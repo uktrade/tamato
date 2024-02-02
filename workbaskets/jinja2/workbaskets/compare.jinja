@@ -9,7 +9,7 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 {% set page_title %}
-  Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Compare with worksheet data
+  Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Compare with worksheet data
 {% endset %}
 
 {% set change_workbasket_details_link = url("workbaskets:workbasket-ui-update", kwargs={"pk": workbasket.pk}) %}
@@ -19,9 +19,9 @@
       "items": [
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:current-workbasket") },
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Checks", "href": url("workbaskets:workbasket-checks") },
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Compare" }
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Summary", "href": url("workbaskets:current-workbasket") },
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Checks", "href": url("workbaskets:workbasket-checks") },
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Compare" }
     ]})
   }}
 {% endblock %}

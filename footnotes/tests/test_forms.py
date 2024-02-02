@@ -18,7 +18,7 @@ pytestmark = pytest.mark.django_db
 
 # https://uktrade.atlassian.net/browse/TP-851
 def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Tests that when two non-overlapping footnotes of the same type are
     created that these are created with a different footnote_id, to avoid
@@ -41,7 +41,7 @@ def test_form_save_creates_new_footnote_id_and_footnote_type_id_combo(
         "start_date_2": 2022,
         "description": "A note on feet",
     }
-    form = forms.FootnoteCreateForm(data=data, request=session_with_workbasket)
+    form = forms.FootnoteCreateForm(data=data, request=session_request_with_workbasket)
     new_footnote = form.save(commit=False)
 
     assert earlier.footnote_id != new_footnote.footnote_id

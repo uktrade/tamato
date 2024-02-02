@@ -5,7 +5,7 @@
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
 {% set page_title %}
-  Workbasket {{ workbasket.id if workbasket else request.session.workbasket.id }} - Summary
+  Workbasket {{ workbasket.id if workbasket else request.user.current_.workbasket.id }} - Summary
 {% endset %}
 
 {% set change_workbasket_details_link = url("workbaskets:workbasket-ui-update", kwargs={"pk": workbasket.pk}) %}
@@ -18,7 +18,7 @@
       "items": [
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary" }
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Summary" }
     ]})
   }}
 {% endblock %}

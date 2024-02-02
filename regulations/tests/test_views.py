@@ -60,7 +60,7 @@ def test_regulation_detail_views(
     view,
     url_pattern,
     valid_user_client,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that regulation detail views are under the url regulations/ and
     don't return an error."""
@@ -284,7 +284,7 @@ def test_regulation_list_view(
     view,
     url_pattern,
     valid_user_client,
-    session_with_workbasket,
+    session_request_with_workbasket,
 ):
     """Verify that regulation list view is under the url regulations/ and
     doesn't return an error."""
@@ -353,7 +353,10 @@ def test_regulation_api_list_view(valid_user_client, date_ranges):
     )
 
 
-def test_regulation_update_view_new_regulation_id(date_ranges, valid_user_client):
+def test_regulation_update_view_new_regulation_id(
+    date_ranges,
+    client_with_current_workbasket,
+):
     """Test that an update to a regulation's `regulation_id` creates a new
     regulation, updates associated measures, and deletes old one."""
     regulation = factories.UIDraftRegulationFactory.create()
@@ -387,7 +390,7 @@ def test_regulation_update_view_new_regulation_id(date_ranges, valid_user_client
             "regulation_id": regulation.regulation_id,
         },
     )
-    response = valid_user_client.post(url, form_data)
+    response = client_with_current_workbasket.post(url, form_data)
     assert response.status_code == 302
 
     new_regulation = Regulation.objects.get(regulation_id=new_regulation_id)

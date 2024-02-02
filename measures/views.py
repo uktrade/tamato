@@ -10,7 +10,6 @@ from urllib.parse import urlencode
 
 from crispy_forms.helper import FormHelper
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
@@ -702,8 +701,7 @@ class MeasureCreateWizard(
     SUMMARY = "summary"
     COMPLETE = "complete"
 
-    form_list = [
-        (START, forms.MeasureCreateStartForm),
+    data_form_list = [
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
         (REGULATION_ID, forms.MeasureRegulationIdForm),
         (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
@@ -713,21 +711,16 @@ class MeasureCreateWizard(
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
         (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
         (FOOTNOTES, forms.MeasureFootnotesFormSet),
+    ]
+    """Forms in this wizard's steps that collect user data."""
+
+    form_list = [
+        (START, forms.MeasureCreateStartForm),
+        *data_form_list,
         (SUMMARY, forms.MeasureReviewForm),
     ]
-
-    # TODO: remove after testing.
-    test_form_list = [
-        (MEASURE_DETAILS, forms.MeasureDetailsForm),
-        (REGULATION_ID, forms.MeasureRegulationIdForm),
-        (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
-        (QUOTA_ORIGINS, forms.MeasureQuotaOriginsForm),
-        # (GEOGRAPHICAL_AREA, forms.MeasureGeographicalAreaForm),
-        # (COMMODITIES, forms.MeasureCommodityAndDutiesFormSet),
-        (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
-        (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
-        (FOOTNOTES, forms.MeasureFootnotesFormSet),
-    ]
+    """All Forms in this wizard's steps, including both those that collect user
+    data and those that don't."""
 
     templates = {
         START: "measures/create-start.jinja",
@@ -805,6 +798,24 @@ class MeasureCreateWizard(
     """Override of dictionary that maps steps to either callables that return a
     boolean or boolean values that indicate whether a wizard step should be
     shown."""
+
+    def get_data_form_list(self) -> dict:
+        """
+        Returns a form list based on form_list, conditionally including only
+        those items as per condition_list and also appearing in data_form_list.
+
+        The list is generated dynamically because conditions in condition_list
+        may be dynamic.
+
+        Essentially, version of `WizardView.get_form_list()` filtering in only
+        those list items appearing in `data_form_list`.
+        """
+        data_form_keys = [key for key, form in self.data_form_list]
+        return {
+            form_key: form_class
+            for form_key, form_class in self.get_form_list().items()
+            if form_key in data_form_keys
+        }
 
     def show_step(self, step) -> bool:
         """Convenience function to check whether a wizard step should be shown
@@ -962,15 +973,8 @@ class MeasureCreateWizard(
         return created_measures
 
     def done(self, form_list, **kwargs):
-        print(f"*** MeasureCreateWizard.done()")
-
         serializable_data = self.all_serializable_form_data()
         serializable_form_kwargs = self.all_serializable_form_kwargs()
-
-        print(f"*** serializable_data:")
-        print(json.dumps(serializable_data, indent=4))
-        print(f"*** serializable_form_kwargs:")
-        print(json.dumps(serializable_form_kwargs, indent=4))
 
         measures_bulk_creator = MeasuresBulkCreator.objects.create(
             form_data=serializable_data,
@@ -978,7 +982,11 @@ class MeasureCreateWizard(
             current_transaction=get_current_transaction(),
         )
         bulk_create_measures.delay(measures_bulk_creator.pk)
-        # TODO: redirect from summary page to done page.
+        # TODO:
+        # - check whether there are actions on the master branch to apply at
+        #   this point, or on the Celery side of measure creation. (The current
+        #   user is assigned to the measures workbasket, but is that redundant?)
+        # - Redirect from summary page to done page.
 
     def all_serializable_form_data(self) -> Dict:
         """
@@ -991,13 +999,8 @@ class MeasureCreateWizard(
 
         all_data = {}
 
-        # TODO:
-        # for form_key in self.get_form_list():
-        #   As per self.get_all_cleaned_data() but using
-        #   self.serializable_form_data_for_step()
-        for form_key, _ in self.test_form_list:
-            if self.show_step(form_key):
-                all_data[form_key] = self.serializable_form_data_for_step(form_key)
+        for form_key in self.get_data_form_list().keys():
+            all_data[form_key] = self.serializable_form_data_for_step(form_key)
 
         return all_data
 
@@ -1015,27 +1018,16 @@ class MeasureCreateWizard(
             data=self.storage.get_step_data(step),
             files=self.storage.get_step_files(step),
         )
-        # TODO:
-        # - Set to True for now, since form_obj.is_valid() failing on
-        #   QUOTA_ORIGINS due to form optionality.
-        # if form_obj.is_valid():
-        if True or form_obj.is_valid():
-            # TODO: with_prefix=True once all forms done and tested.
-            # return form_obj.serializable()
-            return form_obj.serializable(with_prefix=False)
 
-        raise ValidationError
+        return form_obj.serializable_data(remove_key_prefix=step)
 
     def all_serializable_form_kwargs(self) -> Dict:
         """Returns serializable kwargs for all wizard steps."""
 
         all_kwargs = {}
 
-        # TODO:
-        # for form_key in self.get_form_list():
-        for form_key, _ in self.test_form_list:
-            if self.show_step(form_key):
-                all_kwargs[form_key] = self.serializable_form_kwargs_for_step(form_key)
+        for form_key in self.get_data_form_list().keys():
+            all_kwargs[form_key] = self.serializable_form_kwargs_for_step(form_key)
 
         return all_kwargs
 
