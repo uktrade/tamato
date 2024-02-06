@@ -548,9 +548,25 @@ class BaseTaricParser:
             filtered_models = []
             for model in models:
                 if hasattr(model, "valid_between"):
-                    # Check if this record is current
-                    if date.today() in model.valid_between:
-                        filtered_models.append(model)
+                    # Check if this record is the most current
+                    if len(filtered_models) > 0:
+                        # If the model does not have an end date, replace filtered models with non end dated model
+                        if model.valid_between.upper_inf:
+                            filtered_models = [model]
+                        # if current filtered model has no end date, don't replace
+                        elif filtered_models[0].valid_between.upper_inf:
+                            continue
+                        else:
+                            if (
+                                filtered_models[0].valid_between.upper
+                                > model.valid_between.upper
+                            ):
+                                continue
+                            else:
+                                filtered_models = [model]
+
+                    elif len(filtered_models) == 0:
+                        filtered_models = [model]
 
                 elif hasattr(model, "validity_start"):
                     # check for latest
@@ -565,9 +581,15 @@ class BaseTaricParser:
             if len(filtered_models) == 1:
                 return filtered_models[0]
 
+            if len(filtered_models) > 1:
+                raise Exception(
+                    f"multiple models matched query for {related_model.__name__} using {fields_and_values}, please check data and query",
+                )
+
             raise Exception(
-                f"multiple models matched query for {related_model.__name__} using {fields_and_values}, please check data and query",
+                f"no models matched query for {related_model.__name__} using {fields_and_values}, please check data and query",
             )
+
         else:
             return None
 
