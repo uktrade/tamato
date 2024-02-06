@@ -115,12 +115,21 @@ def export_report_to_csv(request, report_slug, current_tab=None):
 
     writer = csv.writer(response)
 
-    # Check if the report is a table or a chart
-    if hasattr(report_instance, "headers"):
-        # For table reports
-        writer.writerow([header["text"] for header in headers])
+    # For ag grid reports
+    if hasattr(report_instance, "headers_list"):
+        header_row = [header.replace("_", " ").capitalize() for header in report_instance.headers_list]
+        writer.writerow(header_row)
+        for row in report_instance.rows():
+            data_row = [str(row[header.replace("_", " ").capitalize()]) for header in report_instance.headers_list]
+            writer.writerow(data_row)
+
+    # For govuk table reports
+    elif hasattr(report_instance, "headers"):
+        writer.writerow([header.get("text", None) for header in headers])
         for row in rows:
             writer.writerow([column["text"] for column in row])
+            
+    # For charts
     else:
         writer.writerow(["Date", "Data"])
 

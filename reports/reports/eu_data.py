@@ -39,6 +39,7 @@ class Report(ReportBaseTable):
             for header in self.headers_list
         ]
 
+    
     def row(self, row) -> [dict]:
         return {
             field.replace("_", " ").capitalize(): str(getattr(row, field, None))
