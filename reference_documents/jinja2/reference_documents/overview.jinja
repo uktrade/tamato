@@ -1,0 +1,24 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = 'Reference Documents versions Overview' %}
+
+{% block breadcrumb %}
+    {{ breadcrumbs(request, [
+      {'text': "Reference Documents"}
+    ]) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        Reference Document Overview
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">You will find a list of reference document versions below that can be viewed.</span>
+
+    <div>
+        {{ govukTable({ "head": reference_document_versions_headers, "rows": reference_documents_versions }) }}
+    </div>
+{% endblock %}
+
+
+
