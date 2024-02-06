@@ -19,25 +19,31 @@ class Report(ReportBaseTable):
     enabled = True
     description = "Quotas that won't be able to be used by a trader"
 
+    headers_list = [
+        "order_number",
+        "start_date",
+        "end_date",
+        "reason",
+    ]
+
     def headers(self) -> [dict]:
         return [
-            {"text": "Order number"},
-            {"text": "Start date"},
-            {"text": "End date"},
-            {"text": "Reason"},
+            {
+                "field": header.replace("_", " ").capitalize(),
+                "filter": "agTextColumnFilter",
+            }
+            for header in self.headers_list
         ]
 
     def row(self, row: QuotaDefinition) -> [dict]:
-        return [
-            {"text": self.link_renderer_for_quotas(row, row.order_number)},
-            {"text": row.valid_between.lower},
-            {"text": row.valid_between.upper},
-            {"text": row.reason},
-        ]
+        return {
+            field.replace("_", " ").capitalize(): str(getattr(row, field, None))
+            for field in self.headers_list
+        }
 
-    def rows(self, current_page_data) -> [[dict]]:
+    def rows(self) -> [[dict]]:
         table_rows = []
-        for row in current_page_data:
+        for row in self.query():
             table_rows.append(self.row(row))
 
         return table_rows
@@ -135,17 +141,3 @@ class Report(ReportBaseTable):
                 quota_order_number.reason = "Definition period has not been set"
 
         return list(matching_data)
-
-    def get_paginated_data(self, page=1, items_per_page=25):
-        report_data = self.query()
-
-        paginator = Paginator(report_data, items_per_page)
-
-        try:
-            current_page_data = paginator.page(page)
-        except PageNotAnInteger:
-            current_page_data = paginator.page(1)
-        except EmptyPage:
-            current_page_data = paginator.page(paginator.num_pages)
-
-        return current_page_data

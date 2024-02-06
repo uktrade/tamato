@@ -31,16 +31,8 @@ def index(request):
 def report(request):
     report_class = utils.get_report_by_slug(request.resolver_match.url_name)
 
-    # Adjust the number of items per page as needed
-    items_per_page = 25
-
-    # current_page_data = report_class().get_paginated_data(
-    #     request.GET.get("page", 1), items_per_page
-    # )
-
     context = {
         "report": report_class(),
-        # "current_page_data": current_page_data,
     }
 
     return render(
@@ -97,16 +89,6 @@ def export_report_to_csv(request, report_slug, current_tab=None):
         headers = (
             report_instance.headers() if hasattr(report_instance, "headers") else None
         )
-        # if current_page:
-            # current_page_data = Paginator(report_instance.query(), 25).page(
-            #     current_page
-            # )
-            # rows = (
-            #     report_instance.rows(current_page_data=current_page_data)
-            #     if hasattr(report_instance, "rows")
-            #     else None
-            # )
-        # else:
         rows = (
             report_instance.rows()
             if hasattr(report_instance, "rows")
