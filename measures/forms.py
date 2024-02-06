@@ -345,6 +345,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
 
         # Note this is a quick fix & hard coded for now
         # Action code's 1,2,3,4 are flexible and have edge cases that all neither Price or certificate to be present
+
         if action:
             skip_price_and_reference_check = action.code in ["01", "02", "03", "04"]
         else:
@@ -574,9 +575,11 @@ class MeasureConditionsWizardStepFormSet(
             else None
         )
 
+        deserialized_start_date = deserialize_date(measure_start_date)
+
         kwargs = {
             "form_kwargs": {
-                "measure_start_date": measure_start_date,
+                "measure_start_date": deserialized_start_date,
                 "measure_type": measure_type,
             },
         }
