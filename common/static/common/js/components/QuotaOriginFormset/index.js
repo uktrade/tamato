@@ -90,6 +90,8 @@ function QuotaOriginFormset({ data, options, errors }) {
 
 function init() {
     const originsContainer = document.getElementById("quota_origins");
+    if (!originsContainer)
+        return;
     const root = createRoot(originsContainer);
     const origins = [...originsData];
     // originsData and geoAreasOptions come from template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
