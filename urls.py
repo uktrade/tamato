@@ -37,6 +37,7 @@ urlpatterns = [
     path("", include("reports.urls")),
     path("", include("taric_parsers.urls")),
     path("", include("workbaskets.urls", namespace="workbaskets")),
+    path("", include("reference_documents.urls", namespace="reference_documents")),
 ]
 
 if not settings.MAINTENANCE_MODE:
