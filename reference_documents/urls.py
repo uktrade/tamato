@@ -1,6 +1,12 @@
 from django.urls import path
-
+from rest_framework import routers
 from reference_documents import views
+
+
+app_name = "reference_documents"
+
+api_router = routers.DefaultRouter()
+
 
 urlpatterns = [
     path(
@@ -13,4 +19,5 @@ urlpatterns = [
         views.ReferenceDocumentsDetailView.as_view(),
         name="reference_documents-ui-detail",
     ),
+    path("reference_documents/", views.ReferenceDocumentList.as_view(), name="index"),
 ]
