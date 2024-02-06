@@ -1,0 +1,1 @@
+{% for unit in units -%}{% if unit.code %}"{{ unit.code }}"i {% if not loop.last %}| {% endif %}{% else %}{% endif %}{% endfor %}
