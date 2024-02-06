@@ -376,3 +376,31 @@ def measure_quota_order_number_origin_form_data(date_ranges):
     }
 
     return {"data": data, "objects": [old_origin, active_origin, future_origin]}
+
+
+@pytest.fixture()
+def measure_conditions_form_data(
+    date_ranges,
+):
+    condition_code_1 = factories.MeasureConditionCodeFactory.create()
+    condition_code_2 = factories.MeasureConditionCodeFactory.create()
+    action_1 = factories.MeasureActionFactory.create()
+    action_2 = factories.MeasureActionFactory.create()
+    return {
+        "data": {
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code": condition_code_1.pk,
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price": "10%",
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action": action_1.pk,
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code": condition_code_2.pk,
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-reference_price": "10%",
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action": action_2.pk,
+        },
+        "kwargs": {
+            "form_kwargs": {
+                "measure_start_date": datetime.date(2025, 1, 1),
+                "measure_type": factories.MeasureTypeFactory.create(
+                    valid_between=date_ranges.normal,
+                ),
+            },
+        },
+    }
