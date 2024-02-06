@@ -34,13 +34,13 @@ def report(request):
     # Adjust the number of items per page as needed
     items_per_page = 25
 
-    current_page_data = report_class().get_paginated_data(
-        request.GET.get("page", 1), items_per_page
-    )
+    # current_page_data = report_class().get_paginated_data(
+    #     request.GET.get("page", 1), items_per_page
+    # )
 
     context = {
         "report": report_class(),
-        "current_page_data": current_page_data,
+        # "current_page_data": current_page_data,
     }
 
     return render(
@@ -50,7 +50,7 @@ def report(request):
     )
 
 
-def export_report_to_csv(request, report_slug, current_tab=None, current_page=None):
+def export_report_to_csv(request, report_slug, current_tab=None):
     report_class = utils.get_report_by_slug(report_slug)
     report_instance = report_class()
 
@@ -66,7 +66,7 @@ def export_report_to_csv(request, report_slug, current_tab=None, current_page=No
         tab_mapping = {
             report_instance.tab_name: (
                 report_instance.headers(),
-                report_instance.rows(current_page_data=current_page),
+                report_instance.rows(),
             ),
             report_instance.tab_name2: (
                 report_instance.headers2(),
@@ -97,21 +97,21 @@ def export_report_to_csv(request, report_slug, current_tab=None, current_page=No
         headers = (
             report_instance.headers() if hasattr(report_instance, "headers") else None
         )
-        if current_page:
-            current_page_data = Paginator(report_instance.query(), 25).page(
-                current_page
-            )
-            rows = (
-                report_instance.rows(current_page_data=current_page_data)
-                if hasattr(report_instance, "rows")
-                else None
-            )
-        else:
-            rows = (
-                report_instance.rows(current_page_data=None)
-                if hasattr(report_instance, "rows")
-                else None
-            )
+        # if current_page:
+            # current_page_data = Paginator(report_instance.query(), 25).page(
+            #     current_page
+            # )
+            # rows = (
+            #     report_instance.rows(current_page_data=current_page_data)
+            #     if hasattr(report_instance, "rows")
+            #     else None
+            # )
+        # else:
+        rows = (
+            report_instance.rows()
+            if hasattr(report_instance, "rows")
+            else None
+        )
 
     writer = csv.writer(response)
 
