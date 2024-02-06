@@ -39,7 +39,6 @@ class Report(ReportBaseTable):
             for header in self.headers_list
         ]
 
-    
     def row(self, row) -> [dict]:
         return {
             field.replace("_", " ").capitalize(): str(getattr(row, field, None))
@@ -55,4 +54,3 @@ class Report(ReportBaseTable):
 
     def query(self):
         return EUDataModel.objects.all().order_by("goods_code")
-

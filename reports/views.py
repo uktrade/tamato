@@ -89,20 +89,22 @@ def export_report_to_csv(request, report_slug, current_tab=None):
         headers = (
             report_instance.headers() if hasattr(report_instance, "headers") else None
         )
-        rows = (
-            report_instance.rows()
-            if hasattr(report_instance, "rows")
-            else None
-        )
+        rows = report_instance.rows() if hasattr(report_instance, "rows") else None
 
     writer = csv.writer(response)
 
     # For ag grid reports
     if hasattr(report_instance, "headers_list"):
-        header_row = [header.replace("_", " ").capitalize() for header in report_instance.headers_list]
+        header_row = [
+            header.replace("_", " ").capitalize()
+            for header in report_instance.headers_list
+        ]
         writer.writerow(header_row)
         for row in report_instance.rows():
-            data_row = [str(row[header.replace("_", " ").capitalize()]) for header in report_instance.headers_list]
+            data_row = [
+                str(row[header.replace("_", " ").capitalize()])
+                for header in report_instance.headers_list
+            ]
             writer.writerow(data_row)
 
     # For govuk table reports
@@ -110,7 +112,7 @@ def export_report_to_csv(request, report_slug, current_tab=None):
         writer.writerow([header.get("text", None) for header in headers])
         for row in rows:
             writer.writerow([column["text"] for column in row])
-            
+
     # For charts
     else:
         writer.writerow(["Date", "Data"])
