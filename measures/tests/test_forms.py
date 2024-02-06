@@ -1830,10 +1830,14 @@ def test_measure_commodities_and_duties_form_set_serialization(
             forms.MeasureConditionsWizardStepFormSet,
             "measure_conditions_form_data",
         ),
+        (
+            forms.MeasureFootnotesFormSet,
+            "measure_footnotes_form_data",
+        ),
     ],
     ids=[
         "conditions_form",
-        # "footnotes",
+        "footnotes",
         # "geographical_areas",
         # "commodities",
     ],
@@ -1870,6 +1874,7 @@ def test_formset_measure_forms_serialize_deserialize(
     )
     assert form_set.is_valid()
     assert type(form_set) == form_class
+    assert form_set.get_serializable_data_keys() == list(data.keys())
     for key in form_set.get_serializable_data_keys():
         if key in data.keys():
             assert form_set.data[key] == data[key]

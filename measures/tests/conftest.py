@@ -404,3 +404,37 @@ def measure_conditions_form_data(
             },
         },
     }
+
+
+@pytest.fixture()
+def measure_footnotes_form_data(
+    date_ranges,
+):
+    footnote_1 = factories.FootnoteFactory.create()
+    footnote_2 = factories.FootnoteFactory.create()
+
+    return {
+        "data": {
+            "form-0-footnote": footnote_1.pk,
+            "form-1-footnote": footnote_2.pk,
+        },
+        "kwargs": {
+            "form_kwargs": {},
+        },
+    }
+
+
+@pytest.fixture()
+def measure_geo_areas_form_data(date_ranges):
+    return {
+        "measure_type": factories.MeasureTypeFactory.create(
+            valid_between=date_ranges.normal,
+        ).pk,
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "min_commodity_count": 1,
+    }
