@@ -1,0 +1,51 @@
+import React from 'react';
+import { useEffect } from 'react';
+import accessibleAutocomplete from 'accessible-autocomplete'
+
+
+function UnassignUserForm({ users, selectElementId}) {
+  const elementId = selectElementId || "assignments-select"
+  const elementName = "assignments"
+  const label = "Unassign user"
+  const hint = "Select a user to unassign"
+
+  useEffect(() => {
+    const selectElement = document.getElementById(elementId);
+    if (selectElement)
+      accessibleAutocomplete.enhanceSelectElement(
+        {
+          autoselect: false,
+          defaultValue: "",
+          minLength: 2,
+          showAllValues: true,
+          selectElement: selectElement
+        }
+      );
+  }, [])
+
+  return (
+    <form action={unassignUsersUrl} method="POST">
+      <input type="hidden" value={CSRF_TOKEN} name="csrfmiddlewaretoken"/>
+      <div className="govuk-form-group">
+        <label className="govuk-label" htmlFor={elementId}>
+          {label}
+        </label>
+        <div id={`${elementName}-hint`} className="govuk-hint">
+          {hint}
+        </div>
+        <select 
+          id={elementId}
+          name={elementName}
+        >
+          <option value="">Select a user</option>
+          {users.map(user => 
+            <option key={user.pk} value={user.pk}>{user.name}</option>
+          )}
+        </select>
+      </div>
+      <button type="submit" className="govuk-button" data-prevent-double-click="true">Save</button>
+    </form>
+  )
+}
+
+export { UnassignUserForm };
