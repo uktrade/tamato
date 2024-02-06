@@ -1,7 +1,7 @@
 {% from "quota-origins/macros/origin_display.jinja" import origin_display %}
 
 {% set origins %}
-    {% for origin in object.quotaordernumberorigin_set.current() %}
+    {% for origin in object.quotaordernumberorigin_set.current().with_latest_geo_area_description() %}
         {{ origin_display(origin) }}
     {% endfor %}
 {% endset %}
@@ -18,7 +18,7 @@
             },
             {
                 "key": {"text": "Origins"},
-                "value": {"text": origins if object.origins.all() else "-"},
+                "value": {"text": origins if object.quotaordernumberorigin_set.current().with_latest_geo_area_description() else "-"},
                 "actions": {"items": []}
             },
             {

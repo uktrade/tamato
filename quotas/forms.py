@@ -9,6 +9,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
@@ -25,7 +26,9 @@ from geo_areas.models import GeographicalArea
 from measures.models import MeasurementUnit
 from quotas import models
 from quotas import validators
+from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
+from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
 
 CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
 SAFEGUARD_HELP_TEXT = (
@@ -93,6 +96,7 @@ class QuotaOriginExclusionsForm(forms.Form):
         help_text="Select a country to be excluded:",
         required=False,
     )
+    pk = forms.IntegerField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -132,24 +136,45 @@ class QuotaUpdateForm(
 
     category = forms.ChoiceField(
         label="",
-        choices=[],  # set in __init__
+        choices=validators.QuotaCategory.choices,
         error_messages={"invalid_choice": "Please select a valid category"},
     )
 
+    def clean_category(self):
+        value = self.cleaned_data.get("category")
+        # the widget is disabled and data is not submitted. fall back to instance value
+        if not value:
+            return self.instance.category
+        if (
+            self.instance.category == validators.QuotaCategory.SAFEGUARD
+            and value != validators.QuotaCategory.SAFEGUARD
+        ):
+            raise ValidationError(SAFEGUARD_HELP_TEXT)
+        return value
+
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
+        self.geo_area_options = kwargs.pop("geo_area_options")
+        self.existing_origins = kwargs.pop("existing_origins")
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.set_initial_data(*args, **kwargs)
-        self.init_layout()
+        self.init_layout(self.request)
 
     def set_initial_data(self, *args, **kwargs):
         self.fields["category"].initial = self.instance.category
 
     def init_fields(self):
         if self.instance.category == validators.QuotaCategory.SAFEGUARD:
+            self.fields["category"].required = False
             self.fields["category"].widget = forms.Select(
+                choices=[
+                    (
+                        validators.QuotaCategory.SAFEGUARD.value,
+                        validators.QuotaCategory.SAFEGUARD.label,
+                    ),
+                ],
                 attrs={"disabled": True},
-                choices=validators.QuotaCategory.choices,
             )
             self.fields["category"].help_text = SAFEGUARD_HELP_TEXT
         else:
@@ -158,7 +183,104 @@ class QuotaUpdateForm(
 
         self.fields["start_date"].help_text = START_DATE_HELP_TEXT
 
-    def init_layout(self):
+    def get_origins_initial(self):
+        initial = [
+            {
+                "id": o.pk,  # unique identifier used by react
+                "pk": o.pk,
+                "exclusions": [
+                    {"pk": e.pk, "id": e.excluded_geographical_area.pk}
+                    for e in o.quotaordernumberoriginexclusion_set.current()
+                ],
+                "geographical_area": o.geographical_area.pk,
+                "start_date_0": o.valid_between.lower.day,
+                "start_date_1": o.valid_between.lower.month,
+                "start_date_2": o.valid_between.lower.year,
+                "end_date_0": o.valid_between.upper.day
+                if o.valid_between.upper
+                else "",
+                "end_date_1": o.valid_between.upper.month
+                if o.valid_between.upper
+                else "",
+                "end_date_2": o.valid_between.upper.year
+                if o.valid_between.upper
+                else "",
+            }
+            for o in self.existing_origins
+        ]
+        # if we just submitted the form, overwrite initial with submitted data
+        # this prevents newly added origin data being cleared if the form does not pass validation
+        if self.data.get("submit"):
+            new_data = unprefix_formset_data(
+                QUOTA_ORIGINS_FORMSET_PREFIX,
+                self.data.copy(),
+            )
+            initial = new_data
+
+        return initial
+
+    def add_extra_error(self, field, error):
+        """
+        A modification of Django's add_error method that allows us to add data
+        to self._errors under custom keys that are not field names or
+        NON_FIELD_ERRORS.
+
+        Used to pass errors to the React form.
+        """
+        if not isinstance(error, ValidationError):
+            error = ValidationError(error)
+
+        if hasattr(error, "error_dict"):
+            if field is not None:
+                raise TypeError(
+                    "The argument `field` must be `None` when the `error` "
+                    "argument contains errors for multiple fields.",
+                )
+            else:
+                error = error.error_dict
+        else:
+            error = {field or NON_FIELD_ERRORS: error.error_list}
+
+        for field, error_list in error.items():
+            if field not in self.errors:
+                self._errors[field] = self.error_class()
+            self._errors[field].extend(error_list)
+            if field in self.cleaned_data:
+                del self.cleaned_data[field]
+
+    def clean(self):
+        # unprefix origins formset
+        submitted_data = unprefix_formset_data(
+            QUOTA_ORIGINS_FORMSET_PREFIX,
+            self.data.copy(),
+        )
+        # for each origin, unprefix exclusions formset
+        for i, origin_data in enumerate(submitted_data):
+            exclusions = unprefix_formset_data(
+                QUOTA_EXCLUSIONS_FORMSET_PREFIX,
+                origin_data.copy(),
+            )
+            submitted_data[i]["exclusions"] = exclusions
+
+        self.cleaned_data["origins"] = []
+
+        for i, origin_data in enumerate(submitted_data):
+            # instantiate a form per origin data to do validation
+            form = QuotaOrderNumberOriginUpdateReactForm(
+                data=origin_data,
+                initial=origin_data,
+            )
+            if not form.is_valid():
+                for field, e in form.errors.as_data().items():
+                    self.add_extra_error(
+                        f"{QUOTA_ORIGINS_FORMSET_PREFIX}-{i}-{field}",
+                        e,
+                    )
+            else:
+                self.cleaned_data["origins"].append(form.cleaned_data)
+        return super().clean()
+
+    def init_layout(self, request):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -167,6 +289,10 @@ class QuotaUpdateForm(
             "includes/quotas/quota-edit-origins.jinja",
             {
                 "object": self.instance,
+                "request": request,
+                "geo_area_options": self.geo_area_options,
+                "origins_initial": self.get_origins_initial(),
+                "errors": self.errors,
             },
         )
 
@@ -188,9 +314,8 @@ class QuotaUpdateForm(
                             HTML(origins_html),
                         ),
                     ),
-                    css_class="govuk-grid-column-two-thirds",
                 ),
-                css_class="govuk-grid-row",
+                css_class="govuk-width-!-two-thirds",
             ),
             Submit(
                 "submit",
@@ -619,7 +744,7 @@ class QuotaDefinitionCreateForm(
                 AccordionSection(
                     "Volume",
                     HTML.p(
-                        "The initial volume is the legal balance applied to the definition period.<br><br>The current volume is the starting balance for the quota."
+                        "The initial volume is the legal balance applied to the definition period.<br><br>The current volume is the starting balance for the quota.",
                     ),
                     "initial_volume",
                     "volume",
@@ -673,3 +798,9 @@ class QuotaOrderNumberOriginUpdateForm(
         initial[QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX] = initial_exclusions
 
         return initial
+
+
+class QuotaOrderNumberOriginUpdateReactForm(QuotaOrderNumberOriginUpdateForm):
+    """Used only to validate data sent from the quota edit React form."""
+
+    pk = forms.IntegerField(required=False)
