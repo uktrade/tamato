@@ -30,6 +30,7 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
     formDiv.className = "govuk-!-margin-top-4";
     const assignmentButton = document.getElementById(buttonId);
     const assignmentRow = assignmentButton.closest(".govuk-summary-list__row")
+    assignmentRow.classList.add("govuk-summary-list__row--no-border");
     assignmentRow.after(formDiv);
     setShowForm(formDiv);
   }
