@@ -234,25 +234,6 @@ class WorkBasketAssignUsersForm(forms.Form):
             ),
         )
 
-    def clean(self):
-        cleaned_data = super().clean()
-        if cleaned_data.get("users") and cleaned_data.get("assignment_type"):
-            for user in cleaned_data["users"]:
-                if (
-                    UserAssignment.objects.filter(
-                        user=user,
-                        assignment_type=cleaned_data["assignment_type"],
-                        task__workbasket=self.workbasket,
-                    )
-                    .assigned()
-                    .exists()
-                ):
-                    self.add_error(
-                        "users",
-                        f"{user.get_full_name()} has already been assigned",
-                    )
-        return cleaned_data
-
     def assign_users(self, task):
         assignment_type = self.cleaned_data["assignment_type"]
 
@@ -264,6 +245,13 @@ class WorkBasketAssignUsersForm(forms.Form):
                 task=task,
             )
             for user in self.cleaned_data["users"]
+            if not UserAssignment.objects.filter(
+                user=user,
+                assignment_type=assignment_type,
+                task__workbasket=self.workbasket,
+            )
+            .assigned()
+            .exists()
         ]
         user_assignments = UserAssignment.objects.bulk_create(objs)
 

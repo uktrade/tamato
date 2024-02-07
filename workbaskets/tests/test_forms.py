@@ -159,27 +159,6 @@ def test_workbasket_assign_users_form_required_fields(rf, valid_user, user_workb
     assert f"Select an assignment type" in form.errors["assignment_type"]
 
 
-def test_workbasket_assign_users_form_already_assigned_error(rf, valid_user):
-    request = rf.request()
-    request.user = valid_user
-    assignment = factories.UserAssignmentFactory.create(user__is_superuser=True)
-    user = assignment.user
-    assignment_type = assignment.assignment_type
-    workbasket = assignment.task.workbasket
-    data = {
-        "users": [user],
-        "assignment_type": assignment_type,
-    }
-
-    form = forms.WorkBasketAssignUsersForm(
-        request=request,
-        workbasket=workbasket,
-        data=data,
-    )
-    assert not form.is_valid()
-    assert f"{user.get_full_name()} has already been assigned" in form.errors["users"]
-
-
 def test_workbasket_unassign_users_form_unassigns_users(
     rf,
     valid_user,
