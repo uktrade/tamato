@@ -10,18 +10,20 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
   const [showForm, setShowForm] = useState(null);
   const assignmentType = assignment == "workers" ? "WORKBASKET_WORKER" : "WORKBASKET_REVIEWER";
 
-  const removeFormDivs = () => {
-    const possibleForms = [
-        document.getElementById("assign-workers-form"),
-        document.getElementById("unassign-workers-form"),
-        document.getElementById("assign-reviewers-form"),
-        document.getElementById("unassign-reviewers-form"),
-      ];
-      possibleForms.forEach(form => {
-        if (form) {
-          form.remove();
-        }
-      });
+  const removeFormDiv = () => {
+    const possibleFormDivs = [
+      document.getElementById("assign-workers-form"),
+      document.getElementById("unassign-workers-form"),
+      document.getElementById("assign-reviewers-form"),
+      document.getElementById("unassign-reviewers-form"),
+    ];
+    possibleFormDivs.forEach(form => {
+      if (form) {
+        const assignmentRow = form.previousSibling;
+        assignmentRow.classList.remove("govuk-summary-list__row--no-border");
+        form.remove();
+      }
+    });
   }
 
   const createFormDiv = () => {
@@ -29,7 +31,7 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
     formDiv.id = formId;
     formDiv.className = "govuk-!-margin-top-4";
     const assignmentButton = document.getElementById(buttonId);
-    const assignmentRow = assignmentButton.closest(".govuk-summary-list__row")
+    const assignmentRow = assignmentButton.closest(".govuk-summary-list__row");
     assignmentRow.classList.add("govuk-summary-list__row--no-border");
     assignmentRow.after(formDiv);
     setShowForm(formDiv);
@@ -38,9 +40,9 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
   const handleClick = (e) => {
     e.preventDefault();
 
-    removeFormDivs();
-
     const isShown = document.getElementById(formId);
+    removeFormDiv();
+
     if(showForm && isShown) {
       setShowForm(null);
       return;
