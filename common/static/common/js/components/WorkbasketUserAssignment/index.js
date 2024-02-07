@@ -90,7 +90,6 @@ function init() {
         users={assignableUsers}
         buttonId="assign-workers"
         formId="assign-workers-form"
-        selectElementId="selectable-workers"
       />
     );
   }
