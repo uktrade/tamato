@@ -4,9 +4,40 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import render_to_string
 from lark import Lark
 from lark import Transformer
+from lark import UnexpectedInput
 
 from measures import models
 from measures.validators import ApplicabilityCode
+
+
+class DutySyntaxError(SyntaxError):
+    def __str__(self):
+        context, _, column = self.args
+        if self.hint:
+            hint_display = f" \n\n{self.hint} "
+        else:
+            hint_display = ""
+        return f"{self.label} at character {column}.{hint_display}\n\n{context}"
+
+
+class DutyInvalidDutyExpression(DutySyntaxError):
+    label = "No matching duty expression found"
+    hint = "Check the validity period of the duty expression and that you are using the correct prefix."
+
+
+class DutyInvalidMonetaryUnit(DutySyntaxError):
+    label = "No matching monetary unit or percentage amount found"
+    hint = f"Check the validity period of the monetary unit and that you are using the correct code. If the amount is a percentage make sure to include the % symbol after the number."
+
+
+class DutyInvalidMeasurementUnit(DutySyntaxError):
+    label = "No matching measurement unit found"
+    hint = "Check the validity period of the measurement unit and that you are using the correct abbreviation (not code)."
+
+
+class DutyInvalidMeasurementUnitQualififer(DutySyntaxError):
+    label = "No matching measurement unit qualifier found"
+    hint = "Check the validity period of the measurement unit qualifier and that you are using the correct abbreviation."
 
 
 class DutySentenceParser:
@@ -83,7 +114,41 @@ class DutySentenceParser:
         )
 
     def parse(self, duty_sentence):
-        return self.parser.parse(duty_sentence)
+        try:
+            return self.parser.parse(duty_sentence)
+
+        except UnexpectedInput as u:
+            exc_class = u.match_examples(
+                self.parser.parse,
+                {
+                    DutyInvalidDutyExpression: [
+                        "10% + Blah duty (reduced)",
+                        "5.5% + ABCDE + Some other fake duty expression",
+                        "10%&@#^&",
+                        "ABC",
+                        "@(*&$#)",
+                    ],
+                    DutyInvalidMonetaryUnit: [
+                        "10% + 100 ABC / 100 kg",
+                        "100 DEF",
+                        "5.5% + 100 XYZ + AC (reduced)",
+                    ],
+                    DutyInvalidMeasurementUnit: [
+                        "10% + 100 GBP / 100 abc",
+                        "100 GBP / foobar measurement",
+                        "5.5% + 100 EUR / foobar",
+                    ],
+                    DutyInvalidMeasurementUnitQualififer: [
+                        "10% + 100 GBP / 100 kg ABC",
+                        "100 GBP / 100 kg XYZ foo bar",
+                        "5.5% + 100 EUR / % vol foo bar",
+                    ],
+                },
+                use_accepts=True,
+            )
+            if not exc_class:
+                raise
+            raise exc_class(u.get_context(duty_sentence), u.line, u.column)
 
 
 # Measure components (only 1):
@@ -103,6 +168,14 @@ class DutyTransformer(Transformer):
         self.date = kwargs.pop("date")
         super().__init__()
 
+    @property
+    def duty_expressions(self):
+        return (
+            models.DutyExpression.objects.as_at(self.date)
+            .exclude(prefix__isnull=True)
+            .order_by("sid")
+        )
+
     def sentence(self, items):
         return items
 
@@ -113,16 +186,10 @@ class DutyTransformer(Transformer):
     def expr_amount_mandatory(self, value):
         (value,) = value
         try:
-            match = (
-                models.DutyExpression.objects.as_at(self.date)
-                .exclude(prefix__isnull=True)
-                .order_by("sid")
-                .filter(
-                    prefix__iexact=value,
-                    duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
-                )
-                .first()
-            )
+            match = self.duty_expressions.filter(
+                prefix__iexact=value,
+                duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
+            ).first()
         except ObjectDoesNotExist:
             match = None
         return ("duty_expression", match)
@@ -130,16 +197,10 @@ class DutyTransformer(Transformer):
     def expr_amount_not_permitted(self, value):
         (value,) = value
         try:
-            match = (
-                models.DutyExpression.objects.as_at(self.date)
-                .exclude(prefix__isnull=True)
-                .order_by("sid")
-                .filter(
-                    prefix__iexact=value,
-                    duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
-                )
-                .first()
-            )
+            match = self.duty_expressions.filter(
+                prefix__iexact=value,
+                duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
+            ).first()
         except ObjectDoesNotExist:
             match = None
         return ("duty_expression", match)
