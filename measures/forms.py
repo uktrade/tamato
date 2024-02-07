@@ -576,7 +576,7 @@ class MeasureConditionsWizardStepFormSet(
 
         kwargs = {
             "form_kwargs": {
-                "measure_start_date": measure_start_date,
+                "measure_start_date": deserialize_date(measure_start_date),
                 "measure_type": measure_type,
             },
         }
