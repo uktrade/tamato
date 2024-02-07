@@ -33,7 +33,8 @@ function UnassignUserForm({ users, selectElementId}) {
         <div id={`${elementName}-hint`} className="govuk-hint">
           {hint}
         </div>
-        <select 
+        <select
+          required={true}
           id={elementId}
           name={elementName}
         >
