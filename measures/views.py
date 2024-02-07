@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 from itertools import groupby
 from operator import attrgetter
 from typing import Any
@@ -9,6 +10,7 @@ from typing import Type
 from urllib.parse import urlencode
 
 from crispy_forms.helper import FormHelper
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.transaction import atomic
 from django.http import HttpRequest
@@ -16,6 +18,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import redirect
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic.base import TemplateView
@@ -71,6 +74,8 @@ from workbaskets.session_store import SessionStore
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
+
+logger = logging.getLogger(__name__)
 
 
 class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -973,6 +978,44 @@ class MeasureCreateWizard(
         return created_measures
 
     def done(self, form_list, **kwargs):
+        if settings.MEASURES_ASYNC_CREATION:
+            return self.async_done(form_list, **kwargs)
+        else:
+            return self.sync_done(form_list, **kwargs)
+
+    def sync_done(self, form_list, **kwargs):
+        """
+        Handles this wizard's done step, to create measures, within the context
+        of the web worker process.
+
+        Because measures creation can be computationally expensive, this can
+        take an unacceptable amount of time.
+        """
+
+        logger.info("Creating measures synchronously.")
+
+        cleaned_data = self.get_all_cleaned_data()
+
+        created_measures = self.create_measures(cleaned_data)
+        created_measures[0].transaction.workbasket.assign_to_user(self.request.user)
+
+        context = self.get_context_data(
+            form=None,
+            created_measures=created_measures,
+            **kwargs,
+        )
+
+        # TODO:
+        # - Redirect from summary page to done page.
+        return render(self.request, "measures/confirm-create-multiple.jinja", context)
+
+    def async_done(self, form_list, **kwargs):
+        """Handles this wizard's done step, handing off most of the processing
+        (creating measures) to an asynchronous, background process managed by
+        Celery."""
+
+        logger.info("Creating measures asynchronously.")
+
         serializable_data = self.all_serializable_form_data()
         serializable_form_kwargs = self.all_serializable_form_kwargs()
 
@@ -1013,7 +1056,7 @@ class MeasureCreateWizard(
         regular cleaned_data.
         """
 
-        form_obj = super().get_form(
+        form_obj = self.get_form(
             step=step,
             data=self.storage.get_step_data(step),
             files=self.storage.get_step_files(step),
@@ -1154,6 +1197,12 @@ class MeasureCreateWizard(
     def get_form(self, step=None, data=None, files=None):
         form = super().get_form(step, data, files)
         tx = WorkBasket.get_current_transaction(self.request)
+        return self.fixup_form(form, tx)
+
+    @classmethod
+    def fixup_form(cls, form, transaction):
+        """Filter queryset form fields to approved transactions up to the
+        workbasket's current transaction."""
         forms = [form]
         if hasattr(form, "forms"):
             forms = form.forms
@@ -1161,7 +1210,9 @@ class MeasureCreateWizard(
             if hasattr(f, "fields"):
                 for field in f.fields.values():
                     if hasattr(field, "queryset"):
-                        field.queryset = field.queryset.approved_up_to_transaction(tx)
+                        field.queryset = field.queryset.approved_up_to_transaction(
+                            transaction,
+                        )
 
         form.is_valid()
         if hasattr(form, "cleaned_data"):

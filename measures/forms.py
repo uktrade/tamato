@@ -576,7 +576,7 @@ class MeasureConditionsWizardStepFormSet(
 
         kwargs = {
             "form_kwargs": {
-                "measure_start_date": measure_start_date,
+                "measure_start_date": deserialize_date(measure_start_date),
                 "measure_type": measure_type,
             },
         }
@@ -1364,6 +1364,17 @@ class MeasureGeographicalAreaForm(
                     ] = exclusions
 
         return cleaned_data
+
+    def serializable_data(self, remove_key_prefix: str = "") -> Dict:
+        # Perculiarly, serializable data in this form keeps its prefix.
+        return super().serializable_data()
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        # Perculiarly, this Form requires a prefix of "geographical_area".
+        return {
+            "prefix": "geographical_area",
+        }
 
 
 class MeasureAdditionalCodeForm(
