@@ -533,10 +533,10 @@ class BaseTaricParser:
 
         Returns:
             TrackedModel, when matched
-            None, When not matched
 
         Exception:
             When multiple models are matched which is invalid and should not happen normally
+            When no models are matched which is invalid and should not happen
         """
         models = related_model.objects.approved_up_to_transaction(transaction).filter(
             **fields_and_values,
