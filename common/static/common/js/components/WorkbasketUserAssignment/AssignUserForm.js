@@ -3,8 +3,8 @@ import { useEffect } from 'react';
 import accessibleAutocomplete from 'accessible-autocomplete'
 
 
-function AssignUserForm({ assignmentType, users, selectElementId}) {
-  const elementId = selectElementId || "users-select"
+function AssignUserForm({ assignmentType, users }) {
+  const elementId = "users-select"
   const elementName = "users"
   const label = "Assign user"
   const hint = "Select a user to assign"

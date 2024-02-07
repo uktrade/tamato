@@ -3,8 +3,8 @@ import { useEffect } from 'react';
 import accessibleAutocomplete from 'accessible-autocomplete'
 
 
-function UnassignUserForm({ users, selectElementId}) {
-  const elementId = selectElementId || "assignments-select"
+function UnassignUserForm({ users }) {
+  const elementId = "assignments-select"
   const elementName = "assignments"
   const label = "Unassign user"
   const hint = "Select a user to unassign"

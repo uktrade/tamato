@@ -39,15 +39,12 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
 
   const handleClick = (e) => {
     e.preventDefault();
-
     const isShown = document.getElementById(formId);
     removeFormDiv();
-
     if(showForm && isShown) {
       setShowForm(null);
       return;
     }
-
     createFormDiv();
 }
 
@@ -60,7 +57,7 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
         />
       );
     } else {
-        return <UnassignUserForm users={users}/>;
+      return <UnassignUserForm users={users}/>;
     }
   }
 
