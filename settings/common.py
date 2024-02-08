@@ -585,6 +585,9 @@ CELERY_ROUTES = {
     re.compile(r"(exporter|notifications|publishing)\.tasks\..*"): {
         "queue": "standard",
     },
+    "measures.tasks.bulk_create_measures": {
+        "queue": "bulk-create",
+    },
 }
 
 SQLITE_EXCLUDED_APPS = [
@@ -809,3 +812,7 @@ FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
 )  # Order is important
+
+
+# Asynchronous / background object creation and editing config.
+MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))
