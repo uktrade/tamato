@@ -1,0 +1,27 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = 'Reference Documents version details' %}
+
+{% block breadcrumb %}
+    {{ breadcrumbs(request, [
+      {'text': "Reference Documents"}
+    ]) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        Reference Document version Overview
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">Reference document version details.</span>
+
+    <div>
+        {{ govukTable({ "head": reference_document_version_duties_headers, "rows": reference_document_version_duties }) }}
+    </div>
+    <div>
+        {{ govukTable({ "head": reference_document_version_quotas_headers, "rows": reference_document_version_quotas }) }}
+    </div>
+{% endblock %}
+
+
+

@@ -1,5 +1,8 @@
 from django.db import models
+from django.db.models import fields
 from django_fsm import FSMField
+
+from common.models import TimestampedMixin
 
 
 class ReferenceDocumentVersionStatus(models.TextChoices):
@@ -11,7 +14,7 @@ class ReferenceDocumentVersionStatus(models.TextChoices):
     PUBLISHED = "PUBLISHED", "Published"
 
 
-class ReferenceDocument(models.Model):
+class ReferenceDocument(models.Model, TimestampedMixin):
     title = models.CharField(
         max_length=255,
         help_text="Short name for this workbasket",
@@ -25,7 +28,7 @@ class ReferenceDocument(models.Model):
     )
 
 
-class ReferenceDocumentVersion(models.Model):
+class ReferenceDocumentVersion(models.Model, TimestampedMixin):
     version = models.FloatField()
     published_date = models.DateField(blank=True, null=True)
     entry_into_force_date = models.DateField(blank=True, null=True)
@@ -97,4 +100,47 @@ class PreferentialQuota(models.Model):
         "reference_documents.ReferenceDocumentVersion",
         on_delete=models.PROTECT,
         related_name="preferential_quotas",
+    )
+
+
+class AlignmentReport(models.Model, TimestampedMixin):
+    reference_document_version = models.ForeignKey(
+        "reference_documents.ReferenceDocumentVersion",
+        on_delete=models.PROTECT,
+        related_name="alignment_reports",
+    )
+
+
+class AlignmentReportCheck(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    alignment_report = models.ForeignKey(
+        "reference_documents.AlignmentReport",
+        on_delete=models.PROTECT,
+        related_name="alignment_report_checks",
+    )
+
+    check_name = fields.CharField(max_length=255)
+    """A string identifying the type of check carried out."""
+
+    successful = fields.BooleanField()
+    """True if the check was successful."""
+
+    message = fields.TextField(null=True)
+    """The text content returned by the check, if any."""
+
+    preferential_quota = models.ForeignKey(
+        "reference_documents.PreferentialQuota",
+        on_delete=models.PROTECT,
+        related_name="alignment_report_checks",
+        blank=True,
+        null=True,
+    )
+
+    preferential_rate = models.ForeignKey(
+        "reference_documents.PreferentialRate",
+        on_delete=models.PROTECT,
+        related_name="alignment_report_checks",
+        blank=True,
+        null=True,
     )
