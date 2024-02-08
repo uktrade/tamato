@@ -686,13 +686,9 @@ def test_run_business_rules(check_workbasket, valid_user_client, user_workbasket
     assert not user_workbasket.tracked_model_checks.exists()
 
 
-def test_workbasket_business_rule_status(
-    valid_user_client,
-    user_empty_workbasket,
-    use_edit_view,
-):
+def test_workbasket_business_rule_status(valid_user_client, user_empty_workbasket):
     """Testing that the live status of a workbasket resets after an item has
-    been updated, created, 'real-edited' or deleted in the workbasket."""
+    been updated, created or deleted in the workbasket."""
 
     with user_empty_workbasket.new_transaction() as transaction:
         footnote = factories.FootnoteFactory.create(
@@ -714,13 +710,35 @@ def test_workbasket_business_rule_status(
     )
     assert success_banner
 
-    use_edit_view(footnote, {**date_post_data("start_date", datetime.date.today())})
+    factories.FootnoteFactory.create(
+        transaction=user_empty_workbasket.new_transaction(),
+    )
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
     assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
 
-    # recheck that running business rules passes
-    check_workbasket_sync(user_empty_workbasket)
+
+def test_workbasket_business_rule_status_real_edit(
+    valid_user_client,
+    use_edit_view,
+    workbasket,
+):
+    """Testing that the live status of a workbasket resets after an item has
+    been updated, created or deleted in the workbasket."""
+
+    with workbasket.new_transaction() as transaction:
+        footnote = factories.FootnoteFactory.create(
+            update_type=UpdateType.CREATE,
+            transaction=transaction,
+            footnote_type__transaction=transaction,
+        )
+        TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=footnote,
+            successful=True,
+        )
+
+    url = reverse("workbaskets:workbasket-checks")
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
     success_banner = page.find(
@@ -729,9 +747,7 @@ def test_workbasket_business_rule_status(
     )
     assert success_banner
 
-    factories.FootnoteFactory.create(
-        transaction=user_empty_workbasket.new_transaction(),
-    )
+    use_edit_view(footnote, {**date_post_data("start_date", datetime.date.today())})
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
     assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
