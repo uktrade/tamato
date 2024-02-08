@@ -48,17 +48,11 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
     createFormDiv();
 }
 
-  function Form({ action }) {
-    if (action === "Assign") {
-      return (
-        <AssignUserForm
-          assignmentType={assignmentType}
-          users={users}
-        />
-      );
-    } else {
+  function UserForm({ action }) {
+    if (action === "Assign")
+      return <AssignUserForm assignmentType={assignmentType} users={users}/>;
+    else
       return <UnassignUserForm users={users}/>;
-    }
   }
 
   return (
@@ -67,12 +61,13 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
         type="button"
         onClick={handleClick}
         id={buttonId}
+        data-testid={buttonId}
         className="govuk-link fake-link">
         {action}<span className="govuk-visually-hidden"> {assignment}</span>
       </button>
 
       {showForm !== null && createPortal(
-        <Form action={action}/>,
+        <UserForm action={action}/>,
         showForm
       )}
     </>
