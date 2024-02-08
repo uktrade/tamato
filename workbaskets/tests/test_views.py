@@ -720,17 +720,18 @@ def test_workbasket_business_rule_status(valid_user_client, user_empty_workbaske
 
 def test_workbasket_business_rule_status_real_edit(
     valid_user_client,
-    use_edit_view,
-    workbasket,
+    use_edit_view_no_workbasket,
+    user_empty_workbasket,
+    published_footnote_type,
 ):
     """Testing that the live status of a workbasket resets after an item has
     been updated, created or deleted in the workbasket."""
 
-    with workbasket.new_transaction() as transaction:
+    with user_empty_workbasket.new_transaction() as transaction:
         footnote = factories.FootnoteFactory.create(
             update_type=UpdateType.CREATE,
             transaction=transaction,
-            footnote_type__transaction=transaction,
+            footnote_type=published_footnote_type,
         )
         TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
@@ -747,7 +748,10 @@ def test_workbasket_business_rule_status_real_edit(
     )
     assert success_banner
 
-    use_edit_view(footnote, {**date_post_data("start_date", datetime.date.today())})
+    use_edit_view_no_workbasket(
+        footnote,
+        {**date_post_data("start_date", datetime.date.today())},
+    )
     response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
     assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
