@@ -3,9 +3,12 @@ from datetime import datetime
 
 import pytest
 
+from common.models import TrackedModel
 from common.models.transactions import TransactionPartition
+from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import UpdateType
+from workbaskets.validators import WorkflowStatus
 
 
 @pytest.mark.django_db()
@@ -74,3 +77,32 @@ def test_missing_current_version_fix(migrator):
     # assert
     assert measurement_unit.version_group.current_version_id == measurement_unit_id
     migrator.reset()
+
+
+@pytest.mark.django_db()
+def test_timestamp_migration(migrator):
+    migrator.reset()
+    """Ensures that the initial migration works."""
+    migrator.apply_initial_migration(
+        ("common", "0009_tracked_model_timestamp"),
+    )
+
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    transaction = factories.TransactionFactory.create(workbasket=workbasket)
+    trked1 = factories.FootnoteTypeFactory.create(transaction=transaction)
+    trked2 = factories.FootnoteTypeFactory.create(transaction=transaction)
+
+    assert transaction.created_at
+    assert hasattr(trked1, "created_at")
+    assert hasattr(trked1, "updated_at")
+    assert trked1.created_at != transaction.created_at
+
+    migrator.apply_tested_migration(("common", "0010_set_tracked_model_datetime"))
+    new_trked1 = TrackedModel.objects.get(pk=trked1.pk)
+    new_trked2 = TrackedModel.objects.get(pk=trked2.pk)
+    assert new_trked1.created_at == transaction.created_at
+    assert new_trked1.updated_at > transaction.updated_at
+    assert new_trked2.created_at == transaction.created_at
+    assert new_trked2.updated_at > transaction.updated_at

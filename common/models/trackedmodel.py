@@ -27,6 +27,7 @@ from common.fields import SignedIntSID
 from common.models import TimestampedMixin
 from common.models.managers import CurrentTrackedModelManager
 from common.models.managers import TrackedModelManager
+from common.models.mixins import TimestampedMixin
 from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.tracked_utils import get_deferred_set_fields
 from common.models.tracked_utils import get_models_linked_to
@@ -55,7 +56,7 @@ class VersionGroup(TimestampedMixin):
 Cls = TypeVar("Cls", bound="TrackedModel")
 
 
-class TrackedModel(PolymorphicModel):
+class TrackedModel(PolymorphicModel, TimestampedMixin):
     transaction = models.ForeignKey(
         "common.Transaction",
         on_delete=models.PROTECT,
@@ -391,6 +392,8 @@ class TrackedModel(PolymorphicModel):
         "update_type",
         "trackedmodel_ptr",
         "transaction",
+        "created_at",
+        "updated_at",
     }
 
     def copy(
