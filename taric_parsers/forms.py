@@ -6,7 +6,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 
@@ -14,6 +14,8 @@ from importer.models import ImportBatch
 from importer.namespaces import TARIC_RECORD_GROUPS
 from taric_parsers.chunker import chunk_taric
 from taric_parsers.importer import run_batch
+
+User = get_user_model()
 
 
 class TaricParserFormMixin:

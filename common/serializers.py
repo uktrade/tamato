@@ -7,8 +7,8 @@ from typing import List
 from typing import Optional
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from drf_extra_fields.fields import DateRangeField
 from lxml import etree
@@ -23,6 +23,8 @@ from common.renderers import counter_generator
 from common.util import TaricDateRange
 from common.util import get_taric_template
 from common.util import parse_xml
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +200,8 @@ class EnvelopeSerializer:
         self,
         output: IO,
         envelope_id: int,
-        message_counter: Counter = counter_generator(),
+        sequence_counter: Counter = None,
+        message_counter: Counter = None,
         max_envelope_size: Optional[int] = None,
         format: str = "xml",
         newline: bool = False,
@@ -206,13 +209,20 @@ class EnvelopeSerializer:
         """
         :param output: The output stream to write to.
         :param envelope_id: The id of the envelope.
+        :param sequence_counter: A counter for the record number sequence
         :param message_counter: A counter for the message ids.
         :param max_envelope_size: The maximum size of an envelope, if None then no limit.
         :param format: Format to serialize to, defaults to xml.
         :param newline: Whether to add a newline after the envelope.
         """
         self.output = output
-        self.message_counter = message_counter
+        # Not set as default in params as the counter value persits between different instantiations of the Serilzer
+        self.sequence_counter = (
+            sequence_counter if sequence_counter else counter_generator()
+        )
+        self.message_counter = (
+            message_counter if message_counter else counter_generator()
+        )
         self.envelope_id = envelope_id
         self.envelope_size = 0
         self.max_envelope_size = max_envelope_size
@@ -280,7 +290,7 @@ class EnvelopeSerializer:
                     context={"format": self.format},
                 ).data,
                 "transaction_id": transaction_id,
-                "counter_generator": counter_generator,
+                "counter_generator": self.sequence_counter,
                 "message_counter": self.message_counter,
             },
         )

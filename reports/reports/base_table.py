@@ -1,4 +1,6 @@
 from abc import abstractmethod
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from reports.reports.base import ReportBase
 
@@ -10,6 +12,13 @@ class ReportBaseTable(ReportBase):
 
     def __init__(self):
         pass
+
+    def link_renderer_for_quotas(self, order_number, text, fragment=None):
+        url = reverse("quota-ui-detail", args=[order_number.sid])
+        href = url + fragment if fragment else url
+        return mark_safe(
+            f"<a class='govuk-link govuk-!-font-weight-bold' href='{href}'>{text}</a>"
+        )
 
     @abstractmethod
     def query(self):

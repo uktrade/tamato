@@ -15,7 +15,7 @@ def test_missing_current_version_fix(migrator):
     new_state = migrator.apply_initial_migration(("common", "0006_auto_20221114_1000"))
     # setup
 
-    user_class = new_state.apps.get_model("auth", "User")
+    user_class = new_state.apps.get_model("common", "User")
     workbasket_class = new_state.apps.get_model("workbaskets", "WorkBasket")
     measurement_unit_class = new_state.apps.get_model("measures", "MeasurementUnit")
     transaction_class = new_state.apps.get_model("common", "Transaction")
