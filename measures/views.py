@@ -1007,7 +1007,11 @@ class MeasureCreateWizard(
 
         # TODO:
         # - Redirect from summary page to done page.
-        return render(self.request, "measures/confirm-create-multiple.jinja", context)
+        return render(
+            self.request,
+            "measures/confirm-create-multiple-async.jinja",
+            context,
+        )
 
     def async_done(self, form_list, **kwargs):
         """Handles this wizard's done step, handing off most of the processing
