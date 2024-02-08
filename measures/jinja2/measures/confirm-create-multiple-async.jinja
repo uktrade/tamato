@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {% macro panel_subtitle(created_measures) %}
-  You can view their status on the Measures process queue page
+  You can view {% if created_measures|length > 1 %}their{% else %}its{% endif %} status on the Measures process queue page.
 {% endmacro %}
 
 {% block breadcrumb %}
