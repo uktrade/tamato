@@ -12,6 +12,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Max
 from django.db.models import QuerySet
 from django.db.models import Subquery
 from django_fsm import FSMField
@@ -627,15 +628,33 @@ class WorkBasket(TimestampedMixin):
 
     @property
     def unchecked_or_errored_transactions(self):
-        return self.transactions.exclude(
+        """
+        Returns unchecked, errored or out of date transactions from the
+        workbaskets.
+
+        The query excludes transactions which have a corresponding transaction
+        check which has been completed, successful and was created after the
+        latest updated_at in the transactions tracked models. Lasted is
+        retrieved by annotating all the transactions for the workbasket with the
+        latest updated for its containing tracked models then we aggregate the
+        latest time from all the transactions.
+        """
+        latest = (
+            self.transactions.all()
+            .annotate(latest_updated_in_transaction=Max("tracked_models__updated_at"))
+            .aggregate(Max("latest_updated_in_transaction"))
+        )
+        returned = self.transactions.exclude(
             pk__in=TransactionCheck.objects.requires_update(False)
             .filter(
                 completed=True,
                 successful=True,
                 transaction__workbasket=self,
+                created_at__gt=latest["latest_updated_in_transaction__max"],
             )
             .values("transaction__pk"),
         )
+        return returned
 
     class Meta:
         verbose_name = "workbasket"
