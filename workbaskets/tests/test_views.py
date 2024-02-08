@@ -725,18 +725,16 @@ def test_workbasket_business_rule_status_real_edit(
     valid_user_client,
     user_empty_workbasket,
     use_edit_view,
-    published_footnote_type,
 ):
     """Testing that the live status of a workbasket resets after an item has
     been updated, created or deleted in the workbasket."""
 
     with user_empty_workbasket.new_transaction() as transaction:
         footnote = factories.FootnoteFactory.create(
-            update_type=UpdateType.CREATE,
             transaction=transaction,
-            footnote_type=published_footnote_type,
+            footnote_type__transaction=transaction,
         )
-        check = TrackedModelCheckFactory.create(
+        TrackedModelCheckFactory.create(
             transaction_check__transaction=transaction,
             model=footnote,
             successful=True,
