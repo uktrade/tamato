@@ -721,6 +721,7 @@ def test_workbasket_business_rule_status(
 
     # recheck that running business rules passes
     check_workbasket_sync(user_empty_workbasket)
+    response = valid_user_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset))
     success_banner = page.find(
         "div",
