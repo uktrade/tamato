@@ -1,3 +1,4 @@
+import datetime
 import os
 import re
 from unittest.mock import MagicMock
@@ -16,6 +17,7 @@ from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
 from common.models.utils import override_current_transaction
 from common.tests import factories
+from common.tests.util import date_post_data
 from common.validators import UpdateType
 from exporter.tasks import upload_workbaskets
 from importer.models import ImportBatch
@@ -716,11 +718,6 @@ def test_workbasket_business_rule_status(valid_user_client, user_empty_workbaske
     assert not page.find("div", attrs={"class": "govuk-notification-banner--success"})
 
 
-import datetime
-
-from common.tests.util import date_post_data
-
-
 def test_workbasket_business_rule_status_real_edit(
     valid_user_client,
     user_empty_workbasket,
@@ -731,6 +728,7 @@ def test_workbasket_business_rule_status_real_edit(
 
     with user_empty_workbasket.new_transaction() as transaction:
         footnote = factories.FootnoteFactory.create(
+            update_type=UpdateType.CREATE,
             transaction=transaction,
             footnote_type__transaction=transaction,
         )
