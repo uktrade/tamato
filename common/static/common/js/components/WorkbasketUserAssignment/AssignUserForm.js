@@ -25,7 +25,7 @@ function AssignUserForm({ assignmentType, users }) {
 
   return (
     <>
-      <form action={assignUsersUrl} method="POST">
+      <form action={assignUsersUrl} method="POST" data-testid={"assign-user-form"}>
         <input type="hidden" value={CSRF_TOKEN} name="csrfmiddlewaretoken"/>
         <div className="govuk-form-group">
           <label className="govuk-label" htmlFor={elementId}>

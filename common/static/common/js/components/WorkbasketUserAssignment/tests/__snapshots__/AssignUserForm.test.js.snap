@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AssignUserForm renders form 1`] = `
+<form
+  action="/workbaskets/1/assign-users/"
+  data-testid="assign-user-form"
+  method="POST"
+>
+  <input
+    name="csrfmiddlewaretoken"
+    type="hidden"
+    value="abc123"
+  />
+  <div
+    className="govuk-form-group"
+  >
+    <label
+      className="govuk-label"
+      htmlFor="users-select"
+    >
+      Assign user
+    </label>
+    <div
+      className="govuk-hint"
+      id="users-hint"
+    >
+      Select a user to assign
+    </div>
+    <select
+      id="users-select"
+      name="users"
+      required={true}
+    >
+      <option
+        value=""
+      >
+        Select a user
+      </option>
+      <option
+        value={1}
+      >
+        User One
+      </option>
+      <option
+        value={2}
+      >
+        User Two
+      </option>
+      <option
+        value={3}
+      >
+        User Three
+      </option>
+    </select>
+  </div>
+  <div
+    className="govuk-form-group"
+  >
+    <input
+      name="assignment_type"
+      type="hidden"
+      value="WORKBASKET_WORKER"
+    />
+  </div>
+  <button
+    className="govuk-button"
+    data-prevent-double-click="true"
+    type="submit"
+  >
+    Save
+  </button>
+</form>
+`;

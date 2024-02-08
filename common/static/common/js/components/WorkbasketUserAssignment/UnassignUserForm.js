@@ -24,7 +24,7 @@ function UnassignUserForm({ users }) {
   }, [])
 
   return (
-    <form action={unassignUsersUrl} method="POST">
+    <form action={unassignUsersUrl} method="POST" data-testid={"unassign-user-form"}>
       <input type="hidden" value={CSRF_TOKEN} name="csrfmiddlewaretoken"/>
       <div className="govuk-form-group">
         <label className="govuk-label" htmlFor={elementId}>

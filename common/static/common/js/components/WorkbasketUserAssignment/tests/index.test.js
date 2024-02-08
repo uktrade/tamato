@@ -1,5 +1,5 @@
 import renderer from 'react-test-renderer';
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { WorkbasketUserAssignment } from '../index';
 
 
@@ -95,7 +95,6 @@ describe(WorkbasketUserAssignment, () => {
     expect(tree).toMatchSnapshot();
   });
 
-
   it("creates form when button is clicked", () => {
     const assignmentRow = document.createElement("div");
     assignmentRow.classList.add("govuk-summary-list__row");
@@ -122,20 +121,20 @@ describe(WorkbasketUserAssignment, () => {
 
     render(
       <WorkbasketUserAssignment
-        action="Assign"
+        action="Unassign"
         assignment="workers"
         users={mockUsers}
-        buttonId="assign-workers"
-        formId="assign-workers-form"
+        buttonId="unassign-workers"
+        formId="unassign-workers-form"
       />, {
         container: document.body.appendChild(assignmentRow),
       }
     );
 
-    fireEvent.click(screen.getByTestId("assign-workers"));
-    expect(screen.getByLabelText("Assign user")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("unassign-workers"));
+    expect(screen.getByLabelText("Unassign user")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("assign-workers"));
-    expect(screen.queryByLabelText("Assign user")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("unassign-workers"));
+    expect(screen.queryByLabelText("Unassign user")).not.toBeInTheDocument();
   });
 })
