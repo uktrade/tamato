@@ -1,3 +1,5 @@
+from commodities.models import GoodsNomenclature
+from geo_areas.models import GeographicalArea
 from datetime import date
 
 from commodities.models import GoodsNomenclature

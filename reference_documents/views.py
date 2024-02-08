@@ -1,17 +1,11 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
-<<<<<<< HEAD
 from django.views.generic import DetailView
-=======
->>>>>>> eb2cd348 (initial commit - ref doc data model)
 from django.views.generic import ListView
 
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from reference_documents.models import ReferenceDocument
-<<<<<<< HEAD
 from reference_documents.models import ReferenceDocumentVersion
-=======
->>>>>>> eb2cd348 (initial commit - ref doc data model)
 
 
 class ReferenceDocumentList(PermissionRequiredMixin, ListView):
