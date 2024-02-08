@@ -677,6 +677,46 @@ def use_edit_view(api_client_with_current_workbasket):
 
 
 @pytest.fixture
+def use_edit_view_no_workbasket(valid_user_api_client):
+    """
+    Uses the default edit form and view for a model in a workbasket with EDITING
+    status.
+
+    The ``object`` param is the TrackedModel instance that is to be edited and
+    saved, which should not create a new version.
+    ``data_changes`` should be a dictionary to apply to the object, effectively
+    applying edits.
+
+    Will raise :class:`~django.core.exceptions.ValidationError` if the form
+    contains errors.
+    """
+
+    def use(obj: TrackedModel, data_changes: dict[str, str]):
+        Model = type(obj)
+        obj_count = Model.objects.filter(**obj.get_identifying_fields()).count()
+        url = obj.get_url("edit")
+
+        # Check initial form rendering.
+        get_response = valid_user_api_client.get(url)
+        assert get_response.status_code == 200
+
+        # Edit and submit the data.
+        initial_form = get_response.context_data["form"]
+        form_data = get_form_data(initial_form)
+        form_data.update(data_changes)
+        post_response = valid_user_api_client.post(url, form_data)
+
+        # POSTing a real edits form should never create new object instances.
+        assert Model.objects.filter(**obj.get_identifying_fields()).count() == obj_count
+        if post_response.status_code not in (301, 302):
+            raise ValidationError(
+                f"Form contained errors: {dict(post_response.context_data['form'].errors)}",
+            )
+
+    return use
+
+
+@pytest.fixture
 def use_update_form(api_client_with_current_workbasket):
     """
     Uses the default create form and view for a model with update_type=UPDATE.
