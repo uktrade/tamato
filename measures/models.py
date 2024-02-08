@@ -1056,6 +1056,7 @@ class MeasuresBulkCreator(models.Model):
             data = self.form_data[form_key]
             kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
             form = form_class(data=data, **kwargs)
+            form = MeasureCreateWizard.fixup_form(form, self.current_transaction)
             is_valid = form.is_valid()
 
             logger.info(
