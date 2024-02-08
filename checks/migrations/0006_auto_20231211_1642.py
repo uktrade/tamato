@@ -10,7 +10,7 @@ epoch_time = 0000000000
 class Migration(migrations.Migration):
     dependencies = [
         ("checks", "0005_trackedmodelcheck_processing_time"),
-        ("common", "0009_set_tracked_model_datetime"),
+        ("common", "0010_set_tracked_model_datetime"),
         ("workbaskets", "0008_datarow_dataupload"),
     ]
 

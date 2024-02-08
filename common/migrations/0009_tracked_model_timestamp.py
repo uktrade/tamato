@@ -7,7 +7,7 @@ from django.db import models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("common", "0007_auto_20221114_1040_fix_missing_current_versions"),
+        ("common", "0008_user_current_workbasket"),
     ]
 
     operations = [

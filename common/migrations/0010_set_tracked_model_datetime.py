@@ -27,7 +27,7 @@ def generate_timestamps(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("common", "0008_auto_20231211_1642"),
+        ("common", "0009_tracked_model_timestamp"),
     ]
 
     operations = [
