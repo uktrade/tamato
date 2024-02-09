@@ -344,20 +344,22 @@ class QuotaUpdateMixin(
                         valid_between=origin["valid_between"],
                         geographical_area=origin["geographical_area"],
                     )
-                    if origin.get("exclusions"):
-                        self.update_exclusions(
-                            instance,
-                            updated_origin,
-                            origin.get("exclusions"),
-                        )
 
                 else:
-                    models.QuotaOrderNumberOrigin.objects.create(
+                    updated_origin = models.QuotaOrderNumberOrigin.objects.create(
                         order_number=instance,
                         valid_between=origin["valid_between"],
                         geographical_area=origin["geographical_area"],
                         update_type=UpdateType.CREATE,
                         transaction=instance.transaction,
+                    )
+
+                # whether it's edited or new we need to add/update exclusions
+                if origin.get("exclusions"):
+                    self.update_exclusions(
+                        instance,
+                        updated_origin,
+                        origin.get("exclusions"),
                     )
         else:
             # even if no changes were made we must update the existing
