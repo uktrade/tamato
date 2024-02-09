@@ -96,7 +96,6 @@ class QuotaOriginExclusionsForm(forms.Form):
         help_text="Select a country to be excluded:",
         required=False,
     )
-    pk = forms.IntegerField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
