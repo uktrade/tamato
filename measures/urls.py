@@ -57,6 +57,11 @@ ui_patterns = [
         name="measure-ui-create",
     ),
     path(
+        "create/done-async/<int:expected_measures_count>",
+        views.MeasuresWizardCreateConfirm.as_view(),
+        name="measure-ui-create-confirm",
+    ),
+    path(
         f"{detail}/edit-footnotes/",
         views.MeasureFootnotesUpdate.as_view(),
         name="measure-ui-edit-footnotes",

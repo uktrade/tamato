@@ -1023,6 +1023,12 @@ class MeasuresBulkCreator(models.Model):
     #   something like that, on the WorkBasket class that freezes it, say, in
     #   the save() and update() methods.
 
+    @property
+    def expected_measures_count(self):
+        # TODO: return the actual number of measures being created. requires calc. based on form_data/form_kwargs
+        return 5
+
+    # TODO: def created_measures_count():
     @atomic
     def create_measures(self) -> Iterable[Measure]:
         """Create measures using the instance's `cleaned_data`, returning the
