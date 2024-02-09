@@ -37,6 +37,7 @@ function UnassignUserForm({ users }) {
           required={true}
           id={elementId}
           name={elementName}
+          data-testid='unassign-user-select'
         >
           <option value="">Select a user</option>
           {users.map(user => 

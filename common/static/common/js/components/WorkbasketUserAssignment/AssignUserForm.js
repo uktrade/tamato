@@ -38,6 +38,7 @@ function AssignUserForm({ assignmentType, users }) {
             required={true}
             id={elementId}
             name={elementName}
+            data-testid='assign-user-select'
           >
             <option value="">Select a user</option>
             {users.map(user => 

@@ -27,6 +27,7 @@ exports[`UnassignUserForm renders form 1`] = `
       Select a user to unassign
     </div>
     <select
+      data-testid="unassign-user-select"
       id="assignments-select"
       name="assignments"
       required={true}
