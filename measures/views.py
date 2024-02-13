@@ -18,6 +18,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import redirect
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic.base import TemplateView
@@ -1004,16 +1005,9 @@ class MeasureCreateWizard(
             **kwargs,
         )
 
-        expected_measures_count = 6
-
         # TODO:
         # - Redirect from summary page to done page.
-        return redirect(
-            reverse(
-                "measure-ui-create-confirm",
-                kwargs={"expected_measures_count": expected_measures_count},
-            ),
-        )
+        return render(self.request, "measures/confirm-create-multiple.jinja", context)
 
     def async_done(self, form_list, **kwargs):
         """Handles this wizard's done step, handing off most of the processing
@@ -1243,10 +1237,10 @@ class MeasureCreateWizard(
 
 class MeasuresWizardCreateConfirm(TemplateView):
     def get_context_data(self, **kwargs):
-        # get the number of measures being created/edited
-        expected_measures_count = self.request.GET.get("expected_measures_count")
-        count = super().get_context_data()
-        print(f"*** fires {expected_measures_count=} {count=}")
+        context = super().get_context_data(**kwargs)
+
+        context["expected_measures_count"] = self.kwargs.get("expected_measures_count")
+        return context
 
 
 class MeasureUpdateBase(

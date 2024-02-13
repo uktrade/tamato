@@ -1025,7 +1025,16 @@ class MeasuresBulkCreator(models.Model):
 
     @property
     def expected_measures_count(self):
-        # TODO: return the actual number of measures being created. requires calc. based on form_data/form_kwargs
+        # TODO: return number of measures being created.
+
+        # The number of measures created depends on two parts: the commodity
+        # count and the geo areas the measure is to be applied to.
+        # The geo area count is per area BEFORE ommissions, ie. each country
+        # group/erga omnes, with an excluded country, still counts as a single
+        # entity.
+        # Measures to be created = commodity count * geo_area
+
+        # Hard coded until the create method has been refactored.
         return 5
 
     # TODO: def created_measures_count():
