@@ -1834,12 +1834,20 @@ def test_measure_commodities_and_duties_form_set_serialization(
             forms.MeasureFootnotesFormSet,
             "measure_footnotes_form_data",
         ),
+        (
+            forms.MeasureCommodityAndDutiesFormSet,
+            "measure_commodities_and_duties_form_data",
+        ),
+        (
+            forms.MeasureGeographicalAreaForm,
+            "measure_geo_area_form_data",
+        ),
     ],
     ids=[
         "conditions_form",
         "footnotes",
-        # "geographical_areas",
-        # "commodities",
+        "commodities",
+        "geographical_areas",
     ],
 )
 def test_formset_measure_forms_serialize_deserialize(
@@ -1878,3 +1886,70 @@ def test_formset_measure_forms_serialize_deserialize(
     for key in form_set.get_serializable_data_keys():
         if key in data.keys():
             assert form_set.data[key] == data[key]
+
+
+def test_measure_forms_geo_area(erga_omnes):
+    data = {
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial=data,
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert form.is_valid()
+
+    form.serializable_data()
+
+    assert 0
+
+
+# def test_measure_forms_geo_area(erga_omnes):
+#     geo_area1 = factories.GeographicalAreaFactory.create()
+#     geo_area2 = factories.GeographicalAreaFactory.create()
+#     formset_prefix = "erga_omnes_exclusions_formset"
+
+#     data = {
+#         f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES,
+#         "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
+#         "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
+#         "erga_omnes_exclusions_formset-__prefix__-erga_omnes_exclusion": "",
+#     }
+#     initial = [
+#         {
+#             "erga_omnes_exclusion": geo_area1.pk,
+#         },
+#         {
+#             "erga_omnes_exclusion": geo_area2.pk,
+#         },
+#     ]
+#     with override_current_transaction(Transaction.objects.last()):
+#         geo_formset = forms.MeasureGeographicalAreaForm(
+#             data,
+#             initial={**data, formset_prefix: formset_prefix},
+#             prefix=GEO_AREA_FORM_PREFIX,
+#         )
+#         assert geo_formset.is_valid()
+
+#     # Create the serialized data
+#     serializable_form_data = geo_formset.serializable_data()
+#     # serializable_form_kwargs = geo_formset.serializable_init_kwargs(kwargs)
+
+#     # Deserialize the kwargs
+#     # deserialized_form_kwargs = form_set.deserialize_init_kwargs(
+#     #     serializable_form_kwargs,
+#     # )
+#     # Make a form from serialized data.Check the form is the right type, valid, and the data that went in is the same that comes out
+#     deserialised_geo_formset = forms.MeasureGeographicalAreaForm(
+#         data=serializable_form_data,
+#         initial={**serializable_form_data, formset_prefix: formset_prefix},
+#         prefix=GEO_AREA_FORM_PREFIX,
+#     )
+
+#     assert 0
+#     assert deserialised_geo_formset.is_valid()
+#     assert deserialised_geo_formset.get_serializable_data_keys() == list(data.keys())
+#     for key in deserialised_geo_formset.get_serializable_data_keys():
+#         if key in data.keys():
+#             assert deserialised_geo_formset.data[key] == data[key]

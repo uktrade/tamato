@@ -13,6 +13,7 @@ from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
+from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.forms import MeasureForm
 from measures.models import Measure
@@ -407,9 +408,7 @@ def measure_conditions_form_data(
 
 
 @pytest.fixture()
-def measure_footnotes_form_data(
-    date_ranges,
-):
+def measure_footnotes_form_data():
     footnote_1 = factories.FootnoteFactory.create()
     footnote_2 = factories.FootnoteFactory.create()
 
@@ -425,16 +424,22 @@ def measure_footnotes_form_data(
 
 
 @pytest.fixture()
-def measure_geo_areas_form_data(date_ranges):
+def measure_commodities_and_duties_form_data():
+    commodity_1 = factories.GoodsNomenclatureFactory.create()
+    commodity_2 = factories.GoodsNomenclatureFactory.create()
+
     return {
-        "measure_type": factories.MeasureTypeFactory.create(
-            valid_between=date_ranges.normal,
-        ).pk,
-        "start_date_0": date_ranges.normal.lower.day,
-        "start_date_1": date_ranges.normal.lower.month,
-        "start_date_2": date_ranges.normal.lower.year,
-        "end_date_0": date_ranges.normal.upper.day,
-        "end_date_1": date_ranges.normal.upper.month,
-        "end_date_2": date_ranges.normal.upper.year,
-        "min_commodity_count": 1,
+        "data": {
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity_1.pk,
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": "4.0%",
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-commodity": commodity_2.pk,
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-duties": "40 GBP/100kg",
+        },
+        "kwargs": {
+            "min_commodity_count": 1,
+            "measure_start_date": datetime.date(2025, 1, 1),
+            "form_kwargs": {
+                "measure_type": None,
+            },
+        },
     }
