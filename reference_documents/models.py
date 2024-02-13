@@ -27,7 +27,9 @@ class ReferenceDocument(models.Model, TimestampedMixin):
     )
 
 
-class ReferenceDocumentVersion(models.Model, TimestampedMixin):
+class ReferenceDocumentVersion(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     version = models.FloatField()
     published_date = models.DateField(blank=True, null=True)
     entry_into_force_date = models.DateField(blank=True, null=True)
@@ -102,7 +104,8 @@ class PreferentialQuota(models.Model):
     )
 
 
-class AlignmentReport(models.Model, TimestampedMixin):
+class AlignmentReport(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
     reference_document_version = models.ForeignKey(
         "reference_documents.ReferenceDocumentVersion",
         on_delete=models.PROTECT,
