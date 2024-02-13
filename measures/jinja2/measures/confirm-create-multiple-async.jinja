@@ -4,11 +4,11 @@
 {% set page_title = "Confirmation" %}
 
 {% macro panel_title(created_measures) %}
-  You successfully submitted {{ created_measures|length }} measure{{ created_measures|pluralize}} to be created or edited on TAP.
+  You successfully submitted {{ expected_measures_count }} measure{{ expected_measures_count|pluralize}} to be created or edited on TAP.
 {% endmacro %}
 
 {% macro panel_subtitle(created_measures) %}
-  You can view {% if created_measures|length > 1 %}their{% else %}its{% endif %} status on the Measures process queue page.
+  You can view {% if expected_measures_count > 1 %}their{% else %}its{% endif %} status on the Measures process queue page.
 {% endmacro %}
 
 {% block breadcrumb %}

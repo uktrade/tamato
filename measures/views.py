@@ -18,7 +18,6 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import redirect
-from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic.base import TemplateView
@@ -1005,12 +1004,15 @@ class MeasureCreateWizard(
             **kwargs,
         )
 
+        expected_measures_count = 6
+
         # TODO:
         # - Redirect from summary page to done page.
-        return render(
-            self.request,
-            "measures/confirm-create-multiple-async.jinja",
-            context,
+        return redirect(
+            reverse(
+                "measure-ui-create-confirm",
+                kwargs={"expected_measures_count": expected_measures_count},
+            ),
         )
 
     def async_done(self, form_list, **kwargs):
@@ -1035,8 +1037,12 @@ class MeasureCreateWizard(
         #   user is assigned to the measures workbasket, but is that redundant?)
         # - Redirect from summary page to done page.
         return redirect(
-            "measure-ui-create-confirm",
-            measures_bulk_creator.expected_measures_count,
+            reverse(
+                "measure-ui-create-confirm",
+                kwargs={
+                    "expected_measures_count": measures_bulk_creator.expected_measures_count,
+                },
+            ),
         )
 
     def all_serializable_form_data(self) -> Dict:
