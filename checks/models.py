@@ -7,7 +7,7 @@ from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 
 
-class TransactionCheck(models.Model):
+class TransactionCheck(TimestampedMixin):
     """
     Represents an in-progress or completed check of a transaction for
     correctness.

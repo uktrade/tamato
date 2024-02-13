@@ -812,7 +812,8 @@ FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
 )  # Order is important
+DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "10000"))
 
 
-# Asynchronous / background object creation and editing config.
+# Asynchronous / background (bulk) object creation and editing config.
 MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))
