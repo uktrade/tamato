@@ -1,0 +1,21 @@
+name: CI/CD
+
+on: 
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    name: "Run jest tests"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Node
+      uses: ./.github/actions/setup-node
+
+    - name: Run tests
+      run: npm run test
