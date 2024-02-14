@@ -1031,12 +1031,10 @@ class MeasureCreateWizard(
         #   user is assigned to the measures workbasket, but is that redundant?)
         # - Redirect from summary page to done page.
         return redirect(
-            reverse(
-                "measure-ui-create-confirm",
-                kwargs={
-                    "expected_measures_count": measures_bulk_creator.expected_measures_count,
-                },
-            ),
+            "measure-ui-create-confirm",
+            kwargs={
+                "expected_measures_count": measures_bulk_creator.expected_measures_count,
+            },
         )
 
     def all_serializable_form_data(self) -> Dict:
