@@ -40,7 +40,7 @@ class MeasuresBulkCreator(models.Model):
     """
     The 'current' Transaction instance at the time `form_data` was constructed.
 
-    This is normally be set by
+    This is normally set by
     `common.models.utils.TransactionMiddleware` when processing a HTTP request
     and can be obtained from `common.models.utils.get_current_transaction()`
     to capture its value.
