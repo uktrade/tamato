@@ -112,23 +112,6 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
 
         return sorted(descriptions)
 
-    @property
-    def geographical_exclusions(self):
-        origin_ids = list(
-            self.quotaordernumberorigin_set.current().values_list(
-                "pk",
-                flat=True,
-            ),
-        )
-        exclusions = [
-            e.excluded_geographical_area
-            for e in QuotaOrderNumberOriginExclusion.objects.current().filter(
-                origin_id__in=origin_ids,
-            )
-        ]
-
-        return exclusions
-
     class Meta:
         verbose_name = "quota"
 

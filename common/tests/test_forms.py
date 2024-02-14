@@ -183,7 +183,7 @@ def test_radio_nested_form_nested_formset_cleaned_data():
                 "measure-conditions-formset-0-applicable_duty": "test1",
                 "measure-conditions-formset-1-applicable_duty": "test2",
                 "measure-conditions-formset-2-applicable_duty": "test3",
-                "measure-conditions-formset-3-applicable_duty": "test4",
+                "measure-conditions-formset-3-applicable_duty": "",
             },
             [
                 {
@@ -196,7 +196,7 @@ def test_radio_nested_form_nested_formset_cleaned_data():
                     "applicable_duty": "test3",
                 },
                 {
-                    "applicable_duty": "test4",
+                    "applicable_duty": "",
                 },
             ],
         ),
