@@ -831,12 +831,16 @@ class QuotaOriginExclusionsReactForm(forms.Form):
     # field name is different to match the react form
     geographical_area = forms.ModelChoiceField(
         label="",
-        queryset=(
+        queryset=GeographicalArea.objects.all(),
+        help_text="Select a country to be excluded:",
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["geographical_area"].queryset = (
             GeographicalArea.objects.current()
             .with_latest_description()
             .as_at_today_and_beyond()
             .order_by("description")
-        ),
-        help_text="Select a country to be excluded:",
-        required=False,
-    )
+        )
