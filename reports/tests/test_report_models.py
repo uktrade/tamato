@@ -130,7 +130,7 @@ class TestIndex:
         target = IndexTable()
 
         assert len(target.headers()) == 2
-        assert target.headers()[0]["text"] == "Name"
+        assert target.headers()[0]["text"] == "Report"
         assert target.headers()[1]["text"] == "Link"
 
     def test_index_table_rows(self):
@@ -146,4 +146,4 @@ class TestIndex:
         row = target.row(Report)
 
         assert row[0]["text"] == "Blank Goods Nomenclature descriptions"
-        assert row[1]["html"] == f'<a href="/reports/{Report.slug()}">View Report</a>'
+        assert row[1]["html"] == f'<a href="/reports/{Report.slug()}">View report</a>'
