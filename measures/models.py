@@ -1023,6 +1023,21 @@ class MeasuresBulkCreator(models.Model):
     #   something like that, on the WorkBasket class that freezes it, say, in
     #   the save() and update() methods.
 
+    @property
+    def expected_measures_count(self):
+        # TODO: return number of measures being created.
+
+        # The number of measures created depends on two parts: the commodity
+        # count and the geo areas the measure is to be applied to.
+        # The geo area count is per area BEFORE ommissions, ie. each country
+        # group/erga omnes, with an excluded country, still counts as a single
+        # entity.
+        # Measures to be created = commodity count * geo_area
+
+        # Hard coded until the create method has been refactored.
+        return 5
+
+    # TODO: def created_measures_count():
     @atomic
     def create_measures(self) -> Iterable[Measure]:
         """Create measures using the instance's `cleaned_data`, returning the
