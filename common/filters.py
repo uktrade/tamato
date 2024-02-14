@@ -131,9 +131,9 @@ class TamatoFilterForm(forms.Form):
 
         self.helper.layout = Layout(
             *field_layout,
-            Button("submit", "Search and Filter"),
+            Button("submit", "Search and filter"),
             HTML(
-                f'<a class="govuk-button govuk-button--secondary" href="{self.clear_url}"> Clear </a>',
+                f'<a class="govuk-button govuk-button--secondary" href="{self.clear_url}" style="margin-left:6px"> Clear </a>',
             ),
         )
 

@@ -236,7 +236,7 @@ class FormSetField(forms.Field):
 
 
 class WorkbasketActions(TextChoices):
-    CREATE = "CREATE", "Create new workbasket"
+    CREATE = "CREATE", "Create a new workbasket"
     EDIT = "EDIT", "Edit workbaskets"
 
 
@@ -254,7 +254,7 @@ class CommonUserActions(TextChoices):
 
 
 class ImportUserActions(TextChoices):
-    IMPORT = "IMPORT", "Import EU Taric files"
+    IMPORT = "IMPORT", "Import EU TARIC files"
 
 
 class WorkbasketManagerActions(TextChoices):
@@ -300,8 +300,8 @@ class HomeForm(forms.Form):
                 HTML.h3("What would you like to do?"),
                 HTML.details(
                     "What is a workbasket?",
-                    "A workbasket is used to collect all the changes you make to the UK's Import and Export Tariff data. "
-                    "Workbaskets group these changes so they can be checked by Customs Declaration Service (CDS) before going live.",
+                    "A workbasket is used to collect all the changes you make to the UK's import and export tariff data. "
+                    "Workbaskets group these changes so they can be checked by the Customs Declaration Service (CDS) before going live.",
                 ),
                 "workbasket_action",
             ),
