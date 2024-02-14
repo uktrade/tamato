@@ -23,7 +23,7 @@
     No users have been assigned to review this workbasket yet.
   {% else %}
     {% for user in assigned_users %}
-      {{ user.user.get_full_name() }}{% if not loop.last %}, {% endif %}
+      {{ user.name }}{% if not loop.last %}, {% endif %}
     {% endfor %}
   {% endif %}
 {% endmacro %}
@@ -110,20 +110,20 @@
               "href": assign_users_link,
               "text": "Assign",
               "visuallyHiddenText": "users",
-              "attributes": {},
+              "attributes": {"id": "assign-workers"},
             },
           ] if not assigned_workers else [
             {
               "href": assign_users_link,
               "text": "Assign",
               "visuallyHiddenText": "users",
-              "attributes": {},
+              "attributes": {"id": "assign-workers"},
             },
             {
               "href": unassign_users_link,
               "text": "Unassign",
               "visuallyHiddenText": "users",
-              "attributes": {},
+              "attributes": {"id": "unassign-workers"},
             },
           ]
         },
@@ -136,25 +136,35 @@
             {
               "href": assign_users_link,
               "text": "Assign",
-              "visuallyHiddenText": "users",
-              "attributes": {},
+              "visuallyHiddenText": "users to review",
+              "attributes": {"id": "assign-reviewers"},
             },
           ] if not assigned_reviewers else [
             {
               "href": assign_users_link,
               "text": "Assign",
-              "visuallyHiddenText": "users",
-              "attributes": {},
+              "visuallyHiddenText": "users to review",
+              "attributes": {"id": "assign-reviewers"},
             },
             {
               "href": unassign_users_link,
               "text": "Unassign",
-              "visuallyHiddenText": "users",
-              "attributes": {},
+              "visuallyHiddenText": "users to review",
+              "attributes": {"id": "unassign-reviewers"},
             },
           ]
         },
       },
 		]
   })}}
+  <script nonce="{{ request.csp_nonce }}">
+    const CSRF_TOKEN = "{{ csrf_token }}";
+
+    const assignableUsers = {{ assignable_users|safe }};
+    const assignedWorkers = {{ assigned_workers|safe }};
+    const assignedReviewers = {{ assigned_reviewers|safe }};
+
+    const assignUsersUrl = "{{ assign_users_link }}";
+    const unassignUsersUrl = "{{ unassign_users_link }}";
+  </script>
 {% endblock %}
