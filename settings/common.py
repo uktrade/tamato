@@ -157,7 +157,7 @@ MIDDLEWARE = [
     "csp.middleware.CSPMiddleware",
 ]
 
-if SSO_ENABLED:
+if SSO_ENABLED and not MAINTENANCE_MODE:
     MIDDLEWARE += [
         "authbroker_client.middleware.ProtectAllViewsMiddleware",
     ]

@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 from bs4 import BeautifulSoup
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from common.models.transactions import Transaction
@@ -225,3 +226,83 @@ def test_quota_update_react_form_cleaned_data(session_request_with_workbasket):
         )
 
         assert len(form.cleaned_data["origins"][0]["exclusions"]) == 2
+
+
+@pytest.mark.parametrize(
+    "field_name, error",
+    [
+        ("some_field", "There is a problem"),
+        ("some_field", ValidationError("There is a problem")),
+        (None, {"some_field": "There is a problem"}),
+    ],
+)
+def test_quota_update_add_extra_error(
+    field_name,
+    error,
+    session_request_with_workbasket,
+):
+    quota = factories.QuotaOrderNumberFactory.create()
+    data = {
+        "category": quota.category,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+        "submit": "Save",
+    }
+    with override_current_transaction(quota.transaction):
+        geo_area_options = (
+            GeographicalArea.objects.all()
+            .prefetch_related("descriptions")
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description")
+        )
+        existing_origins = (
+            quota.quotaordernumberorigin_set.current().with_latest_geo_area_description()
+        )
+        form = forms.QuotaUpdateForm(
+            data=data,
+            instance=quota,
+            initial={},
+            request=session_request_with_workbasket,
+            geo_area_options=geo_area_options,
+            existing_origins=existing_origins,
+        )
+        form.add_extra_error(field_name, error)
+
+        assert "There is a problem" in form.errors["some_field"]
+
+
+def test_quota_update_add_extra_error_type_error(session_request_with_workbasket):
+    quota = factories.QuotaOrderNumberFactory.create()
+    data = {
+        "category": quota.category,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+        "submit": "Save",
+    }
+    with override_current_transaction(quota.transaction):
+        geo_area_options = (
+            GeographicalArea.objects.all()
+            .prefetch_related("descriptions")
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description")
+        )
+        existing_origins = (
+            quota.quotaordernumberorigin_set.current().with_latest_geo_area_description()
+        )
+        form = forms.QuotaUpdateForm(
+            data=data,
+            instance=quota,
+            initial={},
+            request=session_request_with_workbasket,
+            geo_area_options=geo_area_options,
+            existing_origins=existing_origins,
+        )
+        with pytest.raises(TypeError):
+            form.add_extra_error(
+                "a_field",
+                {"some_field": "Error", "some_other_field": "Error"},
+            )

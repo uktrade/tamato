@@ -96,7 +96,6 @@ class QuotaOriginExclusionsForm(forms.Form):
         help_text="Select a country to be excluded:",
         required=False,
     )
-    pk = forms.IntegerField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -266,18 +265,37 @@ class QuotaUpdateForm(
 
         for i, origin_data in enumerate(submitted_data):
             # instantiate a form per origin data to do validation
-            form = QuotaOrderNumberOriginUpdateReactForm(
+            origin_form = QuotaOrderNumberOriginUpdateReactForm(
                 data=origin_data,
                 initial=origin_data,
             )
-            if not form.is_valid():
-                for field, e in form.errors.as_data().items():
+
+            cleaned_exclusions = []
+
+            for exclusion in origin_data["exclusions"]:
+                exclusion_form = QuotaOriginExclusionsReactForm(
+                    data=exclusion,
+                    initial=exclusion,
+                )
+                if not exclusion_form.is_valid():
+                    for field, e in exclusion_form.errors.as_data().items():
+                        self.add_extra_error(
+                            f"{QUOTA_ORIGINS_FORMSET_PREFIX}-{i}-{field}",
+                            e,
+                        )
+                else:
+                    cleaned_exclusions.append(exclusion_form.cleaned_data)
+
+            if not origin_form.is_valid():
+                for field, e in origin_form.errors.as_data().items():
                     self.add_extra_error(
                         f"{QUOTA_ORIGINS_FORMSET_PREFIX}-{i}-{field}",
                         e,
                     )
             else:
-                self.cleaned_data["origins"].append(form.cleaned_data)
+                origin_form.cleaned_data["exclusions"] = cleaned_exclusions
+                self.cleaned_data["origins"].append(origin_form.cleaned_data)
+
         return super().clean()
 
     def init_layout(self, request):
@@ -804,3 +822,21 @@ class QuotaOrderNumberOriginUpdateReactForm(QuotaOrderNumberOriginUpdateForm):
     """Used only to validate data sent from the quota edit React form."""
 
     pk = forms.IntegerField(required=False)
+
+
+class QuotaOriginExclusionsReactForm(forms.Form):
+    """Used only to validate data sent from the quota edit React form."""
+
+    pk = forms.IntegerField(required=False)
+    # field name is different to match the react form
+    geographical_area = forms.ModelChoiceField(
+        label="",
+        queryset=(
+            GeographicalArea.objects.current()
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description")
+        ),
+        help_text="Select a country to be excluded:",
+        required=False,
+    )

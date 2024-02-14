@@ -66,7 +66,7 @@ function QuotaOriginFormset({ data, options, errors }) {
         const newOrigin = { ...origin }
         const exclusionIndex = newOrigin.exclusions.indexOf(exclusion)
         if (exclusionIndex > -1) {
-            newOrigin.exclusions.splice(index, 1)
+            newOrigin.exclusions.splice(exclusionIndex, 1)
         }
 
         // update the origin

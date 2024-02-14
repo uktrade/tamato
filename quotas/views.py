@@ -316,7 +316,10 @@ class QuotaUpdateMixin(
 
     def update_origins(self, instance, form_origins):
         existing_origin_pks = {
-            o.pk for o in instance.quotaordernumberorigin_set.current()
+            o.pk
+            for o in models.QuotaOrderNumberOrigin.objects.current().filter(
+                order_number__sid=instance.sid,
+            )
         }
         if form_origins:
             submitted_origin_pks = {o["pk"] for o in form_origins}
@@ -331,8 +334,19 @@ class QuotaUpdateMixin(
                     workbasket=WorkBasket.current(self.request),
                     transaction=instance.transaction,
                 )
+                # Delete the exclusions as well
+                exclusions = models.QuotaOrderNumberOriginExclusion.objects.filter(
+                    origin__pk=origin_pk,
+                )
+                for exclusion in exclusions:
+                    exclusion.new_version(
+                        update_type=UpdateType.DELETE,
+                        workbasket=WorkBasket.current(self.request),
+                        transaction=instance.transaction,
+                    )
 
             for origin in form_origins:
+                # If origin exists
                 if origin.get("pk"):
                     existing_origin = models.QuotaOrderNumberOrigin.objects.get(
                         pk=origin.get("pk"),
@@ -344,21 +358,23 @@ class QuotaUpdateMixin(
                         valid_between=origin["valid_between"],
                         geographical_area=origin["geographical_area"],
                     )
-                    if origin.get("exclusions"):
-                        self.update_exclusions(
-                            instance,
-                            updated_origin,
-                            origin.get("exclusions"),
-                        )
 
+                # It's a newly created origin
                 else:
-                    models.QuotaOrderNumberOrigin.objects.create(
+                    updated_origin = models.QuotaOrderNumberOrigin.objects.create(
                         order_number=instance,
                         valid_between=origin["valid_between"],
                         geographical_area=origin["geographical_area"],
                         update_type=UpdateType.CREATE,
                         transaction=instance.transaction,
                     )
+
+                # whether it's edited or new we need to add/update exclusions
+                self.update_exclusions(
+                    instance,
+                    updated_origin,
+                    origin.get("exclusions"),
+                )
         else:
             # even if no changes were made we must update the existing
             # origins to link to the updated order number
@@ -378,7 +394,10 @@ class QuotaUpdateMixin(
 
     def update_exclusions(self, quota, updated_origin, exclusions):
         existing_exclusion_pks = {
-            e.pk for e in updated_origin.quotaordernumberoriginexclusion_set.current()
+            e.pk
+            for e in models.QuotaOrderNumberOriginExclusion.objects.current().filter(
+                origin__sid=updated_origin.sid,
+            )
         }
         submitted_exclusion_pks = {e["pk"] for e in exclusions}
         deleted_exclusion_pks = existing_exclusion_pks.difference(
