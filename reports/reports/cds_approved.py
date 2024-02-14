@@ -11,7 +11,7 @@ from workbaskets.validators import WorkflowStatus
 
 class Report(ReportBaseChart):
     name = "CDS approvals in the last 12 months"
-    description = "This chart shows the count of approved (published) workbaskets in the last 12 months per day"
+    description = "This chart shows the number of approved (published) workbaskets per day in the last 12 months."
     chart_type = "line"
     report_template = "chart_timescale"
     days_in_past = 365

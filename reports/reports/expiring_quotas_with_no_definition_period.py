@@ -1,16 +1,16 @@
 import datetime
+
 from django.db.models import Q
+
+from quotas.models import QuotaBlocking
+from quotas.models import QuotaDefinition
+from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaSuspension
 from reports.reports.base_table import ReportBaseTable
-from quotas.models import (
-    QuotaOrderNumber,
-    QuotaDefinition,
-    QuotaBlocking,
-    QuotaSuspension,
-)
 
 
 class Report(ReportBaseTable):
-    name = "Quotas Expiring Soon"
+    name = "Quotas expiring soon"
     enabled = True
     description = "Quotas with definition, sub-quota, blocking or suspension periods about to expire and no future definition period."
     tabular_reports = True
@@ -41,7 +41,7 @@ class Report(ReportBaseTable):
         if not any(table_rows):
             return [
                 [{"text": "There is no data for this report at present"}]
-                + [{"text": " "} for _ in range(len(self.headers()) - 1)]
+                + [{"text": " "} for _ in range(len(self.headers()) - 1)],
             ]
 
         return table_rows
@@ -49,7 +49,7 @@ class Report(ReportBaseTable):
     def query(self):
         expiring_quotas = self.find_quota_definitions_expiring_soon()
         quotas_without_future_definition = self.find_quotas_without_future_definition(
-            expiring_quotas
+            expiring_quotas,
         )
         return quotas_without_future_definition
 
@@ -60,7 +60,7 @@ class Report(ReportBaseTable):
                 valid_between__endswith__lte=self.future_time,
             )
             & Q(valid_between__endswith__gte=self.current_time)
-            | Q(valid_between__endswith=None)
+            | Q(valid_between__endswith=None),
         )
 
         # Filter out quota definitions with associated future definitions
@@ -108,20 +108,25 @@ class Report(ReportBaseTable):
             sub_quotas_array.append(
                 {
                     "text": self.link_renderer_for_quotas(
-                        row.order_number, row.order_number
-                    )
+                        row.order_number,
+                        row.order_number,
+                    ),
                 },
                 {
                     "text": self.link_renderer_for_quotas(
-                        row.order_number, sub_quotas.sid, "#sub-quotas"
-                    )
+                        row.order_number,
+                        sub_quotas.sid,
+                        "#sub-quotas",
+                    ),
                 },
                 {"text": sub_quotas.valid_between.lower},
                 {"text": sub_quotas.valid_between.upper},
                 {
                     "text": self.link_renderer_for_quotas(
-                        row.order_number, row.sid, "#definition-details"
-                    )
+                        row.order_number,
+                        row.sid,
+                        "#definition-details",
+                    ),
                 },
             )
 
@@ -133,7 +138,7 @@ class Report(ReportBaseTable):
         if not any(table_rows):
             return [
                 [{"text": "There is no data for this report at present"}]
-                + [{"text": " "} for _ in range(len(self.headers2()) - 1)]
+                + [{"text": " "} for _ in range(len(self.headers2()) - 1)],
             ]
 
         return table_rows
@@ -173,7 +178,9 @@ class Report(ReportBaseTable):
             {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
             {
                 "text": self.link_renderer_for_quotas(
-                    row.order_number, blocking.sid, "#blocking-periods"
+                    row.order_number,
+                    blocking.sid,
+                    "#blocking-periods",
                 )
                 for blocking in row.quotablocking_set.all()
             },
@@ -187,8 +194,10 @@ class Report(ReportBaseTable):
             },
             {
                 "text": self.link_renderer_for_quotas(
-                    row.order_number, row.sid, "#definition-details"
-                )
+                    row.order_number,
+                    row.sid,
+                    "#definition-details",
+                ),
             },
         ]
 
@@ -198,7 +207,7 @@ class Report(ReportBaseTable):
         if not any(table_rows):
             return [
                 [{"text": "There is no data for this report at present"}]
-                + [{"text": " "} for _ in range(len(self.headers3()) - 1)]
+                + [{"text": " "} for _ in range(len(self.headers3()) - 1)],
             ]
 
         return table_rows
@@ -243,7 +252,9 @@ class Report(ReportBaseTable):
             {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
             {
                 "text": self.link_renderer_for_quotas(
-                    row.order_number, suspension.sid, "#blocking-periods"
+                    row.order_number,
+                    suspension.sid,
+                    "#blocking-periods",
                 )
                 for suspension in row.quotasuspension_set.all()
             },
@@ -257,8 +268,10 @@ class Report(ReportBaseTable):
             },
             {
                 "text": self.link_renderer_for_quotas(
-                    row.order_number, row.sid, "#definition-details"
-                )
+                    row.order_number,
+                    row.sid,
+                    "#definition-details",
+                ),
             },
         ]
 
@@ -268,7 +281,7 @@ class Report(ReportBaseTable):
         if not any(table_rows):
             return [
                 [{"text": "There is no data for this report at present"}]
-                + [{"text": " "} for _ in range(len(self.headers4()) - 1)]
+                + [{"text": " "} for _ in range(len(self.headers4()) - 1)],
             ]
 
         return table_rows
