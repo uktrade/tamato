@@ -190,7 +190,10 @@ def test_quota_update_react_form_cleaned_data(session_request_with_workbasket):
         "origins-0-exclusions-1-geographical_area": area_2.pk,
         "submit": "Save",
     }
-    with override_current_transaction(quota.transaction):
+
+    tx = Transaction.objects.last()
+
+    with override_current_transaction(tx):
         geo_area_options = (
             GeographicalArea.objects.all()
             .prefetch_related("descriptions")
