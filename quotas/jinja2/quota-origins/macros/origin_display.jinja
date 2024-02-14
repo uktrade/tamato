@@ -13,7 +13,7 @@
   {% endset %}
   {% set geo_area_summary -%}
       {{ geo_area_name }}
-      {% if object.geographical_exclusions %} (with exclusions){% endif %}
+      {% if object.quotaordernumberoriginexclusion_set.current() %} (with exclusions){% endif %}
   {% endset %}
   {% set origin_link -%}
       <a href="{{ url('geo_area-ui-detail', args=[object.geographical_area.sid]) }}" class="govuk-link">{{ geo_area_name }}</a>

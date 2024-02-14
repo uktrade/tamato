@@ -195,7 +195,7 @@ def test_index_displays_footer_links(valid_user_client):
     assert "Privacy policy" in a_tags[0].text
     assert (
         a_tags[0].attrs["href"]
-        == "https://workspace.trade.gov.uk/working-at-dit/policies-and-guidance/policies/tariff-application-privacy-policy/"
+        == "https://workspace.trade.gov.uk/working-at-dbt/policies-and-guidance/policies/tariff-application-privacy-policy/"
     )
 
 

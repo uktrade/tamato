@@ -60,7 +60,7 @@ class FootnoteFilter(
         choices=type_choices(models.FootnoteType.objects.latest_approved()),
         widget=CheckboxSelectMultiple,
         field_name="footnote_type__footnote_type_id",
-        label="Footnote Type",
+        label="Footnote type",
         help_text="Select all that apply",
         required=False,
     )
