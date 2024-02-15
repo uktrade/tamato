@@ -64,7 +64,6 @@ from measures.models import MeasureType
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
-from measures.tasks import bulk_create_measures
 from measures.util import diff_components
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
@@ -1024,19 +1023,7 @@ class MeasureCreateWizard(
             form_kwargs=serializable_form_kwargs,
             current_transaction=get_current_transaction(),
         )
-
-        task = bulk_create_measures.apply_async(
-            kwargs={
-                "measures_bulk_creator_pk": measures_bulk_creator.pk,
-            },
-            countdown=1,
-        )
-        measures_bulk_creator.task_id = task.id
-        measures_bulk_creator.save()
-        logger.info(
-            f"Measure bulk creation scheduled on task with ID {task.id} using "
-            f"MeasuresBulkCreator.pk={measures_bulk_creator.pk}.",
-        )
+        measures_bulk_creator.schedule()
 
         # TODO: Remove Exception.
         raise Exception("Stop here for now.")

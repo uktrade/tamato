@@ -123,6 +123,16 @@ class BulkProcessorMixin(DateTimeStampedMixin):
         # TODO: Dynamically calculate state or use a FSM?
         return ProcessingState.AWAITING_PROCESSING
 
+    def schedule(self) -> AsyncResult:
+        """
+        Prototype of function that must be implemented by this mixin's subclass.
+
+        Implementations of this function should schedule the processing task
+        (using `delay()` or `apply_async()`), returning the resulting Celery
+        AsyncResult object.
+        """
+        raise NotImplementedError
+
 
 class MeasuresBulkCreatorManager(models.Manager):
     """Model Manager for MeasuresBulkCreator models."""
@@ -257,6 +267,24 @@ class MeasuresBulkCreator(BulkProcessorMixin, models.Model):
         # TODO: Create the measures.
 
         return created_measures
+
+    def schedule(self) -> AsyncResult:
+        from measures.tasks import bulk_create_measures
+
+        async_result = bulk_create_measures.apply_async(
+            kwargs={
+                "measures_bulk_creator_pk": self.pk,
+            },
+            countdown=1,
+        )
+        self.task_id = async_result.id
+        self.save()
+
+        logger.info(
+            f"Measure bulk creation scheduled on task with ID {async_result.id}"
+            f"using MeasuresBulkCreator.pk={self.pk}.",
+        )
+        return async_result
 
     def _log_form_errors(self, form_class, form_or_formset) -> None:
         """Output errors associated with a Form or Formset instance, handling
