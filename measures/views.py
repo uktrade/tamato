@@ -1024,17 +1024,18 @@ class MeasureCreateWizard(
             form_kwargs=serializable_form_kwargs,
             current_transaction=get_current_transaction(),
         )
-        measures_bulk_creator.schedule()
 
         task = bulk_create_measures.apply_async(
+            kwargs={
+                "measures_bulk_creator_pk": measures_bulk_creator.pk,
+            },
             countdown=1,
-            measures_bulk_creator_pk=measures_bulk_creator.pk,
         )
         measures_bulk_creator.task_id = task.id
         measures_bulk_creator.save()
         logger.info(
             f"Measure bulk creation scheduled on task with ID {task.id} using "
-            f"MeasuresBulkCreator.pk={bulk_create_measures.pk}.",
+            f"MeasuresBulkCreator.pk={measures_bulk_creator.pk}.",
         )
 
         # TODO: Remove Exception.
