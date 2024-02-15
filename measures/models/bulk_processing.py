@@ -162,6 +162,8 @@ class MeasuresBulkCreator(BulkProcessorMixin, models.Model):
     SerializableFormMixin.
     """
 
+    objects = MeasuresBulkCreatorManager()
+
     form_data = models.JSONField()
     """Dictionary of all Form.data, used to reconstruct bound Form instances as
     if the form data had been sumbitted by the user within the measure wizard
