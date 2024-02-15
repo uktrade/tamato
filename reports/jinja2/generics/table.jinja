@@ -29,6 +29,14 @@
         };
 
         const grid = new agGrid.createGrid(document.querySelector('#myGrid'), gridOptions);
+        var checkboxes = document.querySelectorAll('.govuk-checkboxes__input');
+
+        checkboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                var fieldName = this.id.replace('toggleFor', '');
+                toggleColumnVisibility(fieldName);
+            });
+        });
     });
 </script>
 {% endif -%}
@@ -100,7 +108,7 @@
             <div id="customToolPanel" class="govuk-form-group govuk-checkboxes govuk-checkboxes--small" style="display: flex; flex-wrap: wrap;">
              {% for header in report.headers() %} 
              <div class="govuk-checkboxes__item">
-             <input class="govuk-checkboxes__input" onclick="toggleColumnVisibility('{{ header['field'] }}')" id='toggleFor{{ header['field'] }}' name='toggleFor{{ header['field'] }}' type="checkbox" value='toggleFor{{ header['field'] }}' checked>
+             <input class="govuk-checkboxes__input" id='toggleFor{{ header['field'] }}' name='toggleFor{{ header['field'] }}' type="checkbox" value='toggleFor{{ header['field'] }}' checked>
         <label class="govuk-label govuk-checkboxes__label" for="toggleFor{{ header['field'] }}">
         {{ header['field'] }}
         </label>
