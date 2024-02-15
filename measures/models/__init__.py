@@ -1,3 +1,4 @@
+from measures.models.bulk_processing import BulkProcessorResult
 from measures.models.bulk_processing import MeasuresBulkCreator
 from measures.models.tracked_models import AdditionalCodeTypeMeasureType
 from measures.models.tracked_models import DutyExpression
@@ -19,6 +20,7 @@ from measures.models.tracked_models import MonetaryUnit
 
 __all__ = [
     # - Models from bulk_processing.py.
+    "BulkProcessorResult",
     "MeasuresBulkCreator",
     # - Models from tracked_model.py.
     "AdditionalCodeTypeMeasureType",

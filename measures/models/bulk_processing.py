@@ -1,18 +1,159 @@
 import json
 import logging
+from typing import Dict
 from typing import Iterable
 
+from celery.result import AsyncResult
 from django.db import models
+from django.db.models.deletion import SET_NULL
 from django.db.transaction import atomic
 from django.forms.formsets import BaseFormSet
 
+from common.celery import app
+from common.models import Transaction
 from common.models.utils import set_current_transaction
 from measures.models.tracked_models import Measure
 
 logger = logging.getLogger(__name__)
 
 
-class MeasuresBulkCreator(models.Model):
+class DateTimeStampedMixin:
+    """Mixin to add `created_at` (using `auto_now_add=True`) and `updated_at`
+    (using `auto_now=True`) `DateTimeField` attributes to `Model` classes."""
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class ProcessingState(models.TextChoices):
+    """Available states of bulk creational tasks."""
+
+    AWAITING_PROCESSING = (
+        "AWAITING_PROCESSING",
+        "Awaiting processing",
+    )
+    """Queued up and awaiting processing."""
+    CURRENTLY_PROCESSING = (
+        "CURRENTLY_PROCESSING",
+        "Currently processing",
+    )
+    """Picked off the queue and now currently being processed - now attempting
+    to bulk create measures."""
+    SUCCESSFULLY_PROCESSED = (
+        "SUCCESSFULLY_PROCESSED",
+        "Successfully processed",
+    )
+    """Processing now completed with a successful outcome - successfully created
+    measures."""
+    FAILED_PROCESSING = (
+        "FAILED_PROCESSING",
+        "Failed processing",
+    )
+    """Processing now completed with a failure outcome - failed to screate
+    measures."""
+    CANCELLED = (
+        "CANCELLED",
+        "Cancelled",
+    )
+    """Processing has been cancelled."""
+
+    @classmethod
+    def queued_states(cls):
+        """Returns all states that represent a queued  instance, including those
+        that are being processed."""
+        return (
+            cls.AWAITING_PROCESSING,
+            cls.CURRENTLY_PROCESSING,
+        )
+
+    @classmethod
+    def done_processing_states(cls):
+        """Returns all states that represent a task that has completed its
+        processing with either a successful or failed outcome."""
+        return (
+            cls.SUCCESSFULLY_PROCESSED,
+            cls.FAILED_PROCESSING,
+        )
+
+
+class BulkProcessorResult(DateTimeStampedMixin, models.Model):
+    """Result details of bulk operation."""
+
+    succeeded = models.BooleanField(
+        default=False,
+    )
+    """True if a bulk operation succeeded, False otherwise."""
+
+    created_transaction = models.ForeignKey(
+        "common.Transaction",
+        on_delete=SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The transaction associated with a successful bulk creation."""
+
+
+class BulkProcessorMixin(DateTimeStampedMixin):
+    """Mixin defining common attributes and functions on bulk processing Model
+    classes."""
+
+    task_id = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        unique=True,
+    )
+    """ID of the Celery task used to create measures - blank=True + null=True
+    is required to allow multiple blank instances with unique=True."""
+
+    processing_result = models.ForeignKey(
+        "measures.BulkProcessorResult",
+        on_delete=SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The result of a bulk processing action (e.g. measures bulk creation) -
+    NULL until the creation has run to completion."""
+
+    @property
+    def processing_state(self) -> ProcessingState:
+        """Calculates and returns the current processing state."""
+
+        AsyncResult(self.task_id)
+        # TODO: Dynamically calculate state or use a FSM?
+        return ProcessingState.AWAITING_PROCESSING
+
+
+class MeasuresBulkCreatorManager(models.Manager):
+    """Model Manager for MeasuresBulkCreator models."""
+
+    def create(
+        self,
+        form_data: Dict,
+        form_kwargs: Dict,
+        current_transaction: Transaction,
+        **kwargs,
+    ) -> "MeasuresBulkCreator":
+        """Create and save an instance of MeasuresBulkCreator."""
+        return super().create(
+            form_data=form_data,
+            form_kwargs=form_kwargs,
+            current_transaction=current_transaction,
+            workbasket=current_transaction.workbasket,
+            **kwargs,
+        )
+
+
+def REVOKE_TASKS_AND_SET_NULL(collector, field, sub_objs, using):
+    """Revoke any celery bulk editing tasks, identified via a `task_id` field,
+    on the object and set the foreign key value to NULL."""
+    for obj in sub_objs:
+        if hasattr(obj, "task_id"):
+            app.control.revoke(obj.task_id, terminate=True)
+    SET_NULL(collector, field, sub_objs, using)
+
+
+class MeasuresBulkCreator(BulkProcessorMixin, models.Model):
     """
     Model class used to bulk create Measures instances from serialized form
     data.
@@ -32,7 +173,7 @@ class MeasuresBulkCreator(models.Model):
 
     current_transaction = models.ForeignKey(
         "common.Transaction",
-        on_delete=models.SET_NULL,
+        on_delete=REVOKE_TASKS_AND_SET_NULL,
         null=True,
         related_name="measures_bulk_creators",
         editable=False,
@@ -46,17 +187,13 @@ class MeasuresBulkCreator(models.Model):
     to capture its value.
     """
 
-    # TODO:
-    # - Is it preferable to save the Workbasket rather than the current
-    #   transaction in the workbasket?
-    #   The current transaction can change if more transactions are created
-    #   before create_meassures() has chance to run. That could be good (we
-    #   want objects at the time the user performed the create measures action)
-    #   or bad (the current transaction may get deleted).
-    #   However if workbasket immutability is guarenteed until create_measures()
-    #   has completed, then this is moot. It'd need a 'protected' attribute, or
-    #   something like that, on the WorkBasket class that freezes it, say, in
-    #   the save() and update() methods.
+    workbasket = models.ForeignKey(
+        "workbaskets.WorkBasket",
+        on_delete=REVOKE_TASKS_AND_SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The workbasket with which created measures are associated."""
 
     @property
     def expected_measures_count(self):

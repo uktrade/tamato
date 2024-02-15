@@ -1024,12 +1024,22 @@ class MeasureCreateWizard(
             form_kwargs=serializable_form_kwargs,
             current_transaction=get_current_transaction(),
         )
-        bulk_create_measures.delay(measures_bulk_creator.pk)
-        # TODO:
-        # - check whether there are actions on the master branch to apply at
-        #   this point, or on the Celery side of measure creation. (The current
-        #   user is assigned to the measures workbasket, but is that redundant?)
-        # - Redirect from summary page to done page.
+        measures_bulk_creator.schedule()
+
+        task = bulk_create_measures.apply_async(
+            countdown=1,
+            measures_bulk_creator_pk=measures_bulk_creator.pk,
+        )
+        measures_bulk_creator.task_id = task.id
+        measures_bulk_creator.save()
+        logger.info(
+            f"Measure bulk creation scheduled on task with ID {task.id} using "
+            f"MeasuresBulkCreator.pk={bulk_create_measures.pk}.",
+        )
+
+        # TODO: Remove Exception.
+        raise Exception("Stop here for now.")
+
         return redirect(
             "measure-ui-create-confirm",
             kwargs={
