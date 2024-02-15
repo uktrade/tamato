@@ -17,21 +17,23 @@
     <div class="govuk-grid-column-two-thirds">
       {% block panel %}{% endblock%}
       <h2 class="govuk-heading-m">Next steps</h2>
-      {% block next_steps %}
-        <p class="govuk-body">To complete your task you must publish your change. </p>
-      {% endblock%}
       <div>{% block main_button %}{% endblock%}</div>
+      <div class="govuk-button-group">
       {{ govukButton({
-        "text": "Go to your workbasket summary",
+        "text": "View workbasket summary",
         "href": url("workbaskets:current-workbasket"),
+        "classes": "govuk-button"
+      }) }}
+      {{ govukButton({
+        "text": "View " ~ object._meta.verbose_name ~ " " ~ object|string,
+        "href": object.get_url(),
         "classes": "govuk-button--secondary"
       }) }}
+      </div>
       <ul class="govuk-list govuk-list-spaced">
         {% block actions %}
-        <li><a class="govuk-link" href="{{ object.get_url() }}">View {{ object._meta.verbose_name }} {{ object|string }}</a></li>
         <li><a href="{{ object.get_url("list") }}">Find and edit {{ object._meta.verbose_name_plural }}</a></li>
         {% endblock %}
-        {% include "includes/common/main-menu-link.jinja" %}
       </ul>
     </div>
   </div>

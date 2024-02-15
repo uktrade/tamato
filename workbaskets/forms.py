@@ -28,7 +28,7 @@ class WorkbasketCreateForm(forms.ModelForm):
     )
 
     reason = forms.CharField(
-        label="Description",
+        label="Workbasket description",
         help_text="Summarise the changes that will be in this workbasket.",
         widget=forms.Textarea,
         validators=[

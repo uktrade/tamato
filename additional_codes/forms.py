@@ -134,6 +134,7 @@ class AdditionalCodeCreateForm(AdditionalCodeCreateBaseForm):
             "type",
             Field.text("code", field_width=Fluid.ONE_QUARTER, maxlength="3"),
             "start_date",
+            "end_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
             Submit(
@@ -177,6 +178,7 @@ class AdditionalCodeEditCreateForm(AdditionalCodeCreateBaseForm):
             "type",
             Field.text("code", field_width=Fluid.ONE_QUARTER, maxlength="3"),
             "start_date",
+            "end_date",
             Submit(
                 "submit",
                 "Save",
