@@ -5,8 +5,6 @@
 
 {% block head %}
 <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline' 'unsafe-eval' https://tagmanager.google.com/; font-src 'self' data:">
-  <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-grid.css">
-  <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-alpine.css">
   {% if settings.GOOGLE_ANALYTICS_ID %}
     <!-- Google tag (gtag.js) -->
       <script nonce="{{ request.csp_nonce }}" async

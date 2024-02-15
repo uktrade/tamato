@@ -2,21 +2,34 @@
 {% if report.headers_list -%} 
 <script nonce="{{ request.csp_nonce }}" src="{{ static('common/js/ag-grid-community.min.js') }}" async></script>
 <script nonce="{{ request.csp_nonce }}">
-
     document.addEventListener('DOMContentLoaded', function () {
-    const gridOptions = {
-        columnDefs: {{ report.headers() | tojson }},
-        rowData: {{ report.rows() | tojson }},
-        pagination: true,
-        paginationPageSize: 50,
-    };
+        const gridOptions = {
+            columnDefs: {{ report.headers() | tojson }},
+            rowData: {{ report.rows() | tojson }},
+            pagination: true,
+            paginationPageSize: 50,
+            defaultColDef: {
+            },
+            onGridReady: function(params) {
+                const gridApi = params.api;
 
-    agGrid.createGrid(document.querySelector('#myGrid'), gridOptions, {
-        onFirstDataRendered: function (params) {
-            // todo - add any features requested by UI designer
-        }
+                window.toggleColumnVisibility = function (columnName) {
+                    if (columnName) {
+                        const column = gridApi.getColumn(columnName);
+                        
+                        if (column) {
+                            gridApi.setColumnVisible(column.colId, !column.visible);
+                            toggleButton = document.getElementById('toggleFor'+ columnName)
+                        } else {
+                            console.error(`Column with name '${columnName}' not found.`);
+                        }
+                    }
+                };
+            }
+        };
+
+        const grid = new agGrid.createGrid(document.querySelector('#myGrid'), gridOptions);
     });
-});
 </script>
 {% endif -%}
 {% if report.tabular_reports -%}
@@ -84,6 +97,16 @@
     
 {% if report.headers_list -%}
             <div id="myGrid" class="ag-theme-alpine" style="height: 500px"></div>
+            <div id="customToolPanel" class="govuk-form-group govuk-checkboxes govuk-checkboxes--small" style="display: flex; flex-wrap: wrap;">
+             {% for header in report.headers() %} 
+             <div class="govuk-checkboxes__item">
+             <input class="govuk-checkboxes__input" onclick="toggleColumnVisibility('{{ header['field'] }}')" id='toggleFor{{ header['field'] }}' name='toggleFor{{ header['field'] }}' type="checkbox" value='toggleFor{{ header['field'] }}' checked>
+        <label class="govuk-label govuk-checkboxes__label" for="toggleFor{{ header['field'] }}">
+        {{ header['field'] }}
+        </label>
+        </div>
+                {% endfor -%}
+            </div>
         {% else -%}
     {{ govukTable({
         "head": report.headers(),

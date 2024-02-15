@@ -2,6 +2,7 @@ const images = require.context('../../../../node_modules/govuk-frontend/govuk/as
 const imagePath = (name) => images(name, true)
 
 require.context('govuk-frontend/govuk/assets');
+require('./ag-grid-community.min.js');
 import showHideCheckboxes from './showHideCheckboxes';
 import { initAutocomplete } from './autocomplete';
 import { initAutocompleteProgressiveEnhancement } from './autocompleteProgressiveEnhancement';
@@ -10,7 +11,7 @@ import { initCopyToNextDuties } from './copyDuties';
 import { initAll } from 'govuk-frontend';
 import initCheckboxes from './checkboxes';
 import initConditionalMeasureConditions from './conditionalMeasureConditions';
-import initFilterDisabledToggleForComCode from './conditionalDisablingFilters'
+import initFilterDisabledToggleForComCode from './conditionalDisablingFilters';
 import initOpenCloseAccordionSection from './openCloseAccordion';
 import initTapDebounce from './buttonDebounce';
 import { setupQuotaOriginFormset } from './components/QuotaOriginFormset/index';
