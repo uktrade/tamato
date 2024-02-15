@@ -18,9 +18,9 @@ class WorkbasketCreateForm(forms.ModelForm):
     title = forms.CharField(
         label="Tops/Jira number",
         help_text=(
-            "Your Tops/Jira number is needed to associate your workbasket with your Jira ticket. "
+            "Your TOPS/Jira number is needed to associate your workbasket with your Jira ticket. "
             "You can find this number at the end of the web address for your Jira ticket. "
-            "Your workbasket will be given a unique number that may be different to your Tops/Jira number. "
+            "Your workbasket will be given a unique number that will be different to your TOPS/Jira number. "
         ),
         widget=forms.TextInput,
         validators=[validators.tops_jira_number_validator],
@@ -29,7 +29,7 @@ class WorkbasketCreateForm(forms.ModelForm):
 
     reason = forms.CharField(
         label="Description",
-        help_text="Add your notes here.",
+        help_text="Summarise the changes that will be in this workbasket.",
         widget=forms.Textarea,
         validators=[
             AlphanumericValidator,

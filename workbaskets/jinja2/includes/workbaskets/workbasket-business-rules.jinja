@@ -71,7 +71,7 @@
 
 {% if rule_check_in_progress %}
   {% set live_rule_check_status %}
-    Rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket.
+    Rule check in progress. Checking {{ workbasket.tracked_models.count() }} items in basket.
     {{ rule_check_progress }}.
     Come back later or refresh to see results.
   {% endset %}
@@ -118,7 +118,7 @@
   {% set rule_check_block %}{% endset %}
 
 {% else %}
-  {% set live_rule_check_status = "No objects in workbasket" %}
+  {% set live_rule_check_status = "No items in workbasket" %}
   {% set rule_check_button %}{% endset %}
   {% set rule_check_block %}{% endset %}
 {% endif %}
@@ -126,7 +126,7 @@
   <dl class="govuk-summary-list">
   <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">
-        Live status
+        Live rule check status
       </dt>
       <dd class="govuk-summary-list__value">
         {{ live_rule_check_status }}
