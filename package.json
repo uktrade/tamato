@@ -11,9 +11,9 @@
     "npm": "^10.3.0"
   },
   "dependencies": {
+    "@babel/core": "^7.23.2",
     "@babel/preset-env": "^7.23.7",
     "@babel/preset-react": "^7.23.3",
-    "@babel/core": "^7.23.2",
     "@types/styled-components": "^5.1.29",
     "accessible-autocomplete": "^2.0.3",
     "ansi-regex": "^6.0.1",
@@ -33,7 +33,7 @@
     "style-loader": "^3.0.0",
     "styled-components": "^6.1.0",
     "webpack": "^5.76.0",
-    "webpack-bundle-tracker": "^1.1.0",
+    "webpack-bundle-tracker": "^3.0.1",
     "webpack-cli": "^4.7.2"
   },
   "scripts": {
