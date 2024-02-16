@@ -204,7 +204,7 @@ class AdditionalCodeCreateDescriptionForm(CreateDescriptionForm):
                 type="hidden",
             ),
         )
-        self.fields["description"].label = "Additional code description"
+        self.fields["description"].label = "Description"
 
     class Meta:
         model = models.AdditionalCodeDescription

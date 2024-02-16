@@ -25,7 +25,7 @@
         "classes": "govuk-button"
       }) }}
       {{ govukButton({
-        "text": "View " ~ object._meta.verbose_name ~ " " ~ object|string,
+        "text": "View " ~ object._meta.verbose_name ~ ": " ~ object|string,
         "href": object.get_url(),
         "classes": "govuk-button--secondary"
       }) }}

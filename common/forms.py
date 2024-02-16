@@ -397,6 +397,7 @@ class DescriptionForm(forms.ModelForm):
         self.helper.layout = Layout(
             Field("validity_start", context={"legend_size": "govuk-label--s"}),
             Field.textarea("description", label_size=Size.SMALL, rows=5),
+            DescriptionHelpBox(),
             Submit(
                 "submit",
                 "Save",
@@ -422,7 +423,7 @@ class ValidityPeriodForm(forms.ModelForm):
 
         self.fields["end_date"].help_text = (
             f"Leave empty if {get_model_indefinite_article(self.instance)} "
-            f"{self.instance._meta.verbose_name} is needed for an unlimited time"
+            f"{self.instance._meta.verbose_name} is needed for an unlimited time."
         )
 
         if self.instance.valid_between:
@@ -487,11 +488,15 @@ class ValidityPeriodForm(forms.ModelForm):
 class CreateDescriptionForm(DescriptionForm):
     description = forms.CharField(
         widget=forms.Textarea,
+        help_text=(
+            "You can use HTML formatting if required. See the help text "
+            "below for more information."
+        ),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["validity_start"].label = "Description start date"
+        self.fields["validity_start"].label = "Start date"
 
 
 class DeleteForm(forms.ModelForm):

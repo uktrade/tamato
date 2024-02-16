@@ -287,7 +287,7 @@ class StartYearMixin(FilterSet):
         choices=last_10_years,
         widget=forms.CheckboxSelectMultiple,
         method="filter_start_year",
-        label="Start Year",
+        label="Start year",
         help_text="Select all that apply",
         required=False,
     )
