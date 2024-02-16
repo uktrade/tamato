@@ -26,7 +26,6 @@ from django.views.generic import DeleteView
 from django.views.generic import UpdateView
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormMixin
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 
@@ -1024,7 +1023,7 @@ class WorkBasketViolationDetail(DetailView):
         return redirect("workbaskets:workbasket-ui-violations")
 
 
-class WorkBasketDelete(PermissionRequiredMixin, FormMixin, DeleteView):
+class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
     """
     UI to confirm (or cancel) workbasket deletion.
 
