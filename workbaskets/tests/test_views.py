@@ -1780,9 +1780,9 @@ def test_delete_nonempty_workbasket(
     page = BeautifulSoup(response.content, "html.parser")
     error_list = page.select("ul.govuk-list.govuk-error-summary__list")[0]
     assert error_list.find(
-        text=re.compile(
-            f"Workbasket {workbasket_pk} contains {workbasket_object_count} "
-            f"item\(s\), but must be empty",
+        string=(
+            f"Workbasket {workbasket_pk} contains {workbasket_object_count} item(s), "
+            f"but must be empty in order to permit deletion.",
         ),
     )
     assert models.WorkBasket.objects.filter(pk=workbasket_pk)
