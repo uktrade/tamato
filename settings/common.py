@@ -269,9 +269,6 @@ if "VCAP_APPLICATION" in os.environ:
     paas_hosts = json.loads(os.environ["VCAP_APPLICATION"])["uris"]
     ALLOWED_HOSTS.extend(paas_hosts)
 
-# Sets the X-XSS-Protection: 1; mode=block header
-SECURE_BROWSER_XSS_FILTER = True
-
 # Sets the X-Content-Type-Options: nosniff header
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
