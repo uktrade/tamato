@@ -35,7 +35,7 @@ django-webpack-loader==3.0.1
 djangorestframework==3.14.0
 drf-flex-fields==1.0.2
 elastic-apm==6.7.2
-factory-boy==3.2.0
+factory-boy==3.3.0
 flower==1.2.0
 freezegun==1.1.0
 gevent==23.9.1
