@@ -23,7 +23,7 @@ django-fakeredis>=0.1.*
 django-filter==23.5
 django-formtools==2.3
 django-fsm==2.8.1
-django-health-check==3.16.2
+django-health-check==3.18.1
 django-polymorphic==3.0.0
 django-redis==4.12.1
 django-rest-polymorphic==0.1.9
