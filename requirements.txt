@@ -25,7 +25,7 @@ django-formtools==2.3
 django-fsm==2.8.1
 django-health-check==3.18.1
 django-polymorphic==3.1.0
-django-redis==4.12.1
+django-redis==5.4.0
 django-rest-polymorphic==0.1.9
 django-sequences==2.6
 django-staff-sso-client==4.2.1
