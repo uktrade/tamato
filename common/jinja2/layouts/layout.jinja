@@ -28,6 +28,26 @@
   {% endif %}
 {% endset %}
 
+{% set logout_login_link %}
+  {% if request.user.is_authenticated %}
+    <form action="{{ url('logout') }}" method="post">
+      {{ csrf_input }}
+      <button
+        class="fake-link govuk-header__link sign-out"
+        name="submit"
+        value="logout"
+      >
+        Sign out
+      </button>
+    </form>
+  {% else %}
+    <a
+      class="govuk-header__link"
+      href="{{ settings.LOGIN_URL }}"
+    >Sign in</a>
+  {% endif %}
+{% endset %}
+
 {{ govukHeader({
   "homepageUrl": "https://gov.uk/",
   "serviceName": service_name,
@@ -35,12 +55,12 @@
   "navigation": [ 
     { "html": workbasket_html } if workbasket_html else "",
     {
-      "href": url("logout") if request.user.is_authenticated else settings.LOGIN_URL,
-      "text": "Sign out" if request.user.is_authenticated else "Sign In"
+      "html": logout_login_link,
     } if not settings.SSO_ENABLED else "",
   ],
 }) }}
 {% endblock %}
+
 {% block beforeContent %}
   {{ govukPhaseBanner({
     "tag": {
