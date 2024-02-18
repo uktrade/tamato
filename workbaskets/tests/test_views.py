@@ -1381,8 +1381,8 @@ def test_workbasket_changes_view_pagination(
         ("?sort_by=component&ordered=desc", "-polymorphic_ctype"),
         ("?sort_by=action&ordered=asc", "update_type"),
         ("?sort_by=action&ordered=desc", "-update_type"),
-        ("?sort_by=activity_date&ordered=asc", "transaction__updated_up"),
-        ("?sort_by=activity_date&ordered=desc", "-transaction__updated_up"),
+        ("?sort_by=activity_date&ordered=asc", "transaction__updated_at"),
+        ("?sort_by=activity_date&ordered=desc", "-transaction__updated_at"),
     ],
 )
 def test_workbasket_changes_view_sort_by_queryset(ordering_param, expected_ordering):
