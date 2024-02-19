@@ -55,43 +55,37 @@ describe(AssignUserForm, () => {
     expect(screen.getByTestId("assign-user-form")).toHaveAttribute('action', assignUsersUrl);
   });
 
-it('does not submit when form is empty', () => {
-    const mockSubmit = jest.fn();
-    render( < AssignUserForm
-        assignmentType = {
-            "WORKBASKET_WORKER"
-        }
-        users = {
-            mockUsers
-        }
-        />
+  it('does not submit when form is empty', () => {
+    render(
+      <AssignUserForm
+        assignmentType={"WORKBASKET_WORKER"}
+        users={mockUsers}
+      />
     );
+
+    const mockSubmit = jest.fn(e => e.preventDefault());
     screen.getByTestId("assign-user-form").onsubmit = mockSubmit
+
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
     expect(mockSubmit).not.toHaveBeenCalled();
-})
+  })
 
-
-
-it('submits with selected user', () => {
-    const mockSubmit = jest.fn();
-    render( < AssignUserForm
-        assignmentType = {
-            "WORKBASKET_WORKER"
-        }
-        users = {
-            mockUsers
-        }
-        />
+  it('submits with selected user', () => {
+    render(
+      <AssignUserForm
+        assignmentType={"WORKBASKET_WORKER"}
+        users={mockUsers}
+      />
     );
+
+    const mockSubmit = jest.fn(e => e.preventDefault());
     screen.getByTestId("assign-user-form").onsubmit = mockSubmit
     const input = screen.getByTestId('assign-user-select');
-    fireEvent.change(input, {
-        target: {
-            value: mockUsers[0].pk
-        }
-    });
+
+    fireEvent.change(input, {target: {value: mockUsers[0].pk}});
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
     expect(mockSubmit).toHaveBeenCalled();
-})
+  })
 })

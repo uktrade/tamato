@@ -49,37 +49,30 @@ describe(UnassignUserForm, () => {
     expect(screen.getByTestId("unassign-user-form")).toHaveAttribute('action', unassignUsersUrl);
   });
 
-it('does not submit when form is empty', () => {
-    const mockSubmit = jest.fn();
-    render( < UnassignUserForm
-        users = {
-            mockUsers
-        }
-        />
+  it('does not submit when form is empty', () => {
+    render(
+      <UnassignUserForm users={mockUsers}/>
     );
+
+    const mockSubmit = jest.fn(e => e.preventDefault());
     screen.getByTestId("unassign-user-form").onsubmit = mockSubmit
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
     expect(mockSubmit).not.toHaveBeenCalled();
-})
+  })
 
-
-
-it('submits with selected user', () => {
-    const mockSubmit = jest.fn();
-    render( < UnassignUserForm
-        users = {
-            mockUsers
-        }
-        />
+  it('submits with selected user', () => {
+    render(
+      <UnassignUserForm users={mockUsers}/>
     );
+
+    const mockSubmit = jest.fn(e => e.preventDefault());
     screen.getByTestId("unassign-user-form").onsubmit = mockSubmit
     const input = screen.getByTestId('unassign-user-select');
-    fireEvent.change(input, {
-        target: {
-            value: mockUsers[0].pk
-        }
-    });
+
+    fireEvent.change(input, {target: {value: mockUsers[0].pk}});
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
     expect(mockSubmit).toHaveBeenCalled();
-})
+  })
 })
