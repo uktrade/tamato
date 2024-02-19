@@ -2,7 +2,6 @@ const images = require.context('../../../../node_modules/govuk-frontend/govuk/as
 const imagePath = (name) => images(name, true)
 
 require.context('govuk-frontend/govuk/assets');
-require('./ag-grid-community.min.js');
 import showHideCheckboxes from './showHideCheckboxes';
 import { initAutocomplete } from './autocomplete';
 import { initAutocompleteProgressiveEnhancement } from './autocompleteProgressiveEnhancement';
