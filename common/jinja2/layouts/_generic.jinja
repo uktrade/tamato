@@ -4,7 +4,6 @@
 {% set cspNonce=request.csp_nonce %}
 
 {% block head %}
-<meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline' 'unsafe-eval' https://tagmanager.google.com/; font-src 'self' data:">
   {% if settings.GOOGLE_ANALYTICS_ID %}
     <!-- Google tag (gtag.js) -->
       <script nonce="{{ request.csp_nonce }}" async
