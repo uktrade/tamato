@@ -29,7 +29,7 @@ django-redis==5.4.0
 django-rest-polymorphic==0.1.9
 django-sequences==3.0
 django-staff-sso-client==4.2.1
-django-storages==1.13.2
+django-storages==1.14.2
 django-test-migrations==1.3.0
 django-webpack-loader==3.0.1
 djangorestframework==3.14.0
