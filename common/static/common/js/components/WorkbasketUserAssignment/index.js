@@ -6,6 +6,14 @@ import { AssignUserForm } from './AssignUserForm'
 import { UnassignUserForm } from './UnassignUserForm'
 
 
+/**
+ * Renders a button that opens/closes a form to assign/unassign users.
+ * @param action The form's action (Assign or Unassign)
+ * @param assignment The form's assignment type (workers or reviewers)
+ * @param users The form's selectable users
+ * @param buttonId The button's element ID
+ * @param formId The form's element ID
+ */
 function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId }) {
   const [showForm, setShowForm] = useState(null);
   const assignmentType = assignment == "workers" ? "WORKBASKET_WORKER" : "WORKBASKET_REVIEWER";
@@ -74,6 +82,10 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
   )
 }
 
+/**
+ * Creates React roots in which to render WorkBasketUserAssignment components
+ * for each assign/unassign link on the workbasket summary view.
+ */
 function init() {
   const assignWorkersLink = document.getElementById("assign-workers");
   if (assignWorkersLink) {
