@@ -275,12 +275,9 @@ class WorkBasketUnassignUsersForm(forms.Form):
         self.init_layout()
 
     def init_fields(self):
-        self.fields["assignments"].queryset = (
-            UserAssignment.objects.filter(
-                task__workbasket=self.workbasket,
-            )
-            .assigned()
-            .order_by("user__first_name", "user__last_name")
+        self.fields["assignments"].queryset = self.workbasket.user_assignments.order_by(
+            "user__first_name",
+            "user__last_name",
         )
 
         self.fields[

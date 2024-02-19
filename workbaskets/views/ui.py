@@ -57,7 +57,6 @@ from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from regulations.models import Regulation
 from tasks.models import Task
-from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
@@ -414,28 +413,20 @@ class CurrentWorkBasket(TemplateView):
             or self.request.user.has_perm("workbaskets.delete_workbasket")
         )
 
-        workers = (
-            UserAssignment.objects.filter(
-                task__workbasket=self.workbasket,
-            )
-            .assigned()
-            .workbasket_workers()
-            .order_by("user__first_name", "user__last_name")
-        )
         assigned_workers = [
-            {"pk": user.pk, "name": user.user.get_full_name()} for user in workers
+            {"pk": user.pk, "name": user.user.get_full_name()}
+            for user in self.workbasket.worker_assignments.order_by(
+                "user__first_name",
+                "user__last_name",
+            )
         ]
 
-        reviewers = (
-            UserAssignment.objects.filter(
-                task__workbasket=self.workbasket,
-            )
-            .assigned()
-            .workbasket_reviewers()
-            .order_by("user__first_name", "user__last_name")
-        )
         assigned_reviewers = [
-            {"pk": user.pk, "name": user.user.get_full_name()} for user in reviewers
+            {"pk": user.pk, "name": user.user.get_full_name()}
+            for user in self.workbasket.reviewer_assignments.order_by(
+                "user__first_name",
+                "user__last_name",
+            )
         ]
 
         users = User.objects.filter(

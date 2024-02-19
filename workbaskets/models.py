@@ -406,20 +406,7 @@ class WorkBasket(TimestampedMixin):
     def is_fully_assigned(self) -> bool:
         """Returns True if a workbasket has been assigned to both a worker and a
         reviewer, otherwise False."""
-        from tasks.models import UserAssignment
-
-        worker_assignments = (
-            UserAssignment.objects.workbasket_workers()
-            .assigned()
-            .filter(task__workbasket=self)
-        )
-        reviewer_assignments = (
-            UserAssignment.objects.workbasket_reviewers()
-            .assigned()
-            .filter(task__workbasket=self)
-        )
-
-        return worker_assignments and reviewer_assignments
+        return self.worker_assignments.exists() and self.reviewer_assignments.exists()
 
     @transition(
         field=status,
@@ -655,6 +642,31 @@ class WorkBasket(TimestampedMixin):
             .values("transaction__pk"),
         )
         return returned
+
+    @property
+    def worker_assignments(self):
+        from tasks.models import UserAssignment
+
+        return (
+            UserAssignment.objects.filter(task__workbasket=self)
+            .workbasket_workers()
+            .assigned()
+        )
+
+    @property
+    def reviewer_assignments(self):
+        from tasks.models import UserAssignment
+
+        return (
+            UserAssignment.objects.filter(task__workbasket=self)
+            .workbasket_reviewers()
+            .assigned()
+        )
+
+    @property
+    def user_assignments(self):
+        assignments = self.worker_assignments | self.reviewer_assignments
+        return assignments
 
     class Meta:
         verbose_name = "workbasket"

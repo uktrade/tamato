@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Iterable
 from unittest.mock import patch
 
@@ -476,3 +477,29 @@ def test_unassigned_workbasket_cannot_be_queued():
 
     UserAssignment.unassign_user(user=worker, task=task)
     assert not workbasket.is_fully_assigned()
+
+
+def test_workbasket_user_assignments_queryset():
+    workbasket = factories.WorkBasketFactory.create()
+    worker_assignment = factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task__workbasket=workbasket,
+    )
+    reviewer_assignment = factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task__workbasket=workbasket,
+    )
+    # Inactive assignment
+    factories.UserAssignmentFactory.create(
+        unassigned_at=datetime.now(),
+        task__workbasket=workbasket,
+    )
+    # Unrelated assignment
+    factories.UserAssignmentFactory.create()
+
+    workbasket.refresh_from_db()
+    queryset = workbasket.user_assignments
+
+    assert worker_assignment in queryset
+    assert reviewer_assignment in queryset
+    assert len(queryset) == 2
