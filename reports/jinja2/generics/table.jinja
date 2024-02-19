@@ -1,5 +1,5 @@
 {% from "components/table/macro.njk" import govukTable -%}
-{% if report.headers_list -%} 
+{% if report.headers_list -%}
 <script nonce="{{ request.csp_nonce }}" src="{{ static('common/js/ag-grid-community.min.js') }}" async></script>
 <script nonce="{{ request.csp_nonce }}">
     document.addEventListener('DOMContentLoaded', function () {
