@@ -1030,6 +1030,12 @@ class MeasureCreateWizard(
         #   this point, or on the Celery side of measure creation. (The current
         #   user is assigned to the measures workbasket, but is that redundant?)
         # - Redirect from summary page to done page.
+        return redirect(
+            "measure-ui-create-confirm",
+            kwargs={
+                "expected_measures_count": measures_bulk_creator.expected_measures_count,
+            },
+        )
 
     def all_serializable_form_data(self) -> Dict:
         """
@@ -1225,6 +1231,14 @@ class MeasureCreateWizard(
             self.steps.current,
             "measures/create-wizard-step.jinja",
         )
+
+
+class MeasuresWizardCreateConfirm(TemplateView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["expected_measures_count"] = self.kwargs.get("expected_measures_count")
+        return context
 
 
 class MeasureUpdateBase(
