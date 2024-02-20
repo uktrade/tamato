@@ -212,10 +212,15 @@ class WorkBasketAssignUsersForm(forms.Form):
         self.init_layout()
 
     def init_fields(self):
-        self.fields["users"].queryset = User.objects.filter(
-            Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
-            | Q(is_superuser=True),
-        ).order_by("first_name", "last_name")
+        self.fields["users"].queryset = (
+            User.objects.filter(
+                Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
+                | Q(is_superuser=True),
+            )
+            .filter(is_active=True)
+            .distinct()
+            .order_by("first_name", "last_name")
+        )
 
         self.fields["users"].label_from_instance = lambda obj: obj.get_full_name()
 
