@@ -1,14 +1,21 @@
 import csv
+import pandas as pd
 
+from datetime import datetime
 from django.contrib.auth.decorators import permission_required
+from django.core.paginator import Paginator
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from io import StringIO
 from openpyxl import Workbook
 from openpyxl.chart import BarChart, Reference
 
 import reports.reports.index as index_model
 
 import reports.utils as utils
+
+from reports.forms import UploadCSVForm
+from reports.models import EUDataModel
 
 
 @permission_required("reports.view_report_index")
@@ -22,7 +29,6 @@ def index(request):
 
 @permission_required("reports.view_report")
 def report(request):
-    # find the report based on the request
     report_class = utils.get_report_by_slug(request.resolver_match.url_name)
 
     context = {
@@ -87,12 +93,27 @@ def export_report_to_csv(request, report_slug, current_tab=None):
 
     writer = csv.writer(response)
 
-    # Check if the report is a table or a chart
-    if hasattr(report_instance, "headers"):
-        # For table reports
-        writer.writerow([header["text"] for header in headers])
+    # For ag grid reports
+    if hasattr(report_instance, "headers_list"):
+        header_row = [
+            header.replace("_", " ").capitalize()
+            for header in report_instance.headers_list
+        ]
+        writer.writerow(header_row)
+        for row in report_instance.rows():
+            data_row = [
+                str(row[header.replace("_", " ").capitalize()])
+                for header in report_instance.headers_list
+            ]
+            writer.writerow(data_row)
+
+    # For govuk table reports
+    elif hasattr(report_instance, "headers"):
+        writer.writerow([header.get("text", None) for header in headers])
         for row in rows:
             writer.writerow([column["text"] for column in row])
+
+    # For charts
     else:
         writer.writerow(["Date", "Data"])
 
@@ -145,3 +166,107 @@ def export_report_to_excel(request, report_slug):
     workbook.save(response)
 
     return response
+
+
+def upload_report_csv(request):
+    if request.method == "POST":
+        form = UploadCSVForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_file = form.cleaned_data["file"]
+
+            if is_eu_data_file(uploaded_file):
+                content = read_excel_as_csv(uploaded_file)
+
+                # Clear existing data in EUDataTable
+                EUDataModel.objects.all().delete()
+
+                save_eu_data(content)
+                return redirect("reports:table_report_of_eu_data")
+
+    else:
+        form = UploadCSVForm()
+
+    return render(request, "reports/upload_report_csv.jinja", {"form": form})
+
+
+def is_eu_data_file(uploaded_file):
+    try:
+        content = read_excel_as_csv(uploaded_file)
+        csv_reader = csv.DictReader(StringIO(content))
+        file_columns = set(csv_reader.fieldnames) if csv_reader.fieldnames else set()
+
+        print(f"File Columns: {file_columns}")
+        return True
+    except Exception as e:
+        print(f"Error reading CSV content: {e}")
+        return False
+
+
+def read_excel_as_csv(uploaded_file):
+    try:
+        df = pd.read_excel(uploaded_file)
+        csv_data = df.to_csv(index=False, encoding="utf-8")
+        return csv_data
+    except Exception as e:
+        print(f"Error converting Excel to CSV: {e}")
+        return ""
+
+
+def save_eu_data(content):
+    try:
+        csv_reader = csv.DictReader(StringIO(content))
+        for row in csv_reader:
+            print(f"Row: {row}")
+            try:
+                start_date_str = row.get("Start date", None)
+                end_date_str = row.get("End date", None)
+
+                # Convert date strings to the correct format "YYYY-MM-DD"
+                start_date = (
+                    datetime.strptime(start_date_str, "%Y-%m-%d %H:%M:%S").strftime(
+                        "%Y-%m-%d"
+                    )
+                    if start_date_str
+                    else None
+                )
+                end_date = (
+                    datetime.strptime(end_date_str, "%Y-%m-%d %H:%M:%S").strftime(
+                        "%Y-%m-%d"
+                    )
+                    if end_date_str
+                    else None
+                )
+
+                instance = EUDataModel(
+                    goods_code=row.get("Goods code", None),
+                    add_code=row.get("Add code", None),
+                    order_no=row.get("Order No.", None),
+                    start_date=start_date,
+                    end_date=end_date,
+                    red_ind=row.get("RED_IND", None),
+                    origin=row.get("Origin", None),
+                    measure_type=row.get(" Measure type", None),
+                    legal_base=row.get("Legal base", None),
+                    duty=row.get("Duty", None),
+                    origin_code=row.get("Origin code", None),
+                    meas_type_code=row.get(" Meas. type code", None),
+                    goods_nomenclature_exists=row.get(
+                        "Goods Nomenclature Exists in TAP", None
+                    ),
+                    geographical_area_exists=row.get(
+                        "Geographical Area Exists in TAP", None
+                    ),
+                    measure_type_exists=row.get("Measure Type Exists in TAP", None),
+                    measure_exists=row.get("Measure Exists in TAP", None),
+                )
+
+                print(f"Instance to be saved: {instance}")
+                instance.save()
+
+                print(f"Instance saved: {instance}")
+            except Exception as e:
+                print(f"Error saving row {row}: {e}")
+
+    except Exception as e:
+        print(f"Error reading CSV content: {e}")
+        pass

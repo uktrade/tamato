@@ -18,21 +18,27 @@ class Report(ReportBaseTable):
     enabled = True
     description = "Quotas that won't be able to be used by a trader"
 
+    headers_list = [
+        "order_number",
+        "start_date",
+        "end_date",
+        "reason",
+    ]
+
     def headers(self) -> [dict]:
         return [
-            {"text": "Order number"},
-            {"text": "Start date"},
-            {"text": "End date"},
-            {"text": "Reason"},
+            {
+                "field": header.replace("_", " ").capitalize(),
+                "filter": "agTextColumnFilter",
+            }
+            for header in self.headers_list
         ]
 
     def row(self, row: QuotaDefinition) -> [dict]:
-        return [
-            {"text": self.link_renderer_for_quotas(row, row.order_number)},
-            {"text": row.valid_between.lower},
-            {"text": row.valid_between.upper},
-            {"text": row.reason},
-        ]
+        return {
+            field.replace("_", " ").capitalize(): str(getattr(row, field, None))
+            for field in self.headers_list
+        }
 
     def rows(self) -> [[dict]]:
         table_rows = []

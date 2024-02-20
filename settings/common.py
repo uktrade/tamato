@@ -218,7 +218,7 @@ CSP_SCRIPT_SRC = (
     "https://www.googletagmanager.com/",
     "ajax.googleapis.com/",
 )
-CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
+CSP_FONT_SRC = ("'self'", "'unsafe-inline'", "data:")
 CSP_INCLUDE_NONCE_IN = ("script-src",)
 CSP_REPORT_ONLY = False
 

@@ -18,3 +18,6 @@ class ReportBase(ABC):
         result = slugify(cls.name).replace("-", "_")
         result = result.replace("__", "_")
         return result
+
+    def get_paginated_data(self, page, items_per_page):
+        pass

@@ -1,5 +1,57 @@
 {% from "components/table/macro.njk" import govukTable -%}
+{% if report.headers_list -%}
+<script nonce="{{ request.csp_nonce }}" src="{{ static('common/js/ag-grid-community.min.js') }}" async></script>
+<script nonce="{{ request.csp_nonce }}">
+    document.addEventListener('DOMContentLoaded', function () {
+        const gridOptions = {
+            columnDefs: {{ report.headers() | tojson }},
+            rowData: {{ report.rows() | tojson }},
+            pagination: true,
+            paginationPageSize: 50,
+            defaultColDef: {
+            },
+            onGridReady: function(params) {
+                const gridApi = params.api;
 
+                window.toggleColumnVisibility = function (columnName) {
+                    if (columnName) {
+                        const column = gridApi.getColumn(columnName);
+                        
+                        if (column) {
+                            gridApi.setColumnVisible(column.colId, !column.visible);
+                            toggleButton = document.getElementById('toggleFor'+ columnName)
+                        } else {
+                            console.error(`Column with name '${columnName}' not found.`);
+                        }
+                    }
+                };
+                window.exportDataAsCSV = function () {
+                    gridApi.exportDataAsCsv();
+                }
+            }
+        };
+
+        const grid = new agGrid.createGrid(document.querySelector('#myGrid'), gridOptions);
+        var checkboxes = document.querySelectorAll('.govuk-checkboxes__input');
+
+        checkboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                var fieldName = this.id.replace('toggleFor', '');
+                toggleColumnVisibility(fieldName);
+            });
+        });
+
+        var exportToCSV = document.querySelectorAll('#exportToCSVLink{{report.slug()}}').forEach(function (csvButton) 
+            {
+                csvButton.addEventListener('click', function () {
+                    csvButton.href = '#'
+                    exportDataAsCSV();
+                })
+            }
+        )
+    });
+</script>
+{% endif -%}
 {% if report.tabular_reports -%}
 
     <div class="govuk-tabs" data-module="govuk-tabs">
@@ -62,8 +114,23 @@
     </div>
 
 {% else -%}
+    
+{% if report.headers_list -%}
+            <div id="myGrid" class="ag-theme-alpine" style="height: 500px"></div>
+            <div id="customToolPanel" class="govuk-form-group govuk-checkboxes govuk-checkboxes--small" style="display: flex; flex-wrap: wrap;">
+             {% for header in report.headers() %} 
+             <div class="govuk-checkboxes__item">
+             <input class="govuk-checkboxes__input" id='toggleFor{{ header['field'] }}' name='toggleFor{{ header['field'] }}' type="checkbox" value='toggleFor{{ header['field'] }}' checked>
+        <label class="govuk-label govuk-checkboxes__label" for="toggleFor{{ header['field'] }}">
+        {{ header['field'] }}
+        </label>
+        </div>
+                {% endfor -%}
+            </div>
+        {% else -%}
     {{ govukTable({
         "head": report.headers(),
         "rows": report.rows()
     }) }}
+    {% endif -%}
 {% endif -%}

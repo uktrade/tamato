@@ -10,7 +10,7 @@ import { initCopyToNextDuties } from './copyDuties';
 import { initAll } from 'govuk-frontend';
 import initCheckboxes from './checkboxes';
 import initConditionalMeasureConditions from './conditionalMeasureConditions';
-import initFilterDisabledToggleForComCode from './conditionalDisablingFilters'
+import initFilterDisabledToggleForComCode from './conditionalDisablingFilters';
 import initOpenCloseAccordionSection from './openCloseAccordion';
 import initTapDebounce from './buttonDebounce';
 import { setupQuotaOriginFormset } from './components/QuotaOriginFormset/index';

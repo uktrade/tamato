@@ -1,0 +1,23 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = 'Upload CSV' %}
+
+{% block breadcrumb %}
+    {{ breadcrumbs(request, [
+      {'text': "Upload CSV"}
+    ]) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        Upload EU CSV file
+    </h1>
+    <span class="govuk-caption-xl">Select the file to upload that will replace the current EU data report.</span>
+
+    <form action="{{ url('reports:upload_report_csv') }}" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <div class="govuk-file-upload"> {{ form.as_p() }}</div>
+        <button type="submit" class="govuk-button govuk-button--warning">Upload</button>
+    </form>
+{% endblock %}
