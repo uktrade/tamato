@@ -249,6 +249,18 @@ class DutyTransformer(Transformer):
                 message = f"{item_name} cannot be used with duty expression {duty_expression.description} ({duty_expression.prefix})."
             raise ValidationError(message)
 
+    @staticmethod
+    def validate_measurement(unit, qualifier):
+        try:
+            models.Measurement.objects.get(
+                measurement_unit=unit,
+                measurement_unit_qualifier=qualifier,
+            )
+        except ObjectDoesNotExist:
+            raise ValidationError(
+                f"Measurement unit qualifier {qualifier.abbreviation} cannot be used with measurement unit {unit.abbreviation}.",
+            )
+
     def validate_phrase(self, phrase):
         # Each measure component can have an amount, monetary unit and measurement.
         # Which expression elements are allowed in a component is controlled by
@@ -261,6 +273,7 @@ class DutyTransformer(Transformer):
         duty_amount = phrase.get("duty_amount")
         monetary_unit = phrase.get("monetary_unit")
         measurement_unit = phrase.get("measurement_unit")
+        measurement_unit_qualifier = phrase.get("measurement_unit_qualifier")
 
         self.validate_according_to_applicability_code(
             amount_code,
@@ -282,6 +295,8 @@ class DutyTransformer(Transformer):
         )
 
         # If there is a measurement unit qualifier, validate that it can be used with the measurement
+        if measurement_unit and measurement_unit_qualifier:
+            self.validate_measurement(measurement_unit, measurement_unit_qualifier)
 
     def validate_sentence(self, transformed):
         for phrase in transformed:
