@@ -1,1 +1,3 @@
 QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX = "quota-origin-exclusions-formset"
+QUOTA_ORIGINS_FORMSET_PREFIX = "origins"
+QUOTA_EXCLUSIONS_FORMSET_PREFIX = "exclusions"
