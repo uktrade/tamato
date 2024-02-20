@@ -1,25 +1,21 @@
 from django.urls import path
 from rest_framework import routers
+
 from reference_documents import views
-
-
-app_name = "reference_documents"
 
 api_router = routers.DefaultRouter()
 
-
 urlpatterns = [
     path(
-        "reference-documents/",
+        "reference-documents-example/",
         views.ReferenceDocumentsListView.as_view(),
         name="reference_documents-ui-list",
     ),
     path(
-        f"reference-documents/albania/",
+        f"reference-documents-example-albania/",
         views.ReferenceDocumentsDetailView.as_view(),
         name="reference_documents-ui-detail",
     ),
-    path("reference_documents/", views.ReferenceDocumentList.as_view(), name="index"),
     path(
         "reference_documents/",
         views.ReferenceDocumentList.as_view(),
