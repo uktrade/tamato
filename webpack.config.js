@@ -68,6 +68,7 @@ module.exports = {
                   'publishing/static/publishing/scss',
                   'regulations/static/regulations/scss',
                   'workbaskets/static/workbaskets/scss',
+                  'reference_documents/static/reference_documents/scss',
                 ],
               },
             },

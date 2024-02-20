@@ -12,6 +12,15 @@ class ReferenceDocumentVersionStatus(models.TextChoices):
     PUBLISHED = "PUBLISHED", "Published"
 
 
+class AlignmentReportCheckStatus(models.TextChoices):
+    # Reference document version can be edited
+    PASS = "PASS", "Passing"
+    # Reference document version ius locked and in review
+    FAIL = "FAIL", "Failed"
+    # reference document version has been approved and published
+    WARNING = "WARNING", "Warning"
+
+
 class ReferenceDocument(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -126,16 +135,20 @@ class AlignmentReportCheck(models.Model):
     check_name = fields.CharField(max_length=255)
     """A string identifying the type of check carried out."""
 
-    successful = fields.BooleanField()
-    """True if the check was successful."""
-
+    status = FSMField(
+        default=AlignmentReportCheckStatus.FAIL,
+        choices=AlignmentReportCheckStatus.choices,
+        db_index=True,
+        protected=False,
+        editable=False,
+    )
     message = fields.TextField(null=True)
     """The text content returned by the check, if any."""
 
     preferential_quota = models.ForeignKey(
         "reference_documents.PreferentialQuota",
         on_delete=models.PROTECT,
-        related_name="alignment_report_checks",
+        related_name="preferential_quota_checks",
         blank=True,
         null=True,
     )
@@ -143,7 +156,7 @@ class AlignmentReportCheck(models.Model):
     preferential_rate = models.ForeignKey(
         "reference_documents.PreferentialRate",
         on_delete=models.PROTECT,
-        related_name="alignment_report_checks",
+        related_name="preferential_rate_checks",
         blank=True,
         null=True,
     )
