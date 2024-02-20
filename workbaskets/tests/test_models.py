@@ -109,20 +109,20 @@ def test_get_tracked_models(new_workbasket):
 @patch("exporter.tasks.upload_workbaskets")
 def test_workbasket_accepted_updates_current_tracked_models(
     upload,
-    new_workbasket,
+    assigned_workbasket,
     valid_user,
 ):
     original_footnote = factories.FootnoteFactory.create()
     new_footnote = original_footnote.new_version(
-        workbasket=new_workbasket,
+        workbasket=assigned_workbasket,
         update_type=UpdateType.UPDATE,
     )
 
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 
-    assert_workbasket_valid(new_workbasket)
+    assert_workbasket_valid(assigned_workbasket)
 
-    new_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
+    assigned_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     new_footnote.refresh_from_db()
 
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
@@ -131,22 +131,22 @@ def test_workbasket_accepted_updates_current_tracked_models(
 @patch("exporter.tasks.upload_workbaskets")
 def test_workbasket_errored_updates_tracked_models(
     upload,
-    new_workbasket,
+    assigned_workbasket,
     valid_user,
     settings,
 ):
     settings.TRANSACTION_SCHEMA = "workbaskets.models.SEED_FIRST"
     original_footnote = factories.FootnoteFactory.create()
     new_footnote = original_footnote.new_version(
-        workbasket=new_workbasket,
+        workbasket=assigned_workbasket,
         update_type=UpdateType.UPDATE,
     )
-    assert_workbasket_valid(new_workbasket)
+    assert_workbasket_valid(assigned_workbasket)
 
-    new_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
+    assigned_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
-    new_workbasket.cds_error()
+    assigned_workbasket.cds_error()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 

@@ -403,6 +403,17 @@ def taric_schema(settings) -> etree.XMLSchema:
 
 @pytest.fixture
 def new_workbasket() -> WorkBasket:
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    with factories.TransactionFactory.create(workbasket=workbasket):
+        factories.FootnoteTypeFactory.create_batch(2)
+
+    return workbasket
+
+
+@pytest.fixture
+def assigned_workbasket() -> WorkBasket:
     workbasket = factories.AssignedWorkBasketFactory.create()
     with factories.TransactionFactory.create(workbasket=workbasket):
         factories.FootnoteTypeFactory.create_batch(2)
@@ -438,12 +449,12 @@ def published_footnote_type(queued_workbasket):
 
 @pytest.fixture
 @given("there is a current workbasket")
-def user_workbasket(client, valid_user, new_workbasket) -> WorkBasket:
+def user_workbasket(client, valid_user, assigned_workbasket) -> WorkBasket:
     """Returns a workbasket which has been assigned to a valid logged-in
     user."""
     client.force_login(valid_user)
-    new_workbasket.assign_to_user(valid_user)
-    return new_workbasket
+    assigned_workbasket.assign_to_user(valid_user)
+    return assigned_workbasket
 
 
 @pytest.fixture
