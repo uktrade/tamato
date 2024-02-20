@@ -14,7 +14,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db.models import F
 from django.db.models import ProtectedError
-from django.db.models import Q
 from django.db.transaction import atomic
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -429,17 +428,12 @@ class CurrentWorkBasket(TemplateView):
             )
         ]
 
-        users = (
-            User.objects.filter(
-                Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
-                | Q(is_superuser=True),
-            )
-            .filter(is_active=True)
-            .distinct()
-            .order_by("first_name", "last_name")
-        )
         assignable_users = [
-            {"pk": user.pk, "name": user.get_full_name()} for user in users
+            {"pk": user.pk, "name": user.get_full_name()}
+            for user in User.objects.tariff_managers().order_by(
+                "first_name",
+                "last_name",
+            )
         ]
 
         # set to true if there is an associated goods import batch with an unsent notification

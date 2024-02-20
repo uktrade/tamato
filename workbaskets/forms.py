@@ -7,7 +7,6 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
@@ -212,14 +211,9 @@ class WorkBasketAssignUsersForm(forms.Form):
         self.init_layout()
 
     def init_fields(self):
-        self.fields["users"].queryset = (
-            User.objects.filter(
-                Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
-                | Q(is_superuser=True),
-            )
-            .filter(is_active=True)
-            .distinct()
-            .order_by("first_name", "last_name")
+        self.fields["users"].queryset = User.objects.tariff_managers().order_by(
+            "first_name",
+            "last_name",
         )
 
         self.fields["users"].label_from_instance = lambda obj: obj.get_full_name()
