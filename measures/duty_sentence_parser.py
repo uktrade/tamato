@@ -2,7 +2,6 @@ from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
-from django.template.loader import render_to_string
 from lark import Lark
 from lark import Transformer
 from lark import UnexpectedInput
@@ -59,6 +58,17 @@ class DutySentenceParser:
     """A dumb parser that does minimal validation and only matches a duty
     sentence according to a set pattern."""
 
+    @staticmethod
+    def create_rule(items, field_name):
+        output = []
+        for i, item in enumerate(items, start=1):
+            if getattr(item, field_name):
+                if i != len(items):
+                    output.append(f'"{getattr(item, field_name)}"i | ')
+                else:
+                    output.append(f'"{getattr(item, field_name)}"i')
+        return "".join(output)
+
     def __init__(self, date=datetime.now()):
         duty_expressions = models.DutyExpression.objects.as_at(date)
         monetary_units = models.MonetaryUnit.objects.as_at(date)
@@ -67,59 +77,36 @@ class DutySentenceParser:
             date,
         )
 
-        duty_expression_amount_mandatory = render_to_string(
-            "duties/parser/duty_expression.jinja",
-            {
-                "code": ApplicabilityCode.MANDATORY,
-                "duty_expressions": duty_expressions,
-            },
+        amount_mandatory = duty_expressions.filter(
+            duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
         )
-        duty_expression_amount_permitted = render_to_string(
-            "duties/parser/duty_expression.jinja",
-            {
-                "code": ApplicabilityCode.PERMITTED,
-                "duty_expressions": duty_expressions,
-            },
+        amount_permitted = duty_expressions.filter(
+            duty_amount_applicability_code=ApplicabilityCode.PERMITTED,
         )
-        duty_expression_amount_not_permitted = render_to_string(
-            "duties/parser/duty_expression.jinja",
-            {
-                "code": ApplicabilityCode.NOT_PERMITTED,
-                "duty_expressions": duty_expressions,
-            },
+        amount_not_permitted = duty_expressions.filter(
+            duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         )
-        monetary_unit_rule = render_to_string(
-            "duties/parser/unit_code.jinja",
-            {"units": monetary_units},
-        )
-        measurement_unit_rule = render_to_string(
-            "duties/parser/unit_abbreviation.jinja",
-            {"units": measurement_units},
-        )
-        measurement_unit_qualifier_rule = render_to_string(
-            "duties/parser/unit_abbreviation.jinja",
-            {"units": measurement_unit_qualifiers},
-        )
+
         self.parser = Lark(
             f"""
             slash: "/"
 
             # DutyExpression
-            !expr_amount_mandatory: {duty_expression_amount_mandatory}
-            !expr_amount_permitted: {duty_expression_amount_permitted}
-            !expr_amount_not_permitted: {duty_expression_amount_not_permitted}
+            !expr_amount_mandatory: {self.create_rule(amount_mandatory, "prefix")}
+            !expr_amount_permitted: {self.create_rule(amount_permitted, "prefix")}
+            !expr_amount_not_permitted: {self.create_rule(amount_not_permitted, "prefix")}
             # variables output as "-" | "+" | "MAX" | "MIN" | "NIHIL" | "+ AC" etc. see template
 
             duty_amount: NUMBER
 
             # MonetaryUnit
-            !monetary_unit: "%" | {monetary_unit_rule}
+            !monetary_unit: "%" | {self.create_rule(monetary_units, "code")}
 
             # MeasurementUnit
-            !measurement_unit: {measurement_unit_rule}
+            !measurement_unit: {self.create_rule(measurement_units, "abbreviation")}
 
             # MeasurementUnitQualifier
-            !measurement_unit_qualifier: {measurement_unit_qualifier_rule}
+            !measurement_unit_qualifier: {self.create_rule(measurement_unit_qualifiers, "abbreviation")}
 
             # MeasureComponent
             !phrase: expr_amount_not_permitted [slash measurement_unit [measurement_unit_qualifier]]
