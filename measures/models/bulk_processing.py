@@ -11,18 +11,11 @@ from django.forms.formsets import BaseFormSet
 
 from common.celery import app
 from common.models import Transaction
-from common.models.utils import set_current_transaction
+from common.models.mixins import TimestampedMixin
+from common.models.utils import override_current_transaction
 from measures.models.tracked_models import Measure
 
 logger = logging.getLogger(__name__)
-
-
-class DateTimeStampedMixin:
-    """Mixin to add `created_at` (using `auto_now_add=True`) and `updated_at`
-    (using `auto_now=True`) `DateTimeField` attributes to `Model` classes."""
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
 
 class ProcessingState(models.TextChoices):
@@ -76,8 +69,8 @@ class ProcessingState(models.TextChoices):
         )
 
 
-class BulkProcessorResult(DateTimeStampedMixin, models.Model):
-    """Result details of bulk operation."""
+class BulkProcessorResult(TimestampedMixin):
+    """Result details of bulk processing."""
 
     succeeded = models.BooleanField(
         default=False,
@@ -93,9 +86,12 @@ class BulkProcessorResult(DateTimeStampedMixin, models.Model):
     """The transaction associated with a successful bulk creation."""
 
 
-class BulkProcessorMixin(DateTimeStampedMixin):
-    """Mixin defining common attributes and functions on bulk processing Model
-    classes."""
+class BulkProcessor(TimestampedMixin):
+    """(Abstract) Model mixin defining common attributes and functions for
+    inheritace by bulk processing Model classes."""
+
+    class Meta:
+        abstract = True
 
     task_id = models.CharField(
         max_length=50,
@@ -163,7 +159,7 @@ def REVOKE_TASKS_AND_SET_NULL(collector, field, sub_objs, using):
     SET_NULL(collector, field, sub_objs, using)
 
 
-class MeasuresBulkCreator(BulkProcessorMixin, models.Model):
+class MeasuresBulkCreator(BulkProcessor):
     """
     Model class used to bulk create Measures instances from serialized form
     data.
@@ -187,7 +183,6 @@ class MeasuresBulkCreator(BulkProcessorMixin, models.Model):
         "common.Transaction",
         on_delete=REVOKE_TASKS_AND_SET_NULL,
         null=True,
-        related_name="measures_bulk_creators",
         editable=False,
     )
     """
@@ -207,67 +202,6 @@ class MeasuresBulkCreator(BulkProcessorMixin, models.Model):
     )
     """The workbasket with which created measures are associated."""
 
-    @property
-    def expected_measures_count(self):
-        # TODO: return number of measures being created.
-
-        # The number of measures created depends on two parts: the commodity
-        # count and the geo areas the measure is to be applied to.
-        # The geo area count is per area BEFORE ommissions, ie. each country
-        # group/erga omnes, with an excluded country, still counts as a single
-        # entity.
-        # Measures to be created = commodity count * geo_area
-
-        # Hard coded until the create method has been refactored.
-        return 5
-
-    @atomic
-    def create_measures(self) -> Iterable[Measure]:
-        """Create measures using the instance's `cleaned_data`, returning the
-        results as an iterable."""
-
-        created_measures = []
-
-        # Construction and / or validation of some Form instances require
-        # access to a 'current' Transaction.
-        set_current_transaction(self.current_transaction)
-
-        logger.info(
-            f"MeasuresBulkCreator.create_measures() - form_data:\n"
-            f"{json.dumps(self.form_data, indent=4, default=str)}",
-        )
-        logger.info(
-            f"MeasuresBulkCreator.create_measures() - form_kwargs:\n"
-            f"{json.dumps(self.form_kwargs, indent=4, default=str)}",
-        )
-
-        # Avoid circular import.
-        from measures.views import MeasureCreateWizard
-
-        for form_key, form_class in MeasureCreateWizard.data_form_list:
-            if form_key not in self.form_data:
-                # Not all forms / steps are used to create measures. Some are
-                # only conditionally included - see `MeasureCreateWizard.condition_dict`
-                # and `MeasureCreateWizard.show_step()` for details.
-                continue
-
-            data = self.form_data[form_key]
-            kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
-            form = form_class(data=data, **kwargs)
-            form = MeasureCreateWizard.fixup_form(form, self.current_transaction)
-            is_valid = form.is_valid()
-
-            logger.info(
-                f"MeasuresBulkCreator.create_measures() - "
-                f"{form_class.__name__}.is_valid(): {is_valid}",
-            )
-            if not is_valid:
-                self._log_form_errors(form_class=form_class, form_or_formset=form)
-
-        # TODO: Create the measures.
-
-        return created_measures
-
     def schedule(self) -> AsyncResult:
         from measures.tasks import bulk_create_measures
 
@@ -284,7 +218,79 @@ class MeasuresBulkCreator(BulkProcessorMixin, models.Model):
             f"Measure bulk creation scheduled on task with ID {async_result.id}"
             f"using MeasuresBulkCreator.pk={self.pk}.",
         )
+
         return async_result
+
+    @property
+    def expected_measures_count(self):
+        """Return the number of measures that should be created when using this
+        `MeasuresBulkCreator`'s form_data."""
+
+        with override_current_transaction(transaction=self.current_transaction):
+            from measures.creators import MeasuresCreator
+
+            cleaned_data = self.get_forms_cleaned_data()
+            measures_creator = MeasuresCreator(self.workbasket, cleaned_data)
+
+            return measures_creator.expected_measures_count
+
+    @atomic
+    def create_measures(self) -> Iterable[Measure]:
+        """Create measures using the instance's `cleaned_data`, returning the
+        results as an iterable."""
+
+        logger.info(
+            f"MeasuresBulkCreator.create_measures() - form_data:\n"
+            f"{json.dumps(self.form_data, indent=4, default=str)}",
+        )
+        logger.info(
+            f"MeasuresBulkCreator.create_measures() - form_kwargs:\n"
+            f"{json.dumps(self.form_kwargs, indent=4, default=str)}",
+        )
+
+        with override_current_transaction(transaction=self.current_transaction):
+            from measures.creators import MeasuresCreator
+
+            cleaned_data = self.get_forms_cleaned_data()
+            measures_creator = MeasuresCreator(self.workbasket, cleaned_data)
+
+            return measures_creator.create_measures()
+
+    def get_forms_cleaned_data(self):
+        """
+        Returns a merged dictionary of all Form cleaned_data.
+
+        If a Form's
+        data contains a `FormSet`, the key will be prefixed with "formset-"
+        and contain a list of the formset cleaned_data dictionaries.
+        """
+
+        all_cleaned_data = {}
+
+        from measures.views import MeasureCreateWizard
+
+        for form_key, form_class in MeasureCreateWizard.data_form_list:
+            if form_key not in self.form_data:
+                # Forms are conditionally included during step processing - see
+                # `MeasureCreateWizard.show_step()` for details.
+                continue
+
+            data = self.form_data[form_key]
+            kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
+            form = form_class(data=data, **kwargs)
+            form = MeasureCreateWizard.fixup_form(form, self.current_transaction)
+
+            if not form.is_valid():
+                self._log_form_errors(form_class=form_class, form_or_formset=form)
+                # TODO: Handle form error: unlock workbasket and set error state.
+                raise Exception("Form validation failed.")
+
+            if isinstance(form.cleaned_data, (tuple, list)):
+                all_cleaned_data[f"formset-{form_key}"] = form.cleaned_data
+            else:
+                all_cleaned_data.update(form.cleaned_data)
+
+        return all_cleaned_data
 
     def _log_form_errors(self, form_class, form_or_formset) -> None:
         """Output errors associated with a Form or Formset instance, handling
