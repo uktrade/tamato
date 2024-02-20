@@ -1687,44 +1687,167 @@ def test_get_serializable_data_keys():
     assert test_form.get_serializable_data_keys() == list(serializable_data.keys())
 
 
-def test_measure_commodities_and_duties_form_set_serialization(
+"""The following tests check the serialization and deserialization capabilities
+of the CreateMeasure form wizard forms. Forms have been grouped by type as they
+require different parameters, so can not be tested in one parametrize block."""
+
+
+@pytest.mark.parametrize(
+    "form_class, form_data",
+    [
+        (
+            forms.MeasureDetailsForm,
+            "measure_details_form_data",
+        ),
+        (
+            forms.MeasureRegulationIdForm,
+            "measure_regulation_id_form_data",
+        ),
+        (
+            forms.MeasureAdditionalCodeForm,
+            "measure_additional_code_form_data",
+        ),
+        (
+            forms.MeasureQuotaOrderNumberForm,
+            "measure_quota_order_number_form_data",
+        ),
+    ],
+    ids=[
+        "measure_details_form",
+        "regulation_id_form",
+        "additional_code_form",
+        "quota_order_number_form",
+    ],
+)
+def test_simple_measure_forms_serialize_deserialize(form_class, form_data, request):
+    """Test that the CreateMeasure simple forms that use the
+    SerializableFormMixin behave correctly and as expected."""
+
+    # Check the forms are valid on data submission
+    form_data = request.getfixturevalue(form_data)
+    form = form_class(form_data)
+    assert form.is_valid()
+
+    # Create the serialized data
+    serialized_data = form.serializable_data()
+
+    # Make a form from serialized data
+    deserialized_form = form_class(data=serialized_data)
+
+    # Check the form is the right type, valid, and the data that went in is the same that comes out
+    assert type(deserialized_form) == form_class
+    assert deserialized_form.is_valid()
+    assert deserialized_form.data == form_data
+
+
+@pytest.mark.parametrize(
+    "form_class, form_data",
+    [
+        (
+            forms.MeasureQuotaOriginsForm,
+            "measure_quota_order_number_origin_form_data",
+        ),
+    ],
+    ids=[
+        "quota_order_number_origin_form",
+    ],
+)
+def test_selectableobjects_measure_forms_serialize_deserialize(
+    form_class,
+    form_data,
+    request,
+):
+    """Test that the CreateMeasure selectableobjects forms that use the
+    SerializableFormMixin behave correctly and as expected."""
+
+    form_data = request.getfixturevalue(form_data)
+    objects = form_data["objects"]
+    data = form_data["data"]
+
+    form_kwargs = {"objects": objects}
+
+    with override_current_transaction(Transaction.objects.last()):
+        # Check the forms are valid on data submission
+        form = form_class(
+            initial={},
+            objects=objects,
+            data=data,
+        )
+        assert form.is_valid()
+
+        # Create the serialized data
+        serialized_data = form.serializable_data()
+        serialized_form_kwargs = form.serializable_init_kwargs(form_kwargs)
+
+        # Deserialize the kwargs
+        deserialized_form_kwargs = form.deserialize_init_kwargs(serialized_form_kwargs)
+
+        # Make a form from serialized data
+        deserialized_form = form_class(data=serialized_data, **deserialized_form_kwargs)
+
+        # Check the form is the right type, valid, and the data that went in is the same that comes out
+        assert type(deserialized_form) == form_class
+        assert deserialized_form.is_valid()
+        assert deserialized_form.data == data
+
+
+@pytest.mark.parametrize(
+    "form_class, form_data",
+    [
+        (
+            forms.MeasureConditionsWizardStepFormSet,
+            "measure_conditions_form_data",
+        ),
+        (
+            forms.MeasureFootnotesFormSet,
+            "measure_footnotes_form_data",
+        ),
+        (
+            forms.MeasureCommodityAndDutiesFormSet,
+            "measure_commodities_and_duties_form_data",
+        ),
+    ],
+    ids=[
+        "conditions_form",
+        "footnotes",
+        "commodities",
+    ],
+)
+def test_formset_measure_forms_serialize_deserialize(
+    form_class,
+    form_data,
+    request,
     duty_sentence_parser,
 ):
-    commodity_1 = factories.GoodsNomenclatureFactory.create()
-    commodity_2 = factories.GoodsNomenclatureFactory.create()
+    """Test that the CreateMeasure formset forms that use the
+    SerializableFormMixin behave correctly and as expected."""
+    form_data = request.getfixturevalue(form_data)
+    data = form_data["data"]
+    kwargs = form_data["kwargs"]
 
-    form_data = {
-        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity_1.pk,
-        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": "4.0%",
-        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-commodity": commodity_2.pk,
-        f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-duties": "40 GBP/100kg",
-    }
-    form_kwargs = {
-        "min_commodity_count": 1,
-        "measure_start_date": datetime.date(2025, 1, 1),
-        "form_kwargs": {
-            "measure_type": None,
-        },
-    }
-
-    # Form validation as would be performed via a POST submission from the web.
-    form_set = forms.MeasureCommodityAndDutiesFormSet(
-        data=form_data,
-        **form_kwargs,
+    # Check the forms are valid on data submission
+    form_set = form_class(
+        data=data,
+        **kwargs,
     )
     assert form_set.is_valid()
 
+    # Create the serialized data
     serializable_form_data = form_set.serializable_data()
-    serializable_form_kwargs = form_set.serializable_init_kwargs(form_kwargs)
+    serializable_form_kwargs = form_set.serializable_init_kwargs(kwargs)
 
-    # Form validation as would be performed after form data has been serialized
-    # and then deserialized - for instance, when creating a bound for instance
-    # within a Celery task.
+    # Deserialize the kwargs
     deserialized_form_kwargs = form_set.deserialize_init_kwargs(
         serializable_form_kwargs,
     )
-    form_set = forms.MeasureCommodityAndDutiesFormSet(
+    # Make a form from serialized data.Check the form is the right type, valid, and the data that went in is the same that comes out
+    deserialized_form_set = form_class(
         data=serializable_form_data,
         **deserialized_form_kwargs,
     )
-    assert form_set.is_valid()
+    assert deserialized_form_set.is_valid()
+    assert type(deserialized_form_set) == form_class
+    assert deserialized_form_set.get_serializable_data_keys() == list(data.keys())
+    for key in deserialized_form_set.get_serializable_data_keys():
+        if key in data.keys():
+            assert form_set.data[key] == data[key]
