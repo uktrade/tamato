@@ -25,6 +25,9 @@
                         }
                     }
                 };
+                window.exportDataAsCSV = function () {
+                    gridApi.exportDataAsCsv();
+                }
             }
         };
 
@@ -37,6 +40,15 @@
                 toggleColumnVisibility(fieldName);
             });
         });
+
+        var exportToCSV = document.querySelectorAll('#exportToCSVLink{{report.slug()}}').forEach(function (csvButton) 
+            {
+                csvButton.addEventListener('click', function () {
+                    csvButton.href = '#'
+                    exportDataAsCSV();
+                })
+            }
+        )
     });
 </script>
 {% endif -%}
