@@ -464,6 +464,14 @@ def handler500(request, *args, **kwargs):
     return TemplateResponse(request=request, template="common/500.jinja", status=500)
 
 
+def maintenance_mode(request, *args, **kwargs):
+    return TemplateResponse(
+        request=request,
+        template="common/design-mockup.jinja",
+        status=500,
+    )
+
+
 class MaintenanceView(TemplateView):
     template_name = "common/maintenance.jinja"
 

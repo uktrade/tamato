@@ -37,6 +37,11 @@ urlpatterns = [
     path("", include("reports.urls")),
     path("", include("taric_parsers.urls")),
     path("", include("workbaskets.urls", namespace="workbaskets")),
+    path(
+        "maintenance-mode-design-mockup/",
+        common.views.maintenance_mode,
+        name="maintenance-mode",
+    ),
 ]
 
 if not settings.MAINTENANCE_MODE:
