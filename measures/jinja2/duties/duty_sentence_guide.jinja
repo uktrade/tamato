@@ -24,6 +24,7 @@
 
 {% set syntax_help_tab_html %}{% include "duties/tabs/syntax_help.jinja" %}{% endset %}
 {% set duty_expressions_tab_html %}{% include "duties/tabs/duty_expressions.jinja" %}{% endset %}
+{% set measurements_tab_html %}{% include "duties/tabs/measurements.jinja" %}{% endset %}
 {% set measurement_units_tab_html %}{% include "duties/tabs/measurement_units.jinja" %}{% endset %}
 {% set measurement_unit_qualifiers_tab_html %}{% include "duties/tabs/measurement_unit_qualifiers.jinja" %}{% endset %}
 {% set monetary_units_tab_html %}{% include "duties/tabs/monetary_units.jinja" %}{% endset %}
@@ -49,6 +50,13 @@
         "id": "monetary-units",
         "panel": {
           "html": monetary_units_tab_html
+        }
+      },
+      {
+        "label": "Measurements",
+        "id": "measurements",
+        "panel": {
+          "html": measurements_tab_html
         }
       },
       {

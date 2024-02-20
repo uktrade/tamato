@@ -1382,6 +1382,15 @@ class DutySentenceReference(TemplateView):
     def tx(self):
         return WorkBasket.get_current_transaction(self.request)
 
+    def measurements(self):
+        return (
+            models.Measurement.objects.approved_up_to_transaction(
+                self.tx,
+            )
+            .select_related("measurement_unit", "measurement_unit_qualifier")
+            .order_by("measurement_unit__code")
+        )
+
     def measurement_units(self):
         return models.MeasurementUnit.objects.approved_up_to_transaction(
             self.tx,
@@ -1405,6 +1414,7 @@ class DutySentenceReference(TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(
             duty_expressions=self.duty_expressions(),
+            measurements=self.measurements(),
             measurement_units=self.measurement_units(),
             measurement_unit_qualifiers=self.measurement_unit_qualifiers(),
             monetary_units=self.monetary_units(),
