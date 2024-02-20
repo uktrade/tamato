@@ -933,7 +933,7 @@ def test_workbasket_violations(valid_user_client, user_workbasket):
     cells = row.findChildren("td")
 
     assert cells[0].text == str(check.pk)
-    assert cells[1].text == good._meta.verbose_name.title()
+    assert cells[1].text == good._meta.verbose_name.capitalize()
     assert cells[2].text == check.rule_code
     assert cells[3].text == check.message
     assert cells[4].text == f"{check.transaction_check.transaction.created_at:%d %b %Y}"

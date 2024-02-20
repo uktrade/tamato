@@ -724,9 +724,8 @@ def test_ME24(reference_nonexistent_record):
 
 @pytest.mark.skip(reason="All UK tariff regulations are Base regulations")
 def test_ME86():
-    """The role of the entered regulation must be a Base, a Modification, a Provisional
-    Anti- Dumping, a Definitive Anti-Dumping.
-    """
+    """The role of the entered regulation must be a Base, a Modification, a
+    Provisional Anti- Dumping, a Definitive Anti-Dumping."""
     assert False
 
 
@@ -1080,7 +1079,7 @@ def test_ME49(assert_spanning_enforced):
 
 
 def test_ME50(reference_nonexistent_record):
-    """The combination measurement unit + measurement unit qualifier must
+    """The combination of measurement unit and measurement unit qualifier must
     exist."""
 
     with reference_nonexistent_record(
@@ -1273,7 +1272,7 @@ def test_ME61(assert_spanning_enforced):
 
 
 def test_ME62(reference_nonexistent_record):
-    """The combination measurement unit + measurement unit qualifier must
+    """The combination of measurement unit and measurement unit qualifier must
     exist."""
 
     with reference_nonexistent_record(
@@ -1623,8 +1622,8 @@ def test_ME111(applicability_code, measurement, error_expected):
     ),
 )
 def test_ME65(area_code, error_expected):
-    """An exclusion can only be entered if the measure is applicable to a geographical
-    area group (area code = 1)."""
+    """An exclusion can only be entered if the measure is applicable to a
+    geographical area group (area code = 1)."""
 
     exclusion = factories.MeasureExcludedGeographicalAreaFactory.create(
         modified_measure__geographical_area__area_code=area_code,
@@ -1723,10 +1722,13 @@ def test_ME70():
     ),
 )
 def test_ME71_ME72(application_code, item_id, error_expected):
-    """Footnotes with a footnote type for which the application type = "CN
-    footnotes" cannot be associated with TARIC codes (codes with pos. 9-10
-    different from 00). Footnotes with a footnote type for which the application
-    type = "measure footnotes" can be associated at any level."""
+    """
+    Footnotes with a footnote type for which the application type = "CN
+    footnotes" cannot be associated with TARIC codes (codes with pos.
+
+    9-10 different from 00). Footnotes with a footnote type for which the
+    application type = "measure footnotes" can be associated at any level.
+    """
 
     assoc = factories.FootnoteAssociationMeasureFactory.create(
         associated_footnote__footnote_type__application_code=application_code,

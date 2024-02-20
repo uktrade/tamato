@@ -30,18 +30,21 @@
 
     <h2 class="govuk-heading-m">Next steps</h2>
     <p class="govuk-body">
-      To manage another workbasket select one from the workbasket list.
+      To manage another workbasket, select one from the Edit an existing workbasket page.
     </p>
-
+<div class="govuk-button-group">
     {{ govukButton({
-      "text": "Go to workbasket list",
+      "text": "Go to Edit an existing workbasket",
       "href": url("workbaskets:workbasket-ui-list"),
       "classes": "govuk-button--primary"
     }) }}
 
-    <ul class="govuk-list govuk-list-spaced">
-      <li><a class="govuk-link" href="{{ url('home') }}">Return to home page</a></li>
-    </ul>
+  {{ govukButton({
+    "text": "Return to homepage",
+    "href": url("home"),
+    "classes": "govuk-button--secondary",
+  }) }}
+  </div>
   </div>
 </div>
 {% endblock %}

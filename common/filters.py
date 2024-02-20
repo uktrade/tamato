@@ -324,7 +324,7 @@ class CurrentWorkBasketMixin(FilterSet):
     current_work_basket = BooleanFilter(
         widget=forms.CheckboxInput(),
         method="filter_work_basket",
-        label="Filter by current Workbasket",
+        label="Filter by current workbasket",
         required=False,
     )
 
