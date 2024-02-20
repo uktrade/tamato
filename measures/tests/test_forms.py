@@ -1687,6 +1687,11 @@ def test_get_serializable_data_keys():
     assert test_form.get_serializable_data_keys() == list(serializable_data.keys())
 
 
+"""The following tests check the serialization and deserialization capabilities
+of the CreateMeasure form wizard forms. Forms have been grouped by type as they
+require different parameters, so can not be tested in one parametrize block."""
+
+
 @pytest.mark.parametrize(
     "form_class, form_data",
     [
