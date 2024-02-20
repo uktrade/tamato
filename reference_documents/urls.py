@@ -3,6 +3,8 @@ from rest_framework import routers
 
 from reference_documents import views
 
+app_name = "reference_documents"
+
 api_router = routers.DefaultRouter()
 
 urlpatterns = [

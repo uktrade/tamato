@@ -1,9 +1,14 @@
+from datetime import date
+
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db.models import Q
 from django.views.generic import DetailView
 from django.views.generic import ListView
+from django.views.generic import TemplateView
 
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
+from measures.models import Measure
 from reference_documents.models import AlignmentReport
 from reference_documents.models import AlignmentReportCheckStatus
 from reference_documents.models import ReferenceDocument
@@ -65,14 +70,6 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
             {"text": "Actions"},
         ]
         return context
-# Create your views here.
-from datetime import date
-
-from django.db.models import Q
-from django.views.generic import TemplateView
-
-from geo_areas.models import GeographicalArea
-from measures.models import Measure
 
 
 class ReferenceDocumentsListView(TemplateView):

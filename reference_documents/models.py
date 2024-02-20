@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import fields
 from django_fsm import FSMField
 
 
@@ -21,6 +22,8 @@ class AlignmentReportCheckStatus(models.TextChoices):
 
 
 class ReferenceDocument(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+
     title = models.CharField(
         max_length=255,
         help_text="Short name for this workbasket",
