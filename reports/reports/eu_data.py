@@ -1,7 +1,7 @@
 from reports.reports.base_table import ReportBaseTable
 from reports.models import EUDataModel
 
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from typing import List, Dict, Union, Optional
 
 
 class Report(ReportBaseTable):
@@ -30,7 +30,7 @@ class Report(ReportBaseTable):
 
     headers_list = sorted(headers_list)
 
-    def headers(self) -> [dict]:
+    def headers(self) -> List[Dict[str, Union[str, str]]]:
         return [
             {
                 "field": header.replace("_", " ").capitalize(),
@@ -39,13 +39,13 @@ class Report(ReportBaseTable):
             for header in self.headers_list
         ]
 
-    def row(self, row) -> [dict]:
+    def row(self, row) -> Dict[str, Union[str, Optional[str]]]:
         return {
             field.replace("_", " ").capitalize(): str(getattr(row, field, None))
             for field in self.headers_list
         }
 
-    def rows(self) -> [dict]:
+    def rows(self) -> List[Dict[str, Union[str, Optional[str]]]]:
         table_rows = []
         for row in self.query():
             table_rows.append(self.row(row))
@@ -53,4 +53,7 @@ class Report(ReportBaseTable):
         return table_rows
 
     def query(self):
-        return EUDataModel.objects.all().order_by("goods_code")
+        try:
+            return EUDataModel.objects.all().order_by("goods_code")
+        except EUDataModel.DoesNotExist:
+            return None
