@@ -18,6 +18,9 @@
   </form>
 {% endset %}
 
+{% set business_rules_button_class %}
+govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--secondary{% endif %}  govuk-!-margin-0
+{% endset %}
 
 {% set run_business_rules_form %}
   <form
@@ -28,7 +31,7 @@
     <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
     {{ govukButton({
       "text": "Run business rules",
-      "classes": "govuk-button--secondary govuk-!-margin-0",
+      "classes": business_rules_button_class,
       "name": "form-action",
       "value": "run-business-rules",
       "preventDoubleClick": true,
