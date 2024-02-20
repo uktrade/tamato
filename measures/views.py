@@ -12,7 +12,6 @@ from urllib.parse import urlencode
 from crispy_forms.helper import FormHelper
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.transaction import atomic
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -833,11 +832,6 @@ class MeasureCreateWizard(
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
-    @atomic
-    def create_measures(self, data):
-        measures_creator = MeasuresCreator(self.workbasket)
-        return measures_creator.create_measures(data)
-
     def done(self, form_list, **kwargs):
         if settings.MEASURES_ASYNC_CREATION:
             return self.async_done(form_list, **kwargs)
@@ -846,19 +840,20 @@ class MeasureCreateWizard(
 
     def sync_done(self, form_list, **kwargs):
         """
-        Handles this wizard's done step, to create measures, within the context
-        of the web worker process.
+        Handles this wizard's done step to create measures within the context of
+        the web worker process.
 
         Because measures creation can be computationally expensive, this can
-        take an unacceptable amount of time.
+        take an excessive amount of time within the context of HTTP request
+        processing.
         """
 
         logger.info("Creating measures synchronously.")
 
         cleaned_data = self.get_all_cleaned_data()
 
-        created_measures = self.create_measures(cleaned_data)
-        created_measures[0].transaction.workbasket.assign_to_user(self.request.user)
+        measures_creator = MeasuresCreator(self.workbasket, cleaned_data)
+        created_measures = measures_creator.create_measures()
 
         context = self.get_context_data(
             form=None,
@@ -866,8 +861,6 @@ class MeasureCreateWizard(
             **kwargs,
         )
 
-        # TODO:
-        # - Redirect from summary page to done page.
         return render(self.request, "measures/confirm-create-multiple.jinja", context)
 
     def async_done(self, form_list, **kwargs):

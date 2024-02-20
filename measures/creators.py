@@ -12,39 +12,55 @@ from workbaskets.models import WorkBasket
 
 
 class MeasuresCreator:
-    def __init__(self, workbasket: WorkBasket):
+    """Utility class used to create measures from measures wizard accumulated
+    data."""
+
+    workbasket: WorkBasket
+    """The workbasket with which created measures will be associated."""
+
+    data: Dict
+    """Validated, cleaned and accumulated data created by the Form instances of
+    `MeasureCreateWizard`."""
+
+    def __init__(self, workbasket: WorkBasket, data: Dict):
         self.workbasket = workbasket
+        self.data = data
 
-    @atomic
-    def create_measures(self, data: Dict) -> List[Measure]:
-        """Returns a list of the created measures."""
-        measure_start_date = data["valid_between"].lower
+    @property
+    def measure_start_date(self):
+        """Returns the start date, extracted from `MeasuresCreator.data`, that
+        is used when creating Measure instances."""
 
-        measure_creation_pattern = MeasureCreationPattern(
-            workbasket=self.workbasket,
-            base_date=measure_start_date,
-            defaults={
-                "generating_regulation": data["generating_regulation"],
-            },
-        )
+        return self.data["valid_between"].lower
+
+    @property
+    def expected_measures_count(self) -> int:
+        """Return the expected number of measures that are to be created from
+        `MeasuresCreator.data` and associated with
+        `MeasuresCreator.workbasket`."""
+
+        return len(self.get_measures_data())
+
+    def get_measures_data(self) -> List:
+        """Get the measures data used to create Measure instances."""
 
         measures_data = []
 
-        for commodity_data in data.get("formset-commodities", []):
+        for commodity_data in self.data.get("formset-commodities", []):
             if not commodity_data.get("DELETE"):
-                for geo_data in data["geo_areas_and_exclusions"]:
+                for geo_data in self.data["geo_areas_and_exclusions"]:
                     measure_data = {
-                        "measure_type": data["measure_type"],
+                        "measure_type": self.data["measure_type"],
                         "geographical_area": geo_data["geo_area"],
                         "exclusions": geo_data.get("exclusions", []),
                         "goods_nomenclature": commodity_data["commodity"],
-                        "additional_code": data["additional_code"],
-                        "order_number": data["order_number"],
-                        "validity_start": measure_start_date,
-                        "validity_end": data["valid_between"].upper,
+                        "additional_code": self.data["additional_code"],
+                        "order_number": self.data["order_number"],
+                        "validity_start": self.measure_start_date,
+                        "validity_end": self.data["valid_between"].upper,
                         "footnotes": [
                             item["footnote"]
-                            for item in data.get("formset-footnotes", [])
+                            for item in self.data.get("formset-footnotes", [])
                             if not item.get("DELETE")
                         ],
                         # condition_sentence here, or handle separately and duty_sentence after?
@@ -53,8 +69,28 @@ class MeasuresCreator:
 
                     measures_data.append(measure_data)
 
+        return measures_data
+
+    @atomic
+    def create_measures(self) -> List[Measure]:
+        """
+        Returns a list of the created measures.
+
+        `data` must be a dictionary
+        of the accumulated cleaned / validated data created from the
+        `MeasureCreateWizard`.
+        """
+
+        measure_creation_pattern = MeasureCreationPattern(
+            workbasket=self.workbasket,
+            base_date=self.measure_start_date,
+            defaults={
+                "generating_regulation": self.data["generating_regulation"],
+            },
+        )
+        measures_data = self.get_measures_data()
         parser = DutySentenceParser.create(
-            measure_start_date,
+            self.measure_start_date,
             component_output=MeasureConditionComponent,
         )
 
@@ -64,19 +100,16 @@ class MeasuresCreator:
             # creates measure in DB
             measure = measure_creation_pattern.create(**measure_data)
             self.create_measure_conditions(
-                data,
                 measure,
                 measure_creation_pattern,
                 parser,
             )
-
             created_measures.append(measure)
 
         return created_measures
 
     def create_measure_conditions(
         self,
-        data: Dict,
         measure: Measure,
         measure_creation_pattern: MeasureCreationPattern,
         parser: DutySentenceParser,
@@ -84,17 +117,17 @@ class MeasuresCreator:
         """
         Create's measure conditions, components, and their corresponding negative actions
         Args:
-            data: object with the form wizards data
             measure: Current created measure
             measure_creation_pattern: MeasureCreationPattern
             parser: DutySentenceParser
         Returns:
             None
         """
+
         # component number not tied to position in formset as negative conditions are auto generated
         component_sequence_number = 1
         for index, condition_data in enumerate(
-            data.get("formset-conditions", []),
+            self.data.get("formset-conditions", []),
         ):
             if not condition_data.get("DELETE"):
                 # creates a list of tuples with condition and action code
@@ -109,8 +142,8 @@ class MeasuresCreator:
 
                 # set next code unless last item set None
                 next_condition_code = (
-                    data["formset-conditions"][index + 1]["condition_code"]
-                    if (index + 1 < len(data["formset-conditions"]))
+                    self.data["formset-conditions"][index + 1]["condition_code"]
+                    if (index + 1 < len(self.data["formset-conditions"]))
                     else None
                 )
                 # corresponding negative action to the postive one. None if the action code has no pair
@@ -136,7 +169,7 @@ class MeasuresCreator:
                 # only create a negative action if the action has a negative pair
                 if (
                     negative_action
-                    and data["formset-conditions"][index]["condition_code"]
+                    and self.data["formset-conditions"][index]["condition_code"]
                     != next_condition_code
                 ):
                     component_sequence_number += 1
