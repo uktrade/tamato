@@ -21,12 +21,14 @@
           Compare worksheet data with workbasket data
         </dd>
         <dt class="govuk-summary-list__actions">
+        {% if workbasket.tracked_models.exists() %}
           {{
             govukButton({
               "text": "Compare data",
               "href": url("workbaskets:workbasket-check-ui-compare"),
               "classes": "govuk-button--secondary govuk-!-margin-0"
           })}}
+          {% endif %}
         </dt>
     </div>
     </dl>

@@ -35,7 +35,7 @@
             {"html": create_workbasket_status_tag(workbasket.status)},
           ],
           [
-            {"text": "Workbasket ID"},
+            {"text": "ID"},
             {"text": workbasket.pk}
           ],
           [
@@ -72,8 +72,8 @@
   {% endif %}
 
   {{ govukButton({
-    "text": "Return to homepage",
-    "href": url("home"),
+    "text": "Return to Find and view workbaskets",
+    "href": url("workbaskets:workbasket-ui-list-all"),
     "classes": "govuk-button--secondary",
   }) }}
   </div>
