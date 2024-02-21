@@ -81,13 +81,10 @@ def test_packaged_workbasket_create_form_no_rule_check(
     assert response.url[: len(response_url)] == response_url
 
 
-def test_packaged_workbasket_create_form(client, valid_user):
+def test_packaged_workbasket_create_form(client, valid_user, workbasket):
     """Tests that Packaged WorkBasket Create returns 302 and redirects to
     confirm create page on success."""
     client.force_login(valid_user)
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.EDITING,
-    )
     workbasket.assign_to_user(valid_user)
     with workbasket.new_transaction() as transaction:
         TransactionCheckFactory.create(
@@ -167,14 +164,11 @@ def test_packaged_workbasket_create_form_rule_check_violations(client, valid_use
     assert response.url[: len(response_url)] == response_url
 
 
-def test_create_duplicate_awaiting_instances(client, valid_user):
+def test_create_duplicate_awaiting_instances(client, valid_user, workbasket):
     """Tests that Packaged WorkBasket Create returns 302 and redirects to
     packaged workbasket queue page when trying to package a workbasket that is
     already on the queue."""
     client.force_login(valid_user)
-    workbasket = factories.WorkBasketFactory.create(
-        status=WorkflowStatus.EDITING,
-    )
     workbasket.assign_to_user(valid_user)
     with workbasket.new_transaction() as transaction:
         TransactionCheckFactory.create(

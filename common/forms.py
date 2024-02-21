@@ -761,17 +761,15 @@ def unprefix_formset_data(prefix, data):
     for i in range(0, num_items):
         subform_initial = {}
         for k, v in formset_data.items():
-            if v:
-                if k.startswith(f"{prefix}-{i}-"):
-                    subform_initial[k.split(f"{prefix}-{i}-")[1]] = v
+            if k.startswith(f"{prefix}-{i}-"):
+                subform_initial[k.split(f"{prefix}-{i}-")[1]] = v
         if subform_initial:
             output.append(subform_initial)
 
     for k, v in formset_data.items():
         subform_initial = {}
-        if v:
-            if k.startswith(f"{prefix}-__prefix__-"):
-                subform_initial[k.split(f"{prefix}-__prefix__-")[1]] = v
+        if k.startswith(f"{prefix}-__prefix__-"):
+            subform_initial[k.split(f"{prefix}-__prefix__-")[1]] = v
     if subform_initial:
         output.append(subform_initial)
 
