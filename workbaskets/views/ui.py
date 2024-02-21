@@ -429,10 +429,15 @@ class CurrentWorkBasket(TemplateView):
             )
         ]
 
-        users = User.objects.filter(
-            Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
-            | Q(is_superuser=True),
-        ).order_by("first_name", "last_name")
+        users = (
+            User.objects.filter(
+                Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
+                | Q(is_superuser=True),
+            )
+            .filter(is_active=True)
+            .distinct()
+            .order_by("first_name", "last_name")
+        )
         assignable_users = [
             {"pk": user.pk, "name": user.get_full_name()} for user in users
         ]
