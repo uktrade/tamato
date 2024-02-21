@@ -1615,4 +1615,3 @@ def test_quota_update_existing_origin_exclusion_remove(
             for item in updated_origin.transaction.workbasket.tracked_models.all()
         ],
     ) == ["Delete", "Delete", "Update", "Update"]
-
