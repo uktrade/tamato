@@ -241,7 +241,8 @@ def test_select_workbasket_page_200(valid_user_client):
     assert response.status_code == 200
     soup = BeautifulSoup(str(response.content), "html.parser")
     statuses = [
-        element.text for element in soup.select(".govuk-table__row .status-badge")
+        element.text.strip("\\n ")
+        for element in soup.select(".govuk-table__row .govuk-tag")
     ]
     assert len(statuses) == 2
     assert not set(statuses).difference(valid_statuses)
