@@ -128,7 +128,6 @@ TAMATO_APPS = [
     "publishing",
     "taric",
     "workbaskets",
-    "reference_documents",
     "exporter.apps.ExporterConfig",
     "crispy_forms",
     "crispy_forms_gds",

@@ -33,7 +33,6 @@ urlpatterns = [
     path("", include("measures.urls")),
     path("", include("publishing.urls", namespace="publishing")),
     path("", include("quotas.urls")),
-    path("", include("reference_documents.urls")),
     path("", include("regulations.urls")),
     path("", include("reports.urls")),
     path("", include("taric_parsers.urls")),

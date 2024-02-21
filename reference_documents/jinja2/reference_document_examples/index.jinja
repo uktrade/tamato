@@ -10,7 +10,7 @@
   {%- set table_rows = [] -%}
     {% for ref_doc in object_list %}
           {% set ref_doc_link -%}
-            <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("reference_documents-ui-detail") }}">{{ ref_doc.name }}</a>
+            <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("reference_documents:example-ui-details") }}">{{ ref_doc.name }}</a>
           {%- endset %}
           {{ table_rows.append([
                 {"html": ref_doc_link},
