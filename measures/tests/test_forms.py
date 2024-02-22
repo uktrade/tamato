@@ -1851,3 +1851,34 @@ def test_formset_measure_forms_serialize_deserialize(
     for key in deserialized_form_set.get_serializable_data_keys():
         if key in data.keys():
             assert form_set.data[key] == data[key]
+
+
+# We basically need to test that the Geo areas form submits,
+# is valid,
+# Can be serialized and deserialized,
+# Can be submitted again and still be valid.
+
+# Trying to deserialize runs into errors, but on inspection/face value, serializing doesn't work on the Geo area, it gives a type rather than a pk
+# What is weird is it works in practice.. Paul and Charles can give more of a run down
+
+# Ps thanks for looking!
+
+
+def test_measure_forms_geo_area_serialize_deserialize(erga_omnes):
+    data = {
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            data,
+            initial=data,
+            prefix=GEO_AREA_FORM_PREFIX,
+        )
+        assert form.is_valid()
+
+        serializable_form_data = form.serializable_data()
+
+        deserialized_form = forms.MeasureGeographicalAreaForm(
+            data=serializable_form_data,
+        )
+        assert deserialized_form.is_valid()
