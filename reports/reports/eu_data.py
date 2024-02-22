@@ -10,20 +10,20 @@ class Report(ReportBaseTable):
     enabled = True
 
     headers_list = [
-        "goods_code",
+        "goods_nomenclature_exists",
+        "goods_nomenclature_code",
         "add_code",
         "order_no",
         "start_date",
         "end_date",
-        "origin",
+        "geographical_area_exists",
+        "geographical_area_origin",
+        "measure_type_exists",
         "measure_type",
         "legal_base",
         "duty",
         "origin_code",
         "meas_type_code",
-        "goods_nomenclature_exists",
-        "geographical_area_exists",
-        "measure_type_exists",
         "measure_exists",
     ]
 
@@ -70,6 +70,6 @@ class Report(ReportBaseTable):
 
     def query(self):
         try:
-            return EUDataModel.objects.all().order_by("goods_code")
+            return EUDataModel.objects.all().order_by("goods_nomenclature_code")
         except EUDataModel.DoesNotExist:
             return None

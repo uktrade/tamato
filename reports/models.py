@@ -7,13 +7,13 @@ class Report(models.Model):
 
 
 class EUDataModel(models.Model):
-    goods_code = models.CharField(max_length=255, null=True, blank=True)
+    goods_nomenclature_code = models.CharField(max_length=255, null=True, blank=True)
     add_code = models.CharField(max_length=255, null=True, blank=True)
     order_no = models.CharField(max_length=255, null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     red_ind = models.CharField(max_length=255, null=True, blank=True)
-    origin = models.CharField(max_length=255, null=True, blank=True)
+    geographical_area_origin = models.CharField(max_length=255, null=True, blank=True)
     measure_type = models.CharField(max_length=255, null=True, blank=True)
     legal_base = models.CharField(max_length=255, null=True, blank=True)
     duty = models.CharField(max_length=255, null=True, blank=True)

@@ -248,13 +248,13 @@ def save_eu_data(content):
                     goods_code = str(int(float(goods_code))).zfill(10)
 
                 instance = EUDataModel(
-                    goods_code=goods_code,
+                    goods_nomenclature_code=goods_code,
                     add_code=row.get("Add code", None),
                     order_no=order_no,
                     start_date=start_date,
                     end_date=end_date,
                     red_ind=row.get("RED_IND", None),
-                    origin=row.get("Origin", None),
+                    geographical_area_origin=row.get("Origin", None),
                     measure_type=row.get(" Measure type", None),
                     legal_base=row.get("Legal base", None),
                     duty=row.get("Duty", None),
