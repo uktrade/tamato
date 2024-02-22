@@ -1,0 +1,50 @@
+{% macro govuk_header_no_crown(params) %}
+<header class="govuk-header {{ params.classes if params.classes }}" role="banner" data-module="govuk-header"
+        {%- for attribute, value in params.attributes %} {{attribute}}="{{value}}"{% endfor %}>
+  <div class="govuk-header__container {{ params.containerClasses | default('govuk-width-container') }}">
+    <div class="govuk-header__logo">
+      <a href="{{ params.homepageUrl | default('/') }}" class="govuk-header__link govuk-header__link--homepage">
+        <span class="govuk-header__logotype">
+          <span class="govuk-header__logotype-text">
+            GOV.UK
+          </span>
+        </span>
+        {% if (params.productName) %}
+        <span class="govuk-header__product-name">
+          {{ params.productName }}
+        </span>
+        {% endif %}
+      </a>
+    </div>
+    {% if params.serviceName or params.navigation  %}
+    <div class="govuk-header__content">
+    {% if params.serviceName %}
+    <a href="{{ params.serviceUrl }}" class="govuk-header__link govuk-header__link--service-name">
+      {{ params.serviceName }}
+    </a>
+    {% endif %}
+    {% if params.navigation %}
+    <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="{{ params.menuButtonLabel | default('Show or hide navigation menu') }}">Menu</button>
+    <nav>
+      <ul id="navigation" class="govuk-header__navigation {{ params.navigationClasses if params.navigationClasses }}" aria-label="{{ params.navigationLabel | default('Navigation menu') }}">
+        {% for item in params.navigation %}
+          {% if item.text or item.html %}
+            <li class="govuk-header__navigation-item{{ ' govuk-header__navigation-item--active' if item.active }}">
+              {% if item.href %}
+                <a class="govuk-header__link" href="{{ item.href }}"{% for attribute, value in item.attributes %} {{attribute}}="{{value}}"{% endfor %}>
+              {% endif %}
+                {{ item.html | safe if item.html else item.text }}
+              {% if item.href %}
+                </a>
+              {% endif %}
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </nav>
+    {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</header>
+{% endmacro %}

@@ -1,6 +1,7 @@
 {% from "components/phase-banner/macro.njk" import govukPhaseBanner %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/footer/macro.njk" import govukFooter %}
+{% from "macros/govuk-header_no_crown.jinja" import govuk_header_no_crown %}
 
 {% extends "layouts/_generic.jinja" %}
 
@@ -28,7 +29,7 @@
   {% endif %}
 {% endset %}
 
-{{ govukHeader({
+{{ govuk_header_no_crown({
   "homepageUrl": "https://gov.uk/",
   "serviceName": service_name,
   "serviceUrl": "/",
