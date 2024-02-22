@@ -237,10 +237,20 @@ def save_eu_data(content):
                     else None
                 )
 
+                order_no = row.get("Order No.", None)
+                if order_no is not None and order_no != "":
+                    order_no = str(int(float(order_no))).zfill(6)
+                else:
+                    order_no = ""
+
+                goods_code = row.get("Goods code", None)
+                if goods_code is not None and goods_code != "":
+                    goods_code = str(int(float(goods_code))).zfill(10)
+
                 instance = EUDataModel(
-                    goods_code=row.get("Goods code", None),
+                    goods_code=goods_code,
                     add_code=row.get("Add code", None),
-                    order_no=row.get("Order No.", None),
+                    order_no=order_no,
                     start_date=start_date,
                     end_date=end_date,
                     red_ind=row.get("RED_IND", None),

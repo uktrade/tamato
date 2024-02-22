@@ -3,10 +3,13 @@ import pytest
 from django.urls import reverse
 from django.test import RequestFactory
 
+from common.models.user import User
+
 from reports.utils import get_reports
 from reports.views import export_report_to_csv, export_report_to_excel
 from reports.reports.expiring_quotas_with_no_definition_period import Report
 from reports.reports.cds_approved import Report as ChartReport
+from reports.forms import UploadCSVForm
 
 
 pytestmark = pytest.mark.django_db
@@ -77,3 +80,13 @@ class TestReportViews:
             response["Content-Disposition"]
             == f'attachment; filename="{report_slug}_report.xlsx"'
         )
+
+    
+    def test_upload_report_csv_get(self, request):
+        client = request.getfixturevalue("valid_user_client")
+
+        response = client.get(reverse("reports:upload_report_csv"))
+
+        assert response.status_code == 200
+
+        assert 'Upload CSV' in response.content.decode("utf-8")

@@ -15,7 +15,6 @@ class Report(ReportBaseTable):
         "order_no",
         "start_date",
         "end_date",
-        "red_ind",
         "origin",
         "measure_type",
         "legal_base",
@@ -28,22 +27,39 @@ class Report(ReportBaseTable):
         "measure_exists",
     ]
 
-    headers_list = sorted(headers_list)
-
     def headers(self) -> List[Dict[str, Union[str, str]]]:
         return [
             {
                 "field": header.replace("_", " ").capitalize(),
-                "filter": "agTextColumnFilter",
+                "filter": self.get_filter(header),
             }
             for header in self.headers_list
         ]
+    
+    def get_filter(self, header):
+        if "date" in header:
+            return "agDateColumnFilter"
+        else:
+            return "agTextColumnFilter"
 
     def row(self, row) -> Dict[str, Union[str, Optional[str]]]:
-        return {
-            field.replace("_", " ").capitalize(): str(getattr(row, field, None))
-            for field in self.headers_list
-        }
+        updated_row = {}
+        for field in self.headers_list:
+            value = getattr(row, field, None)
+            display_value = self.format_field(field, value)
+            updated_row[field.replace("_", " ").capitalize()] = display_value
+        return updated_row
+
+    def format_field(self, field: str, value: Optional[str]) -> str:
+        if "exists" in field:
+            if value == "UNKNOWN":
+                return "?"
+            elif value == "EXISTS IN TAP":
+                return "Y"
+            else:
+                return "N"
+        else:
+            return "" if value is None else str(value)
 
     def rows(self) -> List[Dict[str, Union[str, Optional[str]]]]:
         table_rows = []
