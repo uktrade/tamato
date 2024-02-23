@@ -99,6 +99,21 @@ class PreferentialQuota(models.Model):
     volume = models.CharField(
         max_length=255,
     )
+    coefficient = models.DecimalField(
+        max_digits=6,
+        decimal_places=4,
+        blank=True,
+        null=True,
+        default=None,
+    )
+
+    main_quota = models.ForeignKey(
+        "self",
+        related_name="sub_quotas",
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+    )
 
     valid_between = TaricDateRangeField(
         db_index=True,
