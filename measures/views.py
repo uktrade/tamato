@@ -1241,6 +1241,12 @@ class MeasuresWizardCreateConfirm(TemplateView):
         return context
 
 
+class MeasuresCreateProcessQueue(TemplateView):
+    """UI endpoint for bulk creating Measures process queue."""
+
+    template_name = "measures/create-process-queue.jinja"
+
+
 class MeasureUpdateBase(
     MeasureMixin,
     TrackedModelDetailMixin,

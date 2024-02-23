@@ -1,0 +1,59 @@
+{% extends "layouts/layout.jinja" %}
+{% from "macros/inline_filter_links.jinja" import inline_filter_links %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{# TODO: bring in processing measures #}
+{# TODO: if measures in EDITING state then url provided#}
+
+{% set page_title = "Measures process queue" %}
+{% set table_rows = [] %}
+{% set filter_links_list = [
+  {
+    "text": "All",
+    "href": "?status=",
+    "selected": selected_link == "all",
+  },
+  {
+    "text": "Processing",
+    "href": "?status=PROCESSING",
+    "selected": selected_link == "processing",
+  },
+  {
+    "text": "Completed",
+    "href": "?status=COMPLETED",
+    "selected": selected_link == "completed",
+  },
+  {
+    "text": "Failed",
+    "href": "?status=FAILED",
+    "selected": selected_link == "failed",
+  },
+]%}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <nav class="workbasket-filters">
+    <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
+      {{ inline_filter_links(filter_links_list) }}
+    {{ govukButton({
+          "text": "Refresh",
+          "href": url("measure-create-process-queue"),
+          "classes": "govuk-button--primary",
+    }) }}
+    <img src="{{ static('common/images/refresh.svg') }}" alt="run business rules">
+  </nav>
+    
+  <hr class="govuk-section-break govuk-section-break--visible">
+    {{ govukTable({
+      "head": [
+        {"text": "Workbasket ID"},
+        {"text": "Submitted date"},
+        {"text": "Submitted by"},
+        {"text": "Status"},
+        {"text": "Object count"},
+        {"text": "Action"},
+      ]
+    })}}
+  
+{% endblock %}
