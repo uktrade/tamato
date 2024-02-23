@@ -115,8 +115,8 @@ class BulkProcessor(TimestampedMixin):
     def processing_state(self) -> ProcessingState:
         """Calculates and returns the current processing state."""
 
+        # TODO: Replace with FSM attr, processing_state, allowing DB querying.
         AsyncResult(self.task_id)
-        # TODO: Dynamically calculate state or use a FSM?
         return ProcessingState.AWAITING_PROCESSING
 
     def schedule(self) -> AsyncResult:
