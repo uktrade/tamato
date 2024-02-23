@@ -39,6 +39,7 @@
       "text": "Sign out" if request.user.is_authenticated else "Sign In"
     } if not settings.SSO_ENABLED else "",
   ],
+      "useTudorCrown": true,
 }) }}
 {% endblock %}
 {% block beforeContent %}
