@@ -721,7 +721,7 @@ def test_measure_update_create_conditions(
     assert condition.update_type == UpdateType.CREATE
 
     components = condition.components.approved_up_to_transaction(tx).order_by(
-        *MeasureConditionComponent._meta.ordering
+        *MeasureConditionComponent._meta.ordering,
     )
 
     assert components.count() == 2
@@ -913,7 +913,7 @@ def test_measure_update_negative_condition(
     condition = updated_measure.conditions.approved_up_to_transaction(tx).last()
 
     components = condition.components.approved_up_to_transaction(tx).order_by(
-        *MeasureConditionComponent._meta.ordering
+        *MeasureConditionComponent._meta.ordering,
     )
 
     assert components.count() == 1
@@ -2689,3 +2689,27 @@ def test_measure_list_results_show_chosen_filters(valid_user_client, date_ranges
             f"Regulation {measure.generating_regulation.autocomplete_label}" in items[3]
         )
         assert f"Measure Type {measure.measure_type.autocomplete_label}" in items[4]
+
+
+def test_measures_wizard_create_confirm_view(valid_user_client):
+    """Test the confirmation page for measures creation, validating URL lookup
+    and correct rendering applying captured params to content."""
+
+    expected_measures_count = 99
+    url = reverse(
+        "measure-ui-create-confirm",
+        kwargs={
+            "expected_measures_count": expected_measures_count,
+        },
+    )
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    expected_h1_text = (
+        f"You successfully submitted {expected_measures_count} measures to be "
+        f"created or edited on TAP."
+    )
+
+    assert expected_h1_text in page.find("h1").text
