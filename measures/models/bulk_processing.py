@@ -262,9 +262,8 @@ class MeasuresBulkCreator(BulkProcessor):
         """
         Returns a merged dictionary of all Form cleaned_data.
 
-        If a Form's
-        data contains a `FormSet`, the key will be prefixed with "formset-"
-        and contain a list of the formset cleaned_data dictionaries.
+        If a Form's data contains a `FormSet`, the key will be prefixed with
+        "formset-" and contain a list of the formset cleaned_data dictionaries.
         """
 
         all_cleaned_data = {}
