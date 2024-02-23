@@ -743,7 +743,7 @@ def test_quota_edit_origin_new_versions(valid_user_client):
 
 
 def test_quota_edit_origin_exclusions(
-    valid_user_client,
+    client_with_current_workbasket,
     approved_transaction,
     geo_group1,
     geo_group2,
@@ -770,7 +770,7 @@ def test_quota_edit_origin_exclusions(
         "submit": "Save",
     }
 
-    response = valid_user_client.post(
+    response = client_with_current_workbasket.post(
         reverse("quota_order_number_origin-ui-edit", kwargs={"sid": origin.sid}),
         form_data,
     )
@@ -799,7 +799,7 @@ def test_quota_edit_origin_exclusions(
 
 
 def test_quota_edit_origin_exclusions_remove(
-    valid_user_client,
+    client_with_current_workbasket,
     approved_transaction,
     geo_group1,
     country1,
@@ -828,7 +828,7 @@ def test_quota_edit_origin_exclusions_remove(
         "submit": "Save",
     }
 
-    response = valid_user_client.post(
+    response = client_with_current_workbasket.post(
         reverse("quota_order_number_origin-ui-edit", kwargs={"sid": origin.sid}),
         form_data,
     )
@@ -859,14 +859,14 @@ def test_quota_edit_origin_exclusions_remove(
     )
 
 
-def test_update_quota_definition_page_200(valid_user_client):
+def test_update_quota_definition_page_200(client_with_current_workbasket):
     quota_definition = factories.QuotaDefinitionFactory.create()
     url = reverse("quota_definition-ui-edit", kwargs={"sid": quota_definition.sid})
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
     assert response.status_code == 200
 
 
-def test_update_quota_definition(valid_user_client, date_ranges):
+def test_update_quota_definition(client_with_current_workbasket, date_ranges):
     quota_definition = factories.QuotaDefinitionFactory.create(
         valid_between=date_ranges.big_no_end,
     )
@@ -889,7 +889,7 @@ def test_update_quota_definition(valid_user_client, date_ranges):
         "quota_critical": "False",
     }
 
-    response = valid_user_client.post(url, data)
+    response = client_with_current_workbasket.post(url, data)
     assert response.status_code == 302
     assert response.url == reverse(
         "quota_definition-ui-confirm-update",
@@ -913,20 +913,20 @@ def test_update_quota_definition(valid_user_client, date_ranges):
     assert updated_definition.quota_critical == False
 
 
-def test_delete_quota_definition_page_200(valid_user_client):
+def test_delete_quota_definition_page_200(client_with_current_workbasket):
     quota_definition = factories.QuotaDefinitionFactory.create()
     url = reverse("quota_definition-ui-delete", kwargs={"sid": quota_definition.sid})
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
     assert response.status_code == 200
 
 
-def test_delete_quota_definition(valid_user_client, date_ranges):
+def test_delete_quota_definition(client_with_current_workbasket, date_ranges):
     quota_definition = factories.QuotaDefinitionFactory.create(
         valid_between=date_ranges.big_no_end,
     )
     url = reverse("quota_definition-ui-delete", kwargs={"sid": quota_definition.sid})
 
-    response = valid_user_client.post(url, {"submit": "Delete"})
+    response = client_with_current_workbasket.post(url, {"submit": "Delete"})
     assert response.status_code == 302
     assert response.url == reverse(
         "quota_definition-ui-confirm-delete",
@@ -937,7 +937,7 @@ def test_delete_quota_definition(valid_user_client, date_ranges):
 
     assert tx.workbasket.tracked_models.first().update_type == UpdateType.DELETE
 
-    confirm_response = valid_user_client.get(response.url)
+    confirm_response = client_with_current_workbasket.get(response.url)
 
     soup = BeautifulSoup(
         confirm_response.content.decode(response.charset),
@@ -952,7 +952,7 @@ def test_delete_quota_definition(valid_user_client, date_ranges):
 
 
 def test_quota_create_origin(
-    valid_user_client,
+    client_with_current_workbasket,
     approved_transaction,
     geo_group1,
     date_ranges,
@@ -971,7 +971,7 @@ def test_quota_create_origin(
         "submit": "Save",
     }
 
-    response = valid_user_client.post(
+    response = client_with_current_workbasket.post(
         reverse("quota_order_number_origin-ui-create", kwargs={"sid": quota.sid}),
         form_data,
     )
@@ -987,7 +987,7 @@ def test_quota_create_origin(
 
 
 def test_quota_create_origin_outwith_quota_period(
-    valid_user_client,
+    client_with_current_workbasket,
     approved_transaction,
     geo_group1,
     date_ranges,
@@ -1007,7 +1007,7 @@ def test_quota_create_origin_outwith_quota_period(
         "submit": "Save",
     }
 
-    response = valid_user_client.post(
+    response = client_with_current_workbasket.post(
         reverse("quota_order_number_origin-ui-create", kwargs={"sid": quota.sid}),
         form_data,
     )
@@ -1024,7 +1024,7 @@ def test_quota_create_origin_outwith_quota_period(
 
 
 def test_quota_create_origin_no_overlapping_origins(
-    valid_user_client,
+    client_with_current_workbasket,
     approved_transaction,
     geo_group1,
     date_ranges,
@@ -1050,7 +1050,7 @@ def test_quota_create_origin_no_overlapping_origins(
         "submit": "Save",
     }
 
-    response = valid_user_client.post(
+    response = client_with_current_workbasket.post(
         reverse("quota_order_number_origin-ui-create", kwargs={"sid": quota.sid}),
         form_data,
     )
@@ -1068,7 +1068,7 @@ def test_quota_create_origin_no_overlapping_origins(
 
 @pytest.mark.django_db
 def test_quota_order_number_and_origin_edit_create_view(
-    valid_user_client,
+    client_with_current_workbasket,
     date_ranges,
     approved_transaction,
     geo_group1,
@@ -1090,14 +1090,14 @@ def test_quota_order_number_and_origin_edit_create_view(
         "submit": "Save",
     }
 
-    response = valid_user_client.post(
+    response = client_with_current_workbasket.post(
         reverse("quota_order_number_origin-ui-edit-create", kwargs={"sid": origin.sid}),
         form_data,
     )
 
     assert response.status_code == 302
 
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse("quota-ui-edit-create", kwargs={"sid": quota.sid}),
         form_data,
     )
@@ -1107,7 +1107,7 @@ def test_quota_order_number_and_origin_edit_create_view(
 
 @pytest.mark.django_db
 def test_quota_order_number_update_view(
-    valid_user_client,
+    client_with_current_workbasket,
     date_ranges,
     approved_transaction,
     geo_group1,
@@ -1129,7 +1129,7 @@ def test_quota_order_number_update_view(
         "submit": "Save",
     }
 
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse("quota-ui-edit-update", kwargs={"sid": quota.sid}),
         form_data,
     )
@@ -1138,7 +1138,7 @@ def test_quota_order_number_update_view(
 
 
 def test_create_new_quota_definition(
-    valid_user_client,
+    client_with_current_workbasket,
     approved_transaction,
     date_ranges,
     mock_quota_api_no_data,
@@ -1168,7 +1168,7 @@ def test_create_new_quota_definition(
     assert not models.QuotaDefinition.objects.all()
 
     url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
-    response = valid_user_client.post(url, form_data)
+    response = client_with_current_workbasket.post(url, form_data)
     assert response.status_code == 302
 
     created_definition = models.QuotaDefinition.objects.last()
@@ -1179,7 +1179,7 @@ def test_create_new_quota_definition(
 
     # check definition is listed on quota order number's definition tab
     url = reverse("quota-ui-detail", kwargs={"sid": quota.sid})
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     definitions_tab = soup.find(id="definition-details")
     details = [
@@ -1197,7 +1197,7 @@ def test_create_new_quota_definition(
 
 
 def test_create_new_quota_definition_business_rule_violation(
-    valid_user_client,
+    client_with_current_workbasket,
     approved_transaction,
     date_ranges,
 ):
@@ -1223,7 +1223,7 @@ def test_create_new_quota_definition_business_rule_violation(
     }
 
     url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
-    response = valid_user_client.post(url, form_data)
+    response = client_with_current_workbasket.post(url, form_data)
 
     assert response.status_code == 200
 
@@ -1239,21 +1239,24 @@ def test_create_new_quota_definition_business_rule_violation(
 
 @pytest.mark.django_db
 def test_quota_order_number_create_200(
-    valid_user_client,
+    client_with_current_workbasket,
 ):
-    response = valid_user_client.get(reverse("quota-ui-create"))
+    response = client_with_current_workbasket.get(reverse("quota-ui-create"))
 
     assert response.status_code == 200
 
 
 @pytest.mark.django_db
 def test_quota_order_number_create_errors_required(
-    valid_user_client,
+    client_with_current_workbasket,
 ):
     form_data = {
         "submit": "Save",
     }
-    response = valid_user_client.post(reverse("quota-ui-create"), form_data)
+    response = client_with_current_workbasket.post(
+        reverse("quota-ui-create"),
+        form_data,
+    )
 
     assert response.status_code == 200
 
@@ -1298,7 +1301,7 @@ def test_quota_order_number_create_validation(
     mechanism,
     category,
     exp_error,
-    valid_user_client,
+    client_with_current_workbasket,
     date_ranges,
 ):
     form_data = {
@@ -1310,7 +1313,10 @@ def test_quota_order_number_create_validation(
         "category": category,
         "submit": "Save",
     }
-    response = valid_user_client.post(reverse("quota-ui-create"), form_data)
+    response = client_with_current_workbasket.post(
+        reverse("quota-ui-create"),
+        form_data,
+    )
 
     assert response.status_code == 200
 
@@ -1323,7 +1329,7 @@ def test_quota_order_number_create_validation(
 
 @pytest.mark.django_db
 def test_quota_order_number_create_success(
-    valid_user_client,
+    client_with_current_workbasket,
     date_ranges,
 ):
     form_data = {
@@ -1335,7 +1341,10 @@ def test_quota_order_number_create_success(
         "category": validators.QuotaCategory.WTO.value,
         "submit": "Save",
     }
-    response = valid_user_client.post(reverse("quota-ui-create"), form_data)
+    response = client_with_current_workbasket.post(
+        reverse("quota-ui-create"),
+        form_data,
+    )
 
     assert response.status_code == 302
 
@@ -1343,10 +1352,268 @@ def test_quota_order_number_create_success(
 
     assert response.url == reverse("quota-ui-confirm-create", kwargs={"sid": quota.sid})
 
-    response2 = valid_user_client.get(response.url)
+    response2 = client_with_current_workbasket.get(response.url)
 
     soup = BeautifulSoup(response2.content.decode(response2.charset), "html.parser")
 
     assert (
         soup.find("h1").text.strip() == f"Quota {quota.order_number} has been created"
     )
+
+
+def test_quota_update_existing_origins(client_with_current_workbasket, date_ranges):
+    quota = factories.QuotaOrderNumberFactory.create(
+        category=0,
+        valid_between=date_ranges.big_no_end,
+    )
+    factories.QuotaOrderNumberOriginFactory.create(order_number=quota)
+    factories.QuotaOrderNumberOriginFactory.create(order_number=quota)
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+    tx = geo_area2.transaction
+    (
+        origin1,
+        origin2,
+        origin3,
+    ) = quota.quotaordernumberorigin_set.approved_up_to_transaction(tx)
+
+    # sanity check
+    assert quota.quotaordernumberorigin_set.count() == 3
+
+    data = {
+        "start_date_0": date_ranges.big_no_end.lower.day,
+        "start_date_1": date_ranges.big_no_end.lower.month,
+        "start_date_2": date_ranges.big_no_end.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "category": "1",  # update category
+        # keep first origin data the same
+        "origins-0-pk": origin1.pk,
+        "origins-0-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-0-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-0-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-0-end_date_0": "",
+        "origins-0-end_date_1": "",
+        "origins-0-end_date_2": "",
+        "origins-0-geographical_area": origin1.geographical_area.pk,
+        # omit subform for origin2 to delete it
+        # change origin3 geo area
+        "origins-1-pk": origin3.pk,
+        "origins-1-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-1-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-1-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-1-end_date_0": "",
+        "origins-1-end_date_1": "",
+        "origins-1-end_date_2": "",
+        "origins-1-geographical_area": geo_area1.pk,
+        # add a new origin
+        "origins-2-pk": "",
+        "origins-2-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-2-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-2-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-2-end_date_0": "",
+        "origins-2-end_date_1": "",
+        "origins-2-end_date_2": "",
+        "origins-2-geographical_area": geo_area2.pk,
+        "submit": "Save",
+    }
+    url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
+    response = client_with_current_workbasket.post(url, data)
+
+    assert response.status_code == 302
+    assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})
+
+    tx = Transaction.objects.last()
+    updated_quota = (
+        models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        .filter(sid=quota.sid)
+        .first()
+    )
+    assert updated_quota.category == 1
+    assert updated_quota.valid_between == date_ranges.big_no_end
+
+    assert updated_quota.origins.approved_up_to_transaction(tx).count() == 3
+    assert {o.sid for o in updated_quota.origins.approved_up_to_transaction(tx)} == {
+        geo_area1.sid,
+        geo_area2.sid,
+        origin1.geographical_area.sid,
+    }
+
+
+def test_quota_update_existing_origin_exclusions(
+    client_with_current_workbasket,
+    date_ranges,
+):
+    # make a geo group with 3 member countries
+    country1 = factories.CountryFactory.create()
+    country2 = factories.CountryFactory.create()
+    country3 = factories.CountryFactory.create()
+    geo_group = factories.GeoGroupFactory.create()
+    membership1 = factories.GeographicalMembershipFactory.create(
+        member=country1,
+        geo_group=geo_group,
+    )
+    membership2 = factories.GeographicalMembershipFactory.create(
+        member=country2,
+        geo_group=geo_group,
+    )
+    membership3 = factories.GeographicalMembershipFactory.create(
+        member=country3,
+        geo_group=geo_group,
+    )
+
+    exclusion = factories.QuotaOrderNumberOriginExclusionFactory.create(
+        excluded_geographical_area=membership1.member,
+    )
+    origin = exclusion.origin
+    quota = origin.order_number
+
+    # sanity check
+    assert quota.quotaordernumberorigin_set.count() == 1
+
+    data = {
+        "start_date_0": date_ranges.big_no_end.lower.day,
+        "start_date_1": date_ranges.big_no_end.lower.month,
+        "start_date_2": date_ranges.big_no_end.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "category": "1",  # update category
+        "origins-0-pk": origin.pk,
+        "origins-0-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-0-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-0-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-0-end_date_0": "",
+        "origins-0-end_date_1": "",
+        "origins-0-end_date_2": "",
+        "origins-0-geographical_area": geo_group.pk,
+        # update existing
+        "origins-0-exclusions-0-pk": exclusion.pk,
+        "origins-0-exclusions-0-geographical_area": membership2.member.pk,
+        # add new
+        "origins-0-exclusions-1-pk": "",
+        "origins-0-exclusions-1-geographical_area": membership3.member.pk,
+        "submit": "Save",
+    }
+    url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
+    response = client_with_current_workbasket.post(url, data)
+
+    assert response.status_code == 302
+    assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})
+
+    tx = Transaction.objects.last()
+
+    updated_quota = (
+        models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        .filter(sid=quota.sid)
+        .first()
+    )
+
+    assert updated_quota.origins.approved_up_to_transaction(tx).count() == 1
+    updated_origin = (
+        updated_quota.quotaordernumberorigin_set.approved_up_to_transaction(tx).first()
+    )
+    assert {
+        e.excluded_geographical_area.sid
+        for e in updated_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+            tx,
+        )
+    } == {
+        membership2.member.sid,
+        membership3.member.sid,
+    }
+
+
+def test_quota_update_existing_origin_exclusion_remove(
+    client_with_current_workbasket,
+    date_ranges,
+):
+    country1 = factories.CountryFactory.create()
+    geo_group = factories.GeoGroupFactory.create()
+    membership1 = factories.GeographicalMembershipFactory.create(
+        member=country1,
+        geo_group=geo_group,
+    )
+
+    exclusion = factories.QuotaOrderNumberOriginExclusionFactory.create(
+        excluded_geographical_area=membership1.member,
+    )
+    origin1 = exclusion.origin
+    quota = origin1.order_number
+    origin2 = factories.QuotaOrderNumberOriginFactory.create(order_number=quota)
+
+    # sanity check
+    tx = Transaction.objects.last()
+    assert quota.quotaordernumberorigin_set.approved_up_to_transaction(tx).count() == 2
+    assert (
+        origin1.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+            tx,
+        ).count()
+        == 1
+    )
+    assert (
+        origin2.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+            tx,
+        ).count()
+        == 0
+    )
+
+    data = {
+        "start_date_0": date_ranges.big_no_end.lower.day,
+        "start_date_1": date_ranges.big_no_end.lower.month,
+        "start_date_2": date_ranges.big_no_end.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "category": quota.category,
+        "origins-0-pk": origin1.pk,
+        "origins-0-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-0-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-0-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-0-end_date_0": "",
+        "origins-0-end_date_1": "",
+        "origins-0-end_date_2": "",
+        "origins-0-geographical_area": geo_group.pk,
+        # remove the first origin's exclusion
+        # remove the second origin
+        "submit": "Save",
+    }
+
+    url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
+    response = client_with_current_workbasket.post(url, data)
+
+    assert response.status_code == 302
+    assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})
+
+    last_tx = Transaction.objects.last()
+
+    updated_quota = (
+        models.QuotaOrderNumber.objects.approved_up_to_transaction(last_tx)
+        .filter(sid=quota.sid)
+        .first()
+    )
+
+    assert updated_quota.origins.approved_up_to_transaction(last_tx).count() == 1
+    updated_origin = (
+        updated_quota.quotaordernumberorigin_set.approved_up_to_transaction(
+            last_tx,
+        ).first()
+    )
+    assert (
+        updated_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+            last_tx,
+        ).count()
+        == 0
+    )
+    # update quota
+    # update quota origin 1
+    # delete quota origin 1 exclusion
+    # delete quota origin 2
+    assert updated_origin.transaction.workbasket.tracked_models.count() == 4
+    assert sorted(
+        [
+            item.get_update_type_display()
+            for item in updated_origin.transaction.workbasket.tracked_models.all()
+        ],
+    ) == ["Delete", "Delete", "Update", "Update"]

@@ -20,11 +20,11 @@
 {% block header %}
 
 {% set workbasket_html %}
-  {% if request.session.workbasket %}
+  {% if request.user.current_workbasket %}
     <a
       href="{{ url('workbaskets:current-workbasket') }}"
       class="govuk-header__link workbasket-link"
-    >Workbasket {{ request.session.workbasket.id }} {{ workbasket_svg }}</a>
+    >Workbasket {{ request.user.current_workbasket.id }} {{ workbasket_svg }}</a>
   {% endif %}
 {% endset %}
 
@@ -66,7 +66,7 @@
     "meta": {
       "items": [
         {
-          "href": "https://workspace.trade.gov.uk/working-at-dit/policies-and-guidance/policies/tariff-application-privacy-policy/",
+          "href": "https://workspace.trade.gov.uk/working-at-dbt/policies-and-guidance/policies/tariff-application-privacy-policy/",
           "text": "Privacy policy"
         },
         {

@@ -1,15 +1,15 @@
-# Create your views here.
 from datetime import date
 
 from django.db.models import Q
 from django.views.generic import TemplateView
 
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalAreaDescription
 from measures.models import Measure
 
 
 class ReferenceDocumentsListView(TemplateView):
-    template_name = "reference_documents/list.jinja"
+    template_name = "reference_document_examples/index.jinja"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -26,7 +26,7 @@ class ReferenceDocumentsListView(TemplateView):
 
 
 class ReferenceDocumentsDetailView(TemplateView):
-    template_name = "reference_documents/detail.jinja"
+    template_name = "reference_document_examples/details.jinja"
 
     def get_pref_duty_rates(self):
         """Returns a list of measures associated with the Albania Preferential
@@ -95,3 +95,16 @@ class ReferenceDocumentsDetailView(TemplateView):
             "quotas": self.get_tariff_quota_data(),
         }
         return context
+
+    def get_name_by_area_id(self, area_id):
+        geo_area = (
+            GeographicalArea.objects.latest_approved().filter(area_id=area_id).first()
+        )
+        if geo_area:
+            geo_area_name = (
+                GeographicalAreaDescription.objects.latest_approved()
+                .filter(described_geographicalarea_id=geo_area.trackedmodel_ptr_id)
+                .last()
+            )
+            return geo_area_name.description if geo_area_name else "None"
+        return "None"

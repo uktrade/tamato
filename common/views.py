@@ -48,7 +48,7 @@ from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class HomeView(FormView, View):
-    template_name = "common/workbasket_action.jinja"
+    template_name = "common/index.jinja"
     form_class = forms.HomeForm
 
     REDIRECT_MAPPING = {
@@ -58,7 +58,8 @@ class HomeView(FormView, View):
         "PROCESS_ENVELOPES": "publishing:envelope-queue-ui-list",
         "SEARCH": "search-page",
         "IMPORT": "commodity_importer-ui-list",
-        "VIEW_REF_DOCS": "reference_documents-ui-list",
+        "REF_DOCS_EXAMPLES": "reference_documents:example-ui-index",
+        "REF_DOCS": "reference_documents:index",
         "WORKBASKET_LIST_ALL": "workbaskets:workbasket-ui-list-all",
     }
 
@@ -463,6 +464,10 @@ def handler403(request, *args, **kwargs):
 
 def handler500(request, *args, **kwargs):
     return TemplateResponse(request=request, template="common/500.jinja", status=500)
+
+
+class MaintenanceView(TemplateView):
+    template_name = "common/maintenance.jinja"
 
 
 class AccessibilityStatementView(TemplateView):

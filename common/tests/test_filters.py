@@ -48,10 +48,10 @@ def test_search_queryset_returns_case_insensitive():
 
 def test_filter_by_current_workbasket_mixin(
     valid_user_client,
-    session_workbasket,
+    user_workbasket,
     session_request,
 ):
-    with session_workbasket.new_transaction() as transaction:
+    with user_workbasket.new_transaction() as transaction:
         commodity_in_workbasket_1 = GoodsNomenclatureFactory.create(
             transaction=transaction,
         )
@@ -61,9 +61,6 @@ def test_filter_by_current_workbasket_mixin(
     commodity_not_in_workbasket_1 = GoodsNomenclatureFactory.create()
     commodity_not_in_workbasket_2 = GoodsNomenclatureFactory.create()
 
-    session = valid_user_client.session
-    session["workbasket"] = {"id": session_workbasket.pk}
-    session.save()
     qs = GoodsNomenclature.objects.all()
 
     self = CommodityFilter(

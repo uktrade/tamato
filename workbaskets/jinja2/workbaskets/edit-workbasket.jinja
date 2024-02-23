@@ -3,8 +3,8 @@
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
 {% set page_title %}
-  Workbasket {{ request.session.workbasket.id }}
-  {% if request.session.workbasket.title %} - Add/edit items{% endif %}
+  Workbasket {{ request.user.current_workbasket.id }}
+  {% if request.user.current_workbasket.title %} - Add/edit items{% endif %}
 {% endset %}
 
 
@@ -13,8 +13,8 @@
     "items": [
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Summary", "href": url("workbaskets:current-workbasket") },
-      {"text": "Workbasket " ~ request.session.workbasket.id ~ " - Add/edit items" }
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Summary", "href": url("workbaskets:current-workbasket") },
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Add/edit items" }
     ]
   }) }}
 {% endblock %}

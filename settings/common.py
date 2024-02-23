@@ -23,6 +23,8 @@ SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
 VCAP_APPLICATION = json.loads(os.environ.get("VCAP_APPLICATION", "{}"))
 
+MAINTENANCE_MODE = is_truthy(os.environ.get("MAINTENANCE_MODE", "False"))
+
 # -- Debug
 
 # Activates debugging
@@ -122,10 +124,10 @@ TAMATO_APPS = [
     "importer",
     "notifications",
     # XXX need to keep this for migrations. delete later.
+    "reference_documents",
     "publishing",
     "taric",
     "workbaskets",
-    "reference_documents",
     "exporter.apps.ExporterConfig",
     "crispy_forms",
     "crispy_forms_gds",
@@ -150,14 +152,25 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "common.models.utils.ValidateSessionWorkBasketMiddleware",
+    "common.models.utils.ValidateUserWorkBasketMiddleware",
     "common.models.utils.TransactionMiddleware",
     "csp.middleware.CSPMiddleware",
 ]
-if SSO_ENABLED:
+
+if SSO_ENABLED and not MAINTENANCE_MODE:
     MIDDLEWARE += [
         "authbroker_client.middleware.ProtectAllViewsMiddleware",
     ]
+
+if MAINTENANCE_MODE:
+    INSTALLED_APPS.remove("django.contrib.admin")
+
+    MIDDLEWARE.remove("django.contrib.sessions.middleware.SessionMiddleware")
+    MIDDLEWARE.remove("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.remove("django.contrib.messages.middleware.MessageMiddleware")
+    MIDDLEWARE.remove("common.models.utils.TransactionMiddleware")
+    MIDDLEWARE.remove("common.models.utils.ValidateUserWorkBasketMiddleware")
+    MIDDLEWARE.append("common.middleware.MaintenanceModeMiddleware")
 
 TEMPLATES = [
     {
@@ -244,6 +257,8 @@ if SSO_ENABLED:
         "authbroker_client.backends.AuthbrokerBackend",
     ]
 
+AUTH_USER_MODEL = "common.User"
+
 # -- Security
 SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")
 
@@ -295,9 +310,12 @@ if VCAP_SERVICES.get("postgres"):
 else:
     DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
 
-DATABASES = {
-    "default": dj_database_url.parse(DB_URL),
-}
+if not MAINTENANCE_MODE:
+    DATABASES = {
+        "default": dj_database_url.parse(DB_URL),
+    }
+else:
+    DATABASES = {}
 
 SQLITE = DB_URL.startswith("sqlite")
 
@@ -792,3 +810,5 @@ FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
 )  # Order is important
+
+DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "10000"))

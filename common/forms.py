@@ -250,8 +250,12 @@ class HMRCCDSManagerActions(TextChoices):
 
 class CommonUserActions(TextChoices):
     SEARCH = "SEARCH", "Search the tariff"
+
+
+class ReferenceDocumentsActions(TextChoices):
     # Change this to be dependent on permissions later
-    VIEW_REF_DOCS = "VIEW_REF_DOCS", "View reference documents"
+    REF_DOCS_EXAMPLES = "REF_DOCS_EXAMPLES", "View example reference document index"
+    REF_DOCS = "REF_DOCS", "View reference documents"
 
 
 class ImportUserActions(TextChoices):
@@ -279,6 +283,9 @@ class HomeForm(forms.Form):
             choices += HMRCCDSManagerActions.choices
 
         choices += CommonUserActions.choices
+
+        if self.user.has_perm("reference_documents.view_reference_document"):
+            choices += ReferenceDocumentsActions.choices
 
         if self.user.has_perm("common.add_trackedmodel") or self.user.has_perm(
             "common.change_trackedmodel",
@@ -757,17 +764,15 @@ def unprefix_formset_data(prefix, data):
     for i in range(0, num_items):
         subform_initial = {}
         for k, v in formset_data.items():
-            if v:
-                if k.startswith(f"{prefix}-{i}-"):
-                    subform_initial[k.split(f"{prefix}-{i}-")[1]] = v
+            if k.startswith(f"{prefix}-{i}-"):
+                subform_initial[k.split(f"{prefix}-{i}-")[1]] = v
         if subform_initial:
             output.append(subform_initial)
 
     for k, v in formset_data.items():
         subform_initial = {}
-        if v:
-            if k.startswith(f"{prefix}-__prefix__-"):
-                subform_initial[k.split(f"{prefix}-__prefix__-")[1]] = v
+        if k.startswith(f"{prefix}-__prefix__-"):
+            subform_initial[k.split(f"{prefix}-__prefix__-")[1]] = v
     if subform_initial:
         output.append(subform_initial)
 

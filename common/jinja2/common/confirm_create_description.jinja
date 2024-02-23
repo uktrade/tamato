@@ -36,7 +36,7 @@
       <ul class="govuk-list govuk-list-spaced">
         <li><a class="govuk-link" href="{{ described_object.get_url() }}">View {{ described_object._meta.verbose_name }} {{ described_object|string }}</a></li>
         <li><a class="govuk-link" href="{{ described_object.get_url("list") }}">Find and edit {{ described_object._meta.verbose_name_plural }}</a></li>
-        {% if request.session.workbasket %}
+        {% if request.user.current_workbasket %}
         <li><a class="govuk-link" href="{{ url('workbaskets:edit-workbasket') }}">Return to workbasket</a></li>
         {% endif %}
       </ul>

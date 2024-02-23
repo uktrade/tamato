@@ -35,11 +35,19 @@ class FootnoteForm(ValidityPeriodForm):
 
         if self.instance.pk:
             self.fields["code"].disabled = True
-            self.fields["code"].help_text = "You can't edit this"
+            self.fields[
+                "code"
+            ].help_text = (
+                "Footnote IDs are automatically generated and cannot be edited."
+            )
             self.fields["code"].initial = str(self.instance)
 
             self.fields["footnote_type"].disabled = True
-            self.fields["footnote_type"].help_text = "You can't edit this"
+            self.fields[
+                "footnote_type"
+            ].help_text = (
+                "Once a footnote is published, you cannot edit the footnote type."
+            )
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -91,8 +99,8 @@ class FootnoteCreateBaseForm(ValidityPeriodForm):
     footnote_type = forms.ModelChoiceField(
         label="Footnote type",
         help_text=(
-            "Selecting the right footnote type will determine whether it can "
-            "be associated with measures, commodity codes, or both."
+            "The footnote type will determine whether it can be"
+            "associated with measures, commodity codes, or both."
         ),
         queryset=models.FootnoteType.objects.latest_approved(),
         empty_label="Select a footnote type",
@@ -150,6 +158,7 @@ class FootnoteCreateForm(FootnoteCreateBaseForm):
         self.helper.layout = Layout(
             "footnote_type",
             "start_date",
+            "end_date",
             Field.textarea("description", rows=5),
             DescriptionHelpBox(),
             Submit(
@@ -187,6 +196,7 @@ class FootnoteEditCreateForm(FootnoteCreateBaseForm):
         self.helper.layout = Layout(
             "footnote_type",
             "start_date",
+            "end_date",
             Submit(
                 "submit",
                 "Save",

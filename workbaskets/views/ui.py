@@ -49,8 +49,11 @@ from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
 from publishing.models import PackagedWorkBasket
+from quotas.models import QuotaAssociation
+from quotas.models import QuotaBlocking
 from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaSuspension
 from regulations.models import Regulation
 from workbaskets import forms
 from workbaskets.models import DataRow
@@ -99,7 +102,7 @@ class WorkBasketCreate(PermissionRequiredMixin, CreateView):
         self.object = form.save(commit=False)
         self.object.author = user
         self.object.save()
-        self.object.save_to_session(self.request.session)
+        self.object.assign_to_user(self.request.user)
         return redirect(
             reverse(
                 "workbaskets:workbasket-ui-confirm-create",
@@ -184,7 +187,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
                 workbasket.restore()
                 workbasket.save()
 
-            workbasket.save_to_session(request.session)
+            workbasket.assign_to_user(request.user)
 
             if workbasket_tab:
                 view = workbasket_tab_map[workbasket_tab]
@@ -272,7 +275,7 @@ class WorkBasketChangesConfirmDelete(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["user_workbasket"] = WorkBasket.current(self.request)
         context["view_workbasket"] = WorkBasket.objects.get(pk=self.kwargs["pk"])
         return context
 
@@ -434,7 +437,7 @@ class CurrentWorkBasket(TemplateView):
             if result.status != "SUCCESS":
                 context.update({"rule_check_in_progress": True})
             else:
-                self.workbasket.save_to_session(self.request.session)
+                self.workbasket.assign_to_user(self.request.user)
 
             num_completed, total = self.workbasket.rule_check_progress()
             context.update(
@@ -1218,7 +1221,7 @@ class WorkBasketChecksView(FormView):
             if result.status != "SUCCESS":
                 context.update({"rule_check_in_progress": True})
             else:
-                self.workbasket.save_to_session(self.request.session)
+                self.workbasket.assign_to_user(self.request.user)
 
             num_completed, total = self.workbasket.rule_check_progress()
             context.update(
@@ -1249,7 +1252,7 @@ class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["user_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
         return context
 
@@ -1297,7 +1300,7 @@ class WorkbasketReviewGoodsView(
         context = super().get_context_data(*args, **kwargs)
         context["tab_page_title"] = "Review commodities"
         context["selected_tab"] = "commodities"
-        context["session_workbasket"] = WorkBasket.current(self.request)
+        context["user_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
         context["report_lines"] = []
         context["import_batch_pk"] = None
@@ -1363,7 +1366,7 @@ class WorkbasketReviewGoodsView(
             context["import_batch_pk"] = import_batch.pk
 
             # notifications only relevant to a goods import
-            if context["workbasket"] == context["session_workbasket"]:
+            if context["workbasket"] == context["user_workbasket"]:
                 context["unsent_notification"] = (
                     import_batch.goods_import
                     and not Notification.objects.filter(
@@ -1478,6 +1481,58 @@ class WorkBasketReviewQuotaDefinitionsView(WorkBasketReviewView):
         return context
 
 
+class WorkBasketReviewSubQuotasView(WorkBasketReviewView):
+    """UI endpoint for reviewing sub-quota association changes in a
+    workbasket."""
+
+    model = QuotaAssociation
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review sub-quota associations"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "sub-quotas"
+        context["tab_template"] = "includes/workbaskets/review-sub-quotas.jinja"
+        return context
+
+
+class WorkBasketReviewQuotaBlockingView(WorkBasketReviewView):
+    """UI endpoint for reviewing quota blocking period changes in a
+    workbasket."""
+
+    model = QuotaBlocking
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota blocking periods"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "blocking-periods"
+        context[
+            "tab_template"
+        ] = "includes/workbaskets/review-quota-blocking-periods.jinja"
+        return context
+
+
+class WorkBasketReviewQuotaSuspensionView(WorkBasketReviewView):
+    """UI endpoint for reviewing quota suspension period changes in a
+    workbasket."""
+
+    model = QuotaSuspension
+    template_name = "workbaskets/review-quotas.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review quota suspension periods"
+        context["selected_tab"] = "quotas"
+        context["selected_nested_tab"] = "suspension-periods"
+        context[
+            "tab_template"
+        ] = "includes/workbaskets/review-quota-suspension-periods.jinja"
+        return context
+
+
 class WorkBasketReviewRegulationsView(WorkBasketReviewView):
     """UI endpoint for reviewing regulation changes in a workbasket."""
 
@@ -1489,3 +1544,10 @@ class WorkBasketReviewRegulationsView(WorkBasketReviewView):
         context["selected_tab"] = "regulations"
         context["tab_template"] = "includes/regulations/list.jinja"
         return context
+
+
+class NoActiveWorkBasket(TemplateView):
+    """Redirect endpoint for users without an active workbasket and views that
+    require one."""
+
+    template_name = "workbaskets/no_active_workbasket.jinja"

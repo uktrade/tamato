@@ -8,9 +8,11 @@ from typing import Tuple
 
 from celery.result import AsyncResult
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Max
 from django.db.models import QuerySet
 from django.db.models import Subquery
 from django_fsm import FSMField
@@ -31,6 +33,8 @@ from workbaskets.util import serialize_uploaded_data
 from workbaskets.validators import WorkflowStatus
 
 logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 
 class TransactionPartitionScheme:
@@ -494,14 +498,10 @@ class WorkBasket(TimestampedMixin):
         """WorkBasket is ready to be worked on again after being rejected by
         CDS."""
 
-    def save_to_session(self, session):
-        session["workbasket"] = {
-            "id": self.pk,
-            "status": self.status,
-            "title": self.title,
-            "error_count": self.tracked_model_check_errors.count(),
-            "measure_count": self.measures.count(),
-        }
+    def assign_to_user(self, user) -> None:
+        """Assigns this instance as `user`'s current workbasket."""
+        user.current_workbasket = self
+        user.save()
 
     @property
     def tracked_models(self) -> TrackedModelQuerySet:
@@ -512,27 +512,17 @@ class WorkBasket(TimestampedMixin):
         return Measure.objects.filter(transaction__workbasket=self)
 
     @classmethod
-    def load_from_session(cls, session):
-        if "workbasket" not in session:
-            raise KeyError("WorkBasket not in session")
-        return WorkBasket.objects.get(pk=session["workbasket"]["id"])
-
-    @classmethod
-    def remove_current_from_session(cls, session):
-        """Remove the current workbasket from the user's session."""
-        if "workbasket" in session:
-            del session["workbasket"]
-
-    @classmethod
     def current(cls, request):
-        """Get the current workbasket in the session."""
-        if "workbasket" in request.session:
-            workbasket = cls.load_from_session(request.session)
+        """Get the user's current workbasket."""
+        try:
+            workbasket = request.user.current_workbasket
+        except AttributeError:
+            return None
 
+        if workbasket is not None:
             if workbasket.status != WorkflowStatus.EDITING:
-                cls.remove_current_from_session(request.session)
+                request.user.remove_current_workbasket()
                 return None
-
             return workbasket
         else:
             return None
@@ -619,15 +609,33 @@ class WorkBasket(TimestampedMixin):
 
     @property
     def unchecked_or_errored_transactions(self):
-        return self.transactions.exclude(
+        """
+        Returns unchecked, errored or out of date transactions from the
+        workbaskets.
+
+        The query excludes transactions which have a corresponding transaction
+        check which has been completed, successful and was created after the
+        latest updated_at in the transactions tracked models. Lasted is
+        retrieved by annotating all the transactions for the workbasket with the
+        latest updated for its containing tracked models then we aggregate the
+        latest time from all the transactions.
+        """
+        latest = (
+            self.transactions.all()
+            .annotate(latest_updated_in_transaction=Max("tracked_models__updated_at"))
+            .aggregate(Max("latest_updated_in_transaction"))
+        )
+        returned = self.transactions.exclude(
             pk__in=TransactionCheck.objects.requires_update(False)
             .filter(
                 completed=True,
                 successful=True,
                 transaction__workbasket=self,
+                created_at__gt=latest["latest_updated_in_transaction__max"],
             )
             .values("transaction__pk"),
         )
+        return returned
 
     class Meta:
         verbose_name = "workbasket"
