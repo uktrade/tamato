@@ -57,7 +57,7 @@ ui_patterns = [
         name="measure-ui-create",
     ),
     path(
-        "create/done-async/<int:expected_measures_count>",
+        "create/done-async/<int:expected_measures_count>/",
         views.MeasuresWizardCreateConfirm.as_view(),
         name="measure-ui-create-confirm",
     ),
