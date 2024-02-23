@@ -1,7 +1,6 @@
 {% from "components/phase-banner/macro.njk" import govukPhaseBanner %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/footer/macro.njk" import govukFooter %}
-{% from "macros/govuk-header_no_crown.jinja" import govuk_header_no_crown %}
 
 {% extends "layouts/_generic.jinja" %}
 
@@ -29,7 +28,7 @@
   {% endif %}
 {% endset %}
 
-{{ govuk_header_no_crown({
+{{ govukHeader({
   "homepageUrl": "https://gov.uk/",
   "serviceName": service_name,
   "serviceUrl": "/",
@@ -40,6 +39,7 @@
       "text": "Sign out" if request.user.is_authenticated else "Sign In"
     } if not settings.SSO_ENABLED else "",
   ],
+      "useTudorCrown": true,
 }) }}
 {% endblock %}
 {% block beforeContent %}
