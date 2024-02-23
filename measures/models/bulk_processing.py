@@ -138,14 +138,16 @@ class MeasuresBulkCreatorManager(models.Manager):
         form_data: Dict,
         form_kwargs: Dict,
         current_transaction: Transaction,
+        workbasket,
         **kwargs,
     ) -> "MeasuresBulkCreator":
         """Create and save an instance of MeasuresBulkCreator."""
+
         return super().create(
             form_data=form_data,
             form_kwargs=form_kwargs,
             current_transaction=current_transaction,
-            workbasket=current_transaction.workbasket,
+            workbasket=workbasket,
             **kwargs,
         )
 

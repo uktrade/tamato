@@ -877,17 +877,13 @@ class MeasureCreateWizard(
             form_data=serializable_data,
             form_kwargs=serializable_form_kwargs,
             current_transaction=get_current_transaction(),
+            workbasket=self.workbasket,
         )
         measures_bulk_creator.schedule()
 
-        # TODO: Remove Exception.
-        raise Exception("Stop here for now.")
-
         return redirect(
             "measure-ui-create-confirm",
-            kwargs={
-                "expected_measures_count": measures_bulk_creator.expected_measures_count,
-            },
+            expected_measures_count=measures_bulk_creator.expected_measures_count,
         )
 
     def all_serializable_form_data(self) -> Dict:
@@ -1087,9 +1083,10 @@ class MeasureCreateWizard(
 
 
 class MeasuresWizardCreateConfirm(TemplateView):
+    template_name = "measures/confirm-create-multiple-async.jinja"
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         context["expected_measures_count"] = self.kwargs.get("expected_measures_count")
         return context
 
