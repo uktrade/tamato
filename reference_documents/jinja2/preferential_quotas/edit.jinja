@@ -1,0 +1,14 @@
+{% extends "layouts/layout.jinja" %}
+
+{% set page_title = "Preferential duty rates" %}
+
+{% block content %}
+
+<form method="post">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    {{ form.as_p() }}
+    <input type="submit" value="Update">
+</form>
+
+{% endblock %}
+

@@ -4,10 +4,26 @@
 <div class="quota__core-data govuk-grid-row">
     <div class="quota__core-data__content govuk-grid-column-three-quarters">
         {% for key, value in reference_document_version_quotas.items() %}
-            <h2 class="govuk-heading-m" id="subsection-title">Order Number {{ key }}</h2>
-        	{{ govukTable({
+            {% if value["quota_order_number"] != None %}
+                <h2 class="govuk-heading-m" id="subsection-title">Order Number
+                    <a class="govuk-link" href="{{ url("quota-ui-detail", args=[value["quota_order_number"].sid] ) }}">
+                        {{ value["quota_order_number"] }}
+                    </a>
+                </h2>
+                <div class="govuk-body">
+                    validity: from {{ value["quota_order_number"].valid_between.lower }}
+                    {% if value["quota_order_number"].valid_between.upper == None %}
+                        no end date defined
+                    {% else %}
+                        to {{ value["quota_order_number"].valid_between.upper }}
+                    {% endif %}
+                </div>
+            {% else %}
+                <h2 class="govuk-heading-m" id="subsection-title">Order Number {{ value["quota_order_number"] }}</h2>
+            {% endif %}
+            {{ govukTable({
             "head": reference_document_version_quotas_headers,
-            "rows": value
+            "rows": value['data_rows']
             }) }}
         {% endfor %}
     </div>

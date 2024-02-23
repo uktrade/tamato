@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.urls import reverse
 from django.views.generic import DetailView
 from django.views.generic import ListView
 
@@ -90,6 +91,7 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
             {"text": "Version"},
             {"text": "Duties"},
             {"text": "Quotas"},
+            {"text": "EIF date"},
             {"text": "Actions"},
         ]
         reference_document_versions = []
@@ -111,7 +113,11 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
                         "text": version.preferential_quotas.count(),
                     },
                     {
+                        "text": version.entry_into_force_date,
+                    },
+                    {
                         "html": f'<a href="/reference_document_versions/{version.id}">version details</a><br>'
+                        f'<a href="{reverse("reference_documents:reference_document_version_edit", args=[version.pk])}">Edit</a><br>'
                         f'<a href="/reference_document_version_alignment_reports/{version.id}">Alignment reports</a>',
                     },
                 ],

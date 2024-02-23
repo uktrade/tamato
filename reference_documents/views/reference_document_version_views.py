@@ -1,8 +1,12 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.urls import reverse
+from django.urls import reverse_lazy
 from django.views.generic import DetailView
+from django.views.generic import UpdateView
 
 from commodities.models import GoodsNomenclature
 from geo_areas.models import GeographicalAreaDescription
+from quotas.models import QuotaOrderNumber
 from reference_documents.models import AlignmentReportCheckStatus
 from reference_documents.models import ReferenceDocumentVersion
 
@@ -41,6 +45,25 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
 
         return goods.first()
 
+    def get_tap_order_number(self, quota):
+        # todo: This needs to consider the validity period(s)
+        # may need to handle in the pre processing of the data e.g. where the volume defines multiple periods
+
+        if quota.reference_document_version.entry_into_force_date is not None:
+            contains_date = quota.reference_document_version.entry_into_force_date
+        else:
+            contains_date = quota.reference_document_version.published_date
+
+        quota_order_number = QuotaOrderNumber.objects.latest_approved().filter(
+            order_number=quota.quota_order_number,
+            valid_between__contains=contains_date,
+        )
+
+        if len(quota_order_number) == 0:
+            return None
+
+        return quota_order_number.first()
+
     def get_context_data(self, *args, **kwargs):
         context = super(ReferenceDocumentVersionDetails, self).get_context_data(
             *args,
@@ -75,11 +98,6 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
         latest_alignment_report = context["object"].alignment_reports.last()
 
         for duty in context["object"].preferential_rates.order_by("order"):
-            validity = ""
-
-            if duty.valid_start_day:
-                validity = f"{duty.valid_start_day}/{duty.valid_start_month} - {duty.valid_end_day}/{duty.valid_end_month}"
-
             failure_count = (
                 duty.preferential_rate_checks.all()
                 .filter(
@@ -120,7 +138,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                         "text": duty.duty_rate,
                     },
                     {
-                        "text": validity,
+                        "text": duty.valid_between,
                     },
                     {
                         "html": checks_output,
@@ -133,11 +151,6 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
 
         # order numbers
         for quota in context["object"].preferential_quotas.order_by("order"):
-            validity = ""
-
-            if quota.valid_start_day:
-                validity = f"{quota.valid_start_day}/{quota.valid_start_month} - {quota.valid_end_day}/{quota.valid_end_month}"
-
             failure_count = (
                 quota.preferential_quota_checks.all()
                 .filter(
@@ -162,6 +175,8 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             else:
                 checks_output = f'<div class="check-passing">PASS</div>'
 
+            quota_order_number = self.get_tap_order_number(quota)
+
             comm_code = self.get_tap_comm_code(quota)
             if comm_code:
                 comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
@@ -179,27 +194,51 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                     "text": f"{quota.volume} {quota.measurement}",
                 },
                 {
-                    "text": validity,
+                    "text": quota.valid_between,
                 },
                 {
                     "html": checks_output,
                 },
                 {
-                    "text": "",
+                    "html": f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> "
+                    f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk])}'>Delete</a>",
                 },
             ]
 
             if quota.quota_order_number in reference_document_version_quotas.keys():
-                reference_document_version_quotas[quota.quota_order_number].append(
+                reference_document_version_quotas[quota.quota_order_number][
+                    "data_rows"
+                ].append(
                     row_to_add,
                 )
             else:
-                reference_document_version_quotas[quota.quota_order_number] = [
-                    row_to_add,
-                ]
+                reference_document_version_quotas[quota.quota_order_number] = {
+                    "data_rows": [row_to_add],
+                    "quota_order_number": quota_order_number,
+                }
 
         context["reference_document_version_duties"] = reference_document_version_duties
-
         context["reference_document_version_quotas"] = reference_document_version_quotas
 
         return context
+
+
+class ReferenceDocumentVersionEditView(PermissionRequiredMixin, UpdateView):
+    template_name = "reference_document_versions/edit.jinja"
+    permission_required = "reference_documents.edit_reference_document"
+    model = ReferenceDocumentVersion
+    fields = ["version", "published_date", "entry_into_force_date"]
+
+    # def post(self, request, *args, **kwargs):
+    #     reference_document_version = self.get_object()
+    #     reference_document_version.save()
+    #     return redirect(reverse("reference_documents:details", args=[reference_document_version.reference_document.pk]))
+
+    def form_valid(self, form):
+        return super(ReferenceDocumentVersionEditView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "reference_documents:details",
+            args=[self.object.id],
+        )

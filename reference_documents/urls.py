@@ -3,6 +3,7 @@ from rest_framework import routers
 
 from reference_documents.views import alignment_report_views
 from reference_documents.views import example_views
+from reference_documents.views import preferential_quotas
 from reference_documents.views import reference_document_version_views
 from reference_documents.views import reference_document_views
 
@@ -39,6 +40,11 @@ urlpatterns = [
         reference_document_version_views.ReferenceDocumentVersionDetails.as_view(),
         name="version_details",
     ),
+    path(
+        "reference_document_versions/edit/<pk>/",
+        reference_document_version_views.ReferenceDocumentVersionEditView.as_view(),
+        name="reference_document_version_edit",
+    ),
     # Alignment report views
     path(
         "reference_document_version_alignment_reports/<pk>/",
@@ -49,5 +55,16 @@ urlpatterns = [
         "alignment_reports/<pk>/",
         alignment_report_views.AlignmentReportsDetailsView.as_view(),
         name="alignment_reports",
+    ),
+    # Preferential Quotas
+    path(
+        "preferential_quotas/delete/<pk>/",
+        preferential_quotas.PreferentialQuotaDeleteView.as_view(),
+        name="preferential_quotas_delete",
+    ),
+    path(
+        "preferential_quotas/edit/<pk>/",
+        preferential_quotas.PreferentialQuotaEditView.as_view(),
+        name="preferential_quotas_edit",
     ),
 ]

@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models import fields
 from django_fsm import FSMField
 
+from common.fields import TaricDateRangeField
+
 
 class ReferenceDocumentVersionStatus(models.TextChoices):
     # Reference document version can be edited
@@ -74,10 +76,12 @@ class PreferentialRate(models.Model):
         related_name="preferential_rates",
     )
 
-    valid_start_day = models.IntegerField(blank=True, null=True)
-    valid_start_month = models.IntegerField(blank=True, null=True)
-    valid_end_day = models.IntegerField(blank=True, null=True)
-    valid_end_month = models.IntegerField(blank=True, null=True)
+    valid_between = TaricDateRangeField(
+        db_index=True,
+        null=True,
+        blank=True,
+        default=None,
+    )
 
 
 class PreferentialQuota(models.Model):
@@ -96,10 +100,12 @@ class PreferentialQuota(models.Model):
         max_length=255,
     )
 
-    valid_start_day = models.IntegerField(blank=True, null=True)
-    valid_start_month = models.IntegerField(blank=True, null=True)
-    valid_end_day = models.IntegerField(blank=True, null=True)
-    valid_end_month = models.IntegerField(blank=True, null=True)
+    valid_between = TaricDateRangeField(
+        db_index=True,
+        null=True,
+        blank=True,
+        default=None,
+    )
 
     measurement = models.CharField(
         max_length=255,
