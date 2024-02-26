@@ -1724,10 +1724,11 @@ def test_ME70():
 def test_ME71_ME72(application_code, item_id, error_expected):
     """
     Footnotes with a footnote type for which the application type = "CN
-    footnotes" cannot be associated with TARIC codes (codes with pos.
+    footnotes" cannot be associated with TARIC codes (codes with position 9-10
+    different from 00).
 
-    9-10 different from 00). Footnotes with a footnote type for which the
-    application type = "measure footnotes" can be associated at any level.
+    Footnotes with a footnote type for which the application type = "measure
+    footnotes" can be associated at any level.
     """
 
     assoc = factories.FootnoteAssociationMeasureFactory.create(

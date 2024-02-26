@@ -27,7 +27,7 @@
   <div class="govuk-grid-row govuk-!-margin-bottom-5">
     <div class="govuk-grid-column-full">
       {{ govukWarningText({
-        "text": "Are you sure you want to permanently remove the " ~ object_list|length ~ " tariff changes below from workbasket " ~ request.user.current_workbasket.pk ~ "?",
+        "text": "Are you sure you want to permanently remove the " ~ object_list|length ~ " tariff change" ~ view.workbasket.tracked_models.count()|pluralize ~ " below from workbasket " ~ request.user.current_workbasket.pk ~ "?",
         "iconFallbackText": "Warning"
       }) }}
 

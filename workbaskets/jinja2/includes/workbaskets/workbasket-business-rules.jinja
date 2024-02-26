@@ -74,7 +74,7 @@ govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--seco
 
 {% if rule_check_in_progress %}
   {% set live_rule_check_status %}
-    Rule check in progress. Checking {{ workbasket.tracked_models.count() }} items in basket.
+    Rule check in progress. Checking {{ workbasket.tracked_models.count() }} item{{ workbasket.tracked_models.count()|pluralize }} in basket.
     {{ rule_check_progress }}.
     Come back later or refresh to see results.
   {% endset %}
