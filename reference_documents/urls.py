@@ -34,6 +34,16 @@ urlpatterns = [
         reference_document_views.ReferenceDocumentDetails.as_view(),
         name="details",
     ),
+    path(
+        "reference_documents/create/",
+        reference_document_views.ReferenceDocumentCreate.as_view(),
+        name="create",
+    ),
+    path(
+        "reference_documents/<pk>/update/",
+        reference_document_views.ReferenceDocumentUpdate.as_view(),
+        name="update",
+    ),
     # reference document version views
     path(
         "reference_document_versions/<pk>/",
