@@ -2,6 +2,7 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 {% set page_title = 'Reference Documents Index' %}
+{% set create_url = "create" %}
 
 {% block breadcrumb %}
     {{ breadcrumbs(request, [
@@ -14,7 +15,11 @@
         Reference Documents
     </h1>
     <span class="govuk-caption-xl govuk-!-margin-bottom-9">You will find a list of reference documents below that can be viewed.</span>
-
+    <p class="govuk-body">
+    <a class="govuk-link" href="{{ create_url }}">
+    Create a new Reference Document
+    </a>
+    </p>
     <div>
         {{ govukTable({ "head": reference_document_headers, "rows": reference_documents }) }}
     </div>
