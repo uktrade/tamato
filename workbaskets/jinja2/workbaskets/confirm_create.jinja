@@ -1,15 +1,19 @@
 {% extends "layouts/layout.jinja" %}
 
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
 {% set page_title = "Create a new " ~ object._meta.verbose_name %}
 
 {% block breadcrumb %}
-  {{ breadcrumbs(request, [
-      {"text": page_title}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Create a new workbasket", "href": url("workbaskets:workbasket-ui-create") },
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " created"}
     ]
-  ) }}
+  }) }}
 {% endblock %}
 
 {% block content %}

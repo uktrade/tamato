@@ -20,12 +20,12 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.parametrize(
     ("action", "permission"),
     [
-        ("Create new workbasket", "add_workbasket"),
+        ("Create a new workbasket", "add_workbasket"),
         ("Edit workbaskets", "add_workbasket"),
         ("Package workbaskets", "manage_packaging_queue"),
         ("Process envelopes", "consume_from_packaging_queue"),
         ("Search the tariff", ""),
-        ("Import EU Taric files", "add_trackedmodel"),
+        ("Import EU TARIC files", "add_trackedmodel"),
         ("Search for workbaskets", "view_workbasket"),
     ],
 )
@@ -240,7 +240,7 @@ def test_accessibility_statement_view_returns_200(valid_user_client):
 
     page = BeautifulSoup(str(response.content), "html.parser")
     assert (
-        "Accessibility statement for the Tariff application platform"
+        "Accessibility statement for the Tariff management tool"
         in page.select("h1")[0].text
     )
 

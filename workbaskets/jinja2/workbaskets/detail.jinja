@@ -35,11 +35,11 @@
             {"html": create_workbasket_status_tag(workbasket.status)},
           ],
           [
-            {"text": "Workbasket ID"},
+            {"text": "ID"},
             {"text": workbasket.pk}
           ],
           [
-            {"text": "Jira number"},
+            {"text": "TOPS/Jira number"},
             {"text": workbasket.title},
           ],
           [
@@ -55,7 +55,7 @@
             {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
           ],
           [
-            {"text": "Activity date"},
+            {"text": "Last updated"},
             {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)}
           ],
       ]}) }}
@@ -72,8 +72,8 @@
   {% endif %}
 
   {{ govukButton({
-    "text": "Return to homepage",
-    "href": url("home"),
+    "text": "Return to Find and view workbaskets",
+    "href": url("workbaskets:workbasket-ui-list-all"),
     "classes": "govuk-button--secondary",
   }) }}
   </div>
