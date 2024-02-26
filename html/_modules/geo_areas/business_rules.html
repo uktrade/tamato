@@ -142,7 +142,7 @@
 
 
 <div class="viewcode-block" id="GA1"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA1">[docs]</a><span class="k">class</span> <span class="nc">GA1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The combination geographical area id + validity start date must be</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The combination of geographical area id + validity start date must be</span>
 <span class="sd">    unique.&quot;&quot;&quot;</span>
 
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;area_id&quot;</span><span class="p">,</span> <span class="s2">&quot;valid_between__lower&quot;</span><span class="p">)</span></div>
@@ -171,9 +171,8 @@
 
 
 <div class="viewcode-block" id="GA4"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA4">[docs]</a><span class="k">class</span> <span class="nc">GA4</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The referenced parent geographical area group must be an existing geographical</span>
-<span class="sd">    area with area code = 1 (geographical area group).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The referenced parent geographical area group must be an existing</span>
+<span class="sd">    geographical area with area code = 1 (geographical area group).&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="GA4.validate"><a class="viewcode-back" href="../../business_rules/geo_areas.html#geo_areas.business_rules.GA4.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geo_area</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
