@@ -57,8 +57,8 @@ class BindNestedFormMixin:
         return bound_form
 
     def bind_nested_forms(self, *args, **kwargs):
-        if kwargs.get("instance"):
-            kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
+        # this mixin does not support ModelForm as subforms
+        kwargs.pop("instance", None)
 
         for name, field in self.fields.items():
             if isinstance(field, RadioNested):
