@@ -77,11 +77,13 @@ class SerializableFormMixin:
         "^csrfmiddlewaretoken$",
         "^measure_create_wizard-current_step$",
         "^submit$",
+        "-ADD$",
+        "-DELETE$",
         "_autocomplete$",
-        "TOTAL_FORMS$",
         "INITIAL_FORMS$",
-        "MIN_NUM_FORMS$",
         "MAX_NUM_FORMS$",
+        "MIN_NUM_FORMS$",
+        "TOTAL_FORMS$",
     ]
     """
     Regexs of keys that may appear in a Form's `data` dictionary attribute and
