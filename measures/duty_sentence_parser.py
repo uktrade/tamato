@@ -1,7 +1,9 @@
 from datetime import datetime
+from typing import Sequence
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
+from django.db.models.expressions import RawSQL
 from lark import Lark
 from lark import Transformer
 from lark import UnexpectedInput
@@ -59,22 +61,50 @@ class DutySentenceParser:
     sentence according to a set pattern."""
 
     @staticmethod
-    def create_rule(items, field_name):
+    def create_rule(items, field_name, strip=False):
         output = []
-        for i, item in enumerate(items, start=1):
+        for item in items:
             if getattr(item, field_name):
-                if i != len(items):
-                    output.append(f'"{getattr(item, field_name)}"i | ')
+                val = getattr(item, field_name)
+                if strip:
+                    # For measurement abbreviations we want to be able to match with and without spaces and commas (in the case of measurement units in the thousands) so add the spaceless and commaless values to the rule as well
+                    unique_values = set(
+                        [
+                            val,
+                            val.replace(" ", ""),
+                            val.replace(",", ""),
+                            val.replace(",", "").replace(" ", ""),
+                        ],
+                    )
+                    for value in unique_values:
+                        output.append(f'"{value}"i | ')
                 else:
-                    output.append(f'"{getattr(item, field_name)}"i')
-        return "".join(output)
+                    output.append(f'"{val}"i | ')
+        # cut off final " | "
+        return "".join(output)[0:-3]
 
-    def __init__(self, date=datetime.now()):
-        duty_expressions = models.DutyExpression.objects.as_at(date)
-        monetary_units = models.MonetaryUnit.objects.as_at(date)
-        measurement_units = models.MeasurementUnit.objects.as_at(date)
-        measurement_unit_qualifiers = models.MeasurementUnitQualifier.objects.as_at(
-            date,
+    def __init__(
+        self,
+        date: datetime = datetime.now(),
+        duty_expressions: Sequence[models.DutyExpression] = None,
+        monetary_units: Sequence[models.MonetaryUnit] = None,
+        measurement_units: Sequence[models.MeasurementUnit] = None,
+        measurement_unit_qualifiers: Sequence[models.MeasurementUnitQualifier] = None,
+    ):
+        """
+        This class can be optionally loaded up with custom lists of duty
+        expressions, monetary units, and measurements on init.
+
+        Mainly useful for testing.
+        """
+        duty_expressions = models.DutyExpression.objects.as_at(date) or duty_expressions
+        monetary_units = models.MonetaryUnit.objects.as_at(date) or monetary_units
+        measurement_units = (
+            models.MeasurementUnit.objects.as_at(date) or measurement_units
+        )
+        measurement_unit_qualifiers = (
+            models.MeasurementUnitQualifier.objects.as_at(date)
+            or measurement_unit_qualifiers
         )
 
         amount_mandatory = duty_expressions.filter(
@@ -87,15 +117,14 @@ class DutySentenceParser:
             duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         )
 
-        self.parser = Lark(
-            f"""
+        self.parser_rules = f"""
             slash: "/"
 
             # DutyExpression
             !expr_amount_mandatory: {self.create_rule(amount_mandatory, "prefix")}
             !expr_amount_permitted: {self.create_rule(amount_permitted, "prefix")}
             !expr_amount_not_permitted: {self.create_rule(amount_not_permitted, "prefix")}
-            # variables output as "-" | "+" | "MAX" | "MIN" | "NIHIL" | "+ AC" etc. see template
+            # variables output as "-" | "+" | "MAX" | "MIN" | "NIHIL" | "+ AC" etc
 
             duty_amount: NUMBER
 
@@ -103,15 +132,16 @@ class DutySentenceParser:
             !monetary_unit: "%" | {self.create_rule(monetary_units, "code")}
 
             # MeasurementUnit
-            !measurement_unit: {self.create_rule(measurement_units, "abbreviation")}
+            !measurement_unit: {self.create_rule(measurement_units, "abbreviation", strip=True)}
 
             # MeasurementUnitQualifier
-            !measurement_unit_qualifier: {self.create_rule(measurement_unit_qualifiers, "abbreviation")}
+            !measurement_unit_qualifier: {self.create_rule(measurement_unit_qualifiers, "abbreviation", strip=True)}
 
             # MeasureComponent
-            !phrase: expr_amount_not_permitted [slash measurement_unit [measurement_unit_qualifier]]
-                | duty_amount monetary_unit [slash measurement_unit [measurement_unit_qualifier]]
-                | (expr_amount_mandatory | expr_amount_permitted) duty_amount monetary_unit [slash measurement_unit [measurement_unit_qualifier]]
+            !phrase: expr_amount_not_permitted [slash measurement_unit [slash measurement_unit_qualifier]]
+                | duty_amount monetary_unit [slash measurement_unit [slash measurement_unit_qualifier]]
+                | (expr_amount_mandatory | expr_amount_permitted) duty_amount monetary_unit [slash measurement_unit [slash measurement_unit_qualifier]]
+                | measurement_unit [slash measurement_unit_qualifier]
 
             !sentence: phrase+
 
@@ -119,9 +149,14 @@ class DutySentenceParser:
             %import common.WS
             %ignore WS
 
-            """,
+            """
+
+        self.parser = Lark(
+            self.parser_rules,
             start="sentence",
         )
+
+        self.transformer = DutyTransformer(date=date)
 
     def parse(self, duty_sentence):
         try:
@@ -159,6 +194,10 @@ class DutySentenceParser:
             if not exc_class:
                 raise
             raise exc_class(u.get_context(duty_sentence), u.line, u.column)
+
+    def transform(self, duty_sentence):
+        tree = self.parse(duty_sentence)
+        self.transformer.transform(tree)
 
 
 class DutyTransformer(Transformer):
@@ -316,6 +355,10 @@ class DutyTransformer(Transformer):
         (value,) = value
         return ("duty_expression", value)
 
+    def expr_amount_permitted(self, value):
+        (value,) = value
+        return ("duty_expression", value)
+
     def duty_amount(self, value):
         (value,) = value
         return ("duty_amount", float(value))
@@ -332,9 +375,17 @@ class DutyTransformer(Transformer):
 
     def measurement_unit(self, value):
         (value,) = value
+        annotated_measurement_units = models.MeasurementUnit.objects.as_at(
+            self.date,
+        ).annotate(
+            abbreviation_stripped=RawSQL(
+                "REPLACE(REPLACE(abbreviation, %s, ''), %s, '')",
+                (" ", ","),
+            ),
+        )
         try:
-            match = models.MeasurementUnit.objects.as_at(self.date).get(
-                abbreviation__iexact=value,
+            match = annotated_measurement_units.get(
+                abbreviation_stripped__iexact=value.replace(" ", "").replace(",", ""),
             )
         except ObjectDoesNotExist:
             raise ValidationError(INVALID_DUTY_MEASUREMENT_UNIT_MESSAGE)
@@ -342,9 +393,17 @@ class DutyTransformer(Transformer):
 
     def measurement_unit_qualifier(self, value):
         (value,) = value
+        annotated_measurement_unit_qualifiers = (
+            models.MeasurementUnitQualifier.objects.as_at(self.date).annotate(
+                abbreviation_stripped=RawSQL(
+                    "REPLACE(REPLACE(abbreviation, %s, ''), %s, '')",
+                    (" ", ","),
+                ),
+            )
+        )
         try:
-            match = models.MeasurementUnitQualifier.objects.as_at(self.date).get(
-                abbreviation__iexact=value,
+            match = annotated_measurement_unit_qualifiers.get(
+                abbreviation_stripped__iexact=value.replace(" ", "").replace(",", ""),
             )
         except ObjectDoesNotExist:
             raise ValidationError(INVALID_DUTY_MEASUREMENT_UNIT_QUALIFIER_MESSAGE)
