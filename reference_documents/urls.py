@@ -30,19 +30,39 @@ urlpatterns = [
         name="index",
     ),
     path(
-        "reference_documents/<pk>/",
-        reference_document_views.ReferenceDocumentDetails.as_view(),
-        name="details",
-    ),
-    path(
         "reference_documents/create/",
         reference_document_views.ReferenceDocumentCreate.as_view(),
         name="create",
     ),
     path(
+        "reference_documents/<pk>/",
+        reference_document_views.ReferenceDocumentDetails.as_view(),
+        name="details",
+    ),
+    path(
         "reference_documents/<pk>/update/",
         reference_document_views.ReferenceDocumentUpdate.as_view(),
         name="update",
+    ),
+    path(
+        f"<pk>/confirm-create/",
+        reference_document_views.ReferenceDocumentConfirmCreate.as_view(),
+        name="confirm-create",
+    ),
+    path(
+        f"<pk>/confirm-update/",
+        reference_document_views.ReferenceDocumentConfirmUpdate.as_view(),
+        name="confirm-update",
+    ),
+    path(
+        f"<pk>/delete/",
+        reference_document_views.ReferenceDocumentDelete.as_view(),
+        name="delete",
+    ),
+    path(
+        f"<deleted_pk>/confirm-delete/",
+        reference_document_views.ReferenceDocumentConfirmDelete.as_view(),
+        name="confirm-delete",
     ),
     # reference document version views
     path(

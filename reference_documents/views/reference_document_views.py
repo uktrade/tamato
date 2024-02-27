@@ -1,11 +1,13 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView
+from django.views.generic import DeleteView
 from django.views.generic import DetailView
 from django.views.generic import ListView
+from django.views.generic import TemplateView
 from django.views.generic import UpdateView
+from django.views.generic.edit import FormMixin
 
 from geo_areas.models import GeographicalAreaDescription
 from reference_documents import forms
@@ -47,7 +49,9 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
                         {"text": 0},
                         {"text": 0},
                         {
-                            "html": f'<a href="/reference_documents/{reference.id}">Details</a>',
+                            "html": f'<a href="/reference_documents/{reference.id}">Details</a><br>'
+                            f"<a href={reverse('reference_documents:update', kwargs={'pk': reference.id})}>Edit</a><br>"
+                            f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>",
                         },
                     ],
                 )
@@ -67,7 +71,8 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
                         },
                         {
                             "html": f'<a href="/reference_documents/{reference.id}">Details</a><br>'
-                            f"<a href={reverse('reference_documents:update', kwargs={'pk': reference.id})}>Edit</a>",
+                            f"<a href={reverse('reference_documents:update', kwargs={'pk': reference.id})}>Edit</a><br>"
+                            f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>",
                         },
                     ],
                 )
@@ -135,33 +140,76 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
         return context
 
 
-class ReferenceDocumentCreate(CreateView):
-    model = models.ReferenceDocument
+class ReferenceDocumentCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/create.jinja"
-    form_class = forms.ReferenceDocumentForm
+    permission_required = "reference_documents.edit_reference_document"
+    form_class = forms.ReferenceDocumentCreateUpdateForm
 
-    @transaction.atomic
-    def form_valid(self, form):
-        self.object.save()
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        # kwargs["request"] = self.request
-        return kwargs
+    def get_success_url(self):
+        return reverse(
+            "reference_documents:confirm-create",
+            kwargs={"pk": self.object.pk},
+        )
 
 
-class ReferenceDocumentUpdate(UpdateView):
+class ReferenceDocumentUpdate(PermissionRequiredMixin, UpdateView):
     model = models.ReferenceDocument
+    permission_required = "reference_documents.edit_reference_document"
     template_name = "reference_documents/update.jinja"
-    form_class = forms.ReferenceDocumentForm
+    form_class = forms.ReferenceDocumentCreateUpdateForm
 
-    @transaction.atomic
-    def form_valid(self, form):
-        self.object.save()
-        return HttpResponseRedirect(reverse("reference_documents:index"))
+    def get_success_url(self):
+        return reverse(
+            "reference_documents:confirm-update",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class ReferenceDocumentDelete(PermissionRequiredMixin, FormMixin, DeleteView):
+    form_class = forms.ReferenceDocumentDeleteForm
+    model = ReferenceDocument
+    permission_required = "reference_documents.edit_reference_document"
+    template_name = "reference_documents/delete.jinja"
+
+    # TODO: Update this to get rid of FormMixin with Django 4.2 as no need to overwrite the post anymore
+    def get_success_url(self) -> str:
+        return reverse(
+            "reference_documents:confirm-delete",
+            kwargs={"deleted_pk": self.kwargs["pk"]},
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        # kwargs["request"] = self.request
+        kwargs["instance"] = self.get_object()
         return kwargs
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        self.object.delete()
+        return redirect(self.get_success_url())
+
+
+class ReferenceDocumentConfirmCreate(DetailView):
+    template_name = "reference_documents/confirm_create.jinja"
+    model = ReferenceDocument
+
+
+class ReferenceDocumentConfirmUpdate(DetailView):
+    template_name = "reference_documents/confirm_update.jinja"
+    model = ReferenceDocument
+
+
+class ReferenceDocumentConfirmDelete(TemplateView):
+    template_name = "reference_documents/confirm_delete.jinja"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["deleted_pk"] = self.kwargs["deleted_pk"]
+        return context_data
