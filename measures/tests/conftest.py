@@ -451,3 +451,14 @@ def measure_geo_area_erga_omnes_form_data(erga_omnes):
     return {
         "geo_area": constants.GeoAreaType.ERGA_OMNES,
     }
+
+
+@pytest.fixture()
+def measure_geo_area_erga_omnes_exclusions_form_data(erga_omnes):
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+    return {
+        "geo_area": constants.GeoAreaType.ERGA_OMNES,
+        "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
+        "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
+    }
