@@ -1,0 +1,48 @@
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set table_rows = [] %}
+{% for object in object_list %}
+    {% set workbasket_link -%}
+        {% if object.workbasket.status == "EDITING"%}
+            <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}">{{ object.workbasket.pk }}</a>
+        {% else %}
+            <p>{{object.workbasket.pk}} {{object.workbasket.status}}</p>
+        {% endif %}
+    {%- endset %}
+    {% set submitted_date -%}
+        {{object.created_at.strftime('%H:%M')}} <br/>
+        {{object.created_at.strftime('%Y %b %d')}}
+    {%- endset %}
+    {% set object_processing_state -%}
+        {% if object.processing_state in ["AWAITING_PROCESSING", "CURRENTLY_PROCESSING"]%}
+            Processing
+        {% elif object.processing_state == "CANCELLED"%}
+            Cancelled
+        {% elif object.processing_state == "FAILED"%}
+            Failed
+        {% elif object.processing_state == "SUCCESSFULLY_PROCESSED"%}
+            Completed
+        {% endif %}
+    {%- endset %}
+    {{ table_rows.append([
+        {"text": workbasket_link},
+        {"text": submitted_date},
+        {"text": "created by"},
+        {"text": object_processing_state|upper},
+        {"text": "object.expected_measures_count"},
+        {"text": "action"},
+    ])}}
+
+{% endfor %}
+
+{{ govukTable({
+    "head": [
+        {"text": "Workbasket ID"},
+        {"text": "Submitted date"},
+        {"text": "Submitted by"},
+        {"text": "Status"},
+        {"text": "Object count"},
+        {"text": "Action"},
+    ],
+    "rows": table_rows
+})}}

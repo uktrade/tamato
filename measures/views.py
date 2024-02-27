@@ -1091,25 +1091,35 @@ class MeasuresWizardCreateConfirm(TemplateView):
         return context
 
 
-class MeasuresCreateProcessQueue(TemplateView):
+class MeasuresCreateProcessQueue(TemplateView, ListView):
     """UI endpoint for bulk creating Measures process queue."""
 
     # permissions?
     template_name = "measures/create-process-queue.jinja"
-    # queryset = measures to be created --> get from MeasuresBulkCreator
+    filter_by_fields = ["all", "processing", "completed", "failed"]
+    sort_by_fields = [
+        "workbasket_id",
+        "submitted_date",
+        "submitted_by",
+        "status",
+        "object_count",
+        "action",
+    ]
+
+    def get_queryset(self):
+        """Get the queryset for measurescreatetask that are in the editing
+        task."""
+        queryset = MeasuresBulkCreator.objects.all()
+
+        return queryset
 
     def get_context_data(self, **kwargs):
+        create_tasks = self.get_queryset()
+        self.object_list = create_tasks
+
         context = super().get_context_data(**kwargs)
 
-        # See importer/views.py CommodityImportListView
-        # workbasket_status = self.request.GET.get("workbasket__status")
-        # if workbasket status == Editing, then provide a url to the workbasket
-        context["selected_link"] = "all"
-        # Options: All, Processing, Completed, Failed
-        # Processing equivalent to ProcessingStates Awaiting & Currently
-        # Completed == Successfully processed
-        # Failed == Failed
-        # Cancelled == Cancelled
+        return context
 
 
 class MeasureUpdateBase(
