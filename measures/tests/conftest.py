@@ -12,6 +12,7 @@ from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
+from geo_areas import constants
 from geo_areas.validators import AreaCode
 from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
@@ -442,4 +443,11 @@ def measure_commodities_and_duties_form_data():
                 "measure_type": None,
             },
         },
+    }
+
+
+@pytest.fixture()
+def measure_geo_area_erga_omnes_form_data(erga_omnes):
+    return {
+        "geo_area": constants.GeoAreaType.ERGA_OMNES,
     }
