@@ -507,8 +507,11 @@ class TrackedModel(PolymorphicModel, TimestampedMixin):
             kwargs.update(nested_fields)
 
             if not ignore:
-                for model in queryset.approved_up_to_transaction(transaction):
-                    model.copy(transaction, **kwargs)
+                try:
+                    for model in queryset.approved_up_to_transaction(transaction):
+                        model.copy(transaction, **kwargs)
+                except ValueError:
+                    pass
 
         return new_object
 
@@ -528,7 +531,7 @@ class TrackedModel(PolymorphicModel, TimestampedMixin):
         remote_field_name = get_accessor(relation.remote_field)
 
         return remote_model.objects.filter(
-            **{f"{remote_field_name}__version_group": self.version_group}
+            **{f"{remote_field_name}__version_group": self.version_group},
         ).approved_up_to_transaction(transaction)
 
     def in_use(self, transaction=None, *relations: str) -> bool:
