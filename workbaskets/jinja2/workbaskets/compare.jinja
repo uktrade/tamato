@@ -70,7 +70,9 @@
     }) }}
 
   {% endif %}
+  {% if data_upload %}
   <h2 class="govuk-heading-l">{{ matching_measures|length }} matching measure{{ matching_measures|pluralize }} found</h2>
+  {% endif %}
   {% if matching_measures %}
     <p class="govuk-body">These are measures that are the same across both your worksheet and your workbasket.</p>
 

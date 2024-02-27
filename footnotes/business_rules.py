@@ -14,7 +14,7 @@ class FOT2(PreventDeleteIfInUse):
 
 
 class FO2(UniqueIdentifyingFields):
-    """The combination footnote type and code must be unique."""
+    """The combination of footnote type and code must be unique."""
 
 
 class FO4(DescriptionsRules):

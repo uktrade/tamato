@@ -1,6 +1,7 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "workbaskets/macros/workbasket_status_tag.jinja" import create_workbasket_status_tag %}
 
 {%- set table_rows = [] -%}
 {% for workbasket in object_list %}
@@ -14,22 +15,19 @@
       value="{{ workbasket.pk }}">
   </form>
   {%- endset -%}
-  {%- set workbasket_status -%}
-    <span class="status-badge">{{ workbasket.status }}</a>
-  {%- endset -%}
 
   {{ table_rows.append([
     {"text": workbasket_linked_pk},
     {"text": workbasket.title},
     {"text": workbasket.reason},
-    {"text": workbasket_status},
+    {"html": create_workbasket_status_tag(workbasket.status)},
   ]) or "" }}
 {% endfor %}
 
 {{ govukTable({
   "head": [
-    {"text": "Number"},
-    {"text": "TOPS/Jira"},
+    {"text": "ID"},
+    {"text": "TOPS/Jira number"},
     {"text": "Description"},
     {"text": "Status"},
   ],
