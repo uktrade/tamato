@@ -33,7 +33,8 @@
     <form action="{{ url('logout') }}" method="post">
       {{ csrf_input }}
       <button
-        class="fake-link govuk-header__link sign-out"
+        class="fake-link govuk-header__link"
+        id="sign-out"
         name="submit"
         value="logout"
       >

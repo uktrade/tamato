@@ -43,16 +43,16 @@
     }
   }
 
-  button.sign-out {
+  button#sign-out {
     color: govuk-colour("white");
     font-weight: bold;
     text-decoration: none;
-  }
 
-  button.sign-out:hover {
-    text-decoration: underline;
-    text-decoration-thickness: 3px;
-    text-underline-offset: 0.1em;
+    &:hover {
+      text-decoration: underline;
+      text-decoration-thickness: 3px;
+      text-underline-offset: 0.1em;
+    }
   }
 
 }
