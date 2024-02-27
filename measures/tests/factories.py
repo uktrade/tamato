@@ -91,3 +91,8 @@ class MeasureSheetRowFactory(factory.Factory):
     def _create(cls, model_class, *args, **kwargs):
         data = [kwargs[k] for k in MeasureSheetRow.columns]
         return super()._create(model_class, data)
+
+
+class MeasuresBulkCreatorFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "measures.MeasuresBulkCreator"
