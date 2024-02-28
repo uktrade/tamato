@@ -511,6 +511,7 @@ class TrackedModel(PolymorphicModel, TimestampedMixin):
                     for model in queryset.approved_up_to_transaction(transaction):
                         model.copy(transaction, **kwargs)
                 except ValueError:
+                    # Calling a related manager for an unsaved instance would nevertheless result in an empty queryset
                     pass
 
         return new_object
