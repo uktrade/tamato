@@ -12,7 +12,7 @@ from reference_documents.models import ReferenceDocumentVersion
 
 
 class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
-    template_name = "reference_document_versions/new_details.jinja"
+    template_name = "reference_documents/reference_document_versions/details.jinja"
     permission_required = "reference_documents.view_reference_document"
     model = ReferenceDocumentVersion
 
@@ -97,7 +97,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
 
         latest_alignment_report = context["object"].alignment_reports.last()
 
-        for duty in context["object"].preferential_rates.order_by("order"):
+        for duty in context["object"].preferential_rates.order_by("commodity_code"):
             failure_count = (
                 duty.preferential_rate_checks.all()
                 .filter(
@@ -144,7 +144,8 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                         "html": checks_output,
                     },
                     {
-                        "text": "",
+                        "html": f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[duty.pk])}'>Edit</a> "
+                        f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[duty.pk])}'>Delete</a>",
                     },
                 ],
             )
