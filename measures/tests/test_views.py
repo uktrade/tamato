@@ -11,6 +11,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.forms.models import model_to_dict
+from django.test import override_settings
 from django.urls import reverse
 
 from common.models.transactions import Transaction
@@ -1158,6 +1159,7 @@ def test_measure_form_wizard_start(client_with_current_workbasket):
     assert response.status_code == 200
 
 
+@override_settings(MEASURES_ASYNC_CREATION=False)
 @unittest.mock.patch("measures.parsers.DutySentenceParser")
 def test_measure_form_wizard_finish(
     mock_duty_sentence_parser,

@@ -838,6 +838,14 @@ class MeasureCreateWizard(
         else:
             return self.sync_done(form_list, **kwargs)
 
+    def create_measures(self, cleaned_data):
+        """Synchronously create measures within the context of the view / web
+        worker using accumulated data, `cleaned_data`, from all the necessary
+        wizard forms."""
+
+        measures_creator = MeasuresCreator(self.workbasket, cleaned_data)
+        return measures_creator.create_measures()
+
     def sync_done(self, form_list, **kwargs):
         """
         Handles this wizard's done step to create measures within the context of
@@ -851,9 +859,7 @@ class MeasureCreateWizard(
         logger.info("Creating measures synchronously.")
 
         cleaned_data = self.get_all_cleaned_data()
-
-        measures_creator = MeasuresCreator(self.workbasket, cleaned_data)
-        created_measures = measures_creator.create_measures()
+        created_measures = self.create_measures(cleaned_data)
 
         context = self.get_context_data(
             form=None,

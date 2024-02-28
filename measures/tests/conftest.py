@@ -1,6 +1,9 @@
 import datetime
 from typing import Dict
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
+import faker
 import pytest
 import requests
 from django.core.exceptions import ValidationError
@@ -443,3 +446,12 @@ def measure_commodities_and_duties_form_data():
             },
         },
     }
+
+
+@pytest.fixture()
+def mocked_schedule_apply_async():
+    with patch(
+        "measures.tasks.bulk_create_measures.apply_async",
+        return_value=MagicMock(id=faker.Faker().uuid4()),
+    ) as apply_async_mock:
+        yield apply_async_mock
