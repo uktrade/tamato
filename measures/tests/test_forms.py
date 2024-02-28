@@ -1858,10 +1858,14 @@ def test_formset_measure_forms_serialize_deserialize(
     [
         ("measure_geo_area_erga_omnes_form_data"),
         ("measure_geo_area_erga_omnes_exclusions_form_data"),
+        ("measure_geo_area_geo_group_form_data"),
+        ("measure_geo_area_geo_group_exclusions_form_data"),
     ],
     ids=[
         "erga-omnes",
         "erga-omnes-exclusions",
+        "geo-group",
+        "geo-group-exclusions",
     ],
 )
 def test_measure_forms_geo_area_serialize_deserialize(form_data, request):
