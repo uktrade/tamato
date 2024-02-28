@@ -36,6 +36,7 @@ class ReferenceDocument(models.Model):
     area_id = models.CharField(
         max_length=4,
         db_index=True,
+        unique=True,
     )
 
 
