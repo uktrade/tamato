@@ -550,6 +550,7 @@ class FormSet(forms.BaseFormSet):
     validate_min = False
     validate_max = False
     prefix = None
+    renderer = get_default_renderer()
 
     def __init__(
         self,
@@ -561,7 +562,6 @@ class FormSet(forms.BaseFormSet):
         error_class=ErrorList,
         form_kwargs=None,
         error_messages=None,
-        renderer=None,
     ):
         # Not calling super().__init__() here because it overwrites any custom prefix we try to
         # pass to the formset and its subforms with the default value from the above 'prefix' kwarg
@@ -575,7 +575,6 @@ class FormSet(forms.BaseFormSet):
         self.error_class = error_class
         self._errors = None
         self._non_form_errors = None
-        self.renderer = renderer or get_default_renderer()
 
         messages = {}
         for cls in reversed(type(self).__mro__):
