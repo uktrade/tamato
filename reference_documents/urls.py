@@ -4,6 +4,7 @@ from rest_framework import routers
 from reference_documents.views import alignment_report_views
 from reference_documents.views import example_views
 from reference_documents.views import preferential_quotas
+from reference_documents.views import preferential_rates
 from reference_documents.views import reference_document_version_views
 from reference_documents.views import reference_document_views
 
@@ -11,6 +12,7 @@ app_name = "reference_documents"
 
 api_router = routers.DefaultRouter()
 
+detail = "<sid:sid>"
 urlpatterns = [
     # Example views
     path(
@@ -66,5 +68,21 @@ urlpatterns = [
         "preferential_quotas/edit/<pk>/",
         preferential_quotas.PreferentialQuotaEditView.as_view(),
         name="preferential_quotas_edit",
+    ),
+    # Preferential Rates
+    path(
+        "preferential_rates/delete/<pk>/",
+        preferential_rates.PreferentialRateDeleteView.as_view(),
+        name="preferential_rates_delete",
+    ),
+    path(
+        "preferential_rates/edit/<pk>/",
+        preferential_rates.PreferentialRateEditView.as_view(),
+        name="preferential_rates_edit",
+    ),
+    path(
+        "reference_document_versions/<pk>/create_preferential_rates/",
+        preferential_rates.PreferentialRateCreateView.as_view(),
+        name="preferential_rates_create",
     ),
 ]
