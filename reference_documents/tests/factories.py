@@ -1,12 +1,11 @@
 import string
-from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 
 import factory
-from factory.fuzzy import FuzzyDateTime
 from factory.fuzzy import FuzzyDecimal
 from factory.fuzzy import FuzzyInteger
+from factory.fuzzy import FuzzyNaiveDateTime
 from factory.fuzzy import FuzzyText
 
 from common.util import TaricDateRange
@@ -19,7 +18,7 @@ class ReferenceDocumentFactory(factory.django.DjangoModelFactory):
         model = "reference_documents.ReferenceDocument"
 
     area_id = FuzzyText("", 2, "", string.ascii_uppercase)
-    created_at = FuzzyDateTime(datetime(2008, 1, 1, tzinfo=UTC), datetime.now())
+    created_at = FuzzyNaiveDateTime(datetime(2008, 1, 1), datetime.now())
     title = FuzzyText("Reference Document for ", 5, "", string.ascii_uppercase)
 
 
@@ -27,12 +26,12 @@ class ReferenceDocumentVersionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "reference_documents.ReferenceDocumentVersion"
 
-    created_at = FuzzyDateTime(datetime(2020, 1, 1, tzinfo=UTC), datetime.now())
-    updated_at = FuzzyDateTime(datetime(2020, 1, 1, tzinfo=UTC), datetime.now())
+    created_at = FuzzyNaiveDateTime(datetime(2020, 1, 1), datetime.now())
+    updated_at = FuzzyNaiveDateTime(datetime(2020, 1, 1), datetime.now())
     version = FuzzyDecimal(1.0, 5.0, 1)
-    published_date = FuzzyDateTime(datetime(2022, 1, 1, tzinfo=UTC), datetime.now())
-    entry_into_force_date = FuzzyDateTime(
-        datetime(2022, 1, 1, tzinfo=UTC),
+    published_date = FuzzyNaiveDateTime(datetime(2022, 1, 1), datetime.now())
+    entry_into_force_date = FuzzyNaiveDateTime(
+        datetime(2022, 1, 1),
         datetime.now(),
     )
 
@@ -65,11 +64,11 @@ class PreferentialRateFactory(factory.django.DjangoModelFactory):
     reference_document_version = factory.SubFactory(ReferenceDocumentVersionFactory)
 
     valid_between = TaricDateRange(
-        FuzzyDateTime(
+        FuzzyNaiveDateTime(
             datetime.now() + timedelta(days=-(365 * 2)),
             datetime.now() + timedelta(days=-365),
         ),
-        FuzzyDateTime(datetime.now() + timedelta(days=-364), datetime.now()),
+        FuzzyNaiveDateTime(datetime.now() + timedelta(days=-364), datetime.now()),
     )
 
     class Params:
@@ -120,11 +119,11 @@ class PreferentialQuotaFactory(factory.django.DjangoModelFactory):
     reference_document_version = factory.SubFactory(ReferenceDocumentVersionFactory)
 
     valid_between = TaricDateRange(
-        FuzzyDateTime(
+        FuzzyNaiveDateTime(
             datetime.now() + timedelta(days=-(365 * 2)),
             datetime.now() + timedelta(days=-365),
         ),
-        FuzzyDateTime(datetime.now() + timedelta(days=-364), datetime.now()),
+        FuzzyNaiveDateTime(datetime.now() + timedelta(days=-364), datetime.now()),
     )
 
     class Params:
@@ -158,7 +157,7 @@ class AlignmentReportFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "reference_documents.AlignmentReport"
 
-    created_at = FuzzyDateTime(datetime(2020, 1, 1, tzinfo=UTC), datetime.now())
+    created_at = FuzzyNaiveDateTime(datetime(2020, 1, 1), datetime.now())
     reference_document_version = factory.SubFactory(ReferenceDocumentVersionFactory)
 
 
@@ -166,7 +165,7 @@ class AlignmentReportCheckFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "reference_documents.AlignmentReportCheck"
 
-    created_at = FuzzyDateTime(datetime(2020, 1, 1, tzinfo=UTC), datetime.now())
+    created_at = FuzzyNaiveDateTime(datetime(2020, 1, 1), datetime.now())
     alignment_report = factory.SubFactory(AlignmentReportFactory)
 
     check_name = FuzzyText(
