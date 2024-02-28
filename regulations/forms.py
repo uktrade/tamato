@@ -385,12 +385,14 @@ class RegulationEditForm(RegulationFormBase):
         )
 
         for measure in self.instance.measure_set.current():
+            terminating_regulation = (
+                new_regulation
+                if measure.terminating_regulation == instance
+                else measure.terminating_regulation
+            )
             measure.new_version(
                 generating_regulation=new_regulation,
-                terminating_regulation=new_regulation
-                if measure.terminating_regulation.regulation_id
-                == instance.regulation_id
-                else measure.terminating_regulation,
+                terminating_regulation=terminating_regulation,
                 workbasket=workbasket,
             )
 
