@@ -1004,7 +1004,9 @@ def imported_fields_match(run_xml_import, update_type):
             kwargs.update(previous_version.get_identifying_fields())
 
         updated_model = run_xml_import(
+            # Give the unsaved instance a placeholder pk value to make it serializable
             lambda: factory.build(
+                pk=1234,
                 update_type=update_type,
                 **kwargs,
             ),

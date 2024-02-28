@@ -17,6 +17,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from backports.zoneinfo import ZoneInfo
 from dateutil.parser import parse as parse_date
 from dateutil.relativedelta import relativedelta
 from django import forms
@@ -29,7 +30,6 @@ from django.urls import reverse
 from django_filters.views import FilterView
 from freezegun import freeze_time
 from lxml import etree
-from pytz import timezone
 
 from commodities.models.orm import GoodsNomenclature
 from common.business_rules import BusinessRule
@@ -98,7 +98,9 @@ def raises_if(exception, expected):
 
 @contextlib.contextmanager
 def add_business_rules(
-    model: Type[TrackedModel], *rules: Type[BusinessRule], indirect=False
+    model: Type[TrackedModel],
+    *rules: Type[BusinessRule],
+    indirect=False,
 ):
     """Attach BusinessRules to a TrackedModel."""
     target = f"{'indirect_' if indirect else ''}business_rules"
@@ -135,7 +137,7 @@ def make_duplicate_record(factory, identifying_fields=None):
         identifying_fields = list(factory._meta.model.identifying_fields)
 
     return factory.create(
-        **dict(get_field_tuple(existing, field) for field in identifying_fields)
+        **dict(get_field_tuple(existing, field) for field in identifying_fields),
     )
 
 
@@ -627,7 +629,8 @@ def validate_taric_xml(
                 )
 
             current_instance = instance or factory.create(
-                transaction=approved_transaction, **factory_kwargs or {}
+                transaction=approved_transaction,
+                **factory_kwargs or {},
             )
 
             xml = export_workbasket(
@@ -731,7 +734,7 @@ class Dates:
 
     @property
     def datetime_now(self):
-        return datetime.now(timezone(settings.TIME_ZONE)).replace(
+        return datetime.now(ZoneInfo(settings.TIME_ZONE)).replace(
             hour=0,
             minute=0,
             second=0,
@@ -895,7 +898,7 @@ def get_form_data(form: forms.ModelForm) -> Dict[str, Any]:
                 del data[field]
             value = form.fields[field].widget.decompress(value)
             data.update(
-                **{f"{field}_{i}": v for i, v in enumerate(value) if v is not None}
+                **{f"{field}_{i}": v for i, v in enumerate(value) if v is not None},
             )
         elif value is not None:
             data.setdefault(field, value)

@@ -180,7 +180,7 @@ def publish_to_api():
             )
             packaged_workbasket.crown_dependencies_envelope.publishing_succeeded()
         else:
-            logger.warn(
+            logger.warning(
                 f"Failed publishing: {packaged_workbasket.crown_dependencies_envelope} - {response.text}",
             )
             # send notification and updates state

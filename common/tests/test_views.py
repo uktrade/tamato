@@ -51,7 +51,7 @@ def test_index_displays_logout_buttons_correctly_SSO_off_logged_in(valid_user_cl
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
-    assert page.find_all("a", {"href": "/logout"})
+    assert page.find("form", {"action": reverse("logout")})
 
 
 def test_index_redirects_to_login_page_logged_out_SSO_off(client):
@@ -69,7 +69,7 @@ def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
-    assert not page.find_all("a", {"href": "/logout"})
+    assert not page.find("form", {"action": reverse("logout")})
     assert not page.find_all("a", {"href": "/login"})
 
 
