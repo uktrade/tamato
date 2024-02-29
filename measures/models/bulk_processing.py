@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Dict
 from typing import Iterable
+from typing import Tuple
 
 from celery.result import AsyncResult
 from django.db import models
@@ -53,7 +54,7 @@ class ProcessingState(models.TextChoices):
     """Processing has been cancelled."""
 
     @classmethod
-    def queued_states(cls):
+    def queued_states(cls) -> Tuple:
         """Returns all states that represent a queued  instance, including those
         that are being processed."""
         return (
@@ -62,7 +63,7 @@ class ProcessingState(models.TextChoices):
         )
 
     @classmethod
-    def done_processing_states(cls):
+    def done_processing_states(cls) -> Tuple:
         """Returns all states that represent a task that has completed its
         processing with either a successful or failed outcome."""
         return (
@@ -147,7 +148,7 @@ class BulkProcessor(TimestampedMixin):
         """
         raise NotImplementedError
 
-    def cancel_task(self):
+    def cancel_task(self) -> None:
         """
         Attempt cancelling a task that has previously been queued using
         schedule_task(), transition processing_state to CANCELLED and save the
@@ -179,7 +180,7 @@ class BulkProcessor(TimestampedMixin):
         target=ProcessingState.CURRENTLY_PROCESSING,
         custom={"label": "Start processing"},
     )
-    def begin_processing(self):
+    def begin_processing(self) -> None:
         """Begin procssing from an initial awaiting state."""
 
     @transition(
@@ -188,7 +189,7 @@ class BulkProcessor(TimestampedMixin):
         target=ProcessingState.SUCCESSFULLY_PROCESSED,
         custom={"label": "Processing succeeded"},
     )
-    def processing_succeeded(self):
+    def processing_succeeded(self) -> None:
         """Processing completed with a successful outcome."""
 
     @transition(
@@ -197,7 +198,7 @@ class BulkProcessor(TimestampedMixin):
         target=ProcessingState.FAILED_PROCESSING,
         custom={"label": "Processing failed"},
     )
-    def processing_failed(self):
+    def processing_failed(self) -> None:
         """Procssing completed with a failed outcome."""
 
     @transition(
@@ -209,7 +210,7 @@ class BulkProcessor(TimestampedMixin):
         target=ProcessingState.CANCELLED,
         custom={"label": "Processing cancelled"},
     )
-    def processing_cancelled(self):
+    def processing_cancelled(self) -> None:
         """Procssing was cancelled before completion."""
 
 
@@ -235,7 +236,7 @@ class MeasuresBulkCreatorManager(models.Manager):
         )
 
 
-def REVOKE_TASKS_AND_SET_NULL(collector, field, sub_objs, using):
+def REVOKE_TASKS_AND_SET_NULL(collector, field, sub_objs, using) -> None:
     """
     Revoke any celery bulk editing tasks, identified via a `task_id` field, on
     the object and set the foreign key value to NULL.
@@ -315,7 +316,7 @@ class MeasuresBulkCreator(BulkProcessor):
         return async_result
 
     @property
-    def expected_measures_count(self):
+    def expected_measures_count(self) -> int:
         """Return the number of measures that should be created when using this
         `MeasuresBulkCreator`'s form_data."""
 
@@ -349,7 +350,7 @@ class MeasuresBulkCreator(BulkProcessor):
 
             return measures_creator.create_measures()
 
-    def get_forms_cleaned_data(self):
+    def get_forms_cleaned_data(self) -> Dict:
         """
         Returns a merged dictionary of all Form cleaned_data.
 
