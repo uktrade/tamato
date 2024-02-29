@@ -6,6 +6,7 @@ from reference_documents.tests.factories import AlignmentReportFactory
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.reference_documents
 class TestAlignmentReport:
     def test_create_with_defaults(self):
         target = AlignmentReportFactory()
@@ -13,6 +14,7 @@ class TestAlignmentReport:
         assert target.reference_document_version is not None
 
 
+@pytest.mark.reference_documents
 class TestAlignmentReportCheck:
     def test_create_with_defaults(self):
         target = AlignmentReportCheckFactory()

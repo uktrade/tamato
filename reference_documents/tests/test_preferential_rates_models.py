@@ -5,6 +5,7 @@ from reference_documents.tests.factories import PreferentialRateFactory
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.reference_documents
 class TestPreferentialRate:
     def test_create_with_defaults(self):
         target = PreferentialRateFactory()

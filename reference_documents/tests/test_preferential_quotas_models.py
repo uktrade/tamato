@@ -5,6 +5,7 @@ from reference_documents.tests.factories import PreferentialQuotaFactory
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.reference_documents
 class TestPreferentialQuota:
     def test_create_with_defaults(self):
         target = PreferentialQuotaFactory()

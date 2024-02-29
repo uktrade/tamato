@@ -5,6 +5,7 @@ from reference_documents.tests.factories import ReferenceDocumentVersionFactory
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.reference_documents
 class TestReferenceDocumentVersion:
     def test_create_with_defaults(self):
         target = ReferenceDocumentVersionFactory()
