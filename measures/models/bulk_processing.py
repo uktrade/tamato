@@ -72,23 +72,6 @@ class ProcessingState(models.TextChoices):
         )
 
 
-class BulkProcessorResult(TimestampedMixin):
-    """Result details of bulk processing."""
-
-    succeeded = models.BooleanField(
-        default=False,
-    )
-    """True if a bulk operation succeeded, False otherwise."""
-
-    created_transaction = models.ForeignKey(
-        "common.Transaction",
-        on_delete=SET_NULL,
-        null=True,
-        editable=False,
-    )
-    """The transaction associated with a successful bulk creation."""
-
-
 class BulkProcessor(TimestampedMixin):
     """(Abstract) Model mixin defining common attributes and functions for
     inheritace by Model classes responsible for asynchronously bulk processing
@@ -119,15 +102,6 @@ class BulkProcessor(TimestampedMixin):
     This attribute is driven through valid transitions by the member functions
     on on this class that are annotated by @transition.
     """
-
-    processing_result = models.ForeignKey(
-        "measures.BulkProcessorResult",
-        on_delete=SET_NULL,
-        null=True,
-        editable=False,
-    )
-    """The result of a bulk processing action (e.g. measures bulk creation) -
-    NULL until the creation has run to completion."""
 
     def schedule_task(self) -> AsyncResult:
         """
