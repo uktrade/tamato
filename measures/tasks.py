@@ -14,7 +14,15 @@ def bulk_create_measures(measures_bulk_creator_pk: int) -> None:
     measures_bulk_creator = MeasuresBulkCreator.objects.get(pk=measures_bulk_creator_pk)
     measures = measures_bulk_creator.create_measures()
 
-    logger.info(
-        f"bulk_create_measures() - created {len(measures)} measures with PKs "
-        f"[{', '.join([m.pk for m in measures])}].",
-    )
+    if len(measures) > 0:
+        transaction = measures[0].transaction
+        workbasket = transaction.workbasket
+        logger.info(
+            f"MeasuresBulkCreator({measures_bulk_creator.pk}) created "
+            f"{len(measures)} Measures in WorkBasket({workbasket.pk}) on "
+            f"Transaction({transaction.pk}).",
+        )
+    else:
+        logger.info(
+            f"MeasuresBulkCreator {measures_bulk_creator.pk} created no " f"measures.",
+        )
