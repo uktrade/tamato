@@ -7,7 +7,7 @@ class IndexTable:
         pass
 
     def headers(self) -> [dict]:
-        return [{"text": "Name"}, {"text": "Link"}]
+        return [{"text": "Report"}, {"text": "Link"}]
 
     def rows(self) -> [[dict]]:
         results = []
@@ -20,5 +20,5 @@ class IndexTable:
     def row(self, row: ReportBase) -> [dict]:
         return [
             {"text": row.name},
-            {"html": f'<a href="/reports/{row.slug()}">View Report</a>'},
+            {"html": f'<a href="/reports/{row.slug()}">View report</a>'},
         ]

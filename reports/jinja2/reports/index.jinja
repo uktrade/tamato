@@ -1,7 +1,7 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set page_title = 'Reports Index' %}
+{% set page_title = 'Reports index' %}
 
 {% block breadcrumb %}
     {{ breadcrumbs(request, [
@@ -11,9 +11,9 @@
 
 {% block content %}
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
-        Reports Index
+        Reports index
     </h1>
-    <span class="govuk-caption-xl govuk-!-margin-bottom-9">You will find a list of reports below that can be viewed.</span>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">View reports about CDS approvals and rejections, expiring quotas and other missing data. </span>
 
     <div>
         {{ govukTable({ "head": report.headers(), "rows": report.rows() }) }}

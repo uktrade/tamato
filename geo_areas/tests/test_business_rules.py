@@ -22,7 +22,7 @@ def child():
 
 @pytest.mark.xfail(reason="GA1 disabled")
 def test_GA1(assert_handles_duplicates):
-    """The combination geographical area id + validity start date must be
+    """The combination of geographical area id + validity start date must be
     unique."""
 
     assert_handles_duplicates(

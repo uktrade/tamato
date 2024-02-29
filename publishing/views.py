@@ -401,11 +401,21 @@ class PackagedWorkbasketCreateView(PermissionRequiredMixin, CreateView):
             return redirect(
                 "workbaskets:current-workbasket",
             )
+        except TransitionNotAllowed as err:
+            self.logger.error(
+                "Error: %s \n Redirecting to work basket %s summary",
+                err,
+                self.workbasket.id,
+            )
+            return redirect(
+                "workbaskets:current-workbasket",
+            )
 
         queued_wb = None
         try:
             queued_wb = PackagedWorkBasket.objects.create(
-                workbasket=wb, **form.cleaned_data
+                workbasket=wb,
+                **form.cleaned_data,
             )
         except PackagedWorkBasketDuplication as err:
             self.logger.error(

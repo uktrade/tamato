@@ -57,8 +57,8 @@ class BindNestedFormMixin:
         return bound_form
 
     def bind_nested_forms(self, *args, **kwargs):
-        if kwargs.get("instance"):
-            kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
+        # this mixin does not support ModelForm as subforms
+        kwargs.pop("instance", None)
 
         for name, field in self.fields.items():
             if isinstance(field, RadioNested):
@@ -236,7 +236,7 @@ class FormSetField(forms.Field):
 
 
 class WorkbasketActions(TextChoices):
-    CREATE = "CREATE", "Create new workbasket"
+    CREATE = "CREATE", "Create a new workbasket"
     EDIT = "EDIT", "Edit workbaskets"
 
 
@@ -254,7 +254,7 @@ class CommonUserActions(TextChoices):
 
 
 class ImportUserActions(TextChoices):
-    IMPORT = "IMPORT", "Import EU Taric files"
+    IMPORT = "IMPORT", "Import EU TARIC files"
 
 
 class WorkbasketManagerActions(TextChoices):
@@ -300,8 +300,8 @@ class HomeForm(forms.Form):
                 HTML.h3("What would you like to do?"),
                 HTML.details(
                     "What is a workbasket?",
-                    "A workbasket is used to collect all the changes you make to the UK's Import and Export Tariff data. "
-                    "Workbaskets group these changes so they can be checked by Customs Declaration Service (CDS) before going live.",
+                    "A workbasket is used to collect all the changes you make to the UK's import and export tariff data. "
+                    "Workbaskets group these changes so they can be checked by the Customs Declaration Service (CDS) before going live.",
                 ),
                 "workbasket_action",
             ),
@@ -397,6 +397,7 @@ class DescriptionForm(forms.ModelForm):
         self.helper.layout = Layout(
             Field("validity_start", context={"legend_size": "govuk-label--s"}),
             Field.textarea("description", label_size=Size.SMALL, rows=5),
+            DescriptionHelpBox(),
             Submit(
                 "submit",
                 "Save",
@@ -422,7 +423,7 @@ class ValidityPeriodForm(forms.ModelForm):
 
         self.fields["end_date"].help_text = (
             f"Leave empty if {get_model_indefinite_article(self.instance)} "
-            f"{self.instance._meta.verbose_name} is needed for an unlimited time"
+            f"{self.instance._meta.verbose_name} is needed for an unlimited time."
         )
 
         if self.instance.valid_between:
@@ -487,11 +488,15 @@ class ValidityPeriodForm(forms.ModelForm):
 class CreateDescriptionForm(DescriptionForm):
     description = forms.CharField(
         widget=forms.Textarea,
+        help_text=(
+            "You can use HTML formatting if required. See the help text "
+            "below for more information."
+        ),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["validity_start"].label = "Description start date"
+        self.fields["validity_start"].label = "Start date"
 
 
 class DeleteForm(forms.ModelForm):
@@ -545,6 +550,7 @@ class FormSet(forms.BaseFormSet):
     validate_min = False
     validate_max = False
     prefix = None
+    renderer = get_default_renderer()
 
     def __init__(
         self,

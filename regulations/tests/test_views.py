@@ -1,5 +1,6 @@
 import datetime
 
+import freezegun
 import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
@@ -353,6 +354,7 @@ def test_regulation_api_list_view(valid_user_client, date_ranges):
     )
 
 
+@freezegun.freeze_time("2023-01-01")
 def test_regulation_update_view_new_regulation_id(
     date_ranges,
     client_with_current_workbasket,

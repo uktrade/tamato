@@ -11,12 +11,12 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.timezone import template_localtime
-from govuk_frontend_jinja.templates import Environment
-from govuk_frontend_jinja.templates import NunjucksExtension
 from jinja2.utils import markupsafe
-from webpack_loader.templatetags.webpack_loader import render_bundle
+from webpack_loader.contrib.jinja2ext import _render_bundle
 from webpack_loader.templatetags.webpack_loader import webpack_static
 
+from govuk_frontend_jinja.templates import Environment
+from govuk_frontend_jinja.templates import NunjucksExtension
 from workbaskets.models import WorkBasket
 
 
@@ -140,7 +140,7 @@ def environment(**kwargs):
             "get_current_workbasket": WorkBasket.current,
             "localtime": template_localtime,
             "pluralize": pluralize,
-            "render_bundle": render_bundle,
+            "render_bundle": _render_bundle,
             "settings": settings,
             "static": static,
             "format_date_string": format_date_string,

@@ -21,7 +21,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({
-        "titleText": "A new description of " ~ described_object._meta.verbose_name ~ " " ~ described_object|string ~ " has been created",
+        "titleText": "A new description of " ~ described_object._meta.verbose_name ~ ": " ~ described_object|string ~ " has been created",
         "text": "This new description has been added to your workbasket",
         "classes": "govuk-!-margin-bottom-7"
       }) }}

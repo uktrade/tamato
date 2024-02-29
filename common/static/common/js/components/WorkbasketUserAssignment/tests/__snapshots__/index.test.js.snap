@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`WorkbasketUserAssignment renders assign reviewers button 1`] = `
+<button
+  className="govuk-link fake-link"
+  data-testid="assign-reviewers"
+  id="assign-reviewers"
+  onClick={[Function]}
+  type="button"
+>
+  Assign
+  <span
+    className="govuk-visually-hidden"
+  >
+     
+    reviewers
+  </span>
+</button>
+`;
+
+exports[`WorkbasketUserAssignment renders assign workers button 1`] = `
+<button
+  className="govuk-link fake-link"
+  data-testid="assign-workers"
+  id="assign-workers"
+  onClick={[Function]}
+  type="button"
+>
+  Assign
+  <span
+    className="govuk-visually-hidden"
+  >
+     
+    workers
+  </span>
+</button>
+`;
+
+exports[`WorkbasketUserAssignment renders unassign reviewers button 1`] = `
+<button
+  className="govuk-link fake-link"
+  data-testid="unassign-reviewers"
+  id="unassign-reviewers"
+  onClick={[Function]}
+  type="button"
+>
+  Unassign
+  <span
+    className="govuk-visually-hidden"
+  >
+     
+    reviewers
+  </span>
+</button>
+`;
+
+exports[`WorkbasketUserAssignment renders unassign workers button 1`] = `
+<button
+  className="govuk-link fake-link"
+  data-testid="assign-workers"
+  id="assign-workers"
+  onClick={[Function]}
+  type="button"
+>
+  Unassign
+  <span
+    className="govuk-visually-hidden"
+  >
+     
+    workers
+  </span>
+</button>
+`;
