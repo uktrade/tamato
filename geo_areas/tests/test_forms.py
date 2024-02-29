@@ -1,3 +1,4 @@
+import freezegun
 import pytest
 
 from common.models.transactions import Transaction
@@ -119,6 +120,7 @@ def test_geographical_membership_add_form_valid_data(date_ranges):
         assert form.is_valid()
 
 
+@freezegun.freeze_time("2023-01-01")
 def test_geographical_membership_add_form_invalid_dates(date_ranges):
     country = factories.CountryFactory.create()
     area_group = factories.GeoGroupFactory.create(valid_between=date_ranges.normal)
