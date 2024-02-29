@@ -1725,12 +1725,14 @@ def duty_sentence_parser(
 def lark_duty_sentence_parser(
     duty_expressions_list,
     monetary_units_list,
+    measurements,
     measurement_units,
     unit_qualifiers,
 ) -> LarkDutySentenceParser:
     return LarkDutySentenceParser(
         duty_expressions=duty_expressions_list,
         monetary_units=monetary_units_list,
+        measurements=measurements,
         measurement_units=measurement_units,
         measurement_unit_qualifiers=unit_qualifiers,
     )
@@ -1741,6 +1743,7 @@ def percent_or_amount() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=1,
         prefix="",
+        description=f"% or amount",
         duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
         measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
@@ -1752,6 +1755,7 @@ def plus_percent_or_amount() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=4,
         prefix="+",
+        description=f"+ % or amount",
         duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
         measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
@@ -1763,6 +1767,7 @@ def plus_agri_component() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=12,
         prefix="+ AC",
+        description="+ agricultural component",
         duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
@@ -1774,6 +1779,7 @@ def plus_amount_only() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=20,
         prefix="+",
+        description="+ amount",
         duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
         measurement_unit_applicability_code=ApplicabilityCode.MANDATORY,
         monetary_unit_applicability_code=ApplicabilityCode.MANDATORY,
@@ -1785,6 +1791,7 @@ def nothing() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=37,
         prefix="NIHIL",
+        description="(nothing)",
         duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         measurement_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
@@ -1796,6 +1803,7 @@ def supplementary_unit() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=99,
         prefix="",
+        description="supplementary unit",
         duty_amount_applicability_code=ApplicabilityCode.PERMITTED,
         measurement_unit_applicability_code=ApplicabilityCode.MANDATORY,
         monetary_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
@@ -1844,39 +1852,74 @@ def duty_expressions_list(
 
 
 @pytest.fixture
-def monetary_units() -> Dict[str, MonetaryUnit]:
+def euro() -> MonetaryUnit:
+    return factories.MonetaryUnitFactory(code="EUR")
+
+
+@pytest.fixture
+def british_pound() -> MonetaryUnit:
+    return factories.MonetaryUnitFactory(code="GBP")
+
+
+@pytest.fixture
+def ecu_conversion() -> MonetaryUnit:
+    return factories.MonetaryUnitFactory(code="XEM")
+
+
+@pytest.fixture
+def monetary_units(euro, british_pound, ecu_conversion) -> Dict[str, MonetaryUnit]:
     return {
         m.code: m
         for m in [
-            factories.MonetaryUnitFactory(code="EUR"),
-            factories.MonetaryUnitFactory(code="GBP"),
-            factories.MonetaryUnitFactory(code="XEM"),
+            euro,
+            british_pound,
+            ecu_conversion,
         ]
     }
 
 
 @pytest.fixture
-def monetary_units_list() -> Sequence[MonetaryUnit]:
+def monetary_units_list(monetary_units) -> Sequence[MonetaryUnit]:
+    return monetary_units.values()
+
+
+@pytest.fixture
+def kilogram() -> MeasurementUnit:
+    return factories.MeasurementUnitFactory(code="KGM", abbreviation="kg")
+
+
+@pytest.fixture
+def hectokilogram() -> MeasurementUnit:
+    return factories.MeasurementUnitFactory(code="DTN", abbreviation="100 kg")
+
+
+@pytest.fixture
+def thousand_items() -> MeasurementUnit:
+    return factories.MeasurementUnitFactory(code="MIL", abbreviation="1,000 p/st")
+
+
+@pytest.fixture
+def measurement_units(
+    kilogram,
+    hectokilogram,
+    thousand_items,
+) -> Sequence[MeasurementUnit]:
     return [
-        factories.MonetaryUnitFactory(code="EUR"),
-        factories.MonetaryUnitFactory(code="GBP"),
-        factories.MonetaryUnitFactory(code="XEM"),
+        kilogram,
+        hectokilogram,
+        thousand_items,
     ]
 
 
 @pytest.fixture
-def measurement_units() -> Sequence[MeasurementUnit]:
-    return [
-        factories.MeasurementUnitFactory(code="KGM", abbreviation="kg"),
-        factories.MeasurementUnitFactory(code="DTN", abbreviation="100 kg"),
-        factories.MeasurementUnitFactory(code="MIL", abbreviation="1,000 p/st"),
-    ]
+def lactic_matter() -> MeasurementUnitQualifier:
+    return factories.MeasurementUnitQualifierFactory(code="Z", abbreviation="lactic.")
 
 
 @pytest.fixture
-def unit_qualifiers() -> Sequence[MeasurementUnitQualifier]:
+def unit_qualifiers(lactic_matter) -> Sequence[MeasurementUnitQualifier]:
     return [
-        factories.MeasurementUnitQualifierFactory(code="Z", abbreviation="lactic."),
+        lactic_matter,
     ]
 
 
@@ -1905,6 +1948,11 @@ def measurements(
         ): m
         for m in measurements
     }
+
+
+@pytest.fixture
+def measurements_list(measurements):
+    return measurements.values()
 
 
 @pytest.fixture

@@ -88,6 +88,7 @@ class DutySentenceParser:
         date: datetime = datetime.now(),
         duty_expressions: Sequence[models.DutyExpression] = None,
         monetary_units: Sequence[models.MonetaryUnit] = None,
+        measurements: Sequence[models.Measurement] = None,
         measurement_units: Sequence[models.MeasurementUnit] = None,
         measurement_unit_qualifiers: Sequence[models.MeasurementUnitQualifier] = None,
     ):
@@ -106,6 +107,7 @@ class DutySentenceParser:
             models.MeasurementUnitQualifier.objects.as_at(date)
             or measurement_unit_qualifiers
         )
+        measurements = models.Measurement.objects.as_at(date) or measurements
 
         amount_mandatory = duty_expressions.filter(
             duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
@@ -156,7 +158,7 @@ class DutySentenceParser:
             start="sentence",
         )
 
-        self.transformer = DutyTransformer(date=date)
+        self.transformer = DutyTransformer(date=date, measurements=measurements)
 
     def parse(self, duty_sentence):
         try:
@@ -197,7 +199,7 @@ class DutySentenceParser:
 
     def transform(self, duty_sentence):
         tree = self.parse(duty_sentence)
-        self.transformer.transform(tree)
+        return self.transformer.transform(tree)
 
 
 class DutyTransformer(Transformer):
@@ -207,6 +209,7 @@ class DutyTransformer(Transformer):
 
     def __init__(self, *args, **kwargs):
         self.date = kwargs.pop("date")
+        self.measurements = kwargs.pop("measurements")
         super().__init__()
 
     def validate_duty_expressions(self, transformed):
@@ -217,6 +220,18 @@ class DutyTransformer(Transformer):
         )
 
         duty_expression_sids = [d.sid for d in duty_expressions]
+        supplementary_unit = models.DutyExpression.objects.as_at(self.date).get(sid=99)
+
+        if len(transformed) == 1:
+            phrase = transformed[0]
+            duty_expression = phrase.get("duty_expression", "")
+            if (
+                duty_expression == ""
+                and "duty_amount" not in transformed[0].keys()
+                and "measurement_unit" in transformed[0].keys()
+            ):
+                phrase["duty_expression"] = supplementary_unit
+                return
 
         for phrase in transformed:
             duty_expression = phrase.get("duty_expression", "")
@@ -264,7 +279,7 @@ class DutyTransformer(Transformer):
         item,
         item_name,
     ):
-        if code == ApplicabilityCode.MANDATORY and not item:
+        if code == ApplicabilityCode.MANDATORY and item is None:
             raise ValidationError(
                 f"Duty expression {duty_expression.description} ({duty_expression.prefix}) requires a {item_name}.",
             )
@@ -275,10 +290,9 @@ class DutyTransformer(Transformer):
                 message = f"{item_name} cannot be used with duty expression {duty_expression.description} ({duty_expression.prefix})."
             raise ValidationError(message)
 
-    @staticmethod
-    def validate_measurement(unit, qualifier):
+    def validate_measurement(self, unit, qualifier):
         try:
-            models.Measurement.objects.get(
+            self.measurements.get(
                 measurement_unit=unit,
                 measurement_unit_qualifier=qualifier,
             )
@@ -296,10 +310,10 @@ class DutyTransformer(Transformer):
         monetary_code = duty_expression.monetary_unit_applicability_code
         measurement_unit_code = duty_expression.measurement_unit_applicability_code
 
-        duty_amount = phrase.get("duty_amount")
-        monetary_unit = phrase.get("monetary_unit")
-        measurement_unit = phrase.get("measurement_unit")
-        measurement_unit_qualifier = phrase.get("measurement_unit_qualifier")
+        duty_amount = phrase.get("duty_amount", None)
+        monetary_unit = phrase.get("monetary_unit", None)
+        measurement_unit = phrase.get("measurement_unit", None)
+        measurement_unit_qualifier = phrase.get("measurement_unit_qualifier", None)
 
         self.validate_according_to_applicability_code(
             amount_code,
@@ -322,7 +336,10 @@ class DutyTransformer(Transformer):
 
         # If there is a measurement unit qualifier, validate that it can be used with the measurement
         if measurement_unit and measurement_unit_qualifier:
-            self.validate_measurement(measurement_unit, measurement_unit_qualifier)
+            self.validate_measurement(
+                measurement_unit,
+                measurement_unit_qualifier,
+            )
 
     def validate_sentence(self, transformed):
         for phrase in transformed:
