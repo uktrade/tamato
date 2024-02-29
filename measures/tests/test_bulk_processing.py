@@ -5,7 +5,6 @@ import pytest
 
 from measures.models import MeasuresBulkCreator
 from measures.models import ProcessingState
-from measures.tests.factories import MeasuresBulkCreatorFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -32,8 +31,8 @@ def test_REVOKE_TASKS_AND_SET_NULL(
     mocked_schedule_apply_async,
 ):
     """Test that deleting an object, referenced by a ForeignKey field that has
-    `on_delete=REVOKE_TASKS_AND_SET_NULL`, correctly revokes any associated
-    Celery task on the owning object."""
+    `on_delete=BulkProcessor.REVOKE_TASKS_AND_SET_NULL`, correctly revokes any
+    associated Celery task on the owning object."""
 
     # mocked_schedule_apply_async used to set `task_id` down in the call to
     # `schedule_task()`, which is necessary for testing revocation of the Celery
@@ -70,16 +69,3 @@ def test_cancel_task(
     )
 
     assert updated_2_measures_bulk_creator.processing_state == ProcessingState.CANCELLED
-
-
-def test_processing_state_transitions(
-    user_empty_workbasket,
-    approved_transaction,
-):
-    measures_bulk_creator = MeasuresBulkCreatorFactory.create(
-        form_data={},
-        form_kwargs={},
-        current_transaction=approved_transaction,
-        workbasket=user_empty_workbasket,
-    )
-    # TODO
