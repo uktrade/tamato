@@ -84,7 +84,7 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
         error_messages={
             "required": "An area ID is required",
             "unique": "A Reference Document with this area ID already exists",
-            "max_length": "The area ID must be 2 characters long",
+            "max_length": "The area ID can be at most 4 characters long",
         },
     )
 

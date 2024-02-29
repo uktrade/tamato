@@ -142,7 +142,7 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
 
 class ReferenceDocumentCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/create.jinja"
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.add_referencedocument"
     form_class = forms.ReferenceDocumentCreateUpdateForm
 
     def get_success_url(self):
@@ -154,7 +154,7 @@ class ReferenceDocumentCreate(PermissionRequiredMixin, CreateView):
 
 class ReferenceDocumentUpdate(PermissionRequiredMixin, UpdateView):
     model = models.ReferenceDocument
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.change_referencedocument"
     template_name = "reference_documents/update.jinja"
     form_class = forms.ReferenceDocumentCreateUpdateForm
 
@@ -168,7 +168,7 @@ class ReferenceDocumentUpdate(PermissionRequiredMixin, UpdateView):
 class ReferenceDocumentDelete(PermissionRequiredMixin, FormMixin, DeleteView):
     form_class = forms.ReferenceDocumentDeleteForm
     model = ReferenceDocument
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.delete_referencedocument"
     template_name = "reference_documents/delete.jinja"
 
     # TODO: Update this to get rid of FormMixin with Django 4.2 as no need to overwrite the post anymore
