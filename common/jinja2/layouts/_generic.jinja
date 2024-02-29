@@ -26,10 +26,10 @@
   {% endif %}
   
   <!--[if !IE 8]><!-->
-    {{ render_bundle("main", "css") }}
+    {{ render_bundle(bundle_name="main", extension="css") }}
   <!--<![endif]-->
   <!--[if IE 8]>
-    {# render_bundle("ie8", "css") #}
+    {# render_bundle(bundle_name="ie8", extension="css") #}
   <![endif]-->
   {% block styles %}{% endblock %}
 {% endblock %}
@@ -55,5 +55,5 @@
 
 {% block bodyEnd %}
   {% set csp_nonce -%}nonce="{{ cspNonce }}"{% endset %}
-  {{ render_bundle("main", "js", attrs=csp_nonce) }}
+  {{ render_bundle(bundle_name="main", extension="js", attrs=csp_nonce) }}
 {% endblock %}

@@ -6,17 +6,20 @@ from reports.reports.base_table import ReportBaseTable
 
 class Report(ReportBaseTable):
     name = "Blank Goods Nomenclature descriptions"
+    description = (
+        "Goods nomenclature objects which have a blank description object attached."
+    )
 
     def headers(self) -> [dict]:
         return [
-            {"text": "item id"},
-            {"text": "suffix"},
-            {"text": "validity start date"},
-            {"text": "description"},
-            {"text": "sid"},
-            {"text": "current sid"},
-            {"text": "active now"},
-            {"text": "current description"},
+            {"text": "Commodity code"},
+            {"text": "Suffix"},
+            {"text": "Start date"},
+            {"text": "Description"},
+            {"text": "Blank description SID"},
+            {"text": "Current description SID"},
+            {"text": "Active now"},
+            {"text": "Current description"},
         ]
 
     def row(self, row: GoodsNomenclatureDescription) -> [dict]:
@@ -31,7 +34,7 @@ class Report(ReportBaseTable):
         return [
             {"text": row.described_goods_nomenclature.item_id},
             {"text": row.described_goods_nomenclature.suffix},
-            {"text": row.validity_start},
+            {"text": f"{row.validity_start:%d %b %Y}"},
             {"text": row.description},
             {"text": row.sid},
             {"text": row.described_goods_nomenclature.get_description().sid},

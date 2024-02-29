@@ -43,7 +43,7 @@ def test_FOT3(date_ranges):
 
 
 def test_FO2(assert_handles_duplicates):
-    """The combination footnote type and code must be unique."""
+    """The combination of footnote type and code must be unique."""
 
     assert_handles_duplicates(
         factories.FootnoteFactory,

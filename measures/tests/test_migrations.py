@@ -14,7 +14,7 @@ from workbaskets.validators import WorkflowStatus
 
 
 @pytest.mark.django_db()
-def test_add_back_deleted_measures(migrator, date_ranges):
+def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
     from common.models.transactions import TransactionPartition
 
     """Ensures that the initial migration works."""
@@ -39,6 +39,8 @@ def test_add_back_deleted_measures(migrator, date_ranges):
     User = old_state.apps.get_model("common", "User")
     WorkBasket = old_state.apps.get_model("workbaskets", "WorkBasket")
     VersionGroup = old_state.apps.get_model("common", "VersionGroup")
+
+    setup_content_types(old_state.apps)
 
     goods_content_type = ContentType.objects.get(model="goodsnomenclature")
     geo_area_content_type = ContentType.objects.get(model="geographicalarea")

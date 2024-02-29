@@ -4,7 +4,7 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 
 
-{% set page_title = "Notify Goods Report" %}
+{% set page_title = "Notify Channel Islands" %}
 
 
 {% block breadcrumb %}
@@ -12,7 +12,7 @@
     "items": [
       {"text": "Home", "href": url("home")},
       {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
-      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Review goods",
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Review commodities",
       "href": url("workbaskets:workbasket-ui-review-goods", kwargs={"pk": request.user.current_workbasket.id})},
       {"text": page_title}
     ]
@@ -24,14 +24,14 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({
-        "titleText": "Notification email sent",
-        "text": "An email notification has been successfully sent to Channel Islands.",
+        "titleText": "The Channel Islands have been notified of commodity code changes",
+        "text": "An email notification has been sent to Channel Islands",
         "classes": "govuk-!-margin-bottom-7"
       }) }}
 
     <div class="govuk-button-group">
       <a class="govuk-link" href="{{ url('workbaskets:workbasket-ui-review-goods', kwargs={"pk": request.user.current_workbasket.id}) }}">
-        Back to Review goods list
+        Return to Review commodities
       </a>
     </div>
 
