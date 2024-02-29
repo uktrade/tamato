@@ -148,20 +148,26 @@ class BulkProcessor(TimestampedMixin):
         raise NotImplementedError
 
     def cancel_task(self):
-        """Cancel a task that has been queued using schedule_task(), transition
-        processing_state to CANCELLED and save the instance (if the instance is
-        in a valid current state)."""
+        """
+        Attempt cancelling a task that has previously been queued using
+        schedule_task(), transition processing_state to CANCELLED and save the
+        instance (if the instance is in a valid current state).
+
+        If the instance
+        `processing_state` is not in one of the queued_states, then no state
+        change is applied to the instance.
+        """
 
         if self.task_id:
             app.control.revoke(self.task_id, terminate=True)
+            logger.info(
+                f"BulkProcessor.cancel_task(): BulkProcessor({self.pk})'s "
+                f"task({self.task_id}) revoked.",
+            )
 
         if self.processing_state in ProcessingState.queued_states():
             self.processing_cancelled()
             self.save()
-        else:
-            logger.warning(
-                "BulkProcessor.cancel_task() called on task in non-queued " "state.",
-            )
 
     # ---
     # Methods used to drive `procssing_state` through valid state transitions.
