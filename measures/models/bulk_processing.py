@@ -8,6 +8,8 @@ from django.db import models
 from django.db.models.deletion import SET_NULL
 from django.db.transaction import atomic
 from django.forms.formsets import BaseFormSet
+from django_fsm import FSMField
+from django_fsm import transition
 
 from common.celery import app
 from common.models import Transaction
@@ -88,7 +90,8 @@ class BulkProcessorResult(TimestampedMixin):
 
 class BulkProcessor(TimestampedMixin):
     """(Abstract) Model mixin defining common attributes and functions for
-    inheritace by bulk processing Model classes."""
+    inheritace by Model classes responsible for asynchronously bulk processing
+    tasks."""
 
     class Meta:
         abstract = True
@@ -102,6 +105,20 @@ class BulkProcessor(TimestampedMixin):
     """ID of the Celery task used to create measures - blank=True + null=True
     is required to allow multiple blank instances with unique=True."""
 
+    processing_state = FSMField(
+        default=ProcessingState.AWAITING_PROCESSING,
+        choices=ProcessingState.choices,
+        db_index=True,
+        protected=True,
+        editable=False,
+    )
+    """
+    Current state of the BulkProcessor instance.
+
+    This attribute is driven through valid transitions by the member functions
+    on on this class that are annotated by @transition.
+    """
+
     processing_result = models.ForeignKey(
         "measures.BulkProcessorResult",
         on_delete=SET_NULL,
@@ -111,23 +128,83 @@ class BulkProcessor(TimestampedMixin):
     """The result of a bulk processing action (e.g. measures bulk creation) -
     NULL until the creation has run to completion."""
 
-    @property
-    def processing_state(self) -> ProcessingState:
-        """Calculates and returns the current processing state."""
-
-        # TODO: Replace with FSM attr, processing_state, allowing DB querying.
-        AsyncResult(self.task_id)
-        return ProcessingState.AWAITING_PROCESSING
-
-    def schedule(self) -> AsyncResult:
+    def schedule_task(self) -> AsyncResult:
         """
         Prototype of function that must be implemented by this mixin's subclass.
 
         Implementations of this function should schedule the processing task
         (using `delay()` or `apply_async()`), returning the resulting Celery
-        AsyncResult object.
+        AsyncResult object, and save the resulting task's id as
+        `BulkProcessor.task_id`. For example:
+
+        ```
+        def schedule_task(self) -> AsyncResult:
+            async_result = bulk_creator_fn.delay()
+            self.task_id = async_result.id
+            self.save()
+            return async_result
+        ```
         """
         raise NotImplementedError
+
+    def cancel_task(self):
+        """Cancel a task that has been queued using schedule_task(), transition
+        processing_state to CANCELLED and save the instance (if the instance is
+        in a valid current state)."""
+
+        if self.task_id:
+            app.control.revoke(self.task_id, terminate=True)
+
+        if self.processing_state in ProcessingState.queued_states():
+            self.processing_cancelled()
+            self.save()
+        else:
+            logger.warning(
+                "BulkProcessor.cancel_task() called on task in non-queued " "state.",
+            )
+
+    # ---
+    # Methods used to drive `procssing_state` through valid state transitions.
+    # ---
+
+    @transition(
+        field=processing_state,
+        source=ProcessingState.AWAITING_PROCESSING,
+        target=ProcessingState.CURRENTLY_PROCESSING,
+        custom={"label": "Start processing"},
+    )
+    def begin_processing(self):
+        """Begin procssing from an initial awaiting state."""
+
+    @transition(
+        field=processing_state,
+        source=ProcessingState.CURRENTLY_PROCESSING,
+        target=ProcessingState.SUCCESSFULLY_PROCESSED,
+        custom={"label": "Processing succeeded"},
+    )
+    def processing_succeeded(self):
+        """Processing completed with a successful outcome."""
+
+    @transition(
+        field=processing_state,
+        source=ProcessingState.CURRENTLY_PROCESSING,
+        target=ProcessingState.FAILED_PROCESSING,
+        custom={"label": "Processing failed"},
+    )
+    def processing_failed(self):
+        """Procssing completed with a failed outcome."""
+
+    @transition(
+        field=processing_state,
+        source=(
+            ProcessingState.AWAITING_PROCESSING,
+            ProcessingState.CURRENTLY_PROCESSING,
+        ),
+        target=ProcessingState.CANCELLED,
+        custom={"label": "Processing cancelled"},
+    )
+    def processing_cancelled(self):
+        """Procssing was cancelled before completion."""
 
 
 class MeasuresBulkCreatorManager(models.Manager):
@@ -153,11 +230,17 @@ class MeasuresBulkCreatorManager(models.Manager):
 
 
 def REVOKE_TASKS_AND_SET_NULL(collector, field, sub_objs, using):
-    """Revoke any celery bulk editing tasks, identified via a `task_id` field,
-    on the object and set the foreign key value to NULL."""
+    """
+    Revoke any celery bulk editing tasks, identified via a `task_id` field, on
+    the object and set the foreign key value to NULL.
+
+    Note: Although this function signature is the same as for other functions
+    that may be used with the `on_delete` parameter, it should only be used by
+    subclasses of BulkProcessor.
+    """
     for obj in sub_objs:
-        if hasattr(obj, "task_id"):
-            app.control.revoke(obj.task_id, terminate=True)
+        if isinstance(obj, BulkProcessor):
+            obj.cancel_task()
     SET_NULL(collector, field, sub_objs, using)
 
 
@@ -204,7 +287,9 @@ class MeasuresBulkCreator(BulkProcessor):
     )
     """The workbasket with which created measures are associated."""
 
-    def schedule(self) -> AsyncResult:
+    def schedule_task(self) -> AsyncResult:
+        """Implementation of base class method."""
+
         from measures.tasks import bulk_create_measures
 
         async_result = bulk_create_measures.apply_async(

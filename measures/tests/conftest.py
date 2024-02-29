@@ -449,6 +449,21 @@ def measure_commodities_and_duties_form_data():
 
 
 @pytest.fixture()
+def simple_measures_bulk_creator(
+    user_empty_workbasket,
+    approved_transaction,
+):
+    from measures.tests.factories import MeasuresBulkCreatorFactory
+
+    return MeasuresBulkCreatorFactory.create(
+        form_data={},
+        form_kwargs={},
+        current_transaction=approved_transaction,
+        workbasket=user_empty_workbasket,
+    )
+
+
+@pytest.fixture()
 def mocked_schedule_apply_async():
     with patch(
         "measures.tasks.bulk_create_measures.apply_async",
