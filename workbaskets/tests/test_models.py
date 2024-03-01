@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Iterable
 from unittest.mock import patch
 
@@ -18,6 +19,7 @@ from common.tests.util import TestRule
 from common.tests.util import add_business_rules
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
+from tasks.models import UserAssignment
 from workbaskets import tasks
 from workbaskets.models import REVISION_ONLY
 from workbaskets.models import SEED_FIRST
@@ -107,20 +109,20 @@ def test_get_tracked_models(new_workbasket):
 @patch("exporter.tasks.upload_workbaskets")
 def test_workbasket_accepted_updates_current_tracked_models(
     upload,
-    new_workbasket,
+    assigned_workbasket,
     valid_user,
 ):
     original_footnote = factories.FootnoteFactory.create()
     new_footnote = original_footnote.new_version(
-        workbasket=new_workbasket,
+        workbasket=assigned_workbasket,
         update_type=UpdateType.UPDATE,
     )
 
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 
-    assert_workbasket_valid(new_workbasket)
+    assert_workbasket_valid(assigned_workbasket)
 
-    new_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
+    assigned_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     new_footnote.refresh_from_db()
 
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
@@ -129,22 +131,22 @@ def test_workbasket_accepted_updates_current_tracked_models(
 @patch("exporter.tasks.upload_workbaskets")
 def test_workbasket_errored_updates_tracked_models(
     upload,
-    new_workbasket,
+    assigned_workbasket,
     valid_user,
     settings,
 ):
     settings.TRANSACTION_SCHEMA = "workbaskets.models.SEED_FIRST"
     original_footnote = factories.FootnoteFactory.create()
     new_footnote = original_footnote.new_version(
-        workbasket=new_workbasket,
+        workbasket=assigned_workbasket,
         update_type=UpdateType.UPDATE,
     )
-    assert_workbasket_valid(new_workbasket)
+    assert_workbasket_valid(assigned_workbasket)
 
-    new_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
+    assigned_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == new_footnote.pk
-    new_workbasket.cds_error()
+    assigned_workbasket.cds_error()
     new_footnote.refresh_from_db()
     assert new_footnote.version_group.current_version.pk == original_footnote.pk
 
@@ -376,6 +378,15 @@ def test_queue(valid_user, unapproved_checked_transaction):
     """Test that approve transitions workbasket from EDITING to QUEUED, setting
     approver and shifting transaction from DRAFT to REVISION partition."""
     wb = unapproved_checked_transaction.workbasket
+    task = factories.TaskFactory.create(workbasket=wb)
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=task,
+    )
     wb.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
 
     assert wb.status == WorkflowStatus.QUEUED
@@ -439,3 +450,56 @@ def test_workbasket_assign_to_user(valid_user, workbasket):
     assert not valid_user.current_workbasket
     workbasket.assign_to_user(valid_user)
     assert valid_user.current_workbasket == workbasket
+
+
+def test_unassigned_workbasket_cannot_be_queued():
+    """Tests that an unassigned workbasket is marked as not fully assigned and
+    cannot be queued."""
+    workbasket = factories.WorkBasketFactory.create()
+    assert not workbasket.is_fully_assigned()
+
+    worker = factories.UserFactory.create()
+    task = factories.TaskFactory.create(workbasket=workbasket)
+
+    with pytest.raises(TransitionNotAllowed):
+        workbasket.queue(user=worker.id, scheme_name=settings.TRANSACTION_SCHEMA)
+
+    factories.UserAssignmentFactory.create(
+        user=worker,
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=task,
+    )
+    assert workbasket.is_fully_assigned()
+
+    UserAssignment.unassign_user(user=worker, task=task)
+    assert not workbasket.is_fully_assigned()
+
+
+def test_workbasket_user_assignments_queryset():
+    workbasket = factories.WorkBasketFactory.create()
+    worker_assignment = factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task__workbasket=workbasket,
+    )
+    reviewer_assignment = factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task__workbasket=workbasket,
+    )
+    # Inactive assignment
+    factories.UserAssignmentFactory.create(
+        unassigned_at=datetime.now(),
+        task__workbasket=workbasket,
+    )
+    # Unrelated assignment
+    factories.UserAssignmentFactory.create()
+
+    workbasket.refresh_from_db()
+    queryset = workbasket.user_assignments
+
+    assert worker_assignment in queryset
+    assert reviewer_assignment in queryset
+    assert len(queryset) == 2

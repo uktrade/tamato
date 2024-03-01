@@ -4,7 +4,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <p class="govuk-body">
-        Create a new description of {{ described_object._meta.verbose_name ~ " " ~ described_object|string }}.
+        Create a new description of {{ described_object._meta.verbose_name ~ ": " ~ described_object|string }}.
       </p>
       {% call django_form() %}
         {{ crispy(form) }}

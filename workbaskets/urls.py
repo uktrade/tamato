@@ -181,6 +181,16 @@ ui_patterns = [
         ui_views.WorkBasketDeleteDone.as_view(),
         name="workbasket-ui-delete-done",
     ),
+    path(
+        f"<pk>/assign-users/",
+        ui_views.WorkBasketAssignUsersView.as_view(),
+        name="workbasket-ui-assign-users",
+    ),
+    path(
+        f"<pk>/unassign-users/",
+        ui_views.WorkBasketUnassignUsersView.as_view(),
+        name="workbasket-ui-unassign-users",
+    ),
 ]
 
 urlpatterns = [

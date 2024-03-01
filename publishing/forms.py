@@ -26,7 +26,7 @@ class LoadingReportForm(ModelForm):
         model = LoadingReport
         fields = ("comments",)
 
-    files = MultipleFileField()
+    files = MultipleFileField(required=False)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request")

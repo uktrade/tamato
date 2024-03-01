@@ -9,7 +9,7 @@
 {% set base_url = url("workbaskets:workbasket-ui-changes", args=[workbasket.pk]) ~ "?page=" ~ page_obj.number %}
 
 {% set component %}
-  {{ create_sortable_anchor(request, "component", "Component", base_url, True) }}
+  {{ create_sortable_anchor(request, "component", "Item", base_url, True) }}
 {% endset %}
 
 {% set action %}
@@ -58,7 +58,7 @@
       {% endif %}
 
     {% elif workbasket.status == "EDITING" and user_can_delete_items %}
-      <p class="govuk-body">Select to remove or click on the ID link to edit:</p>
+      <p class="govuk-body">Select to remove or click on the ID link to edit.</p>
       <form method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         {% if form.fields %}

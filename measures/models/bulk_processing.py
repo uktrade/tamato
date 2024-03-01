@@ -42,7 +42,7 @@ class ProcessingState(models.TextChoices):
         "FAILED_PROCESSING",
         "Failed processing",
     )
-    """Processing now completed with a failure outcome - failed to screate
+    """Processing now completed with a failure outcome - failed to create
     measures."""
     CANCELLED = (
         "CANCELLED",
