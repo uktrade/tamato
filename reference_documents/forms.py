@@ -5,6 +5,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.core.exceptions import ValidationError
 
 from common.forms import ValidityPeriodForm
 from reference_documents import models
@@ -12,7 +13,7 @@ from reference_documents.models import PreferentialRate
 from reference_documents.validators import commodity_code_validator
 
 
-class PreferentialRateEditForm(
+class PreferentialRateCreateUpdateForm(
     ValidityPeriodForm,
     forms.ModelForm,
 ):
@@ -41,6 +42,18 @@ class PreferentialRateEditForm(
             "required": "This is required",
         },
     )
+
+    def clean_duty_rate(self):
+        data = self.cleaned_data["duty_rate"]
+        if len(data) < 1:
+            raise ValidationError("Duty Rate is not valid - it must have a value")
+        return data
+
+    def clean_commodity_code(self):
+        data = self.cleaned_data["commodity_code"]
+        if len(data) != 10 or not data.isdigit():
+            raise ValidationError("Commodity Code is not valid - it must be 10 digits")
+        return data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

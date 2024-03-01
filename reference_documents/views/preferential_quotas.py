@@ -7,7 +7,7 @@ from reference_documents.models import PreferentialQuota
 
 
 class PreferentialQuotaEditView(PermissionRequiredMixin, UpdateView):
-    template_name = "preferential_quotas/edit.jinja"
+    template_name = "reference_documents/preferential_quotas/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuota
     fields = [
