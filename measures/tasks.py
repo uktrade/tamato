@@ -18,15 +18,6 @@ def bulk_create_measures(measures_bulk_creator_pk: int) -> None:
     try:
         measures = measures_bulk_creator.create_measures()
     except Exception as e:
-        # TODO:
-        # - Does a BulkProcessor.cancel_task(), which calls
-        #   app.control.revoke(self.task_id, terminate=True) and in turn issues
-        #   a SIGINT to the Celery process, result in an exception here?
-        #   Probably not, but check!
-        # - How should prematurely terminating Celery tasks (SIGNINT by
-        #   non-cancel_task() means) have their processing_state handled and
-        #   transitioned?
-
         measures_bulk_creator.processing_failed()
         measures_bulk_creator.save()
         logger.error(
