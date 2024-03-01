@@ -15,6 +15,7 @@ from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
+from geo_areas import constants
 from geo_areas.validators import AreaCode
 from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
@@ -445,6 +446,44 @@ def measure_commodities_and_duties_form_data():
                 "measure_type": None,
             },
         },
+    }
+
+
+@pytest.fixture()
+def measure_geo_area_erga_omnes_form_data(erga_omnes):
+    return {
+        "geo_area": constants.GeoAreaType.ERGA_OMNES,
+    }
+
+
+@pytest.fixture()
+def measure_geo_area_erga_omnes_exclusions_form_data(erga_omnes):
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+    return {
+        "geo_area": constants.GeoAreaType.ERGA_OMNES,
+        "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
+        "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
+    }
+
+
+@pytest.fixture()
+def measure_geo_area_geo_group_form_data(erga_omnes):
+    geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+    return {
+        "geo_area": constants.GeoAreaType.GROUP,
+        f"{constants.GEO_GROUP_PREFIX}-geographical_area_group": geo_group.pk,
+    }
+
+
+@pytest.fixture()
+def measure_geo_area_geo_group_exclusions_form_data(erga_omnes):
+    geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    return {
+        "geo_area": constants.GeoAreaType.GROUP,
+        f"{constants.GEO_GROUP_PREFIX}-geographical_area_group": geo_group.pk,
+        "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
     }
 
 
