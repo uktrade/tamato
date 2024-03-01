@@ -460,6 +460,7 @@ def simple_measures_bulk_creator(
         form_kwargs={},
         current_transaction=approved_transaction,
         workbasket=user_empty_workbasket,
+        user=None,
     )
 
 
