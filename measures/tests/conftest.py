@@ -1,6 +1,9 @@
 import datetime
 from typing import Dict
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
+import faker
 import pytest
 import requests
 from django.core.exceptions import ValidationError
@@ -482,3 +485,13 @@ def measure_geo_area_geo_group_exclusions_form_data(erga_omnes):
         f"{constants.GEO_GROUP_PREFIX}-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
     }
+  
+
+@pytest.fixture()  
+def mocked_schedule_apply_async():
+    with patch(
+        "measures.tasks.bulk_create_measures.apply_async",
+        return_value=MagicMock(id=faker.Faker().uuid4()),
+    ) as apply_async_mock:
+        yield apply_async_mock
+

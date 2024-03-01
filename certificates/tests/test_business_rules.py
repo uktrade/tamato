@@ -38,7 +38,7 @@ def test_CET3(date_ranges):
 
 @pytest.mark.xfail(reason="CE2 disabled")
 def test_CE2(assert_handles_duplicates):
-    """The combination certificate type and code must be unique."""
+    """The combination of certificate type and code must be unique."""
 
     assert_handles_duplicates(
         factories.CertificateFactory,

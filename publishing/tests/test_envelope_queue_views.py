@@ -171,7 +171,7 @@ def test_accept_envelope(
     # Submit the form and test the packaged workbasket has transitioned correctly.
     response = valid_user_client.post(
         accept_view_url,
-        {"report_file": "", "comments": "Test comments."},
+        {"files": "", "comments": "Test comments."},
     )
     assert response.status_code == 302
     packaged_work_basket.refresh_from_db()
@@ -221,7 +221,7 @@ def test_reject_envelope(
     # correctly.
     response = superuser_client.post(
         reject_view_url,
-        {"report_file": "", "comments": "Test comments."},
+        {"files": "", "comments": "Test comments."},
     )
     assert response.status_code == 302
 

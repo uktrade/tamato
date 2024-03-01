@@ -22,18 +22,19 @@
       }) }}
 
       <h2 class="govuk-heading-m">Next steps</h2>
+          <div class="govuk-button-group">
       {{ govukButton({
         "text": "Go to your workbasket summary",
         "href": url("workbaskets:current-workbasket"),
-        "classes": "govuk-button--secondary"
+        "classes": "govuk-button"
       }) }}
-      <ul class="govuk-list govuk-list-spaced">
-        {% block actions %}
-          <li><a class="govuk-link" href="{{ url("workbaskets:workbasket-ui-create") }}">Create a new workbasket</a></li>
-          <li><a href="{{ url("workbaskets:workbasket-ui-list") }}">Select an existing workbasket</a></li>
-        {% endblock %}
-        {% include "includes/common/main-menu-link.jinja" %}
-      </ul>
+        {{ govukButton({
+    "text": "Return to homepage",
+    "href": url("home"),
+    "classes": "govuk-button--secondary",
+  }) }}
+      </div>
+
     </div>
   </div>
 {% endblock %}

@@ -1356,9 +1356,7 @@ def test_quota_order_number_create_success(
 
     soup = BeautifulSoup(response2.content.decode(response2.charset), "html.parser")
 
-    assert (
-        soup.find("h1").text.strip() == f"Quota {quota.order_number} has been created"
-    )
+    assert soup.find("h1").text.strip() == f"Quota: {quota.order_number}"
 
 
 def test_quota_update_existing_origins(client_with_current_workbasket, date_ranges):

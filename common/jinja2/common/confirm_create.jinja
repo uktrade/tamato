@@ -1,21 +1,20 @@
 {% extends "layouts/confirm.jinja" %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
-{% set page_title = "Create a new " ~ object._meta.verbose_name %}
+{% set page_title = object._meta.verbose_name|capitalize ~ " created" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url("list")},
-      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object|string, "href": object.get_url()},
-      {"text": page_title}
+      {"text": "Create " ~ object._meta.verbose_name_plural, "href": object.get_url("create")},
+      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object|string ~ " created"}
     ])
   }}
 {% endblock %}
 
 {% block panel %}
   {{ govukPanel({
-    "titleText": object._meta.verbose_name|title ~ " " ~ object|string ~ " has been created",
-    "text": "This new " ~ object._meta.verbose_name ~ " has been added to your workbasket",
+    "titleText": object._meta.verbose_name|capitalize ~ ": " ~ object|string,
+    "text": object._meta.verbose_name|capitalize ~ ": " ~ object|string ~ " has been created and added to workbasket " ~ request.user.current_workbasket.pk,
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}
