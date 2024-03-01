@@ -5,9 +5,11 @@ from typing import Iterable
 from typing import Tuple
 
 from celery.result import AsyncResult
+from django.conf import settings
 from django.db import models
 from django.db.models.deletion import SET_NULL
 from django.db.transaction import atomic
+from django.forms import ValidationError
 from django.forms.formsets import BaseFormSet
 from django_fsm import FSMField
 from django_fsm import transition
@@ -197,6 +199,7 @@ class MeasuresBulkCreatorManager(models.Manager):
         form_kwargs: Dict,
         current_transaction: Transaction,
         workbasket,
+        user,
         **kwargs,
     ) -> "MeasuresBulkCreator":
         """Create and save an instance of MeasuresBulkCreator."""
@@ -206,6 +209,7 @@ class MeasuresBulkCreatorManager(models.Manager):
             form_kwargs=form_kwargs,
             current_transaction=current_transaction,
             workbasket=workbasket,
+            user=user,
             **kwargs,
         )
 
@@ -268,6 +272,14 @@ class MeasuresBulkCreator(BulkProcessor):
     )
     """The workbasket with which created measures are associated."""
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The user who submitted the task to create measures."""
+
     def schedule_task(self) -> AsyncResult:
         """Implementation of base class method."""
 
@@ -291,21 +303,37 @@ class MeasuresBulkCreator(BulkProcessor):
 
     @property
     def expected_measures_count(self) -> int:
-        """Return the number of measures that should be created when using this
-        `MeasuresBulkCreator`'s form_data."""
+        """
+        Return the number of measures that should be created when using this
+        `MeasuresBulkCreator`'s form_data.
+
+        If validation issues are encountered in form_data, then None is returned
+        (since it isn't possible to construct the necessary cleaned data that is
+        required to obtain the measures count).
+        """
 
         with override_current_transaction(transaction=self.current_transaction):
             from measures.creators import MeasuresCreator
 
-            cleaned_data = self.get_forms_cleaned_data()
+            try:
+                cleaned_data = self.get_forms_cleaned_data()
+            except ValidationError:
+                return None
+
             measures_creator = MeasuresCreator(self.workbasket, cleaned_data)
 
             return measures_creator.expected_measures_count
 
     @atomic
     def create_measures(self) -> Iterable[Measure]:
-        """Create measures using the instance's `cleaned_data`, returning the
-        results as an iterable."""
+        """
+        Create measures using the instance's `cleaned_data`, returning the
+        results as an iterable.
+
+        ValidationError exceptions, which may be raised when constructing
+        cleaned data, are not caught by this function, so should be caught or
+        somehow dealt with by its callers.
+        """
 
         logger.info(
             f"MeasuresBulkCreator.create_measures() - form_data:\n"
@@ -330,6 +358,9 @@ class MeasuresBulkCreator(BulkProcessor):
 
         If a Form's data contains a `FormSet`, the key will be prefixed with
         "formset-" and contain a list of the formset cleaned_data dictionaries.
+
+        If form validation errors are encountered when constructing cleaned
+        data, then this function raises Django's `ValidationError` exception.
         """
 
         all_cleaned_data = {}
@@ -349,8 +380,9 @@ class MeasuresBulkCreator(BulkProcessor):
 
             if not form.is_valid():
                 self._log_form_errors(form_class=form_class, form_or_formset=form)
-                # TODO: Handle form error: unlock workbasket and set error state.
-                raise Exception("Form validation failed.")
+                raise ValidationError(
+                    f"{form_class.__name__} has {len(form.errors)} errors.",
+                )
 
             if isinstance(form.cleaned_data, (tuple, list)):
                 all_cleaned_data[f"formset-{form_key}"] = form.cleaned_data
@@ -365,8 +397,7 @@ class MeasuresBulkCreator(BulkProcessor):
 
         logger.error(
             f"MeasuresBulkCreator.create_measures() - "
-            f"{form_class.__name__} has {len(form_or_formset.errors)} unexpected "
-            f"errors.",
+            f"{form_class.__name__} has {len(form_or_formset.errors)} errors.",
         )
 
         # Form.errors is a dictionary of errors, but FormSet.errors is a
