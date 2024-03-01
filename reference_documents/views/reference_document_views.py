@@ -9,7 +9,6 @@ from django.views.generic import TemplateView
 from django.views.generic import UpdateView
 from django.views.generic.edit import FormMixin
 
-from geo_areas.models import GeographicalAreaDescription
 from reference_documents import forms
 from reference_documents import models
 from reference_documents.models import ReferenceDocument
@@ -22,29 +21,17 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
     permission_required = "reference_documents.view_reference_document"
     model = ReferenceDocument
 
-    def get_name_by_area_id(self, area_id):
-        description = (
-            GeographicalAreaDescription.objects.latest_approved()
-            .filter(described_geographicalarea__area_id=area_id)
-            .order_by("-validity_start")
-            .first()
-        )
-        if description:
-            return description.description
-        else:
-            return f"{area_id} (unknown description)"
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         reference_documents = []
 
-        for reference in ReferenceDocument.objects.all().order_by("area_id"):
+        for reference in context["object_list"].order_by("area_id"):
             if reference.reference_document_versions.count() == 0:
                 reference_documents.append(
                     [
                         {"text": "None"},
                         {
-                            "text": f"{reference.area_id} - ({self.get_name_by_area_id(reference.area_id)})",
+                            "text": f"{reference.area_id} - ({reference.get_area_name_by_area_id()})",
                         },
                         {"text": 0},
                         {"text": 0},
@@ -61,7 +48,7 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
                     [
                         {"text": reference.reference_document_versions.last().version},
                         {
-                            "text": f"{reference.area_id} - ({self.get_name_by_area_id(reference.area_id)})",
+                            "text": f"{reference.area_id} - ({reference.get_area_name_by_area_id()})",
                         },
                         {
                             "text": reference.reference_document_versions.last().preferential_rates.count(),

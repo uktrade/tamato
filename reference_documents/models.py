@@ -39,6 +39,20 @@ class ReferenceDocument(models.Model):
         unique=True,
     )
 
+    def get_area_name_by_area_id(self):
+        from geo_areas.models import GeographicalAreaDescription
+
+        description = (
+            GeographicalAreaDescription.objects.latest_approved()
+            .filter(described_geographicalarea__area_id=self.area_id)
+            .order_by("-validity_start")
+            .first()
+        )
+        if description:
+            return description.description
+        else:
+            return f"{self.area_id} (unknown description)"
+
 
 class ReferenceDocumentVersion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
