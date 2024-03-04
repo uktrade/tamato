@@ -14,15 +14,12 @@ def run_task_or_exit(task, local=False, *args, **kwargs):
     """
     Run celery task, block then return the return value of the task, or exit..
 
-    :param local:  Run locally (bypass celery)
-    :param task:  Celery task to run.
-    :return: Result of task.
-
-    Utility function for management commands that require the ability
-    to start a celery task, then wait for the result.
-
-    Tasks may optionally be run locally, which can be useful if the
-    user needs to run a task, but celery infrastructure is unavailable.
+    :param local: Run locally (bypass celery)
+    :param task: Celery task to run.
+    :return: Result of task. Utility function for management commands that
+        require the ability to start a celery task, then wait for the result.
+        Tasks may optionally be run locally, which can be useful if the user
+        needs to run a task, but celery infrastructure is unavailable.
     """
     try:
         if local:
@@ -57,7 +54,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         local = options["local"]
         upload_result = UploadTaskResultData(
-            **run_task_or_exit(upload_workbaskets, local=local)
+            **run_task_or_exit(upload_workbaskets, local=local),
         )
         upload_result.output(self.stdout)
 

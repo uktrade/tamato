@@ -63,7 +63,9 @@ class TestUtils:
 
         # Test with fragment
         result = report_instance.link_renderer_for_quotas(
-            order_number_obj, "Test Text", fragment="#blocking-periods"
+            order_number_obj,
+            "Test Text",
+            fragment="#blocking-periods",
         )
         expected_url = (
             reverse("quota-ui-detail", args=[order_number_obj.sid])

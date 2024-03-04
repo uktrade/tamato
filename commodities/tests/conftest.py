@@ -166,7 +166,9 @@ def create_collection(
 
 
 def create_record(
-    transaction_pool: Iterator[Transaction], factory, **kwargs
+    transaction_pool: Iterator[Transaction],
+    factory,
+    **kwargs,
 ) -> TrackedModel:
     """
     Returns a new TrackedModel instance.
@@ -179,7 +181,9 @@ def create_record(
 
 
 def create_dependent_measure(
-    commodity: Commodity, transaction_pool: Iterator[Transaction], **kwargs
+    commodity: Commodity,
+    transaction_pool: Iterator[Transaction],
+    **kwargs,
 ) -> Measure:
     """Returns a new measure linked to a given good."""
     factory = factories.MeasureFactory
@@ -190,7 +194,9 @@ def create_dependent_measure(
 
 
 def create_footnote_association(
-    commodity: Commodity, transaction_pool: Iterator[Transaction], **kwargs
+    commodity: Commodity,
+    transaction_pool: Iterator[Transaction],
+    **kwargs,
 ) -> FootnoteAssociationGoodsNomenclature:
     """Returns a new footnote association linked to a given good."""
     factory = factories.FootnoteAssociationGoodsNomenclatureFactory

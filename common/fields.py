@@ -100,7 +100,10 @@ class TaricDateRangeField(DateRangeField):
     range_type = TaricDateRange
 
     def from_db_value(
-        self, value: Union[DateRange, TaricDateRange], *_args, **_kwargs
+        self,
+        value: Union[DateRange, TaricDateRange],
+        *_args,
+        **_kwargs,
     ) -> TaricDateRange:
         """
         By default Django ignores the range_type and just returns a Psycopg2

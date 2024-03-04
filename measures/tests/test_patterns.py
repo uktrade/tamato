@@ -126,7 +126,7 @@ def test_all_records_in_same_transaction(
     measure_creation_pattern: MeasureCreationPattern,
 ):
     tracked_models = measure_creation_pattern.create_measure_tracked_models(
-        **measure_data
+        **measure_data,
     )
     assert len(set(m.transaction for m in tracked_models)) == 1
 

@@ -8,17 +8,18 @@ class Migration(migrations.Migration):
     """
     Transaction partition field 3 of 3.
 
-    1/3 Create Partition field, with partition defaulting to (1, SEED), as at the time of writing most of
-    Transactions are from the seed file.
+    1/3 Create Partition field, with partition defaulting to (1, SEED), as at
+    the time of writing most of Transactions are from the seed file.
 
-    2/3 Data migration to set Transaction partitions to (2, REVISION) and (3, DRAFT). REVISION:  Before this
-    migration was written REVISION transactions are contained in workbaskets after the first workbasket with approved
-    workbasket status. After this migration was written data schemas allow more control over SEED / REVISION
-    transactions. DRAFT:   Draft Transactions are inferred by checking for transactions not in the first workbasket
-    that lack an approved workbasket status..
+    2/3 Data migration to set Transaction partitions to (2, REVISION) and (3,
+    DRAFT). REVISION:  Before this migration was written REVISION transactions
+    are contained in workbaskets after the first workbasket with approved
+    workbasket status. After this migration was written data schemas allow more
+    control over SEED / REVISION transactions. DRAFT:   Draft Transactions are
+    inferred by checking for transactions not in the first workbasket that lack
+    an approved workbasket status..
 
-    3/3
-    Set the default value to (3, DRAFT)
+    3/3 Set the default value to (3, DRAFT)
     """
 
     dependencies = [

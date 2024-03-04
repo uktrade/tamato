@@ -25,13 +25,12 @@ class TransactionPartition(models.IntegerChoices):
     Within a partition, a transactions order applies, to obtain a global
     ordering call .order_by("partition", "order").
 
-    The numbers chosen increment by "era" of transaction, starting
-    from approved transactions SEED_FILE, REVISION
-    then ending with DRAFT.
+    The numbers chosen increment by "era" of transaction, starting from approved
+    transactions SEED_FILE, REVISION then ending with DRAFT.
 
     This system enables a simple filter for "approved" transactions, by checking
-    for <= HIGHEST_APPROVED_PARTITION, this is currently set to REVISION,
-    which is implemented in TransactionQuerySet.approved().
+    for <= HIGHEST_APPROVED_PARTITION, this is currently set to REVISION, which
+    is implemented in TransactionQuerySet.approved().
     """
 
     SEED_FILE = 1, "Seed"
@@ -329,7 +328,8 @@ class Transaction(TimestampedMixin):
         Attempts a balance between readability and enough information to debug
         issues, so contains the pk and status of the transaction and workbasket.
 
-        Stringification is lazily evaluated, so this property can be passed to loggers.
+        Stringification is lazily evaluated, so this property can be passed to
+        loggers.
         """
         return (
             f"transaction: {self.partition}, {self.pk} "
@@ -345,8 +345,8 @@ class Transaction(TimestampedMixin):
         issues, so contains the partion, order for transactions and pk, status
         for workbaskets.
 
-        Stringification happens lazily so this property is suitable for use
-        when logging.
+        Stringification happens lazily so this property is suitable for use when
+        logging.
         """
         # This is not decorated with lazy_string because it doesn't work with properties
         return self._get_summary()
@@ -356,11 +356,11 @@ class TransactionGroup(models.Model):
     """
     An ordered group of Transactions.
 
-    Transactions often must be applied in a specific sequence, for example to ensure
-    a Measure exists before a Footnote can be associated with it.
+    Transactions often must be applied in a specific sequence, for example to
+    ensure a Measure exists before a Footnote can be associated with it.
 
-    A Transaction may belong to several groups, for example a group associated with an
-    imported Envelope, and with a WorkBasket.
+    A Transaction may belong to several groups, for example a group associated
+    with an imported Envelope, and with a WorkBasket.
     """
 
     group_id = models.IntegerField()

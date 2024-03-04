@@ -296,7 +296,8 @@ def test_with_reference_price_string_measurement(
     """
     condition_measurement = factories.MeasurementFactory.create(**measurement_kwargs)
     condition = factories.MeasureConditionFactory.create(
-        condition_measurement=condition_measurement, **condition_kwargs
+        condition_measurement=condition_measurement,
+        **condition_kwargs,
     )
     qs = MeasureCondition.objects.with_reference_price_string()
     price_condition = qs.first()

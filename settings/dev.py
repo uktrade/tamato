@@ -51,6 +51,6 @@ if SKIP_CLAM_AV_FILE_UPLOAD:
     )
 
 try:
-    from settings.dev_override import *
+    pass
 except ImportError:
     pass
