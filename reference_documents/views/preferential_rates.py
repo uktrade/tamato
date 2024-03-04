@@ -5,16 +5,16 @@ from django.views.generic import CreateView
 from django.views.generic import DeleteView
 from django.views.generic import UpdateView
 
-from reference_documents.forms import PreferentialRateEditForm
+from reference_documents.forms import PreferentialRateCreateUpdateForm
 from reference_documents.models import PreferentialRate
 from reference_documents.models import ReferenceDocumentVersion
 
 
 class PreferentialRateEditView(PermissionRequiredMixin, UpdateView):
-    form_class = PreferentialRateEditForm
-    permission_required = "reference_documents.edit_reference_document"
+    form_class = PreferentialRateCreateUpdateForm
+    permission_required = "reference_documents.change_preferentialrate"
     model = PreferentialRate
-    template_name = "reference_documents/preferential_rates/edit.jinja"
+    template_name = "reference_documents/edit_preferential_rates.jinja"
 
     def get_success_url(self):
         return reverse(
@@ -28,7 +28,7 @@ class PreferentialRateEditView(PermissionRequiredMixin, UpdateView):
 
 
 class PreferentialRateCreateView(PermissionRequiredMixin, CreateView):
-    form_class = PreferentialRateEditForm
+    form_class = PreferentialRateCreateUpdateForm
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialRate
     template_name = "reference_documents/preferential_rates/create.jinja"

@@ -1,15 +1,9 @@
-{% extends "layouts/layout.jinja" %}
+{% extends 'layouts/form.jinja' %}
 
 {% set page_title = "Edit preferential quota" %}
 
-{% block content %}
-
-    <form method="post">
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-        {{ form.as_p() }}
-
-        <input type="submit" value="Update">
-    </form>
-
+{% block form %}
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
 {% endblock %}
-

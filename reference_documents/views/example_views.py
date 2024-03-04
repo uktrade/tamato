@@ -9,7 +9,7 @@ from measures.models import Measure
 
 
 class ReferenceDocumentsListView(TemplateView):
-    template_name = "reference_document_examples/index.jinja"
+    template_name = "reference_documents/reference_document_examples/index.jinja"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -26,7 +26,7 @@ class ReferenceDocumentsListView(TemplateView):
 
 
 class ReferenceDocumentsDetailView(TemplateView):
-    template_name = "reference_document_examples/details.jinja"
+    template_name = "reference_documents/reference_document_examples/details.jinja"
 
     def get_pref_duty_rates(self):
         """Returns a list of measures associated with the Albania Preferential

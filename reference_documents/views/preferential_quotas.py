@@ -3,21 +3,15 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import UpdateView
 
+from reference_documents.forms import PreferentialQuotaCreateUpdateForm
 from reference_documents.models import PreferentialQuota
 
 
 class PreferentialQuotaEditView(PermissionRequiredMixin, UpdateView):
-    template_name = "preferential_quotas/edit.jinja"
+    template_name = "reference_documents/preferential_quotas/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuota
-    fields = [
-        "quota_order_number",
-        "commodity_code",
-        "quota_duty_rate",
-        "volume",
-        "measurement",
-        "valid_between",
-    ]
+    form_class = PreferentialQuotaCreateUpdateForm
 
     def post(self, request, *args, **kwargs):
         quota = self.get_object()
