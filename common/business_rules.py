@@ -132,8 +132,9 @@ class BusinessRule(metaclass=BusinessRuleBase):
 
         :param model TrackedModel: Get models linked to this model instance
         :param transaction Transaction: Get latest approved versions of linked
-            models as of this transaction :rtype Iterator[TrackedModel]: The
-            linked models
+            models as of this transaction
+        :return: The linked models
+        :rtype: Iterator[TrackedModel]
         """
         for field, related_model in get_relations(type(model)).items():
             business_rules = getattr(related_model, "business_rules", [])
@@ -228,8 +229,10 @@ def skip_when_update_type(cls: Type[BusinessRule], update_types: Iterable[Update
     """
     Skip business rule validation for given update types.
 
-    :param cls Type[BusinessRule]: The BusinessRule to decorate :param
-    update_types Iterable[int]: The UpdateTypes to skip
+    :param cls: The BusinessRule to decorate :param
+    :type cls: Type[BusinessRule]
+    :param update_types: The UpdateTypes to skip
+    :type update_types: Iterable[int]
     """
     _original_validate = cls.validate
 
