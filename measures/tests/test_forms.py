@@ -1851,3 +1851,36 @@ def test_formset_measure_forms_serialize_deserialize(
     for key in deserialized_form_set.get_serializable_data_keys():
         if key in data.keys():
             assert form_set.data[key] == data[key]
+
+
+@pytest.mark.parametrize(
+    "form_data",
+    [
+        ("measure_geo_area_erga_omnes_form_data"),
+        ("measure_geo_area_erga_omnes_exclusions_form_data"),
+        ("measure_geo_area_geo_group_form_data"),
+        ("measure_geo_area_geo_group_exclusions_form_data"),
+    ],
+    ids=[
+        "erga-omnes",
+        "erga-omnes-exclusions",
+        "geo-group",
+        "geo-group-exclusions",
+    ],
+)
+def test_measure_forms_geo_area_serialize_deserialize(form_data, request):
+    form_data = request.getfixturevalue(form_data)
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            form_data,
+        )
+        assert form.is_valid()
+
+        serializable_form_data = form.serializable_data()
+
+        deserialized_form = forms.MeasureGeographicalAreaForm(
+            data=serializable_form_data,
+        )
+        assert deserialized_form.is_valid()
+        assert type(deserialized_form) == forms.MeasureGeographicalAreaForm
+        assert deserialized_form.data == form.data

@@ -884,8 +884,9 @@ class MeasureCreateWizard(
             form_kwargs=serializable_form_kwargs,
             current_transaction=get_current_transaction(),
             workbasket=self.workbasket,
+            user=self.request.user,
         )
-        measures_bulk_creator.schedule()
+        measures_bulk_creator.schedule_task()
 
         return redirect(
             "measure-ui-create-confirm",
