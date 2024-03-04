@@ -229,7 +229,7 @@ def skip_when_update_type(cls: Type[BusinessRule], update_types: Iterable[Update
     """
     Skip business rule validation for given update types.
 
-    :param cls: The BusinessRule to decorate :param
+    :param cls: The BusinessRule to decorate
     :type cls: Type[BusinessRule]
     :param update_types: The UpdateTypes to skip
     :type update_types: Iterable[int]
