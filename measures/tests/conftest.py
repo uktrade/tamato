@@ -485,13 +485,28 @@ def measure_geo_area_geo_group_exclusions_form_data(erga_omnes):
         f"{constants.GEO_GROUP_PREFIX}-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
     }
-  
 
-@pytest.fixture()  
+
+@pytest.fixture()
+def simple_measures_bulk_creator(
+    user_empty_workbasket,
+    approved_transaction,
+):
+    from measures.tests.factories import MeasuresBulkCreatorFactory
+
+    return MeasuresBulkCreatorFactory.create(
+        form_data={},
+        form_kwargs={},
+        current_transaction=approved_transaction,
+        workbasket=user_empty_workbasket,
+        user=None,
+    )
+
+
+@pytest.fixture()
 def mocked_schedule_apply_async():
     with patch(
         "measures.tasks.bulk_create_measures.apply_async",
         return_value=MagicMock(id=faker.Faker().uuid4()),
     ) as apply_async_mock:
         yield apply_async_mock
-

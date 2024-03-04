@@ -1,4 +1,3 @@
-from measures.models.bulk_processing import BulkProcessorResult
 from measures.models.bulk_processing import MeasuresBulkCreator
 from measures.models.bulk_processing import ProcessingState
 from measures.models.tracked_models import AdditionalCodeTypeMeasureType
@@ -21,7 +20,6 @@ from measures.models.tracked_models import MonetaryUnit
 
 __all__ = [
     # - Classes exported from bulk_processing.py.
-    "BulkProcessorResult",
     "MeasuresBulkCreator",
     "ProcessingState",
     # - Classes exported from tracked_model.py.
