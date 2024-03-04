@@ -1,13 +1,15 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% set page_title = 'Reference Documents Index' %}
 {% set create_url = "create" %}
 
 {% block breadcrumb %}
-    {{ breadcrumbs(request, [
-      {'text': "Reference Documents"}
-    ]) }}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents"}],
+  }) }}
 {% endblock %}
 
 {% block content %}

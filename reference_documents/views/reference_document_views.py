@@ -115,8 +115,8 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
                         "text": version.entry_into_force_date,
                     },
                     {
-                        "html": f'<a href="/reference_document_versions/{version.id}">Version details</a><br>'
-                        f'<a href="{reverse("reference_documents:reference_document_version_edit", args=[version.pk])}">Edit</a><br>'
+                        "html": f'<a href="{reverse("reference_documents:version-details", kwargs={"pk":version.id})}">Version details</a><br>'
+                        f'<a href="{reverse("reference_documents:version-edit", kwargs={"pk":context["object"].pk, "version_pk":version.id})}">Edit</a><br>'
                         f'<a href="/reference_document_version_alignment_reports/{version.id}">Alignment reports</a>',
                     },
                 ],
