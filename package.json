@@ -7,8 +7,8 @@
   "repository": "https://github.com/uktrade/tamato.git",
   "licence": "MIT",
   "engines": {
-    "node": "^20.10.0",
-    "npm": "^10.3.0"
+    "node": "^20.11.*",
+    "npm": "^10.2.*"
   },
   "dependencies": {
     "@babel/core": "^7.23.2",
