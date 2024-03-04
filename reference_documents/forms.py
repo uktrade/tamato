@@ -6,6 +6,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 
+from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
 from reference_documents import models
 from reference_documents.models import PreferentialRate
@@ -232,3 +233,53 @@ class PreferentialRateDeleteForm(forms.ModelForm):
 
     def clean(self):
         return super().clean()
+
+
+class ReferenceDocumentVersionsEditCreateForm(forms.ModelForm):
+    version = forms.CharField(
+        label="Version number",
+        error_messages={
+            "required": "A version number is required",
+            "invalid": "Version must be a number",
+        },
+    )
+    published_date = DateInputFieldFixed(
+        label="Published date",
+    )
+    entry_into_force_date = DateInputFieldFixed(
+        label="Entry into force date",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Field(
+                "reference_document",
+                type="hidden",
+            ),
+            Field.text(
+                "version",
+                field_width=Fixed.TEN,
+            ),
+            "published_date",
+            "entry_into_force_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    class Meta:
+        model = models.ReferenceDocumentVersion
+        fields = [
+            "reference_document",
+            "version",
+            "published_date",
+            "entry_into_force_date",
+        ]

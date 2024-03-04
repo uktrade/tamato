@@ -74,6 +74,15 @@ class ReferenceDocumentVersion(models.Model):
         editable=False,
     )
 
+    class Meta:
+        # TODO: Add violation_error_message to this constraint once we have Django 4.1
+        constraints = [
+            models.UniqueConstraint(
+                fields=["version", "reference_document"],
+                name="unique_versions",
+            ),
+        ]
+
 
 class PreferentialRate(models.Model):
     commodity_code = models.CharField(
