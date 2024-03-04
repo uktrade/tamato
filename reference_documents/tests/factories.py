@@ -72,7 +72,7 @@ class PreferentialRateFactory(factory.django.DjangoModelFactory):
 
     reference_document_version = factory.SubFactory(ReferenceDocumentVersionFactory)
 
-    valid_between = (
+    valid_between = TaricDateRange(
         get_random_date(
             date.today() + timedelta(days=-(365 * 2)),
             date.today() + timedelta(days=-365),
