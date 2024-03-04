@@ -60,6 +60,7 @@ from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasuresBulkCreator
 from measures.models import MeasureType
+from measures.models.bulk_processing import ProcessingState
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
@@ -1114,18 +1115,32 @@ class MeasuresCreateProcessQueue(TemplateView, ListView):
     ]
 
     def get_queryset(self):
-        """Get the queryset for measurescreatetask that are in the editing
-        task."""
         queryset = MeasuresBulkCreator.objects.all()
-
         return queryset
 
-    def get_context_data(self, **kwargs):
-        create_tasks = self.get_queryset()
-        self.object_list = create_tasks
+    # ???.order_by(-created_at)
 
+    def get_context_data(self, **kwargs):
+        tasks = self.get_queryset()
+        self.object_list = tasks
         context = super().get_context_data(**kwargs)
 
+        processing_state = self.request.GET.get("processing_state")
+        context["selected_link"] = "all"
+        if processing_state in [
+            ProcessingState.CURRENTLY_PROCESSING,
+            ProcessingState.AWAITING_PROCESSING,
+        ]:
+            context["selected_link"] = "processing"
+        elif processing_state == ProcessingState.CANCELLED:
+            context["selected_link"] = "cancelled"
+        elif processing_state == ProcessingState.FAILED_PROCESSING:
+            context["selected_link"] = "failed"
+        elif processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
+            context["selected_link"] = "completed"
+        # context.
+        # context = super().get_context_data(**kwargs)
+        print(f'{context["selected_link"]}')
         return context
 
 

@@ -27,6 +27,11 @@
     "href": "?status=FAILED",
     "selected": selected_link == "failed",
   },
+  {
+    "text": "Cancelled",
+    "href": "?status=CANCELLED",
+    "selected": selected_link == "cancelled",
+  },
 ]%}
 
 {% block content %}
@@ -39,7 +44,7 @@
             "href": url("measure-create-process-queue"),
             "classes": "govuk-button--primary",
       }) }}
-      <img src="{{ static('common/images/refresh.svg') }}" alt="run business rules">
+      <img src="{{ static('common/images/refresh.svg') }}" alt="refresh filter results">
   </nav>
     
   <hr class="govuk-section-break govuk-section-break--visible">
