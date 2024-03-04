@@ -68,14 +68,39 @@ urlpatterns = [
     ),
     # reference document version views
     path(
-        "reference_document_versions/<pk>/",
+        "versions/<pk>/",
         reference_document_version_views.ReferenceDocumentVersionDetails.as_view(),
-        name="version_details",
+        name="version-details",
     ),
     path(
-        "reference_document_versions/edit/<pk>/",
-        reference_document_version_views.ReferenceDocumentVersionEditView.as_view(),
-        name="reference_document_version_edit",
+        "<pk>/version-create",
+        reference_document_version_views.ReferenceDocumentVersionCreate.as_view(),
+        name="version-create",
+    ),
+    path(
+        "<pk>/version/<version_pk>/edit/",
+        reference_document_version_views.ReferenceDocumentVersionEdit.as_view(),
+        name="version-edit",
+    ),
+    path(
+        "<pk>/version-delete",
+        reference_document_version_views.ReferenceDocumentVersionEdit.as_view(),
+        name="version-delete",
+    ),
+    path(
+        "reference_document_versions/<pk>/confirm-update/",
+        reference_document_version_views.ReferenceDocumentVersionConfirmUpdate.as_view(),
+        name="version-confirm-update",
+    ),
+    path(
+        "reference_document_versions/<pk>/confirm-create/",
+        reference_document_version_views.ReferenceDocumentVersionConfirmCreate.as_view(),
+        name="version-confirm-create",
+    ),
+    path(
+        "reference_document_versions/<deleted_pk>/confirm-delete/",
+        reference_document_version_views.ReferenceDocumentVersionConfirmDelete.as_view(),
+        name="version-confirm-delete",
     ),
     # Alignment report views
     path(
