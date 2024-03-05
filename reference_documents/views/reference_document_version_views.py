@@ -220,6 +220,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                 reference_document_version_quotas[quota.quota_order_number] = {
                     "data_rows": [row_to_add],
                     "quota_order_number": quota_order_number,
+                    "quota_order_number_text": quota.quota_order_number,
                 }
 
         context["reference_document_version_duties"] = reference_document_version_duties
@@ -279,7 +280,7 @@ class ReferenceDocumentVersionConfirmUpdate(DetailView):
     template_name = (
         "reference_documents/reference_document_versions/confirm_update.jinja"
     )
-    model = ReferenceDocument
+    model = ReferenceDocumentVersion
 
 
 class ReferenceDocumentVersionConfirmDelete(TemplateView):

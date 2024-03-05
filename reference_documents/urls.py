@@ -52,38 +52,38 @@ urlpatterns = [
         name="confirm-create",
     ),
     path(
-        f"<pk>/confirm-update/",
+        f"reference_documents/<pk>/confirm-update/",
         reference_document_views.ReferenceDocumentConfirmUpdate.as_view(),
         name="confirm-update",
     ),
     path(
-        f"<pk>/delete/",
+        f"reference_documents/<pk>/delete/",
         reference_document_views.ReferenceDocumentDelete.as_view(),
         name="delete",
     ),
     path(
-        f"<deleted_pk>/confirm-delete/",
+        f"reference_documents/<deleted_pk>/confirm-delete/",
         reference_document_views.ReferenceDocumentConfirmDelete.as_view(),
         name="confirm-delete",
     ),
     # reference document version views
     path(
-        "versions/<pk>/",
+        "reference_documents_versions/<pk>/",
         reference_document_version_views.ReferenceDocumentVersionDetails.as_view(),
         name="version-details",
     ),
     path(
-        "<pk>/version-create",
+        "reference_documents_versions/<pk>/create",
         reference_document_version_views.ReferenceDocumentVersionCreate.as_view(),
         name="version-create",
     ),
     path(
-        "<pk>/version/<version_pk>/edit/",
+        "reference_documents/<pk>/version/<version_pk>/edit/",
         reference_document_version_views.ReferenceDocumentVersionEdit.as_view(),
         name="version-edit",
     ),
     path(
-        "<pk>/version-delete",
+        "reference_documents/<pk>/version-delete",
         reference_document_version_views.ReferenceDocumentVersionEdit.as_view(),
         name="version-delete",
     ),
