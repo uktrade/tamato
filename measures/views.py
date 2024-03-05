@@ -1103,7 +1103,6 @@ class MeasuresWizardCreateConfirm(TemplateView):
 class MeasuresCreateProcessQueue(ListView):
     """UI endpoint for bulk creating Measures process queue."""
 
-    # filterset_class = MeasuresBulkCreator
     permission_required = [
         "common.add_trackedmodel",
         "common.change_trackedmodel",

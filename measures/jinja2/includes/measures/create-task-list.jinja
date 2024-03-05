@@ -13,15 +13,20 @@
         {{object.created_at.strftime('%H:%M')}} <br/>
         {{object.created_at.strftime('%Y %b %d')}}
     {%- endset %}
-
+    {% set submitted_by -%}
+        {{ object.workbasket.author }}
+    {%- endset %}
+    {% set object_status-%}
+        <span class="{{ object.status_tag['tag_class'] }}">{{object.status_tag['text']|upper}}</span>
+    {%- endset %}
     {{ table_rows.append([
         {"text": workbasket_link},
         {"text": submitted_date},
-        {"text": "created by"},
-        {"html": object.status_tag['text']|upper, 'classes': object.status_tag['tag_class']},
-        {"text": "object.expected_measures_count"},
-        {"text": "action"},
-    ]) or ""}}
+        {"text": submitted_by},
+        {"text": object_status},
+        {"text": "Pending..."},
+        {"text": "Pending..."},
+    ]) or "" }}
 {% endfor %}
 
 {{ govukTable({
