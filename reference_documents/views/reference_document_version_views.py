@@ -1,19 +1,22 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.urls import reverse
-from django.urls import reverse_lazy
+from django.views.generic import CreateView
 from django.views.generic import DetailView
+from django.views.generic import TemplateView
 from django.views.generic import UpdateView
 
 from commodities.models import GoodsNomenclature
 from geo_areas.models import GeographicalAreaDescription
 from quotas.models import QuotaOrderNumber
+from reference_documents import forms
 from reference_documents.models import AlignmentReportCheckStatus
+from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
 
 
 class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
     template_name = "reference_documents/reference_document_versions/details.jinja"
-    permission_required = "reference_documents.view_reference_document"
+    permission_required = "reference_documents.view_reference_documentversion"
     model = ReferenceDocumentVersion
 
     def get_country_by_area_id(self, area_id):
@@ -69,11 +72,12 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             *args,
             **kwargs,
         )
+        ref_doc = context["object"].reference_document
 
         # title
         context[
             "ref_doc_title"
-        ] = f'Reference Document for {self.get_country_by_area_id(context["object"].reference_document.area_id)}'
+        ] = f"Reference Document for {ref_doc.get_area_name_by_area_id()}"
 
         context["reference_document_version_duties_headers"] = [
             {"text": "Comm Code"},
@@ -216,7 +220,6 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                 reference_document_version_quotas[quota.quota_order_number] = {
                     "data_rows": [row_to_add],
                     "quota_order_number": quota_order_number,
-                    "quota_order_number_text": quota.quota_order_number,
                 }
 
         context["reference_document_version_duties"] = reference_document_version_duties
@@ -225,22 +228,66 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
         return context
 
 
-class ReferenceDocumentVersionEditView(PermissionRequiredMixin, UpdateView):
-    template_name = "reference_documents/reference_document_versions/edit.jinja"
-    permission_required = "reference_documents.edit_reference_document"
-    model = ReferenceDocumentVersion
-    fields = ["version", "published_date", "entry_into_force_date"]
+class ReferenceDocumentVersionCreate(PermissionRequiredMixin, CreateView):
+    template_name = "reference_documents/reference_document_versions/create.jinja"
+    permission_required = "reference_documents.add_referencedocumentversion"
+    form_class = forms.ReferenceDocumentVersionsEditCreateForm
 
-    # def post(self, request, *args, **kwargs):
-    #     reference_document_version = self.get_object()
-    #     reference_document_version.save()
-    #     return redirect(reverse("reference_documents:details", args=[reference_document_version.reference_document.pk]))
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["reference_document"] = ReferenceDocument.objects.all().get(
+            pk=self.kwargs["pk"],
+        )
+        return initial
 
-    def form_valid(self, form):
-        return super(ReferenceDocumentVersionEditView, self).form_valid(form)
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        print(self.kwargs)
+        context_data["reference_document"] = ReferenceDocument.objects.all().get(
+            pk=self.kwargs["pk"],
+        )
+        return context_data
 
     def get_success_url(self):
-        return reverse_lazy(
-            "reference_documents:details",
-            args=[self.object.id],
+        return reverse(
+            "reference_documents:version-confirm-create",
+            kwargs={"pk": self.object.pk},
         )
+
+
+class ReferenceDocumentVersionEdit(PermissionRequiredMixin, UpdateView):
+    model = ReferenceDocumentVersion
+    permission_required = "reference_documents.change_referencedocumentversion"
+    template_name = "reference_documents/reference_document_versions/edit.jinja"
+    form_class = forms.ReferenceDocumentVersionsEditCreateForm
+
+    def get_success_url(self):
+        return reverse(
+            "reference_documents:version-confirm-update",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class ReferenceDocumentVersionConfirmCreate(DetailView):
+    template_name = (
+        "reference_documents/reference_document_versions/confirm_create.jinja"
+    )
+    model = ReferenceDocument
+
+
+class ReferenceDocumentVersionConfirmUpdate(DetailView):
+    template_name = (
+        "reference_documents/reference_document_versions/confirm_update.jinja"
+    )
+    model = ReferenceDocument
+
+
+class ReferenceDocumentVersionConfirmDelete(TemplateView):
+    template_name = (
+        "reference_documents/reference_document_versions/confirm_delete.jinja"
+    )
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["deleted_pk"] = self.kwargs["deleted_pk"]
+        return context_data

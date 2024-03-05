@@ -1,14 +1,19 @@
-{% extends "layouts/layout.jinja" %}
+{% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Preferential duty rates" %}
+{% set page_title = "Edit Reference Document " ~ object.reference_document.area_id ~ " version " ~ object.version %}
 
-{% block content %}
-
-<form method="post">
-    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-    {{ form.as_p() }}
-    <input type="submit" value="Update">
-</form>
-
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
+      {"text": page_title}]
+  }) }}
 {% endblock %}
 
+{% block form %}
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

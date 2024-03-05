@@ -2,8 +2,18 @@
 
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/tabs/macro.njk" import govukTabs %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% set page_title = "Preferential duty rates" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
+    {"text": "Version " ~ object.version}]
+  }) }}
+{% endblock %}
 
 {% set preferential_rates_html %}
     {% include "includes/tabs/preferential_rates.jinja" %}
