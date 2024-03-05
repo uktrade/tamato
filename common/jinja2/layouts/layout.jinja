@@ -64,9 +64,12 @@
           class="govuk-header__link govuk-header__link--service-name govuk-!-margin-right-1"
         >{{ service_name }}</a>
         <strong class="govuk-tag govuk-phase-banner__content__tag ">{{ phase_banner_tag }}</strong>
+        {% if env != "production" %}
+          <strong class="govuk-tag govuk-phase-banner__content__tag ">{{ env }}</strong>
+        {% endif %}
       </div>
 
-      <div class="align-right">
+      <div id="current-workbasket">
         {{ workbasket_html }}
         {% if not settings.SSO_ENABLED %}
           {{ logout_login_link }}
@@ -110,6 +113,12 @@
               >EU TARIC</a>
             </li>
           {% endif %}
+          <li class="govuk-header__navigation-item">
+              <a
+                href="#TODO"
+                class="govuk-header__link"
+              >Tools</a>
+            </li>
         </ul>
       </nav>
     </div>
@@ -122,12 +131,6 @@
       {{ breadcrumbs(request, [{"text": page_title}]) }}
     {% endif %}
   {% endblock %}
-
-  {% if env != "production"%}
-    <div class="environment-banner"> 
-      <div class="text-wrapper">{{ env }}</div>
-    </div>
-  {% endif %}
 {% endblock %}
 
 {% block footer %}

@@ -22,19 +22,14 @@ from django.db.models import Model
 from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
-from django.shortcuts import redirect
 from django.template.response import TemplateResponse
-from django.urls import reverse
 from django.utils.timezone import make_aware
-from django.views import generic
-from django.views.generic import FormView
+from django.views.generic import DetailView
 from django.views.generic import TemplateView
-from django.views.generic.base import View
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from common import forms
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.celery import app
@@ -43,33 +38,42 @@ from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
 from publishing.models import PackagedWorkBasket
+from tasks.models import UserAssignment
 from workbaskets.models import WorkBasket
+from workbaskets.models import WorkflowStatus
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
-class HomeView(FormView, View):
-    template_name = "common/workbasket_action.jinja"
-    form_class = forms.HomeForm
+class HomeView(LoginRequiredMixin, TemplateView):
+    template_name = "common/homepage.jinja"
 
-    REDIRECT_MAPPING = {
-        "EDIT": "workbaskets:workbasket-ui-list",
-        "CREATE": "workbaskets:workbasket-ui-create",
-        "PACKAGE_WORKBASKETS": "publishing:packaged-workbasket-queue-ui-list",
-        "PROCESS_ENVELOPES": "publishing:envelope-queue-ui-list",
-        "SEARCH": "search-page",
-        "IMPORT": "commodity_importer-ui-list",
-        "WORKBASKET_LIST_ALL": "workbaskets:workbasket-ui-list-all",
-    }
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
-
-    def form_valid(self, form):
-        return redirect(
-            reverse(self.REDIRECT_MAPPING[form.cleaned_data["workbasket_action"]]),
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        assignments = (
+            UserAssignment.objects.filter(user=self.request.user)
+            .assigned()
+            .select_related("task__workbasket")
         )
+        assigned_workbaskets = []
+        for assignment in assignments:
+            workbasket = assignment.task.workbasket
+            if workbasket.status == WorkflowStatus.EDITING:
+                assignment_type = (
+                    "Assigned"
+                    if assignment.assignment_type
+                    == UserAssignment.AssignmentType.WORKBASKET_WORKER
+                    else "Reviewing"
+                )
+                rule_violations_count = workbasket.tracked_model_check_errors.count()
+                assigned_workbaskets.append(
+                    {
+                        "id": workbasket.id,
+                        "rule_violations_count": rule_violations_count,
+                        "assignment_type": assignment_type,
+                    },
+                )
+        context["assigned_workbaskets"] = assigned_workbaskets
+        return context
 
 
 class SearchPageView(TemplateView):
@@ -316,7 +320,7 @@ class TrackedModelDetailMixin:
 class TrackedModelDetailView(
     WithCurrentWorkBasket,
     TrackedModelDetailMixin,
-    generic.DetailView,
+    DetailView,
 ):
     """Base view class for displaying a single TrackedModel."""
 

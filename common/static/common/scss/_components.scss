@@ -90,3 +90,41 @@
   }
 
 }
+
+.homepage-card {
+  box-sizing: border-box;
+  border: 1px solid $govuk-border-colour;
+  padding: govuk-spacing(4);
+  margin: govuk-spacing(4);
+  @media screen and (min-width: 1063px) {
+    width: calc(50% - govuk-spacing(7));
+  }
+  width: calc(100% - govuk-spacing(7));
+  height: fit-content;
+  float: left;
+}
+
+#homepage-tap-tools {
+  columns: 2;
+}
+
+#workbasket-actions li {
+  padding-top: govuk-spacing(3);
+  border-top: 1px solid $govuk-border-colour;
+}
+
+.homepage-workbasket-details {
+  display: inline-block;
+}
+
+#current-workbasket {
+  @media screen and (min-width: 770px) {
+    float: right;
+  }
+
+  display: inline-block;
+
+  a, form {
+    display: inline-block;
+  }
+}
