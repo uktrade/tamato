@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fixed
@@ -6,10 +8,10 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
 
 from common.forms import ValidityPeriodForm
 from reference_documents import models
+from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialRate
 from reference_documents.validators import commodity_code_validator
 from reference_documents.validators import order_number_validator
@@ -254,7 +256,7 @@ class PreferentialQuotaCreateUpdateForm(
     forms.ModelForm,
 ):
     class Meta:
-        model = PreferentialRate
+        model = PreferentialQuota
         fields = [
             "quota_order_number",
             "commodity_code",
@@ -293,7 +295,7 @@ class PreferentialQuotaCreateUpdateForm(
 
     volume = forms.CharField(
         help_text="Volume",
-        validators=[MinValueValidator(0)],
+        validators=[],
         error_messages={
             "invalid": "Volume invalid",
             "required": "Volume is required",
@@ -314,6 +316,12 @@ class PreferentialQuotaCreateUpdateForm(
         if len(data) < 1:
             raise ValidationError("Quota duty Rate is not valid - it must have a value")
         return data
+
+    def clean_volume(self):
+        data = self.cleaned_data["volume"]
+        if not data.isdigit():
+            raise ValidationError("volume is not valid - it must have a value")
+        return Decimal(data)
 
     def clean_commodity_code(self):
         data = self.cleaned_data["commodity_code"]

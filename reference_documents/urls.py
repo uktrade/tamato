@@ -99,6 +99,11 @@ urlpatterns = [
         preferential_quotas.PreferentialQuotaEditView.as_view(),
         name="preferential_quotas_edit",
     ),
+    path(
+        "reference_document_versions/<pk>/create_preferential_quotas/",
+        preferential_quotas.PreferentialQuotaCreateView.as_view(),
+        name="preferential_quotas_create",
+    ),
     # Preferential Rates
     path(
         "preferential_rates/delete/<pk>/",

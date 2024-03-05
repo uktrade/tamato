@@ -216,6 +216,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                 reference_document_version_quotas[quota.quota_order_number] = {
                     "data_rows": [row_to_add],
                     "quota_order_number": quota_order_number,
+                    "quota_order_number_text": quota.quota_order_number,
                 }
 
         context["reference_document_version_duties"] = reference_document_version_duties
@@ -225,7 +226,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
 
 
 class ReferenceDocumentVersionEditView(PermissionRequiredMixin, UpdateView):
-    template_name = "reference_document_versions/edit.jinja"
+    template_name = "reference_documents/reference_document_versions/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = ReferenceDocumentVersion
     fields = ["version", "published_date", "entry_into_force_date"]
