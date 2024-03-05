@@ -57,7 +57,10 @@ class MultiFileEnvelopeTransactionSerializer(EnvelopeSerializer):
         """
         self.output_constructor = output_constructor
         EnvelopeSerializer.__init__(
-            self, self.output_constructor(), envelope_id=envelope_id, **kwargs
+            self,
+            self.output_constructor(),
+            envelope_id=envelope_id,
+            **kwargs,
         )
 
     def start_next_envelope(self):

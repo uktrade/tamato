@@ -18,7 +18,7 @@ Prerequisites
 The following dependencies are required to run this app:
 
 - Python_ 3.8.x
-- Node.js_ 16.8.x
+- Node.js_ 20.11.* (LTS) Iron
 - PostgreSQL_ 12
 - Redis_ 5.x
 
@@ -71,10 +71,10 @@ Installing
     $ npm install
     $ npm run build
 
-Those using Mac m1 laptops may have problems installing certain packages (e.g. 
-psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the 
-following from a rosetta terminal (see `this article 
-<https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/>`_ ), 
+Those using Mac m1 laptops may have problems installing certain packages (e.g.
+psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the
+following from a rosetta terminal (see `this article
+<https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/>`_ ),
 substituting your own python version as appropriate:
 
 .. code:: sh
@@ -85,7 +85,7 @@ substituting your own python version as appropriate:
     $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.8.10/lib"
     $ arch -arm64 pip install psycopg2 --no-binary :all:
 
-Credit due to armenzg and his `answer here 
+Credit due to armenzg and his `answer here
 <https://github.com/psycopg/psycopg2/issues/1286#issuecomment-914286206>`_ .
 
 Running
@@ -248,7 +248,7 @@ Build and Run for the first time:
     # to overwrite default db dump name pass in DB_DUMP=tamato_db.sql
     $ make docker-first-use
         # take a tea break to import the db dump then
-        # enter super user details when prompted 
+        # enter super user details when prompted
         # and visit localhost:8000/ when the containers are up
 
 Run the tamato app every other time:
@@ -274,7 +274,7 @@ Import from a dump of the database:
     # can override the name of the template at TEMPLATE_NAME
     $ make docker-import-new-db
 
-    # Will restore the db DB_NAME with the provided TEMPLATE_NAME 
+    # Will restore the db DB_NAME with the provided TEMPLATE_NAME
     $ make docker-restore-db
 
 Sometimes docker gets clogged up and we need to clean it:
@@ -332,13 +332,13 @@ loading environment settings that are specific to this configuration:
 
     services:
     celery:
-        env_file: 
+        env_file:
         - .env
         - settings/envs/docker.env
         - settings/envs/docker.override.env
 
     rule-check-celery:
-        env_file: 
+        env_file:
         - .env
         - settings/envs/docker.env
         - settings/envs/docker.override.env
@@ -424,7 +424,7 @@ Open another terminal and start a Celery worker:
 .. code:: sh
 
     celery -A common.celery worker --loglevel=info -Q standard,rule-check
-    # The celery worker can be run as two workers for each queue 
+    # The celery worker can be run as two workers for each queue
     celery -A common.celery worker --loglevel=info -Q standard
     celery -A common.celery worker --loglevel=info -Q rule-check
 
@@ -467,19 +467,19 @@ Output defaults to stdout if filename is ``-`` or is not supplied.
 Mocking s3 upload with minio
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Follow `instructions <https://min.io/docs/minio/macos/index.html>`_ to install minio server 
+1. Follow `instructions <https://min.io/docs/minio/macos/index.html>`_ to install minio server
 2. Export MINIO_ROOT_USER and MINIO_ROOT_PASSWORD variables of your choice
-3. Run server with: 
+3. Run server with:
 
 .. code:: sh
-    
+
     minio server --quiet --address 0.0.0.0:9003 ~/data
 
-4. Navigate to http://localhost:9003/ and login using root user and password credentials just 
+4. Navigate to http://localhost:9003/ and login using root user and password credentials just
    created. Create a bucket and an access key via the console.
 5. Export environment variables for any storages you wish to dummy (e.g. for sqlite dump export
    this will be SQLITE_STORAGE_BUCKET_NAME, SQLITE_S3_ACCESS_KEY_ID, SQLITE_S3_SECRET_ACCESS_KEY,
-   SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url to 
+   SQLITE_S3_ENDPOINT_URL, and SQLITE_STORAGE_DIRECTORY), setting s3 endpoint url to
    http://localhost:9003/
 6. Alternatively, export all environment variables temporarily to an environment such as Bash
    (useful when running a local development instance of a Celery worker):
@@ -494,7 +494,7 @@ Virus Scan and running locally
 We use a shared service accross the department for virus scanning to run locally set up the following:
 1. Follow set up `instructions <https://github.com/uktrade/dit-clamav-rest>`_ and run it
 2. set SKIP_CLAM_AV_FILE_UPLOAD to False and CLAM_USE_HTTP True
-3. add CLAM_AV_DOMAIN without http(s):// 
+3. add CLAM_AV_DOMAIN without http(s)://
 4. set CLAM_AV_USERNAME,CLAM_AV_PASSWORD as the username and password found in the config.py in the dit-clamav-rest project
 
 
@@ -502,7 +502,7 @@ Application maintenance mode
 ----------------------------
 
 The application can be put into a "maintenance mode" type of operation. By doing
-so, all user web access is routed to a maintenance view and the default database 
+so, all user web access is routed to a maintenance view and the default database
 route removes the application's access to the database. This prevents
 inadvertent changes by users, via the application UI, to application data while
 in maintenance mode. Note, however, that this would not restrict other forms of

@@ -51,6 +51,6 @@ if SKIP_CLAM_AV_FILE_UPLOAD:
     )
 
 try:
-    from settings.dev_override import *
+    from settings.dev_override import *  # pylint: disable=unused-import
 except ImportError:
     pass

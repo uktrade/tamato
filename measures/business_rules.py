@@ -887,7 +887,7 @@ class ComponentApplicability(BusinessRule):
                 **{
                     f"{self.component_field}__isnull": code
                     == ApplicabilityCode.MANDATORY,
-                }
+                },
             )
             if (
                 components.filter(inapplicable)

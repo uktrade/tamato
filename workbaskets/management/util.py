@@ -15,7 +15,11 @@ def first_line_of(s: str) -> str:
 
 class WorkBasketCommandMixin:
     def _output_workbasket_readable(
-        self, workbasket, show_transaction_info, indent=4, **kwargs
+        self,
+        workbasket,
+        show_transaction_info,
+        indent=4,
+        **kwargs,
     ):
         spaces = " " * indent
         self.stdout.write(f"WorkBasket {workbasket}:")
@@ -58,7 +62,9 @@ class WorkBasketCommandMixin:
             self._output_workbasket_compact(workbasket, show_transaction_info, **kwargs)
         else:
             self._output_workbasket_readable(
-                workbasket, show_transaction_info, **kwargs
+                workbasket,
+                show_transaction_info,
+                **kwargs,
             )
 
     def output_workbaskets(self, workbaskets, show_transaction_info, output_format):
@@ -66,7 +72,8 @@ class WorkBasketCommandMixin:
         Output a list of workbaskets.
 
         :param workbaskets: Sequence of workbaskets to output.
-        :param output_format: Output format, value of WorkBasketOutputFormat Enum.
+        :param output_format: Output format, value of WorkBasketOutputFormat
+            Enum.
         :param show_transaction_info: Whether to show first / this is slower.
         """
         if output_format == WorkBasketOutputFormat.COMPACT:

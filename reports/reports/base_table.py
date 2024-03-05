@@ -1,4 +1,5 @@
 from abc import abstractmethod
+
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
@@ -17,7 +18,7 @@ class ReportBaseTable(ReportBase):
         url = reverse("quota-ui-detail", args=[order_number.sid])
         href = url + fragment if fragment else url
         return mark_safe(
-            f"<a class='govuk-link govuk-!-font-weight-bold' href='{href}'>{text}</a>"
+            f"<a class='govuk-link govuk-!-font-weight-bold' href='{href}'>{text}</a>",
         )
 
     @abstractmethod

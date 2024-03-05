@@ -14,7 +14,7 @@ action_code_mappings = [
     ("34", "14"),
     ("36", "16"),
 ]
-"""positive, negative action code tuples."""
+"""Positive, negative action code tuples."""
 
 
 @atomic

@@ -58,7 +58,8 @@ class RecordParser(ElementParser):
         Save the Record to the database.
 
         :param data: A dict of the parsed element, mapping field names to values
-        :param transaction_id: The primary key of the transaction to add the record to
+        :param transaction_id: The primary key of the transaction to add the
+            record to
         """
         method_name = {
             str(UpdateType.UPDATE): "update",
@@ -83,7 +84,8 @@ class MessageParser(ElementParser):
         Save the contained records to the database.
 
         :param data: A dict of parsed element, mapping field names to values
-        :param transaction_id: The primary key of the transaction to add records to
+        :param transaction_id: The primary key of the transaction to add records
+            to
         """
         logger.debug("Saving message id: %s", data.get("id"))
         for record_data in data.get("record", []):
@@ -107,8 +109,8 @@ class TransactionParser(ElementParser):
         """
         Save the transaction and the contained records to the database.
 
-        :param data: A dict of the parsed element, containing at least an "id" and list
-            of "message" dicts
+        :param data: A dict of the parsed element, containing at least an "id"
+            and list of "message" dicts
         :param envelope: Containing Envelope
         """
         logging.debug(f"Saving transaction {self.data['id']}")

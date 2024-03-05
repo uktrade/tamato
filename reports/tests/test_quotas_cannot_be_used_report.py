@@ -1,14 +1,14 @@
-import pytest
-from common.tests import factories
-from reports.reports.quotas_cannot_be_used import Report
-from common.models.utils import override_current_transaction
-from geo_areas.validators import AreaCode
 import datetime
 
-from common.util import TaricDateRange
+import pytest
 
-from quotas.models import QuotaOrderNumberOriginExclusion
+from common.models.utils import override_current_transaction
+from common.tests import factories
+from common.util import TaricDateRange
+from geo_areas.validators import AreaCode
 from measures.models import Measure
+from quotas.models import QuotaOrderNumberOriginExclusion
+from reports.reports.quotas_cannot_be_used import Report
 
 
 @pytest.fixture
@@ -47,7 +47,11 @@ class TestQuotasCannotBeUsedReport:
         test_function(quota_order_number, approved_transaction, country1, date_ranges)
 
     def test_quotas_without_definitions_appear_in_report(
-        self, quota_order_number, approved_transaction, country1, date_ranges
+        self,
+        quota_order_number,
+        approved_transaction,
+        country1,
+        date_ranges,
     ):
         with override_current_transaction(approved_transaction):
             assert quota_order_number.definitions.current().count() == 0
@@ -56,7 +60,11 @@ class TestQuotasCannotBeUsedReport:
         assert Report().query()[0].reason == "Definition period has not been set"
 
     def test_quota_definitions_with_no_end_date_appear_in_report(
-        self, quota_order_number, approved_transaction, country1, date_ranges
+        self,
+        quota_order_number,
+        approved_transaction,
+        country1,
+        date_ranges,
     ):
         quota_definition = factories.QuotaDefinitionFactory.create(
             order_number=quota_order_number,
@@ -70,10 +78,15 @@ class TestQuotasCannotBeUsedReport:
         assert len(Report().query()) == 1
 
     def test_quotas_without_measures_appear_in_report(
-        self, quota_order_number, approved_transaction, country1, date_ranges
+        self,
+        quota_order_number,
+        approved_transaction,
+        country1,
+        date_ranges,
     ):
         quota_order_number.valid_between = TaricDateRange(
-            datetime.date.today(), datetime.date.today()
+            datetime.date.today(),
+            datetime.date.today(),
         )
         assert quota_order_number.valid_between.upper == datetime.date.today()
 
@@ -82,7 +95,8 @@ class TestQuotasCannotBeUsedReport:
             transaction=approved_transaction,
         )
         quota_definition.valid_between = TaricDateRange(
-            datetime.date.today(), datetime.date.today()
+            datetime.date.today(),
+            datetime.date.today(),
         )
         assert quota_definition.valid_between.upper == datetime.date.today()
 
@@ -97,7 +111,11 @@ class TestQuotasCannotBeUsedReport:
         assert len(Report().query()) == 1
 
     def test_quotas_with_measure_with_matching_exclusion_do_not_appear_in_report(
-        self, quota_order_number, approved_transaction, country1, date_ranges
+        self,
+        quota_order_number,
+        approved_transaction,
+        country1,
+        date_ranges,
     ):
         with override_current_transaction(approved_transaction):
             quota_order_number.valid_between = date_ranges.normal
@@ -113,7 +131,8 @@ class TestQuotasCannotBeUsedReport:
                 transaction=approved_transaction,
                 geographical_area=geo_group,
                 valid_between=TaricDateRange(
-                    datetime.date.today(), datetime.date.today()
+                    datetime.date.today(),
+                    datetime.date.today(),
                 ),
             )
             factories.QuotaOrderNumberOriginExclusionFactory.create(
@@ -124,7 +143,8 @@ class TestQuotasCannotBeUsedReport:
 
             geo_membership_no_end_date = factories.GeographicalMembershipFactory.create(
                 valid_between=TaricDateRange(
-                    datetime.date.today(), datetime.date.today()
+                    datetime.date.today(),
+                    datetime.date.today(),
                 ),
                 geo_group=geo_group,
                 member=country1,
@@ -133,7 +153,8 @@ class TestQuotasCannotBeUsedReport:
             measure = factories.MeasureFactory.create(
                 order_number=quota_order_number,
                 valid_between=TaricDateRange(
-                    datetime.date.today(), datetime.date.today()
+                    datetime.date.today(),
+                    datetime.date.today(),
                 ),
                 geographical_area=geo_group,
             )
@@ -147,7 +168,8 @@ class TestQuotasCannotBeUsedReport:
             factories.QuotaOrderNumberOriginFactory.create(
                 order_number=measure.order_number,
                 valid_between=TaricDateRange(
-                    datetime.date.today(), datetime.date.today()
+                    datetime.date.today(),
+                    datetime.date.today(),
                 ),
             )
             assert quota_order_number.definitions.current().count() == 1
@@ -161,7 +183,7 @@ class TestQuotasCannotBeUsedReport:
 
             retrieved_geo_exclusion = (
                 QuotaOrderNumberOriginExclusion.objects.latest_approved().get(
-                    origin_id=origin.pk
+                    origin_id=origin.pk,
                 )
             )
             assert (
@@ -172,7 +194,11 @@ class TestQuotasCannotBeUsedReport:
         assert len(Report().query()) == 0
 
     def test_quotas_with_measures_without_matching_exclusion_appear_in_report(
-        self, quota_order_number, approved_transaction, country1, date_ranges
+        self,
+        quota_order_number,
+        approved_transaction,
+        country1,
+        date_ranges,
     ):
         with override_current_transaction(approved_transaction):
             quota_order_number.valid_between = date_ranges.normal
@@ -188,7 +214,8 @@ class TestQuotasCannotBeUsedReport:
                 transaction=approved_transaction,
                 geographical_area=geo_group,
                 valid_between=TaricDateRange(
-                    datetime.date.today(), datetime.date.today()
+                    datetime.date.today(),
+                    datetime.date.today(),
                 ),
             )
             factories.QuotaOrderNumberOriginExclusionFactory.create(
@@ -198,7 +225,8 @@ class TestQuotasCannotBeUsedReport:
 
             geo_membership_no_end_date = factories.GeographicalMembershipFactory.create(
                 valid_between=TaricDateRange(
-                    datetime.date.today(), datetime.date.today()
+                    datetime.date.today(),
+                    datetime.date.today(),
                 ),
                 geo_group=geo_group,
                 member=country1,
@@ -207,7 +235,8 @@ class TestQuotasCannotBeUsedReport:
             measure = factories.MeasureFactory.create(
                 order_number=quota_order_number,
                 valid_between=TaricDateRange(
-                    datetime.date.today(), datetime.date.today()
+                    datetime.date.today(),
+                    datetime.date.today(),
                 ),
                 geographical_area=geo_group,
             )
@@ -221,7 +250,8 @@ class TestQuotasCannotBeUsedReport:
             factories.QuotaOrderNumberOriginFactory.create(
                 order_number=measure.order_number,
                 valid_between=TaricDateRange(
-                    datetime.date.today(), datetime.date.today()
+                    datetime.date.today(),
+                    datetime.date.today(),
                 ),
             )
             assert quota_order_number.definitions.current().count() == 1
@@ -235,7 +265,7 @@ class TestQuotasCannotBeUsedReport:
 
             retrieved_geo_exclusion = (
                 QuotaOrderNumberOriginExclusion.objects.latest_approved().get(
-                    origin_id=origin.pk
+                    origin_id=origin.pk,
                 )
             )
             assert (

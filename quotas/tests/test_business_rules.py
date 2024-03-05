@@ -1,5 +1,4 @@
 from collections import defaultdict
-from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -9,7 +8,6 @@ from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
 from common.tests.util import raises_if
-from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas import business_rules
@@ -205,9 +203,8 @@ def test_ON12_does_not_raise(delete_record):
     ],
 )
 def test_ON13(area_code, expect_error):
-    """An exclusion can only be entered if the order number origin is a geographical
-    area group (area code = 1).
-    """
+    """An exclusion can only be entered if the order number origin is a
+    geographical area group (area code = 1)."""
 
     origin = factories.QuotaOrderNumberOriginFactory.create(
         geographical_area__area_code=area_code,

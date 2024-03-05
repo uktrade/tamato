@@ -911,7 +911,10 @@ class SideEffect(BaseModel):
 
         with workbasket.new_transaction(order=order) as transaction:
             return self.obj.new_version(
-                workbasket, transaction, update_type=self.update_type, **attrs
+                workbasket,
+                transaction,
+                update_type=self.update_type,
+                **attrs,
             )
 
     def _get_preemptive_transaction_order(self, workbasket: WorkBasket) -> int:
@@ -1693,7 +1696,9 @@ class TrackedModelReflection:
 
 
 def get_tracked_model_reflection(
-    obj: TrackedModel, transaction: Transaction = None, **overrides
+    obj: TrackedModel,
+    transaction: Transaction = None,
+    **overrides,
 ):
     """
     Returns a reflection of a TrackedModel object.
