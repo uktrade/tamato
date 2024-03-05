@@ -12,14 +12,16 @@ logger = logging.getLogger(__name__)
 
 def run_task_or_exit(task, local=False, *args, **kwargs):
     """
-    Run celery task, block then return the return value of the task, or exit..
+    Run celery task, block then return the return value of the task, or exit.
+
+    Utility function for management commands that  require the ability to start
+    a celery task, then wait for the result. Tasks may optionally be run
+    locally, which can be useful if the user needs to run a task, but celery
+    infrastructure is unavailable.
 
     :param local: Run locally (bypass celery)
     :param task: Celery task to run.
-    :return: Result of task. Utility function for management commands that
-        require the ability to start a celery task, then wait for the result.
-        Tasks may optionally be run locally, which can be useful if the user
-        needs to run a task, but celery infrastructure is unavailable.
+    :return: Result of task.
     """
     try:
         if local:

@@ -170,9 +170,10 @@ class BusinessRule(metaclass=BusinessRuleBase):
         """
         Create a violation exception object.
 
-        :param model Optional[TrackedModel]: The model that violates this
-        business rule :param message Optional[str]: A message explaining the
-        violation
+        :param model: The model that violates this business rule
+        :type model: Optional[TrackedModel]
+        :param message: A message explaining the violation
+        :type message: Optional[str]
         :rtype BusinessRuleViolation: An exception indicating a business rule
             violation
         """
