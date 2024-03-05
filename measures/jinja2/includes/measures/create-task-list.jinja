@@ -18,7 +18,7 @@
         {"text": workbasket_link},
         {"text": submitted_date},
         {"text": "created by"},
-        {"html": object.status_tag['text'], 'classes': object.status_tag['tag_class']},
+        {"html": object.status_tag['text']|upper, 'classes': object.status_tag['tag_class']},
         {"text": "object.expected_measures_count"},
         {"text": "action"},
     ]) or ""}}

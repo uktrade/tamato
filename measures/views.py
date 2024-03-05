@@ -1155,19 +1155,25 @@ class MeasuresCreateProcessQueue(ListView):
             ProcessingState.CURRENTLY_PROCESSING,
             ProcessingState.AWAITING_PROCESSING,
         ]:
-            return {"text": "PROCESSING", "tag_class": "tamato-badge-light-blue"}
+            return {
+                "text": "Processing",
+                "tag_class": "tamato-badge-light-blue",
+            }
         elif task.processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
             return {
-                "text": "SUCCESSFULLY PROCESSED",
+                "text": "Successfully processed",
                 "tag_class": "tamato-badge-light-green",
             }
         elif task.processing_state == ProcessingState.FAILED_PROCESSING:
             return {
-                "text": "FAILED",
+                "text": "Failed",
                 "tag_class": "tamato-badge-light-red",
             }
         elif task.processing_state == ProcessingState.CANCELLED:
-            return {"text": "CANCELLED", "tag_class": "tamato-badge-light-yellow"}
+            return {
+                "text": "Cancelled",
+                "tag_class": "tamato-badge-light-yellow",
+            }
         return None
 
 
