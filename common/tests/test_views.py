@@ -191,12 +191,10 @@ def test_index_displays_footer_links(valid_user_client):
     page = BeautifulSoup(str(response.content), "html.parser")
     a_tags = page.select("footer a")
 
-    assert len(a_tags) == 7
-    assert "Privacy policy" in a_tags[0].text
-    assert (
-        a_tags[0].attrs["href"]
-        == "https://workspace.trade.gov.uk/working-at-dbt/policies-and-guidance/policies/tariff-application-privacy-policy/"
-    )
+    assert len(a_tags) == 3
+    assert "Accessibility statement" in a_tags[0].text
+    assert "Privacy policy" in a_tags[1].text
+    assert "Help centre" in a_tags[2].text
 
 
 def test_search_page_displays_links(valid_user_client):

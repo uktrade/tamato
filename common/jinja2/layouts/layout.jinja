@@ -4,76 +4,123 @@
 
 {% extends "layouts/_generic.jinja" %}
 
-{% set service_name = "Manage Trade Tariffs" %}
+{% set service_name = "Tariff Application Platform" %}
+{% set phase_banner_tag = "Alpha" %}
 
 {% block pageTitle %}
   {{ page_title }} | {{ service_name }}
 {% endblock %}
 
 {% set workbasket_svg %}
-<svg width="25" height="25" viewBox="0 0 362 360" fill="none" xmlns="http://www.w3.org/2000/svg"> {# /PS-IGNORE #}
-<path d="M316.75 135H295.332L239.343 37.5601L213.158 52.4401L260.595 135H101.405L148.858 52.4401L122.658 37.5601L66.6686 135H45.2502C42.9319 135.003 40.6452 135.536 38.5676 136.559C36.4899 137.582 34.6771 139.067 33.2696 140.899C31.862 142.731 30.8976 144.861 30.4511 147.123C30.0046 149.386 30.088 151.72 30.6948 153.945L72.9131 307.905C74.6681 314.247 78.4654 319.842 83.7233 323.833C88.9811 327.823 95.4096 329.99 102.024 330H259.992C273.536 330 285.513 320.925 289.102 307.875L331.321 153.93C331.935 151.704 332.023 149.367 331.578 147.102C331.133 144.836 330.168 142.704 328.757 140.871C327.346 139.038 325.528 137.554 323.446 136.536C321.363 135.517 319.071 134.992 316.75 135ZM259.977 300V315V300H102.024L65.0094 165H296.991L259.977 300Z" fill="white"/> {# /PS-IGNORE #}
-<path d="M135.75 195H165.917V270H135.75V195ZM196.083 195H226.25V270H196.083V195Z" fill="white"/> {# /PS-IGNORE #}
-</svg>
+  <svg
+    focusable="false"
+    role="img"
+    aria-hidden="true"
+    width="25"
+    height="25"
+    viewBox="0 0 362 360"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"> {# /PS-IGNORE #}
+      <path d="M316.75 135H295.332L239.343 37.5601L213.158 52.4401L260.595 135H101.405L148.858 52.4401L122.658 37.5601L66.6686 135H45.2502C42.9319 135.003 40.6452 135.536 38.5676 136.559C36.4899 137.582 34.6771 139.067 33.2696 140.899C31.862 142.731 30.8976 144.861 30.4511 147.123C30.0046 149.386 30.088 151.72 30.6948 153.945L72.9131 307.905C74.6681 314.247 78.4654 319.842 83.7233 323.833C88.9811 327.823 95.4096 329.99 102.024 330H259.992C273.536 330 285.513 320.925 289.102 307.875L331.321 153.93C331.935 151.704 332.023 149.367 331.578 147.102C331.133 144.836 330.168 142.704 328.757 140.871C327.346 139.038 325.528 137.554 323.446 136.536C321.363 135.517 319.071 134.992 316.75 135ZM259.977 300V315V300H102.024L65.0094 165H296.991L259.977 300Z" fill="white"/> {# /PS-IGNORE #}
+      <path d="M135.75 195H165.917V270H135.75V195ZM196.083 195H226.25V270H196.083V195Z" fill="white"/> {# /PS-IGNORE #}
+  </svg>
 {% endset %}
-
-{% block header %}
 
 {% set workbasket_html %}
   {% if request.user.current_workbasket %}
     <a
       href="{{ url('workbaskets:current-workbasket') }}"
-      class="govuk-header__link workbasket-link"
-    >Workbasket {{ request.user.current_workbasket.id }} {{ workbasket_svg }}</a>
+      class="govuk-header__link workbasket-link govuk-header__navigation-item"
+    >{{ workbasket_svg }} Workbasket ID {{ request.user.current_workbasket.id }}</a>
   {% endif %}
 {% endset %}
 
 {% set logout_login_link %}
   {% if request.user.is_authenticated %}
-    <form action="{{ url('logout') }}" method="post">
+    <form class="govuk-header__navigation-item" action="{{ url('logout') }}" method="post">
       {{ csrf_input }}
       <button
-        class="fake-link govuk-header__link"
-        id="sign-out"
+        class="fake-link govuk-header__link logout-login"
         name="submit"
         value="logout"
-      >
-        Sign out
-      </button>
+      >Sign out</button>
     </form>
   {% else %}
-    <a
-      class="govuk-header__link"
-      href="{{ settings.LOGIN_URL }}"
-    >Sign in</a>
+    <a class="govuk-header__link logout-login" href="{{ settings.LOGIN_URL }}">Sign in</a>
   {% endif %}
 {% endset %}
 
-{{ govukHeader({
-  "homepageUrl": "https://gov.uk/",
-  "serviceName": service_name,
-  "serviceUrl": "/",
-  "navigation": [ 
-    { "html": workbasket_html } if workbasket_html else "",
-    {
-      "html": logout_login_link,
-    } if not settings.SSO_ENABLED else "",
-  ],
-      "useTudorCrown": true,
-}) }}
+{% set can_view_workbasket = request.user.has_perm("workbaskets.view_workbasket") %}
+{% set can_import_taric = request.user.has_perm("common.add_trackedmodel") %}
+{% set can_manage_packaging = request.user.has_perm("publishing.manage_packaging_queue") %}
+{% set can_consume_packaging = request.user.has_perm("publishing.consume_from_packaging_queue") %}
+
+{% block header %}
+  <header class="govuk-header" role="banner" data-module="govuk-header">
+    <div class="govuk-header__container govuk-width-container">
+      <div class="govuk-header__logotype">
+        <a
+          href="/"
+          class="govuk-header__link govuk-header__link--service-name govuk-!-margin-right-1"
+        >{{ service_name }}</a>
+        <strong class="govuk-tag govuk-phase-banner__content__tag ">{{ phase_banner_tag }}</strong>
+      </div>
+
+      <div class="align-right">
+        {{ workbasket_html }}
+        {% if not settings.SSO_ENABLED %}
+          {{ logout_login_link }}
+        {% endif %}
+      </div>
+
+      <button
+        type="button"
+        class="govuk-header__menu-button govuk-js-header-toggle"
+        aria-controls="navigation"
+        aria-label="Show or hide Top Level Navigation"
+        aria-expanded="false"
+      >Menu</button>
+
+      <nav aria-label="Top Level Navigation">
+        <ul id="navigation" class="govuk-header__navigation">
+          <li class="govuk-header__navigation-item">
+            <a href="/" class="govuk-header__link">Home</a>
+          </li>
+          {% if can_view_workbasket %}
+            <li class="govuk-header__navigation-item">
+              <a
+                href="{{ url('workbaskets:workbasket-ui-list-all') }}"
+                class="govuk-header__link"
+              >Workbaskets</a>
+            </li>
+          {% endif %}
+          {% if can_consume_packaging %}
+            <li class="govuk-header__navigation-item">
+              <a
+                href="{{ url('publishing:envelope-queue-ui-list') }}"
+                class="govuk-header__link"
+              >Envelopes</a>
+            </li>
+          {% endif %}
+          {% if can_import_taric %}
+            <li class="govuk-header__navigation-item">
+              <a
+                href="{{ url('commodity_importer-ui-list') }}"
+                class="govuk-header__link"
+              >EU TARIC</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  </header>
 {% endblock %}
 
 {% block beforeContent %}
-  {{ govukPhaseBanner({
-    "tag": {
-      "text": "alpha"
-    },
-    "text": "This is a new service – your feedback will help us to improve it."
-  }) }}
   {% block breadcrumb %}
-  {% if request.path != "/" %}
-    {{ breadcrumbs(request, [{"text": page_title}]) }}
-  {% endif %}
+    {% if request.path != "/" %}
+      {{ breadcrumbs(request, [{"text": page_title}]) }}
+    {% endif %}
   {% endblock %}
 
   {% if env != "production"%}
@@ -88,32 +135,16 @@
     "meta": {
       "items": [
         {
-          "href": "https://workspace.trade.gov.uk/working-at-dbt/policies-and-guidance/policies/tariff-application-privacy-policy/",
-          "text": "Privacy policy"
-        },
-        {
           "href": url("accessibility-statement"),
           "text": "Accessibility statement"
         },
         {
-          "href": "https://uktrade.github.io/tariff-data-manual/#home",
-          "text": "Tariff data manual"
+          "href": "https://workspace.trade.gov.uk/working-at-dbt/policies-and-guidance/policies/tariff-application-privacy-policy/",
+          "text": "Privacy policy"
         },
         {
-          "href": url("app-info"),
-          "text": "Application information"
-        },
-        {
-          "href": url("import_batch-ui-list"),
-          "text": "Importer V1"
-        },
-        {
-          "href": url("taric_parser_import_ui_list"),
-          "text": "Importer V2"
-        },
-        {
-          "href": url("reports:index"),
-          "text": "TAP reports"
+          "href": "https://data-services-help.trade.gov.uk/tariff-application-platform/",
+          "text": "Help centre"
         },
       ]
     }
