@@ -324,7 +324,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;transaction__partition&quot;</span><span class="p">,</span> <span class="s2">&quot;transaction__order&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_get_current_related_lookups</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">lookups</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">recurse_level</span><span class="o">=</span><span class="mi">0</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">lookups</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">recurse_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Build a list of lookups for the current versions of related objects.</span>
@@ -370,10 +374,14 @@
 <span class="sd">        run multiple queries for every current relation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">related_lookups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_current_related_lookups</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">lookups</span><span class="p">,</span> <span class="n">recurse_level</span><span class="o">=</span><span class="n">recurse_level</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">lookups</span><span class="p">,</span>
+            <span class="n">recurse_level</span><span class="o">=</span><span class="n">recurse_level</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
-            <span class="s2">&quot;version_group&quot;</span><span class="p">,</span> <span class="s2">&quot;version_group__current_version&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">related_lookups</span>
+            <span class="s2">&quot;version_group&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;version_group__current_version&quot;</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">related_lookups</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">with_transactions_and_models</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>

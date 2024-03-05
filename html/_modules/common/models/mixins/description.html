@@ -276,7 +276,7 @@
         <span class="p">}</span>
 
         <span class="n">query</span> <span class="o">=</span> <span class="n">descriptions_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">filter_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
-            <span class="o">*</span><span class="n">descriptions_model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">ordering</span>
+            <span class="o">*</span><span class="n">descriptions_model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">ordering</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>

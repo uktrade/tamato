@@ -147,12 +147,13 @@
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">importer.nursery.</span></span><span class="sig-name descname"><span class="pre">TariffObjectNursery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">importer.cache.cache.ObjectCacheFacade</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/nursery.html#TariffObjectNursery"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides an interface between raw data and the Django modelling system for
 the tariff.</p>
-<p>The primary function is to take a raw python object (generally a dictionary) and convert
-it into a row in the database via the Django models.</p>
-<p>This layer of separation comes from the fact that often, when receiving data, the system
-will receive incomplete data objects which depend on data received later. As a result
-this “Nursery” is designed to store and look after incomplete data objects until it can
-be matched with the rest of the data and then dispatched to the database.</p>
+<p>The primary function is to take a raw python object (generally a dictionary)
+and convert it into a row in the database via the Django models.</p>
+<p>This layer of separation comes from the fact that often, when receiving
+data, the system will receive incomplete data objects which depend on data
+received later. As a result this “Nursery” is designed to store and look
+after incomplete data objects until it can be matched with the rest of the
+data and then dispatched to the database.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="importer.nursery.TariffObjectNursery.cache_current_instances">
 <span class="sig-name descname"><span class="pre">cache_current_instances</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/importer/nursery.html#TariffObjectNursery.cache_current_instances"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#importer.nursery.TariffObjectNursery.cache_current_instances" title="Permalink to this definition">¶</a></dt>

@@ -154,13 +154,12 @@
 <span class="sd">    Within a partition, a transactions order applies, to obtain a global</span>
 <span class="sd">    ordering call .order_by(&quot;partition&quot;, &quot;order&quot;).</span>
 
-<span class="sd">    The numbers chosen increment by &quot;era&quot; of transaction, starting</span>
-<span class="sd">    from approved transactions SEED_FILE, REVISION</span>
-<span class="sd">    then ending with DRAFT.</span>
+<span class="sd">    The numbers chosen increment by &quot;era&quot; of transaction, starting from approved</span>
+<span class="sd">    transactions SEED_FILE, REVISION then ending with DRAFT.</span>
 
 <span class="sd">    This system enables a simple filter for &quot;approved&quot; transactions, by checking</span>
-<span class="sd">    for &lt;= HIGHEST_APPROVED_PARTITION, this is currently set to REVISION,</span>
-<span class="sd">    which is implemented in TransactionQuerySet.approved().</span>
+<span class="sd">    for &lt;= HIGHEST_APPROVED_PARTITION, this is currently set to REVISION, which</span>
+<span class="sd">    is implemented in TransactionQuerySet.approved().</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">SEED_FILE</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Seed&quot;</span>
@@ -458,7 +457,8 @@
 <span class="sd">        Attempts a balance between readability and enough information to debug</span>
 <span class="sd">        issues, so contains the pk and status of the transaction and workbasket.</span>
 
-<span class="sd">        Stringification is lazily evaluated, so this property can be passed to loggers.</span>
+<span class="sd">        Stringification is lazily evaluated, so this property can be passed to</span>
+<span class="sd">        loggers.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;transaction: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2"> &quot;</span>
@@ -474,8 +474,8 @@
 <span class="sd">        issues, so contains the partion, order for transactions and pk, status</span>
 <span class="sd">        for workbaskets.</span>
 
-<span class="sd">        Stringification happens lazily so this property is suitable for use</span>
-<span class="sd">        when logging.</span>
+<span class="sd">        Stringification happens lazily so this property is suitable for use when</span>
+<span class="sd">        logging.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># This is not decorated with lazy_string because it doesn&#39;t work with properties</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_summary</span><span class="p">()</span></div>
@@ -485,11 +485,11 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An ordered group of Transactions.</span>
 
-<span class="sd">    Transactions often must be applied in a specific sequence, for example to ensure</span>
-<span class="sd">    a Measure exists before a Footnote can be associated with it.</span>
+<span class="sd">    Transactions often must be applied in a specific sequence, for example to</span>
+<span class="sd">    ensure a Measure exists before a Footnote can be associated with it.</span>
 
-<span class="sd">    A Transaction may belong to several groups, for example a group associated with an</span>
-<span class="sd">    imported Envelope, and with a WorkBasket.</span>
+<span class="sd">    A Transaction may belong to several groups, for example a group associated</span>
+<span class="sd">    with an imported Envelope, and with a WorkBasket.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">group_id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>

@@ -156,13 +156,14 @@
 <span class="sd">    Provides an interface between raw data and the Django modelling system for</span>
 <span class="sd">    the tariff.</span>
 
-<span class="sd">    The primary function is to take a raw python object (generally a dictionary) and convert</span>
-<span class="sd">    it into a row in the database via the Django models.</span>
+<span class="sd">    The primary function is to take a raw python object (generally a dictionary)</span>
+<span class="sd">    and convert it into a row in the database via the Django models.</span>
 
-<span class="sd">    This layer of separation comes from the fact that often, when receiving data, the system</span>
-<span class="sd">    will receive incomplete data objects which depend on data received later. As a result</span>
-<span class="sd">    this &quot;Nursery&quot; is designed to store and look after incomplete data objects until it can</span>
-<span class="sd">    be matched with the rest of the data and then dispatched to the database.</span>
+<span class="sd">    This layer of separation comes from the fact that often, when receiving</span>
+<span class="sd">    data, the system will receive incomplete data objects which depend on data</span>
+<span class="sd">    received later. As a result this &quot;Nursery&quot; is designed to store and look</span>
+<span class="sd">    after incomplete data objects until it can be matched with the rest of the</span>
+<span class="sd">    data and then dispatched to the database.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">handlers</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseHandler</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>

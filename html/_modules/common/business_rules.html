@@ -262,7 +262,8 @@
 <span class="sd">        :param model TrackedModel: Get models linked to this model instance</span>
 <span class="sd">        :param transaction Transaction: Get latest approved versions of linked</span>
 <span class="sd">            models as of this transaction</span>
-<span class="sd">        :rtype Iterator[TrackedModel]: The linked models</span>
+<span class="sd">        :return: The linked models</span>
+<span class="sd">        :rtype: Iterator[TrackedModel]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">related_model</span> <span class="ow">in</span> <span class="n">get_relations</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">))</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">business_rules</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">related_model</span><span class="p">,</span> <span class="s2">&quot;business_rules&quot;</span><span class="p">,</span> <span class="p">[])</span>
@@ -298,9 +299,12 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a violation exception object.</span>
 
-<span class="sd">        :param model Optional[TrackedModel]: The model that violates this business rule</span>
-<span class="sd">        :param message Optional[str]: A message explaining the violation</span>
-<span class="sd">        :rtype BusinessRuleViolation: An exception indicating a business rule violation</span>
+<span class="sd">        :param model: The model that violates this business rule</span>
+<span class="sd">        :type model: Optional[TrackedModel]</span>
+<span class="sd">        :param message: A message explaining the violation</span>
+<span class="sd">        :type message: Optional[str]</span>
+<span class="sd">        :rtype BusinessRuleViolation: An exception indicating a business rule</span>
+<span class="sd">            violation</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="s2">&quot;Violation&quot;</span><span class="p">,</span> <span class="n">BusinessRuleViolation</span><span class="p">)(</span>
@@ -314,7 +318,7 @@
 <span class="sd">    Decorate BusinessRules to make them only applicable after a given date.</span>
 
 <span class="sd">    :param cutoff Union[date, datetime, str]: The date, datetime or isoformat</span>
-<span class="sd">        date string of the time before which the rule should not apply</span>
+<span class="sd">    date string of the time before which the rule should not apply</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -355,8 +359,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Skip business rule validation for given update types.</span>
 
-<span class="sd">    :param cls Type[BusinessRule]: The BusinessRule to decorate</span>
-<span class="sd">    :param update_types Iterable[int]: The UpdateTypes to skip</span>
+<span class="sd">    :param cls: The BusinessRule to decorate</span>
+<span class="sd">    :type cls: Type[BusinessRule]</span>
+<span class="sd">    :param update_types: The UpdateTypes to skip</span>
+<span class="sd">    :type update_types: Iterable[int]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_original_validate</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span>
 
@@ -465,7 +471,8 @@
 <span class="sd">        Check whether the specified model violates this business rule.</span>
 
 <span class="sd">        :param model TrackedModel: The model to check</span>
-<span class="sd">        :raises BusinessRuleViolation: Raised if the passed model violates this business rule.</span>
+<span class="sd">        :raises BusinessRuleViolation: Raised if the passed model violates this</span>
+<span class="sd">            business rule.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_violation</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>

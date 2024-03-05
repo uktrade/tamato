@@ -161,8 +161,11 @@ passed <code class="docutils literal notranslate"><span class="pre">model</span>
 models as of this transaction</p></li>
 </ul>
 </dd>
-<dt class="field-even">Rtype Iterator[TrackedModel]</dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p>The linked models</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Iterator[<a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.TrackedModel">TrackedModel</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -185,12 +188,13 @@ models as of this transaction</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>Optional</strong><strong>[</strong><strong>TrackedModel</strong><strong>]</strong> (<em>model</em>) – The model that violates this business rule</p></li>
-<li><p><strong>Optional</strong><strong>[</strong><strong>str</strong><strong>]</strong> (<em>message</em>) – A message explaining the violation</p></li>
+<li><p><strong>model</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="../api/common/common.models.html#common.models.TrackedModel" title="common.models.TrackedModel"><em>TrackedModel</em></a><em>]</em>) – The model that violates this business rule</p></li>
+<li><p><strong>message</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – A message explaining the violation</p></li>
 </ul>
 </dd>
 <dt class="field-even">Rtype BusinessRuleViolation</dt>
-<dd class="field-even"><p>An exception indicating a business rule violation</p>
+<dd class="field-even"><p>An exception indicating a business rule
+violation</p>
 </dd>
 </dl>
 </dd></dl>
@@ -453,7 +457,8 @@ method on the model instance named in <code class="docutils literal notranslate"
 <dd class="field-odd"><p><strong>TrackedModel</strong> (<em>model</em>) – The model to check</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><a class="reference internal" href="#common.business_rules.BusinessRuleViolation" title="common.business_rules.BusinessRuleViolation"><strong>BusinessRuleViolation</strong></a> – Raised if the passed model violates this business rule.</p>
+<dd class="field-even"><p><a class="reference internal" href="#common.business_rules.BusinessRuleViolation" title="common.business_rules.BusinessRuleViolation"><strong>BusinessRuleViolation</strong></a> – Raised if the passed model violates this
+business rule.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -630,10 +635,10 @@ objects.</p>
 <dd><p>Decorate BusinessRules to make them only applicable after a given date.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>str</strong><strong>]</strong> (<em>cutoff Union</em><em>[</em><em>date</em><em>, </em><em>datetime</em><em>,</em>) – The date, datetime or isoformat
-date string of the time before which the rule should not apply</p>
+<dd class="field-odd"><p><strong>str</strong><strong>]</strong> (<em>cutoff Union</em><em>[</em><em>date</em><em>, </em><em>datetime</em><em>,</em>) – The date, datetime or isoformat</p>
 </dd>
 </dl>
+<p>date string of the time before which the rule should not apply</p>
 </dd></dl>
 
 <dl class="py function">
@@ -665,8 +670,8 @@ date string of the time before which the rule should not apply</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>Type</strong><strong>[</strong><strong>BusinessRule</strong><strong>]</strong> (<em>cls</em>) – The BusinessRule to decorate</p></li>
-<li><p><strong>Iterable</strong><strong>[</strong><strong>int</strong><strong>]</strong> (<em>update_types</em>) – The UpdateTypes to skip</p></li>
+<li><p><strong>cls</strong> (<em>Type</em><em>[</em><a class="reference internal" href="#common.business_rules.BusinessRule" title="common.business_rules.BusinessRule"><em>BusinessRule</em></a><em>]</em>) – The BusinessRule to decorate</p></li>
+<li><p><strong>update_types</strong> (<em>Iterable</em><em>[</em><em>int</em><em>]</em>) – The UpdateTypes to skip</p></li>
 </ul>
 </dd>
 </dl>

@@ -339,9 +339,8 @@
 
 
 <div class="viewcode-block" id="ON13"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.ON13">[docs]</a><span class="k">class</span> <span class="nc">ON13</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An exclusion can only be entered if the order number origin is a geographical</span>
-<span class="sd">    area group (area code = 1).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An exclusion can only be entered if the order number origin is a</span>
+<span class="sd">    geographical area group (area code = 1).&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ON13.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.ON13.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">exclusion</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">geographical_area</span><span class="o">.</span><span class="n">area_code</span> <span class="o">!=</span> <span class="n">AreaCode</span><span class="o">.</span><span class="n">GROUP</span><span class="p">:</span>
