@@ -1135,13 +1135,13 @@ class MeasuresCreateProcessQueue(ListView):
             ProcessingState.CURRENTLY_PROCESSING,
             ProcessingState.AWAITING_PROCESSING,
         ]:
-            context["selected_link"] = "processing"
+            context["selected_filter"] = "processing"
         elif processing_state == ProcessingState.CANCELLED:
-            context["selected_link"] = "cancelled"
+            context["selected_filter"] = "cancelled"
         elif processing_state == ProcessingState.FAILED_PROCESSING:
-            context["selected_link"] = "failed"
+            context["selected_filter"] = "failed"
         elif processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
-            context["selected_link"] = "completed"
+            context["selected_filter"] = "completed"
 
         for task in tasks:
             setattr(task, "status_tag", self.status_tag_generator(task))
