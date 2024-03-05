@@ -13,22 +13,12 @@
         {{object.created_at.strftime('%H:%M')}} <br/>
         {{object.created_at.strftime('%Y %b %d')}}
     {%- endset %}
-    {% set object_processing_state -%}
-        {% if object.processing_state in ["AWAITING_PROCESSING", "CURRENTLY_PROCESSING"]%}
-            <span class="tamato-badge-light-blue uppercase">Processing</span>
-        {% elif object.processing_state == "CANCELLED"%}
-            <span class="tamato-badge-light-yellow uppercase">Cancelled</span>
-        {% elif object.processing_state == "FAILED"%}
-            <span class="tamato-badge-light-red uppercase">Failed</span>
-        {% elif object.processing_state == "SUCCESSFULLY_PROCESSED"%}
-            <span class="tamato-badge-light-green uppercase">Completed</span>
-        {% endif %}
-    {%- endset %}
+
     {{ table_rows.append([
         {"text": workbasket_link},
         {"text": submitted_date},
         {"text": "created by"},
-        {"text": object_processing_state},
+        {"html": object.status_tag['text'], 'classes': object.status_tag['tag_class']},
         {"text": "object.expected_measures_count"},
         {"text": "action"},
     ]) or ""}}

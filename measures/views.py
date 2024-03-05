@@ -70,6 +70,7 @@ from regulations.models import Regulation
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
+from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
@@ -1099,10 +1100,14 @@ class MeasuresWizardCreateConfirm(TemplateView):
         return context
 
 
-class MeasuresCreateProcessQueue(TemplateView, ListView):
+class MeasuresCreateProcessQueue(ListView):
     """UI endpoint for bulk creating Measures process queue."""
 
-    # permissions?
+    # filterset_class = MeasuresBulkCreator
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
     template_name = "measures/create-process-queue.jinja"
     filter_by_fields = ["all", "processing", "completed", "failed"]
     sort_by_fields = [
@@ -1115,10 +1120,9 @@ class MeasuresCreateProcessQueue(TemplateView, ListView):
     ]
 
     def get_queryset(self):
-        queryset = MeasuresBulkCreator.objects.all()
-        return queryset
-
-    # ???.order_by(-created_at)
+        return MeasuresBulkCreator.objects.filter(
+            workbasket__status=WorkflowStatus.EDITING,
+        ).order_by("-created_at")
 
     def get_context_data(self, **kwargs):
         tasks = self.get_queryset()
@@ -1126,7 +1130,7 @@ class MeasuresCreateProcessQueue(TemplateView, ListView):
         context = super().get_context_data(**kwargs)
 
         processing_state = self.request.GET.get("processing_state")
-        context["selected_link"] = "all"
+        context["selected_filter"] = "all"
         if processing_state in [
             ProcessingState.CURRENTLY_PROCESSING,
             ProcessingState.AWAITING_PROCESSING,
@@ -1138,10 +1142,33 @@ class MeasuresCreateProcessQueue(TemplateView, ListView):
             context["selected_link"] = "failed"
         elif processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
             context["selected_link"] = "completed"
-        # context.
-        # context = super().get_context_data(**kwargs)
-        print(f'{context["selected_link"]}')
+
+        for task in tasks:
+            setattr(task, "status_tag", self.status_tag_generator(task))
         return context
+
+    @classmethod
+    def status_tag_generator(cls, task) -> dict:
+        """Returns a dict with text and a css class for a ui friendly label for
+        a bulk creation task."""
+        if task.processing_state in [
+            ProcessingState.CURRENTLY_PROCESSING,
+            ProcessingState.AWAITING_PROCESSING,
+        ]:
+            return {"text": "PROCESSING", "tag_class": "tamato-badge-light-blue"}
+        elif task.processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
+            return {
+                "text": "SUCCESSFULLY PROCESSED",
+                "tag_class": "tamato-badge-light-green",
+            }
+        elif task.processing_state == ProcessingState.FAILED_PROCESSING:
+            return {
+                "text": "FAILED",
+                "tag_class": "tamato-badge-light-red",
+            }
+        elif task.processing_state == ProcessingState.CANCELLED:
+            return {"text": "CANCELLED", "tag_class": "tamato-badge-light-yellow"}
+        return None
 
 
 class MeasureUpdateBase(
