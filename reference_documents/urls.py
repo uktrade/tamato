@@ -83,8 +83,8 @@ urlpatterns = [
         name="version-edit",
     ),
     path(
-        "<pk>/version-delete",
-        reference_document_version_views.ReferenceDocumentVersionEdit.as_view(),
+        "<pk>/version/<version_pk>/version-delete",
+        reference_document_version_views.ReferenceDocumentVersionDelete.as_view(),
         name="version-delete",
     ),
     path(

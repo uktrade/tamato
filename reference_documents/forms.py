@@ -402,3 +402,28 @@ class ReferenceDocumentVersionsEditCreateForm(forms.ModelForm):
             "published_date",
             "entry_into_force_date",
         ]
+
+
+class ReferenceDocumentVersionDeleteForm(forms.Form):
+    def __init__(self, *args, **kwargs) -> None:
+        self.instance = kwargs.pop("instance")
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        reference_document_version = self.instance
+        preferential_duty_rates = models.PreferentialRate.objects.all().filter(
+            reference_document_version=reference_document_version,
+        )
+        print(f"duty rates {preferential_duty_rates}")
+        tariff_quotas = models.PreferentialQuota.objects.all().filter(
+            reference_document_version=reference_document_version,
+        )
+        print(f"tariff_quotas {tariff_quotas}")
+        if preferential_duty_rates or tariff_quotas:
+            raise forms.ValidationError(
+                f"Reference Document version {reference_document_version.version} cannot be deleted as it has"
+                f" current preferential duty rates or tariff quotas.",
+            )
+
+        return cleaned_data
