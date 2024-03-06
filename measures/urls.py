@@ -67,7 +67,7 @@ ui_patterns = [
         name="measure-ui-edit-footnotes",
     ),
     path(
-        "process-queue",
+        "process-queue/",
         views.MeasuresCreateProcessQueue.as_view(),
         name="measure-create-process-queue",
     ),
