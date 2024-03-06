@@ -1,4 +1,5 @@
 {% extends "layouts/layout.jinja" %}
+
 {% from "macros/inline_filter_links.jinja" import inline_filter_links %}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/button/macro.njk" import govukButton %}
@@ -67,6 +68,8 @@
     {% else %}
       <p class="govuk-body">No bulk create/edit tasks with this status</p>
     {% endif %}
+
+    {% include "includes/common/pagination.jinja" %}
   </div>
 
 </div>

@@ -42,6 +42,7 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from common.views import WithPaginationListMixin
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
@@ -1100,7 +1101,11 @@ class MeasuresWizardCreateConfirm(TemplateView):
         return context
 
 
-class MeasuresCreateProcessQueue(ListView):
+class MeasuresCreateProcessQueue(
+    PermissionRequiredMixin,
+    WithPaginationListMixin,
+    ListView,
+):
     """UI endpoint for bulk creating Measures process queue."""
 
     permission_required = [
