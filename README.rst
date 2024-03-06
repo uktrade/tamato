@@ -18,7 +18,7 @@ Prerequisites
 The following dependencies are required to run this app:
 
 - Python_ 3.8.x
-- Node.js_ 20.11.* (LTS) Iron
+- Node.js_ 20.10.0 (LTS)
 - PostgreSQL_ 12
 - Redis_ 5.x
 
