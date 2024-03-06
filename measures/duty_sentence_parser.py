@@ -15,11 +15,13 @@ from measures.validators import ApplicabilityCode
 class DutySyntaxError(SyntaxError):
     def __str__(self):
         context, _, column = self.args
-        if self.hint:
-            hint_display = f" \n\n{self.hint} "
-        else:
-            hint_display = ""
+        hint_display = f" \n\n{self.hint} "
         return f"{self.label} at character {column}.{hint_display}"
+
+
+class DutyAmountRequired(DutySyntaxError):
+    label = "A duty amount is required"
+    hint = "Check the duty amount applicability code of the duty expression and that you have included a monetary unit or percentage."
 
 
 class InvalidDutyExpression(DutySyntaxError):
@@ -158,7 +160,14 @@ class DutySentenceParser:
             start="sentence",
         )
 
-        self.transformer = DutyTransformer(date=date, measurements=measurements)
+        self.transformer = DutyTransformer(
+            date=datetime.now(),
+            duty_expressions=duty_expressions,
+            monetary_units=monetary_units,
+            measurements=measurements,
+            measurement_units=measurement_units,
+            measurement_unit_qualifiers=measurement_unit_qualifiers,
+        )
 
     def parse(self, duty_sentence):
         try:
@@ -175,6 +184,9 @@ class DutySentenceParser:
                         "ABC",
                         "@(*&$#)",
                     ],
+                    DutyAmountRequired: [
+                        "+",
+                    ],
                     InvalidMonetaryUnit: [
                         "10% + 100 ABC / 100 kg",
                         "100 DEF",
@@ -186,9 +198,9 @@ class DutySentenceParser:
                         "5.5% + 100 EUR / foobar",
                     ],
                     InvalidMeasurementUnitQualififer: [
-                        "10% + 100 GBP / 100 kg ABC",
-                        "100 GBP / 100 kg XYZ foo bar",
-                        "5.5% + 100 EUR / % vol foo bar",
+                        "10% + 100 GBP / 100 kg / ABC",
+                        "100 GBP / 100 kg / XYZ foo bar",
+                        "5.5% + 100 EUR / % vol / foo bar",
                     ],
                 },
                 use_accepts=True,
@@ -209,7 +221,11 @@ class DutyTransformer(Transformer):
 
     def __init__(self, *args, **kwargs):
         self.date = kwargs.pop("date")
+        self.duty_expressions = kwargs.pop("duty_expressions")
         self.measurements = kwargs.pop("measurements")
+        self.monetary_units = kwargs.pop("monetary_units")
+        self.measurement_units = kwargs.pop("measurement_units")
+        self.measurement_unit_qualifiers = kwargs.pop("measurement_unit_qualifiers")
         super().__init__()
 
     def validate_duty_expressions(self, transformed):
@@ -285,9 +301,9 @@ class DutyTransformer(Transformer):
             )
         if code == ApplicabilityCode.NOT_PERMITTED and item:
             if isinstance(item, object):
-                message = f"{item_name} {item.abbreviation} ({item.code}) cannot be used with duty expression {duty_expression.description} ({duty_expression.prefix})."
+                message = f"{item_name.capitalize()} {item.abbreviation} ({item.code}) cannot be used with duty expression {duty_expression.description} ({duty_expression.prefix})."
             else:
-                message = f"{item_name} cannot be used with duty expression {duty_expression.description} ({duty_expression.prefix})."
+                message = f"{item_name.capitalize()} cannot be used with duty expression {duty_expression.description} ({duty_expression.prefix})."
             raise ValidationError(message)
 
     def validate_measurement(self, unit, qualifier):
@@ -384,10 +400,7 @@ class DutyTransformer(Transformer):
         (value,) = value
         if value == "%":
             return None
-        try:
-            match = models.MonetaryUnit.objects.as_at(self.date).get(code__iexact=value)
-        except ObjectDoesNotExist:
-            raise ValidationError(INVALID_DUTY_MONETARY_UNIT_MESSAGE)
+        match = models.MonetaryUnit.objects.as_at(self.date).get(code__iexact=value)
         return ("monetary_unit", match)
 
     def measurement_unit(self, value):
@@ -400,30 +413,24 @@ class DutyTransformer(Transformer):
                 (" ", ","),
             ),
         )
-        try:
-            match = annotated_measurement_units.get(
-                abbreviation_stripped__iexact=value.replace(" ", "").replace(",", ""),
-            )
-        except ObjectDoesNotExist:
-            raise ValidationError(INVALID_DUTY_MEASUREMENT_UNIT_MESSAGE)
+        match = annotated_measurement_units.get(
+            abbreviation_stripped__iexact=value.replace(" ", "").replace(",", ""),
+        )
         return ("measurement_unit", match)
 
     def measurement_unit_qualifier(self, value):
         (value,) = value
         annotated_measurement_unit_qualifiers = (
-            models.MeasurementUnitQualifier.objects.as_at(self.date).annotate(
+            self.measurement_unit_qualifiers.annotate(
                 abbreviation_stripped=RawSQL(
                     "REPLACE(REPLACE(abbreviation, %s, ''), %s, '')",
                     (" ", ","),
                 ),
             )
         )
-        try:
-            match = annotated_measurement_unit_qualifiers.get(
-                abbreviation_stripped__iexact=value.replace(" ", "").replace(",", ""),
-            )
-        except ObjectDoesNotExist:
-            raise ValidationError(INVALID_DUTY_MEASUREMENT_UNIT_QUALIFIER_MESSAGE)
+        match = annotated_measurement_unit_qualifiers.get(
+            abbreviation_stripped__iexact=value.replace(" ", "").replace(",", ""),
+        )
         return ("measurement_unit_qualifier", match)
 
     def slash(self, value):

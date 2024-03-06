@@ -6,7 +6,12 @@ import pytest
 from django.core.exceptions import ValidationError
 from lark import Token
 
+from measures.duty_sentence_parser import DutyAmountRequired
 from measures.duty_sentence_parser import DutySentenceParser
+from measures.duty_sentence_parser import InvalidDutyExpression
+from measures.duty_sentence_parser import InvalidMeasurementUnit
+from measures.duty_sentence_parser import InvalidMeasurementUnitQualififer
+from measures.duty_sentence_parser import InvalidMonetaryUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -241,3 +246,60 @@ def test_only_permitted_measurements_allowed(lark_duty_sentence_parser):
             e.message
             == "Measurement unit qualifier lactic. cannot be used with measurement unit kg."
         )
+
+
+@pytest.mark.parametrize(
+    "sentence, exp_error_class",
+    [
+        ("+", DutyAmountRequired),
+        ("10% + Blah duty (reduced)", InvalidDutyExpression),
+        ("5.5% + ABCDE + Some other fake duty expression", InvalidDutyExpression),
+        ("10%&@#^&", InvalidDutyExpression),
+        ("ABC", InvalidDutyExpression),
+        ("@(*&$#)", InvalidDutyExpression),
+        ("10% + 100 ABC / 100 kg", InvalidMonetaryUnit),
+        ("100 DEF", InvalidMonetaryUnit),
+        ("5.5% + 100 XYZ + AC (reduced)", InvalidMonetaryUnit),
+        ("10% + 100 GBP / 100 abc", InvalidMeasurementUnit),
+        ("100 GBP / foobar measurement", InvalidMeasurementUnit),
+        ("5.5% + 100 EUR / foobar", InvalidMeasurementUnit),
+        ("10% + 100 GBP / 100 kg / ABC", InvalidMeasurementUnitQualififer),
+        ("100 GBP / 100 kg / XYZ foo bar", InvalidMeasurementUnitQualififer),
+        ("5.5% + 100 EUR / kg / foo bar", InvalidMeasurementUnitQualififer),
+    ],
+)
+def test_duty_syntax_errors(sentence, exp_error_class, lark_duty_sentence_parser):
+    with pytest.raises(exp_error_class):
+        lark_duty_sentence_parser.parse(sentence)
+
+
+@pytest.mark.parametrize(
+    "sentence, exp_error_message",
+    [
+        (
+            f"10% + 10% + 10% + 10% + 10% + 10%",
+            "A duty expression cannot be used more than once in a duty sentence.",
+        ),
+        (
+            f"+ 5.5% 10%",
+            "Duty expressions must be used in the duty sentence in ascending order of SID.",
+        ),
+        (
+            "+ AC 10%",
+            f"Duty amount cannot be used with duty expression + agricultural component (+ AC).",
+        ),
+        (
+            "NIHIL / 100 kg",
+            f"Measurement unit 100 kg (KGM) cannot be used with duty expression (nothing) (NIHIL).",
+        ),
+    ],
+)
+def test_duty_validation_errors(sentence, exp_error_message, lark_duty_sentence_parser):
+    """
+    Tests validation based on applicability codes.
+
+    See conftest.py for DutyExpression fixture details.
+    """
+    with pytest.raises(ValidationError) as e:
+        lark_duty_sentence_parser.transform(sentence)
+        assert exp_error_message in e.message
