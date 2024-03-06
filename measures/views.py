@@ -1124,8 +1124,6 @@ class MeasuresCreateProcessQueue(ListView):
         ).order_by("-created_at")
 
     def get_context_data(self, **kwargs):
-        tasks = self.get_queryset()
-        self.object_list = tasks
         context = super().get_context_data(**kwargs)
 
         processing_state = self.request.GET.get("processing_state")
@@ -1142,14 +1140,16 @@ class MeasuresCreateProcessQueue(ListView):
         elif processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
             context["selected_filter"] = "completed"
 
-        for task in tasks:
-            setattr(task, "status_tag", self.status_tag_generator(task))
+        # Provide template access to status_tag_generator().
+        context["status_tag_generator"] = self.status_tag_generator
+
         return context
 
     @classmethod
-    def status_tag_generator(cls, task) -> dict:
-        """Returns a dict with text and a css class for a ui friendly label for
+    def status_tag_generator(cls, task: MeasuresBulkCreator) -> dict:
+        """Returns a dict with text and a CSS class for a UI-friendly label for
         a bulk creation task."""
+
         if task.processing_state in [
             ProcessingState.CURRENTLY_PROCESSING,
             ProcessingState.AWAITING_PROCESSING,
@@ -1173,7 +1173,11 @@ class MeasuresCreateProcessQueue(ListView):
                 "text": "Cancelled",
                 "tag_class": "tamato-badge-light-yellow",
             }
-        return None
+        else:
+            return {
+                "text": "",
+                "tag_class": "",
+            }
 
 
 class MeasureUpdateBase(
