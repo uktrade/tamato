@@ -246,7 +246,6 @@ class ReferenceDocumentVersionCreate(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        print(self.kwargs)
         context_data["reference_document"] = ReferenceDocument.objects.all().get(
             pk=self.kwargs["pk"],
         )

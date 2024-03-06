@@ -11,9 +11,11 @@ from django.core.exceptions import ValidationError
 
 from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
+from geo_areas.validators import area_id_validator
 from reference_documents import models
 from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialRate
+from reference_documents.models import ReferenceDocumentVersion
 from reference_documents.validators import commodity_code_validator
 from reference_documents.validators import order_number_validator
 
@@ -99,10 +101,12 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
     )
     area_id = forms.CharField(
         label="Area ID",
+        validators=[area_id_validator],
         error_messages={
             "required": "An area ID is required",
             "unique": "A Reference Document with this area ID already exists",
             "max_length": "The area ID can be at most 4 characters long",
+            "invalid": "Enter the area ID in the correct format.",
         },
     )
 
@@ -402,6 +406,17 @@ class ReferenceDocumentVersionsEditCreateForm(forms.ModelForm):
             ),
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        ref_doc = cleaned_data.get("reference_document")
+        latest_version = ReferenceDocumentVersion.objects.filter(
+            reference_document=ref_doc,
+        ).latest("created_at")
+        if float(cleaned_data.get("version")) < latest_version.version:
+            raise forms.ValidationError(
+                "New versions of this reference document must be a higher number than previous versions.",
+            )
+
     class Meta:
         model = models.ReferenceDocumentVersion
         fields = [
@@ -423,11 +438,9 @@ class ReferenceDocumentVersionDeleteForm(forms.Form):
         preferential_duty_rates = models.PreferentialRate.objects.all().filter(
             reference_document_version=reference_document_version,
         )
-        print(f"duty rates {preferential_duty_rates}")
         tariff_quotas = models.PreferentialQuota.objects.all().filter(
             reference_document_version=reference_document_version,
         )
-        print(f"tariff_quotas {tariff_quotas}")
         if preferential_duty_rates or tariff_quotas:
             raise forms.ValidationError(
                 f"Reference Document version {reference_document_version.version} cannot be deleted as it has"
