@@ -4,13 +4,20 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Reference Document " ~ deleted_pk ~ " deleted" %}
+{% set area_id = request.session['deleted_version']['area_id'] %}
+{% set version = request.session['deleted_version']['version'] %}
+{% set ref_doc_pk = request.session['deleted_version']['ref_doc_pk'] %}
+
+{% set page_title = "Reference Document " ~ area_id ~ " version " ~ version ~ " successfully deleted" %}
+
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [{"text": "Home", "href": url("home")},
     {"text": "View reference documents", "href": url("reference_documents:index")},
-      {"text": page_title}]
+    {"text": "Reference Document " ~ area_id, "href": url("reference_documents:details", kwargs={"pk":ref_doc_pk})},
+    {"text": "Delete Reference Document " ~ area_id ~ " version " ~ version},
+    {"text": page_title}]
   }) }}
 {% endblock %}
 
@@ -18,7 +25,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
         {{ govukPanel({
-    "titleText": "Reference Document " ~ deleted_pk ~ " has been deleted",
+    "titleText": "Reference Document " ~ request.session['deleted_version']['area_id'] ~ " version " ~ request.session['deleted_version']['version'] ~ " has been deleted",
     "text": "This change has taken immediate effect",
     "classes": "govuk-!-margin-bottom-7"
   }) }}

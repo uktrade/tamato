@@ -11,7 +11,8 @@
   {{ govukBreadcrumbs({
     "items": [{"text": "Home", "href": url("home")},
     {"text": "View reference documents", "href": url("reference_documents:index")},
-      {"text": page_title}]
+    {"text": "Reference Document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
+    {"text": page_title}]
   }) }}
 {% endblock %}
 
@@ -27,7 +28,7 @@
     <p class="govuk-body">Are you sure you want to permanently delete Reference Document version {{ object.reference_document.area_id }} version {{ object.version }}?</p>
 
     {{ govukWarningText({
-      "text": "Deleted Reference Documents can not be recovered.",
+      "text": "Deleted Reference Document versions can not be recovered.",
       "iconFallbackText": "Warning"
     }) }}
 

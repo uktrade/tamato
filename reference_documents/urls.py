@@ -78,12 +78,12 @@ urlpatterns = [
         name="version-create",
     ),
     path(
-        "reference_documents_versions/<pk>/version/<version_pk>/edit/",
+        "reference_documents_versions/<ref_doc_pk>/version/<pk>/edit/",
         reference_document_version_views.ReferenceDocumentVersionEdit.as_view(),
         name="version-edit",
     ),
     path(
-        "reference_documents_versions/<pk>/version/<version_pk>/version-delete/",
+        "reference_documents_versions/<ref_doc_pk>/version/<pk>/version-delete/",
         reference_document_version_views.ReferenceDocumentVersionDelete.as_view(),
         name="version-delete",
     ),

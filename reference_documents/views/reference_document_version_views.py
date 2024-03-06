@@ -294,6 +294,11 @@ class ReferenceDocumentVersionDelete(PermissionRequiredMixin, FormMixin, DeleteV
         self.object = self.get_object()
         form = self.get_form()
         if form.is_valid():
+            self.request.session["deleted_version"] = {
+                "ref_doc_pk": f"{self.object.reference_document.pk}",
+                "area_id": f"{self.object.reference_document.area_id}",
+                "version": f"{self.object.version}",
+            }
             return self.form_valid(form)
         else:
             return self.form_invalid(form)
@@ -307,7 +312,7 @@ class ReferenceDocumentVersionConfirmCreate(DetailView):
     template_name = (
         "reference_documents/reference_document_versions/confirm_create.jinja"
     )
-    model = ReferenceDocument
+    model = ReferenceDocumentVersion
 
 
 class ReferenceDocumentVersionConfirmUpdate(DetailView):

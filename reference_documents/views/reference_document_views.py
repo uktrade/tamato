@@ -116,8 +116,8 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
                     },
                     {
                         "html": f'<a href="{reverse("reference_documents:version-details", kwargs={"pk":version.id})}">Version details</a><br>'
-                        f'<a href="{reverse("reference_documents:version-edit", kwargs={"pk":context["object"].pk, "version_pk":version.id})}">Edit</a><br>'
-                        f'<a href="{reverse("reference_documents:version-delete", kwargs={"pk":context["object"].pk, "version_pk":version.id})}">Delete</a><br>'
+                        f'<a href="{reverse("reference_documents:version-edit", kwargs={"ref_doc_pk":context["object"].pk, "pk":version.id})}">Edit</a><br>'
+                        f'<a href="{reverse("reference_documents:version-delete", kwargs={"ref_doc_pk":context["object"].pk, "pk":version.id})}">Delete</a><br>'
                         f'<a href="/reference_document_version_alignment_reports/{version.id}">Alignment reports</a>',
                     },
                 ],
