@@ -34,19 +34,23 @@
   },
 ]%}
 
+{% set button_image -%}
+  <img src="{{ static('common/images/mdi_refresh.svg') }}" alt="refresh filter results">
+{%- endset %}
+
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <nav class="workbasket-filters">
     <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
       {{ inline_filter_links(filter_links_list) }}
       {{ govukButton({
-            "text": "Refresh",
+            "html": "Refresh "~button_image,
             "href": url("measure-create-process-queue"),
-            "classes": "govuk-button--primary",
+            "classes": "govuk-button--primary align-right",
       }) }}
-      <img src="{{ static('common/images/refresh.svg') }}" alt="refresh filter results">
   </nav>
-    
+  <br/>
+  <br/>
   <hr class="govuk-section-break govuk-section-break--visible">
       {% if object_list %}
         {% include list_include%}
