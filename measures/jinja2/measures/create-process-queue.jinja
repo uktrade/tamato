@@ -62,13 +62,15 @@
     <hr class="govuk-section-break govuk-section-break--visible">
   </div>
 
-  <div class="govuk-grid-column-full govuk-!-margin-bottom-5">
+  <div class="govuk-grid-column-full">
     {% if object_list %}
       {% include list_include%}
     {% else %}
       <p class="govuk-body">No bulk create/edit tasks with this status</p>
     {% endif %}
+  </div>
 
+  <div class="govuk-grid-column-full">
     {% include "includes/common/pagination.jinja" %}
   </div>
 
