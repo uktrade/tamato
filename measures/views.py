@@ -1411,7 +1411,7 @@ class DutySentenceReference(TemplateView):
             self.tx,
         ).order_by("sid")
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, **kwargs):
         return super().get_context_data(
             duty_expressions=self.duty_expressions(),
             measurements=self.measurements(),
