@@ -108,6 +108,27 @@ class PreferentialRate(models.Model):
     )
 
 
+class PreferentialQuotaOrderNumber(models.Model):
+    quota_order_number = models.CharField(
+        max_length=6,
+        db_index=True,
+    )
+    coefficient = models.DecimalField(
+        max_digits=6,
+        decimal_places=4,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    main_quota = models.ForeignKey(
+        "self",
+        related_name="sub_quotas",
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+    )
+
+
 class PreferentialQuota(models.Model):
     quota_order_number = models.CharField(
         max_length=6,
