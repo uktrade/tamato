@@ -1145,13 +1145,42 @@ class MeasuresCreateProcessQueue(
         elif processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
             context["selected_filter"] = "completed"
 
-        # Provide template access to status_tag_generator().
+        # Provide template access to some UI / view utility functions.
         context["status_tag_generator"] = self.status_tag_generator
+        context["can_cancel_task"] = self.can_cancel_task
+        context["is_task_failed"] = self.is_task_failed
+
+        # Apply the TAP standard date format within the UI.
+        context["date_format"] = settings.DATE_FORMAT
 
         return context
 
-    @classmethod
-    def status_tag_generator(cls, task: MeasuresBulkCreator) -> dict:
+    def is_task_failed(self, task: MeasuresBulkCreator) -> bool:
+        """
+        Return True if the task is in a failed state.
+
+        Return False otherwise.
+        """
+
+        return task.processing_state == ProcessingState.FAILED_PROCESSING
+
+    def can_cancel_task(self, task: MeasuresBulkCreator) -> bool:
+        """
+        Return True if a task is in a queued state and the current user is
+        permitted to cancel task.
+
+        Return False otherwise.
+        """
+
+        if (
+            self.request.user.is_superuser
+            and task.processing_state in ProcessingState.queued_states()
+        ):
+            return True
+
+        return False
+
+    def status_tag_generator(self, task: MeasuresBulkCreator) -> dict:
         """Returns a dict with text and a CSS class for a UI-friendly label for
         a bulk creation task."""
 

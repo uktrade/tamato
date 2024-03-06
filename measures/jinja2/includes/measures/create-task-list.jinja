@@ -6,24 +6,33 @@
 {% for object in object_list %}
     {% set workbasket_link -%}
         <a
-            class="govuk-link govuk-!-font-weight-bold"
+            class="govuk-link"
             href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}"
         >{{ object.workbasket.pk }}</a>
     {%- endset %}
 
     {% set submitted_date -%}
-        {{object.created_at.strftime('%H:%M')}} <br/>
-        {{object.created_at.strftime('%Y %b %d')}}
+        {{ object.created_at.strftime('%H:%M') }} {{ object.created_at.strftime(date_format) }}
     {%- endset %}
 
     {% set submitted_by -%}
         {{ object.workbasket.author }}
     {%- endset %}
 
-    {% set object_status-%}
+    {% set object_status -%}
         <span class="{{ status_tag_generator(object).tag_class }}">
             {{ status_tag_generator(object).text | upper }}
         </span>
+    {%- endset %}
+
+    {% set action_html -%}
+      {% if can_cancel_task(object) -%}
+          <a href="#TODO" class="govuk-link">Cancel</a>
+      {%- elif is_task_failed(object) %}
+          Contact TAP
+      {%- else %}
+          N/A
+      {%- endif %}
     {%- endset %}
 
     {{ table_rows.append([
@@ -31,8 +40,8 @@
         {"text": submitted_date},
         {"text": submitted_by},
         {"text": object_status},
-        {"text": "Pending..."},
-        {"text": "Pending..."},
+        {"text": "TODO"},
+        {"text": action_html},
     ]) or "" }}
 {% endfor %}
 
