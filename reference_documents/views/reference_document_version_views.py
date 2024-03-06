@@ -1,9 +1,12 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView
+from django.views.generic import DeleteView
 from django.views.generic import DetailView
 from django.views.generic import TemplateView
 from django.views.generic import UpdateView
+from django.views.generic.edit import FormMixin
 
 from commodities.models import GoodsNomenclature
 from geo_areas.models import GeographicalAreaDescription
@@ -243,7 +246,6 @@ class ReferenceDocumentVersionCreate(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        print(self.kwargs)
         context_data["reference_document"] = ReferenceDocument.objects.all().get(
             pk=self.kwargs["pk"],
         )
@@ -269,11 +271,47 @@ class ReferenceDocumentVersionEdit(PermissionRequiredMixin, UpdateView):
         )
 
 
+class ReferenceDocumentVersionDelete(PermissionRequiredMixin, FormMixin, DeleteView):
+    form_class = forms.ReferenceDocumentVersionDeleteForm
+    model = ReferenceDocumentVersion
+    permission_required = "reference_documents.delete_referencedocumentversion"
+    template_name = "reference_documents/reference_document_versions/delete.jinja"
+
+    # TODO: Update this to get rid of FormMixin with Django 4.2 as no need to overwrite the post anymore
+    def get_success_url(self) -> str:
+        return reverse(
+            "reference_documents:version-confirm-delete",
+            kwargs={"deleted_pk": self.kwargs["pk"]},
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = self.get_object()
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            self.request.session["deleted_version"] = {
+                "ref_doc_pk": f"{self.object.reference_document.pk}",
+                "area_id": f"{self.object.reference_document.area_id}",
+                "version": f"{self.object.version}",
+            }
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        self.object.delete()
+        return redirect(self.get_success_url())
+
+
 class ReferenceDocumentVersionConfirmCreate(DetailView):
     template_name = (
         "reference_documents/reference_document_versions/confirm_create.jinja"
     )
-    model = ReferenceDocument
+    model = ReferenceDocumentVersion
 
 
 class ReferenceDocumentVersionConfirmUpdate(DetailView):

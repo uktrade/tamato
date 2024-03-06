@@ -10,8 +10,8 @@
   {{ govukBreadcrumbs({
     "items": [{"text": "Home", "href": url("home")},
     {"text": "View reference documents", "href": url("reference_documents:index")},
-    {"text": "Reference Document " ~ object.reference_document.area_id},
-    {"text": "Version " ~ object.version},
+    {"text": "Reference Document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
+    {"text": "Edit Reference Document " ~ object.reference_document.area_id ~ " version " ~ object.version, "href": url("reference_documents:version-edit", kwargs={"ref_doc_pk": object.reference_document.pk, "pk":object.pk})},
       {"text": page_title}]
   }) }}
 {% endblock %}
@@ -28,11 +28,11 @@
   </div>
     <div class="govuk-button-group">
     {{ govukButton({
-    "text": "View your Reference Document",
-    "href": url("reference_documents:details", kwargs={"pk":object.pk}),
+    "text": "View Reference Document " ~ object.reference_document.area_id ~ " version " ~ object.version,
+    "href": url("reference_documents:version-details", kwargs={"pk":object.pk}),
     }) }}
     {{ govukButton({
-      "text": "Back to View Reference Documents",
+      "text": "Back to View reference documents",
       "href": url("reference_documents:index"),
       "classes": "govuk-button--secondary"
     }) }}
