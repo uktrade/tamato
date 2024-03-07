@@ -94,13 +94,12 @@
 .homepage-card {
   box-sizing: border-box;
   border: 1px solid $govuk-border-colour;
-  padding: govuk-spacing(4);
-  margin: govuk-spacing(4);
+  padding: govuk-spacing(3);
+  margin: govuk-spacing(3);
   @media screen and (min-width: 1063px) {
-    width: calc(50% - govuk-spacing(7));
+    width: calc(50% - govuk-spacing(6));
   }
-  width: calc(100% - govuk-spacing(7));
-  height: fit-content;
+  width: calc(100% - govuk-spacing(6));
   float: left;
 }
 
@@ -126,5 +125,34 @@
 
   a, form {
     display: inline-block;
+  }
+}
+
+#homepage-search-form {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: flex-end;
+
+  .govuk-input {
+    height: 50px;
+    font-size: 21px;
+  }
+
+  .govuk-form-group {
+    width: 100%;
+  }
+
+  .govuk-label {
+    @extend .govuk-visually-hidden
+  }
+
+  .govuk-button {
+    background: no-repeat url("/common/static/common/images/search-icon.svg");
+    background-color: govuk-colour("black");
+    background-position: center;
+    color: transparent;
+    margin-left: 0;
+    width: 50px;
+    height: 48px;
   }
 }

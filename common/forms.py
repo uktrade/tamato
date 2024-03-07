@@ -18,6 +18,7 @@ from django.forms.utils import ErrorList
 
 from common.util import TaricDateRange
 from common.util import get_model_indefinite_article
+from common.validators import AlphanumericValidator
 from common.widgets import FormSetFieldWidget
 from common.widgets import MultipleFileInput
 from common.widgets import RadioNestedWidget
@@ -732,3 +733,33 @@ class MultipleFileField(forms.FileField):
         else:
             files = cleaned_data(data, initial)
         return files
+
+
+class HomeSearchForm(forms.Form):
+    search_term = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "Search by tariff element name or ID"},
+        ),
+        validators=[AlphanumericValidator],
+        max_length=18,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Div(
+                Field.text("search_term"),
+                Submit(
+                    "submit",
+                    "Search",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                css_id="homepage-search-form",
+            ),
+        )

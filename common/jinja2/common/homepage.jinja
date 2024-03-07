@@ -1,16 +1,22 @@
-{% extends "layouts/layout.jinja" %}
+{% extends "layouts/form.jinja" %}
 
 {% set page_title = "Home" %}
-
-{% set can_add_workbasket = request.user.has_perm("workbaskets.add_workbasket") %}
-{% set can_view_reports = request.user.has_perm("reports.view_report_index") %}
 
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">Search the Tariff Application Platform</h1>
   <span class="govuk-caption-l govuk-!-margin-bottom-4">This service lets you manage the UK's import and export tariff data</span>
 
-  <div id="homepage-articles" class="govuk-grid-row">
+  {% block form %}
+    <div class="govuk-grid-row">
+      <div id="homepage-search" class="govuk-grid-column-full">
+        {% call django_form() %}
+          {{ crispy(form) }}
+        {% endcall %}
+      </div>
+    </div>
+  {% endblock %}
 
+  <div id="homepage-articles" class="govuk-grid-row">
     {% if can_view_workbasket %}
       <article class="homepage-card">
         <h3 class="govuk-heading-m">What would you like to do?</h3>
@@ -140,7 +146,7 @@
   <div class="govuk-grid-row">
     <h2 class="govuk-heading-l govuk-grid-column-full govuk-!-margin-bottom-3">How can we support you?</h2>
 
-    <article class="homepage-card govuk-grid-column-one-half">
+    <article class="homepage-card">
       <h3 class="govuk-heading-m">Get help</h3>
       <p class="govuk-body">
         Find documentation, guidance, training and updates on the
@@ -153,7 +159,7 @@
       </p>
     </article>
 
-    <article class="homepage-card govuk-grid-column-one-half">
+    <article class="homepage-card">
       <h3 class="govuk-heading-m">Other ways of support</h3>
       <h4 class="govuk-heading-s">Message</h3>
       <p class="govuk-body"><a class="govuk-link" href="mailto:TODO">Contact us</a> if you have a question or suggestion.</p>

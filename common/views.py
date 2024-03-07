@@ -22,33 +22,47 @@ from django.db.models import Model
 from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.template.response import TemplateResponse
+from django.urls import reverse
 from django.utils.timezone import make_aware
 from django.views.generic import DetailView
+from django.views.generic import FormView
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
+from additional_codes.models import AdditionalCode
+from certificates.models import Certificate
+from commodities.models import GoodsNomenclature
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.celery import app
+from common.forms import HomeSearchForm
 from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
+from footnotes.models import Footnote
+from geo_areas.models import GeographicalArea
+from measures.models import Measure
 from publishing.models import PackagedWorkBasket
+from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
 from tasks.models import UserAssignment
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
-class HomeView(LoginRequiredMixin, TemplateView):
+class HomeView(LoginRequiredMixin, FormView):
     template_name = "common/homepage.jinja"
+    form_class = HomeSearchForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         assignments = (
             UserAssignment.objects.filter(user=self.request.user)
             .assigned()
@@ -72,8 +86,129 @@ class HomeView(LoginRequiredMixin, TemplateView):
                         "assignment_type": assignment_type,
                     },
                 )
-        context["assigned_workbaskets"] = assigned_workbaskets
+
+        context.update(
+            {
+                "assigned_workbaskets": assigned_workbaskets,
+                "can_add_workbasket": self.request.user.has_perm(
+                    "workbaskets.add_workbasket",
+                ),
+                "can_view_reports": self.request.user.has_perm(
+                    "reports.view_report_index",
+                ),
+            },
+        )
         return context
+
+    def get_search_result(self, search_term):
+        list_view_map = {
+            "additional codes": "additional_code-ui-list",
+            "certificates": "certificate-ui-list",
+            "footnotes": "footnote-ui-list",
+            "geographical areas": "geo_area-ui-list",
+            "commodities": "commodity-ui-list",
+            "measures": "measure-ui-search",
+            "quotas": "quota-ui-list",
+            "regulations": "regulation-ui-list",
+        }
+        match = list_view_map.get(search_term, None)
+        if match:
+            return match
+
+        search_len = len(search_term)
+        if search_len == 2:
+            match = (
+                GeographicalArea.objects.filter(area_id__iexact=search_term)
+                .current()
+                .last()
+            )
+            return match.get_url() if match else None
+
+        elif search_len == 4:
+            match = (
+                AdditionalCode.objects.filter(
+                    type__sid__iexact=search_term[0],
+                    code__iexact=search_term[1:],
+                )
+                .current()
+                .last()
+            )
+            if match:
+                return match.get_url()
+
+            match = (
+                Certificate.objects.filter(
+                    certificate_type__sid__iexact=search_term[0],
+                    sid__iexact=search_term[1:],
+                )
+                .current()
+                .last()
+            )
+            if match:
+                return match.get_url()
+
+            match = (
+                GeographicalArea.objects.filter(area_id__iexact=search_term)
+                .current()
+                .last()
+            )
+            return match.get_url() if match else None
+
+        elif search_len == 5:
+            match = (
+                Footnote.objects.filter(
+                    footnote_type__footnote_type_id__iexact=search_term[:2],
+                    footnote_id=search_term[2:],
+                )
+                .current()
+                .last()
+            )
+            return match.get_url() if match else None
+
+        elif search_term.isnumeric():
+            if search_len == 6 and search_term[0] == "0":
+                match = (
+                    QuotaOrderNumber.objects.filter(order_number=search_term)
+                    .current()
+                    .last()
+                )
+                return match.get_url() if match else None
+            if search_len == 10:
+                match = (
+                    GoodsNomenclature.objects.filter(item_id=search_term)
+                    .current()
+                    .last()
+                )
+            if match:
+                return match.get_url()
+            else:
+                match = Measure.objects.filter(sid=search_term).current().last()
+                return match.get_url() if match else None
+
+        elif search_len == 8:
+            match = (
+                Regulation.objects.filter(regulation_id__iexact=search_term)
+                .current()
+                .last()
+            )
+            return match.get_url() if match else None
+
+        else:
+            return None
+
+    def form_valid(self, form):
+        search_term = form.cleaned_data["search_term"]
+        if not search_term:
+            return self.get_success_url(reverse("search-page"))
+
+        result = self.get_search_result(search_term)
+        if result:
+            return self.get_success_url(result)
+        else:
+            return self.get_success_url(reverse("search-page"))
+
+    def get_success_url(self, url):
+        return redirect(url)
 
 
 class SearchPageView(TemplateView):
