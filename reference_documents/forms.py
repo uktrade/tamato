@@ -24,16 +24,8 @@ class PreferentialRateCreateUpdateForm(
     ValidityPeriodForm,
     forms.ModelForm,
 ):
-    class Meta:
-        model = PreferentialRate
-        fields = [
-            "commodity_code",
-            "duty_rate",
-            "valid_between",
-        ]
-
     commodity_code = forms.CharField(
-        help_text="Commodity Code",
+        help_text="Enter the 10 digit commodity code",
         validators=[commodity_code_validator],
         error_messages={
             "invalid": "Commodity code should be 10 digits",
@@ -42,7 +34,6 @@ class PreferentialRateCreateUpdateForm(
     )
 
     duty_rate = forms.CharField(
-        help_text="Duty Rate",
         validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
@@ -50,30 +41,20 @@ class PreferentialRateCreateUpdateForm(
         },
     )
 
-    def clean_duty_rate(self):
-        data = self.cleaned_data["duty_rate"]
-        if len(data) < 1:
-            raise ValidationError("Duty Rate is not valid - it must have a value")
-        return data
-
-    def clean_commodity_code(self):
-        data = self.cleaned_data["commodity_code"]
-        if len(data) != 10 or not data.isdigit():
-            raise ValidationError("Commodity Code is not valid - it must be 10 digits")
-        return data
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.init_layout()
-        self.init_fields()
-
-    def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            "commodity_code",
-            "duty_rate",
+            Field.text(
+                "commodity_code",
+                field_width=Fixed.TEN,
+            ),
+            Field.text(
+                "duty_rate",
+                field_width=Fixed.TEN,
+            ),
             "start_date",
             "end_date",
             Submit(
@@ -84,11 +65,13 @@ class PreferentialRateCreateUpdateForm(
             ),
         )
 
-    def init_fields(self):
-        pass
-
-    def clean(self):
-        return super().clean()
+    class Meta:
+        model = PreferentialRate
+        fields = [
+            "commodity_code",
+            "duty_rate",
+            "valid_between",
+        ]
 
 
 class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
@@ -163,68 +146,6 @@ class ReferenceDocumentDeleteForm(forms.Form):
         return cleaned_data
 
 
-class PreferentialRateCreateForm(
-    ValidityPeriodForm,
-    forms.ModelForm,
-):
-    class Meta:
-        model = PreferentialRate
-        fields = [
-            "commodity_code",
-            "duty_rate",
-            "valid_between",
-            "reference_document_version",
-        ]
-
-    commodity_code = forms.CharField(
-        help_text="Commodity Code",
-        validators=[commodity_code_validator],
-        error_messages={
-            "invalid": "Commodity code should be 10 digits",
-            "required": "Enter the commodity code",
-        },
-    )
-
-    duty_rate = forms.CharField(
-        help_text="Duty Rate",
-        validators=[],
-        error_messages={
-            "invalid": "Duty rate is invalid",
-            "required": "This is required",
-        },
-    )
-
-    reference_document_version = forms.CharField(widget=forms.HiddenInput())
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.init_layout()
-        self.init_fields()
-
-    def init_layout(self):
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-        self.helper.layout = Layout(
-            "commodity_code",
-            "duty_rate",
-            "start_date",
-            "end_date",
-            Submit(
-                "submit",
-                "Create",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
-            ),
-        )
-
-    def init_fields(self):
-        pass
-
-    def clean(self):
-        return super().clean()
-
-
 class PreferentialRateDeleteForm(forms.ModelForm):
     class Meta:
         model = PreferentialRate
@@ -232,10 +153,6 @@ class PreferentialRateDeleteForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.init_layout()
-        self.init_fields()
-
-    def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -247,12 +164,6 @@ class PreferentialRateDeleteForm(forms.ModelForm):
                 data_prevent_double_click="true",
             ),
         )
-
-    def init_fields(self):
-        pass
-
-    def clean(self):
-        return super().clean()
 
 
 class PreferentialQuotaCreateUpdateForm(
@@ -335,10 +246,6 @@ class PreferentialQuotaCreateUpdateForm(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.init_layout()
-        self.init_fields()
-
-    def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -357,12 +264,6 @@ class PreferentialQuotaCreateUpdateForm(
                 data_prevent_double_click="true",
             ),
         )
-
-    def init_fields(self):
-        pass
-
-    def clean(self):
-        return super().clean()
 
 
 class ReferenceDocumentVersionsEditCreateForm(forms.ModelForm):
@@ -447,7 +348,7 @@ class ReferenceDocumentVersionDeleteForm(forms.Form):
         preferential_duty_rates = models.PreferentialRate.objects.all().filter(
             reference_document_version=reference_document_version,
         )
-        tariff_quotas = models.PreferentialQuota.objects.all().filter(
+        tariff_quotas = models.PreferentialQuotaOrderNumber.objects.all().filter(
             reference_document_version=reference_document_version,
         )
         if preferential_duty_rates or tariff_quotas:

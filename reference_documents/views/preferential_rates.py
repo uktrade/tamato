@@ -1,11 +1,12 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import CreateView
 from django.views.generic import DeleteView
 from django.views.generic import UpdateView
+from django.views.generic.edit import FormMixin
 
 from reference_documents.forms import PreferentialRateCreateUpdateForm
+from reference_documents.forms import PreferentialRateDeleteForm
 from reference_documents.models import PreferentialRate
 from reference_documents.models import ReferenceDocumentVersion
 
@@ -14,28 +15,24 @@ class PreferentialRateEditView(PermissionRequiredMixin, UpdateView):
     form_class = PreferentialRateCreateUpdateForm
     permission_required = "reference_documents.change_preferentialrate"
     model = PreferentialRate
-    template_name = "reference_documents/edit_preferential_rates.jinja"
+    template_name = "reference_documents/preferential_rates/edit.jinja"
 
     def get_success_url(self):
         return reverse(
-            "reference_documents:version_details",
+            "reference_documents:version-details",
             args=[self.object.reference_document_version.pk],
         )
-
-    def form_valid(self, form):
-        form.save()
-        return super(PreferentialRateEditView, self).form_valid(form)
 
 
 class PreferentialRateCreateView(PermissionRequiredMixin, CreateView):
     form_class = PreferentialRateCreateUpdateForm
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.add_preferentialrate"
     model = PreferentialRate
     template_name = "reference_documents/preferential_rates/create.jinja"
 
     def get_success_url(self):
         return reverse(
-            "reference_documents:version_details",
+            "reference_documents:version-details",
             args=[self.object.reference_document_version.pk],
         )
 
@@ -50,31 +47,14 @@ class PreferentialRateCreateView(PermissionRequiredMixin, CreateView):
         return super(PreferentialRateCreateView, self).form_valid(form)
 
 
-class PreferentialRateDeleteView(PermissionRequiredMixin, DeleteView):
+class PreferentialRateDeleteView(PermissionRequiredMixin, FormMixin, DeleteView):
     template_name = "reference_documents/preferential_rates/delete.jinja"
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.delete_preferentialrate"
     model = PreferentialRate
+    form_class = PreferentialRateDeleteForm
 
     def get_success_url(self):
         return reverse(
-            "reference_documents:version_details",
+            "reference_documents:version-details",
             args=[self.object.reference_document_version.pk],
         )
-
-    def form_valid(self, form):
-        instance = form.instance
-        success_url = reverse(
-            "reference_documents:version_details",
-            args=[instance.reference_document_version.pk],
-        )
-        instance.delete()
-        return HttpResponseRedirect(success_url)
-
-    def post(self, request, *args, **kwargs):
-        object = PreferentialRate.objects.all().get(pk=kwargs["pk"])
-        success_url = reverse(
-            "reference_documents:version_details",
-            args=[object.reference_document_version.pk],
-        )
-        object.delete()
-        return HttpResponseRedirect(success_url)

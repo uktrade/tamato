@@ -4,7 +4,7 @@
 {% from "components/tabs/macro.njk" import govukTabs %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Preferential duty rates" %}
+{% set page_title = "Reference document " ~ object.reference_document.area_id ~ " version " ~ object.version %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({

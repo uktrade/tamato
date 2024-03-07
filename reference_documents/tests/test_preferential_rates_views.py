@@ -56,7 +56,7 @@ class TestPreferentialRateEditView:
         target = PreferentialRateEditView()
         target.object = pref_rate
         assert target.get_success_url() == reverse(
-            "reference_documents:version_details",
+            "reference_documents:version-details",
             args=[target.object.reference_document_version.pk],
         )
 
