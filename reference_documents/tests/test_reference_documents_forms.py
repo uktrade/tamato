@@ -18,7 +18,7 @@ def test_ref_doc_create_update_form_valid_data():
 
 @pytest.mark.reference_documents
 def test_ref_doc_create_update_form_invalid_data():
-    """Test that ReferenceDocumentCreateUpdateForm is invalid when not complete
+    """Test that ReferenceDocumentCreateUpdateForm is invalid when not completed
     correctly."""
     form = forms.ReferenceDocumentCreateUpdateForm(data={})
     assert not form.is_valid()
@@ -32,7 +32,7 @@ def test_ref_doc_create_update_form_invalid_data():
     data = {"title": "Reference document for XY", "area_id": "VWXYZ"}
     form = forms.ReferenceDocumentCreateUpdateForm(data=data)
     assert not form.is_valid()
-    assert "The area ID can be at most 4 characters long" in form.errors["area_id"]
+    assert "Enter the area ID in the correct format" in form.errors["area_id"]
     assert "A Reference Document with this title already exists" in form.errors["title"]
 
 
@@ -40,10 +40,7 @@ def test_ref_doc_create_update_form_invalid_data():
 def test_ref_doc_delete_form_valid():
     """Test that ReferenceDocumentDeleteForm is valid for a reference document
     with no versions."""
-    ref_doc = factories.ReferenceDocumentFactory.create(
-        title="Reference document for XY",
-        area_id="XY",
-    )
+    ref_doc = factories.ReferenceDocumentFactory.create()
     form = forms.ReferenceDocumentDeleteForm(data={}, instance=ref_doc)
     assert form.is_valid()
 
@@ -52,10 +49,7 @@ def test_ref_doc_delete_form_valid():
 def test_ref_doc_delete_form_invalid():
     """Test that ReferenceDocumentDeleteForm is invalid for a reference document
     with versions."""
-    ref_doc = factories.ReferenceDocumentFactory.create(
-        title="Reference document for XY",
-        area_id="XY",
-    )
+    ref_doc = factories.ReferenceDocumentFactory.create()
     factories.ReferenceDocumentVersionFactory(reference_document=ref_doc)
     form = forms.ReferenceDocumentDeleteForm(data={}, instance=ref_doc)
     assert not form.is_valid()

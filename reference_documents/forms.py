@@ -105,8 +105,7 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
         error_messages={
             "required": "An area ID is required",
             "unique": "A Reference Document with this area ID already exists",
-            "max_length": "The area ID can be at most 4 characters long",
-            "invalid": "Enter the area ID in the correct format.",
+            "invalid": "Enter the area ID in the correct format",
         },
     )
 
@@ -383,6 +382,12 @@ class ReferenceDocumentVersionsEditCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["published_date"].error_messages[
+            "required"
+        ] = "A published date is required"
+        self.fields["entry_into_force_date"].error_messages[
+            "required"
+        ] = "An entry into force date is required"
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -409,13 +414,17 @@ class ReferenceDocumentVersionsEditCreateForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         ref_doc = cleaned_data.get("reference_document")
-        latest_version = ReferenceDocumentVersion.objects.filter(
-            reference_document=ref_doc,
-        ).latest("created_at")
-        if float(cleaned_data.get("version")) < latest_version.version:
-            raise forms.ValidationError(
-                "New versions of this reference document must be a higher number than previous versions.",
-            )
+        if cleaned_data.get("version"):
+            try:
+                latest_version = ReferenceDocumentVersion.objects.filter(
+                    reference_document=ref_doc,
+                ).latest("created_at")
+                if float(cleaned_data.get("version")) < latest_version.version:
+                    raise forms.ValidationError(
+                        "New versions of this reference document must be a higher number than previous versions",
+                    )
+            except ReferenceDocumentVersion.DoesNotExist:
+                pass
 
     class Meta:
         model = models.ReferenceDocumentVersion
@@ -444,7 +453,7 @@ class ReferenceDocumentVersionDeleteForm(forms.Form):
         if preferential_duty_rates or tariff_quotas:
             raise forms.ValidationError(
                 f"Reference Document version {reference_document_version.version} cannot be deleted as it has"
-                f" current preferential duty rates or tariff quotas.",
+                f" current preferential duty rates or tariff quotas",
             )
 
         return cleaned_data
