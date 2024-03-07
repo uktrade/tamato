@@ -13,6 +13,7 @@ from geo_areas.models import GeographicalAreaDescription
 from quotas.models import QuotaOrderNumber
 from reference_documents import forms
 from reference_documents.models import AlignmentReportCheckStatus
+from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
 
@@ -34,14 +35,18 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
         else:
             return f"{area_id} (unknown description)"
 
-    def get_tap_comm_code(self, duty):
-        if duty.reference_document_version.entry_into_force_date is not None:
-            contains_date = duty.reference_document_version.entry_into_force_date
+    def get_tap_comm_code(
+        self,
+        ref_doc_version: ReferenceDocumentVersion,
+        comm_code: str,
+    ):
+        if ref_doc_version.entry_into_force_date is not None:
+            contains_date = ref_doc_version.entry_into_force_date
         else:
-            contains_date = duty.reference_document_version.published_date
+            contains_date = ref_doc_version.published_date
 
         goods = GoodsNomenclature.objects.latest_approved().filter(
-            item_id=duty.commodity_code,
+            item_id=comm_code,
             valid_between__contains=contains_date,
             suffix=80,
         )
@@ -51,17 +56,27 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
 
         return goods.first()
 
-    def get_tap_order_number(self, quota):
+    def get_tap_order_number(
+        self,
+        ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
+    ):
         # todo: This needs to consider the validity period(s)
         # may need to handle in the pre processing of the data e.g. where the volume defines multiple periods
 
-        if quota.reference_document_version.entry_into_force_date is not None:
-            contains_date = quota.reference_document_version.entry_into_force_date
+        if (
+            ref_doc_quota_order_number.reference_document_version.entry_into_force_date
+            is not None
+        ):
+            contains_date = (
+                ref_doc_quota_order_number.reference_document_version.entry_into_force_date
+            )
         else:
-            contains_date = quota.reference_document_version.published_date
+            contains_date = (
+                ref_doc_quota_order_number.reference_document_version.published_date
+            )
 
         quota_order_number = QuotaOrderNumber.objects.latest_approved().filter(
-            order_number=quota.quota_order_number,
+            order_number=ref_doc_quota_order_number.quota_order_number,
             valid_between__contains=contains_date,
         )
 
@@ -104,9 +119,11 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
 
         latest_alignment_report = context["object"].alignment_reports.last()
 
-        for duty in context["object"].preferential_rates.order_by("commodity_code"):
+        for preferential_rate in context["object"].preferential_rates.order_by(
+            "commodity_code",
+        ):
             failure_count = (
-                duty.preferential_rate_checks.all()
+                preferential_rate.preferential_rate_checks.all()
                 .filter(
                     alignment_report=latest_alignment_report,
                     status=AlignmentReportCheckStatus.FAIL,
@@ -115,7 +132,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             )
 
             check_count = (
-                duty.preferential_rate_checks.all()
+                preferential_rate.preferential_rate_checks.all()
                 .filter(
                     alignment_report=latest_alignment_report,
                 )
@@ -129,12 +146,15 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             else:
                 checks_output = f'<div class="check-passing">PASS</div>'
 
-            comm_code = self.get_tap_comm_code(duty)
+            comm_code = self.get_tap_comm_code(
+                preferential_rate.reference_document_version,
+                preferential_rate.commodity_code,
+            )
 
             if comm_code:
                 comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.item_id}</a>'
             else:
-                comm_code_link = f"{duty.commodity_code}"
+                comm_code_link = f"{preferential_rate.commodity_code}"
 
             reference_document_version_duties.append(
                 [
@@ -142,25 +162,29 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                         "html": comm_code_link,
                     },
                     {
-                        "text": duty.duty_rate,
+                        "text": preferential_rate.duty_rate,
                     },
                     {
-                        "text": duty.valid_between,
+                        "text": preferential_rate.valid_between,
                     },
                     {
                         "html": checks_output,
                     },
                     {
-                        "html": f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[duty.pk])}'>Edit</a> "
-                        f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[duty.pk])}'>Delete</a>",
+                        "html": f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> "
+                        f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>",
                     },
                 ],
             )
 
         # order numbers
-        for quota in context["object"].preferential_quotas.order_by("order"):
+        for ref_doc_order_number in context[
+            "object"
+        ].preferential_quota_order_numbers.order_by("quota_order_number"):
+            tap_quota_order_number = self.get_tap_order_number(ref_doc_order_number)
+
             failure_count = (
-                quota.preferential_quota_checks.all()
+                ref_doc_order_number.preferential_quota_order_number_checks.all()
                 .filter(
                     alignment_report=latest_alignment_report,
                     status=AlignmentReportCheckStatus.FAIL,
@@ -169,62 +193,85 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             )
 
             check_count = (
-                quota.preferential_quota_checks.all()
+                ref_doc_order_number.preferential_quota_order_number_checks.all()
                 .filter(
                     alignment_report=latest_alignment_report,
                 )
                 .count()
             )
 
-            if failure_count > 0:
-                checks_output = f'<div class="check-failing">FAIL</div>'
-            elif check_count == 0:
-                checks_output = f"N/A"
-            else:
-                checks_output = f'<div class="check-passing">PASS</div>'
+            reference_document_version_quotas[
+                ref_doc_order_number.quota_order_number
+            ] = {
+                "data_rows": [],
+                "quota_order_number": tap_quota_order_number,
+                "quota_order_number_text": ref_doc_order_number.quota_order_number,
+                "failure_count": failure_count,
+                "check_count": check_count,
+            }
 
-            quota_order_number = self.get_tap_order_number(quota)
-
-            comm_code = self.get_tap_comm_code(quota)
-            if comm_code:
-                comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
-            else:
-                comm_code_link = f"{quota.commodity_code}"
-
-            row_to_add = [
-                {
-                    "html": comm_code_link,
-                },
-                {
-                    "text": quota.quota_duty_rate,
-                },
-                {
-                    "text": f"{quota.volume} {quota.measurement}",
-                },
-                {
-                    "text": quota.valid_between,
-                },
-                {
-                    "html": checks_output,
-                },
-                {
-                    "html": f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> "
-                    f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk])}'>Delete</a>",
-                },
-            ]
-
-            if quota.quota_order_number in reference_document_version_quotas.keys():
-                reference_document_version_quotas[quota.quota_order_number][
-                    "data_rows"
-                ].append(
-                    row_to_add,
+            # Add Data Rows
+            for quota in ref_doc_order_number.preferential_quotas.order_by(
+                "commodity_code",
+            ):
+                failure_count = (
+                    quota.preferential_quota_checks.all()
+                    .filter(
+                        alignment_report=latest_alignment_report,
+                        status=AlignmentReportCheckStatus.FAIL,
+                    )
+                    .count()
                 )
-            else:
-                reference_document_version_quotas[quota.quota_order_number] = {
-                    "data_rows": [row_to_add],
-                    "quota_order_number": quota_order_number,
-                    "quota_order_number_text": quota.quota_order_number,
-                }
+
+                check_count = (
+                    quota.preferential_quota_checks.all()
+                    .filter(
+                        alignment_report=latest_alignment_report,
+                    )
+                    .count()
+                )
+
+                if failure_count > 0:
+                    checks_output = f'<div class="check-failing">FAIL</div>'
+                elif check_count == 0:
+                    checks_output = f"N/A"
+                else:
+                    checks_output = f'<div class="check-passing">PASS</div>'
+
+                comm_code = self.get_tap_comm_code(
+                    quota.preferential_quota_order_number.reference_document_version,
+                    quota.commodity_code,
+                )
+                if comm_code:
+                    comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
+                else:
+                    comm_code_link = f"{quota.commodity_code}"
+
+                row_to_add = [
+                    {
+                        "html": comm_code_link,
+                    },
+                    {
+                        "text": quota.quota_duty_rate,
+                    },
+                    {
+                        "text": f"{quota.volume} {quota.measurement}",
+                    },
+                    {
+                        "text": quota.valid_between,
+                    },
+                    {
+                        "html": checks_output,
+                    },
+                    {
+                        "html": f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> "
+                        f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk])}'>Delete</a>",
+                    },
+                ]
+
+                reference_document_version_quotas[
+                    ref_doc_order_number.quota_order_number
+                ]["data_rows"].append(row_to_add)
 
         context["reference_document_version_duties"] = reference_document_version_duties
         context["reference_document_version_quotas"] = reference_document_version_quotas

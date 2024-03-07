@@ -54,7 +54,7 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
                             "text": reference.reference_document_versions.last().preferential_rates.count(),
                         },
                         {
-                            "text": reference.reference_document_versions.last().preferential_quotas.count(),
+                            "text": reference.reference_document_versions.last().preferential_quota_order_numbers.count(),
                         },
                         {
                             "html": f'<a href="/reference_documents/{reference.id}">Details</a><br>'
@@ -69,7 +69,7 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
             {"text": "Latest Version"},
             {"text": "Country"},
             {"text": "Duties"},
-            {"text": "Quotas"},
+            {"text": "Order Numbers"},
             {"text": "Actions"},
         ]
         return context
@@ -89,7 +89,7 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
         context["reference_document_versions_headers"] = [
             {"text": "Version"},
             {"text": "Duties"},
-            {"text": "Quotas"},
+            {"text": "Order Numbers"},
             {"text": "EIF date"},
             {"text": "Actions"},
         ]
@@ -109,7 +109,7 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
                         "text": version.preferential_rates.count(),
                     },
                     {
-                        "text": version.preferential_quotas.count(),
+                        "text": version.preferential_quota_order_numbers.count(),
                     },
                     {
                         "text": version.entry_into_force_date,

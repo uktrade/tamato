@@ -84,31 +84,12 @@ class ReferenceDocumentVersion(models.Model):
         ]
 
 
-class PreferentialRate(models.Model):
-    commodity_code = models.CharField(
-        max_length=10,
-        db_index=True,
-    )
-    duty_rate = models.CharField(
-        max_length=255,
-    )
-    order = models.IntegerField()
-
+class PreferentialQuotaOrderNumber(models.Model):
     reference_document_version = models.ForeignKey(
         "reference_documents.ReferenceDocumentVersion",
         on_delete=models.PROTECT,
-        related_name="preferential_rates",
+        related_name="preferential_quota_order_numbers",
     )
-
-    valid_between = TaricDateRangeField(
-        db_index=True,
-        null=True,
-        blank=True,
-        default=None,
-    )
-
-
-class PreferentialQuotaOrderNumber(models.Model):
     quota_order_number = models.CharField(
         max_length=6,
         db_index=True,
@@ -120,19 +101,29 @@ class PreferentialQuotaOrderNumber(models.Model):
         null=True,
         default=None,
     )
-    main_quota = models.ForeignKey(
+    main_order_number = models.ForeignKey(
         "self",
-        related_name="sub_quotas",
+        related_name="sub_order_number",
         blank=True,
         null=True,
         on_delete=models.PROTECT,
     )
+    valid_between = TaricDateRangeField(
+        db_index=True,
+        null=True,
+        blank=True,
+        default=None,
+    )
 
 
 class PreferentialQuota(models.Model):
-    quota_order_number = models.CharField(
-        max_length=6,
-        db_index=True,
+    preferential_quota_order_number = models.ForeignKey(
+        "reference_documents.PreferentialQuotaOrderNumber",
+        on_delete=models.PROTECT,
+        related_name="preferential_quotas",
+        null=True,
+        blank=True,
+        default=None,
     )
     commodity_code = models.CharField(
         max_length=10,
@@ -144,39 +135,40 @@ class PreferentialQuota(models.Model):
     volume = models.CharField(
         max_length=255,
     )
-    coefficient = models.DecimalField(
-        max_digits=6,
-        decimal_places=4,
-        blank=True,
-        null=True,
-        default=None,
-    )
-
-    main_quota = models.ForeignKey(
-        "self",
-        related_name="sub_quotas",
-        blank=True,
-        null=True,
-        on_delete=models.PROTECT,
-    )
-
     valid_between = TaricDateRangeField(
         db_index=True,
         null=True,
         blank=True,
         default=None,
     )
-
     measurement = models.CharField(
         max_length=255,
     )
-
     order = models.IntegerField()
 
+
+class PreferentialRate(models.Model):
     reference_document_version = models.ForeignKey(
         "reference_documents.ReferenceDocumentVersion",
         on_delete=models.PROTECT,
-        related_name="preferential_quotas",
+        related_name="preferential_rates",
+        null=True,
+        blank=True,
+        default=None,
+    )
+    commodity_code = models.CharField(
+        max_length=10,
+        db_index=True,
+    )
+    duty_rate = models.CharField(
+        max_length=255,
+    )
+    order = models.IntegerField()
+    valid_between = TaricDateRangeField(
+        db_index=True,
+        null=True,
+        blank=True,
+        default=None,
     )
 
 
@@ -215,6 +207,14 @@ class AlignmentReportCheck(models.Model):
         "reference_documents.PreferentialQuota",
         on_delete=models.PROTECT,
         related_name="preferential_quota_checks",
+        blank=True,
+        null=True,
+    )
+
+    preferential_quota_order_number = models.ForeignKey(
+        "reference_documents.PreferentialQuotaOrderNumber",
+        on_delete=models.PROTECT,
+        related_name="preferential_quota_order_number_checks",
         blank=True,
         null=True,
     )

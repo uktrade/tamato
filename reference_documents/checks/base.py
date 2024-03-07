@@ -8,6 +8,7 @@ from common.models import Transaction
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from reference_documents.models import PreferentialQuota
+from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.models import PreferentialRate
 
 
@@ -23,6 +24,12 @@ class BasePreferentialQuotaCheck(BaseCheck):
     def __init__(self, preferential_quota: PreferentialQuota):
         super().__init__()
         self.preferential_quota = preferential_quota
+
+
+class BasePreferentialQuotaOrderNumberCheck(BaseCheck):
+    def __init__(self, preferential_quota_order_number: PreferentialQuotaOrderNumber):
+        super().__init__()
+        self.preferential_quota_order_number = preferential_quota_order_number
 
 
 class BasePreferentialRateCheck(BaseCheck):

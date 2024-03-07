@@ -4,7 +4,9 @@ from datetime import date
 import pandas as pd
 from django.core.management import BaseCommand
 
+from common.util import TaricDateRange
 from reference_documents.models import PreferentialQuota
+from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.models import PreferentialRate
 from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
@@ -32,6 +34,7 @@ class Command(BaseCommand):
         # TODO: remove all ref doc data - temp while testing
         PreferentialQuota.objects.all().delete()
         PreferentialRate.objects.all().delete()
+        PreferentialQuotaOrderNumber.objects.all().delete()
         ReferenceDocumentVersion.objects.all().delete()
         ReferenceDocument.objects.all().delete()
 
@@ -83,41 +86,59 @@ class Command(BaseCommand):
 
         comm_code = df_row["Standardised Commodity Code"]
         comm_code = comm_code + ("0" * (len(comm_code) - 10))
-
         quota_duty_rate = df_row["Quota Duty Rate"]
-
         volume = df_row["Quota Volume"].replace(",", "")
-
         units = df_row["Units"]
 
-        quota = reference_document_version.preferential_quotas.filter(
+        # no data contains valid dates, just create a single record - can be edited later in UI
+        quota_definition_valid_between = None
+
+        if reference_document_version.entry_into_force_date:
+            order_number_valid_between = TaricDateRange(
+                reference_document_version.entry_into_force_date,
+            )
+        else:
+            order_number_valid_between = None
+
+        # Check order number
+        order_number_record = (
+            reference_document_version.preferential_quota_order_numbers.filter(
+                quota_order_number=order_number,
+            ).first()
+        )
+
+        if not order_number_record:
+            # add a new one
+            order_number_record = PreferentialQuotaOrderNumber.objects.create(
+                quota_order_number=order_number,
+                reference_document_version_id=reference_document_version.id,
+                valid_between=order_number_valid_between,
+                coefficient=None,
+                main_order_number=None,
+            )
+
+            order_number_record.save()
+
+        # check quota definition
+        quota = order_number_record.preferential_quotas.filter(
             commodity_code=comm_code,
-            quota_order_number=order_number,
         ).first()
 
         if not quota:
             # add a new one
             quota = PreferentialQuota.objects.create(
                 commodity_code=comm_code,
-                quota_order_number=order_number,
+                preferential_quota_order_number=order_number_record,
                 quota_duty_rate=quota_duty_rate,
                 order=order,
-                reference_document_version=reference_document_version,
                 volume=volume,
-                valid_between=None,
+                valid_between=quota_definition_valid_between,
                 measurement=units,
             )
 
             quota.save()
 
     def add_pt_duty_if_no_exist(self, df_row, df_row_index, reference_document_version):
-        # 'Commodity Code', 'Preferential Duty Rate', 'Staging', 'Validity',
-        # 'Notes', 'description', 'area_id', 'sid',
-        # 'TAP_measure__geographical_area__description',
-        # 'measure__geographical_area__sid', 'Document Date', 'Document Version',
-        # 'Date Processed', 'Standardised Commodity Code', 'Valid From',
-        # 'Valid To', 'Valid Date Difference'
-
         # check for existing entry for comm code
         comm_code = df_row["Standardised Commodity Code"]
         comm_code = comm_code + ("0" * (len(comm_code) - 10))
@@ -158,8 +179,8 @@ class Command(BaseCommand):
                 )
                 .first()
             )
-            # Create records
 
+            # Create records
             if not ref_doc:
                 ref_doc = ReferenceDocument.objects.create(
                     title=f"Reference document for {area}",

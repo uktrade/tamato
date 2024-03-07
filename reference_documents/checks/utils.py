@@ -1,7 +1,7 @@
 from reference_documents.checks.base import BaseCheck
 
 
-class utils:
+class Utils:
     def get_child_checks(self, check_class: BaseCheck.__class__):
         result = []
 
