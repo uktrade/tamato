@@ -194,70 +194,74 @@ class ReferenceDocumentVersionContext:
                 "check_count": check_count,
             }
 
-            # Add Data Rows
-            for quota in ref_doc_order_number.preferential_quotas.order_by(
-                "commodity_code",
-            ):
-                failure_count = (
-                    quota.preferential_quota_checks.all()
-                    .filter(
-                        alignment_report=self.alignment_report(),
-                        status=AlignmentReportCheckStatus.FAIL,
-                    )
-                    .count()
-                )
-
-                check_count = (
-                    quota.preferential_quota_checks.all()
-                    .filter(
-                        alignment_report=self.alignment_report(),
-                    )
-                    .count()
-                )
-
-                if failure_count > 0:
-                    checks_output = f'<div class="check-failing">FAIL</div>'
-                elif check_count == 0:
-                    checks_output = f"N/A"
-                else:
-                    checks_output = f'<div class="check-passing">PASS</div>'
-
-                comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
-                    quota.preferential_quota_order_number.reference_document_version,
-                    quota.commodity_code,
-                )
-                if comm_code:
-                    comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
-                else:
-                    comm_code_link = f"{quota.commodity_code}"
-
-                row_to_add = [
-                    {
-                        "html": comm_code_link,
-                    },
-                    {
-                        "text": quota.quota_duty_rate,
-                    },
-                    {
-                        "text": f"{quota.volume} {quota.measurement}",
-                    },
-                    {
-                        "text": quota.valid_between,
-                    },
-                    {
-                        "html": checks_output,
-                    },
-                    {
-                        "html": f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> "
-                        f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk])}'>Delete</a>",
-                    },
-                ]
-
-                data[ref_doc_order_number.quota_order_number]["data_rows"].append(
-                    row_to_add,
-                )
+            # Add the rows from the order number
+            self.order_number_rows(data, ref_doc_order_number)
 
         return data
+
+    def order_number_rows(self, data, ref_doc_order_number):
+        # Add Data Rows
+        for quota in ref_doc_order_number.preferential_quotas.order_by(
+            "commodity_code",
+        ):
+            failure_count = (
+                quota.preferential_quota_checks.all()
+                .filter(
+                    alignment_report=self.alignment_report(),
+                    status=AlignmentReportCheckStatus.FAIL,
+                )
+                .count()
+            )
+
+            check_count = (
+                quota.preferential_quota_checks.all()
+                .filter(
+                    alignment_report=self.alignment_report(),
+                )
+                .count()
+            )
+
+            if failure_count > 0:
+                checks_output = f'<div class="check-failing">FAIL</div>'
+            elif check_count == 0:
+                checks_output = f"N/A"
+            else:
+                checks_output = f'<div class="check-passing">PASS</div>'
+
+            comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
+                quota.preferential_quota_order_number.reference_document_version,
+                quota.commodity_code,
+            )
+            if comm_code:
+                comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
+            else:
+                comm_code_link = f"{quota.commodity_code}"
+
+            row_to_add = [
+                {
+                    "html": comm_code_link,
+                },
+                {
+                    "text": quota.quota_duty_rate,
+                },
+                {
+                    "text": f"{quota.volume} {quota.measurement}",
+                },
+                {
+                    "text": quota.valid_between,
+                },
+                {
+                    "html": checks_output,
+                },
+                {
+                    "html": f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> "
+                    f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk])}'>Delete</a>",
+                },
+            ]
+
+            data[ref_doc_order_number.quota_order_number]["data_rows"].append(
+                row_to_add,
+            )
 
 
 class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
