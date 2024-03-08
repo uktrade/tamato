@@ -9,7 +9,6 @@ from django.views.generic import UpdateView
 from django.views.generic.edit import FormMixin
 
 from commodities.models import GoodsNomenclature
-from geo_areas.models import GeographicalAreaDescription
 from quotas.models import QuotaOrderNumber
 from reference_documents import forms
 from reference_documents.models import AlignmentReportCheckStatus
@@ -18,46 +17,15 @@ from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
-    template_name = "reference_documents/reference_document_versions/details.jinja"
-    permission_required = "reference_documents.view_reference_documentversion"
-    model = ReferenceDocumentVersion
+class ReferenceDocumentVersionContext:
+    def __init__(self, reference_document_version: ReferenceDocumentVersion):
+        self.reference_document_version = reference_document_version
 
-    def get_country_by_area_id(self, area_id):
-        description = (
-            GeographicalAreaDescription.objects.latest_approved()
-            .filter(described_geographicalarea__area_id=area_id)
-            .order_by("-validity_start")
-            .first()
-        )
-        if description:
-            return description.description
-        else:
-            return f"{area_id} (unknown description)"
+    def alignment_report(self):
+        return self.reference_document_version.alignment_reports.last()
 
-    def get_tap_comm_code(
-        self,
-        ref_doc_version: ReferenceDocumentVersion,
-        comm_code: str,
-    ):
-        if ref_doc_version.entry_into_force_date is not None:
-            contains_date = ref_doc_version.entry_into_force_date
-        else:
-            contains_date = ref_doc_version.published_date
-
-        goods = GoodsNomenclature.objects.latest_approved().filter(
-            item_id=comm_code,
-            valid_between__contains=contains_date,
-            suffix=80,
-        )
-
-        if len(goods) == 0:
-            return None
-
-        return goods.first()
-
+    @staticmethod
     def get_tap_order_number(
-        self,
         ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
     ):
         # todo: This needs to consider the validity period(s)
@@ -85,19 +53,29 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
 
         return quota_order_number.first()
 
-    def get_context_data(self, *args, **kwargs):
-        context = super(ReferenceDocumentVersionDetails, self).get_context_data(
-            *args,
-            **kwargs,
+    @staticmethod
+    def get_tap_comm_code(
+        ref_doc_version: ReferenceDocumentVersion,
+        comm_code: str,
+    ):
+        if ref_doc_version.entry_into_force_date is not None:
+            contains_date = ref_doc_version.entry_into_force_date
+        else:
+            contains_date = ref_doc_version.published_date
+
+        goods = GoodsNomenclature.objects.latest_approved().filter(
+            item_id=comm_code,
+            valid_between__contains=contains_date,
+            suffix=80,
         )
-        ref_doc = context["object"].reference_document
 
-        # title
-        context[
-            "ref_doc_title"
-        ] = f"Reference Document for {ref_doc.get_area_name_by_area_id()}"
+        if len(goods) == 0:
+            return None
 
-        context["reference_document_version_duties_headers"] = [
+        return goods.first()
+
+    def duties_headers(self):
+        return [
             {"text": "Comm Code"},
             {"text": "Duty Rate"},
             {"text": "Validity"},
@@ -105,7 +83,8 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             {"text": "Actions"},
         ]
 
-        context["reference_document_version_quotas_headers"] = [
+    def quotas_headers(self):
+        return [
             {"text": "Comm Code"},
             {"text": "Rate"},
             {"text": "Volume"},
@@ -114,18 +93,17 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             {"text": "Actions"},
         ]
 
-        reference_document_version_duties = []
-        reference_document_version_quotas = {}
-
-        latest_alignment_report = context["object"].alignment_reports.last()
-
-        for preferential_rate in context["object"].preferential_rates.order_by(
+    def duties_row_data(self):
+        rows = []
+        for (
+            preferential_rate
+        ) in self.reference_document_version.preferential_rates.order_by(
             "commodity_code",
         ):
             failure_count = (
                 preferential_rate.preferential_rate_checks.all()
                 .filter(
-                    alignment_report=latest_alignment_report,
+                    alignment_report=self.alignment_report(),
                     status=AlignmentReportCheckStatus.FAIL,
                 )
                 .count()
@@ -134,7 +112,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             check_count = (
                 preferential_rate.preferential_rate_checks.all()
                 .filter(
-                    alignment_report=latest_alignment_report,
+                    alignment_report=self.alignment_report(),
                 )
                 .count()
             )
@@ -146,7 +124,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             else:
                 checks_output = f'<div class="check-passing">PASS</div>'
 
-            comm_code = self.get_tap_comm_code(
+            comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
                 preferential_rate.reference_document_version,
                 preferential_rate.commodity_code,
             )
@@ -156,7 +134,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             else:
                 comm_code_link = f"{preferential_rate.commodity_code}"
 
-            reference_document_version_duties.append(
+            rows.append(
                 [
                     {
                         "html": comm_code_link,
@@ -176,17 +154,25 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                     },
                 ],
             )
+        return rows
 
-        # order numbers
-        for ref_doc_order_number in context[
-            "object"
-        ].preferential_quota_order_numbers.order_by("quota_order_number"):
-            tap_quota_order_number = self.get_tap_order_number(ref_doc_order_number)
+    def quotas_data_orders_and_rows(self):
+        data = {}
+        for (
+            ref_doc_order_number
+        ) in self.reference_document_version.preferential_quota_order_numbers.order_by(
+            "quota_order_number",
+        ):
+            tap_quota_order_number = (
+                ReferenceDocumentVersionContext.get_tap_order_number(
+                    ref_doc_order_number,
+                )
+            )
 
             failure_count = (
                 ref_doc_order_number.preferential_quota_order_number_checks.all()
                 .filter(
-                    alignment_report=latest_alignment_report,
+                    alignment_report=self.alignment_report(),
                     status=AlignmentReportCheckStatus.FAIL,
                 )
                 .count()
@@ -195,14 +181,12 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             check_count = (
                 ref_doc_order_number.preferential_quota_order_number_checks.all()
                 .filter(
-                    alignment_report=latest_alignment_report,
+                    alignment_report=self.alignment_report(),
                 )
                 .count()
             )
 
-            reference_document_version_quotas[
-                ref_doc_order_number.quota_order_number
-            ] = {
+            data[ref_doc_order_number.quota_order_number] = {
                 "data_rows": [],
                 "quota_order_number": tap_quota_order_number,
                 "quota_order_number_text": ref_doc_order_number.quota_order_number,
@@ -217,7 +201,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                 failure_count = (
                     quota.preferential_quota_checks.all()
                     .filter(
-                        alignment_report=latest_alignment_report,
+                        alignment_report=self.alignment_report(),
                         status=AlignmentReportCheckStatus.FAIL,
                     )
                     .count()
@@ -226,7 +210,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                 check_count = (
                     quota.preferential_quota_checks.all()
                     .filter(
-                        alignment_report=latest_alignment_report,
+                        alignment_report=self.alignment_report(),
                     )
                     .count()
                 )
@@ -238,7 +222,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                 else:
                     checks_output = f'<div class="check-passing">PASS</div>'
 
-                comm_code = self.get_tap_comm_code(
+                comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
                     quota.preferential_quota_order_number.reference_document_version,
                     quota.commodity_code,
                 )
@@ -269,12 +253,40 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
                     },
                 ]
 
-                reference_document_version_quotas[
-                    ref_doc_order_number.quota_order_number
-                ]["data_rows"].append(row_to_add)
+                data[ref_doc_order_number.quota_order_number]["data_rows"].append(
+                    row_to_add,
+                )
 
-        context["reference_document_version_duties"] = reference_document_version_duties
-        context["reference_document_version_quotas"] = reference_document_version_quotas
+        return data
+
+
+class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
+    template_name = "reference_documents/reference_document_versions/details.jinja"
+    permission_required = "reference_documents.view_reference_documentversion"
+    model = ReferenceDocumentVersion
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(ReferenceDocumentVersionDetails, self).get_context_data(
+            *args,
+            **kwargs,
+        )
+
+        # title
+        context[
+            "ref_doc_title"
+        ] = f"Reference Document for {context['object'].reference_document.get_area_name_by_area_id()}"
+
+        context_data = ReferenceDocumentVersionContext(context["object"])
+        context[
+            "reference_document_version_duties_headers"
+        ] = context_data.duties_headers()
+        context[
+            "reference_document_version_quotas_headers"
+        ] = context_data.quotas_headers()
+        context["reference_document_version_duties"] = context_data.duties_row_data()
+        context[
+            "reference_document_version_quotas"
+        ] = context_data.quotas_data_orders_and_rows()
 
         return context
 
