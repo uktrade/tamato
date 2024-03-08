@@ -69,7 +69,9 @@ class DutySentenceParser:
             if getattr(item, field_name):
                 val = getattr(item, field_name)
                 if strip:
-                    # For measurement abbreviations we want to be able to match with and without spaces and commas (in the case of measurement units in the thousands) so add the spaceless and commaless values to the rule as well
+                    # For measurement abbreviations we want to be able to match with and
+                    # without spaces and commas (in the case of measurement units in the thousands)
+                    # so add the spaceless and commaless values to the rule as well
                     unique_values = set(
                         [
                             val,
