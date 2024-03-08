@@ -38,11 +38,13 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.models.bulk_processing import ProcessingState
 from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
+from measures.views import MeasuresCreateProcessQueue
 from measures.views import MeasureUpdate
 from measures.wizard import MeasureCreateSessionStorage
 from workbaskets.models import WorkBasket
@@ -2715,3 +2717,87 @@ def test_measures_wizard_create_confirm_view(valid_user_client):
     )
 
     assert expected_h1_text in page.find("h1").text
+
+
+def test_measures_create_process_queue_view_status_tag_generator(
+    valid_user_client,
+    session_request,
+):
+    awaiting_processing = factories.MeasuresBulkCreatorFactory.create()
+    currently_processing = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    failed_processing = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    cancelled = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
+    processed = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+    url = reverse("measure-create-process-queue")
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+    view = MeasuresCreateProcessQueue(request=session_request)
+
+    for task in [currently_processing, awaiting_processing]:
+        assert view.status_tag_generator(task)["text"] == "Processing"
+    assert view.status_tag_generator(failed_processing)["text"] == "Failed"
+    assert view.status_tag_generator(cancelled)["text"] == "Cancelled"
+    assert view.status_tag_generator(processed)["text"] == "Successfully processed"
+
+
+def test_measures_create_process_queue_view_task_is_task_failed(
+    valid_user_client,
+    session_request_with_workbasket,
+):
+    failed_task = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    view = MeasuresCreateProcessQueue(request=session_request_with_workbasket)
+    url = reverse("measure-create-process-queue")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    assert view.is_task_failed(failed_task)
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    cols = [header.string for header in page.find("thead").findAll("th")]
+    col_idx = cols.index("Action")
+    col_value = [
+        td[col_idx].text
+        for td in [tr.findAll("td") for tr in page.find("tbody").findAll("tr")]
+    ]
+    assert "Contact TAP" in col_value[0]
+
+
+def test_measures_create_process_queue_view_admin_can_cancel_task(session_request):
+    """Tests that an appropriately empowered user can cancel a task, if that
+    task is in Awaiting or Currently Processing States."""
+    super_user = factories.UserFactory(is_superuser=True)
+    awaiting_processing = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.AWAITING_PROCESSING,
+    )
+    currently_processing = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    cancelled = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
+    failed = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    processed = factories.MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+    session_request.user = super_user
+    view = MeasuresCreateProcessQueue(
+        request=session_request,
+    )
+
+    for task in [awaiting_processing, currently_processing]:
+        assert view.can_cancel_task(task)
+    for task in [cancelled, failed, processed]:
+        assert not view.can_cancel_task(task)
