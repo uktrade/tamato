@@ -5,8 +5,10 @@ from django.views.generic import DeleteView
 from django.views.generic import UpdateView
 from django.views.generic.edit import FormMixin
 
-from reference_documents.forms import PreferentialRateCreateUpdateForm
-from reference_documents.forms import PreferentialRateDeleteForm
+from reference_documents.forms.preferential_rate_forms import (
+    PreferentialRateCreateUpdateForm,
+)
+from reference_documents.forms.preferential_rate_forms import PreferentialRateDeleteForm
 from reference_documents.models import PreferentialRate
 from reference_documents.models import ReferenceDocumentVersion
 

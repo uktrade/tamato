@@ -9,8 +9,13 @@ from django.views.generic import TemplateView
 from django.views.generic import UpdateView
 from django.views.generic.edit import FormMixin
 
-from reference_documents import forms
 from reference_documents import models
+from reference_documents.forms.reference_document_forms import (
+    ReferenceDocumentCreateUpdateForm,
+)
+from reference_documents.forms.reference_document_forms import (
+    ReferenceDocumentDeleteForm,
+)
 from reference_documents.models import ReferenceDocument
 
 
@@ -131,7 +136,7 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
 class ReferenceDocumentCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/create.jinja"
     permission_required = "reference_documents.add_referencedocument"
-    form_class = forms.ReferenceDocumentCreateUpdateForm
+    form_class = ReferenceDocumentCreateUpdateForm
 
     def get_success_url(self):
         return reverse(
@@ -144,7 +149,7 @@ class ReferenceDocumentUpdate(PermissionRequiredMixin, UpdateView):
     model = models.ReferenceDocument
     permission_required = "reference_documents.change_referencedocument"
     template_name = "reference_documents/update.jinja"
-    form_class = forms.ReferenceDocumentCreateUpdateForm
+    form_class = ReferenceDocumentCreateUpdateForm
 
     def get_success_url(self):
         return reverse(
@@ -154,7 +159,7 @@ class ReferenceDocumentUpdate(PermissionRequiredMixin, UpdateView):
 
 
 class ReferenceDocumentDelete(PermissionRequiredMixin, FormMixin, DeleteView):
-    form_class = forms.ReferenceDocumentDeleteForm
+    form_class = ReferenceDocumentDeleteForm
     model = ReferenceDocument
     permission_required = "reference_documents.delete_referencedocument"
     template_name = "reference_documents/delete.jinja"

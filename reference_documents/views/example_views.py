@@ -8,7 +8,7 @@ from geo_areas.models import GeographicalAreaDescription
 from measures.models import Measure
 
 
-class ReferenceDocumentsListView(TemplateView):
+class ExampleReferenceDocumentsListView(TemplateView):
     template_name = "reference_documents/reference_document_examples/index.jinja"
 
     def get_context_data(self, *args, **kwargs):
@@ -25,7 +25,7 @@ class ReferenceDocumentsListView(TemplateView):
         return context
 
 
-class ReferenceDocumentsDetailView(TemplateView):
+class ExampleReferenceDocumentsDetailView(TemplateView):
     template_name = "reference_documents/reference_document_examples/details.jinja"
 
     def get_pref_duty_rates(self):

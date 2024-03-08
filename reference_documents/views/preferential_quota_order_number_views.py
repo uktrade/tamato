@@ -4,16 +4,18 @@ from django.urls import reverse
 from django.views.generic import CreateView
 from django.views.generic import UpdateView
 
-from reference_documents.forms import PreferentialQuotaCreateUpdateForm
+from reference_documents.forms.preferential_quota_order_number_forms import (
+    PreferentialQuotaOrderNumberCreateUpdateForm,
+)
 from reference_documents.models import PreferentialQuota
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class PreferentialQuotaEditView(PermissionRequiredMixin, UpdateView):
-    template_name = "reference_documents/preferential_quotas/edit.jinja"
+class PreferentialQuotaOrderNumberEditView(PermissionRequiredMixin, UpdateView):
+    template_name = "reference_documents/preferential_quota_order_numbers/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuota
-    form_class = PreferentialQuotaCreateUpdateForm
+    form_class = PreferentialQuotaOrderNumberCreateUpdateForm
 
     def post(self, request, *args, **kwargs):
         quota = self.get_object()
@@ -27,11 +29,11 @@ class PreferentialQuotaEditView(PermissionRequiredMixin, UpdateView):
         )
 
 
-class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
-    template_name = "reference_documents/preferential_quotas/edit.jinja"
+class PreferentialQuotaOrderNumberCreateView(PermissionRequiredMixin, CreateView):
+    template_name = "reference_documents/preferential_quota_order_numbers/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuota
-    form_class = PreferentialQuotaCreateUpdateForm
+    form_class = PreferentialQuotaOrderNumberCreateUpdateForm
 
     def form_valid(self, form):
         instance = form.instance
@@ -41,7 +43,7 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
         instance.order = len(reference_document_version.preferential_rates.all()) + 1
         instance.reference_document_version = reference_document_version
         self.object = instance
-        return super(PreferentialQuotaCreateView, self).form_valid(form)
+        return super(PreferentialQuotaOrderNumberCreateView, self).form_valid(form)
 
     def get_success_url(self):
         return (
@@ -64,7 +66,7 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
     #     )
 
 
-class PreferentialQuotaDeleteView(PermissionRequiredMixin, UpdateView):
-    template_name = "preferential_quotas/delete.jinja"
+class PreferentialQuotaOrderNumberDeleteView(PermissionRequiredMixin, UpdateView):
+    template_name = "preferential_quota_order_numbers/delete.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuota
