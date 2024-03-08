@@ -13,7 +13,7 @@
     {%- endset %}
 
     {% set submitted_by -%}
-        {{ object.workbasket.author }}
+        {{ object.user }}
     {%- endset %}
 
     {% set object_status -%}
@@ -24,11 +24,11 @@
 
     {% set action_html -%}
       {% if can_cancel_task(object) -%}
-          <a href="#TODO" class="govuk-link">Cancel</a>
+          <a href="#TODO" class="govuk-link cancel-task">Cancel</a>
       {%- elif is_task_failed(object) %}
-          Contact TAP
+          <span class="contact-tap">Contact TAP</span>
       {%- else %}
-          N/A
+          <span class="not-applicable">N/A</span>
       {%- endif %}
     {%- endset %}
 
