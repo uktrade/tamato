@@ -18,7 +18,6 @@ class PreferentialQuotaOrderNumberEditView(PermissionRequiredMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super(PreferentialQuotaOrderNumberEditView, self).get_form_kwargs()
-        kwargs["reference_document_version"] = "x"
         return kwargs
 
     def get_success_url(self):

@@ -22,6 +22,30 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
             "valid_between",
         ]
 
+    def __init__(self, reference_document_version, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[
+            "main_order_number"
+        ].queryset = reference_document_version.preferential_quota_order_numbers.all()
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Field.text(
+                "quota_order_number",
+            ),
+            "coefficient",
+            "main_order_number",
+            "start_date",
+            "end_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
     quota_order_number = forms.CharField(
         label="Order number",
         help_text="Enter a six digit number",
@@ -49,7 +73,7 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         widget=forms.TextInput(attrs={"style": "max-width: 6em"}),
     )
 
-    main_order_number = forms.ModelChoiceField(
+    main_order_number_id = forms.ModelChoiceField(
         label="Main order number",
         help_text="Select a main order number",
         queryset=PreferentialQuotaOrderNumber.objects.all(),
@@ -58,36 +82,8 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
             "invalid": "Main Order number is invalid",
         },
         required=False,
-        to_field_name="main_order_number_id",
         widget=forms.Select(attrs={"class": "form-control"}),
     )
-
-    def __init__(self, reference_document_version, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields[
-            "main_order_number"
-        ].choices = reference_document_version.preferential_quota_order_numbers.all().values_list(
-            "id",
-            "quota_order_number",
-        )
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-        self.helper.layout = Layout(
-            Field.text(
-                "quota_order_number",
-            ),
-            "coefficient",
-            "main_order_number",
-            "start_date",
-            "end_date",
-            Submit(
-                "submit",
-                "Save",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
-            ),
-        )
 
 
 class PreferentialQuotaOrderNumberDeleteForm(forms.ModelForm):
