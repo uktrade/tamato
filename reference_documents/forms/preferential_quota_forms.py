@@ -1,6 +1,6 @@
-from decimal import Decimal
-
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fixed
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 
 from common.forms import ValidityPeriodForm
 from reference_documents.models import PreferentialQuota
+from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.validators import commodity_code_validator
 from reference_documents.validators import order_number_validator
 
@@ -79,18 +80,6 @@ class PreferentialQuotaCreateUpdateForm(
             raise ValidationError("Quota duty Rate is not valid - it must have a value")
         return data
 
-    def clean_volume(self):
-        data = self.cleaned_data["volume"]
-        if not data.isdigit():
-            raise ValidationError("volume is not valid - it must have a value")
-        return Decimal(data)
-
-    def clean_commodity_code(self):
-        data = self.cleaned_data["commodity_code"]
-        if len(data) != 10 or not data.isdigit():
-            raise ValidationError("Commodity Code is not valid - it must be 10 digits")
-        return data
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -111,3 +100,98 @@ class PreferentialQuotaCreateUpdateForm(
                 data_prevent_double_click="true",
             ),
         )
+
+
+class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
+    commodity_code = forms.CharField(
+        validators=[commodity_code_validator],
+        error_messages={
+            "invalid": "Commodity code should be 10 digits",
+            "required": "Commodity code is required",
+        },
+    )
+
+    quota_duty_rate = forms.CharField(
+        validators=[],
+        error_messages={
+            "invalid": "Duty rate is invalid",
+            "required": "Duty rate is required",
+        },
+    )
+
+    preferential_quota_order_number = forms.ModelChoiceField(
+        help_text="If the quota order number does not appear, you must first create it for this reference document version.",
+        queryset=PreferentialQuotaOrderNumber.objects.all(),  # Modified in init
+        error_messages={
+            "invalid": "Quota Order Number is invalid",
+            "required": "Quota Order Number is required",
+        },
+    )
+
+    volume = forms.CharField(
+        validators=[],
+        error_messages={
+            "invalid": "Volume invalid",
+            "required": "Volume is required",
+        },
+    )
+
+    measurement = forms.CharField(
+        validators=[],
+        error_messages={
+            "invalid": "Measurement invalid",
+            "required": "Measurement is required",
+        },
+    )
+
+    def __init__(self, reference_document_version, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["preferential_quota_order_number"].queryset = (
+            PreferentialQuotaOrderNumber.objects.all()
+            .filter(reference_document_version=reference_document_version)
+            .order_by()
+        )
+        self.fields[
+            "preferential_quota_order_number"
+        ].label_from_instance = lambda obj: f"{obj.quota_order_number}"
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "preferential_quota_order_number",
+            Field.text(
+                "commodity_code",
+                field_width=Fixed.TEN,
+            ),
+            Field.text(
+                "quota_duty_rate",
+                field_width=Fixed.TEN,
+            ),
+            Field.text(
+                "volume",
+                field_width=Fixed.TEN,
+            ),
+            Field.text(
+                "measurement",
+                field_width=Fixed.TEN,
+            ),
+            "start_date",
+            "end_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    class Meta:
+        model = PreferentialQuota
+        fields = [
+            "preferential_quota_order_number",
+            "commodity_code",
+            "quota_duty_rate",
+            "volume",
+            "measurement",
+            "valid_between",
+        ]
