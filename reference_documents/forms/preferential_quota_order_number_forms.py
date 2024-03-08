@@ -7,7 +7,6 @@ from django import forms
 
 from common.forms import ValidityPeriodForm
 from reference_documents.models import PreferentialQuotaOrderNumber
-from reference_documents.models import PreferentialRate
 
 
 class PreferentialQuotaOrderNumberCreateUpdateForm(
@@ -16,8 +15,16 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
 ):
     class Meta:
         model = PreferentialQuotaOrderNumber
+        fields = [
+            "quota_order_number",
+            "coefficient",
+            "main_order_number",
+            "valid_between",
+        ]
 
     quota_order_number = forms.CharField(
+        label="Order number",
+        help_text="Enter a six digit number",
         validators=[],
         error_messages={
             "invalid": "Quota Order number is invalid",
@@ -27,21 +34,24 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         widget=forms.TextInput(
             attrs={
                 "style": "max-width: 12em",
-                "title": "Enter a six digit number ",
             },
         ),
     )
 
     coefficient = forms.CharField(
+        label="Coefficient",
+        help_text="Enter a decimal number",
         validators=[],
+        required=False,
         error_messages={
             "invalid": "Coefficient is invalid",
-            "required": "Coefficient is required",
         },
         widget=forms.TextInput(attrs={"style": "max-width: 6em"}),
     )
 
     main_order_number = forms.ModelChoiceField(
+        label="Main order number",
+        help_text="Select a main order number",
         queryset=PreferentialQuotaOrderNumber.objects.all(),
         validators=[],
         error_messages={
@@ -52,8 +62,14 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         widget=forms.Select(attrs={"class": "form-control"}),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, reference_document_version, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields[
+            "main_order_number"
+        ].choices = reference_document_version.preferential_quota_order_numbers.all().values_list(
+            "id",
+            "quota_order_number",
+        )
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -72,14 +88,6 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
                 data_prevent_double_click="true",
             ),
         )
-
-    class Meta:
-        model = PreferentialRate
-        fields = [
-            "commodity_code",
-            "duty_rate",
-            "valid_between",
-        ]
 
 
 class PreferentialQuotaOrderNumberDeleteForm(forms.ModelForm):
