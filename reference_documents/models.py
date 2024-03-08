@@ -115,6 +115,9 @@ class PreferentialQuotaOrderNumber(models.Model):
         default=None,
     )
 
+    def __str__(self):
+        return f"{self.quota_order_number}"
+
 
 class PreferentialQuota(models.Model):
     preferential_quota_order_number = models.ForeignKey(

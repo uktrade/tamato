@@ -1,5 +1,4 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView
 from django.views.generic import UpdateView
@@ -17,16 +16,15 @@ class PreferentialQuotaOrderNumberEditView(PermissionRequiredMixin, UpdateView):
     model = PreferentialQuota
     form_class = PreferentialQuotaOrderNumberCreateUpdateForm
 
-    def post(self, request, *args, **kwargs):
-        quota = self.get_object()
-        quota.save()
-        return redirect(
-            reverse(
-                "reference_documents:version_details",
-                args=[quota.reference_document_version.pk],
-            )
-            + "#tariff-quotas",
-        )
+    def get_form_kwargs(self):
+        kwargs = super(PreferentialQuotaOrderNumberEditView, self).get_form_kwargs()
+        return kwargs
+
+    def get_success_url(self):
+        reverse(
+            "reference_documents:version_details",
+            args=[self.get_object().reference_document_version.pk],
+        ) + "#tariff-quotas",
 
 
 class PreferentialQuotaOrderNumberCreateView(PermissionRequiredMixin, CreateView):
@@ -34,6 +32,13 @@ class PreferentialQuotaOrderNumberCreateView(PermissionRequiredMixin, CreateView
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuota
     form_class = PreferentialQuotaOrderNumberCreateUpdateForm
+
+    def get_form_kwargs(self):
+        kwargs = super(PreferentialQuotaOrderNumberCreateView, self).get_form_kwargs()
+        kwargs["reference_document_version"] = ReferenceDocumentVersion.objects.get(
+            id=self.kwargs["pk"],
+        )
+        return kwargs
 
     def form_valid(self, form):
         instance = form.instance
