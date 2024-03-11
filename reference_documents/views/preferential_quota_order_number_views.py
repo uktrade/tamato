@@ -1,23 +1,27 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.urls import reverse
 from django.views.generic import CreateView
+from django.views.generic import DeleteView
 from django.views.generic import UpdateView
 
 from reference_documents.forms.preferential_quota_order_number_forms import (
     PreferentialQuotaOrderNumberCreateUpdateForm,
 )
-from reference_documents.models import PreferentialQuota
+from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.models import ReferenceDocumentVersion
 
 
 class PreferentialQuotaOrderNumberEditView(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/preferential_quota_order_numbers/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
-    model = PreferentialQuota
+    model = PreferentialQuotaOrderNumber
     form_class = PreferentialQuotaOrderNumberCreateUpdateForm
 
     def get_form_kwargs(self):
         kwargs = super(PreferentialQuotaOrderNumberEditView, self).get_form_kwargs()
+        kwargs["reference_document_version"] = PreferentialQuotaOrderNumber.objects.get(
+            id=self.kwargs["pk"],
+        ).reference_document_version
         return kwargs
 
     def get_success_url(self):
@@ -30,7 +34,7 @@ class PreferentialQuotaOrderNumberEditView(PermissionRequiredMixin, UpdateView):
 class PreferentialQuotaOrderNumberCreateView(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/preferential_quota_order_numbers/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
-    model = PreferentialQuota
+    model = PreferentialQuotaOrderNumber
     form_class = PreferentialQuotaOrderNumberCreateUpdateForm
 
     def get_form_kwargs(self):
@@ -53,7 +57,7 @@ class PreferentialQuotaOrderNumberCreateView(PermissionRequiredMixin, CreateView
     def get_success_url(self):
         return (
             reverse(
-                "reference_documents:version_details",
+                "reference_documents:version-details",
                 args=[self.object.reference_document_version.pk],
             )
             + "#tariff-quotas"
@@ -71,7 +75,7 @@ class PreferentialQuotaOrderNumberCreateView(PermissionRequiredMixin, CreateView
     #     )
 
 
-class PreferentialQuotaOrderNumberDeleteView(PermissionRequiredMixin, UpdateView):
-    template_name = "preferential_quota_order_numbers/delete.jinja"
+class PreferentialQuotaOrderNumberDeleteView(PermissionRequiredMixin, DeleteView):
+    template_name = "reference_documents/preferential_quota_order_numbers/delete.jinja"
     permission_required = "reference_documents.edit_reference_document"
-    model = PreferentialQuota
+    model = PreferentialQuotaOrderNumber

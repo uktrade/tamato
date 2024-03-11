@@ -194,6 +194,7 @@ class ReferenceDocumentVersionContext:
             data[ref_doc_order_number.quota_order_number] = {
                 "data_rows": [],
                 "quota_order_number": tap_quota_order_number,
+                "ref_doc_order_number": ref_doc_order_number,
                 "quota_order_number_text": ref_doc_order_number.quota_order_number,
                 "failure_count": failure_count,
                 "check_count": check_count,

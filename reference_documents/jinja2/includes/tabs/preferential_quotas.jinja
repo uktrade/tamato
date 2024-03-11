@@ -21,10 +21,26 @@
             {% else %}
                 <h2 class="govuk-heading-m" id="subsection-title">Order Number {{ value["quota_order_number_text"] }}</h2>
             {% endif %}
-            {{ govukTable({
-            "head": reference_document_version_quotas_headers,
-            "rows": value['data_rows']
-            }) }}
+            <div class="govuk-body govuk-!-margin-bottom-2">
+                Valid between: {{ value['ref_doc_order_number'].valid_between }}
+                {% if value['ref_doc_order_number'].main_order_number %}
+                    Sub Quota to {{ value['ref_doc_order_number'].main_order_number.quota_order_number }}
+                {% endif %}
+            </div>
+            <div class="govuk-body govuk-!-margin-bottom-2">
+                <a href="{{ url('reference_documents:preferential_quota_order_number_edit', args=[value['ref_doc_order_number'].id]) }}">Edit</a>
+                <a href="{{ url('reference_documents:preferential_quota_order_number_delete', args=[value['ref_doc_order_number'].id]) }}">Delete</a>
+            </div>
+            {% if value['data_rows'] != [] %}
+                {{ govukTable({
+                "head": reference_document_version_quotas_headers,
+                "rows": value['data_rows']
+                }) }}
+            {% else %}
+                <div class="govuk-body govuk-!-margin-bottom-2">
+                    No Quota definitions defined
+                </div>
+            {% endif %}
         {% endfor %}
     </div>
 
