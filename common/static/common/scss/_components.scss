@@ -94,13 +94,16 @@
 .homepage-card {
   box-sizing: border-box;
   border: 1px solid $govuk-border-colour;
-  padding: govuk-spacing(3);
+  padding: govuk-spacing(3) govuk-spacing(3) 0;
   margin: govuk-spacing(3);
-  @media screen and (min-width: 1063px) {
-    width: calc(50% - govuk-spacing(6));
-  }
   width: calc(100% - govuk-spacing(6));
   float: left;
+}
+
+@media screen and (min-width: 1063px) {
+  .homepage-card {
+    width: calc(50% - govuk-spacing(6));
+  }
 }
 
 #homepage-tap-tools {
@@ -117,10 +120,6 @@
 }
 
 #current-workbasket {
-  @media screen and (min-width: 770px) {
-    float: right;
-  }
-
   display: inline-block;
 
   a, form {
@@ -128,10 +127,15 @@
   }
 }
 
+@media screen and (min-width: 770px) {
+  #current-workbasket {
+    float: right;
+  }
+}
+
 #homepage-search-form {
   display: flex;
   flex-flow: row nowrap;
-  align-items: flex-end;
 
   .govuk-input {
     height: 50px;
