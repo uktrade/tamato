@@ -96,3 +96,10 @@ class MeasureSheetRowFactory(factory.Factory):
 class MeasuresBulkCreatorFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "measures.MeasuresBulkCreator"
+
+    current_transaction = factory.SubFactory(factories.TransactionFactory)
+    user = factory.SubFactory(factories.UserFactory)
+    created_at = factory.Faker("date_object")
+    workbasket = factory.SubFactory(factories.WorkBasketFactory)
+    form_data = {}
+    form_kwargs = {}

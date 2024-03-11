@@ -42,6 +42,7 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from common.views import WithPaginationListMixin
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
@@ -60,6 +61,7 @@ from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
 from measures.models import MeasuresBulkCreator
 from measures.models import MeasureType
+from measures.models.bulk_processing import ProcessingState
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
@@ -69,6 +71,7 @@ from regulations.models import Regulation
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
+from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
@@ -1096,6 +1099,119 @@ class MeasuresWizardCreateConfirm(TemplateView):
         context = super().get_context_data(**kwargs)
         context["expected_measures_count"] = self.kwargs.get("expected_measures_count")
         return context
+
+
+class MeasuresCreateProcessQueue(
+    PermissionRequiredMixin,
+    WithPaginationListMixin,
+    ListView,
+):
+    """UI endpoint for bulk creating Measures process queue."""
+
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
+    template_name = "measures/create-process-queue.jinja"
+    filter_by_fields = ["all", "processing", "completed", "failed"]
+    sort_by_fields = [
+        "workbasket_id",
+        "submitted_date",
+        "submitted_by",
+        "status",
+        "object_count",
+        "action",
+    ]
+
+    def get_queryset(self):
+        return MeasuresBulkCreator.objects.filter(
+            workbasket__status=WorkflowStatus.EDITING,
+        ).order_by("-created_at")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        processing_state = self.request.GET.get("processing_state")
+        context["selected_filter"] = "all"
+        if processing_state in [
+            ProcessingState.CURRENTLY_PROCESSING,
+            ProcessingState.AWAITING_PROCESSING,
+        ]:
+            context["selected_filter"] = "processing"
+        elif processing_state == ProcessingState.CANCELLED:
+            context["selected_filter"] = "cancelled"
+        elif processing_state == ProcessingState.FAILED_PROCESSING:
+            context["selected_filter"] = "failed"
+        elif processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
+            context["selected_filter"] = "completed"
+
+        # Provide template access to some UI / view utility functions.
+        context["status_tag_generator"] = self.status_tag_generator
+        context["can_cancel_task"] = self.can_cancel_task
+        context["is_task_failed"] = self.is_task_failed
+
+        # Apply the TAP standard date format within the UI.
+        context["date_format"] = settings.DATE_FORMAT
+
+        return context
+
+    def is_task_failed(self, task: MeasuresBulkCreator) -> bool:
+        """
+        Return True if the task is in a failed state.
+
+        Return False otherwise.
+        """
+
+        return task.processing_state == ProcessingState.FAILED_PROCESSING
+
+    def can_cancel_task(self, task: MeasuresBulkCreator) -> bool:
+        """
+        Return True if a task is in a queued state and the current user is
+        permitted to cancel task.
+
+        Return False otherwise.
+        """
+
+        if (
+            self.request.user.is_superuser
+            and task.processing_state in ProcessingState.queued_states()
+        ):
+            return True
+
+        return False
+
+    def status_tag_generator(self, task: MeasuresBulkCreator) -> dict:
+        """Returns a dict with text and a CSS class for a UI-friendly label for
+        a bulk creation task."""
+
+        if task.processing_state in [
+            ProcessingState.CURRENTLY_PROCESSING,
+            ProcessingState.AWAITING_PROCESSING,
+        ]:
+            return {
+                "text": "Processing",
+                "tag_class": "tamato-badge-light-blue",
+            }
+        elif task.processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
+            return {
+                "text": "Successfully processed",
+                "tag_class": "tamato-badge-light-green",
+            }
+        elif task.processing_state == ProcessingState.FAILED_PROCESSING:
+            return {
+                "text": "Failed",
+                "tag_class": "tamato-badge-light-red",
+            }
+        elif task.processing_state == ProcessingState.CANCELLED:
+            return {
+                "text": "Cancelled",
+                "tag_class": "tamato-badge-light-yellow",
+            }
+        else:
+            return {
+                "text": "",
+                "tag_class": "",
+            }
 
 
 class MeasureUpdateBase(

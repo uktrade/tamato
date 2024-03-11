@@ -38,11 +38,14 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.models.bulk_processing import ProcessingState
+from measures.tests.factories import MeasuresBulkCreatorFactory
 from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
+from measures.views import MeasuresCreateProcessQueue
 from measures.views import MeasureUpdate
 from measures.wizard import MeasureCreateSessionStorage
 from workbaskets.models import WorkBasket
@@ -2715,3 +2718,143 @@ def test_measures_wizard_create_confirm_view(valid_user_client):
     )
 
     assert expected_h1_text in page.find("h1").text
+
+
+def test_measures_create_process_queue_view_renders(
+    valid_user_client,
+    session_request,
+):
+    MeasuresBulkCreatorFactory.create()
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+    with patch("measures.views.MeasuresCreateProcessQueue.paginate_by", 3):
+        url = reverse("measure-create-process-queue")
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+        pagination_nav = page.find("nav", class_="pagination")
+        assert pagination_nav
+        assert "Showing 3 of 5" in pagination_nav.find("div", class_="govuk-body").text
+
+
+def test_measures_create_process_queue_view_status_tag_generator(
+    session_request,
+):
+    awaiting_processing = MeasuresBulkCreatorFactory.create()
+    currently_processing = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    failed_processing = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    cancelled = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
+    processed = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+    view = MeasuresCreateProcessQueue(request=session_request)
+
+    for task in [currently_processing, awaiting_processing]:
+        assert view.status_tag_generator(task)["text"] == "Processing"
+    assert view.status_tag_generator(failed_processing)["text"] == "Failed"
+    assert view.status_tag_generator(cancelled)["text"] == "Cancelled"
+    assert view.status_tag_generator(processed)["text"] == "Successfully processed"
+
+
+def test_measures_create_process_queue_view_task_action_options(
+    valid_user_client,
+):
+    """
+    There are 3 possible Actions for a task:
+    1. Cancel, if a user has permissions and the task has not yet processed.
+    This is tested in test_measures_create_process_queue_cancel_link_renders
+    2. Contact TAP, if a task has failed
+    3. N/A, everything else
+    """
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.AWAITING_PROCESSING,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+
+    url = reverse("measure-create-process-queue")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    assert page.find("span", class_="contact-tap")
+    assert page.find("span", class_="not-applicable")
+
+
+def test_measures_create_process_queue_view_task_is_failed(
+    valid_user_client,
+    session_request_with_workbasket,
+):
+    failed_task = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    view = MeasuresCreateProcessQueue(request=session_request_with_workbasket)
+    url = reverse("measure-create-process-queue")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    assert view.is_task_failed(failed_task)
+
+
+def test_measures_create_process_queue_view_admin_can_cancel_task(session_request):
+    """Tests that an appropriately empowered user can cancel a task, if that
+    task is in Awaiting or Currently Processing States."""
+    super_user = factories.UserFactory(is_superuser=True)
+    awaiting_processing = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.AWAITING_PROCESSING,
+    )
+    currently_processing = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    cancelled = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
+    failed = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    processed = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+    session_request.user = super_user
+    view = MeasuresCreateProcessQueue(
+        request=session_request,
+    )
+
+    for task in [awaiting_processing, currently_processing]:
+        assert view.can_cancel_task(task)
+    for task in [cancelled, failed, processed]:
+        assert not view.can_cancel_task(task)
+
+
+def test_measures_create_process_queue_cancel_link_renders(admin_client):
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.AWAITING_PROCESSING,
+    )
+
+    url = reverse("measure-create-process-queue")
+    response = admin_client.get(url)
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    assert page.find("a", class_="cancel-task")

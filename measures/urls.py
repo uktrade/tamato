@@ -66,6 +66,11 @@ ui_patterns = [
         views.MeasureFootnotesUpdate.as_view(),
         name="measure-ui-edit-footnotes",
     ),
+    path(
+        "process-queue/",
+        views.MeasuresCreateProcessQueue.as_view(),
+        name="measure-create-process-queue",
+    ),
 ]
 
 ajax_patterns = [

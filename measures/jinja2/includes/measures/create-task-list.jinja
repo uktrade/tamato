@@ -1,0 +1,55 @@
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{% set table_rows = [] %}
+
+{% for object in object_list %}
+    {% set workbasket_link -%}
+        <a class="govuk-link" href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}">{{ object.workbasket.pk }}</a>
+    {%- endset %}
+
+    {% set submitted_date -%}
+        {{ object.created_at.strftime('%H:%M') }} {{ object.created_at.strftime(date_format) }}
+    {%- endset %}
+
+    {% set submitted_by -%}
+        {{ object.user }}
+    {%- endset %}
+
+    {% set object_status -%}
+        <span class="{{ status_tag_generator(object).tag_class }}">
+            {{ status_tag_generator(object).text | upper }}
+        </span>
+    {%- endset %}
+
+    {% set action_html -%}
+      {% if can_cancel_task(object) -%}
+          <a href="#TODO" class="govuk-link cancel-task">Cancel</a>
+      {%- elif is_task_failed(object) %}
+          <span class="contact-tap">Contact TAP</span>
+      {%- else %}
+          <span class="not-applicable">N/A</span>
+      {%- endif %}
+    {%- endset %}
+
+    {{ table_rows.append([
+        {"text": workbasket_link},
+        {"text": submitted_date},
+        {"text": submitted_by},
+        {"text": object_status},
+        {"text": "TODO"},
+        {"text": action_html},
+    ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+    "head": [
+        {"text": "Workbasket ID"},
+        {"text": "Submitted date"},
+        {"text": "Submitted by"},
+        {"text": "Status"},
+        {"text": "Object count"},
+        {"text": "Action"},
+    ],
+    "rows": table_rows
+})}}
