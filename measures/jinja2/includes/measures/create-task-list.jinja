@@ -28,7 +28,7 @@
       {% elif can_cancel_task(object) -%}
           <a
             href="{{ url("cancel-bulk-processor-task", kwargs={"pk": object.pk}) }}"
-            class="govuk-link"
+            class="govuk-link cancel-task"
           >Cancel</a>
       {%- else %}
           <span class="not-applicable">N/A</span>
