@@ -2771,7 +2771,7 @@ def test_measures_create_process_queue_view_status_tag_generator(
         assert view.status_tag_generator(task)["text"] == "Processing"
     assert view.status_tag_generator(failed_processing)["text"] == "Failed"
     assert view.status_tag_generator(cancelled)["text"] == "Cancelled"
-    assert view.status_tag_generator(processed)["text"] == "Successfully processed"
+    assert view.status_tag_generator(processed)["text"] == "Completed"
 
 
 def test_measures_create_process_queue_view_task_action_options(
