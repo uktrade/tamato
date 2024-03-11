@@ -1903,3 +1903,32 @@ class MeasureGeographicalAreaExclusionsFormSet(FormSet):
     `MeasureEditWizard`."""
 
     form = MeasureGeographicalAreaExclusionsForm
+
+
+class CancelBulkProcessorTaskForm(forms.Form):
+    """Confirm canceling a bulk processor task."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        cancel_url = reverse("measure-create-process-queue")
+
+        self.helper = FormHelper(self)
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Div(
+                Submit(
+                    "submit",
+                    "Cancel Process",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                    css_class="govuk-button govuk-button--warning",
+                ),
+                HTML(
+                    f'<a href="{cancel_url}" role="button" draggable="false" '
+                    f'class="govuk-button govuk-button--secondary" '
+                    f'data-module="govuk-button">Cancel</a>',
+                ),
+                css_class="govuk-button-group",
+            ),
+        )

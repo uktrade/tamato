@@ -1,0 +1,37 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+
+{% set page_title = "Cancel process done" %}
+
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+      request,
+      [
+        {"text": "Measures process queue", "href": url("measure-create-process-queue")},
+        {"text": page_title},
+      ],
+      with_workbasket=False,
+  ) }}
+{% endblock %}
+
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        "titleText": "Cancel Process",
+        "text": "Your request to cancel the process has been sent",
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+
+      <a
+        href="{{ url('measure-create-process-queue') }}"
+        class="govuk-button govuk-button--primary"
+    >Continue to process queue</a>
+    </div>
+  </div>
+{% endblock %}

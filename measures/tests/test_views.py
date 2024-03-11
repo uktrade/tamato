@@ -38,7 +38,8 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
-from measures.models.bulk_processing import ProcessingState
+from measures.models import MeasuresBulkCreator
+from measures.models import ProcessingState
 from measures.tests.factories import MeasuresBulkCreatorFactory
 from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
@@ -2858,3 +2859,103 @@ def test_measures_create_process_queue_cancel_link_renders(admin_client):
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     assert page.find("a", class_="cancel-task")
+
+
+def test_cancel_bulk_processor_task_insufficient_permission(valid_user_client):
+    """Test that users without superuser setting have no access to the cancel
+    view."""
+
+    measures_bulk_creator = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    url = reverse(
+        "cancel-bulk-processor-task",
+        kwargs={
+            "pk": measures_bulk_creator.pk,
+        },
+    )
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 403
+
+    response = valid_user_client.post(url, {})
+
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize(
+    "processing_state",
+    [
+        *ProcessingState.done_processing_states(),
+    ],
+)
+def test_cancel_bulk_processor_completed_task(processing_state, superuser_client):
+    """
+    Test that cancelling a done task has no side-effect on the
+    MeasuresBulkCreator instance.
+
+    This ensures that even when a task transitions from a queued state to a
+    completed state while the user is accessing the cancel view (i.e. the view
+    has become stale), that there is no bad side effect.
+    """
+
+    measures_bulk_creator = MeasuresBulkCreatorFactory.create(
+        processing_state=processing_state,
+    )
+    url = reverse(
+        "cancel-bulk-processor-task",
+        kwargs={
+            "pk": measures_bulk_creator.pk,
+        },
+    )
+    response = superuser_client.post(url, {})
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "cancel-bulk-processor-task-done",
+        kwargs={"pk": measures_bulk_creator.pk},
+    )
+    # MeasuresBulkCreator.processing_state restrictions prevent use of
+    # Model.refresh_from_db(), so a fresh Model.get() is required.
+    updated_measures_bulk_creator = MeasuresBulkCreator.objects.get(
+        pk=measures_bulk_creator.pk,
+    )
+    assert updated_measures_bulk_creator.processing_state == processing_state
+
+
+@pytest.mark.parametrize(
+    "processing_state",
+    [
+        *ProcessingState.queued_states(),
+    ],
+)
+def test_cancel_bulk_processor_task(processing_state, superuser_client):
+    """Test that a user with necessary permissions, cancelling a task in one of
+    the queued states, can perform task cancellation."""
+
+    measures_bulk_creator = MeasuresBulkCreatorFactory.create(
+        processing_state=processing_state,
+    )
+    url = reverse(
+        "cancel-bulk-processor-task",
+        kwargs={
+            "pk": measures_bulk_creator.pk,
+        },
+    )
+    response = superuser_client.get(url)
+
+    assert response.status_code == 200
+
+    response = superuser_client.post(url, {})
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "cancel-bulk-processor-task-done",
+        kwargs={"pk": measures_bulk_creator.pk},
+    )
+    # MeasuresBulkCreator.processing_state restrictions prevent use of
+    # Model.refresh_from_db(), so a fresh Model.get() is required.
+    updated_measures_bulk_creator = MeasuresBulkCreator.objects.get(
+        pk=measures_bulk_creator.pk,
+    )
+    assert updated_measures_bulk_creator.processing_state == ProcessingState.CANCELLED

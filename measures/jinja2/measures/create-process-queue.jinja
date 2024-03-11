@@ -7,6 +7,17 @@
 {% set list_include = "includes/measures/create-task-list.jinja"%}
 
 {% set page_title = "Measures process queue" %}
+
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+      request,
+      [ {"text": page_title} ],
+      with_workbasket=False,
+  ) }}
+{% endblock %}
+
+
 {% set filter_links_list = [
   {
     "text": "All",

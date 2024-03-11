@@ -71,6 +71,16 @@ ui_patterns = [
         views.MeasuresCreateProcessQueue.as_view(),
         name="measure-create-process-queue",
     ),
+    path(
+        "cancel-bulk-processor-task/<int:pk>/",
+        views.CancelBulkProcessorTask.as_view(),
+        name="cancel-bulk-processor-task",
+    ),
+    path(
+        "cancel-bulk-processor-task/<int:pk>/done/",
+        views.CancelBulkProcessorTaskDone.as_view(),
+        name="cancel-bulk-processor-task-done",
+    ),
 ]
 
 ajax_patterns = [

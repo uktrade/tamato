@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 from crispy_forms.helper import FormHelper
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -21,6 +22,8 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic.base import TemplateView
+from django.views.generic.detail import DetailView
+from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
@@ -1151,7 +1154,7 @@ class MeasuresCreateProcessQueue(
         context["is_task_failed"] = self.is_task_failed
 
         # Apply the TAP standard date format within the UI.
-        context["date_format"] = settings.DATE_FORMAT
+        context["datetime_format"] = settings.DATETIME_FORMAT
 
         return context
 
@@ -1194,7 +1197,7 @@ class MeasuresCreateProcessQueue(
             }
         elif task.processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
             return {
-                "text": "Successfully processed",
+                "text": "Completed",
                 "tag_class": "tamato-badge-light-green",
             }
         elif task.processing_state == ProcessingState.FAILED_PROCESSING:
@@ -1504,3 +1507,60 @@ class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):
         selected_objects = {k: v for k, v in cleaned_data.items() if v == 1}
         self.session_store.add_items(selected_objects)
         return JsonResponse(self.session_store.data)
+
+
+class CancelBulkProcessorTask(
+    UserPassesTestMixin,
+    SingleObjectMixin,
+    FormView,
+):
+    """Attempt cancelling a bulk processor task."""
+
+    permission_required = "measures.edit_bulkprocessor"
+    model = MeasuresBulkCreator
+    template_name = "measures/cancel-bulk-processor-task.jinja"
+    form_class = forms.CancelBulkProcessorTaskForm
+
+    def test_func(self) -> bool:
+        """Method override used by UserPassesTestMixin to ensure this view's
+        cancel behaviour is only available to superusers."""
+
+        return self.request.user.is_superuser
+
+    def dispatch(self, request, *args, **kwargs) -> HttpResponse:
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse(
+            "cancel-bulk-processor-task-done",
+            kwargs={"pk": self.object.pk},
+        )
+
+    def get_context_data(self, **kwargs) -> Dict:
+        context = super().get_context_data(**kwargs)
+
+        context["object"] = self.object
+        context["datetime_format"] = settings.DATETIME_FORMAT
+
+        return context
+
+    def form_valid(self, form):
+        self.object.cancel_task()
+        return redirect(self.get_success_url())
+
+
+class CancelBulkProcessorTaskDone(
+    UserPassesTestMixin,
+    DetailView,
+):
+    """Confirm attempt to cancel a bulk processor task."""
+
+    model = MeasuresBulkCreator
+    template_name = "measures/cancel-bulk-processor-task-done.jinja"
+
+    def test_func(self) -> bool:
+        """Method override used by UserPassesTestMixin to ensure this view's
+        cancel behaviour is only available to superusers."""
+
+        return self.request.user.is_superuser

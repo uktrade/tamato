@@ -384,9 +384,12 @@ USE_I18N = False
 # Enable localized formatting of numbers and dates
 USE_L10N = False
 
-# Use a consistent TAP date format throughout.
+# Use consistent TAP date and time formats throughout.
 DATE_FORMAT = "%d %b %Y"
-DATE_FORMAT_SHORT = "%d-%m-%Y"
+SHORT_DATE_FORMAT = "%d-%m-%Y"
+TIME_FORMAT = "%H:%M"
+DATETIME_FORMAT = TIME_FORMAT + " " + DATE_FORMAT
+SHORT_DATETIME_FORMAT = TIME_FORMAT + " " + SHORT_DATE_FORMAT
 
 # Language code - ignored unless USE_I18N is True
 LANGUAGE_CODE = "en-gb"

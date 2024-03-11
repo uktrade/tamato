@@ -9,7 +9,7 @@
     {%- endset %}
 
     {% set submitted_date -%}
-        {{ object.created_at.strftime('%H:%M') }} {{ object.created_at.strftime(date_format) }}
+        {{ object.created_at.strftime(datetime_format) }}
     {%- endset %}
 
     {% set submitted_by -%}
@@ -23,10 +23,13 @@
     {%- endset %}
 
     {% set action_html -%}
-      {% if can_cancel_task(object) -%}
-          <a href="#TODO" class="govuk-link cancel-task">Cancel</a>
-      {%- elif is_task_failed(object) %}
-          <span class="contact-tap">Contact TAP</span>
+      {%- if is_task_failed(object) %}
+          Contact TAP
+      {% elif can_cancel_task(object) -%}
+          <a
+            href="{{ url("cancel-bulk-processor-task", kwargs={"pk": object.pk}) }}"
+            class="govuk-link"
+          >Cancel</a>
       {%- else %}
           <span class="not-applicable">N/A</span>
       {%- endif %}
