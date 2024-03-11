@@ -103,8 +103,10 @@ class PreferentialQuotaCreateUpdateForm(
 
 
 class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
-    commodity_code = forms.CharField(
-        validators=[commodity_code_validator],
+    commodity_codes = forms.CharField(
+        label="Commodity codes",
+        widget=forms.Textarea,
+        # validators=[commodity_code_validator],
         error_messages={
             "invalid": "Commodity code should be 10 digits",
             "required": "Commodity code is required",
@@ -160,8 +162,7 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
         self.helper.layout = Layout(
             "preferential_quota_order_number",
             Field.text(
-                "commodity_code",
-                field_width=Fixed.TEN,
+                "commodity_codes",
             ),
             Field.text(
                 "quota_duty_rate",
@@ -185,11 +186,22 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
             ),
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        commodity_codes = cleaned_data.get("commodity_codes").splitlines()
+        for commodity_code in commodity_codes:
+            try:
+                commodity_code_validator(commodity_code)
+            except ValidationError:
+                self.add_error(
+                    "commodity_codes",
+                    "Ensure all commodity codes are 10 digits and each on a new line",
+                )
+
     class Meta:
         model = PreferentialQuota
         fields = [
             "preferential_quota_order_number",
-            "commodity_code",
             "quota_duty_rate",
             "volume",
             "measurement",
