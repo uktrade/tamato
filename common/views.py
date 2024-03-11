@@ -19,6 +19,7 @@ from django.db import OperationalError
 from django.db import connection
 from django.db import transaction
 from django.db.models import Model
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
@@ -67,25 +68,28 @@ class HomeView(LoginRequiredMixin, FormView):
             UserAssignment.objects.filter(user=self.request.user)
             .assigned()
             .select_related("task__workbasket")
+            .filter(
+                Q(task__workbasket__status=WorkflowStatus.EDITING)
+                | Q(task__workbasket__status=WorkflowStatus.ERRORED),
+            )
         )
         assigned_workbaskets = []
         for assignment in assignments:
             workbasket = assignment.task.workbasket
-            if workbasket.status == WorkflowStatus.EDITING:
-                assignment_type = (
-                    "Assigned"
-                    if assignment.assignment_type
-                    == UserAssignment.AssignmentType.WORKBASKET_WORKER
-                    else "Reviewing"
-                )
-                rule_violations_count = workbasket.tracked_model_check_errors.count()
-                assigned_workbaskets.append(
-                    {
-                        "id": workbasket.id,
-                        "rule_violations_count": rule_violations_count,
-                        "assignment_type": assignment_type,
-                    },
-                )
+            assignment_type = (
+                "Assigned"
+                if assignment.assignment_type
+                == UserAssignment.AssignmentType.WORKBASKET_WORKER
+                else "Reviewing"
+            )
+            rule_violations_count = workbasket.tracked_model_check_errors.count()
+            assigned_workbaskets.append(
+                {
+                    "id": workbasket.id,
+                    "rule_violations_count": rule_violations_count,
+                    "assignment_type": assignment_type,
+                },
+            )
 
         context.update(
             {

@@ -13,6 +13,7 @@ from common.views import HealthCheckResponse
 from common.views import handler403
 from common.views import handler500
 from tasks.models import UserAssignment
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -221,8 +222,15 @@ def test_homepage_cards_contain_expected_links(superuser_client):
         assert reverse(url) in links
 
 
-def test_homepage_card_currently_working_on(valid_user, valid_user_client):
-    workbasket = factories.WorkBasketFactory.create()
+@pytest.mark.parametrize(
+    ("status"),
+    [
+        (WorkflowStatus.EDITING),
+        (WorkflowStatus.ERRORED),
+    ],
+)
+def test_homepage_card_currently_working_on(status, valid_user, valid_user_client):
+    workbasket = factories.WorkBasketFactory.create(status=status)
     review_assignment = factories.UserAssignmentFactory.create(
         user=valid_user,
         assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
