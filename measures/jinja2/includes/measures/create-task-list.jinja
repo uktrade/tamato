@@ -5,7 +5,7 @@
 
 {% for object in object_list %}
     {% set workbasket_link -%}
-        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}">{{ object.workbasket.pk }}</a>
+        <a class="govuk-link" href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}">{{ object.workbasket.pk }}</a>
     {%- endset %}
 
     {% set submitted_date -%}

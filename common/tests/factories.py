@@ -1246,18 +1246,6 @@ class FootnoteAssociationMeasureFactory(TrackedModelMixin):
     associated_footnote = subfactory(FootnoteFactory)
 
 
-class MeasuresBulkCreatorFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = "measures.MeasuresBulkCreator"
-
-    current_transaction = factory.SubFactory(TransactionFactory)
-    user = factory.SubFactory(UserFactory)
-    created_at = factory.Faker("date_object")
-    workbasket = factory.SubFactory(WorkBasketFactory)
-    form_data = {}
-    form_kwargs = {}
-
-
 class EnvelopeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "taric.Envelope"

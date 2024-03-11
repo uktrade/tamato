@@ -39,6 +39,7 @@ from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
 from measures.models.bulk_processing import ProcessingState
+from measures.tests.factories import MeasuresBulkCreatorFactory
 from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
@@ -2723,17 +2724,17 @@ def test_measures_create_process_queue_view_renders(
     valid_user_client,
     session_request,
 ):
-    factories.MeasuresBulkCreatorFactory.create()
-    factories.MeasuresBulkCreatorFactory.create(
+    MeasuresBulkCreatorFactory.create()
+    MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.CURRENTLY_PROCESSING,
     )
-    factories.MeasuresBulkCreatorFactory.create(
+    MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.FAILED_PROCESSING,
     )
-    factories.MeasuresBulkCreatorFactory.create(
+    MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.CANCELLED,
     )
-    factories.MeasuresBulkCreatorFactory.create(
+    MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
     )
     with patch("measures.views.MeasuresCreateProcessQueue.paginate_by", 3):
@@ -2750,17 +2751,17 @@ def test_measures_create_process_queue_view_renders(
 def test_measures_create_process_queue_view_status_tag_generator(
     session_request,
 ):
-    awaiting_processing = factories.MeasuresBulkCreatorFactory.create()
-    currently_processing = factories.MeasuresBulkCreatorFactory.create(
+    awaiting_processing = MeasuresBulkCreatorFactory.create()
+    currently_processing = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.CURRENTLY_PROCESSING,
     )
-    failed_processing = factories.MeasuresBulkCreatorFactory.create(
+    failed_processing = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.FAILED_PROCESSING,
     )
-    cancelled = factories.MeasuresBulkCreatorFactory.create(
+    cancelled = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.CANCELLED,
     )
-    processed = factories.MeasuresBulkCreatorFactory.create(
+    processed = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
     )
     view = MeasuresCreateProcessQueue(request=session_request)
@@ -2782,13 +2783,13 @@ def test_measures_create_process_queue_view_task_action_options(
     2. Contact TAP, if a task has failed
     3. N/A, everything else
     """
-    factories.MeasuresBulkCreatorFactory.create(
+    MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.FAILED_PROCESSING,
     )
-    factories.MeasuresBulkCreatorFactory.create(
+    MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.AWAITING_PROCESSING,
     )
-    factories.MeasuresBulkCreatorFactory.create(
+    MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
     )
 
@@ -2806,7 +2807,7 @@ def test_measures_create_process_queue_view_task_is_failed(
     valid_user_client,
     session_request_with_workbasket,
 ):
-    failed_task = factories.MeasuresBulkCreatorFactory.create(
+    failed_task = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.FAILED_PROCESSING,
     )
     view = MeasuresCreateProcessQueue(request=session_request_with_workbasket)
@@ -2821,19 +2822,19 @@ def test_measures_create_process_queue_view_admin_can_cancel_task(session_reques
     """Tests that an appropriately empowered user can cancel a task, if that
     task is in Awaiting or Currently Processing States."""
     super_user = factories.UserFactory(is_superuser=True)
-    awaiting_processing = factories.MeasuresBulkCreatorFactory.create(
+    awaiting_processing = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.AWAITING_PROCESSING,
     )
-    currently_processing = factories.MeasuresBulkCreatorFactory.create(
+    currently_processing = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.CURRENTLY_PROCESSING,
     )
-    cancelled = factories.MeasuresBulkCreatorFactory.create(
+    cancelled = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.CANCELLED,
     )
-    failed = factories.MeasuresBulkCreatorFactory.create(
+    failed = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.FAILED_PROCESSING,
     )
-    processed = factories.MeasuresBulkCreatorFactory.create(
+    processed = MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
     )
     session_request.user = super_user
@@ -2848,7 +2849,7 @@ def test_measures_create_process_queue_view_admin_can_cancel_task(session_reques
 
 
 def test_measures_create_process_queue_cancel_link_renders(admin_client):
-    factories.MeasuresBulkCreatorFactory.create(
+    MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.AWAITING_PROCESSING,
     )
 
