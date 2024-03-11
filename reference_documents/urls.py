@@ -17,6 +17,9 @@ from reference_documents.views.preferential_quota_order_number_views import (
     PreferentialQuotaOrderNumberEditView,
 )
 from reference_documents.views.preferential_quota_views import (
+    PreferentialQuotaBulkCreateView,
+)
+from reference_documents.views.preferential_quota_views import (
     PreferentialQuotaCreateView,
 )
 from reference_documents.views.preferential_quota_views import (
@@ -182,6 +185,11 @@ urlpatterns = [
         "preferential_quota_order_numbers/<pk>/create_preferential_quotas/",
         PreferentialQuotaCreateView.as_view(),
         name="preferential_quotas_create",
+    ),
+    path(
+        "reference_document_versions/<pk>/bulk_create_preferential_quotas/",
+        PreferentialQuotaBulkCreateView.as_view(),
+        name="preferential_quotas_bulk_create",
     ),
     # Preferential Rates
     path(
