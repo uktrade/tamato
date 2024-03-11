@@ -24,7 +24,7 @@
 
     {% set action_html -%}
       {%- if is_task_failed(object) %}
-          Contact TAP
+          <span class="contact-tap">Contact TAP</span>
       {% elif can_cancel_task(object) -%}
           <a
             href="{{ url("cancel-bulk-processor-task", kwargs={"pk": object.pk}) }}"
