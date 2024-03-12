@@ -18,4 +18,12 @@
   {% call django_form() %}
     {{ crispy(form) }}
   {% endcall %}
+
+  {{ govukButton({
+      "text": "Add new",
+      "attributes": {"id": "add-new"},
+      "classes": "govuk-button--secondary",
+      "value": "1",
+      "name": form.prefix ~ "-ADD",
+    }) }}
 {% endblock %}

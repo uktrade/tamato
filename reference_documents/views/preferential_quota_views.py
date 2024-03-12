@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -5,6 +7,7 @@ from django.views.generic import CreateView
 from django.views.generic import FormView
 from django.views.generic import UpdateView
 
+from common.util import TaricDateRange
 from reference_documents.forms.preferential_quota_forms import (
     PreferentialQuotaBulkCreate,
 )
@@ -73,7 +76,7 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
 class PreferentialQuotaBulkCreateView(PermissionRequiredMixin, FormView):
     template_name = "reference_documents/preferential_quotas/bulk_create.jinja"
     permission_required = "reference_documents.add_preferentialquota"
-    model = PreferentialQuota
+    # model = PreferentialQuota
     form_class = PreferentialQuotaBulkCreate
     queryset = ReferenceDocumentVersion.objects.all()
 
@@ -95,27 +98,47 @@ class PreferentialQuotaBulkCreateView(PermissionRequiredMixin, FormView):
         )
         return context_data
 
+    @staticmethod
+    def get_validity_and_volume_data(data):
+        entries = []
+        for entry in range(len(data.getlist("volume"))):
+            start_date = date(
+                day=int(data.getlist("start_date_0")[entry]),
+                month=int(data.getlist("start_date_1")[entry]),
+                year=int(data.getlist("start_date_2")[entry]),
+            )
+            end_date = date(
+                day=int(data.getlist("end_date_0")[entry]),
+                month=int(data.getlist("end_date_1")[entry]),
+                year=int(data.getlist("end_date_2")[entry]),
+            )
+            valid_between = TaricDateRange(start_date, end_date)
+            volume = data.getlist("volume")[entry]
+            entries.append({f"valid_between": valid_between, f"volume": volume})
+        return entries
+
     def form_valid(self, form):
+        dates_and_volumes = self.get_validity_and_volume_data(form.data)
         commodity_codes = form.cleaned_data["commodity_codes"].splitlines()
         self.reference_document_version = ReferenceDocumentVersion.objects.all().get(
             pk=self.kwargs["pk"],
         )
         for commodity_code in commodity_codes:
-            instance = form.save(commit=False)
-            instance.order = (
-                len(self.reference_document_version.preferential_quotas()) + 1
-            )
-            instance.commodity_code = commodity_code
-            instance = PreferentialQuota(
-                commodity_code=instance.commodity_code,
-                quota_duty_rate=instance.quota_duty_rate,
-                volume=instance.volume,
-                valid_between=instance.valid_between,
-                measurement=instance.measurement,
-                order=instance.order,
-                preferential_quota_order_number=instance.preferential_quota_order_number,
-            )
-            instance.save()
+            for entry in dates_and_volumes:
+                instance = form.save(commit=False)
+                instance.order = (
+                    len(self.reference_document_version.preferential_quotas()) + 1
+                )
+                instance = PreferentialQuota(
+                    commodity_code=commodity_code,
+                    quota_duty_rate=instance.quota_duty_rate,
+                    volume=entry["volume"],
+                    valid_between=entry["valid_between"],
+                    measurement=instance.measurement,
+                    order=instance.order,
+                    preferential_quota_order_number=instance.preferential_quota_order_number,
+                )
+                instance.save()
         return redirect(self.get_success_url())
 
     def get_success_url(self):

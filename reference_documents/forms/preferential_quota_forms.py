@@ -1,5 +1,7 @@
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Fixed
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
@@ -136,6 +138,7 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
             "invalid": "Volume invalid",
             "required": "Volume is required",
         },
+        help_text="<br>",
     )
 
     measurement = forms.CharField(
@@ -156,6 +159,7 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
         self.fields[
             "preferential_quota_order_number"
         ].label_from_instance = lambda obj: f"{obj.quota_order_number}"
+        self.fields["end_date"].help_text = ""
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -169,15 +173,24 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
                 field_width=Fixed.TEN,
             ),
             Field.text(
-                "volume",
-                field_width=Fixed.TEN,
-            ),
-            Field.text(
                 "measurement",
                 field_width=Fixed.TEN,
             ),
-            "start_date",
-            "end_date",
+            Fieldset(
+                Div(
+                    Field("start_date"),
+                ),
+                Div(
+                    Field("end_date"),
+                ),
+                Div(
+                    Field(
+                        "volume",
+                        field_width=Fixed.TEN,
+                    ),
+                ),
+                style="display: grid; grid-template-columns: 2fr 2fr 1fr",
+            ),
             Submit(
                 "submit",
                 "Save",
@@ -203,7 +216,5 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
         fields = [
             "preferential_quota_order_number",
             "quota_duty_rate",
-            "volume",
             "measurement",
-            "valid_between",
         ]
