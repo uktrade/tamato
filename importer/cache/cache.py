@@ -8,14 +8,14 @@ class ObjectCacheFacade(BaseEngine):
     """
     Stores objects in a cache to be fetched for later use.
 
-    To avoid committing to a specific medium of storage this facade is being implemented
-    to provide a neutral interface for getting, putting and popping object data into and
-    out of storage. The only requirement is a unique hashable key for which to fetch the
-    data with.
+    To avoid committing to a specific medium of storage this facade is being
+    implemented to provide a neutral interface for getting, putting and popping
+    object data into and out of storage. The only requirement is a unique
+    hashable key for which to fetch the data with.
 
-    Currently the implementation relies simply on a process level mutable dictionary.
-    However in future this may be updated to use something more persistent such as
-    Redis or similar.
+    Currently the implementation relies simply on a process level mutable
+    dictionary. However in future this may be updated to use something more
+    persistent such as Redis or similar.
     """
 
     DEFAULT_ENGINE = "importer.cache.memory.MemoryCacheEngine"

@@ -195,7 +195,11 @@ class TrackedModelQuerySet(
         return self.order_by("transaction__partition", "transaction__order")
 
     def _get_current_related_lookups(
-        self, model, *lookups, prefix="", recurse_level=0
+        self,
+        model,
+        *lookups,
+        prefix="",
+        recurse_level=0,
     ) -> List[str]:
         """
         Build a list of lookups for the current versions of related objects.
@@ -241,10 +245,14 @@ class TrackedModelQuerySet(
         run multiple queries for every current relation.
         """
         related_lookups = self._get_current_related_lookups(
-            self.model, *lookups, recurse_level=recurse_level
+            self.model,
+            *lookups,
+            recurse_level=recurse_level,
         )
         return self.select_related(
-            "version_group", "version_group__current_version", *related_lookups
+            "version_group",
+            "version_group__current_version",
+            *related_lookups,
         )
 
     def with_transactions_and_models(self) -> TrackedModelQuerySet:

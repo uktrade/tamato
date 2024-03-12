@@ -147,7 +147,7 @@ class DescribedMixin:
         }
 
         query = descriptions_model.objects.filter(**filter_kwargs).order_by(
-            *descriptions_model._meta.ordering
+            *descriptions_model._meta.ordering,
         )
 
         return query.current()

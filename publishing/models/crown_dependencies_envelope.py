@@ -30,7 +30,9 @@ class ApiEnvelopeInvalidWorkBasketStatus(Exception):
 class CrownDependenciesEnvelopeManager(Manager):
     @atomic
     def create(
-        self, packaged_work_basket: PackagedWorkBasket, **kwargs
+        self,
+        packaged_work_basket: PackagedWorkBasket,
+        **kwargs,
     ) -> "CrownDependenciesEnvelope":
         """
         Create a new instance, from the packaged workbasket successfully

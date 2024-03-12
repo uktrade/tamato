@@ -1,6 +1,8 @@
-import pytest
 import datetime
+
+import pytest
 from dateutil.relativedelta import relativedelta
+
 from common.tests import factories
 from common.util import TaricDateRange
 from reports.reports.expiring_quotas_with_no_definition_period import Report
@@ -33,7 +35,7 @@ class TestQuotasExpiringSoonReport:
         )
 
         result = report.find_quotas_without_future_definition(
-            [expiring_quota_definition]
+            [expiring_quota_definition],
         )
 
         assert expiring_quota_definition in result
@@ -48,11 +50,11 @@ class TestQuotasExpiringSoonReport:
             ),
         )
         blocking = factories.QuotaBlockingFactory.create(
-            quota_definition=expiring_quota_definition
+            quota_definition=expiring_quota_definition,
         )
 
         result = report.find_quota_blocking_without_future_definition(
-            [expiring_quota_definition]
+            [expiring_quota_definition],
         )
 
         assert expiring_quota_definition in result
@@ -68,11 +70,11 @@ class TestQuotasExpiringSoonReport:
             ),
         )
         suspension = factories.QuotaSuspensionFactory.create(
-            quota_definition=expiring_quota_definition
+            quota_definition=expiring_quota_definition,
         )
 
         result = report.find_quota_suspension_without_future_definition(
-            [expiring_quota_definition]
+            [expiring_quota_definition],
         )
 
         assert expiring_quota_definition in result

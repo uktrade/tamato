@@ -1,4 +1,4 @@
-# Production static resource building 
+# Production static resource building
 # Currently moved to makefile for development
 
 # FROM node:lts-buster-slim AS jsdeps
@@ -20,7 +20,7 @@ ARG ENV="prod"
 ENV ENV="${ENV}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1\
-    PATH="${PATH}:/home/tamato/.local/bin" 
+    PATH="${PATH}:/home/tamato/.local/bin"
 
 # don't run as root
 RUN groupadd -g 1000 tamato && \

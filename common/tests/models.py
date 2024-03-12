@@ -91,11 +91,15 @@ def model_with_history(factory, date_ranges, **kwargs):
         """
 
         all_models = generate_model_history(
-            factory, valid_between=date_ranges.earlier, **kwargs
+            factory,
+            valid_between=date_ranges.earlier,
+            **kwargs,
         )
 
         active_model = factory.create(
-            valid_between=date_ranges.current, update_type=UpdateType.UPDATE, **kwargs
+            valid_between=date_ranges.current,
+            update_type=UpdateType.UPDATE,
+            **kwargs,
         )
 
         all_models.append(active_model)
