@@ -11,6 +11,7 @@ from reference_documents.forms.preferential_quota_forms import (
     PreferentialQuotaCreateUpdateForm,
 )
 from reference_documents.models import PreferentialQuota
+from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.models import ReferenceDocumentVersion
 
 
@@ -19,6 +20,13 @@ class PreferentialQuotaEditView(PermissionRequiredMixin, UpdateView):
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuota
     form_class = PreferentialQuotaCreateUpdateForm
+
+    def get_form_kwargs(self):
+        kwargs = super(PreferentialQuotaEditView, self).get_form_kwargs()
+        kwargs["reference_document_version"] = PreferentialQuotaOrderNumber.objects.get(
+            id=self.kwargs["pk"],
+        ).reference_document_version
+        return kwargs
 
     def post(self, request, *args, **kwargs):
         quota = self.get_object()
@@ -38,6 +46,13 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
     model = PreferentialQuota
     form_class = PreferentialQuotaCreateUpdateForm
 
+    def get_form_kwargs(self):
+        kwargs = super(PreferentialQuotaCreateView, self).get_form_kwargs()
+        kwargs["reference_document_version"] = ReferenceDocumentVersion.objects.get(
+            id=self.kwargs["pk"],
+        )
+        return kwargs
+
     def form_valid(self, form):
         instance = form.instance
         reference_document_version = ReferenceDocumentVersion.objects.get(
@@ -56,17 +71,6 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
             )
             + "#tariff-quotas"
         )
-
-    # def post(self, request, *args, **kwargs):
-    #     quota = self.get_object()
-    #     quota.save()
-    #     return redirect(
-    #         reverse(
-    #             "reference_documents:version_details",
-    #             args=[quota.reference_document_version.pk],
-    #         )
-    #         + "#tariff-quotas",
-    #     )
 
 
 class PreferentialQuotaBulkCreateView(PermissionRequiredMixin, CreateView):
