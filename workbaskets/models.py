@@ -504,8 +504,8 @@ class WorkBasket(TimestampedMixin):
         """WorkBasket is ready to be worked on again after being rejected by
         CDS."""
 
-    def assign_to_user(self, user) -> None:
-        """Assigns this instance as `user`'s current workbasket."""
+    def set_as_current(self, user) -> None:
+        """Set as the user's current workbasket."""
         user.current_workbasket = self
         user.save()
 
