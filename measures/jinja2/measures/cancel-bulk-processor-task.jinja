@@ -1,0 +1,58 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+
+
+{% set page_title = "Cancel process" %}
+
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+      request,
+      [
+        {"text": "Measures process queue", "href": url("measure-create-process-queue")},
+        {"text": page_title},
+      ],
+      with_workbasket=False,
+  ) }}
+{% endblock %}
+
+
+{% block form %}
+  {{ govukTable({
+    "caption": "Process details",
+    "firstCellIsHeader": True,
+    "rows": [
+      [
+        {"text": "Workbasket ID"},
+        {"text": object.workbasket.pk},
+      ],
+      [
+        {"text": "Submitted date"},
+        {"text": object.created_at.strftime(datetime_format)},
+      ],
+      [
+        {"text": "Submitted by"},
+        {"text": object.user or "Unknown"},
+      ],
+      [
+        {"text": "Expected objects count"},
+        {"text": object.expected_measures_count},
+      ],
+    ]
+  }) }}
+
+  <p class="govuk-body">Process cancellation is not guarenteed because of the dynamic nature of processes.</p>
+
+  <p class="govuk-body">Are you sure you want to try cancelling this process?</p>
+
+  {{ govukWarningText({
+    "text": "Cancelled processes can not be restarted.",
+    "iconFallbackText": "Warning"
+  }) }}
+
+  {%- call django_form() %}
+    {{ crispy(form) }}
+  {%- endcall %}
+{% endblock %}

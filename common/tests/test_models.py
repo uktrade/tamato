@@ -18,6 +18,7 @@ from common.tests import factories
 from common.tests import models
 from common.tests.factories import EnvelopeFactory
 from common.tests.factories import TestModel1Factory
+from common.tests.factories import UserFactory
 from common.tests.models import TestModel1
 from common.tests.models import TestModel2
 from common.tests.models import TestModel3
@@ -842,3 +843,25 @@ def test_next_envelope_id_overflow():
 
         with pytest.raises(ValueError):
             Envelope.next_envelope_id()
+
+
+def test_user_get_displayname():
+    """Test that User.get_displayname() returns the right results given
+    different levels of user account data."""
+
+    user = UserFactory.create(
+        first_name="",
+        last_name="",
+        email="",
+    )
+    assert user.get_displayname() == str(user)
+
+    user.email = "tester@test.com"
+
+    assert user.get_displayname() == user.email
+
+    user.first_name = "tester"
+    user.last_name = "person"
+
+    assert user.get_displayname().startswith(user.first_name)
+    assert user.get_displayname().endswith(user.last_name)
