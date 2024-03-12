@@ -1862,6 +1862,31 @@ def test_workbasket_delete_previously_queued_workbasket(
     assert workbasket.status == WorkflowStatus.ARCHIVED
 
 
+def test_workbasket_delete_archives_assigned_workbasket(valid_user, valid_user_client):
+    """Test that an assigned workbasket (or workbasket with an associated task)
+    transitions to ARCHIVED status when a user attempts to delete it."""
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="delete_workbasket"),
+    )
+    workbasket = factories.AssignedWorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket.pk},
+    )
+    response = valid_user_client.post(url)
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "workbaskets:workbasket-ui-delete-done",
+        kwargs={"deleted_pk": workbasket.pk},
+    )
+
+    workbasket.refresh_from_db()
+    assert workbasket.status == WorkflowStatus.ARCHIVED
+
+
 def test_workbasket_compare_200(valid_user_client, user_workbasket):
     url = reverse("workbaskets:workbasket-check-ui-compare")
     response = valid_user_client.get(url)
