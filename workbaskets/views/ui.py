@@ -1087,13 +1087,13 @@ class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
 
     def form_valid(self, form):
         if (
-            not PackagedWorkBasket.objects.filter(workbasket=self.object).exists()
-            and not self.object.tasks.exists()
+            PackagedWorkBasket.objects.filter(workbasket=self.object).exists()
+            or self.object.tasks.exists()
         ):
-            self.object.delete()
-        else:
             self.object.archive()
             self.object.save()
+        else:
+            self.object.delete()
         return redirect(self.get_success_url())
 
 
