@@ -4,6 +4,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
+from django.core.exceptions import ValidationError
 
 from common.forms import ValidityPeriodForm
 from reference_documents.models import PreferentialQuotaOrderNumber
@@ -27,6 +28,7 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         self.fields[
             "main_order_number"
         ].queryset = reference_document_version.preferential_quota_order_numbers.all()
+        self.reference_document_version = reference_document_version
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -45,6 +47,29 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
                 data_prevent_double_click="true",
             ),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        coefficient = cleaned_data.get("coefficient")
+        main_order_number = cleaned_data.get("main_order_number")
+
+        # cant have one without the other
+        if coefficient and not main_order_number:
+            raise ValidationError(
+                "Coefficient specified without main order number",
+            )
+        elif not coefficient and main_order_number:
+            raise ValidationError(
+                "Main order number specified without coefficient",
+            )
+
+    def clean_quota_order_number(self):
+        data = self.cleaned_data["quota_order_number"]
+        if self.reference_document_version.preferential_quota_order_numbers.filter(
+            quota_order_number=data,
+        ).exists():
+            raise ValidationError("Quota Order Number Already Exists")
+        return data
 
     quota_order_number = forms.CharField(
         label="Order number",

@@ -13,7 +13,6 @@ from common.forms import ValidityPeriodForm
 from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.validators import commodity_code_validator
-from reference_documents.validators import order_number_validator
 
 
 class PreferentialQuotaCreateUpdateForm(
@@ -30,6 +29,31 @@ class PreferentialQuotaCreateUpdateForm(
             "measurement",
             "valid_between",
         ]
+
+    def __init__(self, reference_document_version, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[
+            "quota_order_number"
+        ].queryset = reference_document_version.preferential_quota_order_numbers.all()
+        self.reference_document_version = reference_document_version
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "quota_order_number",
+            "commodity_code",
+            "quota_duty_rate",
+            "volume",
+            "measurement",
+            "start_date",
+            "end_date",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
 
     commodity_code = forms.CharField(
         help_text="Commodity Code",
@@ -49,13 +73,16 @@ class PreferentialQuotaCreateUpdateForm(
         },
     )
 
-    quota_order_number = forms.CharField(
-        help_text="Quota Order Number",
-        validators=[order_number_validator],
+    quota_order_number = forms.ModelChoiceField(
+        label="Quota Order Number",
+        help_text="Select Quota order number",
+        queryset=PreferentialQuotaOrderNumber.objects.all(),
+        validators=[],
         error_messages={
-            "invalid": "Quota Order Number is invalid",
-            "required": "Quota Order Number is required",
+            "invalid": "Quota Order number is invalid",
         },
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
     )
 
     volume = forms.CharField(
@@ -81,27 +108,6 @@ class PreferentialQuotaCreateUpdateForm(
         if len(data) < 1:
             raise ValidationError("Quota duty Rate is not valid - it must have a value")
         return data
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-        self.helper.layout = Layout(
-            "quota_order_number",
-            "commodity_code",
-            "quota_duty_rate",
-            "volume",
-            "measurement",
-            "start_date",
-            "end_date",
-            Submit(
-                "submit",
-                "Save",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
-            ),
-        )
 
 
 class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
