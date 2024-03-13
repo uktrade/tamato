@@ -313,7 +313,7 @@ def test_workbasket_views_without_permission(url_name, client, user_workbasket):
     )
     user = factories.UserFactory.create()
     client.force_login(user)
-    user_workbasket.assign_to_user(user)
+    user_workbasket.set_as_current(user)
     response = client.get(url)
 
     assert response.status_code == 403
@@ -1009,7 +1009,7 @@ def test_violation_detail_page_superuser_override_last_violation(
         transaction_check__successful=False,
     )
     client.force_login(superuser)
-    model_check.transaction_check.transaction.workbasket.assign_to_user(
+    model_check.transaction_check.transaction.workbasket.set_as_current(
         superuser,
     )
 
@@ -1041,7 +1041,7 @@ def test_violation_detail_page_superuser_override_one_of_two_violation(
         transaction_check__successful=False,
     )
     client.force_login(superuser)
-    model_check.transaction_check.transaction.workbasket.assign_to_user(
+    model_check.transaction_check.transaction.workbasket.set_as_current(
         superuser,
     )
 
@@ -1093,7 +1093,7 @@ def test_violation_detail_page_non_superuser_override_violation(
         transaction_check__successful=False,
     )
     client.force_login(valid_user)
-    model_check.transaction_check.transaction.workbasket.assign_to_user(
+    model_check.transaction_check.transaction.workbasket.set_as_current(
         valid_user,
     )
 

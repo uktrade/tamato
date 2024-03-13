@@ -329,7 +329,7 @@ def client_with_current_workbasket(client, valid_user):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(valid_user)
+    workbasket.set_as_current(valid_user)
     return client
 
 
@@ -342,7 +342,7 @@ def client_with_current_workbasket_no_permissions(client):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(user)
+    workbasket.set_as_current(user)
     return client
 
 
@@ -391,7 +391,7 @@ def api_client_with_current_workbasket(api_client, valid_user) -> APIClient:
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(valid_user)
+    workbasket.set_as_current(valid_user)
     return api_client
 
 
@@ -453,7 +453,7 @@ def user_workbasket(client, valid_user, assigned_workbasket) -> WorkBasket:
     """Returns a workbasket which has been assigned to a valid logged-in
     user."""
     client.force_login(valid_user)
-    assigned_workbasket.assign_to_user(valid_user)
+    assigned_workbasket.set_as_current(valid_user)
     return assigned_workbasket
 
 
@@ -463,7 +463,7 @@ def user_empty_workbasket(client, valid_user) -> WorkBasket:
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(valid_user)
+    workbasket.set_as_current(valid_user)
     return workbasket
 
 
@@ -1548,7 +1548,7 @@ def session_request_with_workbasket(client, valid_user):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(valid_user)
+    workbasket.set_as_current(valid_user)
 
     session = client.session
     session.save()
