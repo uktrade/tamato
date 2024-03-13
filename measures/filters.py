@@ -25,6 +25,7 @@ from measures.forms import MeasureFilterForm
 from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureType
+from measures.models.bulk_processing import MeasuresBulkCreator
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
@@ -276,3 +277,14 @@ class MeasureFilter(TamatoFilter):
 
         # Defines the order shown in the form.
         fields = ["search", "sid"]
+
+
+class MeasureCreateTaskFilter(TamatoFilter):
+    """FilterSet for Bulk Measure Creation tasks."""
+
+    search_fields = "processing_state"
+    clear_url = reverse_lazy("measure-create-process-queue")
+
+    class Meta:
+        model = MeasuresBulkCreator
+        fields = ["processing_state"]

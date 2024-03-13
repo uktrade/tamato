@@ -56,6 +56,7 @@ from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.creators import MeasuresCreator
+from measures.filters import MeasureCreateTaskFilter
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
 from measures.models import FootnoteAssociationMeasure
@@ -1116,43 +1117,32 @@ class MeasuresCreateProcessQueue(
         "common.change_trackedmodel",
     ]
     template_name = "measures/create-process-queue.jinja"
-    filter_by_fields = ["all", "processing", "completed", "failed"]
-    sort_by_fields = [
-        "workbasket_id",
-        "submitted_date",
-        "submitted_by",
-        "status",
-        "object_count",
-        "action",
-    ]
-
-    def get_queryset(self):
-        return MeasuresBulkCreator.objects.filter(
-            workbasket__status=WorkflowStatus.EDITING,
-        ).order_by("-created_at")
+    queryset = MeasuresBulkCreator.objects.filter(
+        workbasket__status=WorkflowStatus.EDITING,
+    ).order_by("-created_at")
+    filterset_class = MeasureCreateTaskFilter
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        processing_state = self.request.GET.get("processing_state")
-        context["selected_filter"] = "all"
+        context["selected_link"] = "all"
+        processing_state = self.request.GET.get("status")
+
         if processing_state in [
             ProcessingState.CURRENTLY_PROCESSING,
             ProcessingState.AWAITING_PROCESSING,
         ]:
-            context["selected_filter"] = "processing"
+            context["selected_link"] = "processing"
         elif processing_state == ProcessingState.CANCELLED:
-            context["selected_filter"] = "cancelled"
+            context["selected_link"] = "cancelled"
         elif processing_state == ProcessingState.FAILED_PROCESSING:
-            context["selected_filter"] = "failed"
+            context["selected_link"] = "failed"
         elif processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
-            context["selected_filter"] = "completed"
-
+            context["selected_link"] = "completed"
         # Provide template access to some UI / view utility functions.
         context["status_tag_generator"] = self.status_tag_generator
         context["can_cancel_task"] = self.can_cancel_task
         context["is_task_failed"] = self.is_task_failed
-
         # Apply the TAP standard date format within the UI.
         context["datetime_format"] = settings.DATETIME_FORMAT
 
