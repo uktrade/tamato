@@ -106,7 +106,7 @@ class GoodsNomenclatureSuccessorHandler(BaseHandler):
         ):
             previous = (
                 models.GoodsNomenclatureSuccessor.objects.filter(
-                    **{key: self.data[key] for key in self.identifying_fields}
+                    **{key: self.data[key] for key in self.identifying_fields},
                 )
                 .latest_approved()
                 .get()
@@ -144,7 +144,7 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
         goods_nomenclature_description_handler,
     ):
         """
-        in some circumstances, we will receive an EU update that will reference
+        In some circumstances, we will receive an EU update that will reference
         a historic description period, and since TAP does not track SIDs
         currently for this data we cant resolve the reference.
 

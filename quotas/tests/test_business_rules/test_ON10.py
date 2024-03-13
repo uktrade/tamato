@@ -5,11 +5,8 @@ import pytest
 from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
-from common.util import TaricDateRange, validity_range_contains_range
+from common.util import TaricDateRange
 from quotas import business_rules
-from quotas.models import QuotaOrderNumber
-from quotas.models import QuotaOrderNumberOrigin
-
 
 pytestmark = pytest.mark.django_db
 
@@ -58,7 +55,8 @@ def test_ON10_not_effective_valid_between():
 
     measure = factories.MeasureWithQuotaFactory.create(
         order_number__origin__valid_between=TaricDateRange(
-            date(2021, 1, 1), date(2021, 1, 31)
+            date(2021, 1, 1),
+            date(2021, 1, 31),
         ),
         valid_between=valid_between,
         transaction=unapproved_transaction,
@@ -79,14 +77,15 @@ def test_ON10_is_effective_valid_between():
     unapproved_transaction = factories.UnapprovedTransactionFactory.create()
 
     regulation = factories.RegulationFactory.create(
-        effective_end_date=date(2021, 1, 31)
+        effective_end_date=date(2021, 1, 31),
     )
 
     valid_between = TaricDateRange(date(2020, 1, 1), None)
 
     measure = factories.MeasureWithQuotaFactory.create(
         order_number__origin__valid_between=TaricDateRange(
-            date(2020, 1, 1), date(2021, 1, 31)
+            date(2020, 1, 1),
+            date(2021, 1, 31),
         ),
         valid_between=valid_between,
         generating_regulation=regulation,

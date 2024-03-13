@@ -1,7 +1,8 @@
-from django.contrib.auth.models import Permission, Group
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from reports.models import Report
 from django.db import migrations
+
+from reports.models import Report
 
 
 def create_custom_permissions(apps, schema_editor):

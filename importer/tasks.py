@@ -118,7 +118,9 @@ def setup_chunk_task(
     get_partition_scheme(partition_scheme_setting)
 
     if batch.ready_chunks.filter(
-        record_code=record_code, status=ImporterChunkStatus.RUNNING, **kwargs
+        record_code=record_code,
+        status=ImporterChunkStatus.RUNNING,
+        **kwargs,
     ).exists():
         return
 

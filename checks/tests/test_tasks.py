@@ -56,7 +56,7 @@ def check(request):
     assert num_completed >= num_successful
 
     check = factories.TransactionCheckFactory.create(
-        **{trait: True for trait in traits}
+        **{trait: True for trait in traits},
     )
     check_names = [str(i) for i in range(num_checks)]
     completes = repeat(True, num_completed)
