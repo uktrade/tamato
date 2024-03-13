@@ -219,6 +219,10 @@ class SearchPageView(TemplateView):
     template_name = "common/search_page.jinja"
 
 
+class ResourcesView(TemplateView):
+    template_name = "common/resources.jinja"
+
+
 class HealthCheckResponse(HttpResponse):
     """
     Formatted HTTP response for healthcheck.

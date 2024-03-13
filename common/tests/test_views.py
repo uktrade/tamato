@@ -5,6 +5,7 @@ from django.contrib.auth.models import Permission
 from django.test import modify_settings
 from django.test import override_settings
 from django.urls import reverse
+from django.urls import reverse_lazy
 
 from checks.tests.factories import TrackedModelCheckFactory
 from common.tests import factories
@@ -183,7 +184,7 @@ def test_maintenance_mode_page_content(valid_user_client):
         ("Currently working on", "view_workbasket"),
         ("EU TARIC files", "add_trackedmodel"),
         ("Envelopes", "consume_from_packaging_queue"),
-        ("Tools", ""),
+        ("Resources", ""),
         ("Get help", ""),
         ("Other ways of support", ""),
     ],
@@ -310,3 +311,22 @@ def test_homepage_search_no_result(valid_user_client):
     response = valid_user_client.post(reverse("home"), {"search_term": "empty"})
     assert response.status_code == 302
     assert response.url == reverse("search-page")
+
+
+@pytest.mark.parametrize(
+    ("heading", "expected_url"),
+    [
+        ("Application information", reverse_lazy("app-info")),
+        ("Importer V1", reverse_lazy("import_batch-ui-list")),
+        ("Importer V2", reverse_lazy("taric_parser_import_ui_list")),
+        ("TAP reports", reverse_lazy("reports:index")),
+        ("Tariff data manual", "https://uktrade.github.io/tariff-data-manual/#home"),
+    ],
+)
+def test_resources_view_displays_resources(heading, expected_url, valid_user_client):
+    response = valid_user_client.get(reverse("resources"))
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    assert page.find("h3", string=heading)
+    assert page.find("a", href=expected_url)
