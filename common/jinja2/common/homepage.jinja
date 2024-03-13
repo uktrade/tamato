@@ -21,41 +21,42 @@
       <article class="homepage-card">
         <h3 class="govuk-heading-m">What would you like to do?</h3>
         <p class="govuk-body">
-          A workbasket is used to collect all the changes you make to the UK's import and export tariff data.
+          Create a new workbasket, edit an existing workbasket, package or search for workbaskets.
         </p>
-        <p class="govuk-body">
-          Workbaskets group these changes so they can be checked by the Customs Declaration Service (CDS) before going live.
-        </p>
-        <ul id="workbasket-actions" class="govuk-list govuk-list--spaced">
+
+        <div class="govuk-grid-row">
           {% if can_add_workbasket %}
-            <li>
+            <div class="govuk-grid-column-one-half">
               <a
                 href="{{ url('workbaskets:workbasket-ui-create') }}"
-                class="govuk-link"
-              >Create a new workbasket</a>
-            </li>
-            <li>
-              <a 
+                class="govuk-button govuk-button--secondary govuk-"
+              >Create a workbasket</a>
+            </div>
+
+            <div class="govuk-grid-column-one-half">
+              <a
                 href="{{ url('workbaskets:workbasket-ui-list') }}"
-                class="govuk-link"
+                class="govuk-button govuk-button--secondary"
               >Edit a workbasket</a>
-            </li>
+            </div>
           {% endif %}
+
           {% if can_manage_packaging %}
-            <li>
+            <div class="govuk-grid-column-one-half">
               <a
                 href="{{ url('publishing:packaged-workbasket-queue-ui-list') }}"
-                class="govuk-link"
+                class="govuk-button govuk-button--secondary"
               >Package a workbasket</a>
-            </li>
+            </div>
           {% endif %}
-          <li>
+
+          <div class="govuk-grid-column-one-half">
             <a
               href="{{ url('workbaskets:workbasket-ui-list-all') }}"
-              class="govuk-link"
+              class="govuk-button govuk-button--secondary"
             >Search for workbaskets</a>
-          </li>
-        </ul>
+          </div>
+        </div>
       </article>
 
       <article class="homepage-card">
@@ -114,7 +115,7 @@
       <p class="govuk-body">
         We have a range of resources you can use with the Tariff Application Platform.
       </p>
-      <ul id="homepage-tap-tools" class="govuk-list govuk-list--spaced">
+      <ul id="homepage-tap-resources" class="govuk-list govuk-list--spaced">
         <li>
           <a href="{{ url('app-info') }}" class="govuk-link">Application information</a>
         </li>
@@ -159,7 +160,7 @@
     <article class="homepage-card">
       <h3 class="govuk-heading-m">Other ways of support</h3>
       <h4 class="govuk-heading-s">Message</h3>
-      <p class="govuk-body"><a class="govuk-link" href="mailto:TODO">Contact us</a> if you have a question or suggestion.</p>
+      <p class="govuk-body"><a class="govuk-link" href="mailto:9cf0f83c.trade.gov.uk@uk.teams.ms">Contact us</a> if you have a question or suggestion.</p>
     </article>
   </div>
 {% endblock %}
