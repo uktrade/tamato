@@ -112,14 +112,14 @@ class HomeView(LoginRequiredMixin, FormView):
         element ID, with a length between 2 and 18 characters.
 
         For a tariff element name, we attempt to find a matching key in `list_view_map` dict,
-        returning the corresponding 'Find and edit' view URL as an outcome.
+        returning the corresponding 'Find and edit' view URL of the matching element.
 
-        For a tariff element ID, we perform case-insensitive DB lookups on the identifying fields
-        for any tariff elements whose ID takes the form of the search term,
-        returning the detail view URL of the matching element.
+        For a tariff element ID, we perform case-insensitive DB lookups for tariff elements whose ID
+        takes the form of the search term, returning the detail view URL of the matching element.
 
         If no match can be found for a given search term, then `None` is returned.
         """
+        # Check if the search term matches an element name
         list_view_map = {
             "additional codes": "additional_code-ui-list",
             "certificates": "certificate-ui-list",
@@ -134,6 +134,7 @@ class HomeView(LoginRequiredMixin, FormView):
         if match:
             return match
 
+        # Otherwise attempt to match the search term to an element ID
         search_len = len(search_term)
         if search_len == 2:
             match = (
@@ -212,6 +213,7 @@ class HomeView(LoginRequiredMixin, FormView):
             )
             return match.get_url() if match else None
 
+        # No match has been found for the search term
         else:
             return None
 
