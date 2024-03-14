@@ -115,8 +115,6 @@
 }
 
 #current-workbasket {
-  display: inline-block;
-
   a, form {
     display: inline-block;
   }
@@ -154,4 +152,8 @@
     width: 50px;
     height: 48px;
   }
+}
+
+.homepage-workbasket-action {
+  width: 100%;
 }

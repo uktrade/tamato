@@ -29,15 +29,15 @@
             <div class="govuk-grid-column-one-half">
               <a
                 href="{{ url('workbaskets:workbasket-ui-create') }}"
-                class="govuk-button govuk-button--secondary govuk-"
-              >Create a workbasket</a>
+                class="govuk-button homepage-workbasket-action"
+              >Create a <br> workbasket</a>
             </div>
 
             <div class="govuk-grid-column-one-half">
               <a
                 href="{{ url('workbaskets:workbasket-ui-list') }}"
-                class="govuk-button govuk-button--secondary"
-              >Edit a workbasket</a>
+                class="govuk-button homepage-workbasket-action"
+              >Edit a <br> workbasket</a>
             </div>
           {% endif %}
 
@@ -45,16 +45,16 @@
             <div class="govuk-grid-column-one-half">
               <a
                 href="{{ url('publishing:packaged-workbasket-queue-ui-list') }}"
-                class="govuk-button govuk-button--secondary"
-              >Package a workbasket</a>
+                class="govuk-button homepage-workbasket-action"
+              >Package <br> workbaskets</a>
             </div>
           {% endif %}
 
           <div class="govuk-grid-column-one-half">
             <a
               href="{{ url('workbaskets:workbasket-ui-list-all') }}"
-              class="govuk-button govuk-button--secondary"
-            >Search for workbaskets</a>
+              class="govuk-button homepage-workbasket-action"
+            >Search for <br> workbaskets</a>
           </div>
         </div>
       </article>
