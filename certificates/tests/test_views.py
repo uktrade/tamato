@@ -313,11 +313,10 @@ def test_certificate_detail_measures_view_lists_measures(valid_user_client):
 
 def test_certificate_detail_measures_view_lists_measures_latest_version(
     valid_user_client,
-    user_workbasket,
 ):
-    """Test that `CertificateDetailMeasures` view displays a paginated list of
-    the latest measures for a certificate when the condition is related to the
-    ."""
+    """Test that `CertificateDetailMeasures` view displays a  list of the latest
+    measures for a certificate when the condition is related to an older version
+    of the dependant measure."""
     certificate = factories.CertificateFactory.create()
     tnx = certificate.transaction
     workbasket = certificate.transaction.workbasket
