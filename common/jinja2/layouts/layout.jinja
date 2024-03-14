@@ -13,7 +13,7 @@
 
 {% set workbasket_html %}
   {% if request.user.current_workbasket %}
-    <img class="icon" src="{{ static('/common/images/workbasket-icon.svg') }}">
+    <img class="icon" src="{{ static('/common/images/workbasket-icon.svg') }}"/>
     <a
       href="{{ url('workbaskets:current-workbasket') }}"
       class="govuk-header__link workbasket-link govuk-header__navigation-item"
