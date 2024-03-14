@@ -17,31 +17,31 @@
   ) }}
 {% endblock %}
 
-
+{# NOTE: "?processing_state=AWAITING_PROCESSING,CURRENTLY_PROCESSING" returns neither Awaiting or Currently processing tasks #}
 {% set filter_links_list = [
   {
     "text": "All",
-    "href": "?status=",
+    "href": "?processing_state=",
     "selected": selected_link == "all",
   },
   {
     "text": "Processing",
-    "href": "?status=CURRENTLY_PROCESSING",
+    "href": "?processing_state=AWAITING_PROCESSING&processing_state=CURRENTLY_PROCESSING",
     "selected": selected_link == "processing",
   },
   {
     "text": "Completed",
-    "href": "?status=SUCCESSFULLY_PROCESSED",
+    "href": "?processing_state=SUCCESSFULLY_PROCESSED",
     "selected": selected_link == "completed",
   },
   {
     "text": "Failed",
-    "href": "?status=FAILED_PROCESSING",
+    "href": "?processing_state=FAILED_PROCESSING",
     "selected": selected_link == "failed",
   },
   {
     "text": "Cancelled",
-    "href": "?status=CANCELLED",
+    "href": "?processing_state=CANCELLED",
     "selected": selected_link == "cancelled",
   },
 ]%}

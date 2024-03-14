@@ -45,7 +45,7 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
-from common.views import WithPaginationListMixin
+from common.views import WithPaginationListView
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
@@ -1107,8 +1107,7 @@ class MeasuresWizardCreateConfirm(TemplateView):
 
 class MeasuresCreateProcessQueue(
     PermissionRequiredMixin,
-    WithPaginationListMixin,
-    ListView,
+    WithPaginationListView,
 ):
     """UI endpoint for bulk creating Measures process queue."""
 
@@ -1126,12 +1125,14 @@ class MeasuresCreateProcessQueue(
         context = super().get_context_data(**kwargs)
 
         context["selected_link"] = "all"
-        processing_state = self.request.GET.get("status")
-
-        if processing_state in [
-            ProcessingState.CURRENTLY_PROCESSING,
-            ProcessingState.AWAITING_PROCESSING,
-        ]:
+        processing_state = self.request.GET.get("processing_state")
+        # NOT THIS if processing_state == ProcessingState.AWAITING_PROCESSING or processing_state == ProcessingState.CURRENTLY_PROCESSING:
+        # OR THIS if processing_state in [
+        #     ProcessingState.AWAITING_PROCESSING,
+        #     ProcessingState.CURRENTLY_PROCESSING
+        # ]:
+        # THIS DOESN'T WORK EITHER
+        if processing_state in ProcessingState.queued_states():
             context["selected_link"] = "processing"
         elif processing_state == ProcessingState.CANCELLED:
             context["selected_link"] = "cancelled"
