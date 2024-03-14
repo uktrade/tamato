@@ -1,7 +1,6 @@
 {% extends "layouts/layout.jinja" %}
 
 {% set page_title = "Resources" %}
-{% set can_view_reports = request.user.has_perm("reports.view_report_index") %}
 
 {% macro resource(heading, description, url) %}
   <div class="govuk-grid-row">
