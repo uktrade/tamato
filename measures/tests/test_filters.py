@@ -69,16 +69,13 @@ def test_filter_by_certificates(
 
     # update a measure, both updated and original measure_with_certificate should show in result
     new_transaction = factories.TransactionFactory.create()
+    # only update the measure and as queryset should find the latest version of the measure irrespective of the measure condition version
     updated_measure = measure_with_certificate.new_version(
         workbasket=new_transaction.workbasket,
         transaction=new_transaction,
         update_type=UpdateType.UPDATE,
         valid_between=new_date_range,
         stopped=False,
-    )
-    factories.MeasureConditionFactory.create(
-        dependent_measure=updated_measure,
-        required_certificate=certificate,
     )
     qs = Measure.objects.all()
 
@@ -91,7 +88,11 @@ def test_filter_by_certificates(
         value=certificate,
     )
 
-    assert measure_with_certificate in filtered_measures
+    sids = [measure.sid for measure in filtered_measures]
+
+    # check sid as measure_with_certificate is an older version which wouldn't be returned
+    assert measure_with_certificate.sid in sids
+    # newest version of measure so it will be in the filtered measures
+    assert updated_measure in filtered_measures
     assert measure_no_certificate not in filtered_measures
     assert measure_with_different_certificate not in filtered_measures
-    assert updated_measure in filtered_measures

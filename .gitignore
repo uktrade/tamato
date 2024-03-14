@@ -145,8 +145,6 @@ webpack-stats.json
 # PyCharm
 .idea/
 
-# VS Code
-.vscode/
 
 *.gz
 
@@ -166,4 +164,5 @@ _dumped_cache.pkl
 # Vim
 .swp
 
-tamato_*.sql
+# Database dumps
+*.sql
