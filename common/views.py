@@ -104,7 +104,22 @@ class HomeView(LoginRequiredMixin, FormView):
         )
         return context
 
-    def get_search_result(self, search_term):
+    def get_search_result(self, search_term: str) -> Optional[str]:
+        """
+        Returns the outcome of a search result for a given `search_term`.
+
+        The search term is expected to be either a tariff element name or a tariff
+        element ID, with a length between 2 and 18 characters.
+
+        For a tariff element name, we attempt to find a matching key in `list_view_map` dict,
+        returning the corresponding 'Find and edit' view URL as an outcome.
+
+        For a tariff element ID, we perform case-insensitive DB lookups on the identifying fields
+        for any tariff elements whose ID takes the form of the search term,
+        returning the detail view URL of the matching element.
+
+        If no match can be found for a given search term, then `None` is returned.
+        """
         list_view_map = {
             "additional codes": "additional_code-ui-list",
             "certificates": "certificate-ui-list",
