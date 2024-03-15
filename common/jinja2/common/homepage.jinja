@@ -2,6 +2,13 @@
 
 {% set page_title = "Home" %}
 
+{% block notification_icon %}
+  <div id="notification-icon-container">
+    <img class="notification-icon" src="{{ static('/common/images/bell-icon.svg') }}" alt="notification icon">
+    <span class="notification-icon-count">2</span>
+  </div>
+{% endblock %}
+
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">Search the Tariff Application Platform</h1>
   <span class="govuk-caption-l govuk-!-margin-bottom-4">This service lets you manage the UK's import and export tariff data</span>
@@ -25,11 +32,11 @@
       <div class="govuk-notification-banner__content">
         <p class="govuk-body">
           <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Workbaskets assigned (2)</span>
-          <a class="govuk-notification-banner__link" href="#PLACEHOLDER">View</a>
+          <a class="govuk-notification-banner__link" href="{{ url('workbaskets:workbasket-ui-list') }}">View</a>
         </p>
         <p class="govuk-body">
           <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Quotas expiring soon (1)</span>
-          <a class="govuk-notification-banner__link" href="#PLACEHOLDER">View</a>
+          <a class="govuk-notification-banner__link" href="{{ url('reports:quotas_expiring_soon') }}">View</a>
         </p>
       </div>
     </div>

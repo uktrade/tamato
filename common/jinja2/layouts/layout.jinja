@@ -57,6 +57,7 @@
 
       <div id="current-workbasket">
         {{ workbasket_html }}
+        {% block notification_icon %}{% endblock %}
         {% if not settings.SSO_ENABLED %}
           {{ logout_login_link }}
         {% endif %}

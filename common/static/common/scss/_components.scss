@@ -161,3 +161,30 @@
 .homepage-workbasket-action {
   width: 100%;
 }
+
+
+#notification-icon-container {
+  display: inline-block;
+  position: relative;
+  img {
+    display: inline-block;
+  }
+}
+
+.notification-icon {
+  height:26px;
+  width:26px;
+}
+
+.notification-icon-count {
+  height:10px;
+  width:10px;
+  position:absolute;
+  font-size:10px;
+  font-weight: bold;
+  border-radius:50%;
+  background-color:$govuk-error-colour;
+  padding:4px;
+  text-align: center;
+  left: 15px;
+}
