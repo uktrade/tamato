@@ -101,8 +101,6 @@ def test_filter_by_certificates(
     assert updated_measure in filtered_measures
 
 
-# paramtrise
-# state, query_string, class
 @pytest.mark.parametrize(
     "query_string, css_class",
     [
@@ -139,6 +137,7 @@ def test_measure_create_process_queue_filters(
         "html.parser",
     )
     assert page.find("span", class_=css_class)
+    assert not page.find("span", class_="tamato-badge-light-blue")
 
 
 def test_measure_create_process_queue_filters_processing(
