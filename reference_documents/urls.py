@@ -172,7 +172,7 @@ urlpatterns = [
     ),
     # Preferential Quotas
     path(
-        "preferential_quotas/delete/<pk>/",
+        "preferential_quotas/delete/<pk>/<version_pk>/",
         PreferentialQuotaDeleteView.as_view(),
         name="preferential_quotas_delete",
     ),
@@ -182,9 +182,14 @@ urlpatterns = [
         name="preferential_quotas_edit",
     ),
     path(
-        "preferential_quota_order_numbers/<pk>/create_preferential_quotas/",
+        "preferential_quota_order_numbers/<version_pk>/create_preferential_quotas/",
         PreferentialQuotaCreateView.as_view(),
         name="preferential_quotas_create",
+    ),
+    path(
+        "preferential_quota_order_numbers/<version_pk>/create_preferential_quotas_for_order/<order_pk>/",
+        PreferentialQuotaCreateView.as_view(),
+        name="preferential_quotas_create_for_order",
     ),
     path(
         "reference_document_versions/<pk>/bulk_create_preferential_quotas/",
@@ -209,7 +214,7 @@ urlpatterns = [
     ),
     # Preferential rate Quota order number
     path(
-        "preferential_quota_order_numbers/delete/<pk>/",
+        "preferential_quota_order_numbers/delete/<pk>/<version_pk>/",
         PreferentialQuotaOrderNumberDeleteView.as_view(),
         name="preferential_quota_order_number_delete",
     ),

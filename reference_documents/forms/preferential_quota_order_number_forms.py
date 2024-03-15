@@ -7,6 +7,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from common.forms import ValidityPeriodForm
+from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialQuotaOrderNumber
 
 
@@ -48,6 +49,14 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
             ),
         )
 
+    def clean_coefficient(self):
+        cleaned_data = super().clean()
+        coefficient = cleaned_data.get("coefficient")
+        if coefficient == "":
+            return None
+
+        return coefficient
+
     def clean(self):
         cleaned_data = super().clean()
         coefficient = cleaned_data.get("coefficient")
@@ -65,10 +74,12 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
 
     def clean_quota_order_number(self):
         data = self.cleaned_data["quota_order_number"]
-        if self.reference_document_version.preferential_quota_order_numbers.filter(
-            quota_order_number=data,
-        ).exists():
-            raise ValidationError("Quota Order Number Already Exists")
+        if self.instance._state.adding:
+            if self.reference_document_version.preferential_quota_order_numbers.filter(
+                quota_order_number=data,
+            ).exists():
+                raise ValidationError("Quota Order Number Already Exists")
+
         return data
 
     quota_order_number = forms.CharField(
@@ -111,12 +122,9 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
     )
 
 
-class PreferentialQuotaOrderNumberDeleteForm(forms.ModelForm):
-    class Meta:
-        model = PreferentialQuotaOrderNumber
-        fields = []
-
-    def __init__(self, *args, **kwargs):
+class PreferentialQuotaOrderNumberDeleteForm(forms.Form):
+    def __init__(self, *args, **kwargs) -> None:
+        self.instance = kwargs.pop("instance")
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -129,3 +137,21 @@ class PreferentialQuotaOrderNumberDeleteForm(forms.ModelForm):
                 data_prevent_double_click="true",
             ),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        quota_order_number = self.instance
+        versions = PreferentialQuota.objects.all().filter(
+            preferential_quota_order_number=quota_order_number,
+        )
+        if versions:
+            raise forms.ValidationError(
+                f"Quota Order Number {quota_order_number} cannot be deleted as it has"
+                f" associated Preferential Quotas.",
+            )
+
+        return cleaned_data
+
+    class Meta:
+        model = PreferentialQuotaOrderNumber
+        fields = []
