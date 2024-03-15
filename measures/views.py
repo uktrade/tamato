@@ -56,6 +56,8 @@ from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.creators import MeasuresCreator
+
+# from measures.filters import MeasureCreateTaskFilter
 from measures.filters import MeasureCreateTaskFilter
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
@@ -1116,6 +1118,7 @@ class MeasuresCreateProcessQueue(
         "common.change_trackedmodel",
     ]
     template_name = "measures/create-process-queue.jinja"
+    model = MeasuresBulkCreator
     queryset = MeasuresBulkCreator.objects.filter(
         workbasket__status=WorkflowStatus.EDITING,
     ).order_by("-created_at")
@@ -1126,13 +1129,8 @@ class MeasuresCreateProcessQueue(
 
         context["selected_link"] = "all"
         processing_state = self.request.GET.get("processing_state")
-        # NOT THIS if processing_state == ProcessingState.AWAITING_PROCESSING or processing_state == ProcessingState.CURRENTLY_PROCESSING:
-        # OR THIS if processing_state in [
-        #     ProcessingState.AWAITING_PROCESSING,
-        #     ProcessingState.CURRENTLY_PROCESSING
-        # ]:
-        # THIS DOESN'T WORK EITHER
-        if processing_state in ProcessingState.queued_states():
+
+        if processing_state == "PROCESSING":
             context["selected_link"] = "processing"
         elif processing_state == ProcessingState.CANCELLED:
             context["selected_link"] = "cancelled"
@@ -1146,8 +1144,18 @@ class MeasuresCreateProcessQueue(
         context["is_task_failed"] = self.is_task_failed
         # Apply the TAP standard date format within the UI.
         context["datetime_format"] = settings.DATETIME_FORMAT
-
+        if context["selected_link"] == "processing":
+            context["object_list"] = self.get_processing_queryset()
         return context
+
+    def get_processing_queryset(self):
+        awaiting_processing = self.queryset.filter(
+            processing_state="AWAITING_PROCESSING",
+        )
+        currently_processing = self.queryset.filter(
+            processing_state="CURRENTLY_PROCESSING",
+        )
+        return awaiting_processing.union(currently_processing)
 
     def is_task_failed(self, task: MeasuresBulkCreator) -> bool:
         """
