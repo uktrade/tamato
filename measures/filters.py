@@ -261,9 +261,15 @@ class MeasureFilter(TamatoFilter):
         Certificate object) Filters the queryset for Measures associated with
         that Certificate via MeasureCondition."""
         if value:
-            measure_ids = MeasureCondition.objects.filter(
-                required_certificate=value,
-            ).values_list("dependent_measure_id", flat=True)
+            measure_conditions = MeasureCondition.objects.current().filter(
+                required_certificate__version_group=value.version_group,
+            )
+
+            measure_ids = []
+            for condition in measure_conditions:
+                measure_ids.append(
+                    condition.dependent_measure.current_version.trackedmodel_ptr_id,
+                )
 
             queryset = queryset.filter(id__in=measure_ids)
 
