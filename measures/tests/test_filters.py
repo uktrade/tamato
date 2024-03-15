@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import UpdateType
@@ -82,11 +83,13 @@ def test_filter_by_certificates(
     measure_filter = MeasureFilter(
         data={"certificates": certificate.trackedmodel_ptr_id},
     )
-    filtered_measures = measure_filter.certificates_filter(
-        queryset=qs,
-        name="certificates",
-        value=certificate,
-    )
+
+    with override_current_transaction(new_transaction):
+        filtered_measures = measure_filter.certificates_filter(
+            queryset=qs,
+            name="certificates",
+            value=certificate,
+        )
 
     sids = [measure.sid for measure in filtered_measures]
 
