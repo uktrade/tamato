@@ -56,8 +56,6 @@ from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.creators import MeasuresCreator
-
-# from measures.filters import MeasureCreateTaskFilter
 from measures.filters import MeasureCreateTaskFilter
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
@@ -1149,6 +1147,8 @@ class MeasuresCreateProcessQueue(
         return context
 
     def get_processing_queryset(self):
+        """Returns a combined queryset of tasks either AWAITING_PROCESSING or
+        CURRENTLY_PROCESSING."""
         awaiting_processing = self.queryset.filter(
             processing_state="AWAITING_PROCESSING",
         )
