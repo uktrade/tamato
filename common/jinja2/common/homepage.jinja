@@ -16,6 +16,24 @@
     </div>
   {% endblock %}
 
+    <div class="govuk-notification-banner govuk-!-margin-top-3 govuk-!-margin-bottom-3"
+      id="govuk-notification-banner-title"
+      aria-labelledby="govuk-notification-banner-title"
+      role="region"
+      data-module="govuk-notification-banner"
+    >
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">
+          <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Workbaskets assigned (2)</span>
+          <a class="govuk-notification-banner__link" href="#PLACEHOLDER">View</a>
+        </p>
+        <p class="govuk-body">
+          <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Quotas expiring soon (1)</span>
+          <a class="govuk-notification-banner__link" href="#PLACEHOLDER">View</a>
+        </p>
+      </div>
+    </div>
+
   <div id="homepage-articles" class="govuk-grid-row">
     {% if can_view_workbasket %}
       <article class="homepage-card">
@@ -91,6 +109,7 @@
     {% if can_import_taric %}
       <article class="homepage-card">
         <h3 class="govuk-heading-m">EU TARIC files</h3>
+        <p class="govuk-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit donec quis.</p>
         <p class="govuk-body">
           <a href="{{ url('commodity_importer-ui-list') }}"
             class="govuk-link"
@@ -102,10 +121,23 @@
     {% if can_consume_packaging %}
       <article class="homepage-card">
         <h3 class="govuk-heading-m">Envelopes</h3>
+        <p class="govuk-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit donec quis.</p>
         <p class="govuk-body">
           <a href="{{ url('publishing:envelope-queue-ui-list') }}"
             class="govuk-link"
           >Process envelopes</a>
+        </p>
+      </article>
+    {% endif %}
+
+    {% if can_add_workbasket %}
+      <article class="homepage-card">
+        <h3 class="govuk-heading-m">Process queue</h3>
+        <p class="govuk-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit donec quis.</p>
+        <p class="govuk-body">
+          <a href="#PLACEHOLDER"
+            class="govuk-link"
+          >Process queue</a>
         </p>
       </article>
     {% endif %}
