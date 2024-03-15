@@ -23,23 +23,25 @@
     </div>
   {% endblock %}
 
-    <div class="govuk-notification-banner govuk-!-margin-top-3 govuk-!-margin-bottom-3"
-      id="govuk-notification-banner-title"
-      aria-labelledby="govuk-notification-banner-title"
-      role="region"
-      data-module="govuk-notification-banner"
-    >
-      <div class="govuk-notification-banner__content">
+  <div class="govuk-notification-banner govuk-!-margin-top-3 govuk-!-margin-bottom-3"
+    id="govuk-notification-banner-title"
+    aria-labelledby="govuk-notification-banner-title"
+    role="region"
+    data-module="govuk-notification-banner"
+  >
+    <div class="govuk-notification-banner__content">
+      {% if assigned_workbaskets %}
         <p class="govuk-body">
-          <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Workbaskets assigned (2)</span>
+          <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Workbaskets assigned ({{ assigned_workbaskets|length }})</span>
           <a class="govuk-notification-banner__link" href="{{ url('workbaskets:workbasket-ui-list') }}">View</a>
         </p>
-        <p class="govuk-body">
-          <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Quotas expiring soon (1)</span>
-          <a class="govuk-notification-banner__link" href="{{ url('reports:quotas_expiring_soon') }}">View</a>
-        </p>
-      </div>
+      {% endif %}
+      <p class="govuk-body">
+        <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Quotas expiring soon (1)</span>
+        <a class="govuk-notification-banner__link" href="{{ url('reports:quotas_expiring_soon') }}">View</a>
+      </p>
     </div>
+  </div>
 
   <div id="homepage-articles" class="govuk-grid-row">
     {% if can_view_workbasket %}
@@ -139,12 +141,12 @@
 
     {% if can_add_workbasket %}
       <article class="homepage-card">
-        <h3 class="govuk-heading-m">Process queue</h3>
+        <h3 class="govuk-heading-m">Processing queue</h3>
         <p class="govuk-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit donec quis.</p>
         <p class="govuk-body">
           <a href="#PLACEHOLDER"
             class="govuk-link"
-          >Process queue</a>
+          >Processing queue</a>
         </p>
       </article>
     {% endif %}
@@ -172,7 +174,7 @@
           </li>
         {% endif %}
         <li>
-          <a href="https://uktrade.github.io/tariff-data-manual/#home" class="govuk-link">Tariff data manual</a>
+          <a href="https://uktrade.github.io/tariff-data-manual/#home" class="govuk-link" rel="noreferrer noopener" target="_blank">Tariff data manual</a>
         </li>
       </ul>
     </article>
@@ -186,7 +188,7 @@
     <article class="homepage-card">
       <h3 class="govuk-heading-m">Get help</h3>
       <p class="govuk-body">
-        Find documentation, guidance, training and updates on the
+        Find documentation, guidance, training and updates in the
         <a
           href="https://data-services-help.trade.gov.uk/tariff-application-platform/"
           class="govuk-link"
@@ -196,9 +198,8 @@
       </p>
     </article>
 
-    <article class="homepage-card">
-      <h3 class="govuk-heading-m">Other ways of support</h3>
-      <h4 class="govuk-heading-s">Message</h3>
+    <article class="homepage-card govuk-!-padding-bottom-5">
+      <h3 class="govuk-heading-m">Get in touch</h3>
       <p class="govuk-body"><a class="govuk-link" href="mailto:9cf0f83c.trade.gov.uk@uk.teams.ms">Contact us</a> if you have a question or suggestion.</p>
     </article>
   </div>

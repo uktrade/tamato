@@ -2,7 +2,7 @@
 
 {% set page_title = "Resources" %}
 
-{% macro resource(heading, description, url) %}
+{% macro resource(heading, description, url, open_new_tab="") %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <h3 class="govuk-heading-m">{{ heading }}</h3>
@@ -15,7 +15,10 @@
     <div class="govuk-grid-column-one-half">
       <a
         href="{{ url }}"
-        class="govuk-button align-right"
+        class="govuk-button align-right class"
+        {% if open_new_tab %}
+           rel="noreferrer noopener" target="_blank"
+        {% endif %}
       >View</a>
     </div>
   </div>
@@ -81,6 +84,7 @@
           heading="Tariff data manual",
           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus pharetra ex non lorem aliquet mollis. Aenean interdum odio odio, a finibus nunc auctor congue.",
           url="https://uktrade.github.io/tariff-data-manual/#home",
+          open_new_tab="True",
         )
       }}
 

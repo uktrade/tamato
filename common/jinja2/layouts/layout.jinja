@@ -84,6 +84,14 @@
               >Workbaskets</a>
             </li>
           {% endif %}
+          {% if can_manage_packaging %}
+            <li class="govuk-header__navigation-item">
+              <a
+                href="{{ url('publishing:packaged-workbasket-queue-ui-list') }}"
+                class="govuk-header__link"
+              >Packaging</a>
+            </li>
+          {% endif %}
           {% if can_consume_packaging %}
             <li class="govuk-header__navigation-item">
               <a
