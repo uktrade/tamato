@@ -132,6 +132,7 @@
 #homepage-search-form {
   display: flex;
   flex-flow: row nowrap;
+  align-items: flex-end;
 
   .govuk-input {
     height: 50px;
