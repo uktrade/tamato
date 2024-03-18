@@ -16,6 +16,7 @@ class PreferentialRateCreateUpdateForm(
     forms.ModelForm,
 ):
     commodity_code = forms.CharField(
+        max_length=10,
         help_text="Enter the 10 digit commodity code",
         validators=[commodity_code_validator],
         error_messages={

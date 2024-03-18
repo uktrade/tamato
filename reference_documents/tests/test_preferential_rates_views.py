@@ -2,9 +2,11 @@ import pytest
 from django.contrib.auth.models import Permission
 from django.urls import reverse
 
-from reference_documents.forms import PreferentialRateCreateUpdateForm
+from reference_documents.forms.preferential_rate_forms import (
+    PreferentialRateCreateUpdateForm,
+)
 from reference_documents.tests import factories
-from reference_documents.views.preferential_rates import PreferentialRateEditView
+from reference_documents.views.preferential_rate_views import PreferentialRateEditView
 
 pytestmark = pytest.mark.django_db
 

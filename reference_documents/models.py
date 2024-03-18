@@ -96,6 +96,7 @@ class PreferentialQuotaOrderNumber(models.Model):
         on_delete=models.PROTECT,
         related_name="preferential_quota_order_numbers",
     )
+
     quota_order_number = models.CharField(
         max_length=6,
         db_index=True,

@@ -28,8 +28,10 @@
                 {% endif %}
             </div>
             <div class="govuk-body govuk-!-margin-bottom-2">
-                <a href="{{ url('reference_documents:preferential_quota_order_number_edit', args=[value['ref_doc_order_number'].id]) }}">Edit</a>
-                <a href="{{ url('reference_documents:preferential_quota_order_number_delete', args=[value['ref_doc_order_number'].id]) }}">Delete</a>
+                <a class="order_number_link" href="{{ url('reference_documents:preferential_quota_order_number_edit', args=[value['ref_doc_order_number'].id]) }}">Edit</a>
+                <a class="order_number_link" href="{{ url('reference_documents:preferential_quota_order_number_delete', args=[value['ref_doc_order_number'].id, value['ref_doc_order_number'].reference_document_version.id]) }}">Delete</a>
+                <a class="order_number_link" href="{{ url('reference_documents:preferential_quotas_create_for_order', args=[object.pk, value['ref_doc_order_number'].pk]) }}">Add Quota to Order</a>
+                <a class="order_number_link" href="{{ url('reference_documents:preferential_quota_order_number_delete', args=[value['ref_doc_order_number'].id, value['ref_doc_order_number'].reference_document_version.id]) }}">Bulk Add Quotas</a>
             </div>
             {% if value['data_rows'] != [] %}
                 {{ govukTable({

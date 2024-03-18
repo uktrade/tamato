@@ -155,7 +155,7 @@ class ReferenceDocumentVersionContext:
                     },
                     {
                         "html": f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> "
-                        f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>",
+                        f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk] )}'>Delete</a>",
                     },
                 ],
             )
@@ -261,7 +261,7 @@ class ReferenceDocumentVersionContext:
                 },
                 {
                     "html": f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> "
-                    f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk])}'>Delete</a>",
+                    f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>",
                 },
             ]
 
