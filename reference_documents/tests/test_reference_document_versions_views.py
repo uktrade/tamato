@@ -37,14 +37,14 @@ def test_ref_doc_version_create_creates_object_and_redirects(valid_user, client)
         "entry_into_force_date_1": "1",
         "entry_into_force_date_2": "2024",
     }
-    response = client.post(create_url, form_data)
-    assert response.status_code == 302
+    resp = client.post(create_url, form_data)
+    assert resp.status_code == 302
 
     ref_doc = ReferenceDocumentVersion.objects.get(
         reference_document=ref_doc,
     )
     assert ref_doc
-    assert response.url == reverse(
+    assert resp.url == reverse(
         "reference_documents:version-confirm-create",
         kwargs={"pk": ref_doc.pk},
     )
@@ -77,13 +77,13 @@ def test_ref_doc_version_edit_updates_ref_doc_object(client, valid_user):
         "entry_into_force_date_1": "1",
         "entry_into_force_date_2": "2024",
     }
-    response = client.get(edit_url)
-    assert response.status_code == 200
+    resp = client.get(edit_url)
+    assert resp.status_code == 200
     assert ref_doc_version.version != 6.0
 
-    response = client.post(edit_url, form_data)
-    assert response.status_code == 302
-    assert response.url == reverse(
+    resp = client.post(edit_url, form_data)
+    assert resp.status_code == 302
+    assert resp.url == reverse(
         "reference_documents:version-confirm-update",
         kwargs={"pk": ref_doc_version.pk},
     )
@@ -109,16 +109,16 @@ def test_successfully_delete_ref_doc_version(valid_user, client):
         "reference_documents:version-delete",
         kwargs={"pk": ref_doc_version.pk, "ref_doc_pk": ref_doc_pk},
     )
-    response = client.get(delete_url)
-    page = BeautifulSoup(response.content, "html.parser")
-    assert response.status_code == 200
+    resp = client.get(delete_url)
+    page = BeautifulSoup(resp.content, "html.parser")
+    assert resp.status_code == 200
     assert (
         f"Delete Reference Document {area_id} version {ref_doc_version.version}"
         in page.select("main h1")[0].text
     )
-    response = client.post(delete_url)
-    assert response.status_code == 302
-    assert response.url == reverse(
+    resp = client.post(delete_url)
+    assert resp.status_code == 302
+    assert resp.url == reverse(
         "reference_documents:version-confirm-delete",
         kwargs={"deleted_pk": ref_doc_version.pk},
     )
@@ -142,14 +142,14 @@ def test_delete_ref_doc_version_invalid(valid_user, client):
         "reference_documents:version-delete",
         kwargs={"pk": ref_doc_version.pk, "ref_doc_pk": ref_doc.pk},
     )
-    response = client.get(delete_url)
-    assert response.status_code == 200
+    resp = client.get(delete_url)
+    assert resp.status_code == 200
 
-    response = client.post(delete_url)
-    assert response.status_code == 200
+    client.post(delete_url)
+    assert resp.status_code == 200
     assert (
         f"Reference Document version {ref_doc_version.version} cannot be deleted as it has current preferential duty rates or tariff quotas"
-        in str(response.content)
+        in str(resp.content)
     )
     assert ReferenceDocument.objects.filter(pk=ref_doc.pk)
 
@@ -181,9 +181,9 @@ def test_ref_doc_crud_without_permission(valid_user_client):
         "entry_into_force_date_1": "1",
         "entry_into_force_date_2": "2024",
     }
-    response = valid_user_client.post(create_url, form_data)
-    assert response.status_code == 403
-    response = valid_user_client.post(edit_url, form_data)
-    assert response.status_code == 403
-    response = valid_user_client.post(delete_url)
-    assert response.status_code == 403
+    resp = valid_user_client.post(create_url, form_data)
+    assert resp.status_code == 403
+    resp = valid_user_client.post(edit_url, form_data)
+    assert resp.status_code == 403
+    resp = valid_user_client.post(delete_url)
+    assert resp.status_code == 403
