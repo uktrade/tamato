@@ -1,3 +1,5 @@
+from datetime import date
+
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
@@ -9,7 +11,11 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 
+from common.forms import DateInputFieldFixed
+from common.forms import DateInputFieldTakesParameters
+from common.forms import GovukDateRangeField
 from common.forms import ValidityPeriodForm
+from common.util import TaricDateRange
 from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.validators import commodity_code_validator
@@ -110,7 +116,7 @@ class PreferentialQuotaCreateUpdateForm(
         return data
 
 
-class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
+class PreferentialQuotaBulkCreate(forms.Form):
     commodity_codes = forms.CharField(
         label="Commodity codes",
         widget=forms.Textarea,
@@ -138,15 +144,6 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
         },
     )
 
-    volume = forms.CharField(
-        validators=[],
-        error_messages={
-            "invalid": "Volume invalid",
-            "required": "Volume is required",
-        },
-        help_text="<br>",
-    )
-
     measurement = forms.CharField(
         validators=[],
         error_messages={
@@ -155,8 +152,56 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
         },
     )
 
+    def get_variant_index(self, post_data):
+        result = [0]
+        if "data" in post_data.keys():
+            for key in post_data["data"].keys():
+                if key.startswith("start_date_"):
+                    variant_index = int(key.replace("start_date_", "").split("_")[0])
+                    result.append(variant_index)
+            result = list(set(result))
+            result.sort()
+        return result
+
     def __init__(self, reference_document_version, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.variant_indices = self.get_variant_index(kwargs)
+        self.fields["start_date_0"] = DateInputFieldFixed(
+            label="Start date",
+            required=True,
+        )
+        self.fields["end_date_0"] = DateInputFieldFixed(label="End date", required=True)
+        self.fields["volume_0"] = forms.CharField(
+            error_messages={
+                "invalid": "Volume invalid",
+                "required": "Volume is required",
+            },
+            help_text="<br>",
+        )
+        for index in self.variant_indices:
+            self.fields[f"start_date_{index}_0"] = forms.CharField()
+            self.fields[f"start_date_{index}_1"] = forms.CharField()
+            self.fields[f"start_date_{index}_2"] = forms.CharField()
+            self.fields[f"start_date_{index}"] = DateInputFieldTakesParameters(
+                day=self.fields[f"start_date_{index}_0"],
+                month=self.fields[f"start_date_{index}_1"],
+                year=self.fields[f"start_date_{index}_2"],
+                label="Start date",
+            )
+            self.fields[f"end_date_{index}_0"] = forms.CharField()
+            self.fields[f"end_date_{index}_1"] = forms.CharField()
+            self.fields[f"end_date_{index}_2"] = forms.CharField()
+            self.fields[f"end_date_{index}"] = DateInputFieldTakesParameters(
+                day=self.fields[f"end_date_{index}_0"],
+                month=self.fields[f"end_date_{index}_1"],
+                year=self.fields[f"end_date_{index}_2"],
+                label="End date",
+            )
+            self.fields[f"valid_between_{index}"] = GovukDateRangeField()
+            self.fields[f"volume_{index}"] = forms.CharField(
+                label="Volume",
+                help_text="<br>",
+            )
         self.fields["preferential_quota_order_number"].queryset = (
             PreferentialQuotaOrderNumber.objects.all()
             .filter(reference_document_version=reference_document_version)
@@ -165,7 +210,7 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
         self.fields[
             "preferential_quota_order_number"
         ].label_from_instance = lambda obj: f"{obj.quota_order_number}"
-        self.fields["end_date"].help_text = ""
+        self.fields["end_date_0"].help_text = ""
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -184,18 +229,24 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
             ),
             Fieldset(
                 Div(
-                    Field("start_date"),
-                ),
-                Div(
-                    Field("end_date"),
+                    Field(
+                        "start_date_0",
+                    ),
                 ),
                 Div(
                     Field(
-                        "volume",
+                        "end_date_0",
+                    ),
+                ),
+                Div(
+                    Field(
+                        "volume_0",
+                        label="Volume",
                         field_width=Fixed.TEN,
                     ),
                 ),
                 style="display: grid; grid-template-columns: 2fr 2fr 1fr",
+                css_class="quota-definition-row",
             ),
             Submit(
                 "submit",
@@ -204,23 +255,98 @@ class PreferentialQuotaBulkCreate(ValidityPeriodForm, forms.ModelForm):
                 data_prevent_double_click="true",
             ),
         )
+        for index in self.variant_indices[1:]:
+            self.helper.layout.insert(
+                -1,
+                Fieldset(
+                    Div(
+                        Field(
+                            f"start_date_{index}",
+                        ),
+                    ),
+                    Div(
+                        Field(
+                            f"end_date_{index}",
+                        ),
+                    ),
+                    Div(
+                        Field(
+                            f"volume_{index}",
+                            field_width=Fixed.TEN,
+                        ),
+                    ),
+                    style="display: grid; grid-template-columns: 2fr 2fr 1fr",
+                    css_class="quota-definition-row",
+                ),
+            )
 
     def clean(self):
         cleaned_data = super().clean()
-        commodity_codes = cleaned_data.get("commodity_codes").splitlines()
-        for commodity_code in commodity_codes:
-            try:
-                commodity_code_validator(commodity_code)
-            except ValidationError:
-                self.add_error(
-                    "commodity_codes",
-                    "Ensure all commodity codes are 10 digits and each on a new line",
-                )
+        # Clean commodity codes
+        commodity_codes = cleaned_data.get("commodity_codes")
+        if commodity_codes:
+            for commodity_code in commodity_codes.splitlines():
+                try:
+                    commodity_code_validator(commodity_code)
+                except ValidationError:
+                    self.add_error(
+                        "commodity_codes",
+                        "Ensure all commodity codes are 10 digits and each on a new line",
+                    )
+        # Clean validity periods
+        for index in self.variant_indices:
+            self.clean_validity_period(
+                self,
+                cleaned_data,
+                valid_between_field_name=f"valid_between_{index}",
+                start_date_field_name=f"start_date_{index}",
+                end_date_field_name=f"end_date_{index}",
+            )
 
-    class Meta:
-        model = PreferentialQuota
-        fields = [
-            "preferential_quota_order_number",
-            "quota_duty_rate",
-            "measurement",
-        ]
+    @staticmethod
+    def clean_validity_period(
+        self,
+        cleaned_data,
+        valid_between_field_name,
+        start_date_field_name,
+        end_date_field_name,
+    ):
+        start_date = cleaned_data.pop(start_date_field_name, None)
+        end_date = cleaned_data.pop(end_date_field_name, None)
+
+        # Data may not be present, e.g. if the user skips ahead in the sidebar
+        valid_between = self.initial.get(valid_between_field_name)
+        if end_date and start_date and end_date < start_date:
+            if valid_between:
+                if start_date != valid_between.lower:
+                    self.add_error(
+                        start_date_field_name,
+                        "The start date must be the same as or before the end date.",
+                    )
+                if end_date != self.initial[valid_between_field_name].upper:
+                    self.add_error(
+                        end_date_field_name,
+                        "The end date must be the same as or after the start date.",
+                    )
+            else:
+                self.add_error(
+                    end_date_field_name,
+                    "The end date must be the same as or after the start date.",
+                )
+        cleaned_data[valid_between_field_name] = TaricDateRange(start_date, end_date)
+
+        if start_date:
+            day, month, year = (start_date.day, start_date.month, start_date.year)
+            self.fields[start_date_field_name].initial = date(
+                day=int(day),
+                month=int(month),
+                year=int(year),
+            )
+
+        if end_date:
+            day, month, year = (end_date.day, end_date.month, end_date.year)
+            self.fields[end_date_field_name].initial = date(
+                day=int(day),
+                month=int(month),
+                year=int(year),
+            )

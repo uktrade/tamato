@@ -1,5 +1,3 @@
-from datetime import date
-
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -7,7 +5,6 @@ from django.views.generic import CreateView
 from django.views.generic import FormView
 from django.views.generic import UpdateView
 
-from common.util import TaricDateRange
 from reference_documents.forms.preferential_quota_forms import (
     PreferentialQuotaBulkCreate,
 )
@@ -80,7 +77,6 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
 class PreferentialQuotaBulkCreateView(PermissionRequiredMixin, FormView):
     template_name = "reference_documents/preferential_quotas/bulk_create.jinja"
     permission_required = "reference_documents.add_preferentialquota"
-    # model = PreferentialQuota
     form_class = PreferentialQuotaBulkCreate
     queryset = ReferenceDocumentVersion.objects.all()
 
@@ -102,54 +98,32 @@ class PreferentialQuotaBulkCreateView(PermissionRequiredMixin, FormView):
         )
         return context_data
 
-    @staticmethod
-    def get_validity_and_volume_data(data):
-        entries = []
-        for entry in range(len(data.getlist("volume"))):
-            start_date = date(
-                day=int(data.getlist("start_date_0")[entry]),
-                month=int(data.getlist("start_date_1")[entry]),
-                year=int(data.getlist("start_date_2")[entry]),
-            )
-            end_date = date(
-                day=int(data.getlist("end_date_0")[entry]),
-                month=int(data.getlist("end_date_1")[entry]),
-                year=int(data.getlist("end_date_2")[entry]),
-            )
-            valid_between = TaricDateRange(start_date, end_date)
-            volume = data.getlist("volume")[entry]
-            entries.append({f"valid_between": valid_between, f"volume": volume})
-        return entries
-
     def form_valid(self, form):
-        dates_and_volumes = self.get_validity_and_volume_data(form.data)
+        cleaned_data = form.cleaned_data
         commodity_codes = form.cleaned_data["commodity_codes"].splitlines()
-        self.reference_document_version = ReferenceDocumentVersion.objects.all().get(
+        reference_document_version = ReferenceDocumentVersion.objects.all().get(
             pk=self.kwargs["pk"],
         )
         for commodity_code in commodity_codes:
-            for entry in dates_and_volumes:
-                instance = form.save(commit=False)
-                instance.order = (
-                    len(self.reference_document_version.preferential_quotas()) + 1
-                )
-                instance = PreferentialQuota(
+            for index in form.variant_indices:
+                PreferentialQuota.objects.create(
                     commodity_code=commodity_code,
-                    quota_duty_rate=instance.quota_duty_rate,
-                    volume=entry["volume"],
-                    valid_between=entry["valid_between"],
-                    measurement=instance.measurement,
-                    order=instance.order,
-                    preferential_quota_order_number=instance.preferential_quota_order_number,
+                    quota_duty_rate=cleaned_data["quota_duty_rate"],
+                    volume=cleaned_data[f"volume_{index}"],
+                    valid_between=cleaned_data[f"valid_between_{index}"],
+                    measurement=cleaned_data["measurement"],
+                    order=len(reference_document_version.preferential_quotas()) + 1,
+                    preferential_quota_order_number=cleaned_data[
+                        "preferential_quota_order_number"
+                    ],
                 )
-                instance.save()
-        return redirect(self.get_success_url())
+        return redirect(self.get_success_url(reference_document_version))
 
-    def get_success_url(self):
+    def get_success_url(self, reference_document_version):
         return (
             reverse(
                 "reference_documents:version-details",
-                args=[self.reference_document_version.pk],
+                args=[reference_document_version.pk],
             )
             + "#tariff-quotas"
         )
