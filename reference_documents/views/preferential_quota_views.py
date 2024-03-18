@@ -73,6 +73,7 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
         return kwargs
 
     def form_valid(self, form):
+        form.instance.order = 1
         form.save()
         return super(PreferentialQuotaCreateView, self).form_valid(form)
 
@@ -80,7 +81,9 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
         return (
             reverse(
                 "reference_documents:version-details",
-                args=[self.object.reference_document_version.pk],
+                args=[
+                    self.object.preferential_quota_order_number.reference_document_version.pk,
+                ],
             )
             + "#tariff-quotas"
         )

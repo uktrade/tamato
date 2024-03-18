@@ -1,6 +1,8 @@
 import pytest
 
-from reference_documents.forms import PreferentialRateCreateUpdateForm
+from reference_documents.forms.preferential_rate_forms import (
+    PreferentialRateCreateUpdateForm,
+)
 
 pytestmark = pytest.mark.django_db
 

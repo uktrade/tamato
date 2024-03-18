@@ -26,6 +26,7 @@ def test_ref_doc_version_create_creates_object_and_redirects(valid_user, client)
         "reference_documents:version-create",
         kwargs={"pk": ref_doc.pk},
     )
+
     form_data = {
         "reference_document": ref_doc.pk,
         "version": "2.0",
@@ -40,7 +41,7 @@ def test_ref_doc_version_create_creates_object_and_redirects(valid_user, client)
     assert response.status_code == 302
 
     ref_doc = ReferenceDocumentVersion.objects.get(
-        reference_document=form_data["reference_document"],
+        reference_document=ref_doc,
     )
     assert ref_doc
     assert response.url == reverse(
@@ -84,7 +85,7 @@ def test_ref_doc_version_edit_updates_ref_doc_object(client, valid_user):
     assert response.status_code == 302
     assert response.url == reverse(
         "reference_documents:version-confirm-update",
-        kwargs={"pk": ref_doc_version.reference_document.pk},
+        kwargs={"pk": ref_doc_version.pk},
     )
     ref_doc_version.refresh_from_db()
     assert ref_doc_version.version == 6.0

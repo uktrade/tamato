@@ -21,7 +21,7 @@ class PreferentialQuotaCreateUpdateForm(
     class Meta:
         model = PreferentialQuota
         fields = [
-            "quota_order_number",
+            "preferential_quota_order_number",
             "commodity_code",
             "quota_duty_rate",
             "volume",
@@ -39,10 +39,12 @@ class PreferentialQuotaCreateUpdateForm(
         super().__init__(*args, **kwargs)
 
         if preferential_quota_order_number:
-            self.initial["quota_order_number"] = preferential_quota_order_number
+            self.initial[
+                "preferential_quota_order_number"
+            ] = preferential_quota_order_number
 
         self.fields[
-            "quota_order_number"
+            "preferential_quota_order_number"
         ].queryset = reference_document_version.preferential_quota_order_numbers.all()
 
         self.reference_document_version = reference_document_version
@@ -51,7 +53,7 @@ class PreferentialQuotaCreateUpdateForm(
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            "quota_order_number",
+            "preferential_quota_order_number",
             Field.text(
                 "commodity_code",
                 field_width=Fixed.TEN,
@@ -84,23 +86,13 @@ class PreferentialQuotaCreateUpdateForm(
             raise ValidationError("Quota duty Rate is not valid - it must have a value")
         return data
 
-    # def clean(self, ):
-    #     data = self.cleaned_data["quota_duty_rate"]
-    #     pass
-
-    # def clean_validity_period(
-    #         self,
-    #         cleaned_data,
-    #         valid_between_field_name="valid_between",
-    #         start_date_field_name="start_date",
-    #         end_date_field_name="end_date",
-    # ):
-    #     super().clean_validity_period(cleaned_data, "valid_between", "start_date", "end_date")
-    #     print(cleaned_data[valid_between_field_name])
-    #     data = self.cleaned_data["quota_duty_rate"]
-    #     if data is None:
-    #         raise ValidationError("Validity range must have an end date")
-    #     return data
+    def clean_preferential_quota_order_number(self):
+        data = self.cleaned_data["preferential_quota_order_number"]
+        if not data:
+            raise ValidationError(
+                "Quota Order Number is not valid - it must have a value",
+            )
+        return data
 
     commodity_code = forms.CharField(
         max_length=10,
