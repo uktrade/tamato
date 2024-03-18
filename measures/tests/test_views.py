@@ -4,6 +4,7 @@ import unittest
 from datetime import date
 from decimal import Decimal
 from typing import OrderedDict
+from unittest.mock import PropertyMock
 from unittest.mock import patch
 from urllib.parse import urlencode
 
@@ -2802,6 +2803,42 @@ def test_measures_create_process_queue_view_task_action_options(
 
     assert page.find("span", class_="contact-tap")
     assert page.find("span", class_="not-applicable")
+
+
+@pytest.mark.parametrize(
+    ("expected_measures_count", "successfully_processed_count"),
+    (
+        (1, 0),
+        (1, 1),
+    ),
+)
+def test_measures_create_process_queue_view_processed_count(
+    expected_measures_count,
+    successfully_processed_count,
+    valid_user_client,
+):
+    """Test that the item count column displays the correct values for different
+    states."""
+
+    MeasuresBulkCreatorFactory.create(
+        successfully_processed_count=successfully_processed_count,
+    )
+    url = reverse("measure-create-process-queue")
+
+    with patch(
+        "measures.models.bulk_processing.MeasuresBulkCreator.expected_measures_count",
+        new_callable=PropertyMock,
+    ) as mock_expected_measures_count:
+        mock_expected_measures_count.return_value = expected_measures_count
+        response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    processed_count = page.find("span", class_="processed-count")
+    expected_substring = f"{successfully_processed_count} of {expected_measures_count}"
+
+    assert expected_substring in processed_count.text
 
 
 def test_measures_create_process_queue_view_task_is_failed(

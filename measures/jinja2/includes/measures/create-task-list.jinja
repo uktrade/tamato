@@ -5,7 +5,10 @@
 
 {% for object in object_list %}
     {% set workbasket_link -%}
-        <a class="govuk-link" href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}">{{ object.workbasket.pk }}</a>
+        <a
+            class="govuk-link"
+            href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}"
+        >{{ object.workbasket.pk }}</a>
     {%- endset %}
 
     {% set submitted_date -%}
@@ -19,6 +22,12 @@
     {% set object_status -%}
         <span class="{{ status_tag_generator(object).tag_class }}">
             {{ status_tag_generator(object).text | upper }}
+        </span>
+    {%- endset %}
+
+    {% set item_count -%}
+        <span class="processed-count">
+            {{ object.successfully_processed_count }} of {{ object.expected_measures_count }} processed
         </span>
     {%- endset %}
 
@@ -40,7 +49,7 @@
         {"text": submitted_date},
         {"text": submitted_by},
         {"text": object_status},
-        {"text": "TODO"},
+        {"text": item_count},
         {"text": action_html},
     ]) or "" }}
 {% endfor %}
