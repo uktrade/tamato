@@ -195,7 +195,7 @@ class CertificateDetailMeasures(SortingMixin, WithPaginationListMixin, ListView)
 
         for condition in measure_conditions:
             measure_ids.append(
-                condition.dependent_measure.current_version.trackedmodel_ptr_id,
+                condition.dependent_measure.get_versions().current().get().pk,
             )
 
         queryset = Measure.objects.current().filter(id__in=measure_ids)
