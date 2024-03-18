@@ -73,13 +73,7 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
         return kwargs
 
     def form_valid(self, form):
-        instance = form.instance
-        reference_document_version = ReferenceDocumentVersion.objects.get(
-            pk=self.kwargs["version_pk"],
-        )
-        instance.order = len(reference_document_version.preferential_rates.all()) + 1
-        instance.reference_document_version = reference_document_version
-        self.object = instance
+        form.save()
         return super(PreferentialQuotaCreateView, self).form_valid(form)
 
     def get_success_url(self):

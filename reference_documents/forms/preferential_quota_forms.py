@@ -7,6 +7,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 
+from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
 from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialQuotaOrderNumber
@@ -148,6 +149,10 @@ class PreferentialQuotaCreateUpdateForm(
             "invalid": "Measurement invalid",
             "required": "Measurement is required",
         },
+    )
+
+    end_date = DateInputFieldFixed(
+        label="End date",
     )
 
 
