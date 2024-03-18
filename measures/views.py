@@ -934,7 +934,7 @@ class MeasureCreateWizard(
         cleaned_data = self.get_all_cleaned_data()
 
         created_measures = self.create_measures(cleaned_data)
-        created_measures[0].transaction.workbasket.assign_to_user(self.request.user)
+        created_measures[0].transaction.workbasket.set_as_current(self.request.user)
 
         context = self.get_context_data(
             form=None,

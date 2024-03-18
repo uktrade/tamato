@@ -104,7 +104,7 @@ class WorkBasketCreate(PermissionRequiredMixin, CreateView):
         self.object = form.save(commit=False)
         self.object.author = self.request.user
         self.object.save()
-        self.object.assign_to_user(self.request.user)
+        self.object.set_as_current(self.request.user)
         return redirect(
             reverse(
                 "workbaskets:workbasket-ui-confirm-create",
@@ -189,7 +189,7 @@ class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
                 workbasket.restore()
                 workbasket.save()
 
-            workbasket.assign_to_user(request.user)
+            workbasket.set_as_current(request.user)
 
             if workbasket_tab:
                 view = workbasket_tab_map[workbasket_tab]
@@ -473,7 +473,7 @@ class CurrentWorkBasket(TemplateView):
             if result.status != "SUCCESS":
                 context.update({"rule_check_in_progress": True})
             else:
-                self.workbasket.assign_to_user(self.request.user)
+                self.workbasket.set_as_current(self.request.user)
 
             num_completed, total = self.workbasket.rule_check_progress()
             context.update(
@@ -1086,11 +1086,14 @@ class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
         return kwargs
 
     def form_valid(self, form):
-        if not PackagedWorkBasket.objects.filter(workbasket=self.object).exists():
-            self.object.delete()
-        else:
+        if (
+            PackagedWorkBasket.objects.filter(workbasket=self.object).exists()
+            or self.object.tasks.exists()
+        ):
             self.object.archive()
             self.object.save()
+        else:
+            self.object.delete()
         return redirect(self.get_success_url())
 
 
@@ -1249,7 +1252,7 @@ class WorkBasketChecksView(FormView):
             if result.status != "SUCCESS":
                 context.update({"rule_check_in_progress": True})
             else:
-                self.workbasket.assign_to_user(self.request.user)
+                self.workbasket.set_as_current(self.request.user)
 
             num_completed, total = self.workbasket.rule_check_progress()
             context.update(
