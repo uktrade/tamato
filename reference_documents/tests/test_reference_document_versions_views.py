@@ -145,7 +145,7 @@ def test_delete_ref_doc_version_invalid(valid_user, client):
     resp = client.get(delete_url)
     assert resp.status_code == 200
 
-    client.post(delete_url)
+    resp = client.post(delete_url)
     assert resp.status_code == 200
     assert (
         f"Reference Document version {ref_doc_version.version} cannot be deleted as it has current preferential duty rates or tariff quotas"
