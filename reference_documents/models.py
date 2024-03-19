@@ -83,6 +83,12 @@ class ReferenceDocumentVersion(models.Model):
             ),
         ]
 
+    def preferential_quotas(self):
+        order_numbers = self.preferential_quota_order_numbers.all()
+        return PreferentialQuota.objects.all().filter(
+            preferential_quota_order_number__in=order_numbers,
+        )
+
 
 class PreferentialQuotaOrderNumber(models.Model):
     reference_document_version = models.ForeignKey(
