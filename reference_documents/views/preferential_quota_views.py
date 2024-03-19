@@ -96,30 +96,27 @@ class PreferentialQuotaBulkCreateView(PermissionRequiredMixin, FormView):
     form_class = PreferentialQuotaBulkCreate
     queryset = ReferenceDocumentVersion.objects.all()
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs[
-            "reference_document_version"
-        ] = ReferenceDocumentVersion.objects.all().get(
+    def get_reference_document_version(self):
+        return ReferenceDocumentVersion.objects.all().get(
             pk=self.kwargs["pk"],
         )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["reference_document_version"] = self.get_reference_document_version()
         return kwargs
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data[
             "reference_document_version"
-        ] = ReferenceDocumentVersion.objects.all().get(
-            pk=self.kwargs["pk"],
-        )
+        ] = self.get_reference_document_version()
         return context_data
 
     def form_valid(self, form):
         cleaned_data = form.cleaned_data
-        commodity_codes = form.cleaned_data["commodity_codes"].splitlines()
-        reference_document_version = ReferenceDocumentVersion.objects.all().get(
-            pk=self.kwargs["pk"],
-        )
+        commodity_codes = set(form.cleaned_data["commodity_codes"].splitlines())
+        reference_document_version = self.get_reference_document_version()
         for commodity_code in commodity_codes:
             for index in form.variant_indices:
                 PreferentialQuota.objects.create(
@@ -133,13 +130,13 @@ class PreferentialQuotaBulkCreateView(PermissionRequiredMixin, FormView):
                         "preferential_quota_order_number"
                     ],
                 )
-        return redirect(self.get_success_url(reference_document_version))
+        return redirect(self.get_success_url())
 
-    def get_success_url(self, reference_document_version):
+    def get_success_url(self):
         return (
             reverse(
                 "reference_documents:version-details",
-                args=[reference_document_version.pk],
+                args=[self.get_reference_document_version().pk],
             )
             + "#tariff-quotas"
         )
