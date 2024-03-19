@@ -28,6 +28,7 @@ def bulk_create_measures(measures_bulk_creator_pk: int) -> None:
         raise e
 
     measures_bulk_creator.processing_succeeded()
+    measures_bulk_creator.successfully_processed_count = len(measures)
     measures_bulk_creator.save()
 
     if measures:
