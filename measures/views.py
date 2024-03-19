@@ -13,6 +13,7 @@ from crispy_forms.helper import FormHelper
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.db.models import Q
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -1149,13 +1150,11 @@ class MeasuresCreateProcessQueue(
     def get_processing_queryset(self):
         """Returns a combined queryset of tasks either AWAITING_PROCESSING or
         CURRENTLY_PROCESSING."""
-        awaiting_processing = self.queryset.filter(
-            processing_state="AWAITING_PROCESSING",
+
+        return self.queryset.filter(
+            Q(processing_state=ProcessingState.AWAITING_PROCESSING)
+            | Q(processing_state=ProcessingState.CURRENTLY_PROCESSING),
         )
-        currently_processing = self.queryset.filter(
-            processing_state="CURRENTLY_PROCESSING",
-        )
-        return awaiting_processing.union(currently_processing)
 
     def is_task_failed(self, task: MeasuresBulkCreator) -> bool:
         """
