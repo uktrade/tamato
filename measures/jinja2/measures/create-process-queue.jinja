@@ -17,32 +17,31 @@
   ) }}
 {% endblock %}
 
-
 {% set filter_links_list = [
   {
     "text": "All",
-    "href": "?status=",
-    "selected": selected_filter == "all",
+    "href": "?processing_state=",
+    "selected": selected_link == "all",
   },
   {
     "text": "Processing",
-    "href": "?status=PROCESSING",
-    "selected": selected_filter == "processing",
+    "href": "?processing_state=PROCESSING",
+    "selected": selected_link == "processing",
   },
   {
     "text": "Completed",
-    "href": "?status=COMPLETED",
-    "selected": selected_filter == "completed",
+    "href": "?processing_state=SUCCESSFULLY_PROCESSED",
+    "selected": selected_link == "completed",
   },
   {
     "text": "Failed",
-    "href": "?status=FAILED",
-    "selected": selected_filter == "failed",
+    "href": "?processing_state=FAILED_PROCESSING",
+    "selected": selected_link == "failed",
   },
   {
     "text": "Cancelled",
-    "href": "?status=CANCELLED",
-    "selected": selected_filter == "cancelled",
+    "href": "?processing_state=CANCELLED",
+    "selected": selected_link == "cancelled",
   },
 ]%}
 
