@@ -105,6 +105,16 @@ class BulkProcessor(TimestampedMixin):
     on on this class that are annotated by @transition.
     """
 
+    successfully_processed_count = models.PositiveIntegerField(
+        default=0,
+    )
+    """
+    The number of objects processed by a bulk creation task.
+
+    Its value is set when the processor has successfully completed and maintains
+    its default value of zero otherwise.
+    """
+
     def schedule_task(self) -> AsyncResult:
         """
         Prototype of function that must be implemented by this mixin's subclass.
