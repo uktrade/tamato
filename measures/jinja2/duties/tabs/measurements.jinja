@@ -1,0 +1,46 @@
+
+{% for object in measurements %}
+
+  {% set end_date -%}
+    {{" - {:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else " —"}}
+  {% endset %}
+  {% set validity -%}
+    {{"{:%d %b %Y}".format(object.valid_between.lower) ~ end_date }}
+  {% endset %}
+
+  <h3 class="govuk-heading-l">{{ object.measurement_unit.abbreviation }} {% if object.measurement_unit_qualifier %}
+  {{ object.measurement_unit_qualifier.abbreviation }}
+  {% else %}
+  {% endif %}</h3>
+
+  {{ govukSummaryList({
+    "rows": [
+      {
+        "key": { "text": "Unit abbreviation" },
+        "value": { "html": '<code>' ~ object.measurement_unit.abbreviation ~ "</code>" if object.measurement_unit else "N/A" },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Unit code" },
+        "value": { "html": '<code>' ~ object.measurement_unit.code ~ "</code>" if object.measurement_unit else "N/A" },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Qualifier abbreviation" },
+        "value": { "html": '<code>' ~ object.measurement_unit_qualifier.abbreviation ~ "</code>" if object.measurement_unit_qualifier else "N/A" },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Qualifier code" },
+        "value": { "html": '<code>' ~ object.measurement_unit_qualifier.code ~ "</code>" if object.measurement_unit_qualifier else "N/A" },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Validity" },
+        "value": { "text": validity },
+        "actions": {"items": []}
+      },
+    ]})
+  }}
+
+{% endfor %}

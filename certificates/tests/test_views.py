@@ -311,6 +311,55 @@ def test_certificate_detail_measures_view_lists_measures(valid_user_client):
     assert page.find("nav", class_="pagination").find_next("a", href="?page=2")
 
 
+def test_certificate_detail_measures_view_lists_measures_latest_version(
+    valid_user_client,
+):
+    """Test that `CertificateDetailMeasures` view displays a  list of the latest
+    measures for a certificate when the condition is related to an older version
+    of the dependant measure."""
+    certificate = factories.CertificateFactory.create()
+    tnx = certificate.transaction
+    workbasket = certificate.transaction.workbasket
+    measures = []
+    new_measures = []
+    for measure_with_condition in range(10):
+        measure = factories.MeasureFactory.create(
+            transaction=tnx,
+        )
+        factories.MeasureConditionFactory.create(
+            dependent_measure=measure,
+            required_certificate=certificate,
+            transaction=tnx,
+        )
+        new_measure = measure.new_version(
+            workbasket=workbasket,
+            update_type=UpdateType.UPDATE,
+        )
+        measures.append(measure)
+        new_measures.append(new_measure)
+
+    url = reverse(
+        "certificate-ui-detail-measures",
+        kwargs={
+            "sid": certificate.sid,
+            "certificate_type__sid": certificate.certificate_type.sid,
+        },
+    )
+    response = valid_user_client.get(url)
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    table_rows = page.select(".govuk-table tbody tr")
+    assert len(table_rows) == 10
+
+    table_measure_sids = {
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    }
+    assert table_measure_sids == {m.sid for m in new_measures}
+
+
 def test_certificate_detail_measures_view_sorting_commodity(valid_user_client):
     """Test that measures listed on `CertificateDetailMeasures` view can be
     sorted by commodity code in ascending or descending order."""
