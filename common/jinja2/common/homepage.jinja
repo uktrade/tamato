@@ -2,13 +2,6 @@
 
 {% set page_title = "Home" %}
 
-{% block notification_icon %}
-  <div id="notification-icon-container">
-    <img class="notification-icon" src="{{ static('/common/images/bell-icon.svg') }}" alt="notification icon">
-    <span class="notification-icon-count">2</span>
-  </div>
-{% endblock %}
-
 {% block content %}
   <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">Search the Tariff Application Platform</h1>
   <span class="govuk-caption-l govuk-!-margin-bottom-4">This service lets you manage the UK's import and export tariff data</span>
@@ -22,26 +15,6 @@
       </div>
     </div>
   {% endblock %}
-
-  <div class="govuk-notification-banner govuk-!-margin-top-3 govuk-!-margin-bottom-3"
-    id="govuk-notification-banner-title"
-    aria-labelledby="govuk-notification-banner-title"
-    role="region"
-    data-module="govuk-notification-banner"
-  >
-    <div class="govuk-notification-banner__content">
-      {% if assigned_workbaskets %}
-        <p class="govuk-body">
-          <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Workbaskets assigned ({{ assigned_workbaskets|length }})</span>
-          <a class="govuk-notification-banner__link" href="{{ url('workbaskets:workbasket-ui-list') }}">View</a>
-        </p>
-      {% endif %}
-      <p class="govuk-body">
-        <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">Quotas expiring soon (1)</span>
-        <a class="govuk-notification-banner__link" href="{{ url('reports:quotas_expiring_soon') }}">View</a>
-      </p>
-    </div>
-  </div>
 
   <div id="homepage-articles" class="govuk-grid-row">
     {% if can_view_workbasket %}
@@ -118,7 +91,6 @@
     {% if can_import_taric %}
       <article class="homepage-card">
         <h3 class="govuk-heading-m">EU TARIC files</h3>
-        <p class="govuk-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit donec quis.</p>
         <p class="govuk-body">
           <a href="{{ url('commodity_importer-ui-list') }}"
             class="govuk-link"
@@ -130,23 +102,10 @@
     {% if can_consume_packaging %}
       <article class="homepage-card">
         <h3 class="govuk-heading-m">Envelopes</h3>
-        <p class="govuk-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit donec quis.</p>
         <p class="govuk-body">
           <a href="{{ url('publishing:envelope-queue-ui-list') }}"
             class="govuk-link"
           >Process envelopes</a>
-        </p>
-      </article>
-    {% endif %}
-
-    {% if can_add_workbasket %}
-      <article class="homepage-card">
-        <h3 class="govuk-heading-m">Processing queue</h3>
-        <p class="govuk-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit donec quis.</p>
-        <p class="govuk-body">
-          <a href="#PLACEHOLDER"
-            class="govuk-link"
-          >Processing queue</a>
         </p>
       </article>
     {% endif %}

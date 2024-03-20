@@ -106,7 +106,7 @@ class HomeView(LoginRequiredMixin, FormView):
 
     def get_search_result(self, search_term: str) -> Optional[str]:
         """
-        Returns the outcome of a search result for a given `search_term`.
+        Returns the outcome of a search for a given `search_term`.
 
         The search term is expected to be either a tariff element name or a tariff
         element ID, with a length between 2 and 18 characters.
