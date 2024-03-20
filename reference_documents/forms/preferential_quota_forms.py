@@ -1,6 +1,7 @@
 from datetime import date
 
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
@@ -169,7 +170,7 @@ class PreferentialQuotaBulkCreate(forms.Form):
     commodity_codes = forms.CharField(
         label="Commodity codes",
         widget=forms.Textarea,
-        # validators=[commodity_code_validator],
+        help_text="Enter one or more commodity codes with each one on a new line.",
         error_messages={
             "invalid": "Commodity code should be 10 digits",
             "required": "Commodity code is required",
@@ -202,6 +203,9 @@ class PreferentialQuotaBulkCreate(forms.Form):
     )
 
     def get_variant_index(self, post_data):
+        """Looks through post data to see how many validity date / volume
+        combinations have been submitted and returns the index value of each
+        combination in a list."""
         result = [0]
         if "data" in post_data.keys():
             for key in post_data["data"].keys():
@@ -227,6 +231,7 @@ class PreferentialQuotaBulkCreate(forms.Form):
             },
             help_text="<br>",
         )
+        # Add frontend dynamically added fields to the backend Django form
         for index in self.variant_indices:
             self.fields[f"start_date_{index}_0"] = forms.CharField()
             self.fields[f"start_date_{index}_1"] = forms.CharField()
@@ -259,7 +264,6 @@ class PreferentialQuotaBulkCreate(forms.Form):
         self.fields[
             "preferential_quota_order_number"
         ].label_from_instance = lambda obj: f"{obj.quota_order_number}"
-        self.fields["end_date_0"].help_text = ""
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -297,13 +301,18 @@ class PreferentialQuotaBulkCreate(forms.Form):
                 style="display: grid; grid-template-columns: 2fr 2fr 1fr",
                 css_class="quota-definition-row",
             ),
-            Submit(
-                "submit",
-                "Save",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
+            Div(
+                Submit(
+                    "submit",
+                    "Save",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                Button.secondary("", "Add new", css_id="add-new-definition"),
+                css_class="govuk-button-group",
             ),
         )
+        # Add dynamically added fields to Django form layout so they do not disappear in the event the form is invalid and reloads
         for index in self.variant_indices[1:]:
             self.helper.layout.insert(
                 -1,
@@ -344,16 +353,14 @@ class PreferentialQuotaBulkCreate(forms.Form):
                     )
         # Clean validity periods
         for index in self.variant_indices:
-            self.clean_validity_period(
-                self,
+            self.custom_clean_validity_period(
                 cleaned_data,
                 valid_between_field_name=f"valid_between_{index}",
                 start_date_field_name=f"start_date_{index}",
                 end_date_field_name=f"end_date_{index}",
             )
 
-    @staticmethod
-    def clean_validity_period(
+    def custom_clean_validity_period(
         self,
         cleaned_data,
         valid_between_field_name,
