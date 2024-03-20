@@ -186,7 +186,7 @@ def test_maintenance_mode_page_content(valid_user_client):
         ("Envelopes", "consume_from_packaging_queue"),
         ("Resources", ""),
         ("Get help", ""),
-        ("Other ways of support", ""),
+        ("Get in touch", ""),
     ],
 )
 def test_homepage_cards_match_user_permissions(card, permission, client):
