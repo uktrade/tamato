@@ -56,3 +56,16 @@
   color: govuk-shade(govuk-colour("green"), 20);
   background: govuk-tint(govuk-colour("green"), 80);
 }
+
+.rule-violation-badge {
+  display: inline-block;
+  font-weight: bold;
+  color: govuk-colour("white");
+  background-color:  $govuk-error-colour;
+  min-height: 16px;
+  min-width: 16px;
+  line-height: 1;
+  text-align: center;
+  border-radius: 50%;
+  padding: 4px;
+}

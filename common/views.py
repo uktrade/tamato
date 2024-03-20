@@ -19,6 +19,7 @@ from django.db import OperationalError
 from django.db import connection
 from django.db import transaction
 from django.db.models import Model
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
@@ -26,54 +27,217 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.timezone import make_aware
-from django.views import generic
+from django.views.generic import DetailView
 from django.views.generic import FormView
 from django.views.generic import TemplateView
-from django.views.generic.base import View
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from common import forms
+from additional_codes.models import AdditionalCode
+from certificates.models import Certificate
+from commodities.models import GoodsNomenclature
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.celery import app
+from common.forms import HomeSearchForm
 from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
+from footnotes.models import Footnote
+from geo_areas.models import GeographicalArea
+from measures.models import Measure
 from publishing.models import PackagedWorkBasket
+from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
+from tasks.models import UserAssignment
 from workbaskets.models import WorkBasket
+from workbaskets.models import WorkflowStatus
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
-class HomeView(FormView, View):
-    template_name = "common/workbasket_action.jinja"
-    form_class = forms.HomeForm
+class HomeView(LoginRequiredMixin, FormView):
+    template_name = "common/homepage.jinja"
+    form_class = HomeSearchForm
 
-    REDIRECT_MAPPING = {
-        "EDIT": "workbaskets:workbasket-ui-list",
-        "CREATE": "workbaskets:workbasket-ui-create",
-        "PACKAGE_WORKBASKETS": "publishing:packaged-workbasket-queue-ui-list",
-        "PROCESS_ENVELOPES": "publishing:envelope-queue-ui-list",
-        "SEARCH": "search-page",
-        "IMPORT": "commodity_importer-ui-list",
-        "WORKBASKET_LIST_ALL": "workbaskets:workbasket-ui-list-all",
-    }
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
+        assignments = (
+            UserAssignment.objects.filter(user=self.request.user)
+            .assigned()
+            .select_related("task__workbasket")
+            .filter(
+                Q(task__workbasket__status=WorkflowStatus.EDITING)
+                | Q(task__workbasket__status=WorkflowStatus.ERRORED),
+            )
+        )
+        assigned_workbaskets = []
+        for assignment in assignments:
+            workbasket = assignment.task.workbasket
+            assignment_type = (
+                "Assigned"
+                if assignment.assignment_type
+                == UserAssignment.AssignmentType.WORKBASKET_WORKER
+                else "Reviewing"
+            )
+            rule_violations_count = workbasket.tracked_model_check_errors.count()
+            assigned_workbaskets.append(
+                {
+                    "id": workbasket.id,
+                    "rule_violations_count": rule_violations_count,
+                    "assignment_type": assignment_type,
+                },
+            )
+
+        context.update(
+            {
+                "assigned_workbaskets": assigned_workbaskets,
+                "can_add_workbasket": self.request.user.has_perm(
+                    "workbaskets.add_workbasket",
+                ),
+                "can_view_reports": self.request.user.has_perm(
+                    "reports.view_report_index",
+                ),
+            },
+        )
+        return context
+
+    def get_search_result(self, search_term: str) -> Optional[str]:
+        """
+        Returns the outcome of a search for a given `search_term`.
+
+        The search term is expected to be either a tariff element name or a tariff
+        element ID, with a length between 2 and 18 characters.
+
+        For a tariff element name, we attempt to find a matching key in `list_view_map` dict,
+        returning the corresponding 'Find and edit' view URL of the matching element.
+
+        For a tariff element ID, we perform case-insensitive DB lookups for tariff elements whose ID
+        takes the form of the search term, returning the detail view URL of the matching element.
+
+        If no match can be found for a given search term, then `None` is returned.
+        """
+        # Check if the search term matches an element name
+        list_view_map = {
+            "additional codes": "additional_code-ui-list",
+            "certificates": "certificate-ui-list",
+            "footnotes": "footnote-ui-list",
+            "geographical areas": "geo_area-ui-list",
+            "commodities": "commodity-ui-list",
+            "measures": "measure-ui-search",
+            "quotas": "quota-ui-list",
+            "regulations": "regulation-ui-list",
+        }
+        match = list_view_map.get(search_term, None)
+        if match:
+            return match
+
+        # Otherwise attempt to match the search term to an element ID
+        search_len = len(search_term)
+        if search_len == 2:
+            match = (
+                GeographicalArea.objects.filter(area_id__iexact=search_term)
+                .current()
+                .last()
+            )
+            return match.get_url() if match else None
+
+        elif search_len == 4:
+            match = (
+                AdditionalCode.objects.filter(
+                    type__sid__iexact=search_term[0],
+                    code__iexact=search_term[1:],
+                )
+                .current()
+                .last()
+            )
+            if match:
+                return match.get_url()
+
+            match = (
+                Certificate.objects.filter(
+                    certificate_type__sid__iexact=search_term[0],
+                    sid__iexact=search_term[1:],
+                )
+                .current()
+                .last()
+            )
+            if match:
+                return match.get_url()
+
+            match = (
+                GeographicalArea.objects.filter(area_id__iexact=search_term)
+                .current()
+                .last()
+            )
+            return match.get_url() if match else None
+
+        elif search_len == 5:
+            match = (
+                Footnote.objects.filter(
+                    footnote_type__footnote_type_id__iexact=search_term[:2],
+                    footnote_id=search_term[2:],
+                )
+                .current()
+                .last()
+            )
+            return match.get_url() if match else None
+
+        elif search_term.isnumeric():
+            if search_len == 6 and search_term[0] == "0":
+                match = (
+                    QuotaOrderNumber.objects.filter(order_number=search_term)
+                    .current()
+                    .last()
+                )
+                return match.get_url() if match else None
+            if search_len == 10:
+                match = (
+                    GoodsNomenclature.objects.filter(item_id=search_term)
+                    .current()
+                    .last()
+                )
+            if match:
+                return match.get_url()
+            else:
+                match = Measure.objects.filter(sid=search_term).current().last()
+                return match.get_url() if match else None
+
+        elif search_len == 8:
+            match = (
+                Regulation.objects.filter(regulation_id__iexact=search_term)
+                .current()
+                .last()
+            )
+            return match.get_url() if match else None
+
+        # No match has been found for the search term
+        else:
+            return None
 
     def form_valid(self, form):
-        return redirect(
-            reverse(self.REDIRECT_MAPPING[form.cleaned_data["workbasket_action"]]),
-        )
+        search_term = form.cleaned_data["search_term"]
+        if not search_term:
+            return self.get_success_url(reverse("search-page"))
+
+        result = self.get_search_result(search_term)
+        if result:
+            return self.get_success_url(result)
+        else:
+            return self.get_success_url(reverse("search-page"))
+
+    def get_success_url(self, url):
+        return redirect(url)
 
 
 class SearchPageView(TemplateView):
     template_name = "common/search_page.jinja"
+
+
+class ResourcesView(TemplateView):
+    template_name = "common/resources.jinja"
 
 
 class HealthCheckResponse(HttpResponse):
@@ -316,7 +480,7 @@ class TrackedModelDetailMixin:
 class TrackedModelDetailView(
     WithCurrentWorkBasket,
     TrackedModelDetailMixin,
-    generic.DetailView,
+    DetailView,
 ):
     """Base view class for displaying a single TrackedModel."""
 
