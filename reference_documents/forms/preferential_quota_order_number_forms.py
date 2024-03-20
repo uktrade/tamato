@@ -50,24 +50,30 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         )
 
     def clean_coefficient(self):
-        cleaned_data = super().clean()
-        coefficient = cleaned_data.get("coefficient")
-        if coefficient == "":
+        coefficient = self.cleaned_data["coefficient"]
+
+        if coefficient == "" or coefficient is None:
             return None
 
-        return coefficient
+        try:
+            coefficient = float(coefficient)
+            return coefficient
+        except ValueError:
+            raise ValidationError(
+                "Coefficient not a valid number",
+            )
 
     def clean(self):
         cleaned_data = super().clean()
         coefficient = cleaned_data.get("coefficient")
-        main_order_number = cleaned_data.get("main_order_number")
+        main_order_number_id = cleaned_data.get("main_order_number_id")
 
         # cant have one without the other
-        if coefficient and not main_order_number:
+        if coefficient and not main_order_number_id:
             raise ValidationError(
                 "Coefficient specified without main order number",
             )
-        elif not coefficient and main_order_number:
+        elif not coefficient and main_order_number_id:
             raise ValidationError(
                 "Main order number specified without coefficient",
             )
@@ -80,7 +86,10 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
             ).exists():
                 raise ValidationError("Quota Order Number Already Exists")
 
-        return data
+        if not data.isnumeric():
+            raise ValidationError("Quota Order Number is not numeric")
+        else:
+            return data
 
     quota_order_number = forms.CharField(
         label="Order number",

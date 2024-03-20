@@ -89,17 +89,27 @@ class PreferentialQuotaCreateUpdateForm(
         )
 
     def clean_quota_duty_rate(self):
-        data = self.cleaned_data["quota_duty_rate"]
-        if len(data) < 1:
-            raise ValidationError("Quota duty Rate is not valid - it must have a value")
+        error_message = "Quota duty Rate is not valid - it must have a value"
+
+        if "quota_duty_rate" in self.cleaned_data.keys():
+            data = self.cleaned_data["quota_duty_rate"]
+            if len(data) < 1:
+                raise ValidationError(error_message)
+        else:
+            raise ValidationError(error_message)
+
         return data
 
     def clean_preferential_quota_order_number(self):
-        data = self.cleaned_data["preferential_quota_order_number"]
-        if not data:
-            raise ValidationError(
-                "Quota Order Number is not valid - it must have a value",
-            )
+        error_message = "Quota Order Number is not valid - it must have a value"
+
+        if "preferential_quota_order_number" in self.cleaned_data.keys():
+            data = self.cleaned_data["preferential_quota_order_number"]
+            if not data:
+                raise ValidationError(error_message)
+        else:
+            raise ValidationError(error_message)
+
         return data
 
     commodity_code = forms.CharField(
@@ -415,5 +425,5 @@ class PreferentialQuotaDeleteForm(forms.Form):
         )
 
     class Meta:
-        model = PreferentialQuotaOrderNumber
+        model = PreferentialQuota
         fields = []
