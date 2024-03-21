@@ -104,6 +104,14 @@ class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["reference_document_version"] = self.get_reference_document_version()
+        if "order_pk" in self.kwargs.keys():
+            kwargs["preferential_quota_order_number"] = kwargs[
+                "reference_document_version"
+            ].preferential_quota_order_numbers.get(
+                id=self.kwargs["order_pk"],
+            )
+        else:
+            kwargs["preferential_quota_order_number"] = None
         return kwargs
 
     def get_context_data(self, **kwargs):

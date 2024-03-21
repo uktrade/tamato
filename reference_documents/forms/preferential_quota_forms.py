@@ -216,9 +216,21 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
             result.sort()
         return result
 
-    def __init__(self, reference_document_version, *args, **kwargs):
+    def __init__(
+        self,
+        reference_document_version,
+        preferential_quota_order_number=None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.variant_indices = self.get_variant_index(kwargs)
+        # Populate order number box if already specified by the URL
+        if preferential_quota_order_number:
+            self.initial[
+                "preferential_quota_order_number"
+            ] = preferential_quota_order_number
+        # Add fields for the first mandatory date and volume fieldset
         self.fields["start_date_0"] = DateInputFieldFixed(
             label="Start date",
             required=True,

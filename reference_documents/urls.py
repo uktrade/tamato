@@ -192,6 +192,11 @@ urlpatterns = [
         PreferentialQuotaBulkCreate.as_view(),
         name="preferential_quotas_bulk_create",
     ),
+    path(
+        "reference_document_versions/<pk>/bulk_create_preferential_quotas/<order_pk>/",
+        PreferentialQuotaBulkCreate.as_view(),
+        name="preferential_quotas_bulk_create_for_order",
+    ),
     # Preferential Rates
     path(
         "preferential_rates/delete/<pk>/",
