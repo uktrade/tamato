@@ -32,7 +32,9 @@
                 class="govuk-button homepage-workbasket-action"
               >Create a <br> workbasket</a>
             </div>
+          {% endif %}
 
+          {% if can_edit_workbasket %}
             <div class="govuk-grid-column-one-half">
               <a
                 href="{{ url('workbaskets:workbasket-ui-list') }}"
@@ -60,7 +62,7 @@
       </article>
     {% endif %}
 
-    {% if can_add_workbasket %}
+    {% if can_edit_workbasket %}
       <article class="homepage-card">
         <h3 class="govuk-heading-m">Currently working on</h3>
         {% if not assigned_workbaskets %}
