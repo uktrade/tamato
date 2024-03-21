@@ -97,6 +97,9 @@ class HomeView(LoginRequiredMixin, FormView):
                 "can_add_workbasket": self.request.user.has_perm(
                     "workbaskets.add_workbasket",
                 ),
+                "can_edit_workbasket": self.request.user.has_perm(
+                    "workbaskets.change_workbasket",
+                ),
                 "can_view_reports": self.request.user.has_perm(
                     "reports.view_report_index",
                 ),
