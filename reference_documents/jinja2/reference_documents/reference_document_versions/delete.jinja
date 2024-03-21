@@ -5,13 +5,13 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/error-summary/macro.njk" import govukErrorSummary %}
 
-{% set page_title = "Delete Reference Document " ~ object.reference_document.area_id ~ " version " ~ object.version %}
+{% set page_title = "Delete reference document " ~ object.reference_document.area_id ~ " version " ~ object.version %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [{"text": "Home", "href": url("home")},
     {"text": "View reference documents", "href": url("reference_documents:index")},
-    {"text": "Reference Document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
+    {"text": "Reference document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
     {"text": page_title}]
   }) }}
 {% endblock %}
@@ -25,10 +25,10 @@
 
 <div class="govuk-grid-row govuk-!-margin-bottom-5">
   <div class="govuk-grid-column-two-thirds">
-    <p class="govuk-body">Are you sure you want to permanently delete Reference Document version {{ object.reference_document.area_id }} version {{ object.version }}?</p>
+    <p class="govuk-body">Are you sure you want to permanently delete reference document version {{ object.reference_document.area_id }} version {{ object.version }}?</p>
 
     {{ govukWarningText({
-      "text": "Deleted Reference Document versions can not be recovered.",
+      "text": "Deleted reference document versions can not be recovered.",
       "iconFallbackText": "Warning"
     }) }}
 

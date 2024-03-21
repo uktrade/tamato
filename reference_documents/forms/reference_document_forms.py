@@ -13,10 +13,10 @@ from reference_documents.models import ReferenceDocumentVersion
 
 class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
     title = forms.CharField(
-        label="Reference Document title",
+        label="Reference document title",
         error_messages={
-            "required": "A Reference Document title is required",
-            "unique": "A Reference Document with this title already exists",
+            "required": "A reference document title is required",
+            "unique": "A reference document with this title already exists",
         },
     )
     area_id = forms.CharField(
@@ -24,7 +24,7 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
         validators=[area_id_validator],
         error_messages={
             "required": "An area ID is required",
-            "unique": "A Reference Document with this area ID already exists",
+            "unique": "A reference document with this area ID already exists",
             "invalid": "Enter the area ID in the correct format",
         },
     )
@@ -76,7 +76,7 @@ class ReferenceDocumentDeleteForm(forms.Form):
         )
         if versions:
             raise forms.ValidationError(
-                f"Reference Document {reference_document.area_id} cannot be deleted as it has"
+                f"Reference document {reference_document.area_id} cannot be deleted as it has"
                 f" active versions.",
             )
 

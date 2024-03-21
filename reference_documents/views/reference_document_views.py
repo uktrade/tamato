@@ -42,7 +42,7 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
                         {"text": 0},
                         {
                             "html": f'<a href="/reference_documents/{reference.id}">Details</a><br>'
-                            f"<a href={reverse('reference_documents:update', kwargs={'pk': reference.id})}>Edit</a><br>"
+                            f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
                             f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>",
                         },
                     ],
@@ -63,7 +63,7 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
                         },
                         {
                             "html": f'<a href="/reference_documents/{reference.id}">Details</a><br>'
-                            f"<a href={reverse('reference_documents:update', kwargs={'pk': reference.id})}>Edit</a><br>"
+                            f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
                             f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>",
                         },
                     ],
@@ -145,7 +145,7 @@ class ReferenceDocumentCreate(PermissionRequiredMixin, CreateView):
         )
 
 
-class ReferenceDocumentUpdate(PermissionRequiredMixin, UpdateView):
+class ReferenceDocumentEdit(PermissionRequiredMixin, UpdateView):
     model = models.ReferenceDocument
     permission_required = "reference_documents.change_referencedocument"
     template_name = "reference_documents/update.jinja"

@@ -46,7 +46,7 @@ def test_ref_doc_edit_updates_ref_doc_object(valid_user, client):
     ref_doc = factories.ReferenceDocumentFactory.create()
 
     edit_url = reverse(
-        "reference_documents:update",
+        "reference_documents:edit",
         kwargs={"pk": ref_doc.pk},
     )
 
@@ -95,7 +95,7 @@ def test_successfully_delete_ref_doc(valid_user, client):
     page = BeautifulSoup(response.content, "html.parser")
     assert response.status_code == 200
     assert (
-        f"Delete Reference Document {ref_doc.area_id}" in page.select("main h1")[0].text
+        f"Delete reference document {ref_doc.area_id}" in page.select("main h1")[0].text
     )
 
     response = client.post(delete_url)
@@ -129,7 +129,7 @@ def test_delete_ref_doc_with_versions(valid_user, client):
     response = client.post(delete_url)
     assert response.status_code == 200
     assert (
-        f"Reference Document {ref_doc.area_id} cannot be deleted as it has active versions."
+        f"Reference document {ref_doc.area_id} cannot be deleted as it has active versions."
         in str(response.content)
     )
     assert ReferenceDocument.objects.filter(pk=ref_doc.pk)
@@ -140,7 +140,7 @@ def test_ref_doc_crud_without_permission(valid_user_client):
     # TODO: potentially update this if the permissions for reference doc behaviour changes
     ref_doc = factories.ReferenceDocumentFactory.create()
     create_url = reverse("reference_documents:create")
-    edit_url = reverse("reference_documents:update", kwargs={"pk": ref_doc.pk})
+    edit_url = reverse("reference_documents:edit", kwargs={"pk": ref_doc.pk})
     delete_url = reverse("reference_documents:delete", kwargs={"pk": ref_doc.pk})
     form_data = {
         "title": "Reference document for XY",

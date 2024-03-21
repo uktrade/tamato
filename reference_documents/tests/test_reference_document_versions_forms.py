@@ -4,7 +4,7 @@ from reference_documents.forms.reference_document_version_forms import (
     ReferenceDocumentVersionDeleteForm,
 )
 from reference_documents.forms.reference_document_version_forms import (
-    ReferenceDocumentVersionsEditCreateForm,
+    ReferenceDocumentVersionsCreateUpdateForm,
 )
 from reference_documents.tests import factories
 
@@ -27,7 +27,7 @@ def test_ref_doc_version_create_update_valid_data():
         "entry_into_force_date_2": "2024",
     }
 
-    form = ReferenceDocumentVersionsEditCreateForm(data=data)
+    form = ReferenceDocumentVersionsCreateUpdateForm(data=data)
     assert form.is_valid()
 
 
@@ -35,7 +35,7 @@ def test_ref_doc_version_create_update_valid_data():
 def test_ref_doc_version_create_update_invalid_data():
     """Test that ReferenceDocumentVersionCreateEditForm is invalid when not
     complete correctly."""
-    form = ReferenceDocumentVersionsEditCreateForm(data={})
+    form = ReferenceDocumentVersionsCreateUpdateForm(data={})
     assert not form.is_valid()
     assert "A version number is required" in form.errors["version"]
     assert "A published date is required" in form.errors["published_date"]
@@ -59,7 +59,7 @@ def test_ref_doc_version_create_update_invalid_data():
         "entry_into_force_date_1": "1",
         "entry_into_force_date_2": "2024",
     }
-    form = ReferenceDocumentVersionsEditCreateForm(data=data)
+    form = ReferenceDocumentVersionsCreateUpdateForm(data=data)
     assert not form.is_valid()
     assert (
         "New versions of this reference document must be a higher number than previous versions"
@@ -72,7 +72,7 @@ def test_ref_doc_version_delete_valid():
     """Test that ReferenceDocumentVersionDeleteForm is valid for a reference
     document with no versions."""
     version = factories.ReferenceDocumentVersionFactory.create()
-    form = ReferenceDocumentVersionsEditCreateForm(data={}, instance=version)
+    form = ReferenceDocumentVersionsCreateUpdateForm(data={}, instance=version)
     assert not form.is_valid()
 
 
@@ -85,6 +85,6 @@ def test_ref_doc_version_delete_invalid():
     form = ReferenceDocumentVersionDeleteForm(data={}, instance=version)
     assert not form.is_valid()
     assert (
-        f"Reference Document version {version.version} cannot be deleted as it has current preferential duty rates or tariff quotas"
+        f"Reference document version {version.version} cannot be deleted as it has current preferential duty rates or tariff quotas"
         in form.errors["__all__"]
     )

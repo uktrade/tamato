@@ -2,7 +2,7 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Reference Documents for " ~ object.get_area_name_by_area_id() %}
+{% set page_title = "Reference documents for " ~ object.get_area_name_by_area_id() %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({

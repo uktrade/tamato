@@ -5,7 +5,7 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/error-summary/macro.njk" import govukErrorSummary %}
 
-{% set page_title = "Delete Reference Document " ~ object.area_id %}
+{% set page_title = "Delete reference document " ~ object.area_id %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -24,10 +24,10 @@
 
 <div class="govuk-grid-row govuk-!-margin-bottom-5">
   <div class="govuk-grid-column-two-thirds">
-    <p class="govuk-body">Are you sure you want to permanently delete Reference Document {{ object.area_id }}?</p>
+    <p class="govuk-body">Are you sure you want to permanently delete reference document {{ object.area_id }}?</p>
 
     {{ govukWarningText({
-      "text": "Deleted Reference Documents can not be recovered.",
+      "text": "Deleted reference documents can not be recovered.",
       "iconFallbackText": "Warning"
     }) }}
 

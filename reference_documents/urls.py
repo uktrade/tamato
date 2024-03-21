@@ -8,27 +8,23 @@ from reference_documents.views.alignment_report_views import (
 from reference_documents.views.example_views import ExampleReferenceDocumentsDetailView
 from reference_documents.views.example_views import ExampleReferenceDocumentsListView
 from reference_documents.views.preferential_quota_order_number_views import (
-    PreferentialQuotaOrderNumberCreateView,
+    PreferentialQuotaOrderNumberCreate,
 )
 from reference_documents.views.preferential_quota_order_number_views import (
-    PreferentialQuotaOrderNumberDeleteView,
+    PreferentialQuotaOrderNumberDelete,
 )
 from reference_documents.views.preferential_quota_order_number_views import (
-    PreferentialQuotaOrderNumberEditView,
+    PreferentialQuotaOrderNumberEdit,
 )
 from reference_documents.views.preferential_quota_views import (
-    PreferentialQuotaBulkCreateView,
+    PreferentialQuotaBulkCreate,
 )
-from reference_documents.views.preferential_quota_views import (
-    PreferentialQuotaCreateView,
-)
-from reference_documents.views.preferential_quota_views import (
-    PreferentialQuotaDeleteView,
-)
-from reference_documents.views.preferential_quota_views import PreferentialQuotaEditView
-from reference_documents.views.preferential_rate_views import PreferentialRateCreateView
-from reference_documents.views.preferential_rate_views import PreferentialRateDeleteView
-from reference_documents.views.preferential_rate_views import PreferentialRateEditView
+from reference_documents.views.preferential_quota_views import PreferentialQuotaCreate
+from reference_documents.views.preferential_quota_views import PreferentialQuotaDelete
+from reference_documents.views.preferential_quota_views import PreferentialQuotaEdit
+from reference_documents.views.preferential_rate_views import PreferentialRateCreate
+from reference_documents.views.preferential_rate_views import PreferentialRateDelete
+from reference_documents.views.preferential_rate_views import PreferentialRateEdit
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionConfirmCreate,
 )
@@ -62,8 +58,8 @@ from reference_documents.views.reference_document_views import (
 from reference_documents.views.reference_document_views import ReferenceDocumentCreate
 from reference_documents.views.reference_document_views import ReferenceDocumentDelete
 from reference_documents.views.reference_document_views import ReferenceDocumentDetails
+from reference_documents.views.reference_document_views import ReferenceDocumentEdit
 from reference_documents.views.reference_document_views import ReferenceDocumentList
-from reference_documents.views.reference_document_views import ReferenceDocumentUpdate
 
 app_name = "reference_documents"
 
@@ -99,9 +95,9 @@ urlpatterns = [
         name="details",
     ),
     path(
-        "reference_documents/<pk>/update/",
-        ReferenceDocumentUpdate.as_view(),
-        name="update",
+        "reference_documents/<pk>/edit/",
+        ReferenceDocumentEdit.as_view(),
+        name="edit",
     ),
     path(
         f"<pk>/confirm-create/",
@@ -173,59 +169,59 @@ urlpatterns = [
     # Preferential Quotas
     path(
         "preferential_quotas/delete/<pk>/<version_pk>/",
-        PreferentialQuotaDeleteView.as_view(),
+        PreferentialQuotaDelete.as_view(),
         name="preferential_quotas_delete",
     ),
     path(
         "preferential_quotas/edit/<pk>/",
-        PreferentialQuotaEditView.as_view(),
+        PreferentialQuotaEdit.as_view(),
         name="preferential_quotas_edit",
     ),
     path(
         "preferential_quota_order_numbers/<version_pk>/create_preferential_quotas/",
-        PreferentialQuotaCreateView.as_view(),
+        PreferentialQuotaCreate.as_view(),
         name="preferential_quotas_create",
     ),
     path(
         "preferential_quota_order_numbers/<version_pk>/create_preferential_quotas_for_order/<order_pk>/",
-        PreferentialQuotaCreateView.as_view(),
+        PreferentialQuotaCreate.as_view(),
         name="preferential_quotas_create_for_order",
     ),
     path(
         "reference_document_versions/<pk>/bulk_create_preferential_quotas/",
-        PreferentialQuotaBulkCreateView.as_view(),
+        PreferentialQuotaBulkCreate.as_view(),
         name="preferential_quotas_bulk_create",
     ),
     # Preferential Rates
     path(
         "preferential_rates/delete/<pk>/",
-        PreferentialRateDeleteView.as_view(),
+        PreferentialRateDelete.as_view(),
         name="preferential_rates_delete",
     ),
     path(
         "preferential_rates/edit/<pk>/",
-        PreferentialRateEditView.as_view(),
+        PreferentialRateEdit.as_view(),
         name="preferential_rates_edit",
     ),
     path(
         "reference_document_versions/<pk>/create_preferential_rates/",
-        PreferentialRateCreateView.as_view(),
+        PreferentialRateCreate.as_view(),
         name="preferential_rates_create",
     ),
     # Preferential rate Quota order number
     path(
         "preferential_quota_order_numbers/delete/<pk>/<version_pk>/",
-        PreferentialQuotaOrderNumberDeleteView.as_view(),
+        PreferentialQuotaOrderNumberDelete.as_view(),
         name="preferential_quota_order_number_delete",
     ),
     path(
         "preferential_quota_order_numbers/edit/<pk>/",
-        PreferentialQuotaOrderNumberEditView.as_view(),
+        PreferentialQuotaOrderNumberEdit.as_view(),
         name="preferential_quota_order_number_edit",
     ),
     path(
         "reference_document_versions/<pk>/create_preferential_quota_order_number/",
-        PreferentialQuotaOrderNumberCreateView.as_view(),
+        PreferentialQuotaOrderNumberCreate.as_view(),
         name="preferential_quota_order_number_create",
     ),
 ]

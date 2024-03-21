@@ -12,7 +12,7 @@ from reference_documents.models import PreferentialRate
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class ReferenceDocumentVersionsEditCreateForm(forms.ModelForm):
+class ReferenceDocumentVersionsCreateUpdateForm(forms.ModelForm):
     version = forms.CharField(
         label="Version number",
         error_messages={
@@ -99,7 +99,7 @@ class ReferenceDocumentVersionDeleteForm(forms.Form):
         )
         if preferential_duty_rates or tariff_quotas:
             raise forms.ValidationError(
-                f"Reference Document version {reference_document_version.version} cannot be deleted as it has"
+                f"Reference document version {reference_document_version.version} cannot be deleted as it has"
                 f" current preferential duty rates or tariff quotas",
             )
 

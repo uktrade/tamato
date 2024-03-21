@@ -8,15 +8,15 @@
 {% set version = request.session['deleted_version']['version'] %}
 {% set ref_doc_pk = request.session['deleted_version']['ref_doc_pk'] %}
 
-{% set page_title = "Reference Document " ~ area_id ~ " version " ~ version ~ " successfully deleted" %}
+{% set page_title = "Reference document " ~ area_id ~ " version " ~ version ~ " successfully deleted" %}
 
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [{"text": "Home", "href": url("home")},
     {"text": "View reference documents", "href": url("reference_documents:index")},
-    {"text": "Reference Document " ~ area_id, "href": url("reference_documents:details", kwargs={"pk":ref_doc_pk})},
-    {"text": "Delete Reference Document " ~ area_id ~ " version " ~ version},
+    {"text": "Reference document " ~ area_id, "href": url("reference_documents:details", kwargs={"pk":ref_doc_pk})},
+    {"text": "Delete reference document " ~ area_id ~ " version " ~ version},
     {"text": page_title}]
   }) }}
 {% endblock %}
@@ -25,7 +25,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
         {{ govukPanel({
-    "titleText": "Reference Document " ~ request.session['deleted_version']['area_id'] ~ " version " ~ request.session['deleted_version']['version'] ~ " has been deleted",
+    "titleText": "Reference document " ~ request.session['deleted_version']['area_id'] ~ " version " ~ request.session['deleted_version']['version'] ~ " has been deleted",
     "text": "This change has taken immediate effect",
     "classes": "govuk-!-margin-bottom-7"
   }) }}

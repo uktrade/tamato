@@ -13,7 +13,7 @@ from reference_documents.models import PreferentialRate
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class PreferentialRateEditView(PermissionRequiredMixin, UpdateView):
+class PreferentialRateEdit(PermissionRequiredMixin, UpdateView):
     form_class = PreferentialRateCreateUpdateForm
     permission_required = "reference_documents.change_preferentialrate"
     model = PreferentialRate
@@ -26,7 +26,7 @@ class PreferentialRateEditView(PermissionRequiredMixin, UpdateView):
         )
 
 
-class PreferentialRateCreateView(PermissionRequiredMixin, CreateView):
+class PreferentialRateCreate(PermissionRequiredMixin, CreateView):
     form_class = PreferentialRateCreateUpdateForm
     permission_required = "reference_documents.add_preferentialrate"
     model = PreferentialRate
@@ -46,10 +46,10 @@ class PreferentialRateCreateView(PermissionRequiredMixin, CreateView):
         instance.order = len(reference_document_version.preferential_rates.all()) + 1
         instance.reference_document_version = reference_document_version
         form.save()
-        return super(PreferentialRateCreateView, self).form_valid(form)
+        return super(PreferentialRateCreate, self).form_valid(form)
 
 
-class PreferentialRateDeleteView(PermissionRequiredMixin, FormMixin, DeleteView):
+class PreferentialRateDelete(PermissionRequiredMixin, FormMixin, DeleteView):
     template_name = "reference_documents/preferential_rates/delete.jinja"
     permission_required = "reference_documents.delete_preferentialrate"
     model = PreferentialRate

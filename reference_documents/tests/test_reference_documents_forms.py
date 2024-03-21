@@ -27,7 +27,7 @@ def test_ref_doc_create_update_form_invalid_data():
     correctly."""
     form = ReferenceDocumentCreateUpdateForm(data={})
     assert not form.is_valid()
-    assert "A Reference Document title is required" in form.errors["title"]
+    assert "A reference document title is required" in form.errors["title"]
     assert "An area ID is required" in form.errors["area_id"]
 
     factories.ReferenceDocumentFactory.create(
@@ -38,7 +38,7 @@ def test_ref_doc_create_update_form_invalid_data():
     form = ReferenceDocumentCreateUpdateForm(data=data)
     assert not form.is_valid()
     assert "Enter the area ID in the correct format" in form.errors["area_id"]
-    assert "A Reference Document with this title already exists" in form.errors["title"]
+    assert "A reference document with this title already exists" in form.errors["title"]
 
 
 @pytest.mark.reference_documents

@@ -4,13 +4,13 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Reference Document " ~ object.area_id ~ " successfully updated" %}
+{% set page_title = "Reference document " ~ object.area_id ~ " successfully updated" %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [{"text": "Home", "href": url("home")},
     {"text": "View reference documents", "href": url("reference_documents:index")},
-      {"text": "Edit Reference Document " ~ object.area_id, "href": url("reference_documents:update", kwargs={"pk":object.pk})},
+      {"text": "Edit reference document " ~ object.area_id, "href": url("reference_documents:edit", kwargs={"pk":object.pk})},
       {"text": page_title}]
   }) }}
 {% endblock %}
@@ -19,7 +19,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
         {{ govukPanel({
-    "titleText": "Reference Document " ~ object.area_id ~ " has been updated",
+    "titleText": "Reference document " ~ object.area_id ~ " has been updated",
     "text": "This change has taken immediate effect",
     "classes": "govuk-!-margin-bottom-7"
   }) }}
@@ -27,11 +27,11 @@
   </div>
     <div class="govuk-button-group">
     {{ govukButton({
-    "text": "View your Reference Document",
+    "text": "View your reference document",
     "href": url("reference_documents:details", kwargs={"pk":object.pk}),
     }) }}
     {{ govukButton({
-      "text": "Back to View Reference Documents",
+      "text": "Back to view reference documents",
       "href": url("reference_documents:index"),
       "classes": "govuk-button--secondary"
     }) }}

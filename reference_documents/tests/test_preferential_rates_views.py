@@ -6,7 +6,7 @@ from reference_documents.forms.preferential_rate_forms import (
     PreferentialRateCreateUpdateForm,
 )
 from reference_documents.tests import factories
-from reference_documents.views.preferential_rate_views import PreferentialRateEditView
+from reference_documents.views.preferential_rate_views import PreferentialRateEdit
 
 pytestmark = pytest.mark.django_db
 
@@ -55,7 +55,7 @@ class TestPreferentialRateEditView:
     def test_success_url(self):
         pref_rate = factories.PreferentialRateFactory.create()
 
-        target = PreferentialRateEditView()
+        target = PreferentialRateEdit()
         target.object = pref_rate
         assert target.get_success_url() == reverse(
             "reference_documents:version-details",
@@ -64,7 +64,7 @@ class TestPreferentialRateEditView:
 
     def test_form_valid(self):
         pref_rate = factories.PreferentialRateFactory.create()
-        target = PreferentialRateEditView()
+        target = PreferentialRateEdit()
         target.object = pref_rate
 
         form = PreferentialRateCreateUpdateForm(
@@ -83,7 +83,7 @@ class TestPreferentialRateEditView:
 
     def test_form_invalid(self):
         pref_rate = factories.PreferentialRateFactory.create()
-        target = PreferentialRateEditView()
+        target = PreferentialRateEdit()
         target.object = pref_rate
 
         form = PreferentialRateCreateUpdateForm(

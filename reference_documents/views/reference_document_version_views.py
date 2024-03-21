@@ -14,7 +14,7 @@ from reference_documents.forms.reference_document_version_forms import (
     ReferenceDocumentVersionDeleteForm,
 )
 from reference_documents.forms.reference_document_version_forms import (
-    ReferenceDocumentVersionsEditCreateForm,
+    ReferenceDocumentVersionsCreateUpdateForm,
 )
 from reference_documents.models import AlignmentReportCheckStatus
 from reference_documents.models import PreferentialQuotaOrderNumber
@@ -284,7 +284,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
         # title
         context[
             "ref_doc_title"
-        ] = f"Reference Document for {context['object'].reference_document.get_area_name_by_area_id()}"
+        ] = f"Reference document for {context['object'].reference_document.get_area_name_by_area_id()}"
 
         context_data = ReferenceDocumentVersionContext(context["object"])
         context[
@@ -304,7 +304,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
 class ReferenceDocumentVersionCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/reference_document_versions/create.jinja"
     permission_required = "reference_documents.add_referencedocumentversion"
-    form_class = ReferenceDocumentVersionsEditCreateForm
+    form_class = ReferenceDocumentVersionsCreateUpdateForm
 
     def get_initial(self):
         initial = super().get_initial()
@@ -331,7 +331,7 @@ class ReferenceDocumentVersionEdit(PermissionRequiredMixin, UpdateView):
     model = ReferenceDocumentVersion
     permission_required = "reference_documents.change_referencedocumentversion"
     template_name = "reference_documents/reference_document_versions/edit.jinja"
-    form_class = ReferenceDocumentVersionsEditCreateForm
+    form_class = ReferenceDocumentVersionsCreateUpdateForm
 
     def get_success_url(self):
         return reverse(

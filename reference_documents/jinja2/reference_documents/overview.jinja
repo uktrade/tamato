@@ -1,17 +1,17 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set page_title = 'Reference Documents versions Overview' %}
+{% set page_title = 'Reference documents versions overview' %}
 
 {% block breadcrumb %}
     {{ breadcrumbs(request, [
-      {'text': "Reference Documents"}
+      {'text': "Reference documents"}
     ]) }}
 {% endblock %}
 
 {% block content %}
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
-        Reference Document Overview
+        Reference document overview
     </h1>
     <span class="govuk-caption-xl govuk-!-margin-bottom-9">You will find a list of reference document versions below that can be viewed.</span>
 

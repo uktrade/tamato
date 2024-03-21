@@ -8,7 +8,7 @@ from django.views.generic.edit import DeleteView
 from django.views.generic.edit import FormMixin
 
 from reference_documents.forms.preferential_quota_forms import (
-    PreferentialQuotaBulkCreate,
+    PreferentialQuotaBulkCreateForm,
 )
 from reference_documents.forms.preferential_quota_forms import (
     PreferentialQuotaCreateUpdateForm,
@@ -20,14 +20,14 @@ from reference_documents.models import PreferentialQuota
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class PreferentialQuotaEditView(PermissionRequiredMixin, UpdateView):
+class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/preferential_quotas/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuota
     form_class = PreferentialQuotaCreateUpdateForm
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaEditView, self).get_form_kwargs()
+        kwargs = super(PreferentialQuotaEdit, self).get_form_kwargs()
         kwargs["reference_document_version"] = PreferentialQuota.objects.get(
             id=self.kwargs["pk"],
         ).preferential_quota_order_number.reference_document_version
@@ -50,14 +50,14 @@ class PreferentialQuotaEditView(PermissionRequiredMixin, UpdateView):
         )
 
 
-class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
+class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/preferential_quotas/create.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuota
     form_class = PreferentialQuotaCreateUpdateForm
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaCreateView, self).get_form_kwargs()
+        kwargs = super(PreferentialQuotaCreate, self).get_form_kwargs()
         kwargs["reference_document_version"] = ReferenceDocumentVersion.objects.get(
             id=self.kwargs["version_pk"],
         )
@@ -76,7 +76,7 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.order = 1
         form.save()
-        return super(PreferentialQuotaCreateView, self).form_valid(form)
+        return super(PreferentialQuotaCreate, self).form_valid(form)
 
     def get_success_url(self):
         return (
@@ -90,10 +90,10 @@ class PreferentialQuotaCreateView(PermissionRequiredMixin, CreateView):
         )
 
 
-class PreferentialQuotaBulkCreateView(PermissionRequiredMixin, FormView):
+class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
     template_name = "reference_documents/preferential_quotas/bulk_create.jinja"
     permission_required = "reference_documents.add_preferentialquota"
-    form_class = PreferentialQuotaBulkCreate
+    form_class = PreferentialQuotaBulkCreateForm
     queryset = ReferenceDocumentVersion.objects.all()
 
     def get_reference_document_version(self):
@@ -142,7 +142,7 @@ class PreferentialQuotaBulkCreateView(PermissionRequiredMixin, FormView):
         )
 
 
-class PreferentialQuotaDeleteView(PermissionRequiredMixin, FormMixin, DeleteView):
+class PreferentialQuotaDelete(PermissionRequiredMixin, FormMixin, DeleteView):
     form_class = PreferentialQuotaDeleteForm
     template_name = "reference_documents/preferential_quotas/delete.jinja"
     permission_required = "reference_documents.edit_reference_document"

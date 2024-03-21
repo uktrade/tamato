@@ -113,7 +113,7 @@ def test_successfully_delete_ref_doc_version(valid_user, client):
     page = BeautifulSoup(resp.content, "html.parser")
     assert resp.status_code == 200
     assert (
-        f"Delete Reference Document {area_id} version {ref_doc_version.version}"
+        f"Delete reference document {area_id} version {ref_doc_version.version}"
         in page.select("main h1")[0].text
     )
     resp = client.post(delete_url)
@@ -148,7 +148,7 @@ def test_delete_ref_doc_version_invalid(valid_user, client):
     resp = client.post(delete_url)
     assert resp.status_code == 200
     assert (
-        f"Reference Document version {ref_doc_version.version} cannot be deleted as it has current preferential duty rates or tariff quotas"
+        f"Reference document version {ref_doc_version.version} cannot be deleted as it has current preferential duty rates or tariff quotas"
         in str(resp.content)
     )
     assert ReferenceDocument.objects.filter(pk=ref_doc.pk)

@@ -16,14 +16,14 @@ from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class PreferentialQuotaOrderNumberEditView(PermissionRequiredMixin, UpdateView):
+class PreferentialQuotaOrderNumberEdit(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/preferential_quota_order_numbers/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuotaOrderNumber
     form_class = PreferentialQuotaOrderNumberCreateUpdateForm
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaOrderNumberEditView, self).get_form_kwargs()
+        kwargs = super(PreferentialQuotaOrderNumberEdit, self).get_form_kwargs()
         kwargs["reference_document_version"] = PreferentialQuotaOrderNumber.objects.get(
             id=self.kwargs["pk"],
         ).reference_document_version
@@ -39,14 +39,14 @@ class PreferentialQuotaOrderNumberEditView(PermissionRequiredMixin, UpdateView):
         )
 
 
-class PreferentialQuotaOrderNumberCreateView(PermissionRequiredMixin, CreateView):
+class PreferentialQuotaOrderNumberCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/preferential_quota_order_numbers/edit.jinja"
     permission_required = "reference_documents.edit_reference_document"
     model = PreferentialQuotaOrderNumber
     form_class = PreferentialQuotaOrderNumberCreateUpdateForm
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaOrderNumberCreateView, self).get_form_kwargs()
+        kwargs = super(PreferentialQuotaOrderNumberCreate, self).get_form_kwargs()
         kwargs["reference_document_version"] = ReferenceDocumentVersion.objects.get(
             id=self.kwargs["pk"],
         )
@@ -61,7 +61,7 @@ class PreferentialQuotaOrderNumberCreateView(PermissionRequiredMixin, CreateView
         instance.order = len(reference_document_version.preferential_rates.all()) + 1
         instance.reference_document_version = reference_document_version
         self.object = instance
-        return super(PreferentialQuotaOrderNumberCreateView, self).form_valid(form)
+        return super(PreferentialQuotaOrderNumberCreate, self).form_valid(form)
 
     def get_success_url(self):
         return (
@@ -73,7 +73,7 @@ class PreferentialQuotaOrderNumberCreateView(PermissionRequiredMixin, CreateView
         )
 
 
-class PreferentialQuotaOrderNumberDeleteView(
+class PreferentialQuotaOrderNumberDelete(
     PermissionRequiredMixin,
     FormMixin,
     DeleteView,

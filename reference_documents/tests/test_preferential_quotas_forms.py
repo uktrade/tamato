@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from reference_documents.forms.preferential_quota_forms import (
-    PreferentialQuotaBulkCreate,
+    PreferentialQuotaBulkCreateForm,
 )
 from reference_documents.forms.preferential_quota_forms import (
     PreferentialQuotaCreateUpdateForm,
@@ -175,7 +175,7 @@ def test_preferential_quota_bulk_create_valid_data():
         "volume_2": "300",
     }
 
-    form = PreferentialQuotaBulkCreate(
+    form = PreferentialQuotaBulkCreateForm(
         data=data,
         reference_document_version=ref_doc_version,
     )
@@ -220,7 +220,7 @@ def test_preferential_quota_bulk_create_invalid_data():
         "volume_2": "300",
     }
 
-    form = PreferentialQuotaBulkCreate(
+    form = PreferentialQuotaBulkCreateForm(
         data=data,
         reference_document_version=ref_doc_version,
     )

@@ -4,14 +4,14 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Reference Document " ~ object.reference_document.area_id ~ " version " ~ object.version ~ " successfully updated" %}
+{% set page_title = "Reference document " ~ object.reference_document.area_id ~ " version " ~ object.version ~ " successfully updated" %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [{"text": "Home", "href": url("home")},
     {"text": "View reference documents", "href": url("reference_documents:index")},
-    {"text": "Reference Document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
-    {"text": "Edit Reference Document " ~ object.reference_document.area_id ~ " version " ~ object.version, "href": url("reference_documents:version-edit", kwargs={"ref_doc_pk": object.reference_document.pk, "pk":object.pk})},
+    {"text": "Reference document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
+    {"text": "Edit reference document " ~ object.reference_document.area_id ~ " version " ~ object.version, "href": url("reference_documents:version-edit", kwargs={"ref_doc_pk": object.reference_document.pk, "pk":object.pk})},
       {"text": page_title}]
   }) }}
 {% endblock %}
@@ -20,7 +20,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
         {{ govukPanel({
-    "titleText": "Reference Document " ~ object.reference_document.area_id ~ " version " ~ object.version ~ " has been updated",
+    "titleText": "Reference document " ~ object.reference_document.area_id ~ " version " ~ object.version ~ " has been updated",
     "text": "This change has taken immediate effect",
     "classes": "govuk-!-margin-bottom-7"
   }) }}
@@ -28,7 +28,7 @@
   </div>
     <div class="govuk-button-group">
     {{ govukButton({
-    "text": "View Reference Document " ~ object.reference_document.area_id ~ " version " ~ object.version,
+    "text": "View reference document " ~ object.reference_document.area_id ~ " version " ~ object.version,
     "href": url("reference_documents:version-details", kwargs={"pk":object.pk}),
     }) }}
     {{ govukButton({

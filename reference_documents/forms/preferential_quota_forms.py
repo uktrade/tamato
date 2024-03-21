@@ -166,7 +166,7 @@ class PreferentialQuotaCreateUpdateForm(
     )
 
 
-class PreferentialQuotaBulkCreate(forms.Form):
+class PreferentialQuotaBulkCreateForm(forms.Form):
     commodity_codes = forms.CharField(
         label="Commodity codes",
         widget=forms.Textarea,

@@ -1,7 +1,7 @@
 {% extends "layouts/form.jinja" %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Edit Reference Document " ~ object.reference_document.area_id ~ " version " ~ object.version %}
+{% set page_title = "Edit reference document " ~ object.reference_document.area_id ~ " version " ~ object.version %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
