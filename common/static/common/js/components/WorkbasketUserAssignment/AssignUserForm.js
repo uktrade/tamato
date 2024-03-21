@@ -1,4 +1,5 @@
 import React from 'react';
+import Select from 'react-select'
 import { useEffect } from 'react';
 import accessibleAutocomplete from 'accessible-autocomplete'
 
@@ -26,7 +27,7 @@ function AssignUserForm({ assignmentType, users }) {
   return (
     <>
       <form action={assignUsersUrl} method="POST" data-testid={"assign-user-form"}>
-        <input type="hidden" value={CSRF_TOKEN} name="csrfmiddlewaretoken"/>
+        <input type="hidden" value={CSRF_TOKEN} name="csrfmiddlewaretoken" />
         <div className="govuk-form-group">
           <label className="govuk-label" htmlFor={elementId}>
             {label}
@@ -34,20 +35,21 @@ function AssignUserForm({ assignmentType, users }) {
           <div id={`${elementName}-hint`} className="govuk-hint">
             {hint}
           </div>
-          <select
+          {/* See scss/components for style overrides */}
+          <Select
             required={true}
+            unstyled
+            isMulti
+            className="react-select-container"
+            classNamePrefix="react-select"
             id={elementId}
             name={elementName}
             data-testid='assign-user-select'
-          >
-            <option value="">Select a user</option>
-            {users.map(user => 
-              <option key={user.pk} value={user.pk}>{user.name}</option>
-            )}
-          </select>
+            options={users}
+          />
         </div>
         <div className="govuk-form-group">
-          <input type="hidden" name="assignment_type" value={assignmentType}/>
+          <input type="hidden" name="assignment_type" value={assignmentType} />
         </div>
         <button type="submit" className="govuk-button" data-prevent-double-click="true">Save</button>
       </form>

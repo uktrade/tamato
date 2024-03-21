@@ -90,3 +90,29 @@
   }
 
 }
+
+.react-select__control {
+  @extend .govuk-select;
+}
+
+.react-select__menu {
+  @extend .govuk-body;
+  background-color: govuk-colour("white");
+  border: 1px solid govuk-colour("mid-grey");
+}
+
+.react-select__option {
+  padding: 4px;
+
+  &:hover {
+    background-color: govuk-colour("light-grey");
+  }
+}
+
+.react-select__multi-value {
+  margin-right: 4px;
+  padding: 0 4px;
+  background-color: govuk-colour("light-grey");
+  border: 1px solid govuk-colour("dark-grey");
+  border-radius: 5px;
+}

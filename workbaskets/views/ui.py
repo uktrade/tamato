@@ -438,7 +438,7 @@ class CurrentWorkBasket(TemplateView):
             .order_by("first_name", "last_name")
         )
         assignable_users = [
-            {"pk": user.pk, "name": user.get_full_name()} for user in users
+            {"value": user.pk, "label": user.get_full_name()} for user in users
         ]
 
         # set to true if there is an associated goods import batch with an unsent notification

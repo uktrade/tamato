@@ -46,6 +46,7 @@
   {{ navigation(request, "summary") }}
 
   {{ govukSummaryList({
+    "classes": "govuk-!-margin-bottom-0",
     "rows": [
       {
         "key": {"text": "TOPS/Jira number"},
@@ -101,6 +102,11 @@
           ]
         },
       },
+		]
+  })}}
+  {{ govukSummaryList({
+    "classes": "govuk-!-margin-bottom-0",
+    "rows": [
       {
         "key": {"text": "Assigned to"},
         "value": {"text": display_assigned_users(assigned_workers, "workers")},
@@ -128,6 +134,11 @@
           ]
         },
       },
+		]
+  })}}
+  <div id="assign-workers-form"></div>
+  {{ govukSummaryList({
+    "rows": [
       {
         "key": {"text": "Assigned to review"},
         "value": {"text": display_assigned_users(assigned_reviewers, "reviewers")},
@@ -157,6 +168,7 @@
       },
 		]
   })}}
+  <div id="assign-reviewers-form"></div>
   <script nonce="{{ request.csp_nonce }}">
     const CSRF_TOKEN = "{{ csrf_token }}";
 

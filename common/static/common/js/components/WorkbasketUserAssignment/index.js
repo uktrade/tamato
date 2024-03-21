@@ -18,49 +18,27 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
   const [showForm, setShowForm] = useState(null);
   const assignmentType = assignment == "workers" ? "WORKBASKET_WORKER" : "WORKBASKET_REVIEWER";
 
-  const removeFormDiv = () => {
-    const possibleFormDivs = [
-      document.getElementById("assign-workers-form"),
-      document.getElementById("unassign-workers-form"),
-      document.getElementById("assign-reviewers-form"),
-      document.getElementById("unassign-reviewers-form"),
-    ];
-    possibleFormDivs.forEach(form => {
-      if (form) {
-        const assignmentRow = form.previousSibling;
-        assignmentRow.classList.remove("govuk-summary-list__row--no-border");
-        form.remove();
-      }
-    });
-  }
-
   const createFormDiv = () => {
-    const formDiv = document.createElement("div");
-    formDiv.id = formId;
+    const formDiv = document.getElementById(formId);
     formDiv.className = "govuk-!-margin-top-4";
-    const assignmentButton = document.getElementById(buttonId);
-    const assignmentRow = assignmentButton.closest(".govuk-summary-list__row");
-    assignmentRow.classList.add("govuk-summary-list__row--no-border");
-    assignmentRow.after(formDiv);
     setShowForm(formDiv);
   }
 
   const handleClick = (e) => {
     e.preventDefault();
     const isShown = document.getElementById(formId);
-    removeFormDiv();
-    if(showForm && isShown) {
+    if (showForm && isShown) {
       setShowForm(null);
       return;
     }
     createFormDiv();
-}
+  }
 
   function UserForm({ action }) {
     if (action === "Assign")
-      return <AssignUserForm assignmentType={assignmentType} users={users}/>;
+      return <AssignUserForm assignmentType={assignmentType} users={users} />;
     else
-      return <UnassignUserForm users={users}/>;
+      return <UnassignUserForm users={users} />;
   }
 
   return (
@@ -75,7 +53,7 @@ function WorkbasketUserAssignment({ action, assignment, users, buttonId, formId 
       </button>
 
       {showForm !== null && createPortal(
-        <UserForm action={action}/>,
+        <UserForm action={action} />,
         showForm
       )}
     </>
