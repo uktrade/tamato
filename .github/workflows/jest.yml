@@ -19,3 +19,17 @@ jobs:
 
     - name: Run tests
       run: npm run test
+
+  lint:
+    name: "Lint and static checks"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Node
+      uses: ./.github/actions/setup-node
+
+    - name: Run linter
+      run: |
+        beslint --ext .js,.jsx
