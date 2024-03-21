@@ -58,7 +58,9 @@
           </div>
         </div>
       </article>
+    {% endif %}
 
+    {% if can_add_workbasket %}
       <article class="homepage-card">
         <h3 class="govuk-heading-m">Currently working on</h3>
         {% if not assigned_workbaskets %}

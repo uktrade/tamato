@@ -181,7 +181,7 @@ def test_maintenance_mode_page_content(valid_user_client):
     ("card", "permission"),
     [
         ("What would you like to do?", "view_workbasket"),
-        ("Currently working on", "view_workbasket"),
+        ("Currently working on", "add_workbasket"),
         ("EU TARIC files", "add_trackedmodel"),
         ("Envelopes", "consume_from_packaging_queue"),
         ("Resources", ""),
