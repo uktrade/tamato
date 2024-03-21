@@ -39,7 +39,7 @@ const autoCompleteElement = (element, includeNameAttr = true) => {
     },
     onConfirm: (value) => {
       const autocomplete = document.querySelector(
-        `#${hiddenInput.id}_autocomplete`,
+        `#${hiddenInput.id}_autocomplete`
       );
       if (value && typeof value == "object") {
         // value is new

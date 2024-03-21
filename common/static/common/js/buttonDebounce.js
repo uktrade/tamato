@@ -19,7 +19,7 @@ const tapDebounce = (event) => {
       target.tapDebounceFormSubmitTimer = null;
       target.style.cursor = targetDefaultCursor;
     }.bind(target),
-    DEBOUNCE_TIMEOUT_IN_SECONDS * 1000,
+    DEBOUNCE_TIMEOUT_IN_SECONDS * 1000
   );
   target.style.cursor = "wait";
 };

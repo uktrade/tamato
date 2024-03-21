@@ -6,7 +6,7 @@ import { nodeListForEach } from "./util.js";
 const changeElementVisibility = (
   triggerElement,
   displayElement,
-  triggerProperty,
+  triggerProperty
 ) => {
   if (triggerElement.selectedOptions[0].dataset[triggerProperty] == "True") {
     displayElement.style.display = "block";
@@ -21,19 +21,19 @@ const changeElementVisibility = (
 const applyConditionalRendering = (parent, id) => {
   // Gets reference elements
   let conditionCodeElement = parent.querySelector(
-    `#id_conditions-${id}-condition_code`,
+    `#id_conditions-${id}-condition_code`
   );
   let actionCodeElement = parent.querySelector(`#id_conditions-${id}-action`);
 
   // Gets changeable elements
   let certificateElement = parent.querySelector(
-    `#div_id_conditions-${id}-required_certificate`,
+    `#div_id_conditions-${id}-required_certificate`
   );
   let referencePriceElement = parent.querySelector(
-    `#div_id_conditions-${id}-reference_price`,
+    `#div_id_conditions-${id}-reference_price`
   );
   let dutyElement = parent.querySelector(
-    `#div_id_conditions-${id}-applicable_duty`,
+    `#div_id_conditions-${id}-applicable_duty`
   );
 
   // Functions to set element visibility based on specific triggers
@@ -41,12 +41,12 @@ const applyConditionalRendering = (parent, id) => {
     changeElementVisibility(
       conditionCodeElement,
       certificateElement,
-      "certificate",
+      "certificate"
     );
     changeElementVisibility(
       conditionCodeElement,
       referencePriceElement,
-      "price",
+      "price"
     );
   };
   let changeActionCodeDependency = () => {
@@ -59,17 +59,17 @@ const applyConditionalRendering = (parent, id) => {
 
   // Activates change visibilty on select
   conditionCodeElement.addEventListener("change", () =>
-    changeConditionCodeDependencies(),
+    changeConditionCodeDependencies()
   );
   actionCodeElement.addEventListener("change", () =>
-    changeActionCodeDependency(),
+    changeActionCodeDependency()
   );
 };
 
 // Applies conditional rendering for all MeasureConditions in a form
 const initConditionalMeasureConditions = () => {
   let conditionalMeasureFieldsets = document.querySelectorAll(
-    '[data-field="condition_code"]',
+    '[data-field="condition_code"]'
   );
 
   nodeListForEach(conditionalMeasureFieldsets, (conditionalMeasureForm, i) => {

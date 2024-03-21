@@ -29,7 +29,7 @@ class FilterShowMore {
     this.button.classList.add("js-hidden");
 
     let choices = Array.from(
-      this.module.getElementsByClassName("govuk-checkboxes__item js-hidden"),
+      this.module.getElementsByClassName("govuk-checkboxes__item js-hidden")
     );
     choices.forEach((choice) => {
       choice.style.display = "block";
@@ -43,7 +43,7 @@ const createShowButton = () => {
   button.classList.add(
     "govuk-button",
     "govuk-button--secondary",
-    "js-filter-show-more",
+    "js-filter-show-more"
   );
   button.innerText = "Show more";
   button.type = "button";
@@ -52,7 +52,7 @@ const createShowButton = () => {
 
 const setupCheckBoxes = () => {
   const checkboxSets = Array.from(
-    document.getElementsByClassName("govuk-checkboxes"),
+    document.getElementsByClassName("govuk-checkboxes")
   );
   checkboxSets.forEach((checkboxSet) => {
     if (checkboxSet.children.length > 10) {

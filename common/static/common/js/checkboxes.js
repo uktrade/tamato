@@ -25,7 +25,7 @@ class CheckBoxes {
         this.state[selection] = 1;
       });
       const persistMeasures = document.getElementById(
-        this.PERSIST_MEASURES_BUTTON,
+        this.PERSIST_MEASURES_BUTTON
       );
       persistMeasures.remove();
     }
@@ -55,7 +55,7 @@ class CheckBoxes {
     const checkboxSelector = event.target.dataset.checkAll;
     const checkedState = event.target.checked;
     for (let checkbox of document.querySelectorAll(
-      "[" + checkboxSelector + "]",
+      "[" + checkboxSelector + "]"
     )) {
       checkbox.checked = checkedState;
       this.state[checkbox.name] = checkedState ? 1 : 0;
@@ -71,7 +71,7 @@ class CheckBoxes {
   initCheckboxes() {
     for (let name of Object.keys(this.state)) {
       const element = document.querySelector(
-        `input[type=checkbox][name=${name}]`,
+        `input[type=checkbox][name=${name}]`
       );
       // there may be checkbox names in the session from other pages
       if (element) {
@@ -88,7 +88,7 @@ class CheckBoxes {
       const container2 = document.createElement("div");
       container2.setAttribute(
         "class",
-        "govuk-checkboxes govuk-checkboxes--small",
+        "govuk-checkboxes govuk-checkboxes--small"
       );
       const container3 = document.createElement("div");
       container3.setAttribute("class", "govuk-checkboxes__item");
@@ -101,7 +101,7 @@ class CheckBoxes {
       const labelElement = document.createElement("label");
       labelElement.setAttribute(
         "class",
-        "govuk-label govuk-checkboxes__label govuk-!-padding-right-0",
+        "govuk-label govuk-checkboxes__label govuk-!-padding-right-0"
       );
       labelElement.setAttribute("for", "selected");
 
@@ -117,7 +117,7 @@ class CheckBoxes {
 
   addEventListeners() {
     for (let checkbox of document.querySelectorAll(
-      "[data-check-trackedmodel]",
+      "[data-check-trackedmodel]"
     )) {
       checkbox.onchange = this.toggleCheckbox.bind(this);
     }
@@ -126,7 +126,7 @@ class CheckBoxes {
 
 const initCheckboxes = () => {
   const measurePage = document.querySelector(
-    "#measure-select-checkboxes-script",
+    "#measure-select-checkboxes-script"
   );
   if (measurePage) {
     new CheckBoxes("measures");

@@ -65,7 +65,7 @@ describe("QuotaOriginFormset", () => {
         data={mockOrigins}
         options={mockGeoAreaOptions}
         errors={mockOriginsErrors}
-      />,
+      />
     );
 
     let tree = component.toJSON();
@@ -81,7 +81,7 @@ describe("QuotaOriginFormset", () => {
         data={mockOrigins}
         options={mockGeoAreaOptions}
         errors={mockOriginsErrors}
-      />,
+      />
     );
 
     let tree = component.toJSON();
@@ -99,7 +99,7 @@ describe("QuotaOriginFormset", () => {
         data={mockOrigins}
         options={mockGeoAreaOptions}
         errors={mockOriginsErrors}
-      />,
+      />
     );
 
     let tree = component.toJSON();
@@ -116,7 +116,7 @@ describe("QuotaOriginFormset", () => {
         data={mockOrigins}
         options={mockGeoAreaOptions}
         errors={mockOriginsErrors}
-      />,
+      />
     );
 
     // add an empty origin
@@ -134,7 +134,7 @@ describe("QuotaOriginFormset", () => {
         data={mockOrigins}
         options={mockGeoAreaOptions}
         errors={mockOriginsErrors}
-      />,
+      />
     );
 
     // delete the last origin
@@ -166,7 +166,7 @@ describe("QuotaOriginFormset", () => {
         data={mockOrigins}
         options={mockGeoAreaOptions}
         errors={mockOriginsErrors}
-      />,
+      />
     );
     expect(screen.getByText("Origin 1")).toBeInTheDocument();
     expect(screen.queryByText("Origin 2")).not.toBeInTheDocument();
@@ -191,7 +191,7 @@ describe("QuotaOriginFormset", () => {
         data={mockOrigins}
         options={mockGeoAreaOptions}
         errors={mockOriginsErrors}
-      />,
+      />
     );
     expect(screen.getByText("Origin 1")).toBeInTheDocument();
     expect(screen.getByText("Origin 2")).toBeInTheDocument();

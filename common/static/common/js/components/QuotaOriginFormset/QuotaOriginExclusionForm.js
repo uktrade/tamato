@@ -38,7 +38,7 @@ function QuotaOriginExclusionForm({
             touched: Boolean(
               errors[
                 `origins-${originIndex}-exclusions-${index}-geographical_area`
-              ],
+              ]
             ),
           }}
         >
@@ -74,7 +74,7 @@ QuotaOriginExclusionForm.propTypes = {
       PropTypes.shape({
         id: PropTypes.number.isRequired,
         pk: PropTypes.string.isRequired,
-      }),
+      })
     ),
     geographical_area: PropTypes.number.isRequired,
     start_date_0: PropTypes.number.isRequired,
@@ -88,7 +88,7 @@ QuotaOriginExclusionForm.propTypes = {
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       value: PropTypes.number.isRequired,
-    }),
+    })
   ),
   originIndex: PropTypes.number.isRequired,
   index: PropTypes.number.isRequired,

@@ -4,7 +4,7 @@
 const initFilterDisabledToggleForComCode = () => {
   document.addEventListener("DOMContentLoaded", function () {
     let specificCommodityCode = document.getElementById(
-      "goods_nomenclature_autocomplete",
+      "goods_nomenclature_autocomplete"
     );
     let includeInheritedMeasures = document.getElementById("id_modc");
 

@@ -66,7 +66,7 @@ UnassignUserForm.propTypes = {
     PropTypes.shape({
       pk: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
-    }),
+    })
   ),
 };
 

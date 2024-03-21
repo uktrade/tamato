@@ -43,7 +43,7 @@ describe("WorkbasketUserAssignment", () => {
         users={mockUsers}
         buttonId="assign-workers"
         formId="assign-workers-form"
-      />,
+      />
     );
 
     let tree = component.toJSON();
@@ -58,7 +58,7 @@ describe("WorkbasketUserAssignment", () => {
         users={mockUsers}
         buttonId="assign-reviewers"
         formId="assign-reviewers-form"
-      />,
+      />
     );
 
     let tree = component.toJSON();
@@ -73,7 +73,7 @@ describe("WorkbasketUserAssignment", () => {
         users={mockUsers}
         buttonId="assign-workers"
         formId="assign-workers-form"
-      />,
+      />
     );
 
     let tree = component.toJSON();
@@ -88,7 +88,7 @@ describe("WorkbasketUserAssignment", () => {
         users={mockUsers}
         buttonId="unassign-reviewers"
         formId="unassign-reviewers-form"
-      />,
+      />
     );
 
     let tree = component.toJSON();
@@ -109,7 +109,7 @@ describe("WorkbasketUserAssignment", () => {
       />,
       {
         container: document.body.appendChild(assignmentRow),
-      },
+      }
     );
 
     fireEvent.click(screen.getByTestId("assign-workers"));
@@ -130,7 +130,7 @@ describe("WorkbasketUserAssignment", () => {
       />,
       {
         container: document.body.appendChild(assignmentRow),
-      },
+      }
     );
 
     fireEvent.click(screen.getByTestId("unassign-workers"));

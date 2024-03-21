@@ -111,7 +111,7 @@ QuotaOriginFormset.propTypes = {
         PropTypes.shape({
           id: PropTypes.number.isRequired,
           pk: PropTypes.number.isRequired,
-        }),
+        })
       ),
       geographical_area: PropTypes.number.isRequired,
       start_date_0: PropTypes.number.isRequired,
@@ -120,13 +120,13 @@ QuotaOriginFormset.propTypes = {
       end_date_0: PropTypes.number,
       end_date_1: PropTypes.number,
       end_date_2: PropTypes.number,
-    }),
+    })
   ),
   options: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       value: PropTypes.number.isRequired,
-    }),
+    })
   ),
   errors: PropTypes.object,
 };
@@ -143,7 +143,7 @@ function init() {
       data={origins}
       options={geoAreasOptions}
       errors={originsErrors}
-    />,
+    />
   );
 }
 

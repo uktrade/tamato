@@ -96,7 +96,7 @@ WorkbasketUserAssignment.propTypes = {
     PropTypes.shape({
       pk: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
-    }),
+    })
   ),
   buttonId: PropTypes.string.isRequired,
   formId: PropTypes.string.isRequired,
@@ -117,7 +117,7 @@ function init() {
         users={assignableUsers}
         buttonId="assign-workers"
         formId="assign-workers-form"
-      />,
+      />
     );
   }
 
@@ -131,7 +131,7 @@ function init() {
         users={assignableUsers}
         buttonId="assign-reviewers"
         formId="assign-reviewers-form"
-      />,
+      />
     );
   }
 
@@ -145,7 +145,7 @@ function init() {
         users={assignedWorkers}
         buttonId="unassign-workers"
         formId="unassign-workers-form"
-      />,
+      />
     );
   }
 
@@ -159,7 +159,7 @@ function init() {
         users={assignedReviewers}
         buttonId="unassign-reviewers"
         formId="unassign-reviewers-form"
-      />,
+      />
     );
   }
 }

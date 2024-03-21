@@ -119,7 +119,7 @@ QuotaOriginForm.propTypes = {
       PropTypes.shape({
         id: PropTypes.number.isRequired,
         pk: PropTypes.number.isRequired,
-      }),
+      })
     ),
     geographical_area: PropTypes.number.isRequired,
     start_date_0: PropTypes.number.isRequired,
@@ -133,7 +133,7 @@ QuotaOriginForm.propTypes = {
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       value: PropTypes.number.isRequired,
-    }),
+    })
   ),
   index: PropTypes.number.isRequired,
   removeOrigin: PropTypes.func.isRequired,

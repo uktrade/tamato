@@ -1,7 +1,7 @@
 /* global require:readonly */
 const images = require.context(
   "../../../../node_modules/govuk-frontend/govuk/assets/images",
-  true,
+  true
 );
 
 /* eslint-disable */

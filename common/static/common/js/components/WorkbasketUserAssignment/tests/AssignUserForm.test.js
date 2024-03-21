@@ -34,7 +34,7 @@ describe("AssignUserForm", () => {
 
   it("renders form", () => {
     const component = renderer.create(
-      <AssignUserForm assignmentType={"WORKBASKET_WORKER"} users={mockUsers} />,
+      <AssignUserForm assignmentType={"WORKBASKET_WORKER"} users={mockUsers} />
     );
 
     let tree = component.toJSON();
@@ -43,18 +43,18 @@ describe("AssignUserForm", () => {
 
   it("has assign users form action url", () => {
     render(
-      <AssignUserForm assignmentType={"WORKBASKET_WORKER"} users={mockUsers} />,
+      <AssignUserForm assignmentType={"WORKBASKET_WORKER"} users={mockUsers} />
     );
 
     expect(screen.getByTestId("assign-user-form")).toHaveAttribute(
       "action",
-      assignUsersUrl,
+      assignUsersUrl
     );
   });
 
   it("does not submit when form is empty", () => {
     render(
-      <AssignUserForm assignmentType={"WORKBASKET_WORKER"} users={mockUsers} />,
+      <AssignUserForm assignmentType={"WORKBASKET_WORKER"} users={mockUsers} />
     );
 
     const mockSubmit = jest.fn((e) => e.preventDefault());
@@ -67,7 +67,7 @@ describe("AssignUserForm", () => {
 
   it("submits with selected user", () => {
     render(
-      <AssignUserForm assignmentType={"WORKBASKET_WORKER"} users={mockUsers} />,
+      <AssignUserForm assignmentType={"WORKBASKET_WORKER"} users={mockUsers} />
     );
 
     const mockSubmit = jest.fn((e) => e.preventDefault());

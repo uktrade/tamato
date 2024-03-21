@@ -2,7 +2,7 @@
 const initOpenCloseAccordionSection = () => {
   document.addEventListener("DOMContentLoaded", function () {
     let expandedSection = document.getElementById(
-      "accordion-open-close-section",
+      "accordion-open-close-section"
     );
     let pathname = window.location.pathname;
     if (expandedSection) {

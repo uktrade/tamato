@@ -13,7 +13,7 @@ const progressiveAutoCompleteElement = (element) => {
 
 const initAutocompleteProgressiveEnhancement = () => {
   for (let element of document.querySelectorAll(
-    ".autocomplete-progressive-enhancement",
+    ".autocomplete-progressive-enhancement"
   )) {
     progressiveAutoCompleteElement(element);
   }

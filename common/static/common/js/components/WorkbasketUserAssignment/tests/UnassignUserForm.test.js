@@ -44,7 +44,7 @@ describe("UnassignUserForm", () => {
 
     expect(screen.getByTestId("unassign-user-form")).toHaveAttribute(
       "action",
-      unassignUsersUrl,
+      unassignUsersUrl
     );
   });
 

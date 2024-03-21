@@ -42,7 +42,7 @@ QuotaOriginExclusionFormset.propTypes = {
       PropTypes.shape({
         id: PropTypes.number.isRequired,
         pk: PropTypes.string.isRequired,
-      }),
+      })
     ),
     geographical_area: PropTypes.number.isRequired,
     start_date_0: PropTypes.number.isRequired,
@@ -57,7 +57,7 @@ QuotaOriginExclusionFormset.propTypes = {
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       value: PropTypes.number.isRequired,
-    }),
+    })
   ),
   errors: PropTypes.object,
   addEmptyExclusion: PropTypes.func.isRequired,
