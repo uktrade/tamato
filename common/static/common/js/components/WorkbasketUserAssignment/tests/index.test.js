@@ -1,30 +1,30 @@
-import renderer from 'react-test-renderer';
+import renderer from "react-test-renderer";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { WorkbasketUserAssignment } from '../index';
 
+import { WorkbasketUserAssignment } from "../index";
 
 const mockUsers = [
   {
-    "pk": 1,
-    "name": "User One",
+    pk: 1,
+    name: "User One",
   },
   {
-    "pk": 2,
-    "name": "User Two",
+    pk: 2,
+    name: "User Two",
   },
   {
-    "pk": 3,
-    "name": "User Three",
+    pk: 3,
+    name: "User Three",
   },
-]
+];
 
-describe(WorkbasketUserAssignment, () => {
+describe("WorkbasketUserAssignment", () => {
   beforeAll(() => {
     window.CSRF_TOKEN = "abc123";
     window.assignUsersUrl = "/workbaskets/1/assign-users/";
     window.unassignUsersUrl = "/workbaskets/1/unassign-users/";
   });
-  
+
   afterAll(() => {
     delete window.CSRF_TOKEN;
     delete window.assignUsersUrl;
@@ -35,7 +35,7 @@ describe(WorkbasketUserAssignment, () => {
     document.body.innerHTML = "";
   });
 
-  it('renders assign workers button', () => {
+  it("renders assign workers button", () => {
     const component = renderer.create(
       <WorkbasketUserAssignment
         action="Assign"
@@ -43,14 +43,14 @@ describe(WorkbasketUserAssignment, () => {
         users={mockUsers}
         buttonId="assign-workers"
         formId="assign-workers-form"
-      />
+      />,
     );
 
     let tree = component.toJSON();
     expect(tree).toMatchSnapshot();
   });
 
-  it('renders assign reviewers button', () => {
+  it("renders assign reviewers button", () => {
     const component = renderer.create(
       <WorkbasketUserAssignment
         action="Assign"
@@ -58,14 +58,14 @@ describe(WorkbasketUserAssignment, () => {
         users={mockUsers}
         buttonId="assign-reviewers"
         formId="assign-reviewers-form"
-      />
+      />,
     );
 
     let tree = component.toJSON();
     expect(tree).toMatchSnapshot();
   });
 
-  it('renders unassign workers button', () => {
+  it("renders unassign workers button", () => {
     const component = renderer.create(
       <WorkbasketUserAssignment
         action="Unassign"
@@ -73,14 +73,14 @@ describe(WorkbasketUserAssignment, () => {
         users={mockUsers}
         buttonId="assign-workers"
         formId="assign-workers-form"
-      />
+      />,
     );
 
     let tree = component.toJSON();
     expect(tree).toMatchSnapshot();
   });
 
-  it('renders unassign reviewers button', () => {
+  it("renders unassign reviewers button", () => {
     const component = renderer.create(
       <WorkbasketUserAssignment
         action="Unassign"
@@ -88,7 +88,7 @@ describe(WorkbasketUserAssignment, () => {
         users={mockUsers}
         buttonId="unassign-reviewers"
         formId="unassign-reviewers-form"
-      />
+      />,
     );
 
     let tree = component.toJSON();
@@ -106,9 +106,10 @@ describe(WorkbasketUserAssignment, () => {
         users={mockUsers}
         buttonId="assign-workers"
         formId="assign-workers-form"
-      />, {
+      />,
+      {
         container: document.body.appendChild(assignmentRow),
-      }
+      },
     );
 
     fireEvent.click(screen.getByTestId("assign-workers"));
@@ -126,9 +127,10 @@ describe(WorkbasketUserAssignment, () => {
         users={mockUsers}
         buttonId="unassign-workers"
         formId="unassign-workers-form"
-      />, {
+      />,
+      {
         container: document.body.appendChild(assignmentRow),
-      }
+      },
     );
 
     fireEvent.click(screen.getByTestId("unassign-workers"));
@@ -137,4 +139,4 @@ describe(WorkbasketUserAssignment, () => {
     fireEvent.click(screen.getByTestId("unassign-workers"));
     expect(screen.queryByLabelText("Unassign user")).not.toBeInTheDocument();
   });
-})
+});
