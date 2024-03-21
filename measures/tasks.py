@@ -15,13 +15,6 @@ def bulk_create_measures(measures_bulk_creator_pk: int) -> None:
     measures_bulk_creator.begin_processing()
     measures_bulk_creator.save()
 
-    # TODO: Remove when done.
-    import time
-
-    print("Going to sleep for {sleep_time} seconds...")
-    time.sleep(30)
-    print("Awake again!")
-
     try:
         measures = measures_bulk_creator.create_measures()
     except Exception as e:

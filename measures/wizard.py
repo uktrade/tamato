@@ -6,13 +6,6 @@ class MeasureCreateSessionStorage(SessionStorage):
     data, which shouldn't include the ADD and DELETE elements that are used to
     manage form state."""
 
-    def reset(self):
-        """
-        TODO: Remove when done.
-        No-op to avoid resetting data while in dev.
-        """
-        print(f"*** Preventing wizard data reset while under development.")
-
     def set_step_data(self, step, cleaned_data):
         cleaned_data_copy = cleaned_data.copy()
         for key in list(cleaned_data_copy):
