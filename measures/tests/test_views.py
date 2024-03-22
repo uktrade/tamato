@@ -2771,7 +2771,7 @@ def test_measures_create_process_queue_view_status_tag_generator(
     for task in [currently_processing, awaiting_processing]:
         assert view.status_tag_generator(task)["text"] == "Processing"
     assert view.status_tag_generator(failed_processing)["text"] == "Failed"
-    assert view.status_tag_generator(cancelled)["text"] == "Cancelled"
+    assert view.status_tag_generator(cancelled)["text"] == "Terminated"
     assert view.status_tag_generator(processed)["text"] == "Completed"
 
 
@@ -2779,11 +2779,12 @@ def test_measures_create_process_queue_view_task_action_options(
     valid_user_client,
 ):
     """
-    There are 3 possible Actions for a task:
-    1. Cancel, if a user has permissions and the task has not yet processed.
-    This is tested in test_measures_create_process_queue_cancel_link_renders
+    There are 4 possible Action options for a task:
+    1. Terminate, if a user has permissions and the task has not yet processed.
+    This is tested in test_measures_create_process_queue_terminate_link_renders
     2. Contact TAP, if a task has failed
-    3. N/A, everything else
+    3. Terminated, if a task has been cancelled
+    4. N/A, everything else
     """
     MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.FAILED_PROCESSING,
@@ -2794,6 +2795,9 @@ def test_measures_create_process_queue_view_task_action_options(
     MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
     )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
 
     url = reverse("measure-create-process-queue")
     response = valid_user_client.get(url)
@@ -2802,6 +2806,7 @@ def test_measures_create_process_queue_view_task_action_options(
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     assert page.find("span", class_="contact-tap")
+    assert page.find("span", class_="terminated")
     assert page.find("span", class_="not-applicable")
 
 
@@ -2881,12 +2886,12 @@ def test_measures_create_process_queue_view_admin_can_cancel_task(session_reques
     )
 
     for task in [awaiting_processing, currently_processing]:
-        assert view.can_cancel_task(task)
+        assert view.can_terminate_task(task)
     for task in [cancelled, failed, processed]:
-        assert not view.can_cancel_task(task)
+        assert not view.can_terminate_task(task)
 
 
-def test_measures_create_process_queue_cancel_link_renders(admin_client):
+def test_measures_create_process_queue_terminate_link_renders(admin_client):
     MeasuresBulkCreatorFactory.create(
         processing_state=ProcessingState.AWAITING_PROCESSING,
     )
@@ -2895,7 +2900,7 @@ def test_measures_create_process_queue_cancel_link_renders(admin_client):
     response = admin_client.get(url)
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
-    assert page.find("a", class_="cancel-task")
+    assert page.find("a", class_="terminate-task")
 
 
 def test_cancel_bulk_processor_task_insufficient_permission(valid_user_client):

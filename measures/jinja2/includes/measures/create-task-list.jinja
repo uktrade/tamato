@@ -37,7 +37,7 @@
       {% elif can_terminate_task(object) -%}
           <a
             href="{{ url("cancel-bulk-processor-task", kwargs={"pk": object.pk}) }}"
-            class="govuk-link cancel-task"
+            class="govuk-link terminate-task"
           >Terminate</a>
       {% elif is_task_terminated(object) -%}
           <span class="terminated">Terminated</span>
