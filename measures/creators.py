@@ -99,16 +99,19 @@ class MeasuresCreator:
         for measure_data in measures_data:
 
 
+
             # TODO: Remove when done.
             import logging
+            import os
             import time
 
             logger = logging.getLogger(__name__)
 
             sleep_time = 15
-            logger.info("*** Sleeping for {sleep_time} seconds...")
+            logger.info(f"*** Pid: {os.getpid()}, sleeping for {sleep_time} seconds...")
             time.sleep(sleep_time)
             logger.info("*** Awake!")
+
 
 
             # creates measure in DB
