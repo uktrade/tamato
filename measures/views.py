@@ -346,13 +346,10 @@ class MeasureList(
         if context["has_next_page"]:
             context["next_page_number"] = page.next_page_number()
 
-        measure_selections = [
-            SelectableObjectsForm.object_id_from_field_name(name)
-            for name in self.measure_selections
-        ]
         context["measure_selections"] = models.Measure.objects.filter(
-            pk__in=measure_selections,
-        )
+            pk__in=self.measure_selections,
+        ).values_list("sid", flat=True)
+
         context["query_params"] = True
         context[
             "base_url"

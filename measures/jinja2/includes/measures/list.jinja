@@ -116,9 +116,9 @@
   <div class="govuk-details__text">
   {% if measure_selections %}
     {% set table_rows = [] %}
-      {% for measure in measure_selections %}
+      {% for sid in measure_selections %}
         {% set measure_link %}
-          <a class="govuk-link govuk-!-font-weight-bold" href="{{measure.get_url()}}">{{measure.sid}}</a>
+          <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('measure-ui-detail', args=[sid]) }}">{{sid}}</a>
         {% endset %}
         {{ table_rows.append([
           {"html": measure_link},
