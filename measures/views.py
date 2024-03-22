@@ -56,7 +56,6 @@ from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
-from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
@@ -218,16 +217,12 @@ class MeasureList(
             )
 
         if "order_number" in selected_filters:
-            quota = QuotaOrderNumber.objects.current().get(
-                id=selected_filters["order_number"],
-            )
             selected_filters_strings.append(
-                f"Quota Order Number {quota.structure_code}",
+                f"Quota Order Number {selected_filters['order_number']}",
             )
 
         if "sid" in selected_filters:
-            measure = models.Measure.objects.current().get(sid=selected_filters["sid"])
-            selected_filters_strings.append(f"ID {measure.sid}")
+            selected_filters_strings.append(f"ID {selected_filters['sid']}")
 
         if "additional_code" in selected_filters:
             code = AdditionalCode.objects.current().get(
@@ -267,7 +262,10 @@ class MeasureList(
             footnote = Footnote.objects.current().get(id=selected_filters["footnote"])
             selected_filters_strings.append(f"Footnote {footnote.structure_code}")
 
-        if "start_date_0" and "start_date_1" and "start_date_2" in selected_filters:
+        if all(
+            sf in selected_filters
+            for sf in ("start_date_0", "start_date_1", "start_date_1")
+        ):
             if selected_filters["start_date_modifier"] == "exact":
                 modifier = ""
             else:
@@ -276,7 +274,9 @@ class MeasureList(
                 f"Start date: {modifier} {selected_filters['start_date_0']}/{selected_filters['start_date_1']}/{selected_filters['start_date_2']}",
             )
 
-        if "end_date_0" and "end_date_1" and "end_date_2" in selected_filters:
+        if all(
+            sf in selected_filters for sf in ("end_date_0", "end_date_1", "end_date_2")
+        ):
             if selected_filters["end_date_modifier"] == "exact":
                 modifier = ""
             else:
