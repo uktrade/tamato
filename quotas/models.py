@@ -368,7 +368,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
             URL
         """
         kwargs = {}
-        if action not in ["list", "create"]:
+        if action != "list":
             kwargs = self.get_identifying_fields()
         try:
             if (
@@ -388,10 +388,8 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
                     kwargs={"sid": getattr(self, self.url_relation_field).sid},
                 )
             else:
-                url = reverse(
-                    f"{self.slugify_model_name()}-ui-{action}",
-                    kwargs=kwargs,
-                )
+                urlname = f"{self.slugify_model_name()}-ui-{action}"
+                url = reverse(urlname, kwargs=kwargs)
             if action not in ["detail", "list"]:
                 return url
             return f"{url}{self.url_suffix}"
