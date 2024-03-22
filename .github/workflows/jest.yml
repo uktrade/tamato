@@ -32,4 +32,4 @@ jobs:
 
     - name: Run linter
       run: |
-        beslint --ext .js,.jsx
+        eslint --ext .js,.jsx
