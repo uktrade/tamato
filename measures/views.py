@@ -1145,7 +1145,7 @@ class MeasuresCreateProcessQueue(
             context["selected_link"] = "completed"
         # Provide template access to some UI / view utility functions.
         context["status_tag_generator"] = self.status_tag_generator
-        context["can_cancel_task"] = self.can_cancel_task
+        context["can_terminate_task"] = self.can_terminate_task
         context["is_task_failed"] = self.is_task_failed
         # Apply the TAP standard date format within the UI.
         context["datetime_format"] = settings.DATETIME_FORMAT
@@ -1171,10 +1171,10 @@ class MeasuresCreateProcessQueue(
 
         return task.processing_state == ProcessingState.FAILED_PROCESSING
 
-    def can_cancel_task(self, task: MeasuresBulkCreator) -> bool:
+    def can_terminate_task(self, task: MeasuresBulkCreator) -> bool:
         """
         Return True if a task is in a queued state and the current user is
-        permitted to cancel task.
+        permitted to terminate a task.
 
         Return False otherwise.
         """
