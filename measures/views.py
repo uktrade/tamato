@@ -334,7 +334,6 @@ class MeasureList(
                 "has_next_page": page.has_next(),
                 "page_number": page.number,
                 "list_items_count": self.paginator.per_page,
-                "object_list": page.object_list,
                 "page_links": build_pagination_list(
                     page.number,
                     page.paginator.num_pages,
