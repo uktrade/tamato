@@ -1211,7 +1211,7 @@ class MeasuresCreateProcessQueue(
             }
         elif task.processing_state == ProcessingState.CANCELLED:
             return {
-                "text": "Cancelled",
+                "text": "Terminated",
                 "tag_class": "tamato-badge-light-yellow",
             }
         else:
