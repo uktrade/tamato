@@ -1,6 +1,6 @@
 {% extends "layouts/form.jinja" %}
 
-{% from "components/table/macro.njk" import govukTable %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 
 
@@ -20,28 +20,31 @@
 
 
 {% block form %}
-  {{ govukTable({
-    "caption": "Process details",
-    "firstCellIsHeader": True,
-    "rows": [
-      [
-        {"text": "Workbasket ID"},
-        {"text": object.workbasket.pk},
-      ],
-      [
-        {"text": "Submitted date"},
-        {"text": object.created_at.strftime(datetime_format)},
-      ],
-      [
-        {"text": "Submitted by"},
-        {"text": object.user or "Unknown"},
-      ],
-      [
-        {"text": "Expected objects count"},
-        {"text": object.expected_measures_count},
-      ],
-    ]
-  }) }}
+  <h2 class="govuk-heading-l">Details</h2>
+  {{ govukSummaryList({
+        "rows": [
+        {
+            "key": {"text": "Workbasket ID"},
+            "value": {"text": object.workbasket.pk},
+            "actions": {"items": []}
+        },
+        {
+            "key": {"text": "Submitted date"},
+            "value": {"text": object.created_at.strftime(datetime_format)},
+            "actions": {"items": []}
+        },
+        {
+            "key": {"text": "Submitted by"},
+            "value": {"text": object.user or "Unknown"},
+            "actions": {"items": []}
+        },
+        {
+            "key": {"text": "Expected objects count"},
+            "value": {"text": object.expected_measures_count},
+            "actions": {"items": []}
+        },
+        ]
+    })}}
 
   <p class="govuk-body">Process cancellation is not guarenteed because of the dynamic nature of processes.</p>
 
