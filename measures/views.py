@@ -17,6 +17,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
@@ -298,7 +299,7 @@ class MeasureList(
 
         return selected_filters_lists
 
-    @property
+    @cached_property
     def paginator(self):
         filterset_class = self.get_filterset_class()
         self.filterset = self.get_filterset(filterset_class)
