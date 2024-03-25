@@ -48,6 +48,7 @@
     "lint:js:fix": "npx eslint --ext .jsx,.js --fix"
   },
   "lint-staged": {
+    "stash": false,
     "*.{js,jsx}": [
       "eslint --fix",
       "prettier --write"
