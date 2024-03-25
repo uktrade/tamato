@@ -387,7 +387,7 @@ def test_quota_event_api_list_view(valid_user_client):
 def test_quota_definitions_list_200(valid_user_client, quota_order_number):
     factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
 
-    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+    url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
     response = valid_user_client.get(url)
 
@@ -398,7 +398,7 @@ def test_quota_definitions_list_no_quota_data(valid_user_client, quota_order_num
     factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
 
     url = (
-        reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+        reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
         + "?quota_type=sub_quotas"
     )
 
@@ -417,7 +417,7 @@ def test_quota_definitions_list_sids(valid_user_client, quota_order_number):
         order_number=quota_order_number,
     )
 
-    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+    url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
     response = valid_user_client.get(url)
 
@@ -435,7 +435,7 @@ def test_quota_definitions_list_sids(valid_user_client, quota_order_number):
 def test_quota_definitions_list_title(valid_user_client, quota_order_number):
     factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
 
-    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+    url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
     response = valid_user_client.get(url)
 
@@ -470,7 +470,7 @@ def test_quota_definitions_list_current_versions(
     with override_current_transaction(approved_transaction):
         assert quota_order_number.definitions.current().count() == 1
 
-    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+    url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
     response = valid_user_client.get(url)
 
@@ -530,7 +530,7 @@ def test_quota_definitions_list_edit_delete(
         valid_between=date_ranges.later,
     )
 
-    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+    url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
     response = valid_user_client.get(url)
 
@@ -568,7 +568,7 @@ def test_quota_definitions_list_sort_by_start_date(
         order_number=quota_order_number,
         valid_between=date_ranges.later,
     )
-    url = reverse("quota-definitions", kwargs={"sid": quota_order_number.sid})
+    url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
     response = valid_user_client.get(f"{url}?sort_by=valid_between&ordered=asc")
     assert response.status_code == 200
@@ -707,7 +707,7 @@ def test_current_quota_order_number_returned(
         order_number=current_version,
         valid_between=date_ranges.normal,
     )
-    url = reverse("quota-definitions", kwargs={"sid": current_version.sid})
+    url = reverse("quota_definition-ui-list", kwargs={"sid": current_version.sid})
     response = valid_user_client.get(url)
 
     assert response.status_code == 200
