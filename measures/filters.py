@@ -258,13 +258,24 @@ class MeasureFilter(TamatoFilter):
         return queryset
 
     def certificates_filter(self, queryset, name, value):
-        """Collects the measure_ids from MeasureCondition, filtered on value (a
+        """
+        Collects the measure_ids from MeasureCondition, filtered on value (a
         Certificate object) Filters the queryset for Measures associated with
-        that Certificate via MeasureCondition."""
+        that Certificate via MeasureCondition.
+
+        Queryset ensures that it returns the measure_ids for the latest version
+        of the assosiated measure.
+        """
         if value:
-            measure_ids = MeasureCondition.objects.filter(
-                required_certificate=value,
-            ).values_list("dependent_measure_id", flat=True)
+            measure_conditions = MeasureCondition.objects.current().filter(
+                required_certificate__version_group=value.version_group,
+            )
+
+            measure_ids = []
+            for condition in measure_conditions:
+                measure_ids.append(
+                    condition.dependent_measure.get_versions().current().get().pk,
+                )
 
             queryset = queryset.filter(id__in=measure_ids)
 

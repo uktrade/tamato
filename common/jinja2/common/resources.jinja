@@ -1,0 +1,93 @@
+{% extends "layouts/layout.jinja" %}
+
+{% set page_title = "Resources" %}
+
+{% macro resource(heading, description, url, open_new_tab="") %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h3 class="govuk-heading-m">{{ heading }}</h3>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-half">
+      <p class="govuk-body">{{ description }}</p>
+    </div>
+    <div class="govuk-grid-column-one-half">
+      <a
+        href="{{ url }}"
+        class="govuk-button align-right class"
+        {% if open_new_tab %}
+           rel="noreferrer noopener" target="_blank"
+        {% endif %}
+      >View</a>
+    </div>
+  </div>
+  <hr class="govuk-section-break govuk-section-break govuk-section-break--visible">
+{% endmacro %}
+
+{% block breadcrumb %}
+  <div class="govuk-breadcrumbs">
+    <ol class="govuk-breadcrumbs__list">
+      <li class="govuk-breadcrumbs__list-item">
+        <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
+      </li>
+      <li class="govuk-breadcrumbs__list-item">
+        {{ page_title }}
+      </li>
+    </ol>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row govuk-!-margin-bottom-6">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+      <p class="govuk-body">Tariff Application Platform offers access to a range of resources.</p>
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      {{ 
+        resource(
+          heading="Application information",
+          description="",
+          url=url("app-info"),
+        ) 
+      }}
+
+      {{ 
+        resource(
+          heading="Importer V1",
+          description="",
+          url=url("import_batch-ui-list"),
+        ) 
+      }}
+
+      {{ resource(
+          heading="Importer V2",
+          description="",
+          url=url("taric_parser_import_ui_list"),
+      )}}
+
+      {{
+        resource(
+          heading="TAP reports",
+          description="",
+          url=url("reports:index"),
+        ) 
+      }}
+
+      {{
+        resource(
+          heading="Tariff data manual",
+          description="",
+          url="https://uktrade.github.io/tariff-data-manual/#home",
+          open_new_tab="True",
+        )
+      }}
+
+    </div>
+  </div>
+{% endblock %}
