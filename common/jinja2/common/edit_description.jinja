@@ -58,10 +58,6 @@
       {% call django_form(action=object.get_url("edit")) %}
         {{ crispy(form) }}
       {% endcall %}
-      {{ govukDetails({
-      "summaryText": "Help with formatting description",
-      "html": description_help_html
-      }) }}
     </div>
   </div>
 {% endblock %}
