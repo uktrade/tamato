@@ -57,8 +57,9 @@
 
     <nav class="workbasket-filters">
       <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
-
-      {{ inline_filter_links(filter_links_list) }}
+      <div class="govuk-!-margin-top-2">
+        {{ inline_filter_links(filter_links_list) }}
+      </div>
 
       {{ govukButton({
             "html": "Refresh "~button_image,
