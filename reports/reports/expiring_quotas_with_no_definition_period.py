@@ -12,7 +12,7 @@ from reports.reports.base_table import ReportBaseTable
 class Report(ReportBaseTable):
     name = "Quotas expiring soon"
     enabled = True
-    description = "This table shows quotas with definition, sub-quota, blocking or suspension periods about to expire with no future definition period."
+    description = "This table shows quotas with definition, sub-quota, blocking or suspension periods due to expire in the next 5 weeks with no future definition period."
     tabular_reports = True
     tab_name = "Definitions"
     tab_name2 = "Sub-quota associations"
