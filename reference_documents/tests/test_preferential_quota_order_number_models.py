@@ -1,19 +1,22 @@
 import pytest
 
-from reference_documents.tests.factories import PreferentialQuotaFactory
+from reference_documents.models import PreferentialQuotaOrderNumber
+from reference_documents.tests.factories import PreferentialQuotaOrderNumberFactory
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.reference_documents
-class TestPreferentialQuota:
-    def test_create_with_defaults(self):
-        target = PreferentialQuotaFactory()
+class TestPreferentialQuotaOrderNumber:
+    def test_init(self):
+        target = PreferentialQuotaOrderNumber()
 
-        assert target.preferential_quota_order_number is not None
-        assert target.commodity_code is not None
-        assert target.quota_duty_rate is not None
-        assert target.volume is not None
-        assert target.valid_between is not None
-        assert target.measurement is not None
-        assert target.order is not None
+        assert target.quota_order_number == ""
+        assert target.coefficient is None
+        assert target.main_order_number is None
+        assert target.valid_between is None
+
+    def test_str(self):
+        target = PreferentialQuotaOrderNumberFactory.create()
+
+        assert str(target) == f"{target.quota_order_number}"

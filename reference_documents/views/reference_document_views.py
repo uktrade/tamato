@@ -19,18 +19,22 @@ from reference_documents.forms.reference_document_forms import (
 from reference_documents.models import ReferenceDocument
 
 
-class ReferenceDocumentList(PermissionRequiredMixin, ListView):
-    """UI endpoint for viewing and filtering workbaskets."""
+class ReferenceDocumentContext:
+    def __init__(self, object_list):
+        self.object_list = object_list
 
-    template_name = "reference_documents/index.jinja"
-    permission_required = "reference_documents.view_reference_document"
-    model = ReferenceDocument
+    def get_reference_document_context_headers(self):
+        return [
+            {"text": "Latest Version"},
+            {"text": "Country"},
+            {"text": "Duties"},
+            {"text": "Order Numbers"},
+            {"text": "Actions"},
+        ]
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_reference_document_context_rows(self):
         reference_documents = []
-
-        for reference in context["object_list"].order_by("area_id"):
+        for reference in self.object_list.order_by("area_id"):
             if reference.reference_document_versions.count() == 0:
                 reference_documents.append(
                     [
@@ -68,15 +72,25 @@ class ReferenceDocumentList(PermissionRequiredMixin, ListView):
                         },
                     ],
                 )
+        return reference_documents
 
-        context["reference_documents"] = reference_documents
-        context["reference_document_headers"] = [
-            {"text": "Latest Version"},
-            {"text": "Country"},
-            {"text": "Duties"},
-            {"text": "Order Numbers"},
-            {"text": "Actions"},
-        ]
+    def get_context(self):
+        return {
+            "reference_documents": self.get_reference_document_context_rows(),
+            "reference_document_headers": self.get_reference_document_context_headers(),
+        }
+
+
+class ReferenceDocumentList(PermissionRequiredMixin, ListView):
+    """UI endpoint for viewing and filtering workbaskets."""
+
+    template_name = "reference_documents/index.jinja"
+    permission_required = "reference_documents.view_reference_document"
+    model = ReferenceDocument
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(ReferenceDocumentContext(context["object_list"]).get_context())
         return context
 
 
@@ -120,9 +134,9 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
                         "text": version.entry_into_force_date,
                     },
                     {
-                        "html": f'<a href="{reverse("reference_documents:version-details", kwargs={"pk":version.id})}">Version details</a><br>'
-                        f'<a href="{reverse("reference_documents:version-edit", kwargs={"ref_doc_pk":context["object"].pk, "pk":version.id})}">Edit</a><br>'
-                        f'<a href="{reverse("reference_documents:version-delete", kwargs={"ref_doc_pk":context["object"].pk, "pk":version.id})}">Delete</a><br>'
+                        "html": f'<a href="{reverse("reference_documents:version-details", kwargs={"pk": version.id})}">Version details</a><br>'
+                        f'<a href="{reverse("reference_documents:version-edit", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Edit</a><br>'
+                        f'<a href="{reverse("reference_documents:version-delete", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Delete</a><br>'
                         f'<a href="/reference_document_version_alignment_reports/{version.id}">Alignment reports</a>',
                     },
                 ],

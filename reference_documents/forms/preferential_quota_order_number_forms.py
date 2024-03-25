@@ -1,3 +1,6 @@
+from decimal import Decimal
+from decimal import InvalidOperation
+
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
@@ -56,9 +59,9 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
             return None
 
         try:
-            coefficient = float(coefficient)
+            coefficient = Decimal(coefficient)
             return coefficient
-        except ValueError:
+        except InvalidOperation:
             raise ValidationError(
                 "Coefficient not a valid number",
             )

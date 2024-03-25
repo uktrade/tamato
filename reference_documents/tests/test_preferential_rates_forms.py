@@ -3,6 +3,9 @@ import pytest
 from reference_documents.forms.preferential_rate_forms import (
     PreferentialRateCreateUpdateForm,
 )
+from reference_documents.forms.preferential_rate_forms import PreferentialRateDeleteForm
+from reference_documents.models import PreferentialRate
+from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
 
@@ -42,5 +45,15 @@ class TestPreferentialRateCreateUpdateForm:
         assert "end_date" not in form.errors.as_data().keys()
 
 
+@pytest.mark.reference_documents
 class TestPreferentialRateDeleteForm:
-    pass
+    def test_init(self):
+        pref_rate = factories.PreferentialRateFactory()
+
+        target = PreferentialRateDeleteForm(
+            instance=pref_rate,
+        )
+
+        assert target.instance == pref_rate
+        assert target.Meta.fields == []
+        assert target.Meta.model == PreferentialRate

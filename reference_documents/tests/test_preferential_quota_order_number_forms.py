@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -50,7 +52,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         )
 
         assert not target.is_valid()
-        assert target.instance.coefficient == 1.6
+        assert target.instance.coefficient == Decimal("1.6")
 
     def test_clean_coefficient_fail_invalid(self):
         pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()

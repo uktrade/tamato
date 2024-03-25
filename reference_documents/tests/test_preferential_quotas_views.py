@@ -8,6 +8,7 @@ from reference_documents.tests import factories
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.reference_documents
 class TestPreferentialQuotaEditView:
     def test_get_without_permissions(self, valid_user_client):
         pref_quota = factories.PreferentialQuotaFactory.create()
@@ -18,7 +19,7 @@ class TestPreferentialQuotaEditView:
                 kwargs={"pk": pref_quota.pk},
             ),
         )
-        assert response.status_code == 200
+        assert response.status_code == 403
 
     def test_get_with_permissions(self, superuser_client):
         pref_quota = factories.PreferentialQuotaFactory.create()
