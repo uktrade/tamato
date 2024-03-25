@@ -12,7 +12,7 @@ from reports.reports.base_table import ReportBaseTable
 class Report(ReportBaseTable):
     name = "Quotas expiring soon"
     enabled = True
-    description = "Quotas with definition, sub-quota, blocking or suspension periods about to expire and no future definition period."
+    description = "This table shows quotas with definition, sub-quota, blocking or suspension periods about to expire with no future definition period."
     tabular_reports = True
     tab_name = "Definitions"
     tab_name2 = "Sub-quota associations"
@@ -23,9 +23,9 @@ class Report(ReportBaseTable):
 
     def headers(self) -> [dict]:
         return [
-            {"text": "Quota Order Number"},
-            {"text": "Definition Start Date"},
-            {"text": "Definition End Date"},
+            {"text": "Quota order number"},
+            {"text": "Definition start date"},
+            {"text": "Definition end date"},
         ]
 
     def row(self, row) -> [dict]:
@@ -40,7 +40,7 @@ class Report(ReportBaseTable):
 
         if not any(table_rows):
             return [
-                [{"text": "There is no data for this report at present"}]
+                [{"text": "There is currently no data for this report"}]
                 + [{"text": " "} for _ in range(len(self.headers()) - 1)],
             ]
 
@@ -94,11 +94,11 @@ class Report(ReportBaseTable):
 
     def headers2(self) -> [dict]:
         return [
-            {"text": "Quota Order Number"},
+            {"text": "Quota order number"},
             {"text": "Sub-quota associations SID"},
-            {"text": "Sub-quota associations Start Date"},
-            {"text": "Sub-quota associations End Date"},
-            {"text": "Definition Period SID"},
+            {"text": "Sub-quota associations start date"},
+            {"text": "Sub-quota associations end date"},
+            {"text": "Definition period SID"},
         ]
 
     def row2(self, row) -> [dict]:
@@ -137,7 +137,7 @@ class Report(ReportBaseTable):
 
         if not any(table_rows):
             return [
-                [{"text": "There is no data for this report at present"}]
+                [{"text": "There is currently no data for this report"}]
                 + [{"text": " "} for _ in range(len(self.headers2()) - 1)],
             ]
 
@@ -166,11 +166,11 @@ class Report(ReportBaseTable):
 
     def headers3(self) -> [dict]:
         return [
-            {"text": "Quota Order Number"},
-            {"text": "Blocking Period SIDs"},
-            {"text": "Blocking Period Start Date"},
-            {"text": "Blocking Period End Date"},
-            {"text": "Definition Period SID"},
+            {"text": "Quota order number"},
+            {"text": "Blocking period SIDs"},
+            {"text": "Blocking period start date"},
+            {"text": "Blocking period end date"},
+            {"text": "Definition period SID"},
         ]
 
     def row3(self, row) -> [dict]:
@@ -206,7 +206,7 @@ class Report(ReportBaseTable):
 
         if not any(table_rows):
             return [
-                [{"text": "There is no data for this report at present"}]
+                [{"text": "There is currently no data for this report"}]
                 + [{"text": " "} for _ in range(len(self.headers3()) - 1)],
             ]
 
@@ -240,11 +240,11 @@ class Report(ReportBaseTable):
 
     def headers4(self) -> [dict]:
         return [
-            {"text": "Quota Order Number"},
-            {"text": "Suspension Period SIDs"},
-            {"text": "Suspension Period Start Date"},
-            {"text": "Suspension Period End Date"},
-            {"text": "Definition Period SID"},
+            {"text": "Quota order number"},
+            {"text": "Suspension period SIDs"},
+            {"text": "Suspension period start date"},
+            {"text": "Suspension period end date"},
+            {"text": "Definition period SID"},
         ]
 
     def row4(self, row) -> [dict]:
@@ -280,7 +280,7 @@ class Report(ReportBaseTable):
 
         if not any(table_rows):
             return [
-                [{"text": "There is no data for this report at present"}]
+                [{"text": "There is currently no data for this report"}]
                 + [{"text": " "} for _ in range(len(self.headers4()) - 1)],
             ]
 

@@ -19,7 +19,7 @@ class Report(ReportBaseTable):
 
     def headers(self) -> [dict]:
         return [
-            {"text": "Order number"},
+            {"text": "Quota order number"},
             {"text": "Start date"},
             {"text": "End date"},
             {"text": "Reason"},

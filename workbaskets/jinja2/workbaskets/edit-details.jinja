@@ -8,7 +8,8 @@
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("home")},
-      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Summary", "href": url("workbaskets:current-workbasket") },
+      {"text": "Edit an existing workbasket", "href": url("workbaskets:workbasket-ui-list")},
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - summary", "href": url("workbaskets:current-workbasket") },
       {"text": page_title}
     ]
   }) }}
