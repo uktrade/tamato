@@ -1,0 +1,169 @@
+{% extends "layouts/form.jinja" %}
+
+{% set page_title = "Home" %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">Search the Tariff Application Platform</h1>
+  <span class="govuk-caption-l govuk-!-margin-bottom-4">This service lets you manage the UK's import and export tariff data</span>
+
+  {% block form %}
+    <div class="govuk-grid-row">
+      <div id="homepage-search" class="govuk-grid-column-full">
+        {% call django_form() %}
+          {{ crispy(form) }}
+        {% endcall %}
+      </div>
+    </div>
+  {% endblock %}
+
+  <div id="homepage-articles" class="govuk-grid-row">
+    {% if can_view_workbasket %}
+      <article class="homepage-card">
+        <h3 class="govuk-heading-m">What would you like to do?</h3>
+        <p class="govuk-body">
+          Create a new workbasket, edit an existing workbasket, package or search for workbaskets.
+        </p>
+
+        <div class="govuk-grid-row">
+          {% if can_add_workbasket %}
+            <div class="govuk-grid-column-one-half">
+              <a
+                href="{{ url('workbaskets:workbasket-ui-create') }}"
+                class="govuk-button homepage-workbasket-action"
+              >Create a <br> workbasket</a>
+            </div>
+          {% endif %}
+
+          {% if can_edit_workbasket %}
+            <div class="govuk-grid-column-one-half">
+              <a
+                href="{{ url('workbaskets:workbasket-ui-list') }}"
+                class="govuk-button homepage-workbasket-action"
+              >Edit a <br> workbasket</a>
+            </div>
+          {% endif %}
+
+          {% if can_manage_packaging %}
+            <div class="govuk-grid-column-one-half">
+              <a
+                href="{{ url('publishing:packaged-workbasket-queue-ui-list') }}"
+                class="govuk-button homepage-workbasket-action"
+              >Package <br> workbaskets</a>
+            </div>
+          {% endif %}
+
+          <div class="govuk-grid-column-one-half">
+            <a
+              href="{{ url('workbaskets:workbasket-ui-list-all') }}"
+              class="govuk-button homepage-workbasket-action"
+            >Search for <br> workbaskets</a>
+          </div>
+        </div>
+      </article>
+    {% endif %}
+
+    {% if can_edit_workbasket %}
+      <article class="homepage-card">
+        <h3 class="govuk-heading-m">Currently working on</h3>
+        {% if not assigned_workbaskets %}
+          <p class="govuk-body">You are not currently assigned to a workbasket.</p>
+        {% else %}
+          <ul class="govuk-list">
+            {% for workbasket in assigned_workbaskets %}
+              <li>
+                <p class="homepage-workbasket-details govuk-body">
+                  <a
+                    href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket["id"]}) }}"
+                    class="govuk-link"
+                  >Workbasket ID {{ workbasket["id"] }}</a>
+                  <span>
+                    {% if workbasket["rule_violations_count"] %}
+                      - {{ workbasket["assignment_type"] }}, rule violation{{ workbasket["rule_violations_count"]|pluralize }}
+                      <span class="rule-violation-badge">{{ workbasket["rule_violations_count"] }}</span>
+                    {% else %}
+                    - {{ workbasket["assignment_type"] }}
+                    {% endif %}
+                  </span>
+                </p>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </article>
+    {% endif %}
+
+    {% if can_import_taric %}
+      <article class="homepage-card">
+        <h3 class="govuk-heading-m">EU TARIC files</h3>
+        <p class="govuk-body">
+          <a href="{{ url('commodity_importer-ui-list') }}"
+            class="govuk-link"
+          >View EU import list and import new TARIC files</a>
+        </p>
+      </article>
+    {% endif %}
+
+    {% if can_consume_packaging %}
+      <article class="homepage-card">
+        <h3 class="govuk-heading-m">Envelopes</h3>
+        <p class="govuk-body">
+          <a href="{{ url('publishing:envelope-queue-ui-list') }}"
+            class="govuk-link"
+          >Process envelopes</a>
+        </p>
+      </article>
+    {% endif %}
+
+    <article class="homepage-card">
+      <h3 class="govuk-heading-m">Resources</h3>
+      <p class="govuk-body">
+        We have a range of resources you can use with the Tariff Application Platform.
+      </p>
+      <ul id="homepage-tap-resources" class="govuk-list govuk-list--spaced">
+        <li>
+          <a href="{{ url('app-info') }}" class="govuk-link">Application information</a>
+        </li>
+        {% if request.user.is_superuser %}
+          <li>
+            <a href="{{ url('import_batch-ui-list') }}" class="govuk-link">Importer V1</a>
+          </li>
+          <li>
+            <a href="{{ url('taric_parser_import_ui_list') }}" class="govuk-link">Importer V2</a>
+          </li>
+        {% endif %}
+        {% if can_view_reports %}
+          <li>
+            <a href="{{ url('reports:index') }}" class="govuk-link"><abbr title="Tariff Application Platform">TAP</abbr> reports</a>
+          </li>
+        {% endif %}
+        <li>
+          <a href="https://uktrade.github.io/tariff-data-manual/#home" class="govuk-link" rel="noreferrer noopener" target="_blank">Tariff data manual</a>
+        </li>
+      </ul>
+    </article>
+  </div>
+
+  <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+  <div class="govuk-grid-row">
+    <h2 class="govuk-heading-l govuk-grid-column-full govuk-!-margin-bottom-3">How can we support you?</h2>
+
+    <article class="homepage-card">
+      <h3 class="govuk-heading-m">Get help</h3>
+      <p class="govuk-body">
+        Find documentation, guidance, training and updates in the
+        <a
+          href="https://data-services-help.trade.gov.uk/tariff-application-platform/"
+          class="govuk-link"
+        >
+          <abbr title="Tariff Application Platform">TAP</abbr> help centre.
+        </a>
+      </p>
+    </article>
+
+    <article class="homepage-card govuk-!-padding-bottom-5">
+      <h3 class="govuk-heading-m">Get in touch</h3>
+      <p class="govuk-body"><a class="govuk-link" href="mailto:9cf0f83c.trade.gov.uk@uk.teams.ms">Contact us</a> if you have a question or suggestion.</p>
+    </article>
+  </div>
+{% endblock %}

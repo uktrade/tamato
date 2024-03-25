@@ -1811,10 +1811,7 @@ def test_application_access_after_workbasket_delete(
     # user workbasket deletion.
     assert response.status_code == 200
 
-    assert (
-        f"Workbasket {workbasket_pk}"
-        in page.select("header nav a.workbasket-link")[0].text
-    )
+    assert f"Workbasket ID {workbasket_pk}" in page.select("a.workbasket-link")[0].text
 
     user_empty_workbasket.delete()
 
