@@ -145,6 +145,8 @@ webpack-stats.json
 # PyCharm
 .idea/
 
+# VS Code
+.vscode/
 
 *.gz
 
