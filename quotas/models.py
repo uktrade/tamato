@@ -379,11 +379,13 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
             elif self.update_type == UpdateType.UPDATE:
                 action += "-update"
 
-        if action in ["detail"]:
+        if action == "detail":
             url = reverse(
                 f"{self.get_url_pattern_name_prefix()}-ui-{action}",
                 kwargs={"sid": getattr(self, self.url_relation_field).sid},
             )
+            return f"{url}{self.url_suffix}"
+
         if action in ["create", "list"]:
             url = reverse(
                 f"{self.slugify_model_name()}-ui-{action}",
@@ -391,8 +393,6 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
             )
         else:
             url = reverse(f"{self.slugify_model_name()}-ui-{action}", kwargs=kwargs)
-        if action == "detail":
-            return f"{url}{self.url_suffix}"
         return url
 
     @classmethod
