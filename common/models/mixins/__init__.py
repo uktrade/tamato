@@ -1,4 +1,5 @@
 """Mixins for models."""
+
 from django.db import models
 
 

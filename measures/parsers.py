@@ -401,9 +401,11 @@ class ConditionSentenceParser:
         self.permitted_measurements = {
             (
                 m.measurement_unit.code,
-                m.measurement_unit_qualifier.code
-                if m.measurement_unit_qualifier
-                else None,
+                (
+                    m.measurement_unit_qualifier.code
+                    if m.measurement_unit_qualifier
+                    else None
+                ),
             ): m
             for m in permitted_measurements
         }
@@ -441,14 +443,16 @@ class ConditionSentenceParser:
                     else None
                 )
             ),
-            component_measurement=self.permitted_measurements[
-                (
-                    match.group("m4"),
-                    match.group("m5"),
-                )
-            ]
-            if (match.group("m4") or match.group("m5"))
-            else None,
+            component_measurement=(
+                self.permitted_measurements[
+                    (
+                        match.group("m4"),
+                        match.group("m5"),
+                    )
+                ]
+                if (match.group("m4") or match.group("m5"))
+                else None
+            ),
         )
 
     def get_certificate(self, match: Match[str]) -> Optional[Certificate]:

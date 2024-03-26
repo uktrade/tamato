@@ -1,4 +1,5 @@
 """Business rules for measures."""
+
 from datetime import date
 from typing import Mapping
 from typing import Optional

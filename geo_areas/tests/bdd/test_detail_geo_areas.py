@@ -1,4 +1,5 @@
 """Tests for browse geographical area behaviours."""
+
 import pytest
 from django.urls import reverse
 from pytest_bdd import scenarios

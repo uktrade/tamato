@@ -1,4 +1,5 @@
 """Business rules for Footnotes and Footnote Types."""
+
 from common.business_rules import DescriptionsRules
 from common.business_rules import PreventDeleteIfInUse
 from common.business_rules import UniqueIdentifyingFields

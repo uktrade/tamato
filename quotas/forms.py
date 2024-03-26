@@ -198,15 +198,15 @@ class QuotaUpdateForm(
                 "start_date_0": o.valid_between.lower.day,
                 "start_date_1": o.valid_between.lower.month,
                 "start_date_2": o.valid_between.lower.year,
-                "end_date_0": o.valid_between.upper.day
-                if o.valid_between.upper
-                else "",
-                "end_date_1": o.valid_between.upper.month
-                if o.valid_between.upper
-                else "",
-                "end_date_2": o.valid_between.upper.year
-                if o.valid_between.upper
-                else "",
+                "end_date_0": (
+                    o.valid_between.upper.day if o.valid_between.upper else ""
+                ),
+                "end_date_1": (
+                    o.valid_between.upper.month if o.valid_between.upper else ""
+                ),
+                "end_date_2": (
+                    o.valid_between.upper.year if o.valid_between.upper else ""
+                ),
             }
             for o in self.existing_origins
         ]
@@ -271,9 +271,11 @@ class QuotaUpdateForm(
             origin_form = QuotaOrderNumberOriginUpdateReactForm(
                 data=origin_data,
                 initial=origin_data,
-                instance=models.QuotaOrderNumberOrigin.objects.get(pk=origin_data["pk"])
-                if origin_data.get("pk")
-                else None,
+                instance=(
+                    models.QuotaOrderNumberOrigin.objects.get(pk=origin_data["pk"])
+                    if origin_data.get("pk")
+                    else None
+                ),
             )
 
             cleaned_exclusions = []

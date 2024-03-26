@@ -1,4 +1,5 @@
 """WorkBasket models."""
+
 import importlib
 import logging
 from abc import ABCMeta

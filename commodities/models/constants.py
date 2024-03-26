@@ -1,4 +1,5 @@
 """Includes constants and enumerators for use in commodities models."""
+
 from enum import Enum
 
 SUFFIX_DECLARABLE = "80"
