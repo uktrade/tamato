@@ -34,11 +34,13 @@
     {% set action_html -%}
       {%- if is_task_failed(object) %}
           <span class="contact-tap">Contact TAP</span>
-      {% elif can_cancel_task(object) -%}
+      {% elif can_terminate_task(object) -%}
           <a
             href="{{ url("cancel-bulk-processor-task", kwargs={"pk": object.pk}) }}"
-            class="govuk-link cancel-task"
-          >Cancel</a>
+            class="govuk-link terminate-task"
+          >Terminate</a>
+      {% elif is_task_terminated(object) -%}
+          <span class="terminated">Terminated</span>
       {%- else %}
           <span class="not-applicable">N/A</span>
       {%- endif %}
@@ -60,7 +62,7 @@
         {"text": "Submitted date"},
         {"text": "Submitted by"},
         {"text": "Status"},
-        {"text": "Object count"},
+        {"text": "Item count"},
         {"text": "Action"},
     ],
     "rows": table_rows

@@ -307,9 +307,14 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                     ),
                     style="display: grid; grid-template-columns: 80% 80%; grid-gap: 5%",
                 ),
-                Field("DELETE", template="includes/common/formset-delete-button.jinja")
-                if not self.prefix.endswith("__prefix__")
-                else None,
+                (
+                    Field(
+                        "DELETE",
+                        template="includes/common/formset-delete-button.jinja",
+                    )
+                    if not self.prefix.endswith("__prefix__")
+                    else None
+                ),
                 legend="Condition",
                 legend_size=Size.SMALL,
                 data_field="condition_code",
@@ -1603,9 +1608,14 @@ class MeasureFootnotesForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 "footnote",
-                Field("DELETE", template="includes/common/formset-delete-button.jinja")
-                if not self.prefix.endswith("__prefix__")
-                else None,
+                (
+                    Field(
+                        "DELETE",
+                        template="includes/common/formset-delete-button.jinja",
+                    )
+                    if not self.prefix.endswith("__prefix__")
+                    else None
+                ),
                 legend="Footnote",
                 legend_size=Size.SMALL,
             ),
@@ -1919,7 +1929,7 @@ class CancelBulkProcessorTaskForm(forms.Form):
             Div(
                 Submit(
                     "submit",
-                    "Cancel Process",
+                    "Terminate measure creation",
                     data_module="govuk-button",
                     data_prevent_double_click="true",
                     css_class="govuk-button govuk-button--warning",

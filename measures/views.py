@@ -639,17 +639,23 @@ class MeasureEditWizard(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
                 valid_between=TaricDateRange(
-                    lower=new_start_date
-                    if new_start_date
-                    else measure.valid_between.lower,
+                    lower=(
+                        new_start_date
+                        if new_start_date
+                        else measure.valid_between.lower
+                    ),
                     upper=new_end_date if new_end_date else measure.valid_between.upper,
                 ),
-                order_number=new_quota_order_number
-                if new_quota_order_number
-                else measure.order_number,
-                generating_regulation=new_generating_regulation
-                if new_generating_regulation
-                else measure.generating_regulation,
+                order_number=(
+                    new_quota_order_number
+                    if new_quota_order_number
+                    else measure.order_number
+                ),
+                generating_regulation=(
+                    new_generating_regulation
+                    if new_generating_regulation
+                    else measure.generating_regulation
+                ),
             )
             self.update_measure_components(
                 measure=new_measure,
@@ -1128,15 +1134,16 @@ class MeasuresCreateProcessQueue(
         if processing_state == "PROCESSING":
             context["selected_link"] = "processing"
         elif processing_state == ProcessingState.CANCELLED:
-            context["selected_link"] = "cancelled"
+            context["selected_link"] = "terminated"
         elif processing_state == ProcessingState.FAILED_PROCESSING:
             context["selected_link"] = "failed"
         elif processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
             context["selected_link"] = "completed"
         # Provide template access to some UI / view utility functions.
         context["status_tag_generator"] = self.status_tag_generator
-        context["can_cancel_task"] = self.can_cancel_task
+        context["can_terminate_task"] = self.can_terminate_task
         context["is_task_failed"] = self.is_task_failed
+        context["is_task_terminated"] = self.is_task_terminated
         # Apply the TAP standard date format within the UI.
         context["datetime_format"] = settings.DATETIME_FORMAT
         if context["selected_link"] == "processing":
@@ -1161,10 +1168,20 @@ class MeasuresCreateProcessQueue(
 
         return task.processing_state == ProcessingState.FAILED_PROCESSING
 
-    def can_cancel_task(self, task: models.MeasuresBulkCreator) -> bool:
+    def is_task_terminated(self, task: MeasuresBulkCreator) -> bool:
+        """
+        Return True if the task is in a cancelled state. Cancelled tasks are
+        surfaced as 'terminated' in the UI.
+
+        Return False otherwise.
+        """
+
+        return task.processing_state == ProcessingState.CANCELLED
+
+    def can_terminate_task(self, task: MeasuresBulkCreator) -> bool:
         """
         Return True if a task is in a queued state and the current user is
-        permitted to cancel task.
+        permitted to terminate a task.
 
         Return False otherwise.
         """
@@ -1201,7 +1218,7 @@ class MeasuresCreateProcessQueue(
             }
         elif task.processing_state == ProcessingState.CANCELLED:
             return {
-                "text": "Cancelled",
+                "text": "Terminated",
                 "tag_class": "tamato-badge-light-yellow",
             }
         else:
