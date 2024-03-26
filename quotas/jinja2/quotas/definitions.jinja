@@ -33,7 +33,7 @@
   }) }}
 
 <div class="quota-definitions">
-  {% set base_url = url('quota-definitions', args=[quota.sid] ) %}
+  {% set base_url = url('quota_definition-ui-list', args=[quota.sid] ) %}
 
   {% if quota_type == "blocking_periods" %}
     {% include "quotas/tables/blocking_periods.jinja" %}

@@ -367,36 +367,33 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
             "detail"), eg: "list" or "edit" :rtype Optional[str]: The generated
             URL
         """
-        kwargs = {}
-        if action not in ["list", "create"]:
-            kwargs = self.get_identifying_fields()
-        try:
-            if (
-                action == "edit"
-                and self.transaction.workbasket.status == WorkflowStatus.EDITING
-            ):
-                # Edits in WorkBaskets that are in EDITING state get real
-                # changes via DB updates, not newly created UPDATE instances.
-                if self.update_type == UpdateType.CREATE:
-                    action += "-create"
-                elif self.update_type == UpdateType.UPDATE:
-                    action += "-update"
+        kwargs = self.get_identifying_fields()
+        if (
+            action == "edit"
+            and self.transaction.workbasket.status == WorkflowStatus.EDITING
+        ):
+            # Edits in WorkBaskets that are in EDITING state get real
+            # changes via DB updates, not newly created UPDATE instances.
+            if self.update_type == UpdateType.CREATE:
+                action += "-create"
+            elif self.update_type == UpdateType.UPDATE:
+                action += "-update"
 
-            if action == "detail":
-                url = reverse(
-                    f"{self.get_url_pattern_name_prefix()}-ui-{action}",
-                    kwargs={"sid": getattr(self, self.url_relation_field).sid},
-                )
-            else:
-                url = reverse(
-                    f"{self.slugify_model_name()}-ui-{action}",
-                    kwargs=kwargs,
-                )
-            if action not in ["detail", "list"]:
-                return url
+        if action == "detail":
+            url = reverse(
+                f"{self.get_url_pattern_name_prefix()}-ui-{action}",
+                kwargs={"sid": getattr(self, self.url_relation_field).sid},
+            )
             return f"{url}{self.url_suffix}"
-        except NoReverseMatch:
-            return None
+
+        if action in ["create", "list"]:
+            url = reverse(
+                f"{self.slugify_model_name()}-ui-{action}",
+                kwargs={"sid": getattr(self, self.url_relation_field).sid},
+            )
+        else:
+            url = reverse(f"{self.slugify_model_name()}-ui-{action}", kwargs=kwargs)
+        return url
 
     @classmethod
     def slugify_model_name(cls):
