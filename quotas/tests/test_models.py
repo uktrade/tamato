@@ -127,3 +127,25 @@ def test_quota_order_number_autocomplete_label(date_ranges):
     autocomplete = AutoCompleteSerializer()
     autocomplete_label = autocomplete.to_representation(order_number).get("label")
     assert order_number.autocomplete_label == autocomplete_label
+
+
+@pytest.mark.parametrize(
+    "url_name,exp_path",
+    [
+        ("create", "/quotas/123456789/quota_definitions/create/"),
+        ("list", "/quotas/123456789/quota_definitions/"),
+        ("confirm-create", "/quota_definitions/987654321/confirm-create/"),
+        ("confirm-delete", "/quota_definitions/987654321/confirm-delete/"),
+        ("edit", "/quota_definitions/987654321/edit/"),
+        ("edit-update", "/quota_definitions/987654321/edit-update/"),
+        ("confirm-update", "/quota_definitions/987654321/confirm-update/"),
+        ("delete", "/quota_definitions/987654321/delete/"),
+    ],
+)
+def test_quota_definition_urls(url_name, exp_path):
+    quota = factories.QuotaOrderNumberFactory.create(sid=123456789)
+    definition = factories.QuotaDefinitionFactory.create(
+        order_number=quota,
+        sid=987654321,
+    )
+    assert definition.get_url(url_name) == exp_path

@@ -78,7 +78,10 @@ class QuotaDefinitionFilterForm(forms.Form):
         self.fields["quota_type"].initial = quota_type_initial
         self.helper = FormHelper()
 
-        clear_url = reverse_lazy("quota-definitions", kwargs={"sid": object_sid})
+        clear_url = reverse_lazy(
+            "quota_definition-ui-list",
+            kwargs={"sid": object_sid},
+        )
 
         self.helper.layout = Layout(
             Field.radios("quota_type", label_size=Size.SMALL),
