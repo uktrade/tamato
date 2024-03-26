@@ -90,9 +90,9 @@ class MeasureGeoAreaInitialDataMixin(FormSetSubmitMixin):
                         g[field_name] = GeographicalArea.objects.get(id=id)
                 initial_exclusions = new_data
 
-            initial[
-                constants.FORMSET_PREFIX_MAPPING[geo_area_type]
-            ] = initial_exclusions
+            initial[constants.FORMSET_PREFIX_MAPPING[geo_area_type]] = (
+                initial_exclusions
+            )
 
         return initial
 
@@ -530,9 +530,9 @@ class MeasureForm(
         tx = WorkBasket.get_current_transaction(self.request)
 
         self.initial["duty_sentence"] = self.instance.duty_sentence
-        self.request.session[
-            f"instance_duty_sentence_{self.instance.sid}"
-        ] = self.instance.duty_sentence
+        self.request.session[f"instance_duty_sentence_{self.instance.sid}"] = (
+            self.instance.duty_sentence
+        )
 
         if self.instance.geographical_area.is_all_countries():
             self.initial["geo_area"] = constants.GeoAreaType.ERGA_OMNES.value
@@ -1671,9 +1671,9 @@ class MeasureGeographicalAreaExclusionsForm(forms.Form):
             .order_by("description")
         )
 
-        self.fields[
-            "excluded_area"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["excluded_area"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
         self.helper = FormHelper(self)
         self.helper.form_tag = False

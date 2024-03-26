@@ -344,9 +344,9 @@ class MeasureList(
             pk__in=measure_selections,
         )
         context["query_params"] = True
-        context[
-            "base_url"
-        ] = f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
+        context["base_url"] = (
+            f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
+        )
         return context
 
     def get_initial(self):

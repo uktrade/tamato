@@ -1540,9 +1540,9 @@ class WorkBasketReviewQuotaBlockingView(WorkBasketReviewView):
         context["tab_page_title"] = "Review quota blocking periods"
         context["selected_tab"] = "quotas"
         context["selected_nested_tab"] = "blocking-periods"
-        context[
-            "tab_template"
-        ] = "includes/workbaskets/review-quota-blocking-periods.jinja"
+        context["tab_template"] = (
+            "includes/workbaskets/review-quota-blocking-periods.jinja"
+        )
         return context
 
 
@@ -1558,9 +1558,9 @@ class WorkBasketReviewQuotaSuspensionView(WorkBasketReviewView):
         context["tab_page_title"] = "Review quota suspension periods"
         context["selected_tab"] = "quotas"
         context["selected_nested_tab"] = "suspension-periods"
-        context[
-            "tab_template"
-        ] = "includes/workbaskets/review-quota-suspension-periods.jinja"
+        context["tab_template"] = (
+            "includes/workbaskets/review-quota-suspension-periods.jinja"
+        )
         return context
 
 
