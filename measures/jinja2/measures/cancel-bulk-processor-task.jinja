@@ -1,10 +1,10 @@
 {% extends "layouts/form.jinja" %}
 
-{% from "components/table/macro.njk" import govukTable %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 
 
-{% set page_title = "Cancel process" %}
+{% set page_title = "Terminate measure creation" %}
 
 
 {% block breadcrumb %}
@@ -20,35 +20,38 @@
 
 
 {% block form %}
-  {{ govukTable({
-    "caption": "Process details",
-    "firstCellIsHeader": True,
-    "rows": [
-      [
-        {"text": "Workbasket ID"},
-        {"text": object.workbasket.pk},
-      ],
-      [
-        {"text": "Submitted date"},
-        {"text": object.created_at.strftime(datetime_format)},
-      ],
-      [
-        {"text": "Submitted by"},
-        {"text": object.user or "Unknown"},
-      ],
-      [
-        {"text": "Expected objects count"},
-        {"text": object.expected_measures_count},
-      ],
-    ]
-  }) }}
+  <h2 class="govuk-heading-l">Details</h2>
+  {{ govukSummaryList({
+        "rows": [
+        {
+            "key": {"text": "Workbasket ID"},
+            "value": {"text": object.workbasket.pk},
+            "actions": {"items": []}
+        },
+        {
+            "key": {"text": "Submitted date"},
+            "value": {"text": object.created_at.strftime(datetime_format)},
+            "actions": {"items": []}
+        },
+        {
+            "key": {"text": "Submitted by"},
+            "value": {"text": object.user or "Unknown"},
+            "actions": {"items": []}
+        },
+        {
+            "key": {"text": "Expected item count"},
+            "value": {"text": object.expected_measures_count},
+            "actions": {"items": []}
+        },
+        ]
+    })}}
 
-  <p class="govuk-body">Process cancellation is not guarenteed because of the dynamic nature of processes.</p>
+  <p class="govuk-body">Not all terminations are successful. After termination, check the process status in the measure process queue to confirm.</p>
 
-  <p class="govuk-body">Are you sure you want to try cancelling this process?</p>
+  <p class="govuk-body">Are you sure you want to terminate measure creation?</p>
 
   {{ govukWarningText({
-    "text": "Cancelled processes can not be restarted.",
+    "text": "Terminated measure creations cannot be restarted.",
     "iconFallbackText": "Warning"
   }) }}
 

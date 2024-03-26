@@ -39,9 +39,9 @@
     "selected": selected_link == "failed",
   },
   {
-    "text": "Cancelled",
+    "text": "Terminated",
     "href": "?processing_state=CANCELLED",
-    "selected": selected_link == "cancelled",
+    "selected": selected_link == "terminated",
   },
 ]%}
 
@@ -57,8 +57,9 @@
 
     <nav class="workbasket-filters">
       <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
-
-      {{ inline_filter_links(filter_links_list) }}
+      <div class="govuk-!-margin-top-2">
+        {{ inline_filter_links(filter_links_list) }}
+      </div>
 
       {{ govukButton({
             "html": "Refresh "~button_image,
