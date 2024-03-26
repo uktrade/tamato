@@ -143,7 +143,7 @@ class TrackedModelCheck(TimestampedMixin):
     message = fields.TextField(null=True)
     """The text content returned by the check, if any."""
 
-    processing_time = fields.DecimalField(null=True, decimal_places=4, max_digits=6)
+    processing_time = fields.FloatField(null=True)
     """Added processing_time used to record the time taken to process a rule in
     seconds."""
 

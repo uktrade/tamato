@@ -61,6 +61,7 @@ from common.validators import UpdateType
 from importer.models import ImportBatchStatus
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
+from measures.duty_sentence_parser import DutySentenceParser as LarkDutySentenceParser
 from measures.models import DutyExpression
 from measures.models import MeasureConditionComponent
 from measures.models import Measurement
@@ -160,8 +161,8 @@ def tap_migrator_factory(migrator_factory):
     /PS-IGNORE---https://github.com/wemake-services/django-test-migrations/blob/93db540c00a830767eeab5f90e2eef1747c940d4/django_test_migrations/migrator.py#L73
 
 
-    An initial migration must reference ContentType instances (in the DB).
-    This can occur when inserting Permission objects during
+    An initial migration must reference ContentType instances (in the DB). This
+    can occur when inserting Permission objects during
     `migrator.apply_initial_migration()` execution.
 
     At that point, a stale ContentType cache can give an incorrect account of
@@ -329,7 +330,7 @@ def client_with_current_workbasket(client, valid_user):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(valid_user)
+    workbasket.set_as_current(valid_user)
     return client
 
 
@@ -342,7 +343,7 @@ def client_with_current_workbasket_no_permissions(client):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(user)
+    workbasket.set_as_current(user)
     return client
 
 
@@ -391,7 +392,7 @@ def api_client_with_current_workbasket(api_client, valid_user) -> APIClient:
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(valid_user)
+    workbasket.set_as_current(valid_user)
     return api_client
 
 
@@ -453,7 +454,7 @@ def user_workbasket(client, valid_user, assigned_workbasket) -> WorkBasket:
     """Returns a workbasket which has been assigned to a valid logged-in
     user."""
     client.force_login(valid_user)
-    assigned_workbasket.assign_to_user(valid_user)
+    assigned_workbasket.set_as_current(valid_user)
     return assigned_workbasket
 
 
@@ -463,7 +464,7 @@ def user_empty_workbasket(client, valid_user) -> WorkBasket:
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(valid_user)
+    workbasket.set_as_current(valid_user)
     return workbasket
 
 
@@ -1548,7 +1549,7 @@ def session_request_with_workbasket(client, valid_user):
     workbasket = factories.WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    workbasket.assign_to_user(valid_user)
+    workbasket.set_as_current(valid_user)
 
     session = client.session
     session.save()
@@ -1721,10 +1722,28 @@ def duty_sentence_parser(
 
 
 @pytest.fixture
+def lark_duty_sentence_parser(
+    duty_expressions_list,
+    monetary_units_list,
+    measurements,
+    measurement_units,
+    unit_qualifiers,
+) -> LarkDutySentenceParser:
+    return LarkDutySentenceParser(
+        duty_expressions=duty_expressions_list,
+        monetary_units=monetary_units_list,
+        measurements=measurements,
+        measurement_units=measurement_units,
+        measurement_unit_qualifiers=unit_qualifiers,
+    )
+
+
+@pytest.fixture
 def percent_or_amount() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=1,
         prefix="",
+        description=f"% or amount",
         duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
         measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
@@ -1736,6 +1755,7 @@ def plus_percent_or_amount() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=4,
         prefix="+",
+        description=f"+ % or amount",
         duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
         measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
@@ -1747,6 +1767,7 @@ def plus_agri_component() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=12,
         prefix="+ AC",
+        description="+ agricultural component",
         duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
@@ -1758,6 +1779,7 @@ def plus_amount_only() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=20,
         prefix="+",
+        description="+ amount",
         duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
         measurement_unit_applicability_code=ApplicabilityCode.MANDATORY,
         monetary_unit_applicability_code=ApplicabilityCode.MANDATORY,
@@ -1769,6 +1791,7 @@ def nothing() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=37,
         prefix="NIHIL",
+        description="(nothing)",
         duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         measurement_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
@@ -1780,6 +1803,7 @@ def supplementary_unit() -> DutyExpression:
     return factories.DutyExpressionFactory(
         sid=99,
         prefix="",
+        description="supplementary unit",
         duty_amount_applicability_code=ApplicabilityCode.PERMITTED,
         measurement_unit_applicability_code=ApplicabilityCode.MANDATORY,
         monetary_unit_applicability_code=ApplicabilityCode.NOT_PERMITTED,
@@ -1809,30 +1833,93 @@ def duty_expressions(
 
 
 @pytest.fixture
-def monetary_units() -> Dict[str, MonetaryUnit]:
+def duty_expressions_list(
+    percent_or_amount: DutyExpression,
+    plus_percent_or_amount: DutyExpression,
+    plus_agri_component: DutyExpression,
+    plus_amount_only: DutyExpression,
+    supplementary_unit: DutyExpression,
+    nothing: DutyExpression,
+) -> Sequence[DutyExpression]:
+    return [
+        percent_or_amount,
+        plus_percent_or_amount,
+        plus_agri_component,
+        plus_amount_only,
+        supplementary_unit,
+        nothing,
+    ]
+
+
+@pytest.fixture
+def euro() -> MonetaryUnit:
+    return factories.MonetaryUnitFactory(code="EUR")
+
+
+@pytest.fixture
+def british_pound() -> MonetaryUnit:
+    return factories.MonetaryUnitFactory(code="GBP")
+
+
+@pytest.fixture
+def ecu_conversion() -> MonetaryUnit:
+    return factories.MonetaryUnitFactory(code="XEM")
+
+
+@pytest.fixture
+def monetary_units(euro, british_pound, ecu_conversion) -> Dict[str, MonetaryUnit]:
     return {
         m.code: m
         for m in [
-            factories.MonetaryUnitFactory(code="EUR"),
-            factories.MonetaryUnitFactory(code="GBP"),
-            factories.MonetaryUnitFactory(code="XEM"),
+            euro,
+            british_pound,
+            ecu_conversion,
         ]
     }
 
 
 @pytest.fixture
-def measurement_units() -> Sequence[MeasurementUnit]:
+def monetary_units_list(monetary_units) -> Sequence[MonetaryUnit]:
+    return monetary_units.values()
+
+
+@pytest.fixture
+def kilogram() -> MeasurementUnit:
+    return factories.MeasurementUnitFactory(code="KGM", abbreviation="kg")
+
+
+@pytest.fixture
+def hectokilogram() -> MeasurementUnit:
+    return factories.MeasurementUnitFactory(code="DTN", abbreviation="100 kg")
+
+
+@pytest.fixture
+def thousand_items() -> MeasurementUnit:
+    return factories.MeasurementUnitFactory(code="MIL", abbreviation="1,000 p/st")
+
+
+@pytest.fixture
+def measurement_units(
+    kilogram,
+    hectokilogram,
+    thousand_items,
+) -> Sequence[MeasurementUnit]:
     return [
-        factories.MeasurementUnitFactory(code="KGM", abbreviation="kg"),
-        factories.MeasurementUnitFactory(code="DTN", abbreviation="100 kg"),
-        factories.MeasurementUnitFactory(code="MIL", abbreviation="1,000 p/st"),
+        kilogram,
+        hectokilogram,
+        thousand_items,
     ]
 
 
 @pytest.fixture
-def unit_qualifiers() -> Sequence[MeasurementUnitQualifier]:
+def lactic_matter() -> MeasurementUnitQualifier:
+    return factories.MeasurementUnitQualifierFactory(code="Z", abbreviation="lactic.")
+
+
+@pytest.fixture
+def unit_qualifiers(lactic_matter) -> Sequence[MeasurementUnitQualifier]:
     return [
-        factories.MeasurementUnitQualifierFactory(code="Z", abbreviation="lactic."),
+        lactic_matter,
     ]
 
 
@@ -1861,6 +1948,11 @@ def measurements(
         ): m
         for m in measurements
     }
+
+
+@pytest.fixture
+def measurements_list(measurements):
+    return measurements.values()
 
 
 @pytest.fixture

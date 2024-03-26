@@ -1,0 +1,48 @@
+
+{% for object in duty_expressions %}
+
+  {% set end_date -%}
+    {{" - {:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else " —"}}
+  {% endset %}
+  {% set validity -%}
+    {{"{:%d %b %Y}".format(object.valid_between.lower) ~ end_date }}
+  {% endset %}
+
+  <h3 class="govuk-heading-l">{{ object.description }}</h3>
+
+  {{ govukSummaryList({
+    "rows": [
+      {
+        "key": { "text": "Prefix" },
+        "value": { "html": '<pre>' ~ object.prefix ~ "</pre>" if object.prefix else "N/A" },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "SID" },
+        "value": { "text": object.sid },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Validity" },
+        "value": { "text": validity },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Duty amount applicability code" },
+        "value": { "text": object.get_duty_amount_applicability_code_display() },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Measurement unit applicability code" },
+        "value": { "text": object.get_measurement_unit_applicability_code_display() },
+        "actions": {"items": []}
+      },
+      {
+        "key": { "text": "Monetary unit applicability code" },
+        "value": { "text": object.get_monetary_unit_applicability_code_display() },
+        "actions": {"items": []}
+      },
+    ]})
+  }}
+
+{% endfor %}

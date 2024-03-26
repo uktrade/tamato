@@ -313,7 +313,7 @@ def test_workbasket_views_without_permission(url_name, client, user_workbasket):
     )
     user = factories.UserFactory.create()
     client.force_login(user)
-    user_workbasket.assign_to_user(user)
+    user_workbasket.set_as_current(user)
     response = client.get(url)
 
     assert response.status_code == 403
@@ -1009,7 +1009,7 @@ def test_violation_detail_page_superuser_override_last_violation(
         transaction_check__successful=False,
     )
     client.force_login(superuser)
-    model_check.transaction_check.transaction.workbasket.assign_to_user(
+    model_check.transaction_check.transaction.workbasket.set_as_current(
         superuser,
     )
 
@@ -1041,7 +1041,7 @@ def test_violation_detail_page_superuser_override_one_of_two_violation(
         transaction_check__successful=False,
     )
     client.force_login(superuser)
-    model_check.transaction_check.transaction.workbasket.assign_to_user(
+    model_check.transaction_check.transaction.workbasket.set_as_current(
         superuser,
     )
 
@@ -1093,7 +1093,7 @@ def test_violation_detail_page_non_superuser_override_violation(
         transaction_check__successful=False,
     )
     client.force_login(valid_user)
-    model_check.transaction_check.transaction.workbasket.assign_to_user(
+    model_check.transaction_check.transaction.workbasket.set_as_current(
         valid_user,
     )
 
@@ -1811,10 +1811,7 @@ def test_application_access_after_workbasket_delete(
     # user workbasket deletion.
     assert response.status_code == 200
 
-    assert (
-        f"Workbasket {workbasket_pk}"
-        in page.select("header nav a.workbasket-link")[0].text
-    )
+    assert f"Workbasket ID {workbasket_pk}" in page.select("a.workbasket-link")[0].text
 
     user_empty_workbasket.delete()
 
@@ -1852,6 +1849,31 @@ def test_workbasket_delete_previously_queued_workbasket(
         kwargs={"pk": workbasket.pk},
     )
     response = valid_user_client.post(url, {})
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "workbaskets:workbasket-ui-delete-done",
+        kwargs={"deleted_pk": workbasket.pk},
+    )
+
+    workbasket.refresh_from_db()
+    assert workbasket.status == WorkflowStatus.ARCHIVED
+
+
+def test_workbasket_delete_archives_assigned_workbasket(valid_user, valid_user_client):
+    """Test that an assigned workbasket (or workbasket with an associated task)
+    transitions to ARCHIVED status when a user attempts to delete it."""
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="delete_workbasket"),
+    )
+    workbasket = factories.AssignedWorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket.pk},
+    )
+    response = valid_user_client.post(url)
+
     assert response.status_code == 302
     assert response.url == reverse(
         "workbaskets:workbasket-ui-delete-done",
