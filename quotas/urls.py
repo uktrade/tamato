@@ -55,9 +55,9 @@ urlpatterns = [
         name="quota-ui-confirm-create",
     ),
     path(
-        f"quotas/<sid>/quota-definitions/",
+        f"quotas/<sid>/quota_definitions/",
         views.QuotaDefinitionList.as_view(),
-        name="quota-definitions",
+        name="quota_definition-ui-list",
     ),
     path(
         f"quotas/<sid>/quota_definitions/create/",
@@ -70,7 +70,7 @@ urlpatterns = [
         name="quota_definition-ui-confirm-create",
     ),
     path(
-        f"quotas/<sid>/quota_definitions/confirm-delete/",
+        f"quota_definitions/<sid>/confirm-delete/",
         views.QuotaDefinitionConfirmDelete.as_view(),
         name="quota_definition-ui-confirm-delete",
     ),
