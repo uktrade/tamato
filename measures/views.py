@@ -61,6 +61,7 @@ from measures.creators import MeasuresCreator
 from measures.filters import MeasureCreateTaskFilter
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.models.bulk_processing import MeasuresBulkCreator
 from measures.models.bulk_processing import ProcessingState
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
