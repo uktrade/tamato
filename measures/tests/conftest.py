@@ -497,7 +497,6 @@ def simple_measures_bulk_creator(
     return MeasuresBulkCreatorFactory.create(
         form_data={},
         form_kwargs={},
-        current_transaction=approved_transaction,
         workbasket=user_empty_workbasket,
         user=None,
     )

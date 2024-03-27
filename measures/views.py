@@ -37,7 +37,6 @@ from certificates.models import Certificate
 from commodities.models.orm import GoodsNomenclature
 from common.forms import unprefix_formset_data
 from common.models import TrackedModel
-from common.models.utils import get_current_transaction
 from common.pagination import build_pagination_list
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
@@ -893,7 +892,6 @@ class MeasureCreateWizard(
         measures_bulk_creator = models.MeasuresBulkCreator.objects.create(
             form_data=serializable_data,
             form_kwargs=serializable_form_kwargs,
-            current_transaction=get_current_transaction(),
             workbasket=self.workbasket,
             user=self.request.user,
         )
