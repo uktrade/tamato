@@ -1,5 +1,6 @@
 import datetime
 
+from dateutil.relativedelta import relativedelta
 from django.db.models import Q
 
 from quotas.models import QuotaBlocking
@@ -12,14 +13,14 @@ from reports.reports.base_table import ReportBaseTable
 class Report(ReportBaseTable):
     name = "Quotas expiring soon"
     enabled = True
-    description = "This table shows quotas with definition, sub-quota, blocking or suspension periods due to expire in the next 5 weeks with no future definition period."
+    description = "This table shows quotas with definition, sub-quota, blocking or suspension periods due to expire in the next 2 months with no future definition period."
     tabular_reports = True
     tab_name = "Definitions"
     tab_name2 = "Sub-quota associations"
     tab_name3 = "Blocking periods"
     tab_name4 = "Suspension periods"
     current_time = datetime.datetime.now()
-    future_time = current_time + datetime.timedelta(weeks=5)
+    future_time = current_time + relativedelta(months=2)
 
     def headers(self) -> [dict]:
         return [
