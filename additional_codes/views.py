@@ -238,9 +238,7 @@ class AdditionalCodeDescriptionEditCreate(
     """UI endpoint for editing AdditionalCodeDescription CREATE instances."""
 
     form_class = AdditionalCodeDescriptionForm
-
-    def get_template_names(self):
-        return "common/edit_description.jinja"
+    template_name = "common/edit_description.jinja"
 
     @transaction.atomic
     def form_valid(self, form):
