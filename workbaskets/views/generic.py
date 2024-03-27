@@ -69,9 +69,7 @@ class EditTaricView(
 
     permission_required = "common.add_trackedmodel"
     success_path = "confirm-update"
-
-    def get_template_names(self):
-        return "common/edit.jinja"
+    template_name = "common/edit.jinja"
 
     def get_result_object(self, form):
         """Override the default behaviour in order to only update the existing

@@ -1,13 +1,12 @@
 # Create your tests here.
 import pytest
 from django.urls import reverse
-from django.test import RequestFactory
 
-from reports.utils import get_reports
-from reports.views import export_report_to_csv, export_report_to_excel
-from reports.reports.expiring_quotas_with_no_definition_period import Report
 from reports.reports.cds_approved import Report as ChartReport
-
+from reports.reports.expiring_quotas_with_no_definition_period import Report
+from reports.utils import get_reports
+from reports.views import export_report_to_csv
+from reports.views import export_report_to_excel
 
 pytestmark = pytest.mark.django_db
 
@@ -59,7 +58,8 @@ class TestReportViews:
         invalid_tab = "Invalid tab"
 
         with pytest.raises(
-            ValueError, match=f"Invalid current_tab value: {invalid_tab}"
+            ValueError,
+            match=f"Invalid current_tab value: {invalid_tab}",
         ):
             export_report_to_csv(request, report_slug, current_tab=invalid_tab)
 

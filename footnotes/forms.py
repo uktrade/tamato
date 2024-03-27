@@ -99,7 +99,7 @@ class FootnoteCreateBaseForm(ValidityPeriodForm):
     footnote_type = forms.ModelChoiceField(
         label="Footnote type",
         help_text=(
-            "The footnote type will determine whether it can be"
+            "The footnote type will determine whether it can be "
             "associated with measures, commodity codes, or both."
         ),
         queryset=models.FootnoteType.objects.latest_approved(),

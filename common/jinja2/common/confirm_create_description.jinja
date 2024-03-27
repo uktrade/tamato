@@ -4,9 +4,9 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
-{% set page_title = "Create a new " ~ object._meta.verbose_name %}
-
 {% set described_object = object.get_described_object() %}
+
+{% set page_title = described_object._meta.verbose_name|capitalize ~ ": " ~ described_object|string ~ " description created" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
@@ -21,25 +21,32 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({
-        "titleText": "A new description of " ~ described_object._meta.verbose_name ~ " " ~ described_object|string ~ " has been created",
-        "text": "This new description has been added to your workbasket",
+        "titleText": described_object._meta.verbose_name|capitalize ~ ": " ~ described_object|string,
+        "text": described_object._meta.verbose_name|capitalize ~ ": " ~ described_object|string ~ " description has been created in workbasket " ~ request.user.current_workbasket.pk,
         "classes": "govuk-!-margin-bottom-7"
       }) }}
 
-      <h2 class="govuk-heading-m">Next steps</h2>
-      <p class="govuk-body">To complete your task you must publish your change. </p>
+     <h2 class="govuk-heading-m">Next steps</h2>
+      <div>{% block main_button %}{% endblock%}</div>
+      <div class="govuk-button-group">
       {{ govukButton({
-        "text": "Go to your workbasket summary",
+        "text": "View workbasket summary",
         "href": url("workbaskets:current-workbasket"),
+        "classes": "govuk-button"
+      }) }}
+      {{ govukButton({
+        "text": "View " ~ described_object._meta.verbose_name ~ ": " ~ described_object|string,
+        "href": object.get_url(),
         "classes": "govuk-button--secondary"
       }) }}
+      </div>
       <ul class="govuk-list govuk-list-spaced">
-        <li><a class="govuk-link" href="{{ described_object.get_url() }}">View {{ described_object._meta.verbose_name }} {{ described_object|string }}</a></li>
-        <li><a class="govuk-link" href="{{ described_object.get_url("list") }}">Find and edit {{ described_object._meta.verbose_name_plural }}</a></li>
-        {% if request.user.current_workbasket %}
-        <li><a class="govuk-link" href="{{ url('workbaskets:edit-workbasket') }}">Return to workbasket</a></li>
-        {% endif %}
+        {% block actions %}
+        <li><a href="{{ described_object.get_url("list") }}">Find and edit {{ described_object._meta.verbose_name_plural }}</a></li>
+        {% endblock %}
       </ul>
+
     </div>
   </div>
 {% endblock %}
+

@@ -6,19 +6,15 @@
 {% set page_title = "Remove tariff changes" %}
 
 {% block breadcrumb %}
-  {% if request.user.current_workbasket.id != view.workbasket.pk %}
     {{ breadcrumbs(request, [
         {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
         {
-          "text": "Workbasket " ~ view.workbasket.id ~ "-" ~ view.workbasket.status,
-          "href": url("workbaskets:workbasket-ui-detail", kwargs={"pk": view.workbasket.pk}),
+          "text": "Workbasket " ~ view.workbasket.id ~ "-" ~ view.workbasket.status ~ " changes",
+          "href": url("workbaskets:workbasket-ui-changes", kwargs={"pk": view.workbasket.pk}),
         },
         {"text": page_title}
       ])
     }}
-  {% else %}
-    {{ super() }}
-  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -26,30 +22,22 @@
 
   <div class="govuk-grid-row govuk-!-margin-bottom-5">
     <div class="govuk-grid-column-full">
+      {% if object_list -%}
       {{ govukWarningText({
-        "text": "Are you sure you want to permanently remove the " ~ object_list|length ~ " tariff changes below?",
+        "text": "Are you sure you want to permanently remove the " ~ object_list|length ~ " tariff change" ~ view.workbasket.tracked_models.count()|pluralize ~ " below from workbasket " ~ view.workbasket.pk ~ "?",
         "iconFallbackText": "Warning"
       }) }}
 
       <form method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         <div class="govuk-button-group">
-          {% if object_list -%}
+
             {{ govukButton({
               "text": "Remove tariff changes",
               "classes": "govuk-button--warning",
               "name": "action",
               "value": "delete"
             }) }}
-          {% else %}
-            {{ govukButton({
-              "text": "Remove tariff changes",
-              "classes": "govuk-button--warning",
-              "name": "action",
-              "value": "delete",
-              "disabled": "true"
-            }) }}
-          {% endif %}
           {{ govukButton({
             "text": "Cancel",
             "classes": "govuk-button--secondary",
@@ -58,6 +46,21 @@
           }) }}
         </div>
       </form>
+      {% else %}
+      {{ govukWarningText({
+        "text": "You have not selected any changes to remove.",
+        "iconFallbackText": "Warning"
+      }) }}
+       <form method="post">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      {{ govukButton({
+            "text": "Return to view changes",
+            "classes": "govuk-button--secondary",
+            "href": url("workbaskets:workbasket-ui-changes", kwargs={"pk": request.user.current_workbasket.pk}),
+
+          }) }}
+          </form>
+      {% endif %}
 
       <ul class="govuk-list">
       {% for obj in object_list %}

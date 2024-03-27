@@ -11,7 +11,7 @@ services:
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     shm_size: 32g
     stdin_open: true
-    tty: true  
+    tty: true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -22,7 +22,7 @@ services:
     image: redis
     ports:
       - "127.0.0.1:6379:6379"
-    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"  
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
 
   celery-redis:
     image: redis
@@ -37,11 +37,11 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: 
+    command:
       [
-        "celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "standard" 
+        "celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "standard"
       ]
-    env_file: 
+    env_file:
       - .env
       - settings/envs/docker.env
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
@@ -58,7 +58,7 @@ services:
     volumes:
       - ./:/app/
     command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "rule-check"]
-    env_file: 
+    env_file:
       - .env
       - settings/envs/docker.env
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
@@ -75,7 +75,7 @@ services:
     volumes:
       - ./:/app/
     command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "importer", "--concurrency", "1"]
-    env_file: 
+    env_file:
       - .env
       - settings/envs/docker.env
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
@@ -90,7 +90,7 @@ services:
     volumes:
       - ./:/app/
     command: ["celery", "-A" , "common.celery" ,"beat", "-l", "info"]
-    env_file: 
+    env_file:
       - .env
       - settings/envs/docker.env
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
@@ -117,7 +117,7 @@ services:
       retries: 3
 
   tamato:
-    build: 
+    build:
       context: .
       args:
         - "ENV=${ENV:-prod}"
@@ -137,7 +137,7 @@ services:
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     stdin_open: true
-    tty: true  
+    tty: true
 
 volumes:
   tamato-data-volume: {}

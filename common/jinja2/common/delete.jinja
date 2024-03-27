@@ -4,7 +4,7 @@
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Delete " ~ object._meta.verbose_name ~ " " ~ object|string %}
+{% set page_title = "Delete " ~ object._meta.verbose_name ~ ": " ~ object|string %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [

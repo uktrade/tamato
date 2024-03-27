@@ -4,29 +4,26 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
-{% set page_title = "Remove tariff changes" %}
+{% set page_title = "Tariff changes removed" %}
 
 {% block breadcrumb %}
-  {% if view_workbasket != user_workbasket %}
     {{ breadcrumbs(request, [
         {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
         {
-          "text": "Workbasket " ~ view_workbasket.id ~ "-" ~ view_workbasket.status,
-          "href": url("workbaskets:workbasket-ui-detail", kwargs={"pk": view_workbasket.pk}),
+          "text": "Workbasket " ~ view_workbasket.id ~ "-" ~ view_workbasket.status ~ " changes",
+          "href": url("workbaskets:workbasket-ui-changes", kwargs={"pk": view_workbasket.pk}),
         },
         {"text": page_title}
       ])
     }}
-  {% else %}
-    {{ super() }}
-  {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="govuk-grid-row govuk-!-margin-bottom-3">
   <div class="govuk-grid-column-two-thirds">
     {{ govukPanel({
-      "titleText": "The tariff changes have been removed.",
+      "titleText": "Workbasket " ~ view_workbasket.pk,
+      "text": "The selected tariff changes have been removed from workbasket " ~ view_workbasket.pk,
       "classes": "govuk-!-margin-bottom-7"
     }) }}
 
@@ -37,7 +34,7 @@
       }) }}
     {% else %}
       {{ govukButton({
-        "text": "Go to your workbasket summary",
+        "text": "Go to workbasket summary",
         "href": url("workbaskets:current-workbasket"),
       }) }}
     {% endif %}

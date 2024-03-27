@@ -133,7 +133,8 @@ class BusinessRule(metaclass=BusinessRuleBase):
         :param model TrackedModel: Get models linked to this model instance
         :param transaction Transaction: Get latest approved versions of linked
             models as of this transaction
-        :rtype Iterator[TrackedModel]: The linked models
+        :return: The linked models
+        :rtype: Iterator[TrackedModel]
         """
         for field, related_model in get_relations(type(model)).items():
             business_rules = getattr(related_model, "business_rules", [])
@@ -169,9 +170,12 @@ class BusinessRule(metaclass=BusinessRuleBase):
         """
         Create a violation exception object.
 
-        :param model Optional[TrackedModel]: The model that violates this business rule
-        :param message Optional[str]: A message explaining the violation
-        :rtype BusinessRuleViolation: An exception indicating a business rule violation
+        :param model: The model that violates this business rule
+        :type model: Optional[TrackedModel]
+        :param message: A message explaining the violation
+        :type message: Optional[str]
+        :rtype BusinessRuleViolation: An exception indicating a business rule
+            violation
         """
 
         return getattr(self.__class__, "Violation", BusinessRuleViolation)(
@@ -185,7 +189,7 @@ def only_applicable_after(cutoff: Union[date, datetime, str]):
     Decorate BusinessRules to make them only applicable after a given date.
 
     :param cutoff Union[date, datetime, str]: The date, datetime or isoformat
-        date string of the time before which the rule should not apply
+    date string of the time before which the rule should not apply
     """
 
     if isinstance(cutoff, str):
@@ -226,8 +230,10 @@ def skip_when_update_type(cls: Type[BusinessRule], update_types: Iterable[Update
     """
     Skip business rule validation for given update types.
 
-    :param cls Type[BusinessRule]: The BusinessRule to decorate
-    :param update_types Iterable[int]: The UpdateTypes to skip
+    :param cls: The BusinessRule to decorate
+    :type cls: Type[BusinessRule]
+    :param update_types: The UpdateTypes to skip
+    :type update_types: Iterable[int]
     """
     _original_validate = cls.validate
 
@@ -336,7 +342,8 @@ class PreventDeleteIfInUse(BusinessRule):
         Check whether the specified model violates this business rule.
 
         :param model TrackedModel: The model to check
-        :raises BusinessRuleViolation: Raised if the passed model violates this business rule.
+        :raises BusinessRuleViolation: Raised if the passed model violates this
+            business rule.
         """
         if self.has_violation(model):
             raise self.violation(model)

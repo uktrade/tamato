@@ -210,9 +210,8 @@ class ON12(BusinessRule):
 
 
 class ON13(BusinessRule):
-    """An exclusion can only be entered if the order number origin is a geographical
-    area group (area code = 1).
-    """
+    """An exclusion can only be entered if the order number origin is a
+    geographical area group (area code = 1)."""
 
     def validate(self, exclusion):
         if exclusion.origin.geographical_area.area_code != AreaCode.GROUP:

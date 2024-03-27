@@ -18,6 +18,9 @@
   </form>
 {% endset %}
 
+{% set business_rules_button_class %}
+govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--secondary{% endif %}  govuk-!-margin-0
+{% endset %}
 
 {% set run_business_rules_form %}
   <form
@@ -28,7 +31,7 @@
     <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
     {{ govukButton({
       "text": "Run business rules",
-      "classes": "govuk-button--secondary govuk-!-margin-0",
+      "classes": business_rules_button_class,
       "name": "form-action",
       "value": "run-business-rules",
       "preventDoubleClick": true,
@@ -71,7 +74,7 @@
 
 {% if rule_check_in_progress %}
   {% set live_rule_check_status %}
-    Rule check in progress. Checking {{ workbasket.tracked_models.count() }} objects in basket.
+    Rule check in progress. Checking {{ workbasket.tracked_models.count() }} item{{ workbasket.tracked_models.count()|pluralize }} in basket.
     {{ rule_check_progress }}.
     Come back later or refresh to see results.
   {% endset %}
@@ -86,9 +89,16 @@
       aria-labelledby="summary-title" role="region" data-module="govuk-notification-banner">
       <div class="govuk-notification-banner__content">
         {{ rule_check_result_content() }}
-        {% if unsent_notification %}
+        {% if not workbasket.is_fully_assigned() %}
+        <div class="govuk-hint">
+            A workbasket must have an assigned worker and reviewer before packaging.
+          </div>
+          <button type="submit" disabled aria-disabled="true" class="govuk-button" data-module="govuk-button" id="send-to-packaging">
+            Send to packaging queue
+          </button>
+        {% elif unsent_notification %}
           <div class="govuk-hint"> 
-            For commodity code imports a channel islands notification must be sent from the review goods tab before packaging.
+            For commodity code imports, a notification to the Channel Islands must be sent from the commodities tab on the workbasket review page before packaging.
           </div>
           <a href="{{ url('publishing:packaged-workbasket-queue-ui-create')}}" disabled class="govuk-button govuk-button--primary">
             Send to packaging queue
@@ -118,7 +128,7 @@
   {% set rule_check_block %}{% endset %}
 
 {% else %}
-  {% set live_rule_check_status = "No objects in workbasket" %}
+  {% set live_rule_check_status = "No items in workbasket" %}
   {% set rule_check_button %}{% endset %}
   {% set rule_check_block %}{% endset %}
 {% endif %}
@@ -126,7 +136,7 @@
   <dl class="govuk-summary-list">
   <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">
-        Live status
+        Live rule check status
       </dt>
       <dd class="govuk-summary-list__value">
         {{ live_rule_check_status }}

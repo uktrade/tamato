@@ -42,6 +42,19 @@
       margin-bottom: -4px;
     }
   }
+
+  .logout-login {
+    color: govuk-colour("white");
+    font-weight: bold;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+      text-decoration-thickness: 3px;
+      text-underline-offset: 0.1em;
+    }
+  }
+
 }
 
 .workbasket-navigation {
@@ -76,4 +89,75 @@
     }
   }
 
+}
+
+.homepage-card {
+  box-sizing: border-box;
+  border: 1px solid $govuk-border-colour;
+  padding: govuk-spacing(3) govuk-spacing(3) 0;
+  margin: govuk-spacing(3);
+  width: calc(100% - govuk-spacing(6));
+  float: left;
+}
+
+@media screen and (min-width: 1063px) {
+  .homepage-card {
+    width: calc(50% - govuk-spacing(6));
+  }
+}
+
+#homepage-tap-resources {
+  columns: 2;
+}
+
+.homepage-workbasket-details {
+  display: inline-block;
+}
+
+#current-workbasket {
+  img {
+    vertical-align: text-bottom;
+  }
+  a, form {
+    display: inline-block;
+  }
+}
+
+@media screen and (min-width: 770px) {
+  #current-workbasket {
+    float: right;
+  }
+}
+
+#homepage-search-form {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: flex-end;
+
+  .govuk-input {
+    height: 50px;
+    font-size: 21px;
+  }
+
+  .govuk-form-group {
+    width: 100%;
+  }
+
+  .govuk-label {
+    @extend .govuk-visually-hidden
+  }
+
+  .govuk-button {
+    background: no-repeat url("/common/static/common/images/search-icon.svg");
+    background-color: govuk-colour("black");
+    background-position: center;
+    color: transparent;
+    margin-left: 0;
+    width: 50px;
+    height: 48px;
+  }
+}
+
+.homepage-workbasket-action {
+  width: 100%;
 }

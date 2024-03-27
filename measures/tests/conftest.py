@@ -34,7 +34,7 @@ def component_applicability():
                 **{
                     applicability_field: ApplicabilityCode.MANDATORY,
                     field_name: None,
-                }
+                },
             )
 
         with pytest.raises(ValidationError):
@@ -42,7 +42,7 @@ def component_applicability():
                 **{
                     applicability_field: ApplicabilityCode.NOT_PERMITTED,
                     field_name: value,
-                }
+                },
             )
 
         return True

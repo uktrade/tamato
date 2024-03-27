@@ -13,7 +13,7 @@ from geo_areas.validators import AreaCode
 
 
 class GA1(UniqueIdentifyingFields):
-    """The combination geographical area id + validity start date must be
+    """The combination of geographical area id + validity start date must be
     unique."""
 
     identifying_fields = ("area_id", "valid_between__lower")
@@ -42,9 +42,8 @@ class GA3(DescriptionsRules):
 
 
 class GA4(BusinessRule):
-    """The referenced parent geographical area group must be an existing geographical
-    area with area code = 1 (geographical area group).
-    """
+    """The referenced parent geographical area group must be an existing
+    geographical area with area code = 1 (geographical area group)."""
 
     def validate(self, geo_area):
         try:

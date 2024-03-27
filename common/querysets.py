@@ -25,7 +25,8 @@ class ValidityQuerySet(QuerySet):
         Filter queryset to only those whose validity period does NOT include the
         given date.
 
-        :param at_date date: Exclude results whose validity period contains this date.
+        :param at_date date: Exclude results whose validity period contains this
+            date.
         :rtype QuerySet:
         """
         return self.with_validity_field().exclude(
@@ -37,8 +38,8 @@ class ValidityQuerySet(QuerySet):
         Filter queryset to only those whose validity period ends before the
         given date.
 
-        :param at_date date: Exclude results whose validity period contains or comes
-        after this date.
+        :param at_date date: Exclude results whose validity period contains or
+            comes after this date.
         :rtype QuerySet:
         """
         return self.with_validity_field().filter(
@@ -51,7 +52,8 @@ class ValidityQuerySet(QuerySet):
         Filter the queryset to only those whose validity period starts after the
         given date.
 
-        :param at_date date: Exclude results with validity starts before this date.
+        :param at_date date: Exclude results with validity starts before this
+            date.
         :rtype QuerySet:
         """
         return self.with_validity_field().filter(
@@ -78,8 +80,8 @@ class ValidityQuerySet(QuerySet):
         If done from the TrackedModel this will return all instances of all
         tracked models as represented at a particular date.
 
-        :param date date: Exclude results with validity periods that do not contain this
-        date.
+        :param date date: Exclude results with validity periods that do not
+            contain this date.
         :rtype QuerySet:
         """
         return self.filter(valid_between__contains=date)
@@ -120,7 +122,7 @@ class TransactionPartitionQuerySet(QuerySet):
         return Q(
             **{
                 f"{prefix}transaction__partition__in": TransactionPartition.approved_partitions(),
-            }
+            },
         )
 
     @classmethod
@@ -151,11 +153,11 @@ class TransactionPartitionQuerySet(QuerySet):
             **{
                 f"{prefix}transaction__partition": TransactionPartition.DRAFT,
                 f"{prefix}transaction__workbasket__id": transaction.workbasket_id,
-            }
+            },
         ) | Q(
             **{
                 f"{prefix}transaction__partition__in": TransactionPartition.approved_partitions(),
-            }
+            },
         )
 
         earlier_partition = {

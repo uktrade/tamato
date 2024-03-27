@@ -78,7 +78,10 @@ class QuotaDefinitionFilterForm(forms.Form):
         self.fields["quota_type"].initial = quota_type_initial
         self.helper = FormHelper()
 
-        clear_url = reverse_lazy("quota-definitions", kwargs={"sid": object_sid})
+        clear_url = reverse_lazy(
+            "quota_definition-ui-list",
+            kwargs={"sid": object_sid},
+        )
 
         self.helper.layout = Layout(
             Field.radios("quota_type", label_size=Size.SMALL),
@@ -268,6 +271,9 @@ class QuotaUpdateForm(
             origin_form = QuotaOrderNumberOriginUpdateReactForm(
                 data=origin_data,
                 initial=origin_data,
+                instance=models.QuotaOrderNumberOrigin.objects.get(pk=origin_data["pk"])
+                if origin_data.get("pk")
+                else None,
             )
 
             cleaned_exclusions = []
@@ -796,7 +802,7 @@ class QuotaOrderNumberOriginUpdateForm(
         field_name = "exclusion"
         initial = {}
         initial_exclusions = []
-        if hasattr(self, "instance"):
+        if self.instance.pk:
             initial_exclusions = [
                 {field_name: exclusion.excluded_geographical_area}
                 for exclusion in self.instance.quotaordernumberoriginexclusion_set.current()

@@ -41,7 +41,7 @@ def test_update_quota_form_safeguard_invalid(session_request_with_workbasket):
         assert forms.SAFEGUARD_HELP_TEXT in form.errors["category"]
 
 
-def test_update_quota_form_safeguard_no_change(session_request_with_workbasket):
+def test_update_quota_form_safeguard_disabled(session_request_with_workbasket):
     """When a QuotaOrderNumber with the category safeguard is edited the
     category cannot be changed."""
     quota = factories.QuotaOrderNumberFactory.create(

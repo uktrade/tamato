@@ -5,22 +5,20 @@ from typing import Type
 
 from crispy_forms_gds.fields import DateInputField
 from crispy_forms_gds.helper import FormHelper
-from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
-from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
 from django.core.exceptions import ValidationError
-from django.db.models import TextChoices
 from django.forms.renderers import get_default_renderer
 from django.forms.utils import ErrorList
 
 from common.util import TaricDateRange
 from common.util import get_model_indefinite_article
+from common.validators import AlphanumericValidator
 from common.widgets import FormSetFieldWidget
 from common.widgets import MultipleFileInput
 from common.widgets import RadioNestedWidget
@@ -57,8 +55,8 @@ class BindNestedFormMixin:
         return bound_form
 
     def bind_nested_forms(self, *args, **kwargs):
-        if kwargs.get("instance"):
-            kwargs.pop("instance")  # this mixin does not support ModelForm as subforms
+        # this mixin does not support ModelForm as subforms
+        kwargs.pop("instance", None)
 
         for name, field in self.fields.items():
             if isinstance(field, RadioNested):
@@ -235,93 +233,6 @@ class FormSetField(forms.Field):
         return super().get_bound_field(form, field_name)
 
 
-class WorkbasketActions(TextChoices):
-    CREATE = "CREATE", "Create new workbasket"
-    EDIT = "EDIT", "Edit workbaskets"
-
-
-class DITTariffManagerActions(TextChoices):
-    PACKAGE_WORKBASKETS = "PACKAGE_WORKBASKETS", "Package workbaskets"
-
-
-class HMRCCDSManagerActions(TextChoices):
-    PROCESS_ENVELOPES = "PROCESS_ENVELOPES", "Process envelopes"
-
-
-class CommonUserActions(TextChoices):
-    SEARCH = "SEARCH", "Search the tariff"
-
-
-class ReferenceDocumentsActions(TextChoices):
-    # Change this to be dependent on permissions later
-    REF_DOCS_EXAMPLES = "REF_DOCS_EXAMPLES", "View example reference document index"
-    REF_DOCS = "REF_DOCS", "View reference documents"
-
-
-class ImportUserActions(TextChoices):
-    IMPORT = "IMPORT", "Import EU Taric files"
-
-
-class WorkbasketManagerActions(TextChoices):
-    WORKBASKET_LIST_ALL = "WORKBASKET_LIST_ALL", "Search for workbaskets"
-
-
-class HomeForm(forms.Form):
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop("user")
-        super().__init__(*args, **kwargs)
-
-        choices = []
-
-        if self.user.has_perm("workbaskets.add_workbasket"):
-            choices += WorkbasketActions.choices
-
-        if self.user.has_perm("publishing.manage_packaging_queue"):
-            choices += DITTariffManagerActions.choices
-
-        if self.user.has_perm("publishing.consume_from_packaging_queue"):
-            choices += HMRCCDSManagerActions.choices
-
-        choices += CommonUserActions.choices
-
-        if self.user.has_perm("reference_documents.view_reference_document"):
-            choices += ReferenceDocumentsActions.choices
-
-        if self.user.has_perm("common.add_trackedmodel") or self.user.has_perm(
-            "common.change_trackedmodel",
-        ):
-            choices += ImportUserActions.choices
-
-        if self.user.has_perm("workbaskets.view_workbasket"):
-            choices += WorkbasketManagerActions.choices
-
-        self.fields["workbasket_action"] = forms.ChoiceField(
-            label="",
-            choices=choices,
-            widget=forms.RadioSelect,
-            required=True,
-        )
-
-        self.helper = FormHelper(self)
-        self.helper.layout = Layout(
-            Fieldset(
-                HTML.h3("What would you like to do?"),
-                HTML.details(
-                    "What is a workbasket?",
-                    "A workbasket is used to collect all the changes you make to the UK's Import and Export Tariff data. "
-                    "Workbaskets group these changes so they can be checked by Customs Declaration Service (CDS) before going live.",
-                ),
-                "workbasket_action",
-            ),
-            Submit(
-                "submit",
-                "Continue",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
-            ),
-        )
-
-
 class DescriptionHelpBox(Div):
     template = "components/description_help.jinja"
 
@@ -420,7 +331,8 @@ class DescriptionForm(forms.ModelForm):
     )
 
     description = forms.CharField(
-        help_text="Edit or overwrite the existing description",
+        help_text="You may enter HTML formatting if required. See the guide below "
+        "for more information.",
         widget=forms.Textarea,
     )
 
@@ -431,6 +343,7 @@ class DescriptionForm(forms.ModelForm):
         self.helper.layout = Layout(
             Field("validity_start", context={"legend_size": "govuk-label--s"}),
             Field.textarea("description", label_size=Size.SMALL, rows=5),
+            DescriptionHelpBox(),
             Submit(
                 "submit",
                 "Save",
@@ -453,9 +366,10 @@ class ValidityPeriodForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.fields["end_date"].help_text = (
             f"Leave empty if {get_model_indefinite_article(self.instance)} "
-            f"{self.instance._meta.verbose_name} is needed for an unlimited time"
+            f"{self.instance._meta.verbose_name} is needed for an unlimited time."
         )
 
         if self.instance.valid_between:
@@ -520,11 +434,15 @@ class ValidityPeriodForm(forms.ModelForm):
 class CreateDescriptionForm(DescriptionForm):
     description = forms.CharField(
         widget=forms.Textarea,
+        help_text=(
+            "You can use HTML formatting if required. See the help text "
+            "below for more information."
+        ),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["validity_start"].label = "Description start date"
+        self.fields["validity_start"].label = "Start date"
 
 
 class DeleteForm(forms.ModelForm):
@@ -578,6 +496,7 @@ class FormSet(forms.BaseFormSet):
     validate_min = False
     validate_max = False
     prefix = None
+    renderer = get_default_renderer()
 
     def __init__(
         self,
@@ -841,3 +760,33 @@ class MultipleFileField(forms.FileField):
         else:
             files = cleaned_data(data, initial)
         return files
+
+
+class HomeSearchForm(forms.Form):
+    search_term = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "Search by tariff element name or ID"},
+        ),
+        validators=[AlphanumericValidator],
+        max_length=18,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Div(
+                Field.text("search_term"),
+                Submit(
+                    "submit",
+                    "Search",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                css_id="homepage-search-form",
+            ),
+        )

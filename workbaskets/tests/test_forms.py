@@ -1,6 +1,7 @@
 import pytest
 
 from common.tests import factories
+from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.validators import tops_jira_number_validator
 
@@ -31,7 +32,7 @@ def test_workbasket_create_form_invalid_data():
     factories.WorkBasketFactory(title="123321")
     form = forms.WorkbasketCreateForm(data={"title": "123321", "reason": "test"})
     assert not form.is_valid()
-    assert "Workbasket with this Title already exists." in form.errors["title"]
+    assert "A workbasket with this title already exists" in form.errors["title"]
 
 
 def test_selectable_objects_form():
@@ -120,3 +121,85 @@ def test_workbasket_compare_form_invalid():
     form = forms.WorkbasketCompareForm(data=data)
     assert not form.is_valid()
     assert "Only symbols" in form.errors["data"][0]
+
+
+def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbasket):
+    request = rf.request()
+    request.user = valid_user
+    users = factories.UserFactory.create_batch(2, is_superuser=True)
+    data = {
+        "users": users,
+        "assignment_type": UserAssignment.AssignmentType.WORKBASKET_WORKER,
+    }
+
+    form = forms.WorkBasketAssignUsersForm(
+        request=request,
+        workbasket=user_workbasket,
+        data=data,
+    )
+    assert form.is_valid()
+
+    task = factories.TaskFactory.create(workbasket=user_workbasket)
+    form.assign_users(task=task)
+    for user in users:
+        assert UserAssignment.objects.get(user=user, task=task, assigned_by=valid_user)
+
+
+def test_workbasket_assign_users_form_required_fields(rf, valid_user, user_workbasket):
+    request = rf.request()
+    request.user = valid_user
+
+    form = forms.WorkBasketAssignUsersForm(
+        request=request,
+        workbasket=user_workbasket,
+        data={},
+    )
+    assert not form.is_valid()
+    assert f"Select one or more users to assign" in form.errors["users"]
+    assert f"Select an assignment type" in form.errors["assignment_type"]
+
+
+def test_workbasket_unassign_users_form_unassigns_users(
+    rf,
+    valid_user,
+    user_workbasket,
+):
+    request = rf.request()
+    request.user = valid_user
+    assignments = factories.UserAssignmentFactory.create_batch(
+        2,
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task__workbasket=user_workbasket,
+    )
+    data = {
+        "assignments": assignments,
+    }
+
+    form = forms.WorkBasketUnassignUsersForm(
+        request=request,
+        workbasket=user_workbasket,
+        data=data,
+    )
+    assert form.is_valid()
+
+    form.unassign_users()
+    for assignment in assignments:
+        assignment.refresh_from_db()
+        assert not assignment.is_assigned
+
+
+def test_workbasket_unassign_users_form_required_fields(
+    rf,
+    valid_user,
+    user_workbasket,
+):
+    request = rf.request()
+    request.user = valid_user
+
+    form = forms.WorkBasketUnassignUsersForm(
+        request=request,
+        workbasket=user_workbasket,
+        data={},
+    )
+    assert not form.is_valid()
+    assert f"Select one or more users to unassign" in form.errors["assignments"]

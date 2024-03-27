@@ -4,10 +4,10 @@ from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from openpyxl import Workbook
-from openpyxl.chart import BarChart, Reference
+from openpyxl.chart import BarChart
+from openpyxl.chart import Reference
 
 import reports.reports.index as index_model
-
 import reports.utils as utils
 
 
@@ -110,7 +110,7 @@ def export_report_to_excel(request, report_slug):
     report_instance = report_class()
 
     response = HttpResponse(
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
     response[

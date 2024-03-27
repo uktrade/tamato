@@ -721,7 +721,7 @@ def test_measure_update_create_conditions(
     assert condition.update_type == UpdateType.CREATE
 
     components = condition.components.approved_up_to_transaction(tx).order_by(
-        *MeasureConditionComponent._meta.ordering
+        *MeasureConditionComponent._meta.ordering,
     )
 
     assert components.count() == 2
@@ -913,7 +913,7 @@ def test_measure_update_negative_condition(
     condition = updated_measure.conditions.approved_up_to_transaction(tx).last()
 
     components = condition.components.approved_up_to_transaction(tx).order_by(
-        *MeasureConditionComponent._meta.ordering
+        *MeasureConditionComponent._meta.ordering,
     )
 
     assert components.count() == 1

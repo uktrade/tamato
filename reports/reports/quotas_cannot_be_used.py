@@ -1,26 +1,25 @@
 import datetime
 
-from django.db.models import Exists, Q
+from django.db.models import Exists
+from django.db.models import Q
 
+from measures.models import Measure
+from measures.models import MeasureExcludedGeographicalArea
+from quotas.models import QuotaDefinition
+from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaOrderNumberOrigin
+from quotas.models import QuotaOrderNumberOriginExclusion
 from reports.reports.base_table import ReportBaseTable
-
-from quotas.models import (
-    QuotaOrderNumber,
-    QuotaDefinition,
-    QuotaOrderNumberOriginExclusion,
-    QuotaOrderNumberOrigin,
-)
-from measures.models import Measure, MeasureExcludedGeographicalArea
 
 
 class Report(ReportBaseTable):
-    name = "Quotas Missing Data"
+    name = "Quotas missing data"
     enabled = True
-    description = "Quotas that won't be able to be used by a trader"
+    description = "This table shows quotas that traders won't be able to use."
 
     def headers(self) -> [dict]:
         return [
-            {"text": "Order number"},
+            {"text": "Quota order number"},
             {"text": "Start date"},
             {"text": "End date"},
             {"text": "Reason"},
@@ -29,8 +28,16 @@ class Report(ReportBaseTable):
     def row(self, row: QuotaDefinition) -> [dict]:
         return [
             {"text": self.link_renderer_for_quotas(row, row.order_number)},
-            {"text": row.valid_between.lower},
-            {"text": row.valid_between.upper},
+            {
+                "text": f"{row.valid_between.lower:%d %b %Y}"
+                if row.valid_between.lower
+                else "-",
+            },
+            {
+                "text": f"{row.valid_between.upper:%d %b %Y}"
+                if row.valid_between.upper
+                else "-",
+            },
             {"text": row.reason},
         ]
 
@@ -44,7 +51,7 @@ class Report(ReportBaseTable):
     def query(self):
         quotas_with_definition_periods = self.get_quotas_with_definition_periods()
         quotas_cannot_be_used = self.find_quotas_that_cannot_be_used(
-            quotas_with_definition_periods
+            quotas_with_definition_periods,
         )
         return quotas_cannot_be_used
 
@@ -75,14 +82,14 @@ class Report(ReportBaseTable):
 
         matching_data.update(
             quota_order_numbers_without_definitions.exclude(
-                order_number__startswith="09"
-            )
+                order_number__startswith="09",
+            ),
         )
 
         for quota in quotas_with_definition_periods:
             if not str(quota.order_number).startswith("09"):
                 measures = Measure.objects.latest_approved().filter(
-                    order_number=quota.order_number
+                    order_number=quota.order_number,
                 )
 
                 if not Exists(measures.filter(order_number=quota.order_number)):
@@ -98,13 +105,13 @@ class Report(ReportBaseTable):
                     if quota_order_number:
                         quota_order_number_origin = (
                             QuotaOrderNumberOrigin.objects.latest_approved().filter(
-                                order_number_id=quota_order_number.pk
+                                order_number_id=quota_order_number.pk,
                             )
                         )
 
                         for origin in quota_order_number_origin:
                             geo_exclusions = QuotaOrderNumberOriginExclusion.objects.latest_approved().filter(
-                                origin_id=origin.pk
+                                origin_id=origin.pk,
                             )
 
                             for geo_exclusion in geo_exclusions:

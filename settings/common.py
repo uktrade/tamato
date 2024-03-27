@@ -58,7 +58,11 @@ STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 
 # Auto field type specification required since Django 3.2.
@@ -127,6 +131,7 @@ TAMATO_APPS = [
     "reference_documents",
     "publishing",
     "taric",
+    "tasks",
     "workbaskets",
     "exporter.apps.ExporterConfig",
     "crispy_forms",
@@ -269,9 +274,6 @@ if "VCAP_APPLICATION" in os.environ:
     # Under PaaS, if ALLOW_PAAS_URIS is set, fetch trusted domains from VCAP_APPLICATION env var
     paas_hosts = json.loads(os.environ["VCAP_APPLICATION"])["uris"]
     ALLOWED_HOSTS.extend(paas_hosts)
-
-# Sets the X-XSS-Protection: 1; mode=block header
-SECURE_BROWSER_XSS_FILTER = True
 
 # Sets the X-Content-Type-Options: nosniff header
 SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -23,6 +23,7 @@ from exporter.tasks import upload_workbaskets
 from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from measures.models import Measure
+from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
@@ -239,9 +240,9 @@ def test_select_workbasket_page_200(valid_user_client):
     }
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     statuses = [
-        element.text for element in soup.select(".govuk-table__row .status-badge")
+        element.text.strip() for element in soup.select(".govuk-table__row .govuk-tag")
     ]
     assert len(statuses) == 2
     assert not set(statuses).difference(valid_statuses)
@@ -312,7 +313,7 @@ def test_workbasket_views_without_permission(url_name, client, user_workbasket):
     )
     user = factories.UserFactory.create()
     client.force_login(user)
-    user_workbasket.assign_to_user(user)
+    user_workbasket.set_as_current(user)
     response = client.get(url)
 
     assert response.status_code == 403
@@ -933,7 +934,7 @@ def test_workbasket_violations(valid_user_client, user_workbasket):
     cells = row.findChildren("td")
 
     assert cells[0].text == str(check.pk)
-    assert cells[1].text == good._meta.verbose_name.title()
+    assert cells[1].text == good._meta.verbose_name.capitalize()
     assert cells[2].text == check.rule_code
     assert cells[3].text == check.message
     assert cells[4].text == f"{check.transaction_check.transaction.created_at:%d %b %Y}"
@@ -1008,7 +1009,7 @@ def test_violation_detail_page_superuser_override_last_violation(
         transaction_check__successful=False,
     )
     client.force_login(superuser)
-    model_check.transaction_check.transaction.workbasket.assign_to_user(
+    model_check.transaction_check.transaction.workbasket.set_as_current(
         superuser,
     )
 
@@ -1040,7 +1041,7 @@ def test_violation_detail_page_superuser_override_one_of_two_violation(
         transaction_check__successful=False,
     )
     client.force_login(superuser)
-    model_check.transaction_check.transaction.workbasket.assign_to_user(
+    model_check.transaction_check.transaction.workbasket.set_as_current(
         superuser,
     )
 
@@ -1092,7 +1093,7 @@ def test_violation_detail_page_non_superuser_override_violation(
         transaction_check__successful=False,
     )
     client.force_login(valid_user)
-    model_check.transaction_check.transaction.workbasket.assign_to_user(
+    model_check.transaction_check.transaction.workbasket.set_as_current(
         valid_user,
     )
 
@@ -1381,8 +1382,8 @@ def test_workbasket_changes_view_pagination(
         ("?sort_by=component&ordered=desc", "-polymorphic_ctype"),
         ("?sort_by=action&ordered=asc", "update_type"),
         ("?sort_by=action&ordered=desc", "-update_type"),
-        ("?sort_by=activity_date&ordered=asc", "transaction__updated_up"),
-        ("?sort_by=activity_date&ordered=desc", "-transaction__updated_up"),
+        ("?sort_by=activity_date&ordered=asc", "transaction__updated_at"),
+        ("?sort_by=activity_date&ordered=desc", "-transaction__updated_at"),
     ],
 )
 def test_workbasket_changes_view_sort_by_queryset(ordering_param, expected_ordering):
@@ -1780,9 +1781,9 @@ def test_delete_nonempty_workbasket(
     page = BeautifulSoup(response.content, "html.parser")
     error_list = page.select("ul.govuk-list.govuk-error-summary__list")[0]
     assert error_list.find(
-        text=re.compile(
-            f"Workbasket {workbasket_pk} contains {workbasket_object_count} "
-            f"item\(s\), but must be empty",
+        string=(
+            f"Workbasket {workbasket_pk} contains {workbasket_object_count} item(s), "
+            f"but must be empty in order to permit deletion.",
         ),
     )
     assert models.WorkBasket.objects.filter(pk=workbasket_pk)
@@ -1810,10 +1811,7 @@ def test_application_access_after_workbasket_delete(
     # user workbasket deletion.
     assert response.status_code == 200
 
-    assert (
-        f"Workbasket {workbasket_pk}"
-        in page.select("header nav a.workbasket-link")[0].text
-    )
+    assert f"Workbasket ID {workbasket_pk}" in page.select("a.workbasket-link")[0].text
 
     user_empty_workbasket.delete()
 
@@ -1851,6 +1849,31 @@ def test_workbasket_delete_previously_queued_workbasket(
         kwargs={"pk": workbasket.pk},
     )
     response = valid_user_client.post(url, {})
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "workbaskets:workbasket-ui-delete-done",
+        kwargs={"deleted_pk": workbasket.pk},
+    )
+
+    workbasket.refresh_from_db()
+    assert workbasket.status == WorkflowStatus.ARCHIVED
+
+
+def test_workbasket_delete_archives_assigned_workbasket(valid_user, valid_user_client):
+    """Test that an assigned workbasket (or workbasket with an associated task)
+    transitions to ARCHIVED status when a user attempts to delete it."""
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="delete_workbasket"),
+    )
+    workbasket = factories.AssignedWorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    url = reverse(
+        "workbaskets:workbasket-ui-delete",
+        kwargs={"pk": workbasket.pk},
+    )
+    response = valid_user_client.post(url)
+
     assert response.status_code == 302
     assert response.url == reverse(
         "workbaskets:workbasket-ui-delete-done",
@@ -2088,3 +2111,94 @@ def test_require_current_workbasket_redirect(workbasket_factory, client, valid_u
 
     assert response.status_code == 302
     assert response.url == reverse("workbaskets:no-active-workbasket")
+
+
+def test_disabled_packaging_for_unassigned_workbasket(
+    valid_user_client,
+    user_empty_workbasket,
+):
+    """Tests that if a workbasket has not been fully assigned then the send to
+    packaging queue button is disabled."""
+    with user_empty_workbasket.new_transaction() as transaction:
+        footnote = factories.FootnoteFactory.create(
+            transaction=transaction,
+            footnote_type__transaction=transaction,
+        )
+        TrackedModelCheckFactory.create(
+            transaction_check__transaction=transaction,
+            model=footnote,
+            successful=True,
+        )
+
+    url = reverse("workbaskets:workbasket-checks")
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    assert soup.find("button", {"id": "send-to-packaging", "aria-disabled": "true"})
+
+    # Assign the workbasket so it can now be packaged
+    task = factories.TaskFactory.create(workbasket=user_empty_workbasket)
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=task,
+    )
+
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    packaging_button = soup.find("a", href="/publishing/create/")
+    assert not packaging_button.has_attr("disabled")
+
+
+def test_workbasket_assign_users_view(valid_user, valid_user_client, user_workbasket):
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="add_userassignment"),
+    )
+    response = valid_user_client.get(
+        reverse(
+            "workbaskets:workbasket-ui-assign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
+    assert response.status_code == 200
+    assert "Assign users to workbasket" in str(response.content)
+
+
+def test_workbasket_assign_users_view_without_permission(client, user_workbasket):
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(
+        reverse(
+            "workbaskets:workbasket-ui-assign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
+    assert response.status_code == 403
+
+
+def test_workbasket_unassign_users_view(valid_user, valid_user_client, user_workbasket):
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="change_userassignment"),
+    )
+    response = valid_user_client.get(
+        reverse(
+            "workbaskets:workbasket-ui-unassign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
+    assert response.status_code == 200
+    assert "Unassign users from workbasket" in str(response.content)
+
+
+def test_workbasket_unassign_users_view_without_permission(client, user_workbasket):
+    user = factories.UserFactory.create()
+    client.force_login(user)
+    response = client.get(
+        reverse(
+            "workbaskets:workbasket-ui-unassign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
+    assert response.status_code == 403

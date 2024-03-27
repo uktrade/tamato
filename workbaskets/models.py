@@ -403,6 +403,11 @@ class WorkBasket(TimestampedMixin):
         """Django FSM condition: workbasket must be empty (no tracked models and no transactions) to transition to ARCHIVED status."""
         return not self.tracked_models.exists() and not self.transactions.exists()
 
+    def is_fully_assigned(self) -> bool:
+        """Returns True if a workbasket has been assigned to both a worker and a
+        reviewer, otherwise False."""
+        return self.worker_assignments.exists() and self.reviewer_assignments.exists()
+
     @transition(
         field=status,
         source=WorkflowStatus.EDITING,
@@ -439,6 +444,7 @@ class WorkBasket(TimestampedMixin):
         field=status,
         source=WorkflowStatus.EDITING,
         target=WorkflowStatus.QUEUED,
+        conditions=[is_fully_assigned],
         custom={"label": "Add to packaging queue."},
     )
     def queue(self, user: int, scheme_name: str):
@@ -498,8 +504,8 @@ class WorkBasket(TimestampedMixin):
         """WorkBasket is ready to be worked on again after being rejected by
         CDS."""
 
-    def assign_to_user(self, user) -> None:
-        """Assigns this instance as `user`'s current workbasket."""
+    def set_as_current(self, user) -> None:
+        """Set as the user's current workbasket."""
         user.current_workbasket = self
         user.save()
 
@@ -636,6 +642,31 @@ class WorkBasket(TimestampedMixin):
             .values("transaction__pk"),
         )
         return returned
+
+    @property
+    def worker_assignments(self):
+        from tasks.models import UserAssignment
+
+        return (
+            UserAssignment.objects.filter(task__workbasket=self)
+            .workbasket_workers()
+            .assigned()
+        )
+
+    @property
+    def reviewer_assignments(self):
+        from tasks.models import UserAssignment
+
+        return (
+            UserAssignment.objects.filter(task__workbasket=self)
+            .workbasket_reviewers()
+            .assigned()
+        )
+
+    @property
+    def user_assignments(self):
+        assignments = self.worker_assignments | self.reviewer_assignments
+        return assignments
 
     class Meta:
         verbose_name = "workbasket"

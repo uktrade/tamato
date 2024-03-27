@@ -1,0 +1,25 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = page_title %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " - Summary", "href": url("workbaskets:current-workbasket") },
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block form %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% call django_form() %}
+        {{ crispy(form) }}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}

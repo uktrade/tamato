@@ -70,17 +70,18 @@
       ])
     }}
     {{ workbasket_column("Measures", [
-      {"text": "Create new measure", "url": url('measure-ui-create', kwargs={"step": "start"})},
+      {"text": "Create a new measure", "url": url('measure-ui-create', kwargs={"step": "start"})},
       {"text": "Find and edit measures", "url": url('measure-ui-search')},
+      {"text": "Read the duty sentence reference", "url": url("duties")},
       ])
     }}
     {{ workbasket_column("Quotas", [
-      {"text": "Create new quota", "url": url('quota-ui-create')},
+      {"text": "Create a new quota", "url": url('quota-ui-create')},
       {"text": "Find and edit quotas", "url": url('quota-ui-list')},
       ])
     }}
     {{ workbasket_column("Regulations", [
-      {"text": "Create new regulation", "url": url('regulation-ui-create')},
+      {"text": "Create a new regulation", "url": url('regulation-ui-create')},
       {"text": "Find and edit regulations", "url": url('regulation-ui-list')},
       ])
     }}

@@ -14,7 +14,7 @@ class CET2(PreventDeleteIfInUse):
 
 
 class CE2(UniqueIdentifyingFields):
-    """The combination certificate type and code must be unique."""
+    """The combination of certificate type and code must be unique."""
 
     identifying_fields = ("sid", "certificate_type")
 

@@ -15,6 +15,7 @@ import initFilterDisabledToggleForComCode from './conditionalDisablingFilters'
 import initOpenCloseAccordionSection from './openCloseAccordion';
 import initTapDebounce from './buttonDebounce';
 import { setupQuotaOriginFormset } from './components/QuotaOriginFormset/index';
+import { setupWorkbasketUserAssignment } from './components/WorkbasketUserAssignment/index';
 
 
 showHideCheckboxes();
@@ -33,3 +34,4 @@ initFilterDisabledToggleForComCode();
 initOpenCloseAccordionSection();
 initTapDebounce();
 setupQuotaOriginFormset();
+setupWorkbasketUserAssignment();

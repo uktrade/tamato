@@ -133,8 +133,8 @@ class Regulation(TrackedModel, ValidityMixin):
     approved = models.BooleanField(
         default=False,
     )
-
-    """The code which indicates whether or not a regulation has been replaced."""
+    """The code which indicates whether or not a regulation has been
+    replaced."""
     replacement_indicator = models.PositiveIntegerField(
         choices=validators.ReplacementIndicator.choices,
         default=validators.ReplacementIndicator.NOT_REPLACED,
@@ -265,11 +265,11 @@ class Amendment(TrackedModel):
     """
     This regulation amends a base regulation or an antidumping regulation.
 
-    It can affect the tariff and commercial aspects of the updated regulation but it
-    does not extend nor close the regulation itself.
+    It can affect the tariff and commercial aspects of the updated regulation
+    but it does not extend nor close the regulation itself.
 
-    If the modification regulation has no end date of validity, its end date is defined
-    by the end date of the regulations it modifies.
+    If the modification regulation has no end date of validity, its end date is
+    defined by the end date of the regulations it modifies.
     """
 
     record_code = "290"
@@ -300,11 +300,11 @@ class Extension(TrackedModel):
     validity end date of a base or modification regulation. This means that the
     measures falling under the prorogued regulation are prorogued as well.
 
-    A prorogation regulation can extend several regulations at different dates and a
-    regulation can be extended several times.
+    A prorogation regulation can extend several regulations at different dates
+    and a regulation can be extended several times.
 
-    If a regulation has been prorogued, its published end date does not take into
-    account the prorogation and is different from its effective end date.
+    If a regulation has been prorogued, its published end date does not take
+    into account the prorogation and is different from its effective end date.
 
     Prorogation regulations are also called "extension regulations".
     """
@@ -373,11 +373,11 @@ class Termination(TrackedModel):
     applies by definition to all measures under the abrogated regulation; unless
     these measures have a specific end dates.
 
-    If a regulation has been abrogated, its published end date does not take into
-    account the abrogation and is different from its effective end date.
+    If a regulation has been abrogated, its published end date does not take
+    into account the abrogation and is different from its effective end date.
 
-    An explicit abrogation regulation has no validity period; it ends the validity
-    period of a measure generating regulation or an FTS regulation.
+    An explicit abrogation regulation has no validity period; it ends the
+    validity period of a measure generating regulation or an FTS regulation.
     """
 
     record_code = "280"

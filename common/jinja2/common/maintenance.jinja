@@ -3,13 +3,24 @@
 {% set page_title = "Sorry, the service is unavailable" %}
 
 {% set workbasket_html %}{% endset %}
+{% set logout_login_link %}{% endset %}
+{% set can_view_workbasket %}{% endset %}
+{% set can_import_taric %}{% endset %}
+{% set can_manage_packaging %}{% endset %}
+{% set can_consume_packaging %}{% endset %}
 
 {% block header %}
-{{ govukHeader({
-  "homepageUrl": "https://gov.uk/",
-  "serviceName": service_name,
-  "serviceUrl": "/",
-}) }}
+  <header class="govuk-header" role="banner" data-module="govuk-header">
+    <div class="govuk-header__container govuk-width-container">
+      <div class="govuk-header__logotype">
+        <a
+          href="/"
+          class="govuk-header__link govuk-header__link--service-name govuk-!-margin-right-1"
+        >{{ service_name }}</a>
+        <strong class="govuk-tag govuk-phase-banner__content__tag ">{{ phase_banner_tag }}</strong>
+      </div>
+    </div>
+  </header>
 {% endblock %}
 
 {% block breadcrumb %}{% endblock %}
