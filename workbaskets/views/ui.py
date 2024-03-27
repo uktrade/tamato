@@ -1074,6 +1074,15 @@ class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
     permission_required = "workbaskets.delete_workbasket"
     template_name = "workbaskets/delete_workbasket.jinja"
 
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["workbasket"] = self.workbasket
+        return context
+
     def get_success_url(self) -> str:
         return reverse(
             "workbaskets:workbasket-ui-delete-done",

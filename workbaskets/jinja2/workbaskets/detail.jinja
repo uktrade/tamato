@@ -55,7 +55,7 @@
             {"text": "{:%d %b %y %H:%M}".format(workbasket.created_at)}
           ],
           [
-            {"text": "Last updated"},
+            {"text": "Activity date"},
             {"text": "{:%d %b %y %H:%M}".format(workbasket.updated_at)}
           ],
       ]}) }}
@@ -67,14 +67,20 @@
       <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
       <input type="hidden" name="workbasket" value="{{ workbasket.pk }}">
       <input type="hidden" name="workbasket-tab" value="view-summary">
-      <input type="submit" class="govuk-button" name="submit" value="Go to summary view">
+      <input type="submit" class="govuk-button" name="submit" value="Go to workbasket summary">
     </form>
-  {% endif %}
+      {{ govukButton({
+    "text": "Find and view workbaskets",
+    "href": url("workbaskets:workbasket-ui-list-all"),
+    "classes": "govuk-button--secondary govuk-!-margin-left-2",
+  }) }}
+  {% else %}
 
   {{ govukButton({
-    "text": "Return to Find and view workbaskets",
+    "text": "Find and view workbaskets",
     "href": url("workbaskets:workbasket-ui-list-all"),
     "classes": "govuk-button--secondary",
   }) }}
+  {% endif %}
   </div>
 {% endblock %}
