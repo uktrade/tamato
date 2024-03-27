@@ -5,7 +5,6 @@ from django.views.generic import CreateView
 from django.views.generic import FormView
 from django.views.generic import UpdateView
 from django.views.generic.edit import DeleteView
-from django.views.generic.edit import FormMixin
 
 from reference_documents.forms.preferential_quota_forms import (
     PreferentialQuotaBulkCreateForm,
@@ -150,7 +149,7 @@ class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
         )
 
 
-class PreferentialQuotaDelete(PermissionRequiredMixin, FormMixin, DeleteView):
+class PreferentialQuotaDelete(PermissionRequiredMixin, DeleteView):
     form_class = PreferentialQuotaDeleteForm
     template_name = "reference_documents/preferential_quotas/delete.jinja"
     permission_required = "reference_documents.edit_reference_document"

@@ -7,7 +7,6 @@ from django.views.generic import DetailView
 from django.views.generic import ListView
 from django.views.generic import TemplateView
 from django.views.generic import UpdateView
-from django.views.generic.edit import FormMixin
 
 from reference_documents import models
 from reference_documents.forms.reference_document_forms import (
@@ -172,7 +171,7 @@ class ReferenceDocumentEdit(PermissionRequiredMixin, UpdateView):
         )
 
 
-class ReferenceDocumentDelete(PermissionRequiredMixin, FormMixin, DeleteView):
+class ReferenceDocumentDelete(PermissionRequiredMixin, DeleteView):
     form_class = ReferenceDocumentDeleteForm
     model = ReferenceDocument
     permission_required = "reference_documents.delete_referencedocument"

@@ -6,7 +6,6 @@ from django.views.generic import DeleteView
 from django.views.generic import DetailView
 from django.views.generic import TemplateView
 from django.views.generic import UpdateView
-from django.views.generic.edit import FormMixin
 
 from commodities.models import GoodsNomenclature
 from quotas.models import QuotaOrderNumber
@@ -340,7 +339,7 @@ class ReferenceDocumentVersionEdit(PermissionRequiredMixin, UpdateView):
         )
 
 
-class ReferenceDocumentVersionDelete(PermissionRequiredMixin, FormMixin, DeleteView):
+class ReferenceDocumentVersionDelete(PermissionRequiredMixin, DeleteView):
     form_class = ReferenceDocumentVersionDeleteForm
     model = ReferenceDocumentVersion
     permission_required = "reference_documents.delete_referencedocumentversion"

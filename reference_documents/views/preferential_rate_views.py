@@ -3,7 +3,6 @@ from django.urls import reverse
 from django.views.generic import CreateView
 from django.views.generic import DeleteView
 from django.views.generic import UpdateView
-from django.views.generic.edit import FormMixin
 
 from reference_documents.forms.preferential_rate_forms import (
     PreferentialRateCreateUpdateForm,
@@ -49,7 +48,7 @@ class PreferentialRateCreate(PermissionRequiredMixin, CreateView):
         return super(PreferentialRateCreate, self).form_valid(form)
 
 
-class PreferentialRateDelete(PermissionRequiredMixin, FormMixin, DeleteView):
+class PreferentialRateDelete(PermissionRequiredMixin, DeleteView):
     template_name = "reference_documents/preferential_rates/delete.jinja"
     permission_required = "reference_documents.delete_preferentialrate"
     model = PreferentialRate

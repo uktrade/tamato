@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.views.generic import CreateView
 from django.views.generic import DeleteView
 from django.views.generic import UpdateView
-from django.views.generic.edit import FormMixin
 
 from reference_documents.forms.preferential_quota_order_number_forms import (
     PreferentialQuotaOrderNumberCreateUpdateForm,
@@ -75,7 +74,6 @@ class PreferentialQuotaOrderNumberCreate(PermissionRequiredMixin, CreateView):
 
 class PreferentialQuotaOrderNumberDelete(
     PermissionRequiredMixin,
-    FormMixin,
     DeleteView,
 ):
     form_class = PreferentialQuotaOrderNumberDeleteForm
