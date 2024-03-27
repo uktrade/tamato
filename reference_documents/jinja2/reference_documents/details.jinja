@@ -1,0 +1,31 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Reference documents for " ~ object.get_area_name_by_area_id() %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.area_id}],
+  }) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        {{ page_title }}
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">You will find a list of reference document versions below that can be viewed.</span>
+    <p class="govuk-body">
+    <a class="govuk-link" href="{{ url('reference_documents:version-create', kwargs={"pk":object.id}) }}">
+    Create a new version of this reference document
+    </a>
+    </p>
+    <div>
+        {{ govukTable({ "head": reference_document_versions_headers, "rows": reference_document_versions }) }}
+    </div>
+{% endblock %}
+
+
+

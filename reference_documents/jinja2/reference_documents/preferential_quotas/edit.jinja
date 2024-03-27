@@ -1,0 +1,9 @@
+{% extends 'layouts/form.jinja' %}
+
+{% set page_title = "Edit preferential quota" %}
+
+{% block form %}
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

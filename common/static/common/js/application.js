@@ -5,6 +5,7 @@ require.context('govuk-frontend/govuk/assets');
 import showHideCheckboxes from './showHideCheckboxes';
 import { initAutocomplete } from './autocomplete';
 import { initAutocompleteProgressiveEnhancement } from './autocompleteProgressiveEnhancement';
+import { initAddNewDefinition } from './addNewQuotaDefinitionForm';
 import { initAddNewEnhancement } from './addNewForm';
 import { initCopyToNextDuties } from './copyDuties';
 import { initAll } from 'govuk-frontend';
@@ -21,6 +22,7 @@ showHideCheckboxes();
 // Initialise accessible-autocomplete components without a `name` attr in order
 // to avoid the "dummy" autocomplete field being submitted as part of the form
 // to the server.
+initAddNewDefinition();
 initAddNewEnhancement();
 initAutocomplete(false);
 initCopyToNextDuties();

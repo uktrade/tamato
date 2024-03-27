@@ -1,0 +1,52 @@
+{% from "components/table/macro.njk" import govukTable %}
+{% from 'macros/create_link.jinja' import create_link %}
+
+{%- set table_rows = [] -%}
+{% for quota in ref_doc.quotas %}
+    {% set commodity_codes -%}
+        <ul class="govuk-list govuk-list--bullet">
+            {% for commodity in quota["comm_codes"]%}
+            <li>
+                <a class="govuk-link" href="{{ commodity.get_url() }}">{{ commodity.structure_code}}</a>
+            </li>
+            {%endfor%}
+        </ul>
+    {%- endset %}
+    {{ table_rows.append([
+        {"text": create_link(url("quota-ui-detail", kwargs={"sid": quota["order_number"].sid}), quota["order_number"].structure_code) if quota["order_number"].structure_code else '-'},
+        {"text": "Yes" if quota["order_number"].is_origin_quota else "No"},
+        {"html": commodity_codes},
+        {"text": "-"},
+        {"text": "{:.2f}".format(quota["definition"].volume)},
+        {"text": quota["definition"].valid_between.upper.strftime("%d %b %Y")},
+        {"text": quota["definition"]["measurement_unit"].description},
+        
+    ]) or "" }}
+{% endfor %}
+
+<div class="quota__core-data govuk-grid-row">
+    <div class="quota__core-data__content govuk-grid-column-three-quarters">
+        {{ govukTable({
+        "head": [
+            {"text": "Quota order no."},
+            {"text": "Origin quota"},
+            {"text": "Commodity codes"},
+            {"text": "Quote duty rate"},
+            {"text": "Volume"},
+            {"text": "Quote period closed"},
+            {"text": "Unit"},
+
+        ],
+        "rows": table_rows
+        }) }}
+    </div>
+
+    <div class="govuk-grid-column-one-quarter">
+        <div class="app-related-items" role="complementary">
+            <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
+            <ul class="govuk-list govuk-!-font-size-16">
+                <li><a class="govuk-link" href="{{TBC}}">Copy table data</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
