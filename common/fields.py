@@ -1,4 +1,5 @@
 """Common field types."""
+
 from typing import Union
 
 from dateutil.relativedelta import relativedelta

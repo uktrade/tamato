@@ -212,9 +212,9 @@ class EnvelopeReadyForProcessingNotification(Notification):
             ),
             "theme": packaged_workbasket.theme,
             "eif": eif,
-            "embargo": packaged_workbasket.embargo
-            if packaged_workbasket.embargo
-            else "None",
+            "embargo": (
+                packaged_workbasket.embargo if packaged_workbasket.embargo else "None"
+            ),
             "jira_url": packaged_workbasket.jira_url,
         }
         return personalisation

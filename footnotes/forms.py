@@ -25,9 +25,7 @@ class FootnoteForm(ValidityPeriodForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields[
-            "footnote_type"
-        ].label_from_instance = (
+        self.fields["footnote_type"].label_from_instance = (
             lambda obj: f"{obj.footnote_type_id} - {obj.description}"
         )
         self.fields["footnote_type"].label = "Footnote type"
@@ -35,17 +33,13 @@ class FootnoteForm(ValidityPeriodForm):
 
         if self.instance.pk:
             self.fields["code"].disabled = True
-            self.fields[
-                "code"
-            ].help_text = (
+            self.fields["code"].help_text = (
                 "Footnote IDs are automatically generated and cannot be edited."
             )
             self.fields["code"].initial = str(self.instance)
 
             self.fields["footnote_type"].disabled = True
-            self.fields[
-                "footnote_type"
-            ].help_text = (
+            self.fields["footnote_type"].help_text = (
                 "Once a footnote is published, you cannot edit the footnote type."
             )
 
@@ -99,7 +93,7 @@ class FootnoteCreateBaseForm(ValidityPeriodForm):
     footnote_type = forms.ModelChoiceField(
         label="Footnote type",
         help_text=(
-            "The footnote type will determine whether it can be"
+            "The footnote type will determine whether it can be "
             "associated with measures, commodity codes, or both."
         ),
         queryset=models.FootnoteType.objects.latest_approved(),
@@ -110,9 +104,7 @@ class FootnoteCreateBaseForm(ValidityPeriodForm):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        self.fields[
-            "footnote_type"
-        ].label_from_instance = (
+        self.fields["footnote_type"].label_from_instance = (
             lambda obj: f"{obj.footnote_type_id} - {obj.description}"
         )
 

@@ -32,7 +32,7 @@ def test_workbasket_create_form_invalid_data():
     factories.WorkBasketFactory(title="123321")
     form = forms.WorkbasketCreateForm(data={"title": "123321", "reason": "test"})
     assert not form.is_valid()
-    assert "Workbasket with this Title already exists." in form.errors["title"]
+    assert "A workbasket with this title already exists" in form.errors["title"]
 
 
 def test_selectable_objects_form():

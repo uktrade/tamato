@@ -1,4 +1,5 @@
 """Business rules for geographical areas."""
+
 from django.db import connection
 
 from common.business_rules import BusinessRule

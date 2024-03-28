@@ -1,4 +1,5 @@
 """Includes tests for select fuctionalities in TransactionQueryset."""
+
 import pytest
 
 from common.models.transactions import Transaction

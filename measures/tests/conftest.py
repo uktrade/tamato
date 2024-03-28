@@ -237,16 +237,16 @@ def measure_edit_conditions_data(measure_form_data):
     edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-INITIAL_FORMS"] = 1
     edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-MIN_NUM_FORMS"] = 0
     edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-MAX_NUM_FORMS"] = 1000
-    edit_data[
-        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"
-    ] = condition_code.pk
-    edit_data[
-        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-required_certificate"
-    ] = certificate.pk
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"] = (
+        condition_code.pk
+    )
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-required_certificate"] = (
+        certificate.pk
+    )
     edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action"] = action.pk
-    edit_data[
-        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"
-    ] = "3.5% + 11 GBP / 100 kg"
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"] = (
+        "3.5% + 11 GBP / 100 kg"
+    )
 
     return edit_data
 
@@ -266,11 +266,11 @@ def measure_edit_conditions_and_negative_action_data(measure_edit_conditions_dat
     )
 
     edit_data = {k: v for k, v in measure_edit_conditions_data.items() if v is not None}
-    edit_data[
-        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code"
-    ] = measure_edit_conditions_data[
-        f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"
-    ]
+    edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code"] = (
+        measure_edit_conditions_data[
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code"
+        ]
+    )
     edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action"] = negative_action.pk
     edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-TOTAL_FORMS"] = 2
     edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-INITIAL_FORMS"] = 2

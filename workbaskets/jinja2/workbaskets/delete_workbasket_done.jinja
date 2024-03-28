@@ -1,22 +1,20 @@
 {% extends "layouts/layout.jinja" %}
 
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Delete workbasket " ~ deleted_pk %}
+{% set page_title = "Workbasket " ~ deleted_pk ~ " deleted" %}
 
 
 {% block breadcrumb %}
-<div class="govuk-breadcrumbs">
-  <ol class="govuk-breadcrumbs__list">
-    <li class="govuk-breadcrumbs__list-item">
-      <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
-    </li>
-    <li class="govuk-breadcrumbs__list-item">
-      {{ page_title }}
-    </li>
-  </ol>
-</div>
+    {{ breadcrumbs(request, [
+        {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
+        {"text": "Workbasket " ~ deleted_pk},
+        {"text": "Delete workbasket " ~ deleted_pk },
+        {"text": page_title}
+      ])
+    }}
 {% endblock %}
 
 
@@ -30,11 +28,11 @@
 
     <h2 class="govuk-heading-m">Next steps</h2>
     <p class="govuk-body">
-      To manage another workbasket, select one from the Edit an existing workbasket page.
+      To manage another workbasket, select one from the edit an existing workbasket page.
     </p>
 <div class="govuk-button-group">
     {{ govukButton({
-      "text": "Go to Edit an existing workbasket",
+      "text": "Edit an existing workbasket",
       "href": url("workbaskets:workbasket-ui-list"),
       "classes": "govuk-button--primary"
     }) }}
