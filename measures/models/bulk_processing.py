@@ -15,7 +15,6 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.celery import app
-from common.models import Transaction
 from common.models.mixins import TimestampedMixin
 from common.models.utils import override_current_transaction
 from measures.models.tracked_models import Measure
@@ -207,7 +206,6 @@ class MeasuresBulkCreatorManager(models.Manager):
         self,
         form_data: Dict,
         form_kwargs: Dict,
-        current_transaction: Transaction,
         workbasket,
         user,
         **kwargs,
@@ -217,7 +215,6 @@ class MeasuresBulkCreatorManager(models.Manager):
         return super().create(
             form_data=form_data,
             form_kwargs=form_kwargs,
-            current_transaction=current_transaction,
             workbasket=workbasket,
             user=user,
             **kwargs,
@@ -258,21 +255,6 @@ class MeasuresBulkCreator(BulkProcessor):
     form_kwargs = models.JSONField()
     """Dictionary of all form init data, excluding a form's `data` param (which
     is preserved via this class's `form_data` attribute)."""
-
-    current_transaction = models.ForeignKey(
-        "common.Transaction",
-        on_delete=REVOKE_TASKS_AND_SET_NULL,
-        null=True,
-        editable=False,
-    )
-    """
-    The 'current' Transaction instance at the time `form_data` was constructed.
-
-    This is normally set by
-    `common.models.utils.TransactionMiddleware` when processing a HTTP request
-    and can be obtained from `common.models.utils.get_current_transaction()`
-    to capture its value.
-    """
 
     workbasket = models.ForeignKey(
         "workbaskets.WorkBasket",
@@ -322,7 +304,9 @@ class MeasuresBulkCreator(BulkProcessor):
         required to obtain the measures count).
         """
 
-        with override_current_transaction(transaction=self.current_transaction):
+        with override_current_transaction(
+            transaction=self.workbasket.current_transaction,
+        ):
             from measures.creators import MeasuresCreator
 
             try:
@@ -354,7 +338,9 @@ class MeasuresBulkCreator(BulkProcessor):
             f"{json.dumps(self.form_kwargs, indent=4, default=str)}",
         )
 
-        with override_current_transaction(transaction=self.current_transaction):
+        with override_current_transaction(
+            transaction=self.workbasket.current_transaction,
+        ):
             from measures.creators import MeasuresCreator
 
             cleaned_data = self.get_forms_cleaned_data()
@@ -386,7 +372,10 @@ class MeasuresBulkCreator(BulkProcessor):
             data = self.form_data[form_key]
             kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
             form = form_class(data=data, **kwargs)
-            form = MeasureCreateWizard.fixup_form(form, self.current_transaction)
+            form = MeasureCreateWizard.fixup_form(
+                form,
+                self.workbasket.current_transaction,
+            )
 
             if not form.is_valid():
                 self._log_form_errors(form_class=form_class, form_or_formset=form)

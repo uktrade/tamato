@@ -42,7 +42,7 @@ def test_REVOKE_TASKS_AND_SET_NULL(
     with patch(
         "common.celery.app.control.revoke",
     ) as revoke_mock:
-        simple_measures_bulk_creator.current_transaction.delete()
+        simple_measures_bulk_creator.workbasket.delete()
 
         revoke_mock.assert_called()
 
