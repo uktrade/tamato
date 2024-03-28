@@ -81,8 +81,6 @@ class ReferenceDocumentContext:
 
 
 class ReferenceDocumentList(PermissionRequiredMixin, ListView):
-    """UI endpoint for viewing and filtering workbaskets."""
-
     template_name = "reference_documents/index.jinja"
     permission_required = "reference_documents.view_reference_document"
     model = ReferenceDocument
@@ -112,8 +110,6 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
             {"text": "Actions"},
         ]
         reference_document_versions = []
-
-        print(self.request)
 
         for version in context["object"].reference_document_versions.order_by(
             "version",
@@ -177,7 +173,6 @@ class ReferenceDocumentDelete(PermissionRequiredMixin, DeleteView):
     permission_required = "reference_documents.delete_referencedocument"
     template_name = "reference_documents/delete.jinja"
 
-    # TODO: Update this to get rid of FormMixin with Django 4.2 as no need to overwrite the post anymore
     def get_success_url(self) -> str:
         return reverse(
             "reference_documents:confirm-delete",
@@ -193,6 +188,9 @@ class ReferenceDocumentDelete(PermissionRequiredMixin, DeleteView):
         self.object = self.get_object()
         form = self.get_form()
         if form.is_valid():
+            self.request.session["deleted_version"] = {
+                "area_id": f"{self.object.area_id}",
+            }
             return self.form_valid(form)
         else:
             return self.form_invalid(form)

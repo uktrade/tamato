@@ -314,8 +314,11 @@ class TestPreferentialQuotaBulkCreate:
         }
 
         create_url = reverse(
-            "reference_documents:preferential_quotas_bulk_create",
-            kwargs={"pk": ref_doc_version.pk},
+            "reference_documents:preferential_quotas_bulk_create_for_order",
+            kwargs={
+                "pk": ref_doc_version.pk,
+                "order_pk": preferential_quota_order_number.pk,
+            },
         )
         resp = client.get(create_url)
         assert resp.status_code == 200

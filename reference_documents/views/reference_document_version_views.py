@@ -345,7 +345,6 @@ class ReferenceDocumentVersionDelete(PermissionRequiredMixin, DeleteView):
     permission_required = "reference_documents.delete_referencedocumentversion"
     template_name = "reference_documents/reference_document_versions/delete.jinja"
 
-    # TODO: Update this to get rid of FormMixin with Django 4.2 as no need to overwrite the post anymore
     def get_success_url(self) -> str:
         return reverse(
             "reference_documents:version-confirm-delete",
