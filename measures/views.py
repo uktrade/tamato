@@ -351,9 +351,9 @@ class MeasureList(
         ).values_list("sid", flat=True)
 
         context["query_params"] = True
-        context[
-            "base_url"
-        ] = f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
+        context["base_url"] = (
+            f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
+        )
         return context
 
     def get_initial(self):
@@ -632,17 +632,23 @@ class MeasureEditWizard(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
                 valid_between=TaricDateRange(
-                    lower=new_start_date
-                    if new_start_date
-                    else measure.valid_between.lower,
+                    lower=(
+                        new_start_date
+                        if new_start_date
+                        else measure.valid_between.lower
+                    ),
                     upper=new_end_date if new_end_date else measure.valid_between.upper,
                 ),
-                order_number=new_quota_order_number
-                if new_quota_order_number
-                else measure.order_number,
-                generating_regulation=new_generating_regulation
-                if new_generating_regulation
-                else measure.generating_regulation,
+                order_number=(
+                    new_quota_order_number
+                    if new_quota_order_number
+                    else measure.order_number
+                ),
+                generating_regulation=(
+                    new_generating_regulation
+                    if new_generating_regulation
+                    else measure.generating_regulation
+                ),
             )
             self.update_measure_components(
                 measure=new_measure,

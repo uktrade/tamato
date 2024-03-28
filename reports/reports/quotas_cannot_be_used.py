@@ -29,14 +29,18 @@ class Report(ReportBaseTable):
         return [
             {"text": self.link_renderer_for_quotas(row, row.order_number)},
             {
-                "text": f"{row.valid_between.lower:%d %b %Y}"
-                if row.valid_between.lower
-                else "-",
+                "text": (
+                    f"{row.valid_between.lower:%d %b %Y}"
+                    if row.valid_between.lower
+                    else "-"
+                ),
             },
             {
-                "text": f"{row.valid_between.upper:%d %b %Y}"
-                if row.valid_between.upper
-                else "-",
+                "text": (
+                    f"{row.valid_between.upper:%d %b %Y}"
+                    if row.valid_between.upper
+                    else "-"
+                ),
             },
             {"text": row.reason},
         ]

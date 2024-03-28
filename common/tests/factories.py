@@ -1,4 +1,5 @@
 """Factory classes for BDD tests."""
+
 import string
 from decimal import Decimal
 from itertools import cycle

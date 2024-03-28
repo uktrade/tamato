@@ -207,9 +207,9 @@ class DownloadEnvelopeMixin:
         response = HttpResponse(file_content)
         response["content-type"] = "text/xml"
         response["content-length"] = len(file_content)
-        response[
-            "content-disposition"
-        ] = f'attachment; filename="{envelope.xml_file_name}"'
+        response["content-disposition"] = (
+            f'attachment; filename="{envelope.xml_file_name}"'
+        )
         return response
 
 

@@ -1,4 +1,5 @@
 """Tests for browse geographical area behaviours."""
+
 import pytest
 from pytest_bdd import scenarios
 from pytest_bdd import then

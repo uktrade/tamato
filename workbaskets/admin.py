@@ -52,9 +52,9 @@ class WorkBasketAdminForm(forms.ModelForm):
 
             self.fields["rule_check_task_id"].disabled = True
             self.fields["rule_check_task_status"].disabled = True
-            self.fields[
-                "rule_check_task_status"
-            ].initial = self.instance.rule_check_task_status
+            self.fields["rule_check_task_status"].initial = (
+                self.instance.rule_check_task_status
+            )
         else:
             del self.fields["transition"]
 

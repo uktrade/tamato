@@ -1,4 +1,5 @@
 """Includes dataclasses used in goods nomenclature hierarchy tree management."""
+
 from __future__ import annotations
 
 import datetime
