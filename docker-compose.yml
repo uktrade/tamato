@@ -1,7 +1,7 @@
-version: '3'
+version: "3"
 services:
   db:
-    image: "postgres:12.8"
+    image: "postgres:16"
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
@@ -39,7 +39,16 @@ services:
       - ./:/app/
     command:
       [
-        "celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "standard"
+        "celery",
+        "-A",
+        "common.celery",
+        "worker",
+        "-O",
+        "fair",
+        "-l",
+        "info",
+        "-Q",
+        "standard",
       ]
     env_file:
       - .env
@@ -57,7 +66,19 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "rule-check"]
+    command:
+      [
+        "celery",
+        "-A",
+        "common.celery",
+        "worker",
+        "-O",
+        "fair",
+        "-l",
+        "info",
+        "-Q",
+        "rule-check",
+      ]
     env_file:
       - .env
       - settings/envs/docker.env
@@ -74,7 +95,21 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "importer", "--concurrency", "1"]
+    command:
+      [
+        "celery",
+        "-A",
+        "common.celery",
+        "worker",
+        "-O",
+        "fair",
+        "-l",
+        "info",
+        "-Q",
+        "importer",
+        "--concurrency",
+        "1",
+      ]
     env_file:
       - .env
       - settings/envs/docker.env
@@ -89,7 +124,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"beat", "-l", "info"]
+    command: ["celery", "-A", "common.celery", "beat", "-l", "info"]
     env_file:
       - .env
       - settings/envs/docker.env
@@ -109,7 +144,11 @@ services:
     env_file: .env
     entrypoint: sh
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    command: ['-c', 'mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
+    command:
+      [
+        "-c",
+        'mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"',
+      ]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
