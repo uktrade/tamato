@@ -7,7 +7,7 @@
 {% set form_url = "measure-ui-list" %}
 {% set list_include = "includes/measures/list.jinja" %}
 
-{% set page_title = "Find and edit " ~ object_list.model._meta.verbose_name_plural %}
+{% set page_title = "Find and edit measures" %}
 
 
 {% block content %}
@@ -49,7 +49,7 @@
 
         <hr/>
       {% endif %}
-      {% if object_list %}
+      {% if results_count %}
         {% include list_include %}
       {% else %}
         <p class="govuk-body">There are no results for your search, please:</p>

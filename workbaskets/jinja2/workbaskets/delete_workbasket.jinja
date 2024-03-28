@@ -1,5 +1,6 @@
 {% extends "layouts/layout.jinja" %}
 
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
@@ -8,16 +9,15 @@
 
 
 {% block breadcrumb %}
-<div class="govuk-breadcrumbs">
-  <ol class="govuk-breadcrumbs__list">
-    <li class="govuk-breadcrumbs__list-item">
-      <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
-    </li>
-    <li class="govuk-breadcrumbs__list-item">
-      {{ page_title }}
-    </li>
-  </ol>
-</div>
+    {{ breadcrumbs(request, [
+        {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
+        {
+          "text": "Workbasket " ~ view.workbasket.id ~ "-" ~ view.workbasket.status ~ " changes",
+          "href": url("workbaskets:workbasket-ui-changes", kwargs={"pk": view.workbasket.pk}),
+        },
+        {"text": page_title}
+      ])
+    }}
 {% endblock %}
 
 
@@ -33,7 +33,7 @@
     <p class="govuk-body">Are you sure you want to permanently delete workbasket {{ object.pk }}?</p>
 
     {{ govukWarningText({
-      "text": "Deleted workbaskets can not be recovered.",
+      "text": "Deleted workbaskets cannot be recovered.",
       "iconFallbackText": "Warning"
     }) }}
 
