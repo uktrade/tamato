@@ -1,6 +1,9 @@
 import datetime
 from typing import Dict
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
+import faker
 import pytest
 import requests
 from django.core.exceptions import ValidationError
@@ -12,7 +15,9 @@ from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
+from geo_areas import constants
 from geo_areas.validators import AreaCode
+from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.forms import MeasureForm
 from measures.models import Measure
@@ -318,3 +323,189 @@ def mock_request(rf, valid_user, valid_user_client):
     request.session = valid_user_client.session
     request.requests_session = requests.Session()
     return request
+
+
+@pytest.fixture()
+def measure_regulation_id_form_data():
+    return {"generating_regulation": factories.RegulationFactory.create().pk}
+
+
+@pytest.fixture()
+def measure_details_form_data(date_ranges):
+    return {
+        "measure_type": factories.MeasureTypeFactory.create(
+            valid_between=date_ranges.normal,
+        ).pk,
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "min_commodity_count": 1,
+    }
+
+
+@pytest.fixture()
+def measure_additional_code_form_data():
+    return {"additional_code": factories.AdditionalCodeFactory.create().pk}
+
+
+@pytest.fixture()
+def measure_quota_order_number_form_data():
+    return {"order_number": factories.QuotaOrderNumberFactory.create().pk}
+
+
+@pytest.fixture()
+def measure_quota_order_number_origin_form_data(date_ranges):
+    old_origin = factories.QuotaOrderNumberOriginFactory.create(
+        valid_between=date_ranges.earlier,
+    )
+
+    order_number = old_origin.order_number
+
+    active_origin = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=order_number,
+        valid_between=date_ranges.normal,
+    )
+
+    future_origin = factories.QuotaOrderNumberOriginFactory.create(
+        order_number=order_number,
+        valid_between=date_ranges.later,
+    )
+
+    data = {
+        f"selectableobject_{old_origin.pk}": False,
+        f"selectableobject_{active_origin.pk}": True,
+        f"selectableobject_{future_origin.pk}": True,
+    }
+
+    return {"data": data, "objects": [old_origin, active_origin, future_origin]}
+
+
+@pytest.fixture()
+def measure_conditions_form_data(
+    date_ranges,
+):
+    condition_code_1 = factories.MeasureConditionCodeFactory.create()
+    condition_code_2 = factories.MeasureConditionCodeFactory.create()
+    action_1 = factories.MeasureActionFactory.create()
+    action_2 = factories.MeasureActionFactory.create()
+    return {
+        "data": {
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-condition_code": condition_code_1.pk,
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price": "10%",
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action": action_1.pk,
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-condition_code": condition_code_2.pk,
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-reference_price": "10%",
+            f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-action": action_2.pk,
+        },
+        "kwargs": {
+            "form_kwargs": {
+                "measure_start_date": datetime.date(2025, 1, 1),
+                "measure_type": factories.MeasureTypeFactory.create(
+                    valid_between=date_ranges.normal,
+                ),
+            },
+        },
+    }
+
+
+@pytest.fixture()
+def measure_footnotes_form_data():
+    footnote_1 = factories.FootnoteFactory.create()
+    footnote_2 = factories.FootnoteFactory.create()
+
+    return {
+        "data": {
+            "form-0-footnote": footnote_1.pk,
+            "form-1-footnote": footnote_2.pk,
+        },
+        "kwargs": {
+            "form_kwargs": {},
+        },
+    }
+
+
+@pytest.fixture()
+def measure_commodities_and_duties_form_data():
+    commodity_1 = factories.GoodsNomenclatureFactory.create()
+    commodity_2 = factories.GoodsNomenclatureFactory.create()
+
+    return {
+        "data": {
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity_1.pk,
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": "4.0%",
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-commodity": commodity_2.pk,
+            f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-1-duties": "40 GBP/100kg",
+        },
+        "kwargs": {
+            "min_commodity_count": 1,
+            "measure_start_date": datetime.date(2025, 1, 1),
+            "form_kwargs": {
+                "measure_type": None,
+            },
+        },
+    }
+
+
+@pytest.fixture()
+def measure_geo_area_erga_omnes_form_data(erga_omnes):
+    return {
+        "geo_area": constants.GeoAreaType.ERGA_OMNES,
+    }
+
+
+@pytest.fixture()
+def measure_geo_area_erga_omnes_exclusions_form_data(erga_omnes):
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+    return {
+        "geo_area": constants.GeoAreaType.ERGA_OMNES,
+        "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": geo_area1.pk,
+        "erga_omnes_exclusions_formset-1-erga_omnes_exclusion": geo_area2.pk,
+    }
+
+
+@pytest.fixture()
+def measure_geo_area_geo_group_form_data(erga_omnes):
+    geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+    return {
+        "geo_area": constants.GeoAreaType.GROUP,
+        f"{constants.GEO_GROUP_PREFIX}-geographical_area_group": geo_group.pk,
+    }
+
+
+@pytest.fixture()
+def measure_geo_area_geo_group_exclusions_form_data(erga_omnes):
+    geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    return {
+        "geo_area": constants.GeoAreaType.GROUP,
+        f"{constants.GEO_GROUP_PREFIX}-geographical_area_group": geo_group.pk,
+        "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
+    }
+
+
+@pytest.fixture()
+def simple_measures_bulk_creator(
+    user_empty_workbasket,
+    approved_transaction,
+):
+    from measures.tests.factories import MeasuresBulkCreatorFactory
+
+    return MeasuresBulkCreatorFactory.create(
+        form_data={},
+        form_kwargs={},
+        workbasket=user_empty_workbasket,
+        user=None,
+    )
+
+
+@pytest.fixture()
+def mocked_schedule_apply_async():
+    with patch(
+        "measures.tasks.bulk_create_measures.apply_async",
+        return_value=MagicMock(id=faker.Faker().uuid4()),
+    ) as apply_async_mock:
+        yield apply_async_mock

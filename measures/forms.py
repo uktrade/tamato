@@ -1,6 +1,9 @@
 import datetime
 import logging
+import re
 from itertools import groupby
+from typing import Dict
+from typing import List
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -32,6 +35,8 @@ from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
+from common.serializers import deserialize_date
+from common.serializers import serialize_date
 from common.util import validity_range_contains_range
 from common.validators import SymbolValidator
 from common.validators import UpdateType
@@ -61,6 +66,103 @@ from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 
 logger = logging.getLogger(__name__)
+
+
+class SerializableFormMixin:
+    """Provides a default implementation of `serializable_data()` that can be
+    used to obtain form data that can be serialized, or more specifically,
+    stored to a `JSONField` field."""
+
+    ignored_data_key_regexs = [
+        "^csrfmiddlewaretoken$",
+        "^measure_create_wizard-current_step$",
+        "^submit$",
+        "-ADD$",
+        "-DELETE$",
+        "_autocomplete$",
+        "INITIAL_FORMS$",
+        "MAX_NUM_FORMS$",
+        "MIN_NUM_FORMS$",
+        "TOTAL_FORMS$",
+    ]
+    """
+    Regexs of keys that may appear in a Form's `data` dictionary attribute and
+    which should be ignored when creating a serializable version of `data`.
+
+    Override this on a per form basis if there are other, redundant keys that
+    should be ignored. See the default implementation of
+    `SerializableFormMixin.get_serializable_data_keys()` to see how this class
+    attribute is used.
+    """
+
+    def get_serializable_data_keys(self) -> List[str]:
+        """
+        Default implementation returning a list of the `Form.data` attribute's
+        keys used when serializing `data`.
+
+        Override this function if neither `ignored_data_key_regexs` or this
+        default implementation is sufficient for identifying which of
+        `Form.data`'s keys should be used during a call to this mixin's
+        `serializable_data()` method.
+        """
+        combined_regexs = "(" + ")|(".join(self.ignored_data_key_regexs) + ")"
+        return [k for k in self.data.keys() if not re.search(combined_regexs, k)]
+
+    def serializable_data(self, remove_key_prefix: str = "") -> Dict:
+        """
+        Return serializable form data that can be serialized / stored as, say,
+        `django.db.models.JSONField` which can be used to recreate a valid form.
+
+        If `remove_key_prefix` is a non-empty string, then the keys in the
+        returned dictionary will be stripped of that string where it appears as
+        a key prefix in the origin `data` dictionary.
+
+        Note that this method should only be used immediately after a successful
+        call to the Form's is_valid() if the data that it returns is to be used
+        to recreate a valid form.
+        """
+        serialized_data = {}
+        data_keys = self.get_serializable_data_keys()
+
+        for data_key in data_keys:
+            serialized_key = data_key
+
+            if (
+                remove_key_prefix
+                and len(remove_key_prefix) < len(data_key)
+                and data_key.startswith(remove_key_prefix)
+            ):
+                serialized_key = data_key[len(remove_key_prefix) + 1 :]
+
+            serialized_data[serialized_key] = self.data[data_key]
+
+        return serialized_data
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        """
+        Get a serializable dictionary of arguments that can be used to
+        initialise the form. The `kwargs` parameter is the Python version of
+        kwargs that are used to initialise the form and is normally provided by
+        the same caller as would init the form (i.e. the view).
+
+        For instance, a SelectableObjectsForm subclass
+        requires a valid `objects` parameter to correctly construct and
+        validate the form, so we'd expect `kwargs` dictionary containing
+        an `objects` element.
+        """
+        return {}
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        """
+        Get a dictionary of arguments for use in initialising the form.
+
+        The 'form_kwargs` parameter is the serialized (actually, serializable)
+        version of the form's kwargs that require deserializing to their Python
+        representation.
+        """
+        return {}
 
 
 class MeasureGeoAreaInitialDataMixin(FormSetSubmitMixin):
@@ -447,8 +549,46 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
         return self.conditions_clean(cleaned_data, self.measure_start_date)
 
 
-class MeasureConditionsWizardStepFormSet(MeasureConditionsBaseFormSet):
+class MeasureConditionsWizardStepFormSet(
+    SerializableFormMixin,
+    MeasureConditionsBaseFormSet,
+):
     form = MeasureConditionsWizardStepForm
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        measure_start_date = kwargs.get("form_kwargs", {}).get("measure_start_date")
+        measure_type = kwargs.get("form_kwargs", {}).get("measure_type")
+
+        serializable_kwargs = {
+            "form_kwargs": {
+                "measure_start_date": serialize_date(measure_start_date),
+                "measure_type_pk": measure_type.pk if measure_type else None,
+            },
+        }
+
+        return serializable_kwargs
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        measure_start_date = form_kwargs.get("form_kwargs", {}).get(
+            "measure_start_date",
+        )
+        measure_type_pk = form_kwargs.get("form_kwargs", {}).get("measure_type_pk")
+        measure_type = (
+            models.MeasureType.objects.get(pk=measure_type_pk)
+            if measure_type_pk
+            else None
+        )
+
+        kwargs = {
+            "form_kwargs": {
+                "measure_start_date": deserialize_date(measure_start_date),
+                "measure_type": measure_type,
+            },
+        }
+
+        return kwargs
 
 
 class MeasureForm(
@@ -884,9 +1024,12 @@ class MeasureCreateStartForm(forms.Form):
 
 
 class MeasureDetailsForm(
+    SerializableFormMixin,
     ValidityPeriodForm,
     forms.Form,
 ):
+    MAX_COMMODITY_COUNT = 99
+
     class Meta:
         model = models.Measure
         fields = [
@@ -910,7 +1053,7 @@ class MeasureDetailsForm(
             "Enter how many commodity codes you intend to apply to the measure. You can add more later, up to 99 in total."
         ),
         min_value=1,
-        max_value=99,
+        max_value=MAX_COMMODITY_COUNT,
         required=True,
         error_messages={
             "required": "Enter a number between 1 and 99",
@@ -955,7 +1098,10 @@ class MeasureDetailsForm(
         return cleaned_data
 
 
-class MeasureRegulationIdForm(forms.Form):
+class MeasureRegulationIdForm(
+    SerializableFormMixin,
+    forms.Form,
+):
     class Meta:
         model = models.Measure
         fields = [
@@ -989,7 +1135,10 @@ class MeasureRegulationIdForm(forms.Form):
         )
 
 
-class MeasureQuotaOrderNumberForm(forms.Form):
+class MeasureQuotaOrderNumberForm(
+    SerializableFormMixin,
+    forms.Form,
+):
     class Meta:
         model = models.Measure
         fields = [
@@ -1028,7 +1177,10 @@ class MeasureQuotaOrderNumberForm(forms.Form):
         )
 
 
-class MeasureQuotaOriginsForm(SelectableObjectsForm):
+class MeasureQuotaOriginsForm(
+    SerializableFormMixin,
+    SelectableObjectsForm,
+):
     def clean(self):
         cleaned_data = super().clean()
 
@@ -1048,8 +1200,23 @@ class MeasureQuotaOriginsForm(SelectableObjectsForm):
         ]
         return cleaned_data
 
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        return {
+            "quota_order_number_origin_pks": [o.pk for o in kwargs["objects"]],
+        }
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        return {
+            "objects": QuotaOrderNumberOrigin.objects.filter(
+                pk__in=form_kwargs.get("quota_order_number_origin_pks", []),
+            ),
+        }
+
 
 class MeasureGeographicalAreaForm(
+    SerializableFormMixin,
     MeasureGeoAreaInitialDataMixin,
     BindNestedFormMixin,
     forms.Form,
@@ -1205,8 +1372,22 @@ class MeasureGeographicalAreaForm(
 
         return cleaned_data
 
+    def serializable_data(self, remove_key_prefix: str = "") -> Dict:
+        # Perculiarly, serializable data in this form keeps its prefix.
+        return super().serializable_data()
 
-class MeasureAdditionalCodeForm(forms.ModelForm):
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        # Perculiarly, this Form requires a prefix of "geographical_area".
+        return {
+            "prefix": "geographical_area",
+        }
+
+
+class MeasureAdditionalCodeForm(
+    SerializableFormMixin,
+    forms.ModelForm,
+):
     class Meta:
         model = models.Measure
         fields = [
@@ -1328,7 +1509,10 @@ MeasureCommodityAndDutiesBaseFormSet = formset_factory(
 )
 
 
-class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
+class MeasureCommodityAndDutiesFormSet(
+    SerializableFormMixin,
+    MeasureCommodityAndDutiesBaseFormSet,
+):
     def __init__(self, *args, **kwargs):
         min_commodity_count = kwargs.pop("min_commodity_count", 2)
         self.measure_start_date = kwargs.pop("measure_start_date", None)
@@ -1368,6 +1552,42 @@ class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
 
         return cleaned_data
 
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        measure_type = kwargs.get("form_kwargs", {}).get("measure_type")
+        measure_type_pk = measure_type.pk if measure_type else None
+
+        serializable_kwargs = {
+            "min_commodity_count": kwargs.get("min_commodity_count"),
+            "measure_start_date": serialize_date(kwargs.get("measure_start_date")),
+            "form_kwargs": {
+                "measure_type_pk": measure_type_pk,
+            },
+        }
+
+        return serializable_kwargs
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        measure_type_pk = form_kwargs.get("form_kwargs", {}).get("measure_type_pk")
+        measure_type = (
+            models.MeasureType.objects.get(pk=measure_type_pk)
+            if measure_type_pk
+            else None
+        )
+
+        kwargs = {
+            "min_commodity_count": form_kwargs.get("min_commodity_count"),
+            "measure_start_date": deserialize_date(
+                form_kwargs.get("measure_start_date"),
+            ),
+            "form_kwargs": {
+                "measure_type": measure_type,
+            },
+        }
+
+        return kwargs
+
 
 class MeasureFootnotesForm(forms.Form):
     footnote = AutoCompleteField(
@@ -1402,7 +1622,10 @@ class MeasureFootnotesForm(forms.Form):
         )
 
 
-class MeasureFootnotesFormSet(FormSet):
+class MeasureFootnotesFormSet(
+    SerializableFormMixin,
+    FormSet,
+):
     form = MeasureFootnotesForm
 
     def clean(self):
@@ -1690,3 +1913,32 @@ class MeasureGeographicalAreaExclusionsFormSet(FormSet):
     `MeasureEditWizard`."""
 
     form = MeasureGeographicalAreaExclusionsForm
+
+
+class CancelBulkProcessorTaskForm(forms.Form):
+    """Confirm canceling a bulk processor task."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        cancel_url = reverse("measure-create-process-queue")
+
+        self.helper = FormHelper(self)
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Div(
+                Submit(
+                    "submit",
+                    "Terminate measure creation",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                    css_class="govuk-button govuk-button--warning",
+                ),
+                HTML(
+                    f'<a href="{cancel_url}" role="button" draggable="false" '
+                    f'class="govuk-button govuk-button--secondary" '
+                    f'data-module="govuk-button">Cancel</a>',
+                ),
+                css_class="govuk-button-group",
+            ),
+        )

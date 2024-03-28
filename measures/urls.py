@@ -57,9 +57,29 @@ ui_patterns = [
         name="measure-ui-create",
     ),
     path(
+        "create/done-async/<int:expected_measures_count>/",
+        views.MeasuresWizardCreateConfirm.as_view(),
+        name="measure-ui-create-confirm",
+    ),
+    path(
         f"{detail}/edit-footnotes/",
         views.MeasureFootnotesUpdate.as_view(),
         name="measure-ui-edit-footnotes",
+    ),
+    path(
+        "process-queue/",
+        views.MeasuresCreateProcessQueue.as_view(),
+        name="measure-create-process-queue",
+    ),
+    path(
+        "cancel-bulk-processor-task/<int:pk>/",
+        views.CancelBulkProcessorTask.as_view(),
+        name="cancel-bulk-processor-task",
+    ),
+    path(
+        "cancel-bulk-processor-task/<int:pk>/done/",
+        views.CancelBulkProcessorTaskDone.as_view(),
+        name="cancel-bulk-processor-task-done",
     ),
 ]
 

@@ -1,3 +1,4 @@
+import datetime
 import io
 import os
 import random
@@ -9,6 +10,8 @@ from pytest_django.asserts import assertQuerysetEqual  # noqa
 
 from common.models import Transaction
 from common.serializers import EnvelopeSerializer
+from common.serializers import deserialize_date
+from common.serializers import serialize_date
 from common.tests import factories
 from common.tests.factories import ApprovedTransactionFactory
 from common.tests.factories import QueuedWorkBasketFactory
@@ -271,3 +274,24 @@ def test_transaction_envelope_serializer_counters(queued_workbasket):
         actual_value = int(element.get("id"))
         assert actual_value == expected_id_2
         expected_id_2 += 1
+
+
+@pytest.mark.parametrize(
+    "test_date, serialized_truthiness",
+    [
+        (datetime.date.today(), True),
+        (datetime.date(1900, 1, 1), True),
+        (datetime.date(1970, 1, 1), True),
+        (datetime.date(3000, 1, 1), True),
+        (None, False),
+    ],
+)
+def test_date_serialization(
+    test_date: datetime.date,
+    serialized_truthiness: bool,
+):
+    serialized_date = serialize_date(test_date)
+    assert bool(serialized_date) == serialized_truthiness
+
+    deserialized_date = deserialize_date(serialized_date)
+    assert deserialized_date == test_date

@@ -95,3 +95,14 @@ class MeasureSheetRowFactory(factory.Factory):
     def _create(cls, model_class, *args, **kwargs):
         data = [kwargs[k] for k in MeasureSheetRow.columns]
         return super()._create(model_class, data)
+
+
+class MeasuresBulkCreatorFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "measures.MeasuresBulkCreator"
+
+    user = factory.SubFactory(factories.UserFactory)
+    created_at = factory.Faker("date_object")
+    workbasket = factory.SubFactory(factories.WorkBasketFactory)
+    form_data = {}
+    form_kwargs = {}
