@@ -1,4 +1,5 @@
 """Business rules for regulations."""
+
 import logging
 
 from common.business_rules import BusinessRule

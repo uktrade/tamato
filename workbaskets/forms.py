@@ -23,7 +23,7 @@ class WorkbasketCreateForm(forms.ModelForm):
     """The form for creating a new workbasket."""
 
     title = forms.CharField(
-        label="Tops/Jira number",
+        label="TOPS/Jira number",
         help_text=(
             "Your TOPS/Jira number is needed to associate your workbasket with your Jira ticket. "
             "You can find this number at the end of the web address for your Jira ticket. "
@@ -32,6 +32,7 @@ class WorkbasketCreateForm(forms.ModelForm):
         widget=forms.TextInput,
         validators=[validators.tops_jira_number_validator],
         required=True,
+        error_messages={"unique": "A workbasket with this title already exists"},
     )
 
     reason = forms.CharField(
@@ -131,12 +132,12 @@ class SelectableObjectsForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         for obj in objects:
-            self.fields[
-                SelectableObjectsForm.field_name_for_object(obj)
-            ] = SelectableObjectField(
-                required=False,
-                obj=obj,
-                initial=str(obj.id) in [str(k) for k in self.initial.keys()],
+            self.fields[SelectableObjectsForm.field_name_for_object(obj)] = (
+                SelectableObjectField(
+                    required=False,
+                    obj=obj,
+                    initial=str(obj.id) in [str(k) for k in self.initial.keys()],
+                )
             )
 
     @classmethod
@@ -285,9 +286,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
             "user__last_name",
         )
 
-        self.fields[
-            "assignments"
-        ].label_from_instance = (
+        self.fields["assignments"].label_from_instance = (
             lambda obj: f"{obj.user.get_full_name()} ({obj.get_assignment_type_display().lower()})"
         )
 

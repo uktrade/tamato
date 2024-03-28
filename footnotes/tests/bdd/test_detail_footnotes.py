@@ -1,4 +1,5 @@
 """Tests for view footnotes behaviours."""
+
 import pytest
 from django.urls import reverse
 from pytest_bdd import scenarios

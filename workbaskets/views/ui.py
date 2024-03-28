@@ -1074,6 +1074,15 @@ class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
     permission_required = "workbaskets.delete_workbasket"
     template_name = "workbaskets/delete_workbasket.jinja"
 
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["workbasket"] = self.workbasket
+        return context
+
     def get_success_url(self) -> str:
         return reverse(
             "workbaskets:workbasket-ui-delete-done",
@@ -1540,9 +1549,9 @@ class WorkBasketReviewQuotaBlockingView(WorkBasketReviewView):
         context["tab_page_title"] = "Review quota blocking periods"
         context["selected_tab"] = "quotas"
         context["selected_nested_tab"] = "blocking-periods"
-        context[
-            "tab_template"
-        ] = "includes/workbaskets/review-quota-blocking-periods.jinja"
+        context["tab_template"] = (
+            "includes/workbaskets/review-quota-blocking-periods.jinja"
+        )
         return context
 
 
@@ -1558,9 +1567,9 @@ class WorkBasketReviewQuotaSuspensionView(WorkBasketReviewView):
         context["tab_page_title"] = "Review quota suspension periods"
         context["selected_tab"] = "quotas"
         context["selected_nested_tab"] = "suspension-periods"
-        context[
-            "tab_template"
-        ] = "includes/workbaskets/review-quota-suspension-periods.jinja"
+        context["tab_template"] = (
+            "includes/workbaskets/review-quota-suspension-periods.jinja"
+        )
         return context
 
 

@@ -155,9 +155,9 @@ class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
 
         current_definition = definitions.as_at_and_beyond(date.today()).first()
         context["current_definition"] = current_definition
-        context[
-            "uk_tariff_url"
-        ] = f"{URLs.BASE_URL.value}quota_search?order_number={self.object.order_number}"
+        context["uk_tariff_url"] = (
+            f"{URLs.BASE_URL.value}quota_search?order_number={self.object.order_number}"
+        )
 
         context[
             "quota_associations"
@@ -263,7 +263,10 @@ class QuotaDefinitionList(FormMixin, SortingMixin, ListView):
             blocking_periods=self.blocking_periods,
             suspension_periods=self.suspension_periods,
             sub_quotas=self.sub_quotas,
-            form_url=reverse("quota-definitions", kwargs={"sid": self.quota.sid}),
+            form_url=reverse(
+                "quota_definition-ui-list",
+                kwargs={"sid": self.quota.sid},
+            ),
             *args,
             **kwargs,
         )
@@ -307,9 +310,7 @@ class QuotaUpdateMixin(
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        kwargs[
-            "existing_origins"
-        ] = (
+        kwargs["existing_origins"] = (
             self.object.quotaordernumberorigin_set.current().with_latest_geo_area_description()
         )
         return kwargs

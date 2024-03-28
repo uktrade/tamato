@@ -27,18 +27,18 @@ class AdditionalCodeForm(ValidityPeriodForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields[
-            "type"
-        ].label_from_instance = lambda obj: f"{obj.sid} - {obj.description}"
+        self.fields["type"].label_from_instance = (
+            lambda obj: f"{obj.sid} - {obj.description}"
+        )
         self.fields["type"].label = "Additional code type"
         self.fields["type"].required = False
 
         if self.instance.pk is not None:
             self.fields["code"].disabled = True
             self.fields["code"].help_text = "You can't edit this"
-            self.fields[
-                "code"
-            ].initial = f"{self.instance.type.sid}{self.instance.code}"
+            self.fields["code"].initial = (
+                f"{self.instance.type.sid}{self.instance.code}"
+            )
 
             self.fields["type"].disabled = True
             self.fields["type"].help_text = "You can't edit this"
@@ -108,9 +108,9 @@ class AdditionalCodeCreateBaseForm(ValidityPeriodForm):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        self.fields[
-            "type"
-        ].label_from_instance = lambda obj: f"{obj.sid} - {obj.description}"
+        self.fields["type"].label_from_instance = (
+            lambda obj: f"{obj.sid} - {obj.description}"
+        )
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL

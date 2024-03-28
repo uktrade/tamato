@@ -1,4 +1,5 @@
 """Edit Footnote feature tests."""
+
 from datetime import date
 from datetime import timedelta
 
