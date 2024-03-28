@@ -263,7 +263,10 @@ class QuotaDefinitionList(FormMixin, SortingMixin, ListView):
             blocking_periods=self.blocking_periods,
             suspension_periods=self.suspension_periods,
             sub_quotas=self.sub_quotas,
-            form_url=reverse("quota-definitions", kwargs={"sid": self.quota.sid}),
+            form_url=reverse(
+                "quota_definition-ui-list",
+                kwargs={"sid": self.quota.sid},
+            ),
             *args,
             **kwargs,
         )

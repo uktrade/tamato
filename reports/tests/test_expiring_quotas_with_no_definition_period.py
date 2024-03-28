@@ -86,7 +86,7 @@ class TestQuotasExpiringSoonReport:
         result = report.rows()
 
         assert len(result) == 1
-        assert result[0][0]["text"] == "There is no data for this report at present"
+        assert result[0][0]["text"] == "There is currently no data for this report"
 
     def test_rows2_no_data(self, quota_order_number):
         report = Report()
@@ -96,4 +96,4 @@ class TestQuotasExpiringSoonReport:
 
         # Check that the result contains the "no data" message
         assert len(result) == 1
-        assert result[0][0]["text"] == "There is no data for this report at present"
+        assert result[0][0]["text"] == "There is currently no data for this report"

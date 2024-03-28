@@ -32,7 +32,7 @@
       <p class="govuk-body">There are no transactions in the workbasket.</p>
 
     {% elif workbasket.status == "EDITING" and user_can_move_transactions %}
-      <p class="govuk-body">Move a transaction using the corresponding links or select multiple and move them all using the buttons at the bottom.</p>
+      <p class="govuk-body">Move a transaction using the corresponding links or select multiple transactions and move them all using the buttons at the bottom.</p>
       <form method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         {% if form.fields %}
