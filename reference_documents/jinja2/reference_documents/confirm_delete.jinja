@@ -4,7 +4,9 @@
 {% from "components/button/macro.njk" import govukButton %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Reference document " ~ deleted_pk ~ " deleted" %}
+{% set area_id = request.session['deleted_version']['area_id'] %}
+
+{% set page_title = "Reference document " ~ area_id ~ " successfully deleted" %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -18,7 +20,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
         {{ govukPanel({
-    "titleText": "Reference document " ~ deleted_pk ~ " has been deleted",
+    "titleText": "Reference document " ~ area_id ~ " has been deleted",
     "text": "This change has taken immediate effect",
     "classes": "govuk-!-margin-bottom-7"
   }) }}

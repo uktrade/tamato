@@ -84,7 +84,7 @@ def test_successfully_delete_ref_doc(valid_user, client):
     )
     client.force_login(valid_user)
 
-    ref_doc = factories.ReferenceDocumentFactory.create()
+    ref_doc = factories.ReferenceDocumentFactory.create(area_id="XY")
     assert ReferenceDocument.objects.filter(pk=ref_doc.pk)
     delete_url = reverse(
         "reference_documents:delete",
@@ -105,6 +105,9 @@ def test_successfully_delete_ref_doc(valid_user, client):
         kwargs={"deleted_pk": ref_doc.pk},
     )
     assert not ReferenceDocument.objects.filter(pk=ref_doc.pk)
+
+    response = client.get(response.url)
+    assert f"Reference document XY has been deleted" in str(response.content)
 
 
 @pytest.mark.reference_documents
@@ -152,3 +155,62 @@ def test_ref_doc_crud_without_permission(valid_user_client):
     assert response.status_code == 403
     response = valid_user_client.post(delete_url)
     assert response.status_code == 403
+
+
+@pytest.mark.reference_documents
+def test_ref_doc_list_view(superuser_client):
+    """Test that the reference document list view renders correctly and shows
+    the correct version number."""
+    area_ids_and_titles = {
+        "AD": "Andorra",
+        "AG": "Antigua and Barbuda",
+        "AL": "Albania",
+        "AT": "Austria",
+        "AU": "Australia",
+    }
+    for country in area_ids_and_titles.items():
+        factories.ReferenceDocumentFactory.create(area_id=country[0], title=country[1])
+    list_url = reverse("reference_documents:index")
+    response = superuser_client.get(list_url)
+    page = BeautifulSoup(response.content, "html.parser")
+    assert response.status_code == 200
+    table_rows = page.select(".govuk-table tbody tr")
+    header = page.h1.get_text().strip()
+    assert "Reference documents" == header
+    assert len(table_rows) == 5
+    # Test for ref docs with a version
+    ref_doc = ReferenceDocument.objects.first()
+    ref_doc_version = factories.ReferenceDocumentVersionFactory(
+        reference_document=ref_doc,
+    )
+    response = superuser_client.get(list_url)
+    page = BeautifulSoup(response.content, "html.parser")
+    assert response.status_code == 200
+    andorra_row = page.select("tr")[1]
+    latest_version_cell = andorra_row.select("td")[0]
+    assert str(ref_doc_version.version) in latest_version_cell
+
+
+@pytest.mark.reference_documents
+def test_ref_doc_detail_view(superuser_client):
+    """Test that the reference document detail view shows a row for each
+    reference document version."""
+    ref_doc = factories.ReferenceDocumentFactory.create()
+    ref_doc_version_1 = factories.ReferenceDocumentVersionFactory(
+        reference_document=ref_doc,
+        version=1.0,
+    )
+    ref_doc_version_2 = factories.ReferenceDocumentVersionFactory(
+        reference_document=ref_doc,
+        version=2.0,
+    )
+    ref_doc_version_2 = factories.ReferenceDocumentVersionFactory(
+        reference_document=ref_doc,
+        version=3.0,
+    )
+    details_url = reverse("reference_documents:details", kwargs={"pk": ref_doc.pk})
+    response = superuser_client.get(details_url)
+    page = BeautifulSoup(response.content, "html.parser")
+    assert response.status_code == 200
+    table_rows = page.select("tr")
+    assert len(table_rows) == 4

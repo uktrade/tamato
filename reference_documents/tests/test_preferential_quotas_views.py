@@ -79,8 +79,11 @@ def test_quota_bulk_create_creates_object_and_redirects(valid_user, client):
     }
 
     create_url = reverse(
-        "reference_documents:preferential_quotas_bulk_create",
-        kwargs={"pk": ref_doc_version.pk},
+        "reference_documents:preferential_quotas_bulk_create_for_order",
+        kwargs={
+            "pk": ref_doc_version.pk,
+            "order_pk": preferential_quota_order_number.pk,
+        },
     )
     response = client.get(create_url)
     assert response.status_code == 200
