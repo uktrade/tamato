@@ -12,8 +12,8 @@ class TestReferenceDocumentVersion:
         target = ReferenceDocument()
 
         assert target.created_at is None
-        assert target.title is ""
-        assert target.area_id is ""
+        assert target.title == ""
+        assert target.area_id == ""
 
     def test_get_area_name_by_area_id_no_match_to_database(self):
         target = ReferenceDocument()

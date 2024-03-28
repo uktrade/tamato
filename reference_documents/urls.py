@@ -209,7 +209,7 @@ urlpatterns = [
         name="preferential_rates_edit",
     ),
     path(
-        "reference_document_versions/<pk>/create_preferential_rates/",
+        "reference_document_versions/<version_pk>/create_preferential_rates/",
         PreferentialRateCreate.as_view(),
         name="preferential_rates_create",
     ),

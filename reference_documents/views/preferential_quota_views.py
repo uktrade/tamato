@@ -25,6 +25,14 @@ class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
     model = PreferentialQuota
     form_class = PreferentialQuotaCreateUpdateForm
 
+    def get_success_url(self):
+        reverse(
+            "reference_documents:version-details",
+            args=[
+                self.get_object().preferential_quota_order_number.reference_document_version.pk,
+            ],
+        )
+
     def get_form_kwargs(self):
         kwargs = super(PreferentialQuotaEdit, self).get_form_kwargs()
         kwargs["reference_document_version"] = PreferentialQuota.objects.get(
@@ -35,18 +43,18 @@ class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
         ).preferential_quota_order_number
         return kwargs
 
-    def post(self, request, *args, **kwargs):
-        quota = self.get_object()
-        quota.save()
-        return redirect(
-            reverse(
-                "reference_documents:version-details",
-                args=[
-                    quota.preferential_quota_order_number.reference_document_version.pk,
-                ],
-            )
-            + "#tariff-quotas",
-        )
+    # def post(self, request, *args, **kwargs):
+    #     quota = self.get_object()
+    #     quota.save()
+    #     return redirect(
+    #         reverse(
+    #             "reference_documents:version-details",
+    #             args=[
+    #                 quota.preferential_quota_order_number.reference_document_version.pk,
+    #             ],
+    #         )
+    #         + "#tariff-quotas",
+    #     )
 
 
 class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
