@@ -54,3 +54,18 @@ repos:
         name: Checking local hooks against latest release
         verbose: true
         require_serial: true
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "v2.6.1"
+    hooks:
+      - id: prettier
+        files: "common/static/common/js"
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: 'v8.44.0'
+    hooks:
+      - id: eslint
+        files: "common/static/common/js"
+        additional_dependencies:
+          - eslint@8.57.0
+          - eslint-plugin-jest@27.9.0
+          - eslint-plugin-react@7.34.1
+  
