@@ -1,4 +1,5 @@
 """Tests for browse regulations behaviours."""
+
 import pytest
 from pytest_bdd import given
 from pytest_bdd import scenarios

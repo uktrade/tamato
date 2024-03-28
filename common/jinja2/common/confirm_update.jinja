@@ -1,7 +1,7 @@
 {% extends "layouts/confirm.jinja" %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
-{% set page_title = "Edit " ~ object._meta.verbose_name ~ " details" %}
+{% set page_title = object._meta.verbose_name|capitalize ~ ": "~ object|string ~ " updated" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
@@ -14,8 +14,8 @@
 
 {% block panel %}
   {{ govukPanel({
-    "titleText": object._meta.verbose_name|capitalize ~ ": " ~ object|string ~ " has been updated",
-    "text": "This change has been added to your workbasket",
+    "titleText": object._meta.verbose_name|capitalize ~ ": " ~ object|string,
+    "text": object._meta.verbose_name|capitalize ~ ": " ~ object|string ~ " has been updated in workbasket " ~ request.user.current_workbasket.pk,
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}

@@ -1,4 +1,5 @@
 """Business rules for quotas."""
+
 import datetime
 from datetime import date
 from decimal import Decimal

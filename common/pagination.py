@@ -2,6 +2,7 @@ from typing import List
 
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.utils.functional import cached_property
 
 
 def build_pagination_list(
@@ -66,7 +67,7 @@ class LimitedPaginator(Paginator):
 
     max_count = settings.LIMITED_PAGINATOR_MAX_COUNT
 
-    @property
+    @cached_property
     def limit_breached(self):
         """If the number of paginated objects breaches the
         LIMITED_PAGINATOR_MAX_COUNT, then return True, otherwise False."""
@@ -76,7 +77,7 @@ class LimitedPaginator(Paginator):
         except IndexError:
             return False
 
-    @property
+    @cached_property
     def count(self):
         """Return the precise number of paginated objects up to
         LIMITED_PAGINATOR_MAX_COUNT, or LIMITED_PAGINATOR_MAX_COUNT if that

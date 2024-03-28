@@ -305,7 +305,8 @@ class DescriptionForm(forms.ModelForm):
     )
 
     description = forms.CharField(
-        help_text="Edit or overwrite the existing description",
+        help_text="You may enter HTML formatting if required. See the guide below "
+        "for more information.",
         widget=forms.Textarea,
     )
 

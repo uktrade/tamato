@@ -1,4 +1,5 @@
 """Django settings for tamato project."""
+
 import json
 import os
 import re

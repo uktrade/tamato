@@ -235,9 +235,11 @@ class RegulationFormBase(ValidityPeriodForm):
 
         self._validate_approved_status(
             cleaned_data["approved"],
-            cleaned_data["regulation_usage"]
-            if cleaned_data["regulation_usage"]
-            else self.instance.regulation_id[0],
+            (
+                cleaned_data["regulation_usage"]
+                if cleaned_data["regulation_usage"]
+                else self.instance.regulation_id[0]
+            ),
             cleaned_data["public_identifier"],
             cleaned_data["url"],
             cleaned_data["information_text"],
@@ -387,10 +389,12 @@ class RegulationEditForm(RegulationFormBase):
         for measure in self.instance.measure_set.current():
             measure.new_version(
                 generating_regulation=new_regulation,
-                terminating_regulation=new_regulation
-                if measure.terminating_regulation.regulation_id
-                == instance.regulation_id
-                else measure.terminating_regulation,
+                terminating_regulation=(
+                    new_regulation
+                    if measure.terminating_regulation.regulation_id
+                    == instance.regulation_id
+                    else measure.terminating_regulation
+                ),
                 workbasket=workbasket,
             )
 

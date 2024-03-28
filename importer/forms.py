@@ -263,12 +263,12 @@ class CommodityImportForm(ImporterV2FormMixin, forms.Form):
         max_length=255,
         validators=[tops_jira_number_validator],
         strip=True,
-        label="Tops/Jira number",
+        label="TOPS/Jira number",
         help_text=(
-            "Your Tops/Jira number is needed to associate your import's "
+            "Your TOPS/Jira number is needed to associate your import's "
             "workbasket with your Jira ticket. You can find this number at the "
             "end of the web address for your Jira ticket. Your workbasket will "
-            "be given a unique number that may be different to your Tops/Jira "
+            "be given a unique number that may be different to your TOPS/Jira "
             "number. "
         ),
     )

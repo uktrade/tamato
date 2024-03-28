@@ -1,4 +1,5 @@
 """Business rules for commodities/goods nomenclatures."""
+
 import logging
 from datetime import date
 from datetime import datetime
