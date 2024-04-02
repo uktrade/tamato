@@ -143,7 +143,7 @@ class TestPreferentialRateCreate:
         "user_type, expected_http_status",
         [
             ("regular", 403),
-            ("superuser", 200),
+            ("superuser", 302),
         ],
     )
     def test_post(
@@ -185,27 +185,48 @@ class TestPreferentialRateCreate:
 @pytest.mark.reference_documents
 class TestPreferentialRateDeleteView:
     @pytest.mark.parametrize(
-        "http_method, user_type, expected_http_status",
+        "http_method, expected_http_status",
         [
-            ("get", "regular", 403),
-            ("get", "superuser", 200),
-            ("post", "regular", 403),
-            ("post", "superuser", 302),
+            ("get", 200),
+            ("post", 302),
         ],
     )
     def test_get_without_permissions(
         self,
-        valid_user_client,
         superuser_client,
         http_method,
-        user_type,
         expected_http_status,
     ):
         pref_rate = factories.PreferentialRateFactory.create()
 
         client = superuser_client
-        if user_type == "regular":
-            client = valid_user_client
+
+        resp = getattr(client, http_method)(
+            reverse(
+                "reference_documents:preferential_rates_delete",
+                kwargs={
+                    "pk": pref_rate.pk,
+                },
+            ),
+        )
+        assert resp.status_code == expected_http_status
+
+    @pytest.mark.parametrize(
+        "http_method, expected_http_status",
+        [
+            ("get", 403),
+            ("post", 403),
+        ],
+    )
+    def test_regular_user_get_post(
+        self,
+        valid_user_client,
+        http_method,
+        expected_http_status,
+    ):
+        pref_rate = factories.PreferentialRateFactory.create()
+
+        client = valid_user_client
 
         resp = getattr(client, http_method)(
             reverse(

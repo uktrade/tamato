@@ -40,7 +40,7 @@ class PreferentialRateCreate(PermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         instance = form.instance
         reference_document_version = ReferenceDocumentVersion.objects.get(
-            pk=self.kwargs["pk"],
+            pk=self.kwargs["version_pk"],
         )
         instance.order = len(reference_document_version.preferential_rates.all()) + 1
         instance.reference_document_version = reference_document_version
