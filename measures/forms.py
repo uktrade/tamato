@@ -17,7 +17,6 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from parsec import ParseError
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -48,6 +47,7 @@ from measures import models
 from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import MeasureEditSteps
+from measures.duty_sentence_parser import DutySentenceParser as LarkDutySentenceParser
 from measures.models import MeasureExcludedGeographicalArea
 from measures.parsers import DutySentenceParser
 from measures.util import diff_components
@@ -280,6 +280,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                 )
 
         if price and not price_errored:
+            # TODO: add condition sentence parsing functionality to the new parser
             parser = DutySentenceParser.create(measure_start_date)
             components = parser.parse(price)
             if len(components) > 1:
@@ -1272,16 +1273,16 @@ class MeasureCommodityAndDutiesForm(forms.Form):
                 Div(
                     Div(
                         Field("commodity"),
-                        css_class="tap-column",
+                        css_class="govuk-grid-column-one-third",
                     ),
                     Div(
                         Field(
                             "duties",
                             css_class="duties",
                         ),
-                        css_class="tap-column",
+                        css_class="govuk-grid-column-two-thirds",
                     ),
-                    css_class="tap-row",
+                    css_class="govuk-grid-row",
                 ),
                 delete_button,
                 css_class="tap-inline",
@@ -1352,18 +1353,14 @@ class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
         data = tuple((data["duties"], data["form_prefix"]) for data in cleaned_data)
         # Filter tuples(duty, form) for unique duties to avoid parsing the same duty more than once
         duties = [next(group) for duty, group in groupby(data, key=lambda x: x[0])]
-
-        duty_sentence_parser = DutySentenceParser.create(
-            self.measure_start_date,
-        )
+        duty_sentence_parser = LarkDutySentenceParser(date=self.measure_start_date)
         for duty, form in duties:
             try:
-                duty_sentence_parser.parse(duty)
-            except ParseError as error:
-                error_index = int(error.loc().split(":", 1)[1])
+                duty_sentence_parser.transform(duty)
+            except (SyntaxError, ValidationError) as e:
                 self.forms[form].add_error(
                     "duties",
-                    f'"{duty[error_index:]}" is an invalid duty expression',
+                    e,
                 )
 
         return cleaned_data
