@@ -1,8 +1,6 @@
 from django.urls import path
 from rest_framework import routers
 
-from reference_documents.views.example_views import ExampleReferenceDocumentsDetailView
-from reference_documents.views.example_views import ExampleReferenceDocumentsListView
 from reference_documents.views.preferential_quota_order_number_views import (
     PreferentialQuotaOrderNumberCreate,
 )
@@ -63,17 +61,6 @@ api_router = routers.DefaultRouter()
 
 detail = "<sid:sid>"
 urlpatterns = [
-    # Example views
-    path(
-        "reference-documents-example/",
-        ExampleReferenceDocumentsListView.as_view(),
-        name="example-ui-index",
-    ),
-    path(
-        f"reference-documents-example-albania/",
-        ExampleReferenceDocumentsDetailView.as_view(),
-        name="example-ui-details",
-    ),
     # Reference document views
     path(
         "reference_documents/",
