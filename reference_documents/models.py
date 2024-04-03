@@ -1,5 +1,4 @@
 from django.db import models
-from django.db.models import fields
 from django_fsm import FSMField
 
 from common.fields import TaricDateRangeField
@@ -12,15 +11,6 @@ class ReferenceDocumentVersionStatus(models.TextChoices):
     IN_REVIEW = "IN_REVIEW", "In Review"
     # reference document version has been approved and published
     PUBLISHED = "PUBLISHED", "Published"
-
-
-class AlignmentReportCheckStatus(models.TextChoices):
-    # Reference document version can be edited
-    PASS = "PASS", "Passing"
-    # Reference document version ius locked and in review
-    FAIL = "FAIL", "Failed"
-    # reference document version has been approved and published
-    WARNING = "WARNING", "Warning"
 
 
 class ReferenceDocument(models.Model):
@@ -179,60 +169,4 @@ class PreferentialRate(models.Model):
         null=True,
         blank=True,
         default=None,
-    )
-
-
-class AlignmentReport(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    reference_document_version = models.ForeignKey(
-        "reference_documents.ReferenceDocumentVersion",
-        on_delete=models.PROTECT,
-        related_name="alignment_reports",
-    )
-
-
-class AlignmentReportCheck(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    alignment_report = models.ForeignKey(
-        "reference_documents.AlignmentReport",
-        on_delete=models.PROTECT,
-        related_name="alignment_report_checks",
-    )
-
-    check_name = fields.CharField(max_length=255)
-    """A string identifying the type of check carried out."""
-
-    status = FSMField(
-        default=AlignmentReportCheckStatus.FAIL,
-        choices=AlignmentReportCheckStatus.choices,
-        db_index=True,
-        protected=False,
-        editable=False,
-    )
-    message = fields.TextField(null=True)
-    """The text content returned by the check, if any."""
-
-    preferential_quota = models.ForeignKey(
-        "reference_documents.PreferentialQuota",
-        on_delete=models.PROTECT,
-        related_name="preferential_quota_checks",
-        blank=True,
-        null=True,
-    )
-
-    preferential_quota_order_number = models.ForeignKey(
-        "reference_documents.PreferentialQuotaOrderNumber",
-        on_delete=models.PROTECT,
-        related_name="preferential_quota_order_number_checks",
-        blank=True,
-        null=True,
-    )
-
-    preferential_rate = models.ForeignKey(
-        "reference_documents.PreferentialRate",
-        on_delete=models.PROTECT,
-        related_name="preferential_rate_checks",
-        blank=True,
-        null=True,
     )

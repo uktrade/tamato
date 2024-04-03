@@ -10,7 +10,6 @@ from factory.fuzzy import FuzzyInteger
 from factory.fuzzy import FuzzyText
 
 from common.util import TaricDateRange
-from reference_documents.models import AlignmentReportCheckStatus
 from reference_documents.models import ReferenceDocumentVersionStatus
 
 
@@ -185,51 +184,4 @@ class PreferentialQuotaFactory(factory.django.DjangoModelFactory):
                 date.today() + timedelta(days=10),
                 date.today() + timedelta(days=375),
             ),
-        )
-
-
-class AlignmentReportFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = "reference_documents.AlignmentReport"
-
-    created_at = get_random_date(date(2020, 1, 1), date.today())
-    reference_document_version = factory.SubFactory(ReferenceDocumentVersionFactory)
-
-
-class AlignmentReportCheckFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = "reference_documents.AlignmentReportCheck"
-
-    created_at = get_random_date(date(2020, 1, 1), date.today())
-    alignment_report = factory.SubFactory(AlignmentReportFactory)
-
-    check_name = FuzzyText(
-        prefix="SomeClassName ",
-        length=5,
-        chars=string.ascii_uppercase,
-    )
-
-    status = (AlignmentReportCheckStatus.FAIL,)
-
-    message = FuzzyText(
-        prefix="Some Random Message ",
-        length=5,
-        chars=string.ascii_uppercase,
-    )
-
-    preferential_quota = None
-    preferential_rate = None
-
-    class Params:
-        with_quota = factory.Trait(
-            preferential_quota=factory.SubFactory(PreferentialQuotaFactory),
-        )
-        with_rate = factory.Trait(
-            preferential_rate=factory.SubFactory(PreferentialRateFactory),
-        )
-        passing = factory.Trait(
-            status=AlignmentReportCheckStatus.PASS,
-        )
-        warning = factory.Trait(
-            status=AlignmentReportCheckStatus.WARNING,
         )
