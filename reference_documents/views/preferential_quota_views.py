@@ -131,7 +131,6 @@ class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
     def form_valid(self, form):
         cleaned_data = form.cleaned_data
         commodity_codes = set(form.cleaned_data["commodity_codes"].splitlines())
-        reference_document_version = self.get_reference_document_version()
         for commodity_code in commodity_codes:
             for index in form.variant_indices:
                 PreferentialQuota.objects.create(
@@ -140,7 +139,6 @@ class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
                     volume=cleaned_data[f"volume_{index}"],
                     valid_between=cleaned_data[f"valid_between_{index}"],
                     measurement=cleaned_data["measurement"],
-                    order=len(reference_document_version.preferential_quotas()) + 1,
                     preferential_quota_order_number=cleaned_data[
                         "preferential_quota_order_number"
                     ],

@@ -6,7 +6,6 @@ from random import randint
 
 import factory
 from factory.fuzzy import FuzzyDecimal
-from factory.fuzzy import FuzzyInteger
 from factory.fuzzy import FuzzyText
 
 from common.util import TaricDateRange
@@ -66,8 +65,6 @@ class PreferentialRateFactory(factory.django.DjangoModelFactory):
     commodity_code = FuzzyText(length=6, chars=string.digits, suffix="0000")
 
     duty_rate = FuzzyText(length=2, chars=string.digits, suffix="%")
-
-    order = FuzzyInteger(0, 100, 1)
 
     reference_document_version = factory.SubFactory(ReferenceDocumentVersionFactory)
 
@@ -146,8 +143,6 @@ class PreferentialQuotaFactory(factory.django.DjangoModelFactory):
     volume = FuzzyDecimal(100.0, 10000.0, 1)
 
     measurement = "tonnes"
-
-    order = FuzzyInteger(0, 100, 1)
 
     valid_between = TaricDateRange(
         get_random_date(
