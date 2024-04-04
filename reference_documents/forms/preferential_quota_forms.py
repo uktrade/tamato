@@ -137,7 +137,7 @@ class PreferentialQuotaCreateUpdateForm(
         queryset=PreferentialQuotaOrderNumber.objects.all(),
         validators=[],
         error_messages={
-            "invalid": "Quota Order number is invalid",
+            "invalid": "Quota order number is invalid",
         },
         required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -189,8 +189,8 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
         help_text="If the quota order number does not appear, you must first create it for this reference document version.",
         queryset=PreferentialQuotaOrderNumber.objects.all(),  # Modified in init
         error_messages={
-            "invalid": "Quota Order Number is invalid",
-            "required": "Quota Order Number is required",
+            "invalid": "Quota order number is invalid",
+            "required": "Quota order number is required",
         },
     )
 
@@ -435,7 +435,7 @@ class PreferentialQuotaDeleteForm(forms.Form):
         self.helper.layout = Layout(
             Submit(
                 "submit",
-                "Confirm Delete",
+                "Confirm delete",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),

@@ -29,7 +29,7 @@ class PreferentialRateCreateUpdateForm(
         validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
-            "required": "This is required",
+            "required": "Duty rate is required",
         },
     )
 
@@ -79,7 +79,7 @@ class PreferentialRateDeleteForm(forms.ModelForm):
         self.helper.layout = Layout(
             Submit(
                 "submit",
-                "Confirm Delete",
+                "Confirm delete",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),

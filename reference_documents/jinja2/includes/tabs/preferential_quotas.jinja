@@ -5,7 +5,7 @@
     <div class="quota__core-data__content govuk-grid-column-three-quarters">
         {% for key, value in reference_document_version_quotas.items() %}
             {% if value["quota_order_number"] != None %}
-                <h2 class="govuk-heading-m" id="subsection-title">Order Number
+                <h2 class="govuk-heading-m" id="subsection-title">Order number
                     <a class="govuk-link" href="{{ url("quota-ui-detail", args=[value["quota_order_number"].sid] ) }}">
                         {{ value["quota_order_number"] }}
                     </a>
@@ -19,12 +19,12 @@
                     {% endif %}
                 </div>
             {% else %}
-                <h2 class="govuk-heading-m" id="subsection-title">Order Number {{ value["quota_order_number_text"] }}</h2>
+                <h2 class="govuk-heading-m" id="subsection-title">Order number {{ value["quota_order_number_text"] }}</h2>
             {% endif %}
             <div class="govuk-body govuk-!-margin-bottom-2">
                 Valid between: {{ value['ref_doc_order_number'].valid_between }}
                 {% if value['ref_doc_order_number'].main_order_number %}
-                    Sub Quota to {{ value['ref_doc_order_number'].main_order_number.quota_order_number }}
+                    Sub quota to {{ value['ref_doc_order_number'].main_order_number.quota_order_number }}
                 {% endif %}
             </div>
             <div class="govuk-body govuk-!-margin-bottom-2">
@@ -40,7 +40,7 @@
                 }) }}
             {% else %}
                 <div class="govuk-body govuk-!-margin-bottom-2">
-                    No Quota definitions defined
+                    No quota definitions defined
                 </div>
             {% endif %}
         {% endfor %}
@@ -50,8 +50,8 @@
         <div class="app-related-items" role="complementary">
             <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
             <ul class="govuk-list govuk-!-font-size-16">
-                <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quota_order_number_create', args=[object.pk]) }}">Add New Order Number</a></li>
-                <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quotas_create', args=[object.pk]) }}">Add New Quota</a></li>
+                <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quota_order_number_create', args=[object.pk]) }}">Add new order number</a></li>
+                <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quotas_create', args=[object.pk]) }}">Add new quota</a></li>
                 <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quotas_bulk_create', args=[object.pk]) }}">Bulk add quotas</a></li>
             </ul>
 
