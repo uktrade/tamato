@@ -320,7 +320,12 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
                     data_module="govuk-button",
                     data_prevent_double_click="true",
                 ),
-                Button.secondary("", "Add new", css_id="add-new-definition"),
+                Button.secondary(
+                    "",
+                    "Add new",
+                    css_id="add-new-definition",
+                    type="button",
+                ),
                 css_class="govuk-button-group",
             ),
         )
