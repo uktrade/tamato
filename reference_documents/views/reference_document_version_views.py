@@ -31,9 +31,6 @@ class ReferenceDocumentVersionContext:
     def get_tap_order_number(
         ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
     ):
-        # todo: This needs to consider the validity period(s)
-        # may need to handle in the pre processing of the data e.g. where the volume defines multiple periods
-
         if (
             ref_doc_quota_order_number.reference_document_version.entry_into_force_date
             is not None

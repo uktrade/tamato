@@ -43,19 +43,6 @@ class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
         ).preferential_quota_order_number
         return kwargs
 
-    # def post(self, request, *args, **kwargs):
-    #     quota = self.get_object()
-    #     quota.save()
-    #     return redirect(
-    #         reverse(
-    #             "reference_documents:version-details",
-    #             args=[
-    #                 quota.preferential_quota_order_number.reference_document_version.pk,
-    #             ],
-    #         )
-    #         + "#tariff-quotas",
-    #     )
-
 
 class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/preferential_quotas/create.jinja"
