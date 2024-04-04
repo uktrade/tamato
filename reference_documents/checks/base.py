@@ -7,6 +7,7 @@ from commodities.models.dc import SnapshotMoment
 from common.models import Transaction
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
+from quotas.models import QuotaOrderNumber
 from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.models import PreferentialRate
@@ -30,6 +31,16 @@ class BasePreferentialQuotaOrderNumberCheck(BaseCheck):
     def __init__(self, preferential_quota_order_number: PreferentialQuotaOrderNumber):
         super().__init__()
         self.preferential_quota_order_number = preferential_quota_order_number
+
+    def order_number(self):
+        try:
+            order_number = QuotaOrderNumber.objects.all().get(
+                order_number=self.preferential_quota_order_number.quota_order_number,
+                valid_between=self.preferential_quota_order_number.valid_between,
+            )
+            return order_number
+        except QuotaOrderNumber.DoesNotExist:
+            return None
 
 
 class BasePreferentialRateCheck(BaseCheck):
