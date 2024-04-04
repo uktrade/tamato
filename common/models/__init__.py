@@ -1,4 +1,5 @@
 """Models used by all apps in the project."""
+
 from common.fields import ApplicabilityCode
 from common.fields import NumericSID
 from common.fields import ShortDescription

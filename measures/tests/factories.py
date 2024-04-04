@@ -48,14 +48,18 @@ class MeasureSheetRowFactory(factory.Factory):
         ),
     )
     quota_order_number = factory.LazyAttribute(
-        lambda m: m.measure.order_number.order_number
-        if m.measure.order_number
-        else m.measure.dead_order_number,
+        lambda m: (
+            m.measure.order_number.order_number
+            if m.measure.order_number
+            else m.measure.dead_order_number
+        ),
     )
     additional_code_id = factory.LazyAttribute(
-        lambda m: m.measure.additional_code.type.sid + m.measure.additional_code.code
-        if m.measure.additional_code
-        else m.measure.dead_additional_code,
+        lambda m: (
+            m.measure.additional_code.type.sid + m.measure.additional_code.code
+            if m.measure.additional_code
+            else m.measure.dead_additional_code
+        ),
     )
     validity_start_date = factory.SelfAttribute("measure.valid_between.lower")
     validity_end_date = factory.SelfAttribute("measure.valid_between.upper")

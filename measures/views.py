@@ -17,6 +17,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
@@ -55,7 +56,6 @@ from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
 from measures.util import diff_components
-from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
@@ -217,16 +217,12 @@ class MeasureList(
             )
 
         if "order_number" in selected_filters:
-            quota = QuotaOrderNumber.objects.current().get(
-                id=selected_filters["order_number"],
-            )
             selected_filters_strings.append(
-                f"Quota Order Number {quota.structure_code}",
+                f"Quota Order Number {selected_filters['order_number']}",
             )
 
         if "sid" in selected_filters:
-            measure = models.Measure.objects.current().get(sid=selected_filters["sid"])
-            selected_filters_strings.append(f"ID {measure.sid}")
+            selected_filters_strings.append(f"ID {selected_filters['sid']}")
 
         if "additional_code" in selected_filters:
             code = AdditionalCode.objects.current().get(
@@ -266,7 +262,10 @@ class MeasureList(
             footnote = Footnote.objects.current().get(id=selected_filters["footnote"])
             selected_filters_strings.append(f"Footnote {footnote.structure_code}")
 
-        if "start_date_0" and "start_date_1" and "start_date_2" in selected_filters:
+        if all(
+            sf in selected_filters
+            for sf in ("start_date_0", "start_date_1", "start_date_1")
+        ):
             if selected_filters["start_date_modifier"] == "exact":
                 modifier = ""
             else:
@@ -275,7 +274,9 @@ class MeasureList(
                 f"Start date: {modifier} {selected_filters['start_date_0']}/{selected_filters['start_date_1']}/{selected_filters['start_date_2']}",
             )
 
-        if "end_date_0" and "end_date_1" and "end_date_2" in selected_filters:
+        if all(
+            sf in selected_filters for sf in ("end_date_0", "end_date_1", "end_date_2")
+        ):
             if selected_filters["end_date_modifier"] == "exact":
                 modifier = ""
             else:
@@ -298,11 +299,21 @@ class MeasureList(
 
         return selected_filters_lists
 
-    @property
+    @cached_property
     def paginator(self):
         filterset_class = self.get_filterset_class()
         self.filterset = self.get_filterset(filterset_class)
-        return MeasurePaginator(self.filterset.qs, per_page=40)
+        return MeasurePaginator(
+            self.filterset.qs.select_related(
+                "additional_code",
+                "generating_regulation",
+                "geographical_area",
+                "goods_nomenclature",
+                "measure_type",
+                "order_number",
+            ),
+            per_page=40,
+        )
 
     def get_context_data(self, **kwargs):
         # References to page or pagination in the template were heavily increasing load time. By setting everything we need in the context,
@@ -323,7 +334,6 @@ class MeasureList(
                 "has_next_page": page.has_next(),
                 "page_number": page.number,
                 "list_items_count": self.paginator.per_page,
-                "object_list": page.object_list,
                 "page_links": build_pagination_list(
                     page.number,
                     page.paginator.num_pages,
@@ -336,17 +346,14 @@ class MeasureList(
         if context["has_next_page"]:
             context["next_page_number"] = page.next_page_number()
 
-        measure_selections = [
-            SelectableObjectsForm.object_id_from_field_name(name)
-            for name in self.measure_selections
-        ]
         context["measure_selections"] = models.Measure.objects.filter(
-            pk__in=measure_selections,
-        )
+            pk__in=self.measure_selections,
+        ).values_list("sid", flat=True)
+
         context["query_params"] = True
-        context[
-            "base_url"
-        ] = f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
+        context["base_url"] = (
+            f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
+        )
         return context
 
     def get_initial(self):
@@ -625,17 +632,23 @@ class MeasureEditWizard(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
                 valid_between=TaricDateRange(
-                    lower=new_start_date
-                    if new_start_date
-                    else measure.valid_between.lower,
+                    lower=(
+                        new_start_date
+                        if new_start_date
+                        else measure.valid_between.lower
+                    ),
                     upper=new_end_date if new_end_date else measure.valid_between.upper,
                 ),
-                order_number=new_quota_order_number
-                if new_quota_order_number
-                else measure.order_number,
-                generating_regulation=new_generating_regulation
-                if new_generating_regulation
-                else measure.generating_regulation,
+                order_number=(
+                    new_quota_order_number
+                    if new_quota_order_number
+                    else measure.order_number
+                ),
+                generating_regulation=(
+                    new_generating_regulation
+                    if new_generating_regulation
+                    else measure.generating_regulation
+                ),
             )
             self.update_measure_components(
                 measure=new_measure,

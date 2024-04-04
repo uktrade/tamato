@@ -1,4 +1,5 @@
 """Provides a base model for all dataclasses used in the project."""
+
 from __future__ import annotations
 
 import types

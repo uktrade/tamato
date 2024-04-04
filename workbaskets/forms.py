@@ -132,12 +132,12 @@ class SelectableObjectsForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         for obj in objects:
-            self.fields[
-                SelectableObjectsForm.field_name_for_object(obj)
-            ] = SelectableObjectField(
-                required=False,
-                obj=obj,
-                initial=str(obj.id) in [str(k) for k in self.initial.keys()],
+            self.fields[SelectableObjectsForm.field_name_for_object(obj)] = (
+                SelectableObjectField(
+                    required=False,
+                    obj=obj,
+                    initial=str(obj.id) in [str(k) for k in self.initial.keys()],
+                )
             )
 
     @classmethod
@@ -286,9 +286,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
             "user__last_name",
         )
 
-        self.fields[
-            "assignments"
-        ].label_from_instance = (
+        self.fields["assignments"].label_from_instance = (
             lambda obj: f"{obj.user.get_full_name()} ({obj.get_assignment_type_display().lower()})"
         )
 

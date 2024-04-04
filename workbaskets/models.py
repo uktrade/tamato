@@ -1,4 +1,5 @@
 """WorkBasket models."""
+
 import importlib
 import logging
 from abc import ABCMeta
@@ -556,9 +557,9 @@ class WorkBasket(TimestampedMixin):
             )
 
         if "composite_key" not in kwargs:
-            kwargs[
-                "composite_key"
-            ] = f"{self.pk}-{kwargs['order']}-{kwargs['partition']}"
+            kwargs["composite_key"] = (
+                f"{self.pk}-{kwargs['order']}-{kwargs['partition']}"
+            )
 
         # Get Transaction model via transactions.model to avoid circular import.
         return self.transactions.model.objects.create(workbasket=self, **kwargs)

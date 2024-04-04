@@ -4,7 +4,6 @@ Custom path converters for footnotes.
 https://docs.djangoproject.com/en/3.2/topics/http/urls/#registering-custom-path-converters
 """
 
-
 from django.urls.converters import StringConverter
 
 from footnotes import validators

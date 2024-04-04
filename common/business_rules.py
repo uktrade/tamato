@@ -1,4 +1,5 @@
 """Base classes for business rules and violations."""
+
 from __future__ import annotations
 
 import logging

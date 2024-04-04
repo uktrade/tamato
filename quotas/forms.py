@@ -108,9 +108,9 @@ class QuotaOriginExclusionsForm(forms.Form):
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        self.fields[
-            "exclusion"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["exclusion"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
 
 QuotaOriginExclusionsFormSet = formset_factory(
@@ -198,15 +198,15 @@ class QuotaUpdateForm(
                 "start_date_0": o.valid_between.lower.day,
                 "start_date_1": o.valid_between.lower.month,
                 "start_date_2": o.valid_between.lower.year,
-                "end_date_0": o.valid_between.upper.day
-                if o.valid_between.upper
-                else "",
-                "end_date_1": o.valid_between.upper.month
-                if o.valid_between.upper
-                else "",
-                "end_date_2": o.valid_between.upper.year
-                if o.valid_between.upper
-                else "",
+                "end_date_0": (
+                    o.valid_between.upper.day if o.valid_between.upper else ""
+                ),
+                "end_date_1": (
+                    o.valid_between.upper.month if o.valid_between.upper else ""
+                ),
+                "end_date_2": (
+                    o.valid_between.upper.year if o.valid_between.upper else ""
+                ),
             }
             for o in self.existing_origins
         ]
@@ -271,9 +271,11 @@ class QuotaUpdateForm(
             origin_form = QuotaOrderNumberOriginUpdateReactForm(
                 data=origin_data,
                 initial=origin_data,
-                instance=models.QuotaOrderNumberOrigin.objects.get(pk=origin_data["pk"])
-                if origin_data.get("pk")
-                else None,
+                instance=(
+                    models.QuotaOrderNumberOrigin.objects.get(pk=origin_data["pk"])
+                    if origin_data.get("pk")
+                    else None
+                ),
             )
 
             cleaned_exclusions = []
@@ -523,9 +525,9 @@ class QuotaOrderNumberOriginForm(
             .prefetch_related("descriptions")
             .order_by("description")
         )
-        self.fields[
-            "geographical_area"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["geographical_area"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
 
 class QuotaDefinitionUpdateForm(
@@ -596,16 +598,16 @@ class QuotaDefinitionUpdateForm(
         self.fields["measurement_unit"].queryset = self.fields[
             "measurement_unit"
         ].queryset.order_by("code")
-        self.fields[
-            "measurement_unit"
-        ].label_from_instance = lambda obj: f"{obj.code} - {obj.description}"
+        self.fields["measurement_unit"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
 
         self.fields["measurement_unit_qualifier"].queryset = self.fields[
             "measurement_unit_qualifier"
         ].queryset.order_by("code")
-        self.fields[
-            "measurement_unit_qualifier"
-        ].label_from_instance = lambda obj: f"{obj.code} - {obj.description}"
+        self.fields["measurement_unit_qualifier"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
 
     def init_layout(self):
         self.helper = FormHelper(self)
@@ -730,16 +732,16 @@ class QuotaDefinitionCreateForm(
         self.fields["measurement_unit"].queryset = self.fields[
             "measurement_unit"
         ].queryset.order_by("code")
-        self.fields[
-            "measurement_unit"
-        ].label_from_instance = lambda obj: f"{obj.code} - {obj.description}"
+        self.fields["measurement_unit"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
 
         self.fields["measurement_unit_qualifier"].queryset = self.fields[
             "measurement_unit_qualifier"
         ].queryset.order_by("code")
-        self.fields[
-            "measurement_unit_qualifier"
-        ].label_from_instance = lambda obj: f"{obj.code} - {obj.description}"
+        self.fields["measurement_unit_qualifier"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
 
     def init_layout(self):
         self.helper = FormHelper(self)

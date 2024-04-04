@@ -28,7 +28,7 @@ repos:
             "--pre-summary-newline",
           ]
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 24.3.0
     hooks:
       - id: black
   - repo: https://github.com/ikamensh/flynt/
@@ -54,3 +54,4 @@ repos:
         name: Checking local hooks against latest release
         verbose: true
         require_serial: true
+  

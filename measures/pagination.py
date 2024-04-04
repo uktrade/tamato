@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.utils.functional import cached_property
 
 from common.pagination import LimitedPaginator
 
@@ -13,3 +14,14 @@ class MeasurePaginator(LimitedPaginator):
     """
 
     max_count = settings.MEASURES_PAGINATOR_MAX_COUNT
+
+    @cached_property
+    def count(self):
+        """Override `LimitedPaginator.count` to avoid performing slow `.count()`
+        operations on measure querysets chained with the filter
+        `.with_effective_valid_between()`."""
+
+        if self.limit_breached:
+            return self.max_count
+        else:
+            return len(self.object_list)

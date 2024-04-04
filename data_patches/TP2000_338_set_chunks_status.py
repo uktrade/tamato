@@ -7,7 +7,6 @@ Run this script from a Tamato virtualenv:     python manage.py runscript
 data_patches.TP2000_338_set_chunks_status
 """
 
-
 from datetime import datetime
 
 from django.db.transaction import atomic
