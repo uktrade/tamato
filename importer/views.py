@@ -243,9 +243,9 @@ class DownloadAdminTaricView(RequiresSuperuserMixin, DetailView):
         response = HttpResponse(file_content)
         response["content-type"] = "text/xml"
         response["content-length"] = len(file_content)
-        response["content-disposition"] = (
-            f'attachment; filename="{import_batch.taric_file.name}"'
-        )
+        response[
+            "content-disposition"
+        ] = f'attachment; filename="{import_batch.taric_file.name}"'
         return response
 
     def get(self, request, *args, **kwargs) -> HttpResponse:
@@ -268,9 +268,9 @@ class DownloadGoodsReportMixin:
             file_content = tmp.read()
 
         response = HttpResponse(file_content)
-        response["content-type"] = (
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        response[
+            "content-type"
+        ] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         response["content-length"] = len(file_content)
         response["content-disposition"] = f'attachment; filename="{report_name}"'
         return response

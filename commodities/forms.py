@@ -71,15 +71,17 @@ class CommodityFootnoteForm(ValidityPeriodForm, forms.ModelForm):
     )
 
     def init_fields(self):
-        self.fields["end_date"].help_text = (
-            "Leave empty if the footnote is needed for an unlimited time"
-        )
+        self.fields[
+            "end_date"
+        ].help_text = "Leave empty if the footnote is needed for an unlimited time"
         self.fields[
             "associated_footnote"
         ].queryset = Footnote.objects.approved_up_to_transaction(self.tx).filter(
             footnote_type__application_code__in=[1, 2],
         )
-        self.fields["associated_footnote"].label_from_instance = (
+        self.fields[
+            "associated_footnote"
+        ].label_from_instance = (
             lambda obj: f"{obj.structure_code} - {obj.structure_description}"
         )
 

@@ -40,9 +40,9 @@ class CertificateCreateBaseForm(ValidityPeriodForm):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-        self.fields["certificate_type"].label_from_instance = (
-            lambda obj: f"{obj.sid} - {obj.description}"
-        )
+        self.fields[
+            "certificate_type"
+        ].label_from_instance = lambda obj: f"{obj.sid} - {obj.description}"
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -183,9 +183,9 @@ class CertificateForm(ValidityPeriodForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["certificate_type"].label_from_instance = (
-            lambda obj: f"{obj.sid} - {obj.description}"
-        )
+        self.fields[
+            "certificate_type"
+        ].label_from_instance = lambda obj: f"{obj.sid} - {obj.description}"
         self.fields["certificate_type"].required = False
 
         if self.instance:

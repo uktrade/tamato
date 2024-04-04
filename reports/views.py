@@ -43,9 +43,9 @@ def export_report_to_csv(request, report_slug, current_tab=None):
     response = HttpResponse(content_type="text/csv")
 
     if current_tab:
-        response["Content-Disposition"] = (
-            f'attachment; filename="{report_slug + "_for_" + current_tab}_report.csv"'
-        )
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="{report_slug + "_for_" + current_tab}_report.csv"'
         formatted_current_tab = current_tab.capitalize().replace("_", " ")
 
         # Define a dictionary to map current_tab values to methods
@@ -77,9 +77,9 @@ def export_report_to_csv(request, report_slug, current_tab=None):
             # Raise an exception if current_tab doesn't match any expected values
             raise ValueError(f"Invalid current_tab value: {formatted_current_tab}")
     else:
-        response["Content-Disposition"] = (
-            f'attachment; filename="{report_slug}_report.csv"'
-        )
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="{report_slug}_report.csv"'
         headers = (
             report_instance.headers() if hasattr(report_instance, "headers") else None
         )
@@ -113,9 +113,9 @@ def export_report_to_excel(request, report_slug):
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
-    response["Content-Disposition"] = (
-        f'attachment; filename="{report_slug}_report.xlsx"'
-    )
+    response[
+        "Content-Disposition"
+    ] = f'attachment; filename="{report_slug}_report.xlsx"'
 
     workbook = Workbook()
     sheet = workbook.active

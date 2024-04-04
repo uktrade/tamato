@@ -178,7 +178,9 @@ class GoodsNomenclatureDescriptionHandler(BaseGoodsNomenclatureDescriptionHandle
             goods_nomenclature_description
             and goods_nomenclature_description.described_goods_nomenclature.valid_between.lower
         ):
-            data["validity_start"] = (
+            data[
+                "validity_start"
+            ] = (
                 goods_nomenclature_description.described_goods_nomenclature.valid_between.lower
             )
         else:

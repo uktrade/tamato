@@ -295,9 +295,9 @@ class CommodityMeasuresVATExcise(CommodityMixin, TrackedModelDetailView):
         context["selected_tab"] = "measures"
         context["commodity"] = self.object
         context["commodity_data"] = self.commodity_data
-        context["uk_tariff_url"] = (
-            f"{URLs.BASE_URL.value}commodities/{self.object.item_id}#vat_excise"
-        )
+        context[
+            "uk_tariff_url"
+        ] = f"{URLs.BASE_URL.value}commodities/{self.object.item_id}#vat_excise"
         if self.commodity_data:
             measures = [
                 item

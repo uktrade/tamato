@@ -405,9 +405,9 @@ class BaseTaricParser:
                     if not model_link.optional or (
                         model_link.optional and include_optional
                     ):
-                        key_fields[model_link_field.parser_field_name] = (
-                            model_link_field.object_field_name
-                        )
+                        key_fields[
+                            model_link_field.parser_field_name
+                        ] = model_link_field.object_field_name
 
         return key_fields
 

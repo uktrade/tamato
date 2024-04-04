@@ -65,12 +65,12 @@ class ConvertTaricDateRange(Operation):
         self.kwargs = kwargs
 
     def state_forwards(self, app_label, state):
-        state.models[app_label, self.model_name].fields[self.name] = (
-            TaricDateRangeField(
-                db_index=True,
-                blank=self.kwargs.get("blank", False),
-                null=self.kwargs.get("null", False),
-            )
+        state.models[app_label, self.model_name].fields[
+            self.name
+        ] = TaricDateRangeField(
+            db_index=True,
+            blank=self.kwargs.get("blank", False),
+            null=self.kwargs.get("null", False),
         )
         state.reload_model(app_label, self.model_name, delay=True)
 
