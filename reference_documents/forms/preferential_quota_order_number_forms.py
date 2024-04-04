@@ -74,11 +74,11 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         # cant have one without the other
         if coefficient and not main_order_number_id:
             raise ValidationError(
-                "Coefficient specified without main order number",
+                "If you provide a value for the Coefficient you must also select a main order number",
             )
         elif not coefficient and main_order_number_id:
             raise ValidationError(
-                "Main order number specified without coefficient",
+                "If you select a main order number a coefficient must also be provided",
             )
 
     def clean_quota_order_number(self):
