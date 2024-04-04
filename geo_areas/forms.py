@@ -88,9 +88,9 @@ class GeoAreaCountryForm(forms.Form):
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        self.fields[
-            "country"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["country"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
 
 class GeoAreaRegionForm(forms.Form):
@@ -110,9 +110,9 @@ class GeoAreaRegionForm(forms.Form):
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        self.fields[
-            "region"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["region"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
 
 class GeographicalMembershipEndDateForm(forms.Form):
@@ -199,9 +199,9 @@ class GeographicalMembershipAddForm(
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        self.fields[
-            "geo_group"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["geo_group"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
         self.fields["geo_group"].label = ""
         self.fields["member"].label = ""
@@ -357,9 +357,9 @@ class GeographicalAreaEndDateForm(ValidityPeriodForm):
 
         self.fields["start_date"].required = False
         self.fields["end_date"].label = ""
-        self.fields[
-            "end_date"
-        ].help_text = "End date this geographical area. Leave empty if the geographical area is needed for an unlimited time."
+        self.fields["end_date"].help_text = (
+            "End date this geographical area. Leave empty if the geographical area is needed for an unlimited time."
+        )
 
     def clean(self):
         self.cleaned_data["start_date"] = self.instance.valid_between.lower
@@ -466,9 +466,7 @@ class GeographicalAreaCreateForm(ValidityPeriodForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields[
-            "end_date"
-        ].help_text = (
+        self.fields["end_date"].help_text = (
             "Leave empty if the geographical area is needed for an unlimited time."
         )
 
@@ -558,9 +556,9 @@ class GeographicalMembershipGroupForm(DateValidationMixin, ValidityPeriodForm):
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        self.fields[
-            "geo_group"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["geo_group"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
         self.fields["end_date"].help_text = ""
 
@@ -647,9 +645,9 @@ class GeographicalMembershipMemberForm(DateValidationMixin, ValidityPeriodForm):
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        self.fields[
-            "member"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["member"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
         self.fields["end_date"].help_text = ""
 
@@ -784,9 +782,9 @@ class ErgaOmnesExclusionsForm(forms.Form):
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        self.fields[
-            "erga_omnes_exclusion"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["erga_omnes_exclusion"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
 
 ErgaOmnesExclusionsFormSet = formset_factory(
@@ -820,9 +818,9 @@ class GeoGroupForm(forms.Form):
             .order_by("description")
         )
         # descriptions__description" should make this implicitly distinct()
-        self.fields[
-            "geographical_area_group"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["geographical_area_group"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
         if self.initial.get("geo_area") == constants.GeoAreaType.GROUP.value:
             self.initial["geographical_area_group"] = self.initial["geographical_area"]
@@ -846,9 +844,9 @@ class GeoGroupExclusionsForm(forms.Form):
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        self.fields[
-            "geo_group_exclusion"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["geo_group_exclusion"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
 
 GeoGroupFormSet = formset_factory(
@@ -896,9 +894,9 @@ class CountryRegionForm(forms.Form):
             .order_by("description")
         )
 
-        self.fields[
-            "geographical_area_country_or_region"
-        ].label_from_instance = lambda obj: f"{obj.area_id} - {obj.description}"
+        self.fields["geographical_area_country_or_region"].label_from_instance = (
+            lambda obj: f"{obj.area_id} - {obj.description}"
+        )
 
         if self.initial.get("geo_area") == constants.GeoAreaType.COUNTRY.value:
             self.initial["geographical_area_country_or_region"] = self.initial[
