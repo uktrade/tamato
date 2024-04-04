@@ -67,6 +67,13 @@ class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
 
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["reference_document_version"] = ReferenceDocumentVersion.objects.get(
+            id=self.kwargs["version_pk"],
+        )
+        return context_data
+
     def form_valid(self, form):
         form.instance.order = 1
         form.save()

@@ -47,6 +47,13 @@ class PreferentialRateCreate(PermissionRequiredMixin, CreateView):
         form.save()
         return super(PreferentialRateCreate, self).form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["reference_document_version"] = ReferenceDocumentVersion.objects.get(
+            id=self.kwargs["version_pk"],
+        )
+        return context_data
+
 
 class PreferentialRateDelete(PermissionRequiredMixin, DeleteView):
     template_name = "reference_documents/preferential_rates/delete.jinja"

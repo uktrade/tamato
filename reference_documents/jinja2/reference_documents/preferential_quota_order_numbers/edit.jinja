@@ -1,9 +1,33 @@
 {% extends 'layouts/form.jinja' %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "todo: Edit Quota Order Number " %}
+{% set page_title = "Edit quota order number " %}
+
+{% block breadcrumb %}
+    {% if object %}
+    {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.reference_document_version.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document_version.reference_document.pk})},
+    {"text": "Version " ~ object.reference_document_version.version, 'href': url("reference_documents:version-details", kwargs={"pk":object.reference_document_version.pk})},
+    {"text": "Edit quota order number " ~ object.quota_order_number}
+    ]
+  }) }}
+    {% else %}
+        {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ reference_document_version.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":reference_document_version.reference_document.pk})},
+    {"text": "Version " ~ reference_document_version.version, 'href': url("reference_documents:version-details", kwargs={"pk":reference_document_version.pk})},
+    {"text": "Create new quota order number "}
+    ]
+  }) }}
+    {%  endif %}
+
+{% endblock %}
 
 {% block form %}
-  {% call django_form() %}
-    {{ crispy(form) }}
-  {% endcall %}
+    {% call django_form() %}
+        {{ crispy(form) }}
+    {% endcall %}
 {% endblock %}
