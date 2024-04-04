@@ -26,7 +26,7 @@ class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
     form_class = PreferentialQuotaCreateUpdateForm
 
     def get_success_url(self):
-        reverse(
+        return reverse(
             "reference_documents:version-details",
             args=[
                 self.get_object().preferential_quota_order_number.reference_document_version.pk,
