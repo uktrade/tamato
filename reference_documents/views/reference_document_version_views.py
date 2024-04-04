@@ -205,21 +205,21 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
         )
 
         # title
-        context[
-            "ref_doc_title"
-        ] = f"Reference document for {context['object'].reference_document.get_area_name_by_area_id()}"
+        context["ref_doc_title"] = (
+            f"Reference document for {context['object'].reference_document.get_area_name_by_area_id()}"
+        )
 
         context_data = ReferenceDocumentVersionContext(context["object"])
-        context[
-            "reference_document_version_duties_headers"
-        ] = context_data.duties_headers()
-        context[
-            "reference_document_version_quotas_headers"
-        ] = context_data.quotas_headers()
+        context["reference_document_version_duties_headers"] = (
+            context_data.duties_headers()
+        )
+        context["reference_document_version_quotas_headers"] = (
+            context_data.quotas_headers()
+        )
         context["reference_document_version_duties"] = context_data.duties_row_data()
-        context[
-            "reference_document_version_quotas"
-        ] = context_data.quotas_data_orders_and_rows()
+        context["reference_document_version_quotas"] = (
+            context_data.quotas_data_orders_and_rows()
+        )
 
         return context
 

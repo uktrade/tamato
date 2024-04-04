@@ -32,9 +32,9 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields[
-            "title"
-        ].help_text = "For example, 'Reference document for XX' where XX is the Area ID"
+        self.fields["title"].help_text = (
+            "For example, 'Reference document for XX' where XX is the Area ID"
+        )
         self.fields["area_id"].help_text = "Two character ID for the area referenced"
 
         self.helper = FormHelper(self)

@@ -123,9 +123,9 @@ class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data[
-            "reference_document_version"
-        ] = self.get_reference_document_version()
+        context_data["reference_document_version"] = (
+            self.get_reference_document_version()
+        )
         return context_data
 
     def form_valid(self, form):

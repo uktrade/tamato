@@ -47,13 +47,13 @@ class PreferentialQuotaCreateUpdateForm(
         super().__init__(*args, **kwargs)
 
         if preferential_quota_order_number:
-            self.initial[
-                "preferential_quota_order_number"
-            ] = preferential_quota_order_number
+            self.initial["preferential_quota_order_number"] = (
+                preferential_quota_order_number
+            )
 
-        self.fields[
-            "preferential_quota_order_number"
-        ].queryset = reference_document_version.preferential_quota_order_numbers.all()
+        self.fields["preferential_quota_order_number"].queryset = (
+            reference_document_version.preferential_quota_order_numbers.all()
+        )
 
         self.reference_document_version = reference_document_version
         self.quota_order_number = preferential_quota_order_number
@@ -227,9 +227,9 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
         self.variant_indices = self.get_variant_index(kwargs)
         # Populate order number box if already specified by the URL
         if preferential_quota_order_number:
-            self.initial[
-                "preferential_quota_order_number"
-            ] = preferential_quota_order_number
+            self.initial["preferential_quota_order_number"] = (
+                preferential_quota_order_number
+            )
         # Add fields for the first mandatory date and volume fieldset
         self.fields["start_date_0"] = DateInputFieldFixed(
             label="Start date",
@@ -273,9 +273,9 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
             .filter(reference_document_version=reference_document_version)
             .order_by()
         )
-        self.fields[
-            "preferential_quota_order_number"
-        ].label_from_instance = lambda obj: f"{obj.quota_order_number}"
+        self.fields["preferential_quota_order_number"].label_from_instance = (
+            lambda obj: f"{obj.quota_order_number}"
+        )
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL

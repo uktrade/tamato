@@ -29,9 +29,9 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
 
     def __init__(self, reference_document_version, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields[
-            "main_order_number"
-        ].queryset = reference_document_version.preferential_quota_order_numbers.all()
+        self.fields["main_order_number"].queryset = (
+            reference_document_version.preferential_quota_order_numbers.all()
+        )
         self.reference_document_version = reference_document_version
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
