@@ -144,7 +144,6 @@ class PreferentialQuota(models.Model):
     measurement = models.CharField(
         max_length=255,
     )
-    order = models.IntegerField()
 
 
 class PreferentialRate(models.Model):
@@ -163,7 +162,6 @@ class PreferentialRate(models.Model):
     duty_rate = models.CharField(
         max_length=255,
     )
-    order = models.IntegerField()
     valid_between = TaricDateRangeField(
         db_index=True,
         null=True,
