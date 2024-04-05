@@ -1,7 +1,9 @@
 module.exports = {
   ci: {
-    upload: {
-      target: "temporary-public-storage",
+    collect: {
+      url: ["http://localhost:8000/"],
+      startServerCommand: "docker-compose up --build",
     },
+    upload: { target: "temporary-public-storage" },
   },
 };
