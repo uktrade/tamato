@@ -37,11 +37,6 @@ class PreferentialQuotaOrderNumberEdit(PermissionRequiredMixin, UpdateView):
             + "#tariff-quotas"
         )
 
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data['reference_document_version'] = 'h'
-        return context_data
-
 
 class PreferentialQuotaOrderNumberCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/preferential_quota_order_numbers/edit.jinja"
@@ -78,7 +73,9 @@ class PreferentialQuotaOrderNumberCreate(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data['reference_document_version'] = ReferenceDocumentVersion.objects.all().get(pk=self.kwargs.get("pk"))
+        context_data["reference_document_version"] = (
+            ReferenceDocumentVersion.objects.all().get(pk=self.kwargs.get("pk"))
+        )
         return context_data
 
 

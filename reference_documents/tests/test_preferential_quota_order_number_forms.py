@@ -166,7 +166,10 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
 
         with pytest.raises(ValidationError) as ve:
             target.clean()
-        assert "If you provide a value for the coefficient you must also select a main order number" in str(ve.value)
+        assert (
+            "If you provide a value for the coefficient you must also select a main order number"
+            in str(ve.value)
+        )
 
     def test_clean_main_order_no_coefficient(self):
         pref_quota_order_number_main = factories.PreferentialQuotaOrderNumberFactory()
@@ -188,7 +191,10 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         with pytest.raises(ValidationError) as ve:
             target.clean()
 
-        assert "If you select a main order number a coefficient must also be provided" in str(ve.value)
+        assert (
+            "If you select a main order number a coefficient must also be provided"
+            in str(ve.value)
+        )
 
 
 @pytest.mark.reference_documents
