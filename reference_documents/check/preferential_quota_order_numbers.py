@@ -1,4 +1,4 @@
-from reference_documents.checks.base import BasePreferentialQuotaOrderNumberCheck
+from reference_documents.check.base import BasePreferentialQuotaOrderNumberCheck
 from reference_documents.models import AlignmentReportCheckStatus
 
 
