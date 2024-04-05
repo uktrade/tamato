@@ -15,7 +15,6 @@ from reference_documents.forms.reference_document_version_forms import (
 from reference_documents.forms.reference_document_version_forms import (
     ReferenceDocumentVersionsCreateUpdateForm,
 )
-from reference_documents.models import AlignmentReportCheckStatus
 from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
@@ -32,9 +31,6 @@ class ReferenceDocumentVersionContext:
     def get_tap_order_number(
         ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
     ):
-        # todo: This needs to consider the validity period(s)
-        # may need to handle in the pre processing of the data e.g. where the volume defines multiple periods
-
         if (
             ref_doc_quota_order_number.reference_document_version.entry_into_force_date
             is not None
@@ -83,7 +79,6 @@ class ReferenceDocumentVersionContext:
             {"text": "Comm Code"},
             {"text": "Duty Rate"},
             {"text": "Validity"},
-            {"text": "Checks"},
             {"text": "Actions"},
         ]
 
@@ -93,7 +88,6 @@ class ReferenceDocumentVersionContext:
             {"text": "Rate"},
             {"text": "Volume"},
             {"text": "Validity"},
-            {"text": "Checks"},
             {"text": "Actions"},
         ]
 
@@ -104,30 +98,6 @@ class ReferenceDocumentVersionContext:
         ) in self.reference_document_version.preferential_rates.order_by(
             "commodity_code",
         ):
-            failure_count = (
-                preferential_rate.preferential_rate_checks.all()
-                .filter(
-                    alignment_report=self.alignment_report(),
-                    status=AlignmentReportCheckStatus.FAIL,
-                )
-                .count()
-            )
-
-            check_count = (
-                preferential_rate.preferential_rate_checks.all()
-                .filter(
-                    alignment_report=self.alignment_report(),
-                )
-                .count()
-            )
-
-            if failure_count > 0:
-                checks_output = f'<div class="check-failing">FAIL</div>'
-            elif check_count == 0:
-                checks_output = f"N/A"
-            else:
-                checks_output = f'<div class="check-passing">PASS</div>'
-
             comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
                 preferential_rate.reference_document_version,
                 preferential_rate.commodity_code,
@@ -150,9 +120,6 @@ class ReferenceDocumentVersionContext:
                         "text": preferential_rate.valid_between,
                     },
                     {
-                        "html": checks_output,
-                    },
-                    {
                         "html": f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> "
                         f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk] )}'>Delete</a>",
                     },
@@ -173,30 +140,11 @@ class ReferenceDocumentVersionContext:
                 )
             )
 
-            failure_count = (
-                ref_doc_order_number.preferential_quota_order_number_checks.all()
-                .filter(
-                    alignment_report=self.alignment_report(),
-                    status=AlignmentReportCheckStatus.FAIL,
-                )
-                .count()
-            )
-
-            check_count = (
-                ref_doc_order_number.preferential_quota_order_number_checks.all()
-                .filter(
-                    alignment_report=self.alignment_report(),
-                )
-                .count()
-            )
-
             data[ref_doc_order_number.quota_order_number] = {
                 "data_rows": [],
                 "quota_order_number": tap_quota_order_number,
                 "ref_doc_order_number": ref_doc_order_number,
                 "quota_order_number_text": ref_doc_order_number.quota_order_number,
-                "failure_count": failure_count,
-                "check_count": check_count,
             }
 
             # Add the rows from the order number
@@ -209,30 +157,6 @@ class ReferenceDocumentVersionContext:
         for quota in ref_doc_order_number.preferential_quotas.order_by(
             "commodity_code",
         ):
-            failure_count = (
-                quota.preferential_quota_checks.all()
-                .filter(
-                    alignment_report=self.alignment_report(),
-                    status=AlignmentReportCheckStatus.FAIL,
-                )
-                .count()
-            )
-
-            check_count = (
-                quota.preferential_quota_checks.all()
-                .filter(
-                    alignment_report=self.alignment_report(),
-                )
-                .count()
-            )
-
-            if failure_count > 0:
-                checks_output = f'<div class="check-failing">FAIL</div>'
-            elif check_count == 0:
-                checks_output = f"N/A"
-            else:
-                checks_output = f'<div class="check-passing">PASS</div>'
-
             comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
                 quota.preferential_quota_order_number.reference_document_version,
                 quota.commodity_code,
@@ -254,9 +178,6 @@ class ReferenceDocumentVersionContext:
                 },
                 {
                     "text": quota.valid_between,
-                },
-                {
-                    "html": checks_output,
                 },
                 {
                     "html": f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> "
@@ -281,21 +202,21 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
         )
 
         # title
-        context[
-            "ref_doc_title"
-        ] = f"Reference document for {context['object'].reference_document.get_area_name_by_area_id()}"
+        context["ref_doc_title"] = (
+            f"Reference document for {context['object'].reference_document.get_area_name_by_area_id()}"
+        )
 
         context_data = ReferenceDocumentVersionContext(context["object"])
-        context[
-            "reference_document_version_duties_headers"
-        ] = context_data.duties_headers()
-        context[
-            "reference_document_version_quotas_headers"
-        ] = context_data.quotas_headers()
+        context["reference_document_version_duties_headers"] = (
+            context_data.duties_headers()
+        )
+        context["reference_document_version_quotas_headers"] = (
+            context_data.quotas_headers()
+        )
         context["reference_document_version_duties"] = context_data.duties_row_data()
-        context[
-            "reference_document_version_quotas"
-        ] = context_data.quotas_data_orders_and_rows()
+        context["reference_document_version_quotas"] = (
+            context_data.quotas_data_orders_and_rows()
+        )
 
         return context
 

@@ -1,12 +1,6 @@
 from django.urls import path
 from rest_framework import routers
 
-from reference_documents.views.alignment_report_views import AlignmentReportsDetailsView
-from reference_documents.views.alignment_report_views import (
-    ReferenceDocumentVersionAlignmentReportsDetailsView,
-)
-from reference_documents.views.example_views import ExampleReferenceDocumentsDetailView
-from reference_documents.views.example_views import ExampleReferenceDocumentsListView
 from reference_documents.views.preferential_quota_order_number_views import (
     PreferentialQuotaOrderNumberCreate,
 )
@@ -67,17 +61,6 @@ api_router = routers.DefaultRouter()
 
 detail = "<sid:sid>"
 urlpatterns = [
-    # Example views
-    path(
-        "reference-documents-example/",
-        ExampleReferenceDocumentsListView.as_view(),
-        name="example-ui-index",
-    ),
-    path(
-        f"reference-documents-example-albania/",
-        ExampleReferenceDocumentsDetailView.as_view(),
-        name="example-ui-details",
-    ),
     # Reference document views
     path(
         "reference_documents/",
@@ -154,17 +137,6 @@ urlpatterns = [
         "reference_document_versions/<deleted_pk>/confirm-delete/",
         ReferenceDocumentVersionConfirmDelete.as_view(),
         name="version-confirm-delete",
-    ),
-    # Alignment report views
-    path(
-        "reference_document_version_alignment_reports/<pk>/",
-        ReferenceDocumentVersionAlignmentReportsDetailsView.as_view(),
-        name="version_alignment_reports",
-    ),
-    path(
-        "alignment_reports/<pk>/",
-        AlignmentReportsDetailsView.as_view(),
-        name="alignment_reports",
     ),
     # Preferential Quotas
     path(

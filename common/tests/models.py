@@ -1,5 +1,6 @@
 """These models are for testing purposes only and will not be migrated into the
 database outside of a test environment."""
+
 from typing import List
 
 from django.db import models

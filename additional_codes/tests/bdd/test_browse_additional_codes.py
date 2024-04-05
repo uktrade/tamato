@@ -1,4 +1,5 @@
 """Test for browse additional code behaviours."""
+
 import pytest
 from pytest_bdd import scenarios
 from pytest_bdd import then

@@ -263,6 +263,6 @@ def test_ref_doc_version_detail_view(superuser_client):
     assert response.status_code == 200
     # Assert the remaining four quotas appear too
     for order_number in order_number_batch[1:]:
-        assert f"Order Number {order_number.quota_order_number}" in str(
+        assert f"Order number {order_number.quota_order_number}" in str(
             response.content,
         )

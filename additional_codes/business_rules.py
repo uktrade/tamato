@@ -1,4 +1,5 @@
 """Business rules for Additional Codes."""
+
 from django.core.exceptions import ObjectDoesNotExist
 
 from additional_codes.validators import ApplicationCode

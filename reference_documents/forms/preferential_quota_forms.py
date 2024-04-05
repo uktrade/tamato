@@ -47,13 +47,13 @@ class PreferentialQuotaCreateUpdateForm(
         super().__init__(*args, **kwargs)
 
         if preferential_quota_order_number:
-            self.initial[
-                "preferential_quota_order_number"
-            ] = preferential_quota_order_number
+            self.initial["preferential_quota_order_number"] = (
+                preferential_quota_order_number
+            )
 
-        self.fields[
-            "preferential_quota_order_number"
-        ].queryset = reference_document_version.preferential_quota_order_numbers.all()
+        self.fields["preferential_quota_order_number"].queryset = (
+            reference_document_version.preferential_quota_order_numbers.all()
+        )
 
         self.reference_document_version = reference_document_version
         self.quota_order_number = preferential_quota_order_number
@@ -137,7 +137,7 @@ class PreferentialQuotaCreateUpdateForm(
         queryset=PreferentialQuotaOrderNumber.objects.all(),
         validators=[],
         error_messages={
-            "invalid": "Quota Order number is invalid",
+            "invalid": "Quota order number is invalid",
         },
         required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -189,8 +189,8 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
         help_text="If the quota order number does not appear, you must first create it for this reference document version.",
         queryset=PreferentialQuotaOrderNumber.objects.all(),  # Modified in init
         error_messages={
-            "invalid": "Quota Order Number is invalid",
-            "required": "Quota Order Number is required",
+            "invalid": "Quota order number is invalid",
+            "required": "Quota order number is required",
         },
     )
 
@@ -227,9 +227,9 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
         self.variant_indices = self.get_variant_index(kwargs)
         # Populate order number box if already specified by the URL
         if preferential_quota_order_number:
-            self.initial[
-                "preferential_quota_order_number"
-            ] = preferential_quota_order_number
+            self.initial["preferential_quota_order_number"] = (
+                preferential_quota_order_number
+            )
         # Add fields for the first mandatory date and volume fieldset
         self.fields["start_date_0"] = DateInputFieldFixed(
             label="Start date",
@@ -273,9 +273,9 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
             .filter(reference_document_version=reference_document_version)
             .order_by()
         )
-        self.fields[
-            "preferential_quota_order_number"
-        ].label_from_instance = lambda obj: f"{obj.quota_order_number}"
+        self.fields["preferential_quota_order_number"].label_from_instance = (
+            lambda obj: f"{obj.quota_order_number}"
+        )
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -320,7 +320,12 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
                     data_module="govuk-button",
                     data_prevent_double_click="true",
                 ),
-                Button.secondary("", "Add new", css_id="add-new-definition"),
+                Button.secondary(
+                    "",
+                    "Add new",
+                    css_id="add-new-definition",
+                    type="button",
+                ),
                 css_class="govuk-button-group",
             ),
         )
@@ -430,7 +435,7 @@ class PreferentialQuotaDeleteForm(forms.Form):
         self.helper.layout = Layout(
             Submit(
                 "submit",
-                "Confirm Delete",
+                "Confirm delete",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),

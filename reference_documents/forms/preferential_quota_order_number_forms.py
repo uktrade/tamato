@@ -29,9 +29,9 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
 
     def __init__(self, reference_document_version, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields[
-            "main_order_number"
-        ].queryset = reference_document_version.preferential_quota_order_numbers.all()
+        self.fields["main_order_number"].queryset = (
+            reference_document_version.preferential_quota_order_numbers.all()
+        )
         self.reference_document_version = reference_document_version
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -63,7 +63,7 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
             return coefficient
         except InvalidOperation:
             raise ValidationError(
-                "Coefficient not a valid number",
+                "Coefficient is not a valid number",
             )
 
     def clean(self):
@@ -74,11 +74,11 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         # cant have one without the other
         if coefficient and not main_order_number_id:
             raise ValidationError(
-                "Coefficient specified without main order number",
+                "If you provide a value for the coefficient you must also select a main order number",
             )
         elif not coefficient and main_order_number_id:
             raise ValidationError(
-                "Main order number specified without coefficient",
+                "If you select a main order number a coefficient must also be provided",
             )
 
     def clean_quota_order_number(self):
@@ -87,10 +87,10 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
             if self.reference_document_version.preferential_quota_order_numbers.filter(
                 quota_order_number=data,
             ).exists():
-                raise ValidationError("Quota Order Number Already Exists")
+                raise ValidationError("Quota order number already exists")
 
         if not data.isnumeric():
-            raise ValidationError("Quota Order Number is not numeric")
+            raise ValidationError("Quota order number is not numeric")
         else:
             return data
 
@@ -99,8 +99,8 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         help_text="Enter a six digit number",
         validators=[],
         error_messages={
-            "invalid": "Quota Order number is invalid",
-            "required": "Quota Order number is required",
+            "invalid": "Quota order number is invalid",
+            "required": "Quota order number is required",
         },
         max_length=6,
         widget=forms.TextInput(
@@ -127,7 +127,7 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         queryset=PreferentialQuotaOrderNumber.objects.all(),
         validators=[],
         error_messages={
-            "invalid": "Main Order number is invalid",
+            "invalid": "Main order number is invalid",
         },
         required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -144,7 +144,7 @@ class PreferentialQuotaOrderNumberDeleteForm(forms.Form):
         self.helper.layout = Layout(
             Submit(
                 "submit",
-                "Confirm Delete",
+                "Confirm delete",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
@@ -158,8 +158,8 @@ class PreferentialQuotaOrderNumberDeleteForm(forms.Form):
         )
         if versions:
             raise forms.ValidationError(
-                f"Quota Order Number {quota_order_number} cannot be deleted as it has"
-                f" associated Preferential Quotas.",
+                f"Quota order number {quota_order_number} cannot be deleted as it has"
+                f" associated preferential quotas.",
             )
 
         return cleaned_data

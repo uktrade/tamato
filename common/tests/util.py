@@ -556,9 +556,9 @@ def generate_test_import_xml(
         context={
             "envelope_id": next_transaction_id,
             "tracked_models": objects,
-            "transaction_id": next_transaction_id
-            if transaction_id is None
-            else transaction_id,
+            "transaction_id": (
+                next_transaction_id if transaction_id is None else transaction_id
+            ),
             "message_counter": counter_generator(),
             "counter_generator": counter_generator,
         },

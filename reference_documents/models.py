@@ -28,7 +28,7 @@ class ReferenceDocument(models.Model):
 
     title = models.CharField(
         max_length=255,
-        help_text="Short name for this workbasket",
+        help_text="Short name for this reference document",
         db_index=True,
         unique=True,
     )
@@ -154,7 +154,6 @@ class PreferentialQuota(models.Model):
     measurement = models.CharField(
         max_length=255,
     )
-    order = models.IntegerField()
 
 
 class PreferentialRate(models.Model):
@@ -173,7 +172,6 @@ class PreferentialRate(models.Model):
     duty_rate = models.CharField(
         max_length=255,
     )
-    order = models.IntegerField()
     valid_between = TaricDateRangeField(
         db_index=True,
         null=True,

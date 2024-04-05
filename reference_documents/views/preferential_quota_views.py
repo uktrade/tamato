@@ -46,19 +46,6 @@ class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
         ).preferential_quota_order_number
         return kwargs
 
-    # def post(self, request, *args, **kwargs):
-    #     quota = self.get_object()
-    #     quota.save()
-    #     return redirect(
-    #         reverse(
-    #             "reference_documents:version-details",
-    #             args=[
-    #                 quota.preferential_quota_order_number.reference_document_version.pk,
-    #             ],
-    #         )
-    #         + "#tariff-quotas",
-    #     )
-
 
 class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/preferential_quotas/create.jinja"
@@ -82,6 +69,15 @@ class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
             kwargs["preferential_quota_order_number"] = None
 
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["reference_document_version"] = (
+            ReferenceDocumentVersion.objects.get(
+                id=self.kwargs["version_pk"],
+            )
+        )
+        return context_data
 
     def form_valid(self, form):
         form.instance.order = 1
@@ -126,15 +122,14 @@ class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data[
-            "reference_document_version"
-        ] = self.get_reference_document_version()
+        context_data["reference_document_version"] = (
+            self.get_reference_document_version()
+        )
         return context_data
 
     def form_valid(self, form):
         cleaned_data = form.cleaned_data
         commodity_codes = set(form.cleaned_data["commodity_codes"].splitlines())
-        reference_document_version = self.get_reference_document_version()
         for commodity_code in commodity_codes:
             for index in form.variant_indices:
                 PreferentialQuota.objects.create(
@@ -143,7 +138,6 @@ class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
                     volume=cleaned_data[f"volume_{index}"],
                     valid_between=cleaned_data[f"valid_between_{index}"],
                     measurement=cleaned_data["measurement"],
-                    order=len(reference_document_version.preferential_quotas()) + 1,
                     preferential_quota_order_number=cleaned_data[
                         "preferential_quota_order_number"
                     ],

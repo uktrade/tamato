@@ -71,6 +71,13 @@ class PreferentialQuotaOrderNumberCreate(PermissionRequiredMixin, CreateView):
             + "#tariff-quotas"
         )
 
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["reference_document_version"] = (
+            ReferenceDocumentVersion.objects.all().get(pk=self.kwargs.get("pk"))
+        )
+        return context_data
+
 
 class PreferentialQuotaOrderNumberDelete(
     PermissionRequiredMixin,

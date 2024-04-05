@@ -68,7 +68,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         )
 
         assert not target.is_valid()
-        assert target.errors["coefficient"] == ["Coefficient not a valid number"]
+        assert target.errors["coefficient"] == ["Coefficient is not a valid number"]
 
     def test_clean_coefficient_pass_blank(self):
         pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
@@ -166,7 +166,10 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
 
         with pytest.raises(ValidationError) as ve:
             target.clean()
-        assert "Coefficient specified without main order number" in str(ve.value)
+        assert (
+            "If you provide a value for the coefficient you must also select a main order number"
+            in str(ve.value)
+        )
 
     def test_clean_main_order_no_coefficient(self):
         pref_quota_order_number_main = factories.PreferentialQuotaOrderNumberFactory()
@@ -188,7 +191,10 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         with pytest.raises(ValidationError) as ve:
             target.clean()
 
-        assert "Main order number specified without coefficient" in str(ve.value)
+        assert (
+            "If you select a main order number a coefficient must also be provided"
+            in str(ve.value)
+        )
 
 
 @pytest.mark.reference_documents
@@ -218,8 +224,8 @@ class TestPreferentialQuotaOrderNumberDeleteForm:
             target.clean()
 
         expected_string = (
-            f"Quota Order Number {pref_quota.preferential_quota_order_number} "
-            f"cannot be deleted as it has associated Preferential Quotas."
+            f"Quota order number {pref_quota.preferential_quota_order_number} "
+            f"cannot be deleted as it has associated preferential quotas."
         )
 
         assert expected_string in str(ve)

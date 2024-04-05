@@ -207,9 +207,11 @@ class RegulationUpdate(
         for measure in form.instance.measure_set.current():
             measure.new_version(
                 generating_regulation=new_regulation,
-                terminating_regulation=new_regulation
-                if measure.terminating_regulation == form.instance
-                else measure.terminating_regulation,
+                terminating_regulation=(
+                    new_regulation
+                    if measure.terminating_regulation == form.instance
+                    else measure.terminating_regulation
+                ),
                 workbasket=self.workbasket,
             )
 

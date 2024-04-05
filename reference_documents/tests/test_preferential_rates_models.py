@@ -11,6 +11,5 @@ class TestPreferentialRate:
         target = PreferentialRate()
         assert target.commodity_code == ""
         assert target.duty_rate == ""
-        assert target.order is None
         assert target.reference_document_version is None
         assert target.valid_between is None

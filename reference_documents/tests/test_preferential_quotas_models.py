@@ -16,4 +16,3 @@ class TestPreferentialQuota:
         assert target.volume == ""
         assert target.valid_between is None
         assert target.measurement == ""
-        assert target.order is None
