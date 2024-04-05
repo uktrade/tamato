@@ -7,6 +7,8 @@ from commodities.models.dc import SnapshotMoment
 from common.models import Transaction
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
+from measures.models import Measure
+from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialQuotaOrderNumber
@@ -25,6 +27,92 @@ class BasePreferentialQuotaCheck(BaseCheck):
     def __init__(self, preferential_quota: PreferentialQuota):
         super().__init__()
         self.preferential_quota = preferential_quota
+        self.preferential_quota_order_number = (
+            self.preferential_quota.preferential_quota_order_number
+        )
+        self.reference_document_version = (
+            self.preferential_quota_order_number.reference_document_version
+        )
+        self.reference_document = self.reference_document_version.reference_document
+
+    def order_number(self):
+        try:
+            order_number = QuotaOrderNumber.objects.all().get(
+                order_number=self.preferential_quota_order_number.quota_order_number,
+                valid_between=self.preferential_quota_order_number.valid_between,
+            )
+            print(f"order number found {order_number}")
+            return order_number
+        except QuotaOrderNumber.DoesNotExist:
+            return None
+
+    def geo_area(self):
+        geo_area = (
+            GeographicalArea.objects.latest_approved()
+            .filter(
+                area_id=self.reference_document_version.reference_document.area_id,
+            )
+            .first()
+        )
+        print(f"geo_area_found {geo_area}")
+        return geo_area
+
+    def geo_area_description(self):
+        geo_area_desc = (
+            GeographicalAreaDescription.objects.latest_approved()
+            .filter(described_geographicalarea=self.geo_area())
+            .last()
+        )
+        print(f"geo area found {geo_area_desc.description}")
+        return geo_area_desc.description
+
+    def commodity_code(self):
+        goods = GoodsNomenclature.objects.latest_approved().filter(
+            item_id=self.preferential_quota.commodity_code,
+            valid_between__contains=self.reference_document_version.entry_into_force_date,
+            suffix=80,
+        )
+
+        if len(goods) == 0:
+            return None
+        print(f"commodity found {goods.first()}")
+        return goods.first()
+
+    def quota_definition(self):
+        # TODO: Some kind of filtering by measurement
+        volume = float(self.preferential_quota.volume)
+        order_number = self.order_number()
+        try:
+            quota_definition = QuotaDefinition.objects.all().get(
+                order_number=order_number,
+                initial_volume=volume,
+                valid_between=self.preferential_quota.valid_between,
+            )
+            print(f"quota definition found {quota_definition}")
+        except QuotaDefinition.DoesNotExist:
+            quota_definition = None
+        return quota_definition
+
+    def measure(self):
+        # Assuming there will only be one measure in each of these cases
+        try:
+            measure = (
+                Measure.objects.all()
+                .latest_approved()
+                .get(
+                    order_number=self.order_number(),
+                    goods_nomenclature=self.commodity_code(),
+                    geographical_area=self.geo_area(),
+                    measure_type__sid__in=[
+                        142,
+                        143,
+                    ],
+                )
+            )
+        except Measure.DoesNotExist:
+            measure = None
+        print(f" measure found {measure}")
+        return measure
 
 
 class BasePreferentialQuotaOrderNumberCheck(BaseCheck):
