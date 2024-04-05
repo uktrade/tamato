@@ -4,12 +4,16 @@ import os
 import time
 from datetime import datetime
 from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Type
 
+import boto3
 import django.contrib.auth.views
 import kombu.exceptions
+from botocore.exceptions import ClientError
+from botocore.exceptions import EndpointConnectionError
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -31,6 +35,7 @@ from django.utils.timezone import make_aware
 from django.views.generic import DetailView
 from django.views.generic import FormView
 from django.views.generic import TemplateView
+from django.views.generic import View
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 from redis.exceptions import TimeoutError as RedisTimeoutError
@@ -244,55 +249,68 @@ class ResourcesView(TemplateView):
     template_name = "common/resources.jinja"
 
 
-class HealthCheckResponse(HttpResponse):
-    """
-    Formatted HTTP response for healthcheck.
+class HealthCheckView(View):
+    """Endpoint for a Pingdom-compatible HTTP response health check."""
 
-    See https://readme.trade.gov.uk/docs/howtos/healthcheck.html
-    """
-
-    def __init__(self):
-        super().__init__(content_type="text/xml")
-        self["Cache-Control"] = "no-cache, no-store, must-revalidate"
-
-        self.start_time = time.time()
-        self.status = "OK"
+    content_type = "text/xml"
+    headers = {"Cache-Control": "no-cache, no-store, must-revalidate"}
+    pingdom_template = (
+        "<pingdom_http_custom_check>"
+        "<status>{status}</status>"
+        "<response_time>{response_time:.03f}</response_time>"
+        "</pingdom_http_custom_check>"
+    )
 
     @property
-    def content(self):
-        return (
-            "<pingdom_http_custom_check>"
-            f"<status>{self.status}</status>"
-            f"<response_time>{int(time.time() - self.start_time)}</response_time>"
-            "</pingdom_http_custom_check>"
+    def checks(self) -> List[callable]:
+        return [self.check_database, self.check_redis, self.check_s3]
+
+    def check_database(self) -> Tuple[str, int]:
+        try:
+            connection.cursor()
+            return "OK", 200
+        except OperationalError:
+            return "Database health check failed", 503
+
+    def check_redis(self) -> Tuple[str, int]:
+        try:
+            cache.set("__pingdom_test", 1, timeout=1)
+            return "OK", 200
+        except RedisTimeoutError:
+            return "Redis health check failed", 503
+
+    def check_s3(self) -> Tuple[str, int]:
+        try:
+            client = boto3.client(
+                "s3",
+                aws_access_key_id=settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY,
+                endpoint_url=settings.S3_ENDPOINT_URL,
+                region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
+            )
+            client.head_bucket(Bucket=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME)
+            return "OK", 200
+        except (ClientError, EndpointConnectionError):
+            return "S3 health check failed", 503
+
+    def get(self, request, *args, **kwargs) -> HttpResponse:
+        start_time = time.time()
+        for check in self.checks:
+            status, status_code = check()
+            if status_code != 200:
+                break
+        response_time = time.time() - start_time
+        content = self.pingdom_template.format(
+            status=status,
+            response_time=response_time,
         )
-
-    @content.setter
-    def content(self, value):
-        pass
-
-    def fail(self, status):
-        self.status_code = 503
-        self.status = status
-        return self
-
-
-def healthcheck(request):
-    """Healthcheck endpoint returns a 503 error if the database or redis is
-    down."""
-    response = HealthCheckResponse()
-
-    try:
-        connection.cursor()
-    except OperationalError:
-        return response.fail("DB missing")
-
-    try:
-        cache.set("__pingdom_test", 1, timeout=1)
-    except RedisTimeoutError:
-        return response.fail("Redis missing")
-
-    return response
+        return HttpResponse(
+            content=content,
+            status=status_code,
+            reason=status,
+            headers=self.headers,
+            content_type=self.content_type,
+        )
 
 
 class AppInfoView(
