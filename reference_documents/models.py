@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import fields
-from django_fsm import FSMField
+from django_fsm import FSMField, transition
 
 from common.fields import TaricDateRangeField
 
@@ -88,6 +88,16 @@ class ReferenceDocumentVersion(models.Model):
         return PreferentialQuota.objects.all().filter(
             preferential_quota_order_number__in=order_numbers,
         )
+
+    @transition(
+        field=status,
+        source=ReferenceDocumentVersionStatus.EDITING,
+        target=ReferenceDocumentVersionStatus.IN_REVIEW,
+        custom={"label": "Mark the reference document version for review."},
+    )
+    def review(self):
+        """WorkBasket is ready to be worked on again after being rejected by
+        CDS."""
 
 
 class PreferentialQuotaOrderNumber(models.Model):

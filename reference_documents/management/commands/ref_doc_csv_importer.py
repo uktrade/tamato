@@ -76,7 +76,6 @@ class Command(BaseCommand):
     def add_pt_quota_if_no_exists(
         self,
         df_row,
-        order,
         order_number,
         reference_document_version,
     ):
@@ -130,7 +129,6 @@ class Command(BaseCommand):
                 commodity_code=comm_code,
                 preferential_quota_order_number=order_number_record,
                 quota_duty_rate=quota_duty_rate,
-                order=order,
                 volume=volume,
                 valid_between=quota_definition_valid_between,
                 measurement=units,
@@ -138,7 +136,7 @@ class Command(BaseCommand):
 
             quota.save()
 
-    def add_pt_duty_if_no_exist(self, df_row, df_row_index, reference_document_version):
+    def add_pt_duty_if_no_exist(self, df_row, reference_document_version):
         # check for existing entry for comm code
         comm_code = df_row["Standardised Commodity Code"]
         comm_code = comm_code + ("0" * (len(comm_code) - 10))
@@ -152,7 +150,6 @@ class Command(BaseCommand):
             pref_rate = PreferentialRate.objects.create(
                 commodity_code=comm_code,
                 duty_rate=df_row["Preferential Duty Rate"],
-                order=df_row_index,
                 reference_document_version=reference_document_version,
                 valid_between=None,
             )
@@ -237,7 +234,7 @@ class Command(BaseCommand):
                 df_area_duties = self.duties_df.loc[self.duties_df["area_id"] == area]
                 for index, row in df_area_duties.iterrows():
                     print(f' -- -- {row["Standardised Commodity Code"]}')
-                    self.add_pt_duty_if_no_exist(row, index, ref_doc_version)
+                    self.add_pt_duty_if_no_exist(row, ref_doc_version)
 
                 # Quotas
 
@@ -262,8 +259,6 @@ class Command(BaseCommand):
                         print(f' -- -- {on} - {row["Standardised Commodity Code"]}')
                         self.add_pt_quota_if_no_exists(
                             row,
-                            index + add_to_index,
                             on,
                             ref_doc_version,
                         )
-                        add_to_index += 1
