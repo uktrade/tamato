@@ -102,7 +102,7 @@ class Report(ReportBaseTable):
             {"text": "Sub-quota associations start date"},
             {"text": "Sub-quota associations end date"},
             {"text": "Definition period SID"},
-            {"text": "Quota order number origins"}
+            {"text": "Quota order number origins"},
         ]
 
     def row2(self, row) -> [dict]:
