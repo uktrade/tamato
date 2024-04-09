@@ -89,7 +89,7 @@ class PreferentialQuotaCreateUpdateForm(
         )
 
     def clean_quota_duty_rate(self):
-        error_message = "Quota duty Rate is not valid - it must have a value"
+        error_message = "Quota duty rate is not valid - it must have a value"
 
         if "quota_duty_rate" in self.cleaned_data.keys():
             data = self.cleaned_data["quota_duty_rate"]
@@ -101,7 +101,7 @@ class PreferentialQuotaCreateUpdateForm(
         return data
 
     def clean_preferential_quota_order_number(self):
-        error_message = "Quota Order Number is not valid - it must have a value"
+        error_message = "Quota order number is not valid - it must have a value"
 
         if "preferential_quota_order_number" in self.cleaned_data.keys():
             data = self.cleaned_data["preferential_quota_order_number"]
@@ -123,7 +123,7 @@ class PreferentialQuotaCreateUpdateForm(
     )
 
     quota_duty_rate = forms.CharField(
-        help_text="Quota Duty Rate",
+        help_text="Quota duty rate",
         validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
@@ -132,7 +132,7 @@ class PreferentialQuotaCreateUpdateForm(
     )
 
     quota_order_number = forms.ModelChoiceField(
-        label="Quota Order Number",
+        label="Quota order number",
         help_text="Select Quota order number",
         queryset=PreferentialQuotaOrderNumber.objects.all(),
         validators=[],
