@@ -1,4 +1,4 @@
-from reference_documents.checks.base import BasePreferentialQuotaCheck
+from reference_documents.check.base import BasePreferentialQuotaCheck
 from reference_documents.models import AlignmentReportCheckStatus
 
 
@@ -25,6 +25,8 @@ class PreferentialQuotaExists(BasePreferentialQuotaCheck):
             return AlignmentReportCheckStatus.FAIL, message
 
         if not self.measure():
-            message = f"FAIL - measure not found"
+            message = (
+                f"FAIL - measure(s) spanning whole quota definition period not found"
+            )
             print(message)
             return AlignmentReportCheckStatus.FAIL, message
