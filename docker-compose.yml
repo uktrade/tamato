@@ -37,19 +37,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command:
-      [
-        "celery",
-        "-A",
-        "common.celery",
-        "worker",
-        "-O",
-        "fair",
-        "-l",
-        "info",
-        "-Q",
-        "standard",
-      ]
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q standard"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -66,19 +54,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command:
-      [
-        "celery",
-        "-A",
-        "common.celery",
-        "worker",
-        "-O",
-        "fair",
-        "-l",
-        "info",
-        "-Q",
-        "rule-check",
-      ]
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q rule-check"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -95,21 +71,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command:
-      [
-        "celery",
-        "-A",
-        "common.celery",
-        "worker",
-        "-O",
-        "fair",
-        "-l",
-        "info",
-        "-Q",
-        "importer",
-        "--concurrency",
-        "1",
-      ]
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q importer --concurrency 1"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -124,7 +86,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A", "common.celery", "beat", "-l", "info"]
+    command: sh -c "celery -A common.celery beat -l info"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -172,12 +134,12 @@ services:
       - celery
       - rule-check-celery
       - importer-celery
-      #- celery-beat # Usually only required in production environments.
+      #- celery-beat # Normally only required in production environments.
       - s3
     env_file:
       - .env
       - settings/envs/docker.env
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     stdin_open: true
     tty: true
@@ -188,6 +150,10 @@ services:
       POSTGRES_HOST_AUTH_METHOD: "trust"
       POSTGRES_USER: postgres
       POSTGRES_DB: tamato
+    ports:
+      # Map a port to allow useful connections from the host, e.g.:
+      # $ psql --host=127.0.0.1 --port=5430 --username=postgres --dbname=tamato
+      - "127.0.0.1:5430:5432"
 
   pytest:
     build:
@@ -196,11 +162,11 @@ services:
     image: pytest
     depends_on:
       - pytest-db
-    #env_file:
-    #  - settings/envs/docker.env
     environment:
       DATABASE_URL: postgres://postgres@pytest-db/tamato
-    command: bash -c "DJANGO_SETTINGS_MODULE=settings.test python manage.py migrate && pytest || /bin/bash"
+      DJANGO_SETTINGS_MODULE: settings.test
+      ENV: test
+    command: sh -c "python manage.py migrate && pytest"
     stdin_open: true
     tty: true
 
