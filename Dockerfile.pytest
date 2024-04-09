@@ -7,11 +7,11 @@ FROM python:3.8
 ARG TARGETPLATFORM
 RUN echo "Building for ${TARGETPLATFORM} platform..."
 
-ARG ENV="test"
-ENV ENV="${ENV}"
-ENV DJANGO_SETTINGS_MODULE=settings.test
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+
+# Note: Set the ENV and DJANGO_SETTINGS_MODULE env vars via docker compose to
+# permit flexible image use.
 
 ###############
 # Install OS packages.
@@ -39,7 +39,7 @@ RUN ln -s "/${NODE_NAME}/bin/npm" /usr/local/bin/npm
 RUN ln -s "/${NODE_NAME}/bin/npx" /usr/local/bin/npx
 
 ###############
-# Install Python packages and Node packages.
+# Install Node packages and Python packages.
 
 WORKDIR /app
 
@@ -59,4 +59,4 @@ COPY . /app/
 RUN npm run build
 RUN python manage.py collectstatic --noinput
 
-CMD ["make test"]
+CMD ["pytest"]
