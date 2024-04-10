@@ -1,9 +1,12 @@
 import pytest
+from bs4 import BeautifulSoup
+from django.contrib.auth.models import Permission
 from django.urls import reverse
 
 from reference_documents.forms.preferential_rate_forms import (
     PreferentialRateCreateUpdateForm,
 )
+from reference_documents.models import PreferentialRate
 from reference_documents.tests import factories
 from reference_documents.views.preferential_rate_views import PreferentialRateCreate
 from reference_documents.views.preferential_rate_views import PreferentialRateEdit
@@ -237,3 +240,115 @@ class TestPreferentialRateDeleteView:
             ),
         )
         assert resp.status_code == expected_http_status
+
+
+@pytest.mark.reference_documents
+def test_preferential_rate_bulk_create_creates_object_and_redirects(valid_user, client):
+    """Test that posting the bulk create from creates all preferential rates and
+    redirects."""
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="add_preferentialrate"),
+    )
+    client.force_login(valid_user)
+
+    ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
+    preferential_rates = PreferentialRate.objects.all().filter(
+        reference_document_version=ref_doc_version,
+    )
+    assert len(preferential_rates) == 0
+
+    data = {
+        "commodity_codes": "1234567890\r\n2345678901\r\n3456789012\r\n4567890123",
+        "duty_rate": "5%",
+        "start_date_0": "1",
+        "start_date_1": "1",
+        "start_date_2": "2023",
+        "end_date_0": "31",
+        "end_date_1": "12",
+        "end_date_2": "2023",
+    }
+
+    create_url = reverse(
+        "reference_documents:preferential_rates_bulk_create",
+        kwargs={"pk": ref_doc_version.pk},
+    )
+    resp = client.get(create_url)
+    assert resp.status_code == 200
+    resp = client.post(create_url, data)
+    assert resp.status_code == 302
+    preferential_rates = PreferentialRate.objects.all().filter(
+        reference_document_version=ref_doc_version,
+    )
+    assert len(preferential_rates) == 4
+    assert resp.url == reverse(
+        "reference_documents:version-details",
+        args=[ref_doc_version.pk],
+    )
+
+
+def test_preferential_rate_bulk_create_invalid(valid_user, client):
+    """Test that posting the bulk create form with invalid data fails and
+    reloads the form with errors."""
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="add_preferentialrate"),
+    )
+    client.force_login(valid_user)
+
+    ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
+    preferential_rates = PreferentialRate.objects.all().filter(
+        reference_document_version=ref_doc_version,
+    )
+    assert len(preferential_rates) == 0
+
+    data = {
+        "commodity_codes": "1234567890\r\n2345678901\r\n12345678910",
+        "duty_rate": "",
+        "start_date_0": "",
+        "start_date_1": "1",
+        "start_date_2": "2023",
+        "end_date_0": "31",
+        "end_date_1": "12",
+        "end_date_2": "2023",
+    }
+    create_url = reverse(
+        "reference_documents:preferential_rates_bulk_create",
+        kwargs={"pk": ref_doc_version.pk},
+    )
+    resp = client.post(create_url, data)
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content.decode(resp.charset), "html.parser")
+    error_messages = soup.select("ul.govuk-list.govuk-error-summary__list a")
+    print(error_messages)
+    assert "Duty rate is required" == error_messages[0].text
+    assert "Enter the day, month and year" in error_messages[1].text
+    assert (
+        "Ensure all commodity codes are 10 digits and each on a new line"
+        in error_messages[2].text
+    )
+
+
+def test_preferential_rate_bulk_create_without_permission(valid_user_client):
+    """Test that posting the bulk create form without relevant user permissions
+    does not work."""
+    ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
+    data = {
+        "commodity_codes": "1234567890\r\n2345678901\r\n3456789012\r\n4567890123",
+        "duty_rate": "5%",
+        "start_date_0": "1",
+        "start_date_1": "1",
+        "start_date_2": "2023",
+        "end_date_0": "31",
+        "end_date_1": "12",
+        "end_date_2": "2023",
+    }
+
+    create_url = reverse(
+        "reference_documents:preferential_rates_bulk_create",
+        kwargs={"pk": ref_doc_version.pk},
+    )
+    resp = valid_user_client.post(create_url, data)
+    assert resp.status_code == 403
+    preferential_rates = PreferentialRate.objects.all().filter(
+        reference_document_version=ref_doc_version,
+    )
+    assert len(preferential_rates) == 0
