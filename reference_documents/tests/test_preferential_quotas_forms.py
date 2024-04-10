@@ -81,7 +81,7 @@ class TestPreferentialQuotaCreateUpdateForm:
         with pytest.raises(ValidationError) as ve:
             target.clean_quota_duty_rate()
 
-        assert "Quota duty Rate is not valid - it must have a value" in str(ve)
+        assert "Quota duty rate is not valid - it must have a value" in str(ve)
 
     def test_clean_preferential_quota_order_number_pass(self):
         pref_quota = factories.PreferentialQuotaFactory()
@@ -120,7 +120,7 @@ class TestPreferentialQuotaCreateUpdateForm:
         with pytest.raises(ValidationError) as ve:
             target.clean_preferential_quota_order_number()
 
-        assert "Quota Order Number is not valid - it must have a value" in str(ve)
+        assert "Quota order number is not valid - it must have a value" in str(ve)
 
 
 @pytest.mark.reference_documents
