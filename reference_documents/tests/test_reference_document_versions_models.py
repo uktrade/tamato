@@ -1,5 +1,8 @@
 import pytest
+from django_fsm import TransitionNotAllowed
 
+from common.tests.factories import UserFactory
+from reference_documents.models import ReferenceDocumentVersionStatus as RDVStatus
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -26,3 +29,33 @@ class TestReferenceDocumentVersion:
         )
 
         assert len(target.preferential_quotas()) == 1
+
+    # FSM tests
+    @pytest.mark.parametrize(
+        "initial_state, method, allowed, expected_status",
+        [
+            # valid
+            (RDVStatus.EDITING, 'in_review', True, RDVStatus.IN_REVIEW),
+            (RDVStatus.IN_REVIEW, 'published', True, RDVStatus.PUBLISHED),
+            (RDVStatus.PUBLISHED, 'editing_from_published', True, RDVStatus.EDITING),
+            (RDVStatus.IN_REVIEW, 'editing_from_in_review', True, RDVStatus.EDITING),
+            # invalid
+            (RDVStatus.IN_REVIEW, 'in_review', False, RDVStatus.IN_REVIEW),
+            (RDVStatus.PUBLISHED, 'in_review', False, RDVStatus.PUBLISHED),
+            (RDVStatus.PUBLISHED, 'published', False, RDVStatus.PUBLISHED),
+            (RDVStatus.EDITING, 'published', False, RDVStatus.EDITING),
+            (RDVStatus.EDITING, 'editing_from_published', False, RDVStatus.EDITING),
+            (RDVStatus.IN_REVIEW, 'editing_from_published', False, RDVStatus.IN_REVIEW),
+            (RDVStatus.EDITING, 'editing_from_in_review', False, RDVStatus.EDITING),
+            (RDVStatus.PUBLISHED, 'editing_from_in_review', False, RDVStatus.PUBLISHED),
+        ],
+    )
+    def test_transitions(self, initial_state, method, allowed, expected_status):
+        target = factories.ReferenceDocumentVersionFactory.create(status=initial_state)
+
+        if not allowed:
+            with pytest.raises(TransitionNotAllowed):
+                getattr(target, method)()
+        else:
+            getattr(target, method)()
+            assert target.status == expected_status

@@ -20,7 +20,7 @@ from reference_documents.views.preferential_rate_views import PreferentialRateCr
 from reference_documents.views.preferential_rate_views import PreferentialRateDelete
 from reference_documents.views.preferential_rate_views import PreferentialRateEdit
 from reference_documents.views.reference_document_version_views import (
-    ReferenceDocumentVersionConfirmCreate,
+    ReferenceDocumentVersionConfirmCreate, ReferenceDocumentVersionChangeStateToInReviewConfirm,
 )
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionConfirmDelete,
@@ -117,6 +117,36 @@ urlpatterns = [
         "reference_documents_versions/<ref_doc_pk>/version/<pk>/edit/",
         ReferenceDocumentVersionEdit.as_view(),
         name="version-edit",
+    ),
+    path(
+        "reference_documents_versions/<ref_doc_pk>/version/<pk>/to_in_review/",
+        ReferenceDocumentVersionChangeStateToInReviewConfirm.as_view(),
+        name="version-status-change-to-in-review",
+    ),
+    path(
+        "reference_documents_versions/<ref_doc_pk>/version/<pk>/to_in_review/",
+        ReferenceDocumentVersionEdit.as_view(),
+        name="version-status-change-to-in-review",
+    ),
+    path(
+        "reference_documents_versions/<ref_doc_pk>/version/<pk>/to_published/",
+        ReferenceDocumentVersionEdit.as_view(),
+        name="version-status-change-to-published",
+    ),
+    path(
+        "reference_documents_versions/<ref_doc_pk>/version/<pk>/to_published/",
+        ReferenceDocumentVersionEdit.as_view(),
+        name="version-status-change-to-published-confirm",
+    ),
+    path(
+        "reference_documents_versions/<ref_doc_pk>/version/<pk>/to_editable/",
+        ReferenceDocumentVersionEdit.as_view(),
+        name="version-status-change-to-editing",
+    ),
+    path(
+        "reference_documents_versions/<ref_doc_pk>/version/<pk>/to_editable/",
+        ReferenceDocumentVersionEdit.as_view(),
+        name="version-status-change-to-editing-confirm",
     ),
     path(
         "reference_documents_versions/<ref_doc_pk>/version/<pk>/version-delete/",

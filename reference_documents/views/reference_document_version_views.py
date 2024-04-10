@@ -318,3 +318,20 @@ class ReferenceDocumentVersionConfirmDelete(TemplateView):
         context_data = super().get_context_data(**kwargs)
         context_data["deleted_pk"] = self.kwargs["deleted_pk"]
         return context_data
+
+
+class ReferenceDocumentVersionChangeStateToInReviewConfirm(DetailView):
+    template_name = (
+        "reference_documents/reference_document_versions/confirm_state_to_in_review.jinja"
+    )
+    model = ReferenceDocumentVersion
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Update state
+        # self.object.in_review()
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["ref_doc_pk"] = self.kwargs["ref_doc_pk"]
+        return context_data

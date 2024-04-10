@@ -95,9 +95,35 @@ class ReferenceDocumentVersion(models.Model):
         target=ReferenceDocumentVersionStatus.IN_REVIEW,
         custom={"label": "Mark the reference document version for review."},
     )
-    def review(self):
-        """WorkBasket is ready to be worked on again after being rejected by
-        CDS."""
+    def in_review(self):
+        """Reference document version ready to be reviewed."""
+
+    @transition(
+        field=status,
+        source=ReferenceDocumentVersionStatus.IN_REVIEW,
+        target=ReferenceDocumentVersionStatus.PUBLISHED,
+        custom={"label": "Mark the reference document as published."},
+    )
+    def published(self):
+        """Reference document version has passed review and is published."""
+
+    @transition(
+        field=status,
+        source=ReferenceDocumentVersionStatus.PUBLISHED,
+        target=ReferenceDocumentVersionStatus.EDITING,
+        custom={"label": "Mark the reference document version for review."},
+    )
+    def editing_from_published(self):
+        """Reference document version has passed review and is published."""
+
+    @transition(
+        field=status,
+        source=ReferenceDocumentVersionStatus.IN_REVIEW,
+        target=ReferenceDocumentVersionStatus.EDITING,
+        custom={"label": "Mark the reference document version for review."},
+    )
+    def editing_from_in_review(self):
+        """Reference document version has passed review and is published."""
 
 
 class PreferentialQuotaOrderNumber(models.Model):
