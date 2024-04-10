@@ -553,7 +553,7 @@ CROWN_DEPENDENCIES_API_CRON = (
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
-        "schedule": crontab(hour=3, minute=5),
+        "schedule": crontab(hour=19, minute=5),
     },
 }
 if ENABLE_CROWN_DEPENDENCIES_PUBLISHING:
