@@ -1,10 +1,12 @@
 from datetime import date
+from datetime import timedelta
 
 from commodities.models import GoodsNomenclature
 from commodities.models.dc import CommodityCollectionLoader
 from commodities.models.dc import CommodityTreeSnapshot
 from commodities.models.dc import SnapshotMoment
 from common.models import Transaction
+from common.util import TaricDateRange
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from measures.models import Measure
@@ -36,17 +38,18 @@ class BasePreferentialQuotaCheck(BaseCheck):
         self.reference_document = self.reference_document_version.reference_document
 
     def order_number(self):
+        """Finds order number in TAP for a given preferential quota."""
         try:
             order_number = QuotaOrderNumber.objects.all().get(
                 order_number=self.preferential_quota_order_number.quota_order_number,
                 valid_between=self.preferential_quota_order_number.valid_between,
             )
-            print(f"order number found {order_number}")
             return order_number
         except QuotaOrderNumber.DoesNotExist:
             return None
 
     def geo_area(self):
+        """Finds the geo area in TAP for a given preferential quota."""
         geo_area = (
             GeographicalArea.objects.latest_approved()
             .filter(
@@ -54,19 +57,20 @@ class BasePreferentialQuotaCheck(BaseCheck):
             )
             .first()
         )
-        print(f"geo_area_found {geo_area}")
         return geo_area
 
     def geo_area_description(self):
+        """Gets the geo area description for a given preferential quota."""
         geo_area_desc = (
             GeographicalAreaDescription.objects.latest_approved()
             .filter(described_geographicalarea=self.geo_area())
             .last()
         )
-        print(f"geo area found {geo_area_desc.description}")
         return geo_area_desc.description
 
     def commodity_code(self):
+        """Finds the latest approved version of a commodity code in TAP of a
+        given preferential quota."""
         goods = GoodsNomenclature.objects.latest_approved().filter(
             item_id=self.preferential_quota.commodity_code,
             valid_between__contains=self.reference_document_version.entry_into_force_date,
@@ -75,11 +79,13 @@ class BasePreferentialQuotaCheck(BaseCheck):
 
         if len(goods) == 0:
             return None
-        print(f"commodity found {goods.first()}")
         return goods.first()
 
     def quota_definition(self):
-        # TODO: Some kind of filtering by measurement
+        """Searches for the quota definition period in TAP of a given
+        preferential quota."""
+        # TODO: Some kind of filtering by measurement / unit
+        # TODO: Consider the possibility there could be two valid contiguous quota definitions instead of one
         volume = float(self.preferential_quota.volume)
         order_number = self.order_number()
         try:
@@ -88,31 +94,80 @@ class BasePreferentialQuotaCheck(BaseCheck):
                 initial_volume=volume,
                 valid_between=self.preferential_quota.valid_between,
             )
-            print(f"quota definition found {quota_definition}")
         except QuotaDefinition.DoesNotExist:
             quota_definition = None
         return quota_definition
 
     def measure(self):
-        # Assuming there will only be one measure in each of these cases
-        try:
-            measure = (
-                Measure.objects.all()
-                .latest_approved()
-                .get(
-                    order_number=self.order_number(),
-                    goods_nomenclature=self.commodity_code(),
-                    geographical_area=self.geo_area(),
-                    measure_type__sid__in=[
-                        142,
-                        143,
-                    ],
-                )
+        """
+        Looks for a measure(s) in TAP for a given preferential quota.
+
+        It may find more than one if the original measure was end dated and a
+        new one was created.
+        """
+        measures = (
+            Measure.objects.all()
+            .latest_approved()
+            .filter(
+                order_number=self.order_number(),
+                goods_nomenclature=self.commodity_code(),
+                geographical_area=self.geo_area(),
+                measure_type__sid__in=[
+                    142,
+                    143,
+                ],
             )
-        except Measure.DoesNotExist:
-            measure = None
-        print(f" measure found {measure}")
-        return measure
+            .order_by("valid_between")
+        )
+        return self.check_measure_validity(measures)
+
+    def check_measure_validity(self, measures):
+        """
+        Checks the validity period of the measure(s).
+
+        If there is more than one measure it checks that they are contiguous. It
+        then checks that the validity period of the quota order number spans the
+        validity period of the measure (ON9).
+        """
+        if len(measures) == 0:
+            return None
+        if len(measures) == 1:
+            start_date = measures[0].valid_between.lower
+            end_date = measures[0].valid_between.upper
+            measure_span_period = TaricDateRange(start_date, end_date)
+        else:
+            for index in range(len(measures) - 1):
+                # Check the dates are contiguous and when one measure ends the next one begins
+                measure1_end_date = measures[index].valid_between.upper
+                measure2_start_date = measures[index + 1].valid_between.lower
+                if measure1_end_date + timedelta(days=1) != measure2_start_date:
+                    return None
+            # Getting start date of first measure and final end date of last measure to get the full validity span
+            start_date = measures[0].valid_between.lower
+            last_item = len(measures) - 1
+            end_date = measures[last_item].valid_between.upper
+            measure_span_period = TaricDateRange(start_date, end_date)
+        # Check that the validity period of the measure is within the validity period of the order number 0N9
+        if not self.validity_period_contains(
+            outer_period=self.order_number().valid_between,
+            inner_period=measure_span_period,
+        ):
+            return False
+        return measures
+
+    @staticmethod
+    def validity_period_contains(outer_period, inner_period):
+        """Checks that the inner validity period is within the outer validity
+        period."""
+        if outer_period.upper:
+            if (
+                outer_period.upper >= inner_period.upper
+                and outer_period.lower <= inner_period.lower
+            ):
+                return True
+        elif outer_period.lower <= inner_period.lower:
+            return True
+        return False
 
 
 class BasePreferentialQuotaOrderNumberCheck(BaseCheck):
