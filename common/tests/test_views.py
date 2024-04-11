@@ -55,15 +55,21 @@ def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
     [
         ("common.views.HealthCheckView.check_database", ("OK", 200)),
         ("common.views.HealthCheckView.check_redis_cache", ("OK", 200)),
-        ("common.views.HealthCheckView.check_celery_broker", ("OK", 200)),
         ("common.views.HealthCheckView.check_database", ("Not OK", 503)),
         ("common.views.HealthCheckView.check_redis_cache", ("Not OK", 503)),
         ("common.views.HealthCheckView.check_celery_broker", ("Not OK", 503)),
         ("common.views.HealthCheckView.check_s3", ("Not OK", 503)),
     ],
 )
+@patch("common.views.HealthCheckView.check_celery_broker", return_value=("OK", 200))
 @patch("common.views.HealthCheckView.check_s3", return_value=("OK", 200))
-def test_health_check_view_response(check_s3_mock, check_to_mock, mock_result, client):
+def test_health_check_view_response(
+    check_celery_broker_mock,
+    check_s3_mock,
+    check_to_mock,
+    mock_result,
+    client,
+):
     """Test that `HealthCheckView` returns a Pingdom-compatible HTTP
     response."""
     request = client.get(reverse("healthcheck"))
