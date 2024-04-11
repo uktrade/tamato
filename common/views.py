@@ -38,6 +38,7 @@ from django.views.generic import TemplateView
 from django.views.generic import View
 from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
+from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from additional_codes.models import AdditionalCode
@@ -283,7 +284,7 @@ class HealthCheckView(View):
         try:
             cache.set("__pingdom_test", 1, timeout=1)
             return "OK", 200
-        except RedisTimeoutError:
+        except (RedisConnectionError, RedisTimeoutError):
             return "Redis cache health check failed", 503
 
     def check_celery_broker(self) -> Tuple[str, int]:
