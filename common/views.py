@@ -290,7 +290,7 @@ class HealthCheckView(View):
     def check_celery_broker(self) -> Tuple[str, int]:
         try:
             conn = celery_app.broker_connection().ensure_connection(
-                max_retries=None,
+                max_retries=0,
                 timeout=10,
             )
             conn.close()
