@@ -286,6 +286,7 @@ def test_preferential_rate_bulk_create_creates_object_and_redirects(valid_user, 
     )
 
 
+@pytest.mark.reference_documents
 def test_preferential_rate_bulk_create_invalid(valid_user, client):
     """Test that posting the bulk create form with invalid data fails and
     reloads the form with errors."""
@@ -327,6 +328,7 @@ def test_preferential_rate_bulk_create_invalid(valid_user, client):
     )
 
 
+@pytest.mark.reference_documents
 def test_preferential_rate_bulk_create_without_permission(valid_user_client):
     """Test that posting the bulk create form without relevant user permissions
     does not work."""
