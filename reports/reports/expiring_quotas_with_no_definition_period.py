@@ -27,6 +27,7 @@ class Report(ReportBaseTable):
             {"text": "Quota order number"},
             {"text": "Definition start date"},
             {"text": "Definition end date"},
+            {"text": "Quota order number origins"},
         ]
 
     def row(self, row) -> [dict]:
@@ -34,6 +35,7 @@ class Report(ReportBaseTable):
             {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
             {"text": row.valid_between.lower},
             {"text": row.valid_between.upper},
+            {"text": origin for origin in row.order_number.origins.all()},
         ]
 
     def rows(self) -> [[dict]]:
@@ -100,6 +102,7 @@ class Report(ReportBaseTable):
             {"text": "Sub-quota associations start date"},
             {"text": "Sub-quota associations end date"},
             {"text": "Definition period SID"},
+            {"text": "Quota order number origins"},
         ]
 
     def row2(self, row) -> [dict]:
@@ -129,6 +132,7 @@ class Report(ReportBaseTable):
                         "#definition-details",
                     ),
                 },
+                {"text": origin for origin in row.order_number.origins.all()},
             )
 
         return sub_quotas_array
@@ -172,6 +176,7 @@ class Report(ReportBaseTable):
             {"text": "Blocking period start date"},
             {"text": "Blocking period end date"},
             {"text": "Definition period SID"},
+            {"text": "Quota order number origins"},
         ]
 
     def row3(self, row) -> [dict]:
@@ -200,6 +205,7 @@ class Report(ReportBaseTable):
                     "#definition-details",
                 ),
             },
+            {"text": origin for origin in row.order_number.origins.all()},
         ]
 
     def rows3(self) -> [[dict]]:
@@ -246,6 +252,7 @@ class Report(ReportBaseTable):
             {"text": "Suspension period start date"},
             {"text": "Suspension period end date"},
             {"text": "Definition period SID"},
+            {"text": "Quota order number origins"},
         ]
 
     def row4(self, row) -> [dict]:
@@ -274,6 +281,7 @@ class Report(ReportBaseTable):
                     "#definition-details",
                 ),
             },
+            {"text": origin for origin in row.order_number.origins.all()},
         ]
 
     def rows4(self) -> [[dict]]:
