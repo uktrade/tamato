@@ -2,7 +2,7 @@ import pytest
 from django_fsm import TransitionNotAllowed
 
 from common.tests.factories import UserFactory
-from reference_documents.models import ReferenceDocumentVersionStatus as RDVStatus
+from reference_documents.models import ReferenceDocumentVersionStatus as RDVStatus, ReferenceDocumentVersionStatus
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -59,3 +59,36 @@ class TestReferenceDocumentVersion:
         else:
             getattr(target, method)()
             assert target.status == expected_status
+
+    def test_state_not_editable_prevents_save(self):
+        target = factories.ReferenceDocumentVersionFactory()
+        target_version = target.version
+
+        assert target.status == ReferenceDocumentVersionStatus.EDITING
+        assert target.editable()
+
+        target.in_review()
+        target.save(force_save=True)
+
+        target.version = '33.33'
+        target.save()
+
+        target.refresh_from_db()
+
+        assert target.status == ReferenceDocumentVersionStatus.IN_REVIEW
+        assert float(target.version) == float(target_version)
+        assert not target.editable()
+
+        target.published()
+        target.save(force_save=True)
+
+        target.version = '33.33'
+        target.save()
+
+        target.refresh_from_db()
+
+        assert target.status == ReferenceDocumentVersionStatus.PUBLISHED
+        assert not target.editable()
+        assert float(target.version) == float(target_version)
+
+

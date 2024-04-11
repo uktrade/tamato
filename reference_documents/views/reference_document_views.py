@@ -52,6 +52,11 @@ class ReferenceDocumentContext:
                 )
 
             else:
+                actions = f'<a href="/reference_documents/{reference.id}">Details</a><br>'
+                if reference.editable():
+                    actions += f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
+                    actions += f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>"
+
                 reference_documents.append(
                     [
                         {"text": reference.reference_document_versions.last().version},
@@ -65,9 +70,7 @@ class ReferenceDocumentContext:
                             "text": reference.reference_document_versions.last().preferential_quota_order_numbers.count(),
                         },
                         {
-                            "html": f'<a href="/reference_documents/{reference.id}">Details</a><br>'
-                                    f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
-                                    f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>",
+                            "html": actions
                         },
                     ],
                 )
@@ -127,7 +130,7 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
                 )
             elif version.status == ReferenceDocumentVersionStatus.IN_REVIEW:
                 actions += (
-                    f'<a href="{reverse("reference_documents:version-status-change-to-publish", kwargs={"ref_doc_pk": context["object"].pk,"pk": version.id})}">Ready to publish</a><br>'
+                    f'<a href="{reverse("reference_documents:version-status-change-to-published", kwargs={"ref_doc_pk": context["object"].pk,"pk": version.id})}">Ready to publish</a><br>'
                     f'<a href="{reverse("reference_documents:version-status-change-to-editing", kwargs={"ref_doc_pk": context["object"].pk,"pk": version.id})}">Revert to editable</a><br>'
                 )
             else:
