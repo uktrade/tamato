@@ -62,6 +62,8 @@ from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
+from .celery import app as celery_app
+
 
 class HomeView(LoginRequiredMixin, FormView):
     template_name = "common/homepage.jinja"
@@ -263,7 +265,12 @@ class HealthCheckView(View):
 
     @property
     def checks(self) -> List[callable]:
-        return [self.check_database, self.check_redis, self.check_s3]
+        return [
+            self.check_database,
+            self.check_redis_cache,
+            self.check_celery_broker,
+            self.check_s3,
+        ]
 
     def check_database(self) -> Tuple[str, int]:
         try:
@@ -272,12 +279,23 @@ class HealthCheckView(View):
         except OperationalError:
             return "Database health check failed", 503
 
-    def check_redis(self) -> Tuple[str, int]:
+    def check_redis_cache(self) -> Tuple[str, int]:
         try:
             cache.set("__pingdom_test", 1, timeout=1)
             return "OK", 200
         except RedisTimeoutError:
-            return "Redis health check failed", 503
+            return "Redis cache health check failed", 503
+
+    def check_celery_broker(self) -> Tuple[str, int]:
+        try:
+            conn = celery_app.broker_connection().ensure_connection(
+                max_retries=None,
+                timeout=10,
+            )
+            conn.close()
+            return "OK", 200
+        except kombu.exceptions.OperationalError:
+            return "Celery broker health check failed", 503
 
     def check_s3(self) -> Tuple[str, int]:
         try:

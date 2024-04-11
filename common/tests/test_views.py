@@ -54,9 +54,11 @@ def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
     "check_to_mock, mock_result",
     [
         ("common.views.HealthCheckView.check_database", ("OK", 200)),
-        ("common.views.HealthCheckView.check_redis", ("OK", 200)),
+        ("common.views.HealthCheckView.check_redis_cache", ("OK", 200)),
+        ("common.views.HealthCheckView.check_celery_broker", ("OK", 200)),
         ("common.views.HealthCheckView.check_database", ("Not OK", 503)),
-        ("common.views.HealthCheckView.check_redis", ("Not OK", 503)),
+        ("common.views.HealthCheckView.check_redis_cache", ("Not OK", 503)),
+        ("common.views.HealthCheckView.check_celery_broker", ("Not OK", 503)),
         ("common.views.HealthCheckView.check_s3", ("Not OK", 503)),
     ],
 )
