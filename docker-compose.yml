@@ -145,6 +145,8 @@ services:
     tty: true
 
   pytest-db:
+    # With no persistent volume, it's possible to clear the database contents by
+    # simply stopping this service: docker-compose stop pytest-db.
     image: "postgres:16"
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
