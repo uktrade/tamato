@@ -268,6 +268,87 @@ class TestReferenceDocumentVersionViews:
                 resp.content,
             )
 
+    @pytest.mark.parametrize(
+        "state",
+        [
+            # valid
+            ReferenceDocumentVersionStatus.IN_REVIEW,
+            ReferenceDocumentVersionStatus.PUBLISHED,
+        ],
+    )
+    def test_ref_doc_version_detail_view_hides_edit_when_state_in_review(self, state, superuser_client):
+        """Test that the reference document version detail view shows edit links correctly."""
+        ref_doc = factories.ReferenceDocumentFactory.create(
+            area_id="XY",
+            title="Reference document for XY",
+        )
+        ref_doc_version = factories.ReferenceDocumentVersionFactory(
+            reference_document=ref_doc,
+            version=1.0,
+            status=state
+        )
+
+        preferential_rate_batch = factories.PreferentialRateFactory.create_batch(
+            10,
+            reference_document_version=ref_doc_version,
+        )
+        first_preferential_rate = preferential_rate_batch[0]
+        order_number_batch = factories.PreferentialQuotaOrderNumberFactory.create_batch(
+            5,
+            reference_document_version=ref_doc_version,
+        )
+        first_quota_order_number = order_number_batch[0].quota_order_number
+        tap_quota = QuotaOrderNumberFactory.create(order_number=first_quota_order_number)
+        tap_commodity_code = SimpleGoodsNomenclatureFactory.create(
+            item_id=first_preferential_rate.commodity_code,
+            valid_between=date_ranges("big"),
+            suffix=80,
+        )
+        core_data_tab = (
+            reverse(
+                "reference_documents:version-details",
+                kwargs={"pk": ref_doc_version.pk},
+            )
+            + "#core-data"
+        )
+        resp = superuser_client.get(core_data_tab)
+        page = BeautifulSoup(resp.content, "html.parser")
+        assert resp.status_code == 200
+        # check that edit links exist for preferential rates
+        edit_links = page.find("a", href=True, text="Edit")
+        delete_links = page.find("a", href=True, text="Delete")
+        assert edit_links is None
+        assert delete_links is None
+        assert not page.find("a", href=True, text="Add new rate")
+        assert not page.find("a", href=True, text="Bulk add rates")
+
+        table_rows = page.select("tr")
+        # Assert there is a row for each preferential rate
+        assert len(table_rows) == 1
+        tariff_quotas_tab = (
+            reverse(
+                "reference_documents:version-details",
+                kwargs={"pk": ref_doc_version.pk},
+            )
+            + "#tariff_quotas"
+        )
+        resp = superuser_client.get(tariff_quotas_tab)
+        page = BeautifulSoup(resp.content, "html.parser")
+        assert resp.status_code == 200
+
+        edit_links = page.find("a", href=True, text="Edit")
+        delete_links = page.find("a", href=True, text="Delete")
+        add_quota_links = page.find("a", href=True, text="Add quota to order number")
+        bulk_add_quota_links = page.find("a", href=True, text="Bulk add quotas")
+
+        assert edit_links is None
+        assert delete_links is None
+        assert add_quota_links is None
+        assert bulk_add_quota_links is None
+        assert not page.find("a", href=True, text="Add new order number")
+        assert not page.find("a", href=True, text="Add new quota")
+        assert not page.find("a", href=True, text="Bulk add quotas")
+
 
 @pytest.mark.reference_documents
 class TestReferenceDocumentVersionChangeStateToInReview:
@@ -342,3 +423,73 @@ class TestReferenceDocumentVersionChangeStatePublished:
 
         assert ref_doc_ver.status == ReferenceDocumentVersionStatus.IN_REVIEW
 
+
+@pytest.mark.reference_documents
+class TestReferenceDocumentVersionChangeStateToEditable:
+    def test_get_changes_state_from_published_to_editing_by_superuser(self, superuser_client):
+        ref_doc_ver = factories.ReferenceDocumentVersionFactory.create(status=ReferenceDocumentVersionStatus.PUBLISHED)
+
+        url = reverse(
+            "reference_documents:version-status-change-to-editing",
+            kwargs={"ref_doc_pk": ref_doc_ver.reference_document.pk, "pk": ref_doc_ver.pk},
+        )
+
+        resp = superuser_client.get(url)
+        assert resp.status_code == 200
+
+        ref_doc_ver.refresh_from_db()
+
+        assert ref_doc_ver.status == ReferenceDocumentVersionStatus.EDITING
+
+    def test_get_changes_state_from_in_review_to_editing_by_superuser(self, superuser_client):
+        ref_doc_ver = factories.ReferenceDocumentVersionFactory.create(status=ReferenceDocumentVersionStatus.IN_REVIEW)
+
+        url = reverse(
+            "reference_documents:version-status-change-to-editing",
+            kwargs={"ref_doc_pk": ref_doc_ver.reference_document.pk, "pk": ref_doc_ver.pk},
+        )
+
+        resp = superuser_client.get(url)
+        assert resp.status_code == 200
+
+        ref_doc_ver.refresh_from_db()
+
+        assert ref_doc_ver.status == ReferenceDocumentVersionStatus.EDITING
+
+    def test_get_changes_state_from_in_review_to_editing_by_user(self, valid_user, client):
+        valid_user.user_permissions.add(
+            Permission.objects.get(codename="change_referencedocumentversion"),
+        )
+        client.force_login(valid_user)
+        ref_doc_ver = factories.ReferenceDocumentVersionFactory.create(status=ReferenceDocumentVersionStatus.IN_REVIEW)
+
+        url = reverse(
+            "reference_documents:version-status-change-to-editing",
+            kwargs={"ref_doc_pk": ref_doc_ver.reference_document.pk, "pk": ref_doc_ver.pk},
+        )
+
+        resp = client.get(url)
+        assert resp.status_code == 200
+
+        ref_doc_ver.refresh_from_db()
+
+        assert ref_doc_ver.status == ReferenceDocumentVersionStatus.EDITING
+
+    def test_get_does_not_change_state_as_user(self, valid_user, client):
+        valid_user.user_permissions.add(
+            Permission.objects.get(codename="change_referencedocumentversion"),
+        )
+        client.force_login(valid_user)
+        ref_doc_ver = factories.ReferenceDocumentVersionFactory.create(status=ReferenceDocumentVersionStatus.PUBLISHED)
+
+        url = reverse(
+            "reference_documents:version-status-change-to-editing",
+            kwargs={"ref_doc_pk": ref_doc_ver.reference_document.pk, "pk": ref_doc_ver.pk},
+        )
+
+        resp = client.get(url)
+        assert resp.status_code == 403
+
+        ref_doc_ver.refresh_from_db()
+
+        assert ref_doc_ver.status == ReferenceDocumentVersionStatus.PUBLISHED

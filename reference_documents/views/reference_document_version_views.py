@@ -112,10 +112,8 @@ class ReferenceDocumentVersionContext:
             actions = '<span></span>'
 
             if self.reference_document_version.editable():
-                actions = (
-                    f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> "
-                    f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>",
-                )
+                actions = f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> | " \
+                          f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>"
 
             rows.append(
                 [
@@ -177,10 +175,8 @@ class ReferenceDocumentVersionContext:
             actions = '<span></span>'
 
             if self.reference_document_version.editable():
-                actions = (
-                    f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> "
-                    f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>"
-                )
+                actions = f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> | " \
+                          f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>"
 
             row_to_add = [
                 {
@@ -201,8 +197,8 @@ class ReferenceDocumentVersionContext:
             ]
 
             data[ref_doc_order_number.quota_order_number]["data_rows"].append(
-                row_to_add,
-            )
+            row_to_add,
+        )
 
 
 class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):

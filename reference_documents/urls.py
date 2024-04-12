@@ -20,10 +20,7 @@ from reference_documents.views.preferential_rate_views import PreferentialRateBu
 from reference_documents.views.preferential_rate_views import PreferentialRateCreate
 from reference_documents.views.preferential_rate_views import PreferentialRateDelete
 from reference_documents.views.preferential_rate_views import PreferentialRateEdit
-from reference_documents.views.reference_document_version_views import (
-    ReferenceDocumentVersionConfirmCreate, ReferenceDocumentVersionChangeStateToPublished,
-    ReferenceDocumentVersionChangeStateToInReview, ReferenceDocumentVersionChangeStateToEditable,
-)
+from reference_documents.views.reference_document_version_views import ReferenceDocumentVersionConfirmCreate, ReferenceDocumentVersionChangeStateToPublished,    ReferenceDocumentVersionChangeStateToInReview, ReferenceDocumentVersionChangeStateToEditable
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionConfirmDelete,
 )
