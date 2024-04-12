@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import fields
+from django.db.models import fields, Q
 from django_fsm import FSMField, transition
 
 from common.fields import TaricDateRangeField
@@ -39,6 +39,16 @@ class ReferenceDocument(models.Model):
         unique=True,
     )
 
+    def editable(self):
+        if self.pk is None:
+            return True
+        return not self.reference_document_versions.filter(
+            status__in=[
+                ReferenceDocumentVersionStatus.IN_REVIEW,
+                ReferenceDocumentVersionStatus.PUBLISHED,
+            ]
+        ).count() > 0
+
     def get_area_name_by_area_id(self):
         from geo_areas.models import GeographicalAreaDescription
 
@@ -52,6 +62,11 @@ class ReferenceDocument(models.Model):
             return description.description
         else:
             return f"{self.area_id} (unknown description)"
+
+    def save(self, *args, **kwargs):
+        if not self.editable():
+            return
+        super(ReferenceDocument, self).save(*args, **kwargs)
 
 
 class ReferenceDocumentVersion(models.Model):
@@ -89,6 +104,14 @@ class ReferenceDocumentVersion(models.Model):
             preferential_quota_order_number__in=order_numbers,
         )
 
+    def editable(self):
+        return self.status == ReferenceDocumentVersionStatus.EDITING
+
+    def save(self, force_save=False, *args, **kwargs):
+        if not self.editable() and self.pk is not None and force_save is not True:
+            return
+        super(ReferenceDocumentVersion, self).save(*args, **kwargs)
+
     @transition(
         field=status,
         source=ReferenceDocumentVersionStatus.EDITING,
@@ -97,6 +120,7 @@ class ReferenceDocumentVersion(models.Model):
     )
     def in_review(self):
         """Reference document version ready to be reviewed."""
+        return
 
     @transition(
         field=status,
@@ -106,6 +130,8 @@ class ReferenceDocumentVersion(models.Model):
     )
     def published(self):
         """Reference document version has passed review and is published."""
+        super(ReferenceDocumentVersion, self).save()
+        return
 
     @transition(
         field=status,
@@ -115,6 +141,8 @@ class ReferenceDocumentVersion(models.Model):
     )
     def editing_from_published(self):
         """Reference document version has passed review and is published."""
+        super(ReferenceDocumentVersion, self).save()
+        return
 
     @transition(
         field=status,
@@ -124,6 +152,8 @@ class ReferenceDocumentVersion(models.Model):
     )
     def editing_from_in_review(self):
         """Reference document version has passed review and is published."""
+        super(ReferenceDocumentVersion, self).save()
+        return
 
 
 class PreferentialQuotaOrderNumber(models.Model):
@@ -161,6 +191,11 @@ class PreferentialQuotaOrderNumber(models.Model):
     def __str__(self):
         return f"{self.quota_order_number}"
 
+    def save(self, *args, **kwargs):
+        if not self.reference_document_version.editable():
+            return
+        super(PreferentialQuotaOrderNumber, self).save(*args, **kwargs)
+
 
 class PreferentialQuota(models.Model):
     preferential_quota_order_number = models.ForeignKey(
@@ -191,6 +226,11 @@ class PreferentialQuota(models.Model):
         max_length=255,
     )
 
+    def save(self, *args, **kwargs):
+        if not self.preferential_quota_order_number.reference_document_version.editable():
+            return
+        super(PreferentialQuota, self).save(*args, **kwargs)
+
 
 class PreferentialRate(models.Model):
     reference_document_version = models.ForeignKey(
@@ -214,6 +254,11 @@ class PreferentialRate(models.Model):
         blank=True,
         default=None,
     )
+
+    def save(self, *args, **kwargs):
+        if not self.reference_document_version.editable():
+            return
+        super(PreferentialRate, self).save(*args, **kwargs)
 
 
 class AlignmentReport(models.Model):

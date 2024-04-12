@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView
@@ -15,7 +16,7 @@ from reference_documents.forms.reference_document_version_forms import (
 from reference_documents.forms.reference_document_version_forms import (
     ReferenceDocumentVersionsCreateUpdateForm,
 )
-from reference_documents.models import PreferentialQuotaOrderNumber
+from reference_documents.models import PreferentialQuotaOrderNumber, ReferenceDocumentVersionStatus
 from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
 
@@ -29,11 +30,11 @@ class ReferenceDocumentVersionContext:
 
     @staticmethod
     def get_tap_order_number(
-        ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
+            ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
     ):
         if (
-            ref_doc_quota_order_number.reference_document_version.entry_into_force_date
-            is not None
+                ref_doc_quota_order_number.reference_document_version.entry_into_force_date
+                is not None
         ):
             contains_date = (
                 ref_doc_quota_order_number.reference_document_version.entry_into_force_date
@@ -55,8 +56,8 @@ class ReferenceDocumentVersionContext:
 
     @staticmethod
     def get_tap_comm_code(
-        ref_doc_version: ReferenceDocumentVersion,
-        comm_code: str,
+            ref_doc_version: ReferenceDocumentVersion,
+            comm_code: str,
     ):
         if ref_doc_version.entry_into_force_date is not None:
             contains_date = ref_doc_version.entry_into_force_date
@@ -94,7 +95,7 @@ class ReferenceDocumentVersionContext:
     def duties_row_data(self):
         rows = []
         for (
-            preferential_rate
+                preferential_rate
         ) in self.reference_document_version.preferential_rates.order_by(
             "commodity_code",
         ):
@@ -108,6 +109,12 @@ class ReferenceDocumentVersionContext:
             else:
                 comm_code_link = f"{preferential_rate.commodity_code}"
 
+            actions = '<span></span>'
+
+            if self.reference_document_version.editable():
+                actions = f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> | " \
+                          f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>"
+
             rows.append(
                 [
                     {
@@ -120,8 +127,7 @@ class ReferenceDocumentVersionContext:
                         "text": preferential_rate.valid_between,
                     },
                     {
-                        "html": f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> "
-                        f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk] )}'>Delete</a>",
+                        "html": actions
                     },
                 ],
             )
@@ -130,7 +136,7 @@ class ReferenceDocumentVersionContext:
     def quotas_data_orders_and_rows(self):
         data = {}
         for (
-            ref_doc_order_number
+                ref_doc_order_number
         ) in self.reference_document_version.preferential_quota_order_numbers.order_by(
             "quota_order_number",
         ):
@@ -155,7 +161,7 @@ class ReferenceDocumentVersionContext:
     def order_number_rows(self, data, ref_doc_order_number):
         # Add Data Rows
         for quota in ref_doc_order_number.preferential_quotas.order_by(
-            "commodity_code",
+                "commodity_code",
         ):
             comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
                 quota.preferential_quota_order_number.reference_document_version,
@@ -165,6 +171,12 @@ class ReferenceDocumentVersionContext:
                 comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
             else:
                 comm_code_link = f"{quota.commodity_code}"
+
+            actions = '<span></span>'
+
+            if self.reference_document_version.editable():
+                actions = f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> | " \
+                          f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>"
 
             row_to_add = [
                 {
@@ -180,14 +192,13 @@ class ReferenceDocumentVersionContext:
                     "text": quota.valid_between,
                 },
                 {
-                    "html": f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> "
-                    f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>",
+                    "html": actions,
                 },
             ]
 
             data[ref_doc_order_number.quota_order_number]["data_rows"].append(
-                row_to_add,
-            )
+            row_to_add,
+        )
 
 
 class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
@@ -320,11 +331,12 @@ class ReferenceDocumentVersionConfirmDelete(TemplateView):
         return context_data
 
 
-class ReferenceDocumentVersionChangeStateToInReviewConfirm(DetailView):
+class ReferenceDocumentVersionChangeStateToInReview(PermissionRequiredMixin, DetailView):
     template_name = (
         "reference_documents/reference_document_versions/confirm_state_to_in_review.jinja"
     )
     model = ReferenceDocumentVersion
+    permission_required = "reference_documents.change_referencedocumentversion"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -335,3 +347,65 @@ class ReferenceDocumentVersionChangeStateToInReviewConfirm(DetailView):
         context_data = super().get_context_data(**kwargs)
         context_data["ref_doc_pk"] = self.kwargs["ref_doc_pk"]
         return context_data
+
+    def get(self, request, *args, **kwargs):
+        rdv = ReferenceDocumentVersion.objects.all().get(pk=self.kwargs["pk"])
+        rdv.in_review()
+        rdv.save(force_save=True)
+        return super().get(request, *args, **kwargs)
+
+
+class ReferenceDocumentVersionChangeStateToPublished(PermissionRequiredMixin, DetailView):
+    template_name = (
+        "reference_documents/reference_document_versions/confirm_state_to_published.jinja"
+    )
+    model = ReferenceDocumentVersion
+    permission_required = "reference_documents.change_referencedocumentversion"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Update state
+        # self.object.in_review()
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["ref_doc_pk"] = self.kwargs["ref_doc_pk"]
+        return context_data
+
+    def get(self, request, *args, **kwargs):
+        rdv = ReferenceDocumentVersion.objects.all().get(pk=self.kwargs["pk"])
+        rdv.published()
+        rdv.save(force_save=True)
+        return super().get(request, *args, **kwargs)
+
+
+class ReferenceDocumentVersionChangeStateToEditable(PermissionRequiredMixin, DetailView):
+    template_name = (
+        "reference_documents/reference_document_versions/confirm_state_to_editable.jinja"
+    )
+    model = ReferenceDocumentVersion
+    permission_required = "reference_documents.change_referencedocumentversion"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Update state
+        # self.object.in_review()
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["ref_doc_pk"] = self.kwargs["ref_doc_pk"]
+        return context_data
+
+    def get(self, request, *args, **kwargs):
+        rdv = ReferenceDocumentVersion.objects.all().get(pk=self.kwargs["pk"])
+        if rdv.status == ReferenceDocumentVersionStatus.PUBLISHED:
+            if request.user.is_superuser:
+                rdv.editing_from_published()
+                rdv.save(force_save=True)
+            else:
+                raise PermissionDenied()
+        elif rdv.status == ReferenceDocumentVersionStatus.IN_REVIEW:
+            rdv.editing_from_in_review()
+            rdv.save(force_save=True)
+
+        return super().get(request, *args, **kwargs)

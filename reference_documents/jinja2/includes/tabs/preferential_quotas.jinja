@@ -28,10 +28,12 @@
                 {% endif %}
             </div>
             <div class="govuk-body govuk-!-margin-bottom-2">
+            {% if object.editable() %}
                 <a class="order_number_link" href="{{ url('reference_documents:preferential_quota_order_number_edit', args=[value['ref_doc_order_number'].id]) }}">Edit</a>
                 <a class="order_number_link" href="{{ url('reference_documents:preferential_quota_order_number_delete', args=[value['ref_doc_order_number'].id, value['ref_doc_order_number'].reference_document_version.id]) }}">Delete</a>
                 <a class="order_number_link" href="{{ url('reference_documents:preferential_quotas_create_for_order', args=[object.pk, value['ref_doc_order_number'].pk]) }}">Add quota to order number</a>
                 <a class="order_number_link" href="{{ url('reference_documents:preferential_quotas_bulk_create_for_order', kwargs={"pk": object.pk, "order_pk": value['ref_doc_order_number'].pk}) }}">Bulk add quotas</a>
+            {% endif %}
             </div>
             {% if value['data_rows'] != [] %}
                 {{ govukTable({
@@ -50,9 +52,11 @@
         <div class="app-related-items" role="complementary">
             <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
             <ul class="govuk-list govuk-!-font-size-16">
+                {% if object.editable() %}
                 <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quota_order_number_create', args=[object.pk]) }}">Add new order number</a></li>
                 <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quotas_create', args=[object.pk]) }}">Add new quota</a></li>
                 <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quotas_bulk_create', args=[object.pk]) }}">Bulk add quotas</a></li>
+                {% endif %}
             </ul>
 
         </div>
