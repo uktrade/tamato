@@ -329,11 +329,13 @@ class MeasureConditionsForm(MeasureConditionsFormMixin):
         string.
         """
         applicable_duty = self.cleaned_data["applicable_duty"]
+        measure_start_date = self.get_start_date(self.data)
 
-        if applicable_duty and self.get_start_date(self.data) is not None:
+        if applicable_duty and measure_start_date is not None:
+            duty_sentence_parser = LarkDutySentenceParser(date=measure_start_date)
             try:
-                validate_duties(applicable_duty, self.get_start_date(self.data))
-            except ValidationError as e:
+                duty_sentence_parser.transform(applicable_duty)
+            except (SyntaxError, ValidationError) as e:
                 self.add_error("applicable_duty", e)
 
         return applicable_duty
@@ -427,9 +429,10 @@ class MeasureConditionsWizardStepForm(MeasureConditionsFormMixin):
             )
 
         if applicable_duty and self.measure_start_date is not None:
+            duty_sentence_parser = LarkDutySentenceParser(date=self.measure_start_date)
             try:
-                validate_duties(applicable_duty, self.measure_start_date)
-            except ValidationError as e:
+                duty_sentence_parser.transform(applicable_duty)
+            except (SyntaxError, ValidationError) as e:
                 self.add_error("applicable_duty", e)
         return applicable_duty
 
@@ -1353,7 +1356,9 @@ class MeasureCommodityAndDutiesFormSet(MeasureCommodityAndDutiesBaseFormSet):
         data = tuple((data["duties"], data["form_prefix"]) for data in cleaned_data)
         # Filter tuples(duty, form) for unique duties to avoid parsing the same duty more than once
         duties = [next(group) for duty, group in groupby(data, key=lambda x: x[0])]
-        duty_sentence_parser = LarkDutySentenceParser(date=self.measure_start_date)
+        duty_sentence_parser = LarkDutySentenceParser(
+            date=self.measure_start_date or datetime.datetime.now(),
+        )
         for duty, form in duties:
             try:
                 duty_sentence_parser.transform(duty)
