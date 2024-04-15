@@ -45,44 +45,6 @@ class TestPreferentialQuotaCreateUpdateForm:
             "valid_between",
         ]
 
-    def test_clean_quota_duty_rate_pass(self):
-        pref_quota = factories.PreferentialQuotaFactory()
-
-        data = {
-            "quota_duty_rate": "10%",
-        }
-
-        target = PreferentialQuotaCreateUpdateForm(
-            pref_quota.preferential_quota_order_number.reference_document_version,
-            pref_quota.preferential_quota_order_number,
-            instance=pref_quota,
-            data=data,
-        )
-
-        assert not target.is_valid()
-        assert target.clean_quota_duty_rate() == "10%"
-
-    def test_clean_quota_duty_rate_fail(self):
-        pref_quota = factories.PreferentialQuotaFactory()
-
-        data = {
-            "quota_duty_rate": "",
-        }
-
-        target = PreferentialQuotaCreateUpdateForm(
-            pref_quota.preferential_quota_order_number.reference_document_version,
-            pref_quota.preferential_quota_order_number,
-            instance=pref_quota,
-            data=data,
-        )
-
-        assert not target.is_valid()
-
-        with pytest.raises(ValidationError) as ve:
-            target.clean_quota_duty_rate()
-
-        assert "Quota duty rate is not valid - it must have a value" in str(ve)
-
     def test_clean_preferential_quota_order_number_pass(self):
         pref_quota = factories.PreferentialQuotaFactory()
 
@@ -120,7 +82,7 @@ class TestPreferentialQuotaCreateUpdateForm:
         with pytest.raises(ValidationError) as ve:
             target.clean_preferential_quota_order_number()
 
-        assert "Quota order number is not valid - it must have a value" in str(ve)
+        assert "Quota order number is required" in str(ve)
 
 
 @pytest.mark.reference_documents

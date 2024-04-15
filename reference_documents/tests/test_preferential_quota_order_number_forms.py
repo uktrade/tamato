@@ -172,11 +172,16 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         )
 
     def test_clean_main_order_no_coefficient(self):
-        pref_quota_order_number_main = factories.PreferentialQuotaOrderNumberFactory()
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        ref_doc_version = factories.ReferenceDocumentVersionFactory()
+        pref_quota_order_number_main = factories.PreferentialQuotaOrderNumberFactory(
+            reference_document_version=ref_doc_version,
+        )
+        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory(
+            reference_document_version=ref_doc_version,
+        )
 
         data = {
-            "main_order_number_id": pref_quota_order_number_main.id,
+            "main_order_number": pref_quota_order_number_main.id,
             "quota_order_number": pref_quota_order_number.quota_order_number,
             "valid_between": pref_quota_order_number.valid_between,
         }

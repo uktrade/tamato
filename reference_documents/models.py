@@ -65,7 +65,6 @@ class ReferenceDocumentVersion(models.Model):
     )
 
     class Meta:
-        # TODO: Add violation_error_message to this constraint once we have Django 4.1
         constraints = [
             models.UniqueConstraint(
                 fields=["version", "reference_document"],

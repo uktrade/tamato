@@ -35,7 +35,7 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
         self.fields["title"].help_text = (
             "For example: 'Reference document for XX' where XX is the area ID"
         )
-        self.fields["area_id"].help_text = "Two character ID for the area referenced"
+        self.fields["area_id"].help_text = "ID for the area referenced"
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL

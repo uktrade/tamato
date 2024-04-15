@@ -1,6 +1,3 @@
-from decimal import Decimal
-from decimal import InvalidOperation
-
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
@@ -10,6 +7,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from common.forms import ValidityPeriodForm
+from quotas.validators import quota_order_number_validator
 from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialQuotaOrderNumber
 
@@ -52,24 +50,10 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
             ),
         )
 
-    def clean_coefficient(self):
-        coefficient = self.cleaned_data["coefficient"]
-
-        if coefficient == "" or coefficient is None:
-            return None
-
-        try:
-            coefficient = Decimal(coefficient)
-            return coefficient
-        except InvalidOperation:
-            raise ValidationError(
-                "Coefficient is not a valid number",
-            )
-
     def clean(self):
         cleaned_data = super().clean()
         coefficient = cleaned_data.get("coefficient")
-        main_order_number_id = cleaned_data.get("main_order_number_id")
+        main_order_number_id = cleaned_data.get("main_order_number")
 
         # cant have one without the other
         if coefficient and not main_order_number_id:
@@ -97,7 +81,7 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
     quota_order_number = forms.CharField(
         label="Order number",
         help_text="Enter a six digit number",
-        validators=[],
+        validators=[quota_order_number_validator],
         error_messages={
             "invalid": "Quota order number is invalid",
             "required": "Quota order number is required",
@@ -110,18 +94,18 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         ),
     )
 
-    coefficient = forms.CharField(
+    coefficient = forms.DecimalField(
         label="Coefficient",
         help_text="Enter a decimal number",
         validators=[],
         required=False,
         error_messages={
-            "invalid": "Coefficient is invalid",
+            "invalid": "Coefficient is not a valid number",
         },
         widget=forms.TextInput(attrs={"style": "max-width: 6em"}),
     )
 
-    main_order_number_id = forms.ModelChoiceField(
+    main_order_number = forms.ModelChoiceField(
         label="Main order number",
         help_text="Select a main order number",
         queryset=PreferentialQuotaOrderNumber.objects.all(),

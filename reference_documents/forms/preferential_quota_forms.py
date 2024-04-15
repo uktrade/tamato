@@ -45,6 +45,10 @@ class PreferentialQuotaCreateUpdateForm(
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self.fields["end_date"].help_text = ""
+        self.fields["preferential_quota_order_number"].help_text = (
+            "If the quota order number does not appear, you must first create it for this reference document version."
+        )
 
         if preferential_quota_order_number:
             self.initial["preferential_quota_order_number"] = (
@@ -88,28 +92,12 @@ class PreferentialQuotaCreateUpdateForm(
             ),
         )
 
-    def clean_quota_duty_rate(self):
-        error_message = "Quota duty rate is not valid - it must have a value"
-
-        if "quota_duty_rate" in self.cleaned_data.keys():
-            data = self.cleaned_data["quota_duty_rate"]
-            if len(data) < 1:
-                raise ValidationError(error_message)
-        else:
-            raise ValidationError(error_message)
-
-        return data
-
     def clean_preferential_quota_order_number(self):
-        error_message = "Quota order number is not valid - it must have a value"
+        error_message = "Quota order number is required"
 
-        if "preferential_quota_order_number" in self.cleaned_data.keys():
-            data = self.cleaned_data["preferential_quota_order_number"]
-            if not data:
-                raise ValidationError(error_message)
-        else:
+        data = self.cleaned_data.get("preferential_quota_order_number")
+        if not data:
             raise ValidationError(error_message)
-
         return data
 
     commodity_code = forms.CharField(
@@ -124,28 +112,15 @@ class PreferentialQuotaCreateUpdateForm(
 
     quota_duty_rate = forms.CharField(
         help_text="Quota duty rate",
-        validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
             "required": "Duty rate is required",
         },
     )
 
-    quota_order_number = forms.ModelChoiceField(
-        label="Quota order number",
-        help_text="Select Quota order number",
-        queryset=PreferentialQuotaOrderNumber.objects.all(),
-        validators=[],
-        error_messages={
-            "invalid": "Quota order number is invalid",
-        },
-        required=False,
-        widget=forms.Select(attrs={"class": "form-control"}),
-    )
-
-    volume = forms.CharField(
+    volume = forms.DecimalField(
         help_text="Volume",
-        validators=[],
+        widget=forms.TextInput(),
         error_messages={
             "invalid": "Volume invalid",
             "required": "Volume is required",
@@ -154,7 +129,6 @@ class PreferentialQuotaCreateUpdateForm(
 
     measurement = forms.CharField(
         help_text="Measurement",
-        validators=[],
         error_messages={
             "invalid": "Measurement invalid",
             "required": "Measurement is required",
@@ -236,11 +210,12 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
             required=True,
         )
         self.fields["end_date_0"] = DateInputFieldFixed(label="End date", required=True)
-        self.fields["volume_0"] = forms.CharField(
+        self.fields["volume_0"] = forms.DecimalField(
             error_messages={
                 "invalid": "Volume invalid",
                 "required": "Volume is required",
             },
+            widget=forms.TextInput(),
             help_text="<br>",
         )
         # Add frontend dynamically added fields to the backend Django form
@@ -264,8 +239,9 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
                 label="End date",
             )
             self.fields[f"valid_between_{index}"] = GovukDateRangeField()
-            self.fields[f"volume_{index}"] = forms.CharField(
+            self.fields[f"volume_{index}"] = forms.DecimalField(
                 label="Volume",
+                widget=forms.TextInput(),
                 help_text="<br>",
             )
         self.fields["preferential_quota_order_number"].queryset = (
