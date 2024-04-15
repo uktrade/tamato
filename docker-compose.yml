@@ -1,5 +1,7 @@
 version: "3"
 services:
+
+  # Database instance.
   db:
     image: "postgres:12.8"
     environment:
@@ -18,18 +20,21 @@ services:
       timeout: 5s
       retries: 5
 
+  # Redis instance used as a Django cache store.
   cache-redis:
     image: redis
     ports:
       - "127.0.0.1:6379:6379"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
 
+  # Redis instance used as Celery's broker instance.
   celery-redis:
     image: redis
     ports:
       - "127.0.0.1:6378:6379"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
 
+  # General purpose Celery worker - notifications, publishing and sqlite snapshots.
   celery:
     build:
       context: .
@@ -47,6 +52,7 @@ services:
     depends_on:
       - celery-redis
 
+  # Celery worker used to execute business rule checks on workbaskets.
   rule-check-celery:
     build:
       context: .
@@ -54,7 +60,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: sh -c "celery -A common.celery worker -O fair -l info -Q rule-check"
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q rule-check --concurrency 1"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -64,6 +70,25 @@ services:
     depends_on:
       - celery-redis
 
+  # Celery worker for bulk creating and editing of objects.
+  bulk-create-celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q bulk-create --concurrency 1"
+    env_file: 
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stdin_open: true
+    tty: true
+    depends_on:
+      - celery-redis
+
+  # Celery worker used to execute importer parser and objection creation.
   importer-celery:
     build:
       context: .
@@ -79,6 +104,7 @@ services:
     depends_on:
       - celery-redis
 
+  # Celery Beat process, used to execute scheduled, cron-like tasks.
   celery-beat:
     build:
       context: .
@@ -96,6 +122,7 @@ services:
     depends_on:
       - celery-redis
 
+  # Minio object store instance providing S3-like APIs and capabilities.
   s3:
     image: minio/minio
     ports:
@@ -106,17 +133,14 @@ services:
     env_file: .env
     entrypoint: sh
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    command:
-      [
-        "-c",
-        'mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"',
-      ]
+    command: -c "mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ':9001'"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
 
+  # Web application process.
   tamato:
     build:
       context: .
