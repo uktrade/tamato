@@ -1,7 +1,7 @@
 version: "3"
 services:
   db:
-    image: "postgres:16"
+    image: "postgres:12.8"
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
@@ -153,7 +153,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: tamato
     ports:
-      # Map a port to allow useful connections from the host, e.g.:
+      # Map a port from the host to allow inspection via DB clients, e.g.:
       # $ psql --host=127.0.0.1 --port=5430 --username=postgres --dbname=tamato
       - "127.0.0.1:5430:5432"
 
