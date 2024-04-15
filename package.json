@@ -45,16 +45,18 @@
     "heroku-postbuild": "npm run build",
     "test": "jest",
     "lint:js": "npx eslint --ext .jsx,.js",
-    "lint:js:fix": "npx eslint --ext .jsx,.js --fix"
+    "lint:js:fix": "npx eslint --ext .jsx,.js --fix",
+    "lint-staged": "lint-staged --verbose"
   },
   "lint-staged": {
-    "stash": false,
     "*.{js,jsx}": [
       "eslint --fix",
       "prettier --write"
     ]
   },
-  "pre-commit": "lint-staged",
+  "pre-commit": [
+    "lint-staged"
+  ],
   "devDependencies": {
     "@testing-library/jest-dom": "^6.2.1",
     "@testing-library/react": "^14.1.2",
