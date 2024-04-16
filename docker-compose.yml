@@ -81,7 +81,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "bulk-create", "--concurrency", "1"]
+    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "importer", "--concurrency", "1"]
     env_file:
       - .env
       - settings/envs/docker.env
