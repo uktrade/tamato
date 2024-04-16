@@ -1,4 +1,5 @@
 import csv
+import re
 
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
@@ -92,6 +93,11 @@ def export_report_to_csv(request, report_slug, current_tab=None):
         # For table reports
         writer.writerow([header["text"] for header in headers])
         for row in rows:
+            for column in row:
+                if str(column["text"]).startswith("<a"):
+                    match = re.search(r">(.*?)<", column["text"])
+                    if match:
+                        column["text"] = match.group(1)
             writer.writerow([column["text"] for column in row])
     else:
         writer.writerow(["Date", "Data"])
