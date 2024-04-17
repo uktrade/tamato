@@ -17,7 +17,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-from backports.zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo
 from dateutil.parser import parse as parse_date
 from dateutil.relativedelta import relativedelta
 from django import forms
