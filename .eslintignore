@@ -1,2 +1,6 @@
+htmlcov/
 public/
 node_modules/*
+run/
+static/webpack_bundles
+venv/
