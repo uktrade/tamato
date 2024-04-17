@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
 
   # Database instance.
@@ -42,10 +42,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command:
-      [
-        "celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "standard"
-      ]
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q standard"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -63,8 +60,26 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "rule-check", "--concurrency", "1"]
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q rule-check --concurrency 1"
     env_file:
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stdin_open: true
+    tty: true
+    depends_on:
+      - celery-redis
+
+  # Celery worker for bulk creating and editing of objects.
+  bulk-create-celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q bulk-create --concurrency 1"
+    env_file: 
       - .env
       - settings/envs/docker.env
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
@@ -81,14 +96,13 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "bulk-create", "--concurrency", "1"]
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q importer --concurrency 1"
     env_file:
       - .env
       - settings/envs/docker.env
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     depends_on:
       - celery-redis
-
 
   # Celery Beat process, used to execute scheduled, cron-like tasks.
   celery-beat:
@@ -98,7 +112,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"beat", "-l", "info"]
+    command: sh -c "celery -A common.celery beat -l info"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -119,7 +133,7 @@ services:
     env_file: .env
     entrypoint: sh
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    command: ['-c', 'mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
+    command: -c "mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ':9001'"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
@@ -139,14 +153,46 @@ services:
       - "127.0.0.1:8000:8000"
     depends_on:
       - db
-      - s3
       - cache-redis
       - celery-redis
+      - celery
+      - rule-check-celery
+      - importer-celery
+      #- celery-beat # Normally only required in production environments.
+      - s3
     env_file:
       - .env
       - settings/envs/docker.env
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stdin_open: true
+    tty: true
+
+  pytest-db:
+    # With no persistent volume, it's possible to clear the database contents by
+    # simply stopping this service: docker-compose stop pytest-db.
+    image: "postgres:16"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+      POSTGRES_USER: postgres
+      POSTGRES_DB: tamato
+    ports:
+      # Map a port from the host to allow inspection via DB clients, e.g.:
+      # $ psql --host=127.0.0.1 --port=5430 --username=postgres --dbname=tamato
+      - "127.0.0.1:5430:5432"
+
+  pytest:
+    build:
+      context: .
+      dockerfile: Dockerfile.pytest
+    image: pytest
+    depends_on:
+      - pytest-db
+    environment:
+      DATABASE_URL: postgres://postgres@pytest-db/tamato
+      DJANGO_SETTINGS_MODULE: settings.test
+      ENV: test
+    command: sh -c "python manage.py migrate && pytest"
     stdin_open: true
     tty: true
 

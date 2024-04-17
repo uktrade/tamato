@@ -35,7 +35,10 @@ class Report(ReportBaseTable):
             {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
             {"text": row.valid_between.lower},
             {"text": row.valid_between.upper},
-            {"text": origin for origin in row.order_number.origins.all()},
+            {
+                "text": self.link_renderer_for_quota_origin(origin)
+                for origin in row.order_number.origins.all()
+            },
         ]
 
     def rows(self) -> [[dict]]:
@@ -132,7 +135,10 @@ class Report(ReportBaseTable):
                         "#definition-details",
                     ),
                 },
-                {"text": origin for origin in row.order_number.origins.all()},
+                {
+                    "text": self.link_renderer_for_quota_origin(origin)
+                    for origin in row.order_number.origins.all()
+                },
             )
 
         return sub_quotas_array
@@ -205,7 +211,10 @@ class Report(ReportBaseTable):
                     "#definition-details",
                 ),
             },
-            {"text": origin for origin in row.order_number.origins.all()},
+            {
+                "text": self.link_renderer_for_quota_origin(origin)
+                for origin in row.order_number.origins.all()
+            },
         ]
 
     def rows3(self) -> [[dict]]:
@@ -281,7 +290,10 @@ class Report(ReportBaseTable):
                     "#definition-details",
                 ),
             },
-            {"text": origin for origin in row.order_number.origins.all()},
+            {
+                "text": self.link_renderer_for_quota_origin(origin)
+                for origin in row.order_number.origins.all()
+            },
         ]
 
     def rows4(self) -> [[dict]]:
