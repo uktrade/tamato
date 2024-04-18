@@ -2,7 +2,7 @@
 ###############
 # Build on Python-based image using default target platform (TARGETPLATFORM).
 
-FROM python:3.10-bookworm
+FROM python:3.9-bookworm
 
 ARG TARGETPLATFORM
 RUN echo "Building for ${TARGETPLATFORM} platform..."

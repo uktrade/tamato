@@ -12,7 +12,7 @@
 
 ############################################################
 
-FROM python:3.10-bookworm
+FROM python:3.9-bookworm
 
 LABEL maintainer="webops@digital.trade.gov.uk"
 
