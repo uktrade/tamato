@@ -20,7 +20,24 @@ from reference_documents.views.preferential_rate_views import PreferentialRateBu
 from reference_documents.views.preferential_rate_views import PreferentialRateCreate
 from reference_documents.views.preferential_rate_views import PreferentialRateDelete
 from reference_documents.views.preferential_rate_views import PreferentialRateEdit
-from reference_documents.views.reference_document_version_views import ReferenceDocumentVersionConfirmCreate, ReferenceDocumentVersionChangeStateToPublished,    ReferenceDocumentVersionChangeStateToInReview, ReferenceDocumentVersionChangeStateToEditable
+from reference_documents.views.reference_document_version_views import (
+    ReferenceDocumentVersionChangeStateToEditable,
+)
+from reference_documents.views.reference_document_version_views import (
+    ReferenceDocumentVersionChangeStateToInReview,
+)
+from reference_documents.views.reference_document_version_views import (
+    ReferenceDocumentVersionChangeStateToPublished,
+)
+from reference_documents.views.reference_document_version_views import (
+    ReferenceDocumentVersionCheck,
+)
+from reference_documents.views.reference_document_version_views import (
+    ReferenceDocumentVersionCheckResults,
+)
+from reference_documents.views.reference_document_version_views import (
+    ReferenceDocumentVersionConfirmCreate,
+)
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionConfirmDelete,
 )
@@ -151,6 +168,16 @@ urlpatterns = [
         "reference_document_versions/<deleted_pk>/confirm-delete/",
         ReferenceDocumentVersionConfirmDelete.as_view(),
         name="version-confirm-delete",
+    ),
+    path(
+        "reference_document_versions/<pk>/checks/",
+        ReferenceDocumentVersionCheck.as_view(),
+        name="version-checks",
+    ),
+    path(
+        "reference_document_versions/<pk>/check-results/",
+        ReferenceDocumentVersionCheckResults.as_view(),
+        name="version-check-results",
     ),
     # Preferential Quotas
     path(

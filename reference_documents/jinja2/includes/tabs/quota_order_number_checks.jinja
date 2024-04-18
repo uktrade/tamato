@@ -1,0 +1,31 @@
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set table_rows = [] %}
+
+{% for object in checks.quota_order_numbers %}
+  {{ table_rows.append([
+    {"html": object.id},
+    {"html": object.preferential_quota_order_number_id},
+    {"html": object.check_name},
+    {"text": object.message},
+    {"text": object.status}
+  ]) or "" }}
+{% endfor %}
+
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+        <h2 class="govuk-heading-l">Details</h2>
+        <p class="govuk-body">Showing quota order number checks.</p>
+        {{ govukTable({
+            "head": [
+                {"text": "Check ID"},
+                {"text": "Quota order number ID"},
+                {"text": "Check name"},
+                {"text": "Message"},
+                {"text": "Status"},
+            ],
+            "rows": table_rows
+            }) }}
+    </div>
+</div>

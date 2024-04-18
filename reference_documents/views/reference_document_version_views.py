@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.views.generic import CreateView
 from django.views.generic import DeleteView
 from django.views.generic import DetailView
+from django.views.generic import ListView
 from django.views.generic import TemplateView
 from django.views.generic import UpdateView
 
@@ -16,9 +17,11 @@ from reference_documents.forms.reference_document_version_forms import (
 from reference_documents.forms.reference_document_version_forms import (
     ReferenceDocumentVersionsCreateUpdateForm,
 )
-from reference_documents.models import PreferentialQuotaOrderNumber, ReferenceDocumentVersionStatus
+from reference_documents.models import AlignmentReportCheck
+from reference_documents.models import PreferentialQuotaOrderNumber
 from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import ReferenceDocumentVersionStatus
 
 
 class ReferenceDocumentVersionContext:
@@ -30,11 +33,11 @@ class ReferenceDocumentVersionContext:
 
     @staticmethod
     def get_tap_order_number(
-            ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
+        ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
     ):
         if (
-                ref_doc_quota_order_number.reference_document_version.entry_into_force_date
-                is not None
+            ref_doc_quota_order_number.reference_document_version.entry_into_force_date
+            is not None
         ):
             contains_date = (
                 ref_doc_quota_order_number.reference_document_version.entry_into_force_date
@@ -56,8 +59,8 @@ class ReferenceDocumentVersionContext:
 
     @staticmethod
     def get_tap_comm_code(
-            ref_doc_version: ReferenceDocumentVersion,
-            comm_code: str,
+        ref_doc_version: ReferenceDocumentVersion,
+        comm_code: str,
     ):
         if ref_doc_version.entry_into_force_date is not None:
             contains_date = ref_doc_version.entry_into_force_date
@@ -95,7 +98,7 @@ class ReferenceDocumentVersionContext:
     def duties_row_data(self):
         rows = []
         for (
-                preferential_rate
+            preferential_rate
         ) in self.reference_document_version.preferential_rates.order_by(
             "commodity_code",
         ):
@@ -109,11 +112,13 @@ class ReferenceDocumentVersionContext:
             else:
                 comm_code_link = f"{preferential_rate.commodity_code}"
 
-            actions = '<span></span>'
+            actions = "<span></span>"
 
             if self.reference_document_version.editable():
-                actions = f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> | " \
-                          f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>"
+                actions = (
+                    f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> | "
+                    f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>"
+                )
 
             rows.append(
                 [
@@ -127,7 +132,7 @@ class ReferenceDocumentVersionContext:
                         "text": preferential_rate.valid_between,
                     },
                     {
-                        "html": actions
+                        "html": actions,
                     },
                 ],
             )
@@ -136,7 +141,7 @@ class ReferenceDocumentVersionContext:
     def quotas_data_orders_and_rows(self):
         data = {}
         for (
-                ref_doc_order_number
+            ref_doc_order_number
         ) in self.reference_document_version.preferential_quota_order_numbers.order_by(
             "quota_order_number",
         ):
@@ -161,7 +166,7 @@ class ReferenceDocumentVersionContext:
     def order_number_rows(self, data, ref_doc_order_number):
         # Add Data Rows
         for quota in ref_doc_order_number.preferential_quotas.order_by(
-                "commodity_code",
+            "commodity_code",
         ):
             comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
                 quota.preferential_quota_order_number.reference_document_version,
@@ -172,11 +177,13 @@ class ReferenceDocumentVersionContext:
             else:
                 comm_code_link = f"{quota.commodity_code}"
 
-            actions = '<span></span>'
+            actions = "<span></span>"
 
             if self.reference_document_version.editable():
-                actions = f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> | " \
-                          f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>"
+                actions = (
+                    f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> | "
+                    f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>"
+                )
 
             row_to_add = [
                 {
@@ -197,8 +204,8 @@ class ReferenceDocumentVersionContext:
             ]
 
             data[ref_doc_order_number.quota_order_number]["data_rows"].append(
-            row_to_add,
-        )
+                row_to_add,
+            )
 
 
 class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
@@ -331,10 +338,11 @@ class ReferenceDocumentVersionConfirmDelete(TemplateView):
         return context_data
 
 
-class ReferenceDocumentVersionChangeStateToInReview(PermissionRequiredMixin, DetailView):
-    template_name = (
-        "reference_documents/reference_document_versions/confirm_state_to_in_review.jinja"
-    )
+class ReferenceDocumentVersionChangeStateToInReview(
+    PermissionRequiredMixin,
+    DetailView,
+):
+    template_name = "reference_documents/reference_document_versions/confirm_state_to_in_review.jinja"
     model = ReferenceDocumentVersion
     permission_required = "reference_documents.change_referencedocumentversion"
 
@@ -355,10 +363,11 @@ class ReferenceDocumentVersionChangeStateToInReview(PermissionRequiredMixin, Det
         return super().get(request, *args, **kwargs)
 
 
-class ReferenceDocumentVersionChangeStateToPublished(PermissionRequiredMixin, DetailView):
-    template_name = (
-        "reference_documents/reference_document_versions/confirm_state_to_published.jinja"
-    )
+class ReferenceDocumentVersionChangeStateToPublished(
+    PermissionRequiredMixin,
+    DetailView,
+):
+    template_name = "reference_documents/reference_document_versions/confirm_state_to_published.jinja"
     model = ReferenceDocumentVersion
     permission_required = "reference_documents.change_referencedocumentversion"
 
@@ -379,10 +388,11 @@ class ReferenceDocumentVersionChangeStateToPublished(PermissionRequiredMixin, De
         return super().get(request, *args, **kwargs)
 
 
-class ReferenceDocumentVersionChangeStateToEditable(PermissionRequiredMixin, DetailView):
-    template_name = (
-        "reference_documents/reference_document_versions/confirm_state_to_editable.jinja"
-    )
+class ReferenceDocumentVersionChangeStateToEditable(
+    PermissionRequiredMixin,
+    DetailView,
+):
+    template_name = "reference_documents/reference_document_versions/confirm_state_to_editable.jinja"
     model = ReferenceDocumentVersion
     permission_required = "reference_documents.change_referencedocumentversion"
 
@@ -409,3 +419,42 @@ class ReferenceDocumentVersionChangeStateToEditable(PermissionRequiredMixin, Det
             rdv.save(force_save=True)
 
         return super().get(request, *args, **kwargs)
+
+
+class ReferenceDocumentVersionCheck(DetailView):
+    template_name = "reference_documents/reference_document_versions/checks.jinja"
+    model = ReferenceDocumentVersion
+
+
+class ReferenceDocumentVersionCheckResults(ListView):
+    model = AlignmentReportCheck
+    template_name = (
+        "reference_documents/reference_document_versions/check_results.jinja"
+    )
+    context_object_name = "checks"
+
+    @property
+    def reference_document_version(self) -> ReferenceDocumentVersion:
+        return ReferenceDocumentVersion.objects.all().get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["reference_document_version"] = self.reference_document_version
+        return context
+
+    def get_queryset(self):
+        alignment_checks = AlignmentReportCheck.objects.all().filter(
+            alignment_report__reference_document_version=self.reference_document_version,
+        )
+        queryset = {
+            "preferential_rates": alignment_checks.filter(
+                preferential_rate__isnull=False,
+            ),
+            "preferential_quotas": alignment_checks.filter(
+                preferential_quota__isnull=False,
+            ),
+            "quota_order_numbers": alignment_checks.filter(
+                preferential_quota_order_number__isnull=False,
+            ),
+        }
+        return queryset

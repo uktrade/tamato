@@ -1,0 +1,67 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{% set page_title = "Reference document " ~ object.reference_document.area_id ~ " version " ~ object.version ~ " check" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
+    {"text": "Version " ~ object.version, "href": url("reference_documents:version-details", kwargs={"pk":object.pk})},
+    {"text": page_title},
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+<h2 class="govuk-heading-m">Run check against TAP data</h2>
+<p class=govuk-body>Run a check to see how this reference document's data compares to the data held in TAP. Any discrepancies will be flagged.</p>
+<a href="#" class="govuk-button govuk-button--primary">
+            Run check
+</a>
+<p class="govuk-body govuk-!-font-weight-bold" style="float:right">
+      Last Run: (16 Apr 2024 09:47)
+    </p>
+<h2 class="govuk-heading-m">Latest check results</h2>
+{% set table_rows = [
+    [
+        {"text": "Preferential rates"},
+        {"text": object.preferential_rates.count() },
+        {"text": "xxx"},
+        {"text": "%"}
+    ],
+    [
+        {"text": "Quota order numbers"},
+        {"text": object.preferential_quota_order_numbers.count() },
+        {"text": "yyy"},
+        {"text": "%"}
+        ],
+
+    [
+        {"text": "Preferential quotas"},
+        {"text": object.preferential_quotas().count()},
+        {"text": "qqq"},
+        {"text": "%"}
+        ]] %}
+
+{{ govukTable({
+    "firstCellIsHeader": true,
+    "head": [
+        {"text": "Object"},
+        {"text": "Total"},
+        {"text": "Found in TAP"},
+        {"text": "Pass rate"},
+    ],
+    "rows": table_rows
+}) }}
+
+<p class=govuk-body>View results in further detail to see discrepancies.</p>
+<a href="{{ url('reference_documents:version-check-results', kwargs={"pk": object.pk}) }}" class="govuk-button govuk-button--secondary">
+            View results
+</a>
+
+{% endblock %}
