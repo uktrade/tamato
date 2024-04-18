@@ -45,8 +45,12 @@
   },
 ]%}
 
-{% set button_image -%}
-  <img src="{{ static('common/images/mdi_refresh.svg') }}" alt="refresh filter results">
+{% set refresh_button_content -%}
+  Refresh
+  <img
+    src="{{ static('common/images/mdi_refresh.svg') }}"
+    alt="refresh filter results"
+  >
 {%- endset %}
 
 {% block content %}
@@ -62,9 +66,9 @@
       </div>
 
       {{ govukButton({
-            "html": "Refresh "~button_image,
+            "html": refresh_button_content,
             "href": url("measure-create-process-queue"),
-            "classes": "govuk-button--primary align-right govuk-!-margin-bottom-0",
+            "classes": "govuk-button--primary align-right govuk-!-margin-bottom-0 refresh-button",
       }) }}
     </nav>
   </div>
