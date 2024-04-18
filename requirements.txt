@@ -69,6 +69,10 @@ sentry-sdk==0.20.2
 sphinxcontrib-applehelp==1.0.4
 sphinxcontrib.devhelp==1.0.2
 sphinxcontrib.htmlhelp==2.0.1
+sphinxcontrib-jquery==4.1
+sphinxcontrib-jsmath==1.0.0
+sphinxcontrib-qthelp==1.0.5
+sphinxcontrib-serializinghtml==1.1.5
 Sphinx==4.2.0
 sphinx-gherkindoc==3.6.2
 sqlite-s3vfs==0.0.35
