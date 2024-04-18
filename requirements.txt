@@ -49,7 +49,7 @@ moto==2.1.0
 notifications-python-client==6.4.1
 openpyxl==3.0.7
 parsec==3.8
-psycopg2-binary==2.9.*
+psycopg-binary==3.*
 py_w3c==0.3.1
 pygments>=2.8
 pytest==7.1.2

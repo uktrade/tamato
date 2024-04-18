@@ -9,7 +9,7 @@ from django.db import models
 from django.db.models.expressions import RawSQL
 from django.forms import ModelChoiceField
 from django.urls import reverse_lazy
-from psycopg2.extras import DateRange
+from psycopg.types.range import DateRange
 
 from common import validators
 from common.util import TaricDateRange
