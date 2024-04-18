@@ -16,7 +16,7 @@
     {%- endset %}
 
     {% set submitted_by -%}
-        {{ object.user.get_displayname() }}
+        {{ object.user and object.user.get_displayname() or "Unknown" }}
     {%- endset %}
 
     {% set object_status -%}
