@@ -1,0 +1,62 @@
+
+###############
+# Build on Python-based image using default target platform (TARGETPLATFORM).
+
+FROM python:3.8
+
+ARG TARGETPLATFORM
+RUN echo "Building for ${TARGETPLATFORM} platform..."
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Note: Set the ENV and DJANGO_SETTINGS_MODULE env vars via docker compose to
+# permit flexible image use.
+
+###############
+# Install OS packages.
+
+RUN apt-get update -qqy --fix-missing && \
+    apt-get install -qqy --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    curl \
+    g++ \
+    git \
+    libmagic1 \
+    postgresql-client
+
+###############
+# Download and setup Node.
+
+ENV NODE_VERION="v20.10.0"
+ENV NODE_NAME="node-${NODE_VERION}-linux-arm64"
+
+RUN curl "https://nodejs.org/dist/${NODE_VERION}/${NODE_NAME}.tar.gz" -O
+RUN tar xzf "${NODE_NAME}.tar.gz"
+RUN ln -s "/${NODE_NAME}/bin/node" /usr/local/bin/node
+RUN ln -s "/${NODE_NAME}/bin/npm" /usr/local/bin/npm
+RUN ln -s "/${NODE_NAME}/bin/npx" /usr/local/bin/npx
+
+###############
+# Install Node packages and Python packages.
+
+WORKDIR /app
+
+COPY package.json /app/
+COPY package-lock.json /app/
+RUN npm install
+
+COPY requirements.txt /app/
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt --no-warn-script-location 
+
+COPY . /app/
+
+###############
+# Build static assets.
+
+RUN npm run build
+RUN python manage.py collectstatic --noinput
+
+CMD ["pytest"]

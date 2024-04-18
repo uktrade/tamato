@@ -10,4 +10,6 @@ applications:
         memory: 4G
       - type: rule-check-worker
         memory: 6G
+      - type: bulk-create
+        memory: 6G
     stack: cflinuxfs4
