@@ -573,7 +573,11 @@ class MeasureForm(
         duty_sentence = self.cleaned_data["duty_sentence"]
         valid_between = self.initial.get("valid_between")
         if duty_sentence and valid_between is not None:
-            validate_duties(duty_sentence, valid_between.lower)
+            duty_sentence_parser = LarkDutySentenceParser(date=valid_between.lower)
+            try:
+                duty_sentence_parser.transform(duty_sentence)
+            except (SyntaxError, ValidationError) as e:
+                raise ValidationError(e)
 
         return duty_sentence
 
