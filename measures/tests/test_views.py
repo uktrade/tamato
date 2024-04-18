@@ -1162,7 +1162,7 @@ def test_measure_form_wizard_start(client_with_current_workbasket):
 
 
 @unittest.mock.patch("measures.parsers.DutySentenceParser")
-@unittest.mock.patch("measures.duty_sentence_parser.DutySentenceParser")
+@unittest.mock.patch("measures.forms.LarkDutySentenceParser")
 def test_measure_form_wizard_finish(
     mock_lark_duty_sentence_parser,
     mock_duty_sentence_parser,
