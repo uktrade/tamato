@@ -1946,6 +1946,13 @@ object the first time, the query is executed.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="common.models.User.get_displayname">
+<span class="sig-name descname"><span class="pre">get_displayname</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/common/models/user.html#User.get_displayname"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.User.get_displayname" title="Permalink to this definition">¶</a></dt>
+<dd><p>Best effort at getting a useful representation of a User’s name for
+general display purposes.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="common.models.User.get_next_by_date_joined">
 <span class="sig-name descname"><span class="pre">get_next_by_date_joined</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*</span></em>, <em class="sig-param"><span class="pre">field=&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">date_joined&gt;</span></em>, <em class="sig-param"><span class="pre">is_next=True</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#common.models.User.get_next_by_date_joined" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -2031,6 +2038,21 @@ object the first time, the query is executed.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.User.logentry_set">
 <span class="sig-name descname"><span class="pre">logentry_set</span></span><a class="headerlink" href="#common.models.User.logentry_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;children&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_forward_many_to_many_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="common.models.User.measuresbulkcreator_set">
+<span class="sig-name descname"><span class="pre">measuresbulkcreator_set</span></span><a class="headerlink" href="#common.models.User.measuresbulkcreator_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Accessor to the related objects manager on the reverse side of a
 many-to-one relation.</p>
 <p>In the example:</p>

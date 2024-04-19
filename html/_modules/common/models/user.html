@@ -147,7 +147,13 @@
 <div class="viewcode-block" id="User.remove_current_workbasket"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.User.remove_current_workbasket">[docs]</a>    <span class="k">def</span> <span class="nf">remove_current_workbasket</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove the user&#39;s assigned current workbasket.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_workbasket</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="User.get_displayname"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.User.get_displayname">[docs]</a>    <span class="k">def</span> <span class="nf">get_displayname</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Best effort at getting a useful representation of a User&#39;s name for</span>
+<span class="sd">        general display purposes.&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_full_name</span><span class="p">()</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">email</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
 </pre></div>
 
 
