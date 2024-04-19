@@ -182,7 +182,7 @@ browse and make changes to the UK Global Tariff, and submit these changes to HMR
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
 <p>The following dependencies are required to run this app:</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://python.org/">Python</a> 3.8.x</p></li>
+<li><p><a class="reference external" href="https://python.org/">Python</a> 3.9.x</p></li>
 <li><p><a class="reference external" href="https://nodejs.org/">Node.js</a> 20.10.0 (LTS)</p></li>
 <li><p><a class="reference external" href="https://postgresql.org/">PostgreSQL</a> 12</p></li>
 <li><p><a class="reference external" href="https://redis.io/">Redis</a> 5.x</p></li>
@@ -228,7 +228,7 @@ substituting your own python version as appropriate:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>uninstall<span class="w"> </span>psycopg2
 $<span class="w"> </span>brew<span class="w"> </span>install<span class="w"> </span>postgresql
 $<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">CPPFLAGS</span><span class="o">=</span><span class="s2">&quot;-I/opt/homebrew/opt/openssl@1.1/include&quot;</span>
-$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">&quot;-L/opt/homebrew/opt/openssl@1.1/lib -L</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span><span class="s2">/.pyenv/versions/3.8.10/lib&quot;</span>
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">LDFLAGS</span><span class="o">=</span><span class="s2">&quot;-L/opt/homebrew/opt/openssl@1.1/lib -L</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span><span class="s2">/.pyenv/versions/3.9/lib&quot;</span>
 $<span class="w"> </span>arch<span class="w"> </span>-arm64<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>psycopg2<span class="w"> </span>--no-binary<span class="w"> </span>:all:
 </pre></div>
 </div>
