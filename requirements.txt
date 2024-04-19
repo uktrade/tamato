@@ -1,4 +1,4 @@
-aiohttp==3.9.2
+aiohttp==3.9.4
 apsw==3.43.0.0
 allure-pytest-bdd==2.8.40
 api-client==1.3.0
