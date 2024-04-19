@@ -385,9 +385,12 @@ USE_I18N = False
 # Enable localized formatting of numbers and dates
 USE_L10N = False
 
-# Use a consistent TAP date format throughout.
+# Use consistent TAP date and time formats throughout.
 DATE_FORMAT = "%d %b %Y"
-DATE_FORMAT_SHORT = "%d-%m-%Y"
+SHORT_DATE_FORMAT = "%d-%m-%Y"
+TIME_FORMAT = "%H:%M"
+DATETIME_FORMAT = TIME_FORMAT + " " + DATE_FORMAT
+SHORT_DATETIME_FORMAT = TIME_FORMAT + " " + SHORT_DATE_FORMAT
 
 # Language code - ignored unless USE_I18N is True
 LANGUAGE_CODE = "en-gb"
@@ -587,6 +590,9 @@ CELERY_ROUTES = {
     },
     re.compile(r"(exporter|notifications|publishing)\.tasks\..*"): {
         "queue": "standard",
+    },
+    "measures.tasks.bulk_create_measures": {
+        "queue": "bulk-create",
     },
 }
 
@@ -812,5 +818,8 @@ FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
 )  # Order is important
-
 DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "10000"))
+
+
+# Asynchronous / background (bulk) object creation and editing config.
+MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))
