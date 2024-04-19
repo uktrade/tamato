@@ -2,7 +2,7 @@
 ###############
 # Build on Python-based image using default target platform (TARGETPLATFORM).
 
-FROM python:3.8
+FROM python:3.9-bookworm
 
 ARG TARGETPLATFORM
 RUN echo "Building for ${TARGETPLATFORM} platform..."
@@ -58,5 +58,3 @@ COPY . /app/
 
 RUN npm run build
 RUN python manage.py collectstatic --noinput
-
-CMD ["pytest"]
