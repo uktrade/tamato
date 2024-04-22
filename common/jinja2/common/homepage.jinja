@@ -114,6 +114,20 @@
       </article>
     {% endif %}
 
+    {% if can_view_processing_queues %}
+      <article class="homepage-card">
+        <h3 class="govuk-heading-m">Processing queues</h3>
+        <p class="govuk-body">
+          <a href="{{ url('measure-create-process-queue') }}"
+            class="govuk-link"
+          >Measures process queue</a>
+          <br>
+          This queue shows the status of measures that you submitted for
+          creation.
+        </p>
+      </article>
+    {% endif %}
+
     <article class="homepage-card">
       <h3 class="govuk-heading-m">Resources</h3>
       <p class="govuk-body">

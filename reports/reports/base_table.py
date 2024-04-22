@@ -21,6 +21,12 @@ class ReportBaseTable(ReportBase):
             f"<a class='govuk-link govuk-!-font-weight-bold' href='{href}'>{text}</a>",
         )
 
+    def link_renderer_for_quota_origin(self, origin):
+        url = reverse("geo_area-ui-detail", args=[origin.sid])
+        return mark_safe(
+            f"<a class='govuk-link govuk-!-font-weight-bold' href='{url}'>{origin}</a>",
+        )
+
     @abstractmethod
     def query(self):
         pass

@@ -230,6 +230,7 @@ def test_homepage_cards_contain_expected_links(superuser_client):
         "Search for workbaskets": "workbaskets:workbasket-ui-list-all",
         "View EU import list": "commodity_importer-ui-list",
         "Process envelopes": "publishing:envelope-queue-ui-list",
+        "Measures process queue": "measure-create-process-queue",
         "Application information": "app-info",
         "Importer V1": "import_batch-ui-list",
         "Importer V2": "taric_parser_import_ui_list",

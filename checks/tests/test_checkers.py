@@ -60,10 +60,13 @@ def test_indirect_business_rule_validation():
         transaction=model.transaction,
     )
 
-    with add_business_rules(type(model), TestRule), add_business_rules(
-        factories.TestModelDescription1Factory._meta.model,
-        TestRule,
-        indirect=True,
+    with (
+        add_business_rules(type(model), TestRule),
+        add_business_rules(
+            factories.TestModelDescription1Factory._meta.model,
+            TestRule,
+            indirect=True,
+        ),
     ):
         checker_type = IndirectBusinessRuleChecker.of(TestRule)
 
