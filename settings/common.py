@@ -611,7 +611,9 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
-        "asim_formatter":  {"()": ASIMFormatter,},
+        "asim_formatter": {
+            "()": ASIMFormatter,
+        },
     },
     "handlers": {
         "console": {
