@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import pytest
 from psycopg.types.range import Range
-from psycopg.types.range import TimestampRange
+from psycopg.types.range import TimestamptzRange
 # from psycopg._range import DateTimeTZRange
 # Change to timestamp range and check if tests pass. Use range if that doesn't work in the tests. 
 
@@ -137,7 +137,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         update_type=UpdateType.CREATE,
         transaction=transaction,
         version_group=VersionGroup.objects.create(),
-        valid_between=TimestampRange(
+        valid_between=TimestamptzRange(
             date.today() + timedelta(days=-1000),
             date.today() + timedelta(days=1000),
         ),
@@ -152,7 +152,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         regulation_group=new_regulation_group,
         regulation_id="C2100006",
         approved=True,
-        valid_between=TimestampRange(
+        valid_between=TimestamptzRange(
             date.today() + timedelta(days=-1000),
             date.today() + timedelta(days=1000),
         ),
