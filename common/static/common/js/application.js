@@ -23,6 +23,7 @@ import initOpenCloseAccordionSection from "./openCloseAccordion";
 import initTapDebounce from "./buttonDebounce";
 import { setupQuotaOriginFormset } from "./components/QuotaOriginFormset/index";
 import { setupWorkbasketUserAssignment } from "./components/WorkbasketUserAssignment/index";
+import { initMasonry } from "./masonry";
 
 showHideCheckboxes();
 // Initialise accessible-autocomplete components without a `name` attr in order
@@ -40,3 +41,4 @@ initOpenCloseAccordionSection();
 initTapDebounce();
 setupQuotaOriginFormset();
 setupWorkbasketUserAssignment();
+initMasonry();
