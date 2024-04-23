@@ -13,6 +13,7 @@ from pathlib import Path
 import dj_database_url
 from celery.schedules import crontab
 from django.urls import reverse_lazy
+from django_log_formatter_asim import ASIMFormatter
 
 from common.util import is_truthy
 
@@ -610,12 +611,13 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
+        "asim_formatter":  {"()": ASIMFormatter,},
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "default",
+            "formatter": "asim_formatter",
         },
     },
     "loggers": {
