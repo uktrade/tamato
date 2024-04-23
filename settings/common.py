@@ -683,6 +683,8 @@ LOGGING = {
     },
 }
 
+DLFA_INCLUDE_RAW_LOG = True
+
 # -- Sentry error tracking
 
 SENTRY_ENABLED = is_truthy(os.environ.get("SENTRY_DSN", "False"))
