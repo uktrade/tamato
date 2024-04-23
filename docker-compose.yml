@@ -79,7 +79,7 @@ services:
     volumes:
       - ./:/app/
     command: sh -c "celery -A common.celery worker -O fair -l info -Q bulk-create --concurrency 1"
-    env_file: 
+    env_file:
       - .env
       - settings/envs/docker.env
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
