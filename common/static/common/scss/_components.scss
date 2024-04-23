@@ -91,7 +91,7 @@
 
 }
 
-.homepage-card {
+.masonry-card {
   box-sizing: border-box;
   border: 1px solid $govuk-border-colour;
   padding: govuk-spacing(3) govuk-spacing(3) 0;
@@ -101,7 +101,7 @@
 }
 
 @media screen and (min-width: 1063px) {
-  .homepage-card {
+  .masonry-card {
     width: calc(50% - govuk-spacing(6));
   }
 }
