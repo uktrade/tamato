@@ -627,6 +627,11 @@ LOGGING = {
             "handlers": ["console"],
             "level": "WARNING",
         },
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
         "importer": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
