@@ -1,4 +1,4 @@
-web: scripts/entry.sh
+web: scripts/web-worker-entrypoint.sh
 worker: celery -A common.celery worker -O fair -l info -Q standard
 beat: celery -A common.celery beat
 rule-check-worker: celery -A common.celery worker -O fair -l info -Q rule-check --concurrency 1
