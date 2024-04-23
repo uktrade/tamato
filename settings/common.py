@@ -616,39 +616,43 @@ LOGGING = {
         },
     },
     "handlers": {
-        "console": {
-            "level": "DEBUG",
+        "asim": {
             "class": "logging.StreamHandler",
             "formatter": "asim_formatter",
         },
     },
+    "root": {
+        "handlers": ["asim"],
+        "level": "WARNING",
+    },
     "loggers": {
-        "root": {
-            "handlers": ["console"],
-            "level": "WARNING",
-        },
         "django": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
             "propagate": False,
         },
+        "django.server": {
+            "handlers": ["asim"],
+            "level": "INFO",
+            "propagate": False,
+        },
         "importer": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
         "exporter": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
         "commodities": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
         "common": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
@@ -657,27 +661,27 @@ LOGGING = {
             "propagate": DEBUG is True,
         },
         "footnotes": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
         "measures": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
         "checks": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
         "publishing": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
         "workbaskets": {
-            "handlers": ["console"],
+            "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
