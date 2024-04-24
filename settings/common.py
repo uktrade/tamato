@@ -619,6 +619,7 @@ LOGGING = {
         "asim": {
             "class": "logging.StreamHandler",
             "formatter": "asim_formatter",
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
         },
     },
     "root": {
