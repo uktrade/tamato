@@ -1,6 +1,4 @@
-#web: scripts/web-worker-entrypoint.sh
-#web: gunicorn wsgi --bind 0.0.0.0:$PORT --timeout 1000 --worker-class=gevent --worker-connections=1000 --workers 9
-web: sh -c "source /home/vcap/app/scripts/web-worker-entrypoint.sh"
+web: scripts/web-worker-entrypoint.sh
 worker: celery -A common.celery worker -O fair -l info -Q standard
 beat: celery -A common.celery beat
 rule-check-worker: celery -A common.celery worker -O fair -l info -Q rule-check --concurrency 1
