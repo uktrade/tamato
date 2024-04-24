@@ -618,7 +618,7 @@ LOGGING = {
     "handlers": {
         "asim": {
             "class": "logging.StreamHandler",
-            "stream": sys.stdout,
+            "stream": sys.stderr,
             "formatter": "asim_formatter",
             "level": "INFO",
         },
