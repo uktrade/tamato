@@ -618,6 +618,7 @@ LOGGING = {
     "handlers": {
         "asim": {
             "class": "logging.StreamHandler",
+            "stream": sys.stdout,
             "formatter": "asim_formatter",
             "level": "INFO",
         },
@@ -642,51 +643,7 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        "importer": {
-            "handlers": ["asim"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-            "propagate": False,
-        },
-        "exporter": {
-            "handlers": ["asim"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-            "propagate": False,
-        },
-        "commodities": {
-            "handlers": ["asim"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-            "propagate": False,
-        },
-        "common": {
-            "handlers": ["asim"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-            "propagate": False,
-        },
-        "common.paths": {
-            "handlers": [],
-            "propagate": DEBUG is True,
-        },
-        "footnotes": {
-            "handlers": ["asim"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-            "propagate": False,
-        },
-        "measures": {
-            "handlers": ["asim"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-            "propagate": False,
-        },
-        "checks": {
-            "handlers": ["asim"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-            "propagate": False,
-        },
         "publishing": {
-            "handlers": ["asim"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
-            "propagate": False,
-        },
-        "workbaskets": {
             "handlers": ["asim"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
