@@ -628,13 +628,16 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["asim"],
-            # "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
-            "level": "INFO",
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+        },
+        "django.request": {
+            "handlers": ["asim"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
             "propagate": False,
         },
         "django.server": {
             "handlers": ["asim"],
-            "level": "INFO",
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
             "propagate": False,
         },
         "importer": {
