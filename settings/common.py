@@ -624,7 +624,7 @@ LOGGING = {
     },
     "root": {
         "handlers": ["asim"],
-        "level": "WARNING",
+        "level": "INFO",
     },
     "loggers": {
         "django": {
