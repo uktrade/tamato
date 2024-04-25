@@ -616,30 +616,24 @@ LOGGING = {
         },
     },
     "handlers": {
-        "asim": {
+        "console": {
+            "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "stream": sys.stderr,
-            "formatter": "asim_formatter",
+            "formatter": "default",
+        },
+        "asim": {
             "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "asim_formatter",
         },
     },
     "root": {
-        "handlers": ["asim"],
+        "handlers": ["console"],
         "level": "INFO",
     },
     "loggers": {
         "django": {
-            "handlers": ["asim"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.request": {
-            "handlers": ["asim"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.server": {
-            "handlers": ["asim"],
+            "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
         },
@@ -654,6 +648,9 @@ LOGGING = {
         "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
     },
 }
+
+LOGGING["root"]["handlers"] = ["asim"]
+LOGGING["loggers"]["django"]["handlers"] = ["asim"]
 
 DLFA_INCLUDE_RAW_LOG = True
 
