@@ -638,7 +638,51 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "importer": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "exporter": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "commodities": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "common": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "common.paths": {
+            "handlers": [],
+            "propagate": DEBUG is True,
+        },
+        "footnotes": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "measures": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "checks": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
         "publishing": {
+            "handlers": ["console"],
+            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "workbaskets": {
             "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
