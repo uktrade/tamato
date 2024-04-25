@@ -12,6 +12,7 @@ from pathlib import Path
 
 import dj_database_url
 from celery.schedules import crontab
+from dbt_copilot_python.utility import is_copilot
 from django.urls import reverse_lazy
 from django_log_formatter_asim import ASIMFormatter
 
@@ -649,10 +650,12 @@ LOGGING = {
     },
 }
 
-LOGGING["root"]["handlers"] = ["asim"]
-LOGGING["loggers"]["django"]["handlers"] = ["asim"]
+if is_copilot():
 
-DLFA_INCLUDE_RAW_LOG = True
+    LOGGING["root"]["handlers"] = ["asim"]
+    LOGGING["loggers"]["django"]["handlers"] = ["asim"]
+
+    DLFA_INCLUDE_RAW_LOG = True
 
 # -- Sentry error tracking
 
