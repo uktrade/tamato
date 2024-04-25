@@ -639,7 +639,7 @@ LOGGING = {
             "propagate": False,
         },
         "publishing": {
-            "handlers": ["asim"],
+            "handlers": ["console"],
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
