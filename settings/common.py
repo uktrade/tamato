@@ -346,7 +346,11 @@ SQLITE = DB_URL.startswith("sqlite")
 
 CACHE_URL = os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1")
 
-if VCAP_SERVICES.get("redis"):
+# DBT PaaS
+if is_copilot():
+    REDIS_URL = os.getenv("REDIS_URL", default=None) + "?ssl_cert_reqs=required"
+# Govuk PaaS
+elif VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
         if redis_instance["name"] == "DJANGO_CACHE":
             credentials = redis_instance["credentials"]
