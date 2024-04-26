@@ -182,6 +182,15 @@ def test_accessibility_statement_view_returns_200(valid_user_client):
 @override_settings(MAINTENANCE_MODE=True)
 @modify_settings(
     MIDDLEWARE={
+        "remove": [
+            "authbroker_client.middleware.ProtectAllViewsMiddleware",
+            "django.contrib.admin",
+            "django.contrib.sessions.middleware.SessionMiddleware",
+            "django.contrib.auth.middleware.AuthenticationMiddleware",
+            "django.contrib.messages.middleware.MessageMiddleware",
+            "common.models.utils.TransactionMiddleware",
+            "common.models.utils.ValidateUserWorkBasketMiddleware",
+        ],
         "append": "common.middleware.MaintenanceModeMiddleware",
     },
 )
@@ -189,6 +198,9 @@ def test_user_redirect_during_maintenance_mode(valid_user_client):
     response = valid_user_client.get(reverse("home"))
     assert response.status_code == 302
     assert response.url == reverse("maintenance")
+
+    response = valid_user_client.get(response.url)
+    assert response.status_code == 200
 
 
 def test_maintenance_mode_page_content(valid_user_client):
