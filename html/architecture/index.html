@@ -337,13 +337,15 @@ that is not draft is considered to be “current”.</p>
 exists a version of the model in a draft state within a transaction
 preceding (and including) the given transaction in the workbasket of the
 given transaction.</p>
+<p>Excludes versions of the model that have been marked as deleted (<cite>UpdateType.DELETE</cite>).</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="common.models.trackedmodel.TrackedModelQuerySet.latest_approved">
 <span class="sig-name descname"><span class="pre">latest_approved</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#common.models.trackedmodel.TrackedModelQuerySet" title="common.models.tracked_qs.TrackedModelQuerySet"><span class="pre">common.models.tracked_qs.TrackedModelQuerySet</span></a></span></span><a class="reference internal" href="../_modules/common/models/tracked_qs.html#TrackedModelQuerySet.latest_approved"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#common.models.trackedmodel.TrackedModelQuerySet.latest_approved" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get all the latest versions of the model being queried which have been
-approved.</p>
+approved, excluding those that have been marked as deleted
+(<cite>UpdateType.DELETE</cite>).</p>
 <p>This will specifically fetch the most recent approved row pertaining to
 an object. If a row is unapproved, or has subsequently been rejected
 after approval, it should not be included in the returned QuerySet.

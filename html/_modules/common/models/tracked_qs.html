@@ -162,7 +162,8 @@
 <div class="viewcode-block" id="TrackedModelQuerySet.latest_approved"><a class="viewcode-back" href="../../../architecture/index.html#common.models.trackedmodel.TrackedModelQuerySet.latest_approved">[docs]</a>    <span class="k">def</span> <span class="nf">latest_approved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get all the latest versions of the model being queried which have been</span>
-<span class="sd">        approved.</span>
+<span class="sd">        approved, excluding those that have been marked as deleted</span>
+<span class="sd">        (`UpdateType.DELETE`).</span>
 
 <span class="sd">        This will specifically fetch the most recent approved row pertaining to</span>
 <span class="sd">        an object. If a row is unapproved, or has subsequently been rejected</span>
@@ -180,7 +181,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a queryset of approved versions of the model up to the globally</span>
 <span class="sd">        defined current transaction (see ``common.models.utils`` for details of</span>
-<span class="sd">        how this is managed).</span>
+<span class="sd">        how this is managed). Excludes versions of the model that have been</span>
+<span class="sd">        marked as deleted (`UpdateType.DELETE`).</span>
 
 <span class="sd">        If this method is called from within a running instance of the Django</span>
 <span class="sd">        web application (i.e. application middleware has been exectuted), then</span>
@@ -198,10 +200,14 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="TrackedModelQuerySet.approved_up_to_transaction"><a class="viewcode-back" href="../../../architecture/index.html#common.models.trackedmodel.TrackedModelQuerySet.approved_up_to_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">approved_up_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the approved versions of the model being queried, unless there</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the approved versions of the model being queried, unless there</span>
 <span class="sd">        exists a version of the model in a draft state within a transaction</span>
 <span class="sd">        preceding (and including) the given transaction in the workbasket of the</span>
-<span class="sd">        given transaction.&quot;&quot;&quot;</span>
+<span class="sd">        given transaction.</span>
+
+<span class="sd">        Excludes versions of the model that have been marked as deleted (`UpdateType.DELETE`).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">transaction</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_approved</span><span class="p">()</span>
 
