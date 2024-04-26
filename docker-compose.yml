@@ -196,6 +196,9 @@ services:
     stdin_open: true
     tty: true
 
+  cypress:
+    image: cypress/base:latest
+
 volumes:
   tamato-data-volume: {}
   tamato-s3-volume: {}

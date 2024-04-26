@@ -167,3 +167,6 @@ _dumped_cache.pkl
 
 # Database dumps
 *.sql
+
+# Cypress
+cypress/screenshots/
