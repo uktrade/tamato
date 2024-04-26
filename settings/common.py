@@ -320,7 +320,15 @@ STATIC_URL = "/assets/"
 
 # -- Database
 
-if VCAP_SERVICES.get("postgres"):
+# DBT PaaS
+if is_copilot():
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=database_url_from_env("DATABASE_CREDENTIALS")
+        )
+    }
+# Govuk PaaS
+elif VCAP_SERVICES.get("postgres"):
     DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
 else:
     DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
