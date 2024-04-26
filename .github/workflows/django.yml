@@ -57,12 +57,11 @@ jobs:
     #   uses: codecov/codecov-action@v1
 
 
-    - name: Check for missing migrations
+    - name: Running application
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         DJANGO_SETTINGS_MODULE: settings.test
       run: |
-        python manage.py collectstatic
         python manage.py runserver
 
     - name: Cypress run
