@@ -687,10 +687,11 @@ LOGGING = {
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
-    },
-    "celery": {
-        "handlers": ["celery"],
-        "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
+        "celery": {
+            "handlers": ["asim"],
+            "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
     },
 }
 
