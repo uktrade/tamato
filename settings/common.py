@@ -12,7 +12,9 @@ from pathlib import Path
 
 import dj_database_url
 from celery.schedules import crontab
+from dbt_copilot_python.utility import is_copilot
 from django.urls import reverse_lazy
+from django_log_formatter_asim import ASIMFormatter
 
 from common.util import is_truthy
 
@@ -610,6 +612,9 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
+        "asim_formatter": {
+            "()": ASIMFormatter,
+        },
     },
     "handlers": {
         "console": {
@@ -617,11 +622,25 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "default",
         },
+        "asim": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "asim_formatter",
+        },
+        "celery": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
     },
     "loggers": {
-        "root": {
+        "django": {
             "handlers": ["console"],
-            "level": "WARNING",
+            "level": "INFO",
+            "propagate": False,
         },
         "importer": {
             "handlers": ["console"],
@@ -672,12 +691,21 @@ LOGGING = {
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
-    },
-    "celery": {
-        "handlers": ["celery"],
-        "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
+        "celery": {
+            "handlers": ["celery"],
+            "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
     },
 }
+
+if is_copilot():
+
+    LOGGING["root"]["handlers"] = ["asim"]
+    LOGGING["loggers"]["django"]["handlers"] = ["asim"]
+    LOGGING["loggers"]["celery"]["handlers"] = ["asim"]
+
+    DLFA_INCLUDE_RAW_LOG = True
 
 # -- Sentry error tracking
 
