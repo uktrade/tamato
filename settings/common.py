@@ -627,6 +627,10 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "asim_formatter",
         },
+        "celery": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+        },
     },
     "root": {
         "handlers": ["console"],
@@ -688,7 +692,7 @@ LOGGING = {
             "propagate": False,
         },
         "celery": {
-            "handlers": ["asim"],
+            "handlers": ["celery"],
             "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
@@ -699,6 +703,7 @@ if is_copilot():
 
     LOGGING["root"]["handlers"] = ["asim"]
     LOGGING["loggers"]["django"]["handlers"] = ["asim"]
+    LOGGING["loggers"]["celery"]["handlers"] = ["asim"]
 
     DLFA_INCLUDE_RAW_LOG = True
 
