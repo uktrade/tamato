@@ -856,7 +856,7 @@ def test_user_get_displayname():
     )
     assert user.get_displayname() == str(user)
 
-    user.email = "tester@test.com"
+    user.email = "tester@test.com"  # /PS-IGNORE Ignore false positive secret check
 
     assert user.get_displayname() == user.email
 
