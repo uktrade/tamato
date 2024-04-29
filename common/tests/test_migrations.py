@@ -50,7 +50,7 @@ def test_missing_current_version_fix(migrator):
 
     kwargs = {
         "update_type": UpdateType.CREATE,
-        "transaction": transaction,
+        "transaction_id": transaction.id,
         "valid_between": TaricDateRange(date(2000, 1, 1), None),
         "code": "XXX",
         "description": "made up measurement unit",
