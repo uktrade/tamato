@@ -1,7 +1,9 @@
 from datetime import date
 from datetime import datetime
 
+import factory
 import pytest
+from psycopg2._range import DateTimeTZRange
 
 from common.models import TrackedModel
 from common.models.transactions import TransactionPartition
@@ -80,19 +82,56 @@ def test_missing_current_version_fix(migrator):
 
 
 @pytest.mark.django_db()
-def test_timestamp_migration(migrator):
+def test_timestamp_migration(migrator, setup_content_types):
     migrator.reset()
     """Ensures that the initial migration works."""
-    migrator.apply_initial_migration(
+    old_state = migrator.apply_initial_migration(
         ("common", "0009_tracked_model_timestamp"),
     )
 
-    workbasket = factories.WorkBasketFactory.create(
+    ContentType = old_state.apps.get_model("contenttypes", "ContentType")
+    FootnoteType = old_state.apps.get_model("footnotes", "FootnoteType")
+    Transaction = old_state.apps.get_model("common", "Transaction")
+    User = old_state.apps.get_model("common", "User")
+    VersionGroup = old_state.apps.get_model("common", "VersionGroup")
+    Workbasket = old_state.apps.get_model("workbaskets", "WorkBasket")
+
+    setup_content_types(old_state.apps)
+    footnotetype_content_type = ContentType.objects.get(model="footnotetype")
+
+    user = factory.create(User, FACTORY_CLASS=factories.UserFactory)
+    workbasket = factory.create(
+        Workbasket,
+        FACTORY_CLASS=factories.WorkBasketFactory,
+        author=user,
         status=WorkflowStatus.EDITING,
     )
-    transaction = factories.TransactionFactory.create(workbasket=workbasket)
-    trked1 = factories.FootnoteTypeFactory.create(transaction=transaction)
-    trked2 = factories.FootnoteTypeFactory.create(transaction=transaction)
+    transaction = factory.create(
+        Transaction,
+        FACTORY_CLASS=factories.TransactionFactory,
+        workbasket=workbasket,
+    )
+    version_groups = factory.create_batch(
+        VersionGroup,
+        size=2,
+        FACTORY_CLASS=factories.VersionGroupFactory,
+    )
+    trked1 = factory.create(
+        FootnoteType,
+        FACTORY_CLASS=factories.FootnoteTypeFactory,
+        transaction=transaction,
+        version_group=version_groups[0],
+        valid_between=DateTimeTZRange(date.today()),
+        polymorphic_ctype=footnotetype_content_type,
+    )
+    trked2 = factory.create(
+        FootnoteType,
+        FACTORY_CLASS=factories.FootnoteTypeFactory,
+        transaction=transaction,
+        version_group=version_groups[1],
+        valid_between=DateTimeTZRange(date.today()),
+        polymorphic_ctype=footnotetype_content_type,
+    )
 
     assert transaction.created_at
     assert hasattr(trked1, "created_at")
