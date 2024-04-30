@@ -278,7 +278,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")
 ALLOWED_HOSTS = re.split(r"\s|,", os.environ.get("ALLOWED_HOSTS", ""))
 
 # DBT PaaS
-if is_copilot:
+if is_copilot():
     ALLOWED_HOSTS = setup_allowed_hosts(ALLOWED_HOSTS)
 
 # Govuk PaaS
@@ -435,8 +435,22 @@ HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/stagin
 
 # S3 settings for packaging automation.
 
-# TODO
-if VCAP_SERVICES.get("aws-s3-bucket"):
+if is_copilot():
+    IMPORTER_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
+    IMPORTER_S3_ACCESS_KEY_ID = None
+    IMPORTER_S3_SECRET_ACCESS_KEY = None
+    HMRC_PACKAGING_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
+    HMRC_PACKAGING_S3_ACCESS_KEY_ID = None
+    HMRC_PACKAGING_S3_SECRET_ACCESS_KEY = None
+    HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
+        "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
+        "hmrc-packaging",
+    )
+    IMPORTER_STORAGE_BUCKET_NAME = os.environ.get(
+        "IMPORTER_STORAGE_BUCKET_NAME",
+        "importer",
+    )
+elif VCAP_SERVICES.get("aws-s3-bucket"):
     app_bucket_creds = VCAP_SERVICES["aws-s3-bucket"][0]["credentials"]
 
     S3_REGION_NAME = app_bucket_creds["aws_region"]
@@ -513,15 +527,20 @@ CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY = int(
 
 
 # SQLite AWS settings
+if is_copilot():
+    SQLITE_S3_ACCESS_KEY_ID = None
+    SQLITE_S3_SECRET_ACCESS_KEY = None
+else:
+    SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
+        "SQLITE_S3_ACCESS_KEY_ID",
+        "test_sqlite_key_id",
+    )
+    SQLITE_S3_SECRET_ACCESS_KEY = os.environ.get(
+        "SQLITE_S3_SECRET_ACCESS_KEY",
+        "test_sqlite_key",
+    )
+
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
-SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
-    "SQLITE_S3_ACCESS_KEY_ID",
-    "test_sqlite_key_id",
-)
-SQLITE_S3_SECRET_ACCESS_KEY = os.environ.get(
-    "SQLITE_S3_SECRET_ACCESS_KEY",
-    "test_sqlite_key",
-)
 SQLITE_S3_ENDPOINT_URL = os.environ.get(
     "SQLITE_S3_ENDPOINT_URL",
     "https://test-sqlite-url.local/",
@@ -529,8 +548,13 @@ SQLITE_S3_ENDPOINT_URL = os.environ.get(
 SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
 
 # Default AWS settings.
-AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
-AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+if is_copilot():
+    AWS_ACCESS_KEY_ID = None
+    AWS_SECRET_ACCESS_KEY = None
+else:
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
 AWS_PRELOAD_METADATA = False
