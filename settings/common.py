@@ -318,27 +318,28 @@ ROOT_URLCONF = f"urls"
 # URL path where static files are served
 STATIC_URL = "/assets/"
 
+
 # -- Database
+if MAINTENANCE_MODE:
+    DATABASES = {}
 
 # DBT PaaS
-if is_copilot():
+elif is_copilot():
+    DB_URL = dj_database_url.config(default=database_url_from_env("DATABASE_CREDENTIALS"))
     DATABASES = {
-        "default": dj_database_url.config(
-            default=database_url_from_env("DATABASE_CREDENTIALS")
-        )
+        "default": DB_URL
     }
 # Govuk PaaS
 elif VCAP_SERVICES.get("postgres"):
-    DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
-else:
-    DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
-
-if not MAINTENANCE_MODE:
+    DB_URL = dj_database_url.parse(VCAP_SERVICES["postgres"][0]["credentials"]["uri"])
     DATABASES = {
-        "default": dj_database_url.parse(DB_URL),
+        "default": DB_URL
     }
 else:
-    DATABASES = {}
+    DB_URL = dj_database_url.parse(os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato"))
+    DATABASES = {
+        "default": DB_URL
+    }
 
 SQLITE = DB_URL.startswith("sqlite")
 
@@ -347,8 +348,10 @@ SQLITE = DB_URL.startswith("sqlite")
 CACHE_URL = os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1")
 
 # DBT PaaS
+
+# Not sure if this is right, they expose an end point for us so I guess everything else can stay the same? 
 if is_copilot():
-    REDIS_URL = os.getenv("REDIS_URL", default=None) + "?ssl_cert_reqs=required"
+    REDIS_ENDPOINT = os.getenv("REDIS_ENDPOINT", default=None) + "?ssl_cert_reqs=required"
 # Govuk PaaS
 elif VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
@@ -433,6 +436,7 @@ HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/stagin
 
 # S3 settings for packaging automation.
 
+# TODO
 if VCAP_SERVICES.get("aws-s3-bucket"):
     app_bucket_creds = VCAP_SERVICES["aws-s3-bucket"][0]["credentials"]
 
@@ -552,6 +556,11 @@ CROWN_DEPENDENCIES_GET_API_KEY = os.environ.get("CROWN_DEPENDENCIES_GET_API_KEY"
 CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KEY", "")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
+
+# Redis again - maybe copy from above? 
+
+if is_copilot():
+    REDIS_ENDPOINT = os.getenv("REDIS_ENDPOINT", default=None) + "?ssl_cert_reqs=required"
 
 if VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
