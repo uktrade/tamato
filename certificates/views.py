@@ -180,25 +180,18 @@ class CertificateDetailMeasures(SortingMixin, WithPaginationListMixin, ListView)
         )
 
     def get_queryset(self):
-        """
-        Collects the measure from MeasureCondition, filtered on value a
-        Certificate object for Measures associated with that Certificate via
-        MeasureCondition.
+        """Returns the current versions of measures associated to the
+        certificate via `MeasureCondition`."""
 
-        Ensuring it returns the latest version of the associated Measures.
-        """
-        measure_conditions = MeasureCondition.objects.current().filter(
-            required_certificate__version_group=self.certificate.version_group,
+        measure_sids = (
+            MeasureCondition.objects.current()
+            .filter(
+                required_certificate__version_group=self.certificate.version_group,
+            )
+            .values_list("dependent_measure__sid", flat=True)
         )
 
-        measure_ids = []
-
-        for condition in measure_conditions:
-            measure_ids.append(
-                condition.dependent_measure.get_versions().current().get().pk,
-            )
-
-        queryset = Measure.objects.current().filter(id__in=measure_ids)
+        queryset = Measure.objects.filter(sid__in=measure_sids).current()
 
         ordering = self.get_ordering()
         if ordering:

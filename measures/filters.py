@@ -25,6 +25,7 @@ from measures.forms import MeasureFilterForm
 from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureType
+from measures.models.bulk_processing import MeasuresBulkCreator
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
@@ -257,24 +258,27 @@ class MeasureFilter(TamatoFilter):
         return queryset
 
     def certificates_filter(self, queryset, name, value):
-        """
-        Collects the measure_ids from MeasureCondition, filtered on value (a
-        Certificate object) Filters the queryset for Measures associated with
-        that Certificate via MeasureCondition.
-
-        Queryset ensures that it returns the measure_ids for the latest version
-        of the assosiated measure.
-        """
+        """Filters the queryset for the current versions of measures associated
+        to the certificate via `MeasureCondition`."""
         if value:
-            measure_conditions = MeasureCondition.objects.current().filter(
-                required_certificate__version_group=value.version_group,
+            measure_conditions = (
+                MeasureCondition.objects.current()
+                .filter(
+                    required_certificate__version_group=value.version_group,
+                )
+                .select_related("dependent_measure")
             )
 
             measure_ids = []
             for condition in measure_conditions:
-                measure_ids.append(
-                    condition.dependent_measure.get_versions().current().get().pk,
-                )
+                try:
+                    # `dependent_measure` may not be the latest version of the measure.
+                    measure_ids.append(
+                        condition.dependent_measure.get_versions().current().get().pk,
+                    )
+                except Measure.DoesNotExist:
+                    # `.current()` returned an empty queryset because the measure has since been deleted.
+                    continue
 
             queryset = queryset.filter(id__in=measure_ids)
 
@@ -287,3 +291,14 @@ class MeasureFilter(TamatoFilter):
 
         # Defines the order shown in the form.
         fields = ["search", "sid"]
+
+
+class MeasureCreateTaskFilter(TamatoFilter):
+    """FilterSet for Bulk Measure Creation tasks."""
+
+    search_fields = "processing_state"
+    clear_url = reverse_lazy("measure-create-process-queue")
+
+    class Meta:
+        model = MeasuresBulkCreator
+        fields = ["processing_state"]

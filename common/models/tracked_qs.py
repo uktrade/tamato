@@ -33,7 +33,8 @@ class TrackedModelQuerySet(
     def latest_approved(self) -> TrackedModelQuerySet:
         """
         Get all the latest versions of the model being queried which have been
-        approved.
+        approved, excluding those that have been marked as deleted
+        (`UpdateType.DELETE`).
 
         This will specifically fetch the most recent approved row pertaining to
         an object. If a row is unapproved, or has subsequently been rejected
@@ -51,7 +52,8 @@ class TrackedModelQuerySet(
         """
         Returns a queryset of approved versions of the model up to the globally
         defined current transaction (see ``common.models.utils`` for details of
-        how this is managed).
+        how this is managed). Excludes versions of the model that have been
+        marked as deleted (`UpdateType.DELETE`).
 
         If this method is called from within a running instance of the Django
         web application (i.e. application middleware has been exectuted), then
@@ -69,10 +71,14 @@ class TrackedModelQuerySet(
         )
 
     def approved_up_to_transaction(self, transaction=None) -> TrackedModelQuerySet:
-        """Get the approved versions of the model being queried, unless there
+        """
+        Get the approved versions of the model being queried, unless there
         exists a version of the model in a draft state within a transaction
         preceding (and including) the given transaction in the workbasket of the
-        given transaction."""
+        given transaction.
+
+        Excludes versions of the model that have been marked as deleted (`UpdateType.DELETE`).
+        """
         if not transaction:
             return self.latest_approved()
 

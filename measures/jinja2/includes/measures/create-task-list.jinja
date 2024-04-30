@@ -1,0 +1,69 @@
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{% set table_rows = [] %}
+
+{% for object in object_list %}
+    {% set workbasket_link -%}
+        <a
+            class="govuk-link"
+            href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}"
+        >{{ object.workbasket.pk }}</a>
+    {%- endset %}
+
+    {% set submitted_date -%}
+        {{ object.created_at.strftime(datetime_format) }}
+    {%- endset %}
+
+    {% set submitted_by -%}
+        {{ object.user and object.user.get_displayname() or "Unknown" }}
+    {%- endset %}
+
+    {% set object_status -%}
+        <span class="{{ status_tag_generator(object).tag_class }}">
+            {{ status_tag_generator(object).text | upper }}
+        </span>
+    {%- endset %}
+
+    {% set item_count -%}
+        <span class="processed-count">
+            {{ object.successfully_processed_count }} of {{ object.expected_measures_count }} processed
+        </span>
+    {%- endset %}
+
+    {% set action_html -%}
+      {%- if is_task_failed(object) %}
+          <span class="contact-tap">Contact TAP</span>
+      {% elif can_terminate_task(object) -%}
+          <a
+            href="{{ url("cancel-bulk-processor-task", kwargs={"pk": object.pk}) }}"
+            class="govuk-link terminate-task"
+          >Terminate</a>
+      {% elif is_task_terminated(object) -%}
+          <span class="terminated">Terminated</span>
+      {%- else %}
+          <span class="not-applicable">N/A</span>
+      {%- endif %}
+    {%- endset %}
+
+    {{ table_rows.append([
+        {"text": workbasket_link},
+        {"text": submitted_date},
+        {"text": submitted_by},
+        {"text": object_status},
+        {"text": item_count},
+        {"text": action_html},
+    ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+    "head": [
+        {"text": "Workbasket ID"},
+        {"text": "Submitted date"},
+        {"text": "Submitted by"},
+        {"text": "Status"},
+        {"text": "Item count"},
+        {"text": "Action"},
+    ],
+    "rows": table_rows
+})}}

@@ -1,11 +1,11 @@
 
-{% macro breadcrumbs(request, breadcrumbs_list) %}
+{% macro breadcrumbs(request, breadcrumbs_list, with_workbasket=True) %}
 <div class="govuk-breadcrumbs">
   <ol class="govuk-breadcrumbs__list">
     <li class="govuk-breadcrumbs__list-item">
       <a class="govuk-breadcrumbs__link" href="{{ url('home') }}">Home</a>
     </li>
-    {% if request.user.current_workbasket %}
+    {% if request.user.current_workbasket and with_workbasket %}
       <li class="govuk-breadcrumbs__list-item">
         <a class="govuk-breadcrumbs__link" href="{{ url('workbaskets:edit-workbasket') }}">Workbasket {{ request.user.current_workbasket.id }}</a>
       </li>

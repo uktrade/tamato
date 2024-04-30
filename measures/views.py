@@ -1,15 +1,19 @@
 import datetime
 import json
+import logging
 from itertools import groupby
 from operator import attrgetter
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Type
 from urllib.parse import urlencode
 
 from crispy_forms.helper import FormHelper
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.transaction import atomic
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.db.models import Q
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -20,6 +24,8 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views import View
 from django.views.generic.base import TemplateView
+from django.views.generic.detail import DetailView
+from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
@@ -40,6 +46,7 @@ from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
+from common.views import WithPaginationListView
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
@@ -50,8 +57,12 @@ from measures.conditions import show_step_quota_origins
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import START
 from measures.constants import MeasureEditSteps
+from measures.creators import MeasuresCreator
+from measures.filters import MeasureCreateTaskFilter
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
+from measures.models.bulk_processing import MeasuresBulkCreator
+from measures.models.bulk_processing import ProcessingState
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
 from measures.patterns import MeasureCreationPattern
@@ -60,9 +71,12 @@ from regulations.models import Regulation
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
+from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
+
+logger = logging.getLogger(__name__)
 
 
 class MeasureTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -708,8 +722,7 @@ class MeasureCreateWizard(
     SUMMARY = "summary"
     COMPLETE = "complete"
 
-    form_list = [
-        (START, forms.MeasureCreateStartForm),
+    data_form_list = [
         (MEASURE_DETAILS, forms.MeasureDetailsForm),
         (REGULATION_ID, forms.MeasureRegulationIdForm),
         (QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
@@ -719,8 +732,16 @@ class MeasureCreateWizard(
         (ADDITIONAL_CODE, forms.MeasureAdditionalCodeForm),
         (CONDITIONS, forms.MeasureConditionsWizardStepFormSet),
         (FOOTNOTES, forms.MeasureFootnotesFormSet),
+    ]
+    """Forms in this wizard's steps that collect user data."""
+
+    form_list = [
+        (START, forms.MeasureCreateStartForm),
+        *data_form_list,
         (SUMMARY, forms.MeasureReviewForm),
     ]
+    """All Forms in this wizard's steps, including both those that collect user
+    data and those that don't."""
 
     templates = {
         START: "measures/create-start.jinja",
@@ -795,160 +816,68 @@ class MeasureCreateWizard(
         QUOTA_ORIGINS: show_step_quota_origins,
         GEOGRAPHICAL_AREA: show_step_geographical_area,
     }
+    """Override of dictionary that maps steps to either callables that return a
+    boolean or boolean values that indicate whether a wizard step should be
+    shown."""
+
+    def get_data_form_list(self) -> dict:
+        """
+        Returns a form list based on form_list, conditionally including only
+        those items as per condition_list and also appearing in data_form_list.
+
+        The list is generated dynamically because conditions in condition_list
+        may be dynamic.
+
+        Essentially, version of `WizardView.get_form_list()` filtering in only
+        those list items appearing in `data_form_list`.
+        """
+        data_form_keys = [key for key, form in self.data_form_list]
+        return {
+            form_key: form_class
+            for form_key, form_class in self.get_form_list().items()
+            if form_key in data_form_keys
+        }
+
+    def show_step(self, step) -> bool:
+        """Convenience function to check whether a wizard step should be shown
+        and therefore has data."""
+        condition = self.condition_dict.get(step, True)
+        if callable(condition):
+            condition = condition(self)
+        return condition
 
     @property
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
-    def create_measure_conditions(
-        self,
-        data,
-        measure: models.Measure,
-        measure_creation_pattern: MeasureCreationPattern,
-        parser: DutySentenceParser,
-    ):
-        """
-        Create's measure conditions, components, and their corresponding negative actions
-        Args:
-            data: object with the form wizards data
-            measure: Current created measure
-            measure_creation_pattern: MeasureCreationPattern
-            parser: DutySentenceParser
-        Returns:
-            None
-        """
-        # component number not tied to position in formset as negative conditions are auto generated
-        component_sequence_number = 1
-        for index, condition_data in enumerate(
-            data.get("formset-conditions", []),
-        ):
-            if not condition_data.get("DELETE"):
-                # creates a list of tuples with condition and action code
-                # this will be used to create the corresponding negative action
-                measure_creation_pattern.create_condition_and_components(
-                    condition_data,
-                    component_sequence_number,
-                    measure,
-                    parser,
-                    self.workbasket,
-                )
-
-                # set next code unless last item set None
-                next_condition_code = (
-                    data["formset-conditions"][index + 1]["condition_code"]
-                    if (index + 1 < len(data["formset-conditions"]))
-                    else None
-                )
-                # corresponding negative action to the postive one. None if the action code has no pair
-                action_pair = models.MeasureActionPair.objects.filter(
-                    positive_action__code=condition_data.get("action").code,
-                ).first()
-
-                negative_action = None
-
-                if action_pair:
-                    negative_action = action_pair.negative_action
-                elif (
-                    measure.measure_type
-                    in measure_creation_pattern.autonomous_tariff_suspension_use_measure_types
-                    and condition_data.get("action").code == "01"
-                ):
-                    """If measure type is an automatic suspension and an action
-                    code 01 is selected then the negative action of code 07
-                    (measure not applicable)is used."""
-                    negative_action = measure_creation_pattern.measure_not_applicable
-
-                # if the next condition code is different create the negative action for the current condition
-                # only create a negative action if the action has a negative pair
-                if (
-                    negative_action
-                    and data["formset-conditions"][index]["condition_code"]
-                    != next_condition_code
-                ):
-                    component_sequence_number += 1
-                    measure_creation_pattern.create_condition_and_components(
-                        {
-                            "condition_code": condition_data.get("condition_code"),
-                            "duty_amount": None,
-                            "required_certificate": None,
-                            # corresponding negative action to the postive one.
-                            "action": negative_action,
-                            "DELETE": False,
-                        },
-                        component_sequence_number,
-                        measure,
-                        parser,
-                        self.workbasket,
-                    )
-
-            # deletes also increment or well did when using the enumerated index
-            component_sequence_number += 1
-
-    @atomic
-    def create_measures(self, data):
-        """Returns a list of the created measures."""
-        measure_start_date = data["valid_between"].lower
-
-        measure_creation_pattern = MeasureCreationPattern(
-            workbasket=self.workbasket,
-            base_date=measure_start_date,
-            defaults={
-                "generating_regulation": data["generating_regulation"],
-            },
-        )
-
-        measures_data = []
-
-        for commodity_data in data.get("formset-commodities", []):
-            if not commodity_data.get("DELETE"):
-                for geo_data in data["geo_areas_and_exclusions"]:
-                    measure_data = {
-                        "measure_type": data["measure_type"],
-                        "geographical_area": geo_data["geo_area"],
-                        "exclusions": geo_data.get("exclusions", []),
-                        "goods_nomenclature": commodity_data["commodity"],
-                        "additional_code": data["additional_code"],
-                        "order_number": data["order_number"],
-                        "validity_start": measure_start_date,
-                        "validity_end": data["valid_between"].upper,
-                        "footnotes": [
-                            item["footnote"]
-                            for item in data.get("formset-footnotes", [])
-                            if not item.get("DELETE")
-                        ],
-                        # condition_sentence here, or handle separately and duty_sentence after?
-                        "duty_sentence": commodity_data["duties"],
-                    }
-
-                    measures_data.append(measure_data)
-
-        parser = DutySentenceParser.create(
-            measure_start_date,
-            component_output=models.MeasureConditionComponent,
-        )
-
-        created_measures = []
-
-        for measure_data in measures_data:
-            # creates measure in DB
-            measure = measure_creation_pattern.create(**measure_data)
-            self.create_measure_conditions(
-                data,
-                measure,
-                measure_creation_pattern,
-                parser,
-            )
-
-            created_measures.append(measure)
-
-        return created_measures
-
     def done(self, form_list, **kwargs):
+        if settings.MEASURES_ASYNC_CREATION:
+            return self.async_done(form_list, **kwargs)
+        else:
+            return self.sync_done(form_list, **kwargs)
+
+    def create_measures(self, cleaned_data):
+        """Synchronously create measures within the context of the view / web
+        worker using accumulated data, `cleaned_data`, from all the necessary
+        wizard forms."""
+
+        measures_creator = MeasuresCreator(self.workbasket, cleaned_data)
+        return measures_creator.create_measures()
+
+    def sync_done(self, form_list, **kwargs):
+        """
+        Handles this wizard's done step to create measures within the context of
+        the web worker process.
+
+        Because measures creation can be computationally expensive, this can
+        take an excessive amount of time within the context of HTTP request
+        processing.
+        """
+
+        logger.info("Creating measures synchronously.")
+
         cleaned_data = self.get_all_cleaned_data()
-
         created_measures = self.create_measures(cleaned_data)
-        created_measures[0].transaction.workbasket.set_as_current(self.request.user)
-
         context = self.get_context_data(
             form=None,
             created_measures=created_measures,
@@ -956,6 +885,80 @@ class MeasureCreateWizard(
         )
 
         return render(self.request, "measures/confirm-create-multiple.jinja", context)
+
+    def async_done(self, form_list, **kwargs):
+        """Handles this wizard's done step, handing off most of the processing
+        (creating measures) to an asynchronous, background process managed by
+        Celery."""
+
+        logger.info("Creating measures asynchronously.")
+
+        serializable_data = self.all_serializable_form_data()
+        serializable_form_kwargs = self.all_serializable_form_kwargs()
+
+        measures_bulk_creator = models.MeasuresBulkCreator.objects.create(
+            form_data=serializable_data,
+            form_kwargs=serializable_form_kwargs,
+            workbasket=self.workbasket,
+            user=self.request.user,
+        )
+        measures_bulk_creator.schedule_task()
+
+        return redirect(
+            "measure-ui-create-confirm",
+            expected_measures_count=measures_bulk_creator.expected_measures_count,
+        )
+
+    def all_serializable_form_data(self) -> Dict:
+        """
+        Returns serializable data for all wizard steps.
+
+        This is a re-implementation of
+        MeasureCreateWizard.get_all_cleaned_data(), but using self.data after
+        is_valid() has been successfully run.
+        """
+
+        all_data = {}
+
+        for form_key in self.get_data_form_list().keys():
+            all_data[form_key] = self.serializable_form_data_for_step(form_key)
+
+        return all_data
+
+    def serializable_form_data_for_step(self, step) -> Dict:
+        """
+        Returns serializable data for a wizard step.
+
+        This is a re-implementation of WizardView.get_cleaned_data_for_step(),
+        returning the serializable version of data in place of the form's
+        regular cleaned_data.
+        """
+
+        form_obj = self.get_form(
+            step=step,
+            data=self.storage.get_step_data(step),
+            files=self.storage.get_step_files(step),
+        )
+
+        return form_obj.serializable_data(remove_key_prefix=step)
+
+    def all_serializable_form_kwargs(self) -> Dict:
+        """Returns serializable kwargs for all wizard steps."""
+
+        all_kwargs = {}
+
+        for form_key in self.get_data_form_list().keys():
+            all_kwargs[form_key] = self.serializable_form_kwargs_for_step(form_key)
+
+        return all_kwargs
+
+    def serializable_form_kwargs_for_step(self, step) -> Dict:
+        """Returns serializable kwargs for a wizard step."""
+
+        form_kwargs = self.get_form_kwargs(step)
+        form_class = self.form_list[step]
+
+        return form_class.serializable_init_kwargs(form_kwargs)
 
     def get_all_cleaned_data(self):
         """
@@ -1072,6 +1075,12 @@ class MeasureCreateWizard(
     def get_form(self, step=None, data=None, files=None):
         form = super().get_form(step, data, files)
         tx = WorkBasket.get_current_transaction(self.request)
+        return self.fixup_form(form, tx)
+
+    @classmethod
+    def fixup_form(cls, form, transaction):
+        """Filter queryset form fields to approved transactions up to the
+        workbasket's current transaction."""
         forms = [form]
         if hasattr(form, "forms"):
             forms = form.forms
@@ -1079,7 +1088,9 @@ class MeasureCreateWizard(
             if hasattr(f, "fields"):
                 for field in f.fields.values():
                     if hasattr(field, "queryset"):
-                        field.queryset = field.queryset.approved_up_to_transaction(tx)
+                        field.queryset = field.queryset.approved_up_to_transaction(
+                            transaction,
+                        )
 
         form.is_valid()
         if hasattr(form, "cleaned_data"):
@@ -1092,6 +1103,135 @@ class MeasureCreateWizard(
             self.steps.current,
             "measures/create-wizard-step.jinja",
         )
+
+
+class MeasuresWizardCreateConfirm(TemplateView):
+    template_name = "measures/confirm-create-multiple-async.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["expected_measures_count"] = self.kwargs.get("expected_measures_count")
+        return context
+
+
+class MeasuresCreateProcessQueue(
+    PermissionRequiredMixin,
+    WithPaginationListView,
+):
+    """UI endpoint for bulk creating Measures process queue."""
+
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
+    template_name = "measures/create-process-queue.jinja"
+    model = models.MeasuresBulkCreator
+    queryset = models.MeasuresBulkCreator.objects.filter(
+        workbasket__status=WorkflowStatus.EDITING,
+    ).order_by("-created_at")
+    filterset_class = MeasureCreateTaskFilter
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["selected_link"] = "all"
+        processing_state = self.request.GET.get("processing_state")
+
+        if processing_state == "PROCESSING":
+            context["selected_link"] = "processing"
+        elif processing_state == ProcessingState.CANCELLED:
+            context["selected_link"] = "terminated"
+        elif processing_state == ProcessingState.FAILED_PROCESSING:
+            context["selected_link"] = "failed"
+        elif processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
+            context["selected_link"] = "completed"
+        # Provide template access to some UI / view utility functions.
+        context["status_tag_generator"] = self.status_tag_generator
+        context["can_terminate_task"] = self.can_terminate_task
+        context["is_task_failed"] = self.is_task_failed
+        context["is_task_terminated"] = self.is_task_terminated
+        # Apply the TAP standard date format within the UI.
+        context["datetime_format"] = settings.DATETIME_FORMAT
+        if context["selected_link"] == "processing":
+            context["object_list"] = self.get_processing_queryset()
+        return context
+
+    def get_processing_queryset(self):
+        """Returns a combined queryset of tasks either AWAITING_PROCESSING or
+        CURRENTLY_PROCESSING."""
+
+        return self.queryset.filter(
+            Q(processing_state=ProcessingState.AWAITING_PROCESSING)
+            | Q(processing_state=ProcessingState.CURRENTLY_PROCESSING),
+        )
+
+    def is_task_failed(self, task: models.MeasuresBulkCreator) -> bool:
+        """
+        Return True if the task is in a failed state.
+
+        Return False otherwise.
+        """
+
+        return task.processing_state == ProcessingState.FAILED_PROCESSING
+
+    def is_task_terminated(self, task: MeasuresBulkCreator) -> bool:
+        """
+        Return True if the task is in a cancelled state. Cancelled tasks are
+        surfaced as 'terminated' in the UI.
+
+        Return False otherwise.
+        """
+
+        return task.processing_state == ProcessingState.CANCELLED
+
+    def can_terminate_task(self, task: MeasuresBulkCreator) -> bool:
+        """
+        Return True if a task is in a queued state and the current user is
+        permitted to terminate a task.
+
+        Return False otherwise.
+        """
+
+        if (
+            self.request.user.is_superuser
+            and task.processing_state in ProcessingState.queued_states()
+        ):
+            return True
+
+        return False
+
+    def status_tag_generator(self, task: models.MeasuresBulkCreator) -> dict:
+        """Returns a dict with text and a CSS class for a UI-friendly label for
+        a bulk creation task."""
+
+        if task.processing_state in [
+            ProcessingState.CURRENTLY_PROCESSING,
+            ProcessingState.AWAITING_PROCESSING,
+        ]:
+            return {
+                "text": "Processing",
+                "tag_class": "tamato-badge-light-blue",
+            }
+        elif task.processing_state == ProcessingState.SUCCESSFULLY_PROCESSED:
+            return {
+                "text": "Completed",
+                "tag_class": "tamato-badge-light-green",
+            }
+        elif task.processing_state == ProcessingState.FAILED_PROCESSING:
+            return {
+                "text": "Failed",
+                "tag_class": "tamato-badge-light-red",
+            }
+        elif task.processing_state == ProcessingState.CANCELLED:
+            return {
+                "text": "Terminated",
+                "tag_class": "tamato-badge-light-yellow",
+            }
+        else:
+            return {
+                "text": "",
+                "tag_class": "",
+            }
 
 
 class MeasureUpdateBase(
@@ -1386,6 +1526,63 @@ class MeasureSelectionUpdate(MeasureSessionStoreMixin, View):
         selected_objects = {k: v for k, v in cleaned_data.items() if v == 1}
         self.session_store.add_items(selected_objects)
         return JsonResponse(self.session_store.data)
+
+
+class CancelBulkProcessorTask(
+    UserPassesTestMixin,
+    SingleObjectMixin,
+    FormView,
+):
+    """Attempt cancelling a bulk processor task."""
+
+    permission_required = "measures.edit_bulkprocessor"
+    model = models.MeasuresBulkCreator
+    template_name = "measures/cancel-bulk-processor-task.jinja"
+    form_class = forms.CancelBulkProcessorTaskForm
+
+    def test_func(self) -> bool:
+        """Method override used by UserPassesTestMixin to ensure this view's
+        cancel behaviour is only available to superusers."""
+
+        return self.request.user.is_superuser
+
+    def dispatch(self, request, *args, **kwargs) -> HttpResponse:
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse(
+            "cancel-bulk-processor-task-done",
+            kwargs={"pk": self.object.pk},
+        )
+
+    def get_context_data(self, **kwargs) -> Dict:
+        context = super().get_context_data(**kwargs)
+
+        context["object"] = self.object
+        context["datetime_format"] = settings.DATETIME_FORMAT
+
+        return context
+
+    def form_valid(self, form):
+        self.object.cancel_task()
+        return redirect(self.get_success_url())
+
+
+class CancelBulkProcessorTaskDone(
+    UserPassesTestMixin,
+    DetailView,
+):
+    """Confirm attempt to cancel a bulk processor task."""
+
+    model = models.MeasuresBulkCreator
+    template_name = "measures/cancel-bulk-processor-task-done.jinja"
+
+    def test_func(self) -> bool:
+        """Method override used by UserPassesTestMixin to ensure this view's
+        cancel behaviour is only available to superusers."""
+
+        return self.request.user.is_superuser
 
 
 class DutySentenceReference(TemplateView):

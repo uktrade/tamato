@@ -12,7 +12,9 @@ from pathlib import Path
 
 import dj_database_url
 from celery.schedules import crontab
+from dbt_copilot_python.utility import is_copilot
 from django.urls import reverse_lazy
+from django_log_formatter_asim import ASIMFormatter
 
 from common.util import is_truthy
 
@@ -385,9 +387,12 @@ USE_I18N = False
 # Enable localized formatting of numbers and dates
 USE_L10N = False
 
-# Use a consistent TAP date format throughout.
+# Use consistent TAP date and time formats throughout.
 DATE_FORMAT = "%d %b %Y"
-DATE_FORMAT_SHORT = "%d-%m-%Y"
+SHORT_DATE_FORMAT = "%d-%m-%Y"
+TIME_FORMAT = "%H:%M"
+DATETIME_FORMAT = TIME_FORMAT + " " + DATE_FORMAT
+SHORT_DATETIME_FORMAT = TIME_FORMAT + " " + SHORT_DATE_FORMAT
 
 # Language code - ignored unless USE_I18N is True
 LANGUAGE_CODE = "en-gb"
@@ -553,7 +558,7 @@ CROWN_DEPENDENCIES_API_CRON = (
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
-        "schedule": crontab(hour=3, minute=5),
+        "schedule": crontab(hour=19, minute=5),
     },
 }
 if ENABLE_CROWN_DEPENDENCIES_PUBLISHING:
@@ -588,6 +593,9 @@ CELERY_ROUTES = {
     re.compile(r"(exporter|notifications|publishing)\.tasks\..*"): {
         "queue": "standard",
     },
+    "measures.tasks.bulk_create_measures": {
+        "queue": "bulk-create",
+    },
 }
 
 SQLITE_EXCLUDED_APPS = [
@@ -604,6 +612,9 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
+        "asim_formatter": {
+            "()": ASIMFormatter,
+        },
     },
     "handlers": {
         "console": {
@@ -611,11 +622,25 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "default",
         },
+        "asim": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "asim_formatter",
+        },
+        "celery": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
     },
     "loggers": {
-        "root": {
+        "django": {
             "handlers": ["console"],
-            "level": "WARNING",
+            "level": "INFO",
+            "propagate": False,
         },
         "importer": {
             "handlers": ["console"],
@@ -666,12 +691,21 @@ LOGGING = {
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
-    },
-    "celery": {
-        "handlers": ["celery"],
-        "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
+        "celery": {
+            "handlers": ["celery"],
+            "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
     },
 }
+
+if is_copilot():
+
+    LOGGING["root"]["handlers"] = ["asim"]
+    LOGGING["loggers"]["django"]["handlers"] = ["asim"]
+    LOGGING["loggers"]["celery"]["handlers"] = ["asim"]
+
+    DLFA_INCLUDE_RAW_LOG = True
 
 # -- Sentry error tracking
 
@@ -812,5 +846,8 @@ FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
 )  # Order is important
-
 DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "10000"))
+
+
+# Asynchronous / background (bulk) object creation and editing config.
+MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))

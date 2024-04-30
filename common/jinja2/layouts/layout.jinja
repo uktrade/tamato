@@ -40,6 +40,7 @@
 {% set can_import_taric = request.user.has_perm("common.add_trackedmodel") %}
 {% set can_manage_packaging = request.user.has_perm("publishing.manage_packaging_queue") %}
 {% set can_consume_packaging = request.user.has_perm("publishing.consume_from_packaging_queue") %}
+{% set can_view_processing_queues = request.user.has_perm("common.add_trackedmodel") %}
 
 {% block header %}
   <header class="govuk-header" role="banner" data-module="govuk-header">
