@@ -345,13 +345,9 @@ SQLITE = DB_URL.startswith("sqlite")
 
 # -- Cache
 
-CACHE_URL = os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1")
-
 # DBT PaaS
-
-# Not sure if this is right, they expose an end point for us so I guess everything else can stay the same? 
 if is_copilot():
-    REDIS_ENDPOINT = os.getenv("REDIS_ENDPOINT", default=None) + "?ssl_cert_reqs=required"
+    CACHE_URL = os.getenv("CACHE_URL", default=None) + "?ssl_cert_reqs=required"
 # Govuk PaaS
 elif VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
@@ -360,6 +356,9 @@ elif VCAP_SERVICES.get("redis"):
             CACHE_URL = credentials["uri"]
             CACHE_URL += "?ssl_cert_reqs=required"
             break
+else:
+    CACHE_URL = os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1")
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -555,20 +554,19 @@ CROWN_DEPENDENCIES_API_URL_PATH = os.environ.get(
 CROWN_DEPENDENCIES_GET_API_KEY = os.environ.get("CROWN_DEPENDENCIES_GET_API_KEY", "")
 CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KEY", "")
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
-
-# Redis again - maybe copy from above? 
 
 if is_copilot():
-    REDIS_ENDPOINT = os.getenv("REDIS_ENDPOINT", default=None) + "?ssl_cert_reqs=required"
+    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", default=None) + "?ssl_cert_reqs=required"
 
-if VCAP_SERVICES.get("redis"):
+elif VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
         if redis_instance["name"] == "CELERY_BROKER":
             credentials = redis_instance["credentials"]
             CELERY_BROKER_URL = credentials["uri"]
             CELERY_BROKER_URL += "?ssl_cert_reqs=required"
             break
+else:
+    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
 CELERY_TRACK_STARTED = True
