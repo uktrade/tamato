@@ -19,6 +19,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
 from django.urls import reverse
 from parsec import ParseError
 
@@ -31,6 +32,7 @@ from common.forms import DateInputFieldFixed
 from common.forms import FormSet
 from common.forms import FormSetSubmitMixin
 from common.forms import RadioNested
+from common.forms import RadioNestedWidget
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
@@ -48,6 +50,7 @@ from geo_areas.forms import ErgaOmnesExclusionsFormSet
 from geo_areas.forms import GeoGroupExclusionsFormSet
 from geo_areas.forms import GeoGroupForm
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import models
 from measures.constants import MEASURE_COMMODITIES_FORMSET_PREFIX
@@ -1245,6 +1248,7 @@ class MeasureGeographicalAreaForm(
             constants.GeoAreaType.COUNTRY.value: [CountryRegionFormSet],
         },
         error_messages={"required": "A Geographical area must be selected"},
+        widget=RadioNestedWidget(attrs={"id": "geo-area-form-field"}),
     )
 
     @property
@@ -1306,10 +1310,72 @@ class MeasureGeographicalAreaForm(
 
         return nested_forms_initial
 
-    def init_layout(self):
+    def init_layout(
+        self,
+        request,
+        initial,
+        exclusions_options,
+        groups_options,
+        country_regions_options,
+    ):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
+
+        print(initial)
+
+        group_initial = self.data.get(f"{self.prefix}-geographical_area_group", "")
+
+        react_initial = {
+            "geoAreaType": self.data.get(f"{self.prefix}-geo_area", ""),
+            "ergaOmnesExclusions": [
+                country["erga_omnes_exclusion"].pk
+                for country in initial.get(
+                    constants.ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
+                    [],
+                )
+                if country["erga_omnes_exclusion"]
+            ],
+            "geographicalAreaGroup": group_initial,
+            "geoGroupExclusions": [
+                country["geo_group_exclusion"].pk
+                for country in initial.get(
+                    constants.GROUP_EXCLUSIONS_FORMSET_PREFIX,
+                    [],
+                )
+                if country["geo_group_exclusion"]
+            ],
+            "countryRegions": [
+                country["geographical_area_country_or_region"].pk
+                for country in initial.get(constants.COUNTRY_REGION_FORMSET_PREFIX, [])
+                if country["geographical_area_country_or_region"]
+            ],
+        }
+
+        geo_group_pks = [group.pk for group in groups_options]
+        memberships = GeographicalMembership.objects.filter(
+            geo_group__pk__in=geo_group_pks,
+        ).prefetch_related("geo_group", "member")
+
+        groups_with_members = {}
+
+        for group_pk in geo_group_pks:
+            members = memberships.filter(geo_group__pk=group_pk)
+            groups_with_members[group_pk] = [m.member.pk for m in members]
+
+        script = render_to_string(
+            "includes/measures/geo_area_script.jinja",
+            {
+                "request": request,
+                "initial": react_initial,
+                "groups_with_members": groups_with_members,
+                "exclusions_options": exclusions_options,
+                "groups_options": groups_options,
+                "country_regions_options": country_regions_options,
+                "errors": self.errors,
+            },
+        )
+
         self.helper.layout = Layout(
             "geo_area",
             Submit(
@@ -1318,14 +1384,25 @@ class MeasureGeographicalAreaForm(
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
+            HTML(script),
         )
 
     def __init__(self, *args, **kwargs):
+        request = kwargs.pop("request")
+        exclusions_options = kwargs.pop("exclusions_options")
+        groups_options = kwargs.pop("groups_options")
+        country_regions_options = kwargs.pop("country_regions_options")
         super().__init__(*args, **kwargs)
         nested_forms_initial = self.get_initial_data()
         kwargs.pop("initial", None)
         self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
-        self.init_layout()
+        self.init_layout(
+            request,
+            nested_forms_initial,
+            exclusions_options,
+            groups_options,
+            country_regions_options,
+        )
 
     def clean(self):
         cleaned_data = super().clean()

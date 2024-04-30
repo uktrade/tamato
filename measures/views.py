@@ -50,6 +50,7 @@ from common.views import WithPaginationListView
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
+from geo_areas.validators import AreaCode
 from measures import forms
 from measures import models
 from measures.conditions import show_step_geographical_area
@@ -1035,6 +1036,20 @@ class MeasureCreateWizard(
                 self.quota_order_number.quotaordernumberorigin_set.current().as_at_today_and_beyond()
             )
             kwargs["objects"] = origins
+
+        elif step == self.GEOGRAPHICAL_AREA:
+            all_geo_areas = (
+                GeographicalArea.objects.current()
+                .with_latest_description()
+                .as_at_today_and_beyond()
+                .order_by("description")
+            )
+            kwargs["exclusions_options"] = all_geo_areas
+            kwargs["groups_options"] = all_geo_areas.filter(area_code=AreaCode.GROUP)
+            kwargs["country_regions_options"] = all_geo_areas.exclude(
+                area_code=AreaCode.GROUP,
+            )
+            kwargs["request"] = self.request
 
         elif step == self.COMMODITIES:
             min_commodity_count = 0

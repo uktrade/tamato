@@ -22,6 +22,7 @@ import initFilterDisabledToggleForComCode from "./conditionalDisablingFilters";
 import initOpenCloseAccordionSection from "./openCloseAccordion";
 import initTapDebounce from "./buttonDebounce";
 import { setupQuotaOriginFormset } from "./components/QuotaOriginFormset/index";
+import { setupGeoAreaField } from "./components/GeoAreaField/index";
 import { setupWorkbasketUserAssignment } from "./components/WorkbasketUserAssignment/index";
 import { initMasonry } from "./masonry";
 
@@ -40,5 +41,6 @@ initFilterDisabledToggleForComCode();
 initOpenCloseAccordionSection();
 initTapDebounce();
 setupQuotaOriginFormset();
+setupGeoAreaField();
 setupWorkbasketUserAssignment();
 initMasonry();
