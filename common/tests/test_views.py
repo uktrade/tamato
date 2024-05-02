@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -10,7 +12,7 @@ from django.urls import reverse_lazy
 from checks.tests.factories import TrackedModelCheckFactory
 from common.tests import factories
 from common.util import xml_fromstring
-from common.views import HealthCheckResponse
+from common.views import HealthCheckView
 from common.views import handler403
 from common.views import handler500
 from tasks.models import UserAssignment
@@ -49,19 +51,37 @@ def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
 
 
 @pytest.mark.parametrize(
-    "response, status_code, status",
+    "check_to_mock, mock_result",
     [
-        (HealthCheckResponse(), 200, "OK"),
-        (HealthCheckResponse().fail("Not OK"), 503, "Not OK"),
+        ("common.views.HealthCheckView.check_database", ("OK", 200)),
+        ("common.views.HealthCheckView.check_redis_cache", ("OK", 200)),
+        ("common.views.HealthCheckView.check_database", ("Not OK", 503)),
+        ("common.views.HealthCheckView.check_redis_cache", ("Not OK", 503)),
+        ("common.views.HealthCheckView.check_celery_broker", ("Not OK", 503)),
+        ("common.views.HealthCheckView.check_s3", ("Not OK", 503)),
     ],
 )
-def test_healthcheck_response(response, status_code, status):
-    assert response.status_code == status_code
-    payload = xml_fromstring(response.content)
-    assert payload.tag == "pingdom_http_custom_check"
-    assert payload[0].tag == "status"
-    assert payload[0].text == status
-    assert payload[1].tag == "response_time"
+@patch("common.views.HealthCheckView.check_celery_broker", return_value=("OK", 200))
+@patch("common.views.HealthCheckView.check_s3", return_value=("OK", 200))
+def test_health_check_view_response(
+    check_celery_broker_mock,
+    check_s3_mock,
+    check_to_mock,
+    mock_result,
+    client,
+):
+    """Test that `HealthCheckView` returns a Pingdom-compatible HTTP
+    response."""
+    request = client.get(reverse("healthcheck"))
+    view = HealthCheckView()
+    with patch(check_to_mock, return_value=mock_result):
+        response = view.get(request)
+        assert response.status_code == mock_result[1]
+        payload = xml_fromstring(response.content)
+        assert payload.tag == "pingdom_http_custom_check"
+        assert payload[0].tag == "status"
+        assert payload[0].text == mock_result[0]
+        assert payload[1].tag == "response_time"
 
 
 def test_app_info_non_superuser(valid_user_client):
@@ -162,6 +182,15 @@ def test_accessibility_statement_view_returns_200(valid_user_client):
 @override_settings(MAINTENANCE_MODE=True)
 @modify_settings(
     MIDDLEWARE={
+        "remove": [
+            "authbroker_client.middleware.ProtectAllViewsMiddleware",
+            "django.contrib.admin",
+            "django.contrib.sessions.middleware.SessionMiddleware",
+            "django.contrib.auth.middleware.AuthenticationMiddleware",
+            "django.contrib.messages.middleware.MessageMiddleware",
+            "common.models.utils.TransactionMiddleware",
+            "common.models.utils.ValidateUserWorkBasketMiddleware",
+        ],
         "append": "common.middleware.MaintenanceModeMiddleware",
     },
 )
@@ -169,6 +198,9 @@ def test_user_redirect_during_maintenance_mode(valid_user_client):
     response = valid_user_client.get(reverse("home"))
     assert response.status_code == 302
     assert response.url == reverse("maintenance")
+
+    response = valid_user_client.get(response.url)
+    assert response.status_code == 200
 
 
 def test_maintenance_mode_page_content(valid_user_client):
@@ -210,6 +242,7 @@ def test_homepage_cards_contain_expected_links(superuser_client):
         "Search for workbaskets": "workbaskets:workbasket-ui-list-all",
         "View EU import list": "commodity_importer-ui-list",
         "Process envelopes": "publishing:envelope-queue-ui-list",
+        "Measures process queue": "measure-create-process-queue",
         "Application information": "app-info",
         "Importer V1": "import_batch-ui-list",
         "Importer V2": "taric_parser_import_ui_list",

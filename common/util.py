@@ -596,13 +596,13 @@ def format_date_string(date_string: str, short_format=False) -> str:
 
     If the `short_format` parameter is False, then the
     `settings.DATE_FORMAT` is applied, otherwise, the
-    `settings.DATE_FORMAT_SHORT` is applied.
+    `settings.SHORT_DATE_FORMAT` is applied.
     """
     from dateutil import parser as date_parser
 
     try:
         if short_format:
-            return date_parser.parse(date_string).strftime(settings.DATE_FORMAT_SHORT)
+            return date_parser.parse(date_string).strftime(settings.SHORT_DATE_FORMAT)
         else:
             return date_parser.parse(date_string).strftime(settings.DATE_FORMAT)
     except:
