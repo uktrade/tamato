@@ -282,9 +282,8 @@ ALLOWED_HOSTS = re.split(r"\s|,", os.environ.get("ALLOWED_HOSTS", ""))
 # DBT PaaS
 if is_copilot():
     ALLOWED_HOSTS = setup_allowed_hosts(ALLOWED_HOSTS)
-
 # Govuk PaaS
-if "VCAP_APPLICATION" in os.environ:
+elif "VCAP_APPLICATION" in os.environ:
     # Under PaaS, if ALLOW_PAAS_URIS is set, fetch trusted domains from VCAP_APPLICATION env var
     paas_hosts = json.loads(os.environ["VCAP_APPLICATION"])["uris"]
     ALLOWED_HOSTS.extend(paas_hosts)
