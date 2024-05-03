@@ -332,14 +332,14 @@ elif is_copilot():
     }
 # Govuk PaaS
 elif VCAP_SERVICES.get("postgres"):
-    DB_URL = dj_database_url.parse(VCAP_SERVICES["postgres"][0]["credentials"]["uri"])
+    DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
     DATABASES = {
-        "default": DB_URL
+        "default": dj_database_url.parse(DB_URL),
     }
 else:
-    DB_URL = dj_database_url.parse(os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato"))
+    DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
     DATABASES = {
-        "default": DB_URL
+        "default": dj_database_url.parse(DB_URL),
     }
 
 SQLITE = DB_URL.startswith("sqlite")
