@@ -326,10 +326,10 @@ if MAINTENANCE_MODE:
 
 # DBT PaaS
 elif is_copilot():
-    DB_URL = dj_database_url.config(default=database_url_from_env("DATABASE_CREDENTIALS"))
-    DATABASES = {
-        "default": DB_URL
-    }
+    DB_URL = dj_database_url.config(
+        default=database_url_from_env("DATABASE_CREDENTIALS")
+    )
+    DATABASES = {"default": DB_URL}
 # Govuk PaaS
 elif VCAP_SERVICES.get("postgres"):
     DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
@@ -581,7 +581,9 @@ CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KE
 
 
 if is_copilot():
-    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", default=None) + "?ssl_cert_reqs=required"
+    CELERY_BROKER_URL = (
+        os.getenv("CELERY_BROKER_URL", default=None) + "?ssl_cert_reqs=required"
+    )
 
 elif VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
@@ -591,7 +593,9 @@ elif VCAP_SERVICES.get("redis"):
             CELERY_BROKER_URL += "?ssl_cert_reqs=required"
             break
 else:
-    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
+    CELERY_BROKER_URL = os.environ.get(
+        "CELERY_BROKER_URL", CACHES["default"]["LOCATION"]
+    )
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
 CELERY_TRACK_STARTED = True
