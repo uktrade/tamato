@@ -93,7 +93,7 @@ test:
 	@echo "> Running tests..."
 	@${PYTHON} -m pytest -n=auto --dist=loadfile --ignore=tests/e2e --alluredir=allure-results --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
 
-## test: Run e2e tests
+## test-e2e: Run e2e tests
 test-e2e:
 	@echo
 	@echo "> Running E2E tests..."
