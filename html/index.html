@@ -141,6 +141,7 @@
 </li>
 <li><a class="reference internal" href="#using-the-importer">Using the importer</a></li>
 <li><a class="reference internal" href="#using-the-taric-parser-currently-referenced-importer-v2">Using the TARIC parser (currently referenced importer v2)</a></li>
+<li><a class="reference internal" href="#reference-document-data-import">Reference document data import</a></li>
 <li><a class="reference internal" href="#using-the-exporter">Using the exporter</a><ul>
 <li><a class="reference internal" href="#running-the-exporter">Running the exporter</a></li>
 <li><a class="reference internal" href="#manually-trigger-the-upload-to-s3">Manually trigger the upload to s3</a></li>
@@ -478,6 +479,19 @@ This can be run in isolation using the command</p>
 <p>There are no command line tools available for this tool.</p>
 <p>This tool is available as an importer alternative found within the web front end in the footer menu under “New TARIC parser”.</p>
 <p>This tool addresses several short falls that the current importer has.</p>
+</section>
+<section id="reference-document-data-import">
+<h2>Reference document data import<a class="headerlink" href="#reference-document-data-import" title="Permalink to this headline">¶</a></h2>
+<p>WARNING: this feature is in alpha : do not use in production until this feature has been
+fully tested.</p>
+<p>In order to populate the reference document data from extracted data from an external tool
+you can use the management command ref_doc_csv_importer</p>
+<p>Example:</p>
+<blockquote>
+<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>manage.py<span class="w"> </span>ref_doc_csv_importer<span class="w"> </span><span class="s2">&quot;/absolute/path/to/duties.csv&quot;</span><span class="w"> </span><span class="s2">&quot;/absolute/path/to/quotas.csv&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
 </section>
 <section id="using-the-exporter">
 <h2>Using the exporter<a class="headerlink" href="#using-the-exporter" title="Permalink to this headline">¶</a></h2>
