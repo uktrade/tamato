@@ -44,8 +44,8 @@
     "heroku-prebuild": "",
     "heroku-postbuild": "npm run build",
     "test": "jest",
-    "lint:js": "npx eslint --ext .jsx,.js",
-    "lint:js:fix": "npx eslint --ext .jsx,.js --fix",
+    "lint:js": "npx eslint . --ext .jsx,.js",
+    "lint:js:fix": "npx eslint . --ext .jsx,.js --fix",
     "lint-staged": "lint-staged --verbose"
   },
   "lint-staged": {

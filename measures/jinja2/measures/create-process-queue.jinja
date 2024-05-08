@@ -1,0 +1,93 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "macros/inline_filter_links.jinja" import inline_filter_links %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set list_include = "includes/measures/create-task-list.jinja"%}
+
+{% set page_title = "Measures process queue" %}
+
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+      request,
+      [ {"text": page_title} ],
+      with_workbasket=False,
+  ) }}
+{% endblock %}
+
+{% set filter_links_list = [
+  {
+    "text": "All",
+    "href": "?processing_state=",
+    "selected": selected_link == "all",
+  },
+  {
+    "text": "Processing",
+    "href": "?processing_state=PROCESSING",
+    "selected": selected_link == "processing",
+  },
+  {
+    "text": "Completed",
+    "href": "?processing_state=SUCCESSFULLY_PROCESSED",
+    "selected": selected_link == "completed",
+  },
+  {
+    "text": "Failed",
+    "href": "?processing_state=FAILED_PROCESSING",
+    "selected": selected_link == "failed",
+  },
+  {
+    "text": "Terminated",
+    "href": "?processing_state=CANCELLED",
+    "selected": selected_link == "terminated",
+  },
+]%}
+
+{% set refresh_button_content -%}
+  Refresh
+  <img
+    src="{{ static('common/images/mdi_refresh.svg') }}"
+    alt="refresh filter results"
+  >
+{%- endset %}
+
+{% block content %}
+<div class="govuk-grid-row">
+    
+  <div class="govuk-grid-column-full">
+    <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+    <nav class="workbasket-filters">
+      <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
+      <div class="govuk-!-margin-top-2">
+        {{ inline_filter_links(filter_links_list) }}
+      </div>
+
+      {{ govukButton({
+            "html": refresh_button_content,
+            "href": url("measure-create-process-queue"),
+            "classes": "govuk-button--primary align-right govuk-!-margin-bottom-0 refresh-button",
+      }) }}
+    </nav>
+  </div>
+
+  <div class="govuk-grid-column-full govuk-!-margin-bottom-3">
+    <hr class="govuk-section-break govuk-section-break--visible">
+  </div>
+
+  <div class="govuk-grid-column-full">
+    {% if object_list %}
+      {% include list_include%}
+    {% else %}
+      <p class="govuk-body">No bulk create/edit tasks with this status</p>
+    {% endif %}
+  </div>
+
+  <div class="govuk-grid-column-full">
+    {% include "includes/common/pagination.jinja" %}
+  </div>
+
+</div>
+{% endblock %}

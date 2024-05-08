@@ -1,0 +1,69 @@
+
+###############
+# Build on Python-based image using default target platform (TARGETPLATFORM).
+
+FROM python:3.9-bookworm
+
+ARG TARGETPLATFORM
+ARG TARGETARCH
+RUN echo "Building for ${TARGETPLATFORM} platform..."
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Note: Set the ENV and DJANGO_SETTINGS_MODULE env vars via docker compose to
+# permit flexible image use.
+
+###############
+# Install OS packages.
+
+RUN apt-get update -qqy --fix-missing && \
+    apt-get install -qqy --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    curl \
+    g++ \
+    git \
+    libmagic1 \
+    postgresql-client
+
+###############
+# Download and setup Node.
+
+ENV NODE_VERSION="v20.10.0"
+
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+        NODE_ARCH="linux-arm64"; \
+    elif [ "$TARGETARCH" = "amd64" ]; then \
+        NODE_ARCH="linux-x64"; \
+    else \
+        echo "Unsupported node binary package platform architecture: ${TARGETARCH}"; \
+        exit 1; \
+    fi \
+    && NODE_NAME="node-${NODE_VERSION}-${NODE_ARCH}" \
+    && curl "https://nodejs.org/dist/${NODE_VERSION}/${NODE_NAME}.tar.gz" -O \
+    && tar xzf "${NODE_NAME}.tar.gz" \
+    && ln -s "/${NODE_NAME}/bin/node" /usr/local/bin/node \
+    && ln -s "/${NODE_NAME}/bin/npm" /usr/local/bin/npm \
+    && ln -s "/${NODE_NAME}/bin/npx" /usr/local/bin/npx
+
+###############
+# Install Node packages and Python packages.
+
+WORKDIR /app
+
+COPY package.json /app/
+COPY package-lock.json /app/
+RUN npm install
+
+COPY requirements.txt /app/
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt --no-warn-script-location 
+
+COPY . /app/
+
+###############
+# Build static assets.
+
+RUN npm run build
+RUN python manage.py collectstatic --noinput

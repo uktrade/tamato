@@ -1,4 +1,6 @@
 -r requirements-dev.txt
 
-ipython
-jupyter
+ipython==8.18.1
+jupyter==1.0.0
+jupyter-nbextensions-configurator==0.6.3
+notebook==6.5.6

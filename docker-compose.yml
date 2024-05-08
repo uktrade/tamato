@@ -1,7 +1,9 @@
-version: '3'
+version: "3"
 services:
+
+  # Database instance.
   db:
-    image: "postgres:12.8"
+    image: "postgres:16"
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
@@ -18,18 +20,21 @@ services:
       timeout: 5s
       retries: 5
 
+  # Redis instance used as a Django cache store.
   cache-redis:
     image: redis
     ports:
       - "127.0.0.1:6379:6379"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
 
+  # Redis instance used as Celery's broker instance.
   celery-redis:
     image: redis
     ports:
       - "127.0.0.1:6378:6379"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
 
+  # General purpose Celery worker - notifications, publishing and sqlite snapshots.
   celery:
     build:
       context: .
@@ -37,10 +42,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command:
-      [
-        "celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "standard"
-      ]
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q standard"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -49,7 +51,14 @@ services:
     tty: true
     depends_on:
       - celery-redis
+    healthcheck:
+      test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 5s
 
+  # Celery worker used to execute business rule checks on workbaskets.
   rule-check-celery:
     build:
       context: .
@@ -57,7 +66,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "rule-check"]
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q rule-check --concurrency 1"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -66,7 +75,40 @@ services:
     tty: true
     depends_on:
       - celery-redis
+    healthcheck:
+      test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 5s
 
+
+  # Celery worker for bulk creating and editing of objects.
+  bulk-create-celery:
+    build:
+      context: .
+      args:
+        - "ENV=${ENV:-prod}"
+    volumes:
+      - ./:/app/
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q bulk-create --concurrency 1"
+    env_file:
+      - .env
+      - settings/envs/docker.env
+    restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
+    stdin_open: true
+    tty: true
+    depends_on:
+      - celery-redis
+    healthcheck:
+      test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 5s
+
+
+  # Celery worker used to execute importer parser and objection creation.
   importer-celery:
     build:
       context: .
@@ -74,14 +116,22 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"worker", "-O", "fair", "-l", "info", "-Q", "importer", "--concurrency", "1"]
+    command: sh -c "celery -A common.celery worker -O fair -l info -Q importer --concurrency 1"
     env_file:
       - .env
       - settings/envs/docker.env
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     depends_on:
       - celery-redis
+    healthcheck:
+      test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 5s
 
+
+  # Celery Beat process, used to execute scheduled, cron-like tasks.
   celery-beat:
     build:
       context: .
@@ -89,7 +139,7 @@ services:
         - "ENV=${ENV:-prod}"
     volumes:
       - ./:/app/
-    command: ["celery", "-A" , "common.celery" ,"beat", "-l", "info"]
+    command: sh -c "celery -A common.celery beat -l info"
     env_file:
       - .env
       - settings/envs/docker.env
@@ -99,6 +149,7 @@ services:
     depends_on:
       - celery-redis
 
+  # Minio object store instance providing S3-like APIs and capabilities.
   s3:
     image: minio/minio
     ports:
@@ -109,13 +160,14 @@ services:
     env_file: .env
     entrypoint: sh
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    command: ['-c', 'mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ":9001"']
+    command: -c "mkdir -p /data/importer && mkdir -p /data/hmrc-packaging && minio server --quiet /data --console-address ':9001'"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
 
+  # Web application process.
   tamato:
     build:
       context: .
@@ -128,13 +180,17 @@ services:
       - "127.0.0.1:8000:8000"
     depends_on:
       - db
-      - s3
       - cache-redis
       - celery-redis
+      - celery
+      - rule-check-celery
+      - importer-celery
+      #- celery-beat # Normally only required in production environments.
+      - s3
     env_file:
       - .env
       - settings/envs/docker.env
-    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     stdin_open: true
     tty: true
