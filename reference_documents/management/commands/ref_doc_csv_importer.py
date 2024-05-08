@@ -93,12 +93,14 @@ class Command(BaseCommand):
             order_number_valid_between = None
 
         # add a new one
-        order_number_record, created = PreferentialQuotaOrderNumber.objects.get_or_create(
-            quota_order_number=order_number,
-            reference_document_version_id=reference_document_version.id,
-            valid_between=order_number_valid_between,
-            coefficient=None,
-            main_order_number=None,
+        order_number_record, created = (
+            PreferentialQuotaOrderNumber.objects.get_or_create(
+                quota_order_number=order_number,
+                reference_document_version_id=reference_document_version.id,
+                valid_between=order_number_valid_between,
+                coefficient=None,
+                main_order_number=None,
+            )
         )
 
         if created:
@@ -175,12 +177,14 @@ class Command(BaseCommand):
                     )
 
                 # Create version
-                ref_doc_version, created = ReferenceDocumentVersion.objects.get_or_create(
-                    reference_document=ref_doc,
-                    version=float(version),
-                    published_date=document_publish_date,
-                    entry_into_force_date=None,
-                    status=ReferenceDocumentVersionStatus.EDITING,
+                ref_doc_version, created = (
+                    ReferenceDocumentVersion.objects.get_or_create(
+                        reference_document=ref_doc,
+                        version=float(version),
+                        published_date=document_publish_date,
+                        entry_into_force_date=None,
+                        status=ReferenceDocumentVersionStatus.EDITING,
+                    )
                 )
 
                 if created:

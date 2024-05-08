@@ -2,6 +2,7 @@ from django.db import models
 from django_fsm import FSMField
 
 from common.fields import TaricDateRangeField
+from common.models import TimestampedMixin
 
 
 class ReferenceDocumentVersionStatus(models.TextChoices):
@@ -13,8 +14,7 @@ class ReferenceDocumentVersionStatus(models.TextChoices):
     PUBLISHED = "PUBLISHED", "Published"
 
 
-class ReferenceDocument(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
+class ReferenceDocument(TimestampedMixin):
 
     title = models.CharField(
         max_length=255,
@@ -44,9 +44,7 @@ class ReferenceDocument(models.Model):
             return f"{self.area_id} (unknown description)"
 
 
-class ReferenceDocumentVersion(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+class ReferenceDocumentVersion(TimestampedMixin):
     version = models.FloatField()
     published_date = models.DateField(blank=True, null=True)
     entry_into_force_date = models.DateField(blank=True, null=True)
