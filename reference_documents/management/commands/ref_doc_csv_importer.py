@@ -14,7 +14,7 @@ from reference_documents.models import ReferenceDocumentVersionStatus
 
 
 class Command(BaseCommand):
-    help = "Basic HELP .. todo"
+    help = "Import reference document data from a CSV file"
 
     def add_arguments(self, parser) -> None:
         parser.add_argument(
@@ -31,13 +31,6 @@ class Command(BaseCommand):
         return super().add_arguments(parser)
 
     def handle(self, *args, **options):
-        # TODO: remove all ref doc data - temp while testing
-        PreferentialQuota.objects.all().delete()
-        PreferentialRate.objects.all().delete()
-        PreferentialQuotaOrderNumber.objects.all().delete()
-        ReferenceDocumentVersion.objects.all().delete()
-        ReferenceDocument.objects.all().delete()
-
         # verify each file exists
         if not os.path.isfile(options["duties_csv_path"]):
             raise FileNotFoundError(options["duties_csv_path"])
@@ -99,41 +92,29 @@ class Command(BaseCommand):
         else:
             order_number_valid_between = None
 
-        # Check order number
-        order_number_record = (
-            reference_document_version.preferential_quota_order_numbers.filter(
-                quota_order_number=order_number,
-            ).first()
+        # add a new one
+        order_number_record, created = PreferentialQuotaOrderNumber.objects.get_or_create(
+            quota_order_number=order_number,
+            reference_document_version_id=reference_document_version.id,
+            valid_between=order_number_valid_between,
+            coefficient=None,
+            main_order_number=None,
         )
 
-        if not order_number_record:
-            # add a new one
-            order_number_record = PreferentialQuotaOrderNumber.objects.create(
-                quota_order_number=order_number,
-                reference_document_version_id=reference_document_version.id,
-                valid_between=order_number_valid_between,
-                coefficient=None,
-                main_order_number=None,
-            )
-
+        if created:
             order_number_record.save()
 
-        # check quota definition
-        quota = order_number_record.preferential_quotas.filter(
+        # add a new one
+        quota, created = PreferentialQuota.objects.get_or_create(
             commodity_code=comm_code,
-        ).first()
+            preferential_quota_order_number=order_number_record,
+            quota_duty_rate=quota_duty_rate,
+            volume=volume,
+            valid_between=quota_definition_valid_between,
+            measurement=units,
+        )
 
-        if not quota:
-            # add a new one
-            quota = PreferentialQuota.objects.create(
-                commodity_code=comm_code,
-                preferential_quota_order_number=order_number_record,
-                quota_duty_rate=quota_duty_rate,
-                volume=volume,
-                valid_between=quota_definition_valid_between,
-                measurement=units,
-            )
-
+        if created:
             quota.save()
 
     def add_pt_duty_if_no_exist(self, df_row, reference_document_version):
@@ -141,19 +122,15 @@ class Command(BaseCommand):
         comm_code = df_row["Standardised Commodity Code"]
         comm_code = comm_code + ("0" * (len(comm_code) - 10))
 
-        pref_rate = reference_document_version.preferential_rates.filter(
+        # add a new one
+        pref_rate, created = PreferentialRate.objects.get_or_create(
             commodity_code=comm_code,
-        ).first()
+            duty_rate=df_row["Preferential Duty Rate"],
+            reference_document_version=reference_document_version,
+            valid_between=None,
+        )
 
-        if not pref_rate:
-            # add a new one
-            pref_rate = PreferentialRate.objects.create(
-                commodity_code=comm_code,
-                duty_rate=df_row["Preferential Duty Rate"],
-                reference_document_version=reference_document_version,
-                valid_between=None,
-            )
-
+        if created:
             pref_rate.save()
 
     # Create base documents
@@ -163,26 +140,12 @@ class Command(BaseCommand):
         areas = pd.unique(self.duties_df["area_id"].values)
 
         for area in areas:
-            # # isolating mexico
-            # if area != 'MX':
-            #     continue
-
-            print(area)
-            ref_doc = (
-                ReferenceDocument.objects.all()
-                .filter(
-                    title=f"Reference document for {area}",
-                    area_id=area,
-                )
-                .first()
-            )
-
             # Create records
-            if not ref_doc:
-                ref_doc = ReferenceDocument.objects.create(
-                    title=f"Reference document for {area}",
-                    area_id=area,
-                )
+            ref_doc, created = ReferenceDocument.objects.get_or_create(
+                title=f"Reference document for {area}",
+                area_id=area,
+            )
+            if created:
                 ref_doc.save()
 
             versions = pd.unique(
@@ -192,11 +155,6 @@ class Command(BaseCommand):
             )
 
             for version in versions:
-                print(f" -- {version}")
-                # try and find existing
-                ref_doc_version = ref_doc.reference_document_versions.filter(
-                    version=float(version),
-                ).first()
                 if (
                     self.duties_df[self.duties_df["area_id"] == area][
                         "Document Date"
@@ -216,16 +174,16 @@ class Command(BaseCommand):
                         int(doc_date_string[6:]),
                     )
 
-                if not ref_doc_version:
-                    # Create version
-                    ref_doc_version = ReferenceDocumentVersion.objects.create(
-                        reference_document=ref_doc,
-                        version=float(version),
-                        published_date=document_publish_date,
-                        entry_into_force_date=None,
-                        status=ReferenceDocumentVersionStatus.EDITING,
-                    )
+                # Create version
+                ref_doc_version, created = ReferenceDocumentVersion.objects.get_or_create(
+                    reference_document=ref_doc,
+                    version=float(version),
+                    published_date=document_publish_date,
+                    entry_into_force_date=None,
+                    status=ReferenceDocumentVersionStatus.EDITING,
+                )
 
+                if created:
                     ref_doc_version.save()
 
                 # Add duties
