@@ -398,6 +398,21 @@ This tool is available as an importer alternative found within the web front end
 
 This tool addresses several short falls that the current importer has.
 
+Reference document data import
+------------------------------
+
+WARNING: this feature is in alpha : do not use in production until this feature has been
+fully tested.
+
+In order to populate the reference document data from extracted data from an external tool
+you can use the management command ref_doc_csv_importer
+
+Example:
+
+   .. code:: sh
+
+      $ python manage.py ref_doc_csv_importer "/absolute/path/to/duties.csv" "/absolute/path/to/quotas.csv"
+
 Using the exporter
 ------------------
 
