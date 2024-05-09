@@ -2,6 +2,7 @@
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "includes/workbaskets/navigation.jinja" import navigation %}
 
 {% set page_title %}
@@ -13,6 +14,8 @@
 {% set transaction_order_link = url("workbaskets:workbasket-ui-transaction-order", kwargs={"pk": workbasket.pk}) %}
 {% set assign_users_link = url("workbaskets:workbasket-ui-assign-users", kwargs={"pk": workbasket.pk}) %}
 {% set unassign_users_link = url("workbaskets:workbasket-ui-unassign-users", kwargs={"pk": workbasket.pk}) %}
+
+{% set base_url = url("workbaskets:current-workbasket") ~ "?page=" ~ page_obj.number %}
 
 {% macro display_assigned_users(assigned_users, assignment_type) %}
   {% if not assigned_users and assignment_type == "workers" %}
@@ -159,9 +162,38 @@
         <dd class="govuk-summary-list__value govuk-!-padding-top-4">
           {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
         </dd>
+        {% if comments %}
+          <dd class="govuk-summary-list__actions">
+            <span class="govuk-visually-hidden">Sort by </span>{{ create_sortable_anchor(request, "comments", sort_by_title, base_url, query_params="True") }}
+          </dd>
+        {% endif %}
       </div>
     {% endif %}
   </dl>
+
+  {% if comments and can_view_comment %}
+    <div class="govuk-grid-row">
+      <div id="workbasket-comments-container" class="govuk-grid-column-three-quarters">
+        <h2 class="govuk-heading-m govuk-visually-hidden">Comments</h2>
+        {% for comment in comments %}
+          <article>
+            <header class="govuk-!-margin-bottom-4">
+              <p class="govuk-body">
+                <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">{{ comment.author.get_displayname() }}</span>
+                <time>{{ localtime(comment.created_at).strftime("%d %B %Y, %I:%M %p") }}</time>
+              </p>
+            </header>
+            <div>{{ comment.content }}</div>
+          </article>
+          {% if not loop.last %}
+            <hr class="govuk-section-break govuk-section-break--visible">
+          {% endif %}
+        {% endfor %}
+        <hr class="govuk-section-break">
+        {% include "includes/common/pagination.jinja" %}
+      </div>
+    </div>
+  {% endif %}
 
   <script nonce="{{ request.csp_nonce }}">
     const CSRF_TOKEN = "{{ csrf_token }}";

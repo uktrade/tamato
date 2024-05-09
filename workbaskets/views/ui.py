@@ -55,6 +55,7 @@ from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from regulations.models import Regulation
+from tasks.models import Comment
 from tasks.models import Task
 from workbaskets import forms
 from workbaskets.models import DataRow
@@ -336,6 +337,27 @@ class CurrentWorkBasket(FormView):
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
+    @cached_property
+    def comments(self):
+        ordering = self.get_comments_ordering()[0]
+        return Comment.objects.filter(task__workbasket=self.workbasket).order_by(
+            ordering,
+        )
+
+    @cached_property
+    def paginator(self):
+        return Paginator(self.comments, per_page=20)
+
+    def get_comments_ordering(self):
+        ordered = self.request.GET.get("ordered")
+        if ordered == "desc":
+            ordering = "created_at"
+            new_sort_by_title = "Newest first"
+        else:
+            ordering = "-created_at"
+            new_sort_by_title = "Oldest first"
+        return ordering, new_sort_by_title
+
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket=self.workbasket)
         return redirect(self.get_success_url())
@@ -376,6 +398,13 @@ class CurrentWorkBasket(FormView):
         ]
 
         can_add_comment = self.request.user.has_perm("tasks.add_comment")
+        can_view_comment = self.request.user.has_perm("tasks.view_comment")
+
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
 
         context.update(
             {
@@ -384,6 +413,12 @@ class CurrentWorkBasket(FormView):
                 "assigned_reviewers": assigned_reviewers,
                 "assignable_users": assignable_users,
                 "can_add_comment": can_add_comment,
+                "can_view_comment": can_view_comment,
+                "comments": page.object_list,
+                "sort_by_title": self.get_comments_ordering()[1],
+                "paginator": self.paginator,
+                "page_obj": page,
+                "page_links": page_links,
             },
         )
 

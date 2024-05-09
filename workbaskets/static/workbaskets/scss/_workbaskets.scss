@@ -60,3 +60,12 @@ table.workbasket-transactions tbody {
     height: 1.5rem;
   }
 }
+
+#workbasket-comments-container {
+  width: 70%;
+  float: right;
+
+  header > p{
+    display: inline;
+  }
+}
