@@ -30,6 +30,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
+from markdownify import markdownify
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -1656,6 +1657,12 @@ class WorkBasketCommentUpdate(UpdateView):
             raise PermissionDenied
         else:
             return obj
+
+    def get_initial(self):
+        initial = super().get_initial()
+        markdown = markdownify(self.object.content, heading_style="ATX")
+        initial["content"] = markdown
+        return initial
 
 
 class WorkBasketCommentDelete(DeleteView):

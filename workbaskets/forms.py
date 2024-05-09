@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import bleach
+import markdown
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Div
@@ -14,6 +16,7 @@ from django.urls import reverse
 
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
+from common.validators import markdown_tags_allowlist
 from tasks.models import Comment
 from tasks.models import Task
 from tasks.models import UserAssignment
@@ -349,6 +352,17 @@ class WorkBasketCommentCreateForm(forms.ModelForm):
             ),
         )
 
+    def clean_content(self):
+        content = self.cleaned_data["content"]
+        html = markdown.markdown(text=content, extensions=["sane_lists", "tables"])
+        content = bleach.clean(
+            text=html,
+            tags=markdown_tags_allowlist,
+            attributes=[],
+            strip=True,
+        )
+        return content
+
     def save(self, user, workbasket, commit=True):
         instance = super().save(commit=False)
         instance.author = user
@@ -391,6 +405,17 @@ class WorkBasketCommentUpdateForm(forms.ModelForm):
                 css_class="govuk-button-group",
             ),
         )
+
+    def clean_content(self):
+        content = self.cleaned_data["content"]
+        html = markdown.markdown(text=content, extensions=["sane_lists", "tables"])
+        content = bleach.clean(
+            text=html,
+            tags=markdown_tags_allowlist,
+            attributes=[],
+            strip=True,
+        )
+        return content
 
 
 class WorkBasketCommentDeleteForm(forms.ModelForm):

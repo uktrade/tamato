@@ -38,7 +38,7 @@
               <time>{{ localtime(comment.created_at).strftime("%d %B %Y, %I:%M %p") }}</time>
             </p>
           </header>
-          <div id="{{ comment_anchor }}">{{ comment.content }}</p>
+          <div id="{{ comment_anchor }}" class="comment">{{ comment.content|safe }}</p>
           <footer>
             <a href="{{ base_url }}#{{ comment_anchor }}" class="govuk-link govuk-body-s">Link to this comment</a>
           </footer>

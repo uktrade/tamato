@@ -85,3 +85,56 @@ ul.comment-actions {
     margin-right: 0;
   }
 }
+
+.comment {
+  h1 {
+    @extend .govuk-heading-l;
+  }
+
+  h2 {
+    @extend .govuk-heading-m;
+  }
+
+  h3 {
+    @extend .govuk-heading-s;
+  }
+  
+  p {
+    @extend .govuk-body;
+  }
+  
+  blockquote {
+    @extend .govuk-inset-text;
+  }
+
+  hr {
+    @extend .govuk-section-break;
+    @extend .govuk-section-break--visible;
+  }
+
+  strong {
+    @extend .govuk-\!-font-weight-bold;
+  }
+
+  ul {
+    @extend .govuk-list;
+    @extend .govuk-list--bullet;
+  }
+
+  ol {
+    @extend .govuk-list;
+    @extend .govuk-list--number;
+  }
+
+  table {
+    @extend .govuk-table;
+  }
+  
+  th {
+    @extend .govuk-table__header;
+  }
+
+  td {
+    @extend .govuk-table__cell
+  }
+}

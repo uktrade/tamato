@@ -199,7 +199,7 @@
                 </ul>
               {% endif %}
             </header>
-            <div>{{ comment.content }}</div>
+            <div class="comment">{{ comment.content|safe }}</div>
           </article>
           {% if not loop.last %}
             <hr class="govuk-section-break govuk-section-break--visible">

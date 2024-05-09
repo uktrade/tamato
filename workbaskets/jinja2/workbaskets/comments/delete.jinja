@@ -25,7 +25,7 @@
         <time>{{ localtime(object.created_at).strftime("%d %B %Y, %I:%M %p") }}</time>
       </p>
     </header>
-    <div>{{ object.content }}</div>
+    <div class="comment">{{ object.content|safe }}</div>
   </article>
 
   {% call django_form(action=url("workbaskets:workbasket-ui-comment-delete", kwargs={"wb_pk": request.user.current_workbasket.pk, "pk": object.pk})) %}
