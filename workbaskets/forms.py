@@ -11,6 +11,8 @@ from django.db.models import Q
 
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
+from tasks.models import Comment
+from tasks.models import Task
 from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets import validators
@@ -314,3 +316,40 @@ class WorkBasketUnassignUsersForm(forms.Form):
             fields=["unassigned_at"],
         )
         return user_assignments
+
+
+class WorkBasketCommentCreateForm(forms.ModelForm):
+    content = forms.CharField(
+        label="",
+        error_messages={"required": "Enter your comment"},
+        widget=forms.widgets.Textarea,
+        max_length=5000,
+    )
+
+    class Meta:
+        model = Comment
+        fields = ("content",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Field.textarea("content", rows=1, placeholder="Add a comment"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def save(self, user, workbasket, commit=True):
+        instance = super().save(commit=False)
+        instance.author = user
+        instance.task = Task.objects.get(workbasket=workbasket)
+        if commit:
+            instance.save()
+        return instance
