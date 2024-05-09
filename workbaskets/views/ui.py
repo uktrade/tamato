@@ -38,6 +38,7 @@ from common.models import Transaction
 from common.models.transactions import TransactionPartition
 from common.util import format_date_string
 from common.views import SortingMixin
+from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
 from common.views import build_pagination_list
 from exporter.models import Upload
@@ -1604,3 +1605,30 @@ class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse("workbaskets:current-workbasket")
+
+
+class WorkBasketCommentListView(
+    PermissionRequiredMixin,
+    WithPaginationListMixin,
+    ListView,
+):
+    permission_required = [
+        "workbaskets.view_workbasket",
+        "tasks.view_comment",
+    ]
+    template_name = "workbaskets/comments/list.jinja"
+    paginate_by = 20
+
+    @cached_property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    def get_queryset(self):
+        return Comment.objects.filter(task__workbasket=self.workbasket).order_by(
+            "-created_at",
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["workbasket"] = self.workbasket
+        return context

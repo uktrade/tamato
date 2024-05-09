@@ -191,6 +191,11 @@ ui_patterns = [
         ui_views.WorkBasketUnassignUsersView.as_view(),
         name="workbasket-ui-unassign-users",
     ),
+    path(
+        f"<pk>/comments/",
+        ui_views.WorkBasketCommentListView.as_view(),
+        name="workbasket-ui-comments",
+    ),
 ]
 
 urlpatterns = [
