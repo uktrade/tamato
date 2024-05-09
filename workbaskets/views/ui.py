@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import F
 from django.db.models import ProtectedError
@@ -1632,3 +1633,26 @@ class WorkBasketCommentListView(
         context = super().get_context_data(*args, **kwargs)
         context["workbasket"] = self.workbasket
         return context
+
+
+class WorkBasketCommentDelete(DeleteView):
+    model = Comment
+    form_class = forms.WorkBasketCommentDeleteForm
+    template_name = "workbaskets/comments/delete.jinja"
+    success_url = reverse_lazy("workbaskets:current-workbasket")
+
+    def editable(self, comment):
+        if (
+            comment.author != self.request.user
+            or comment.task.workbasket.status != WorkflowStatus.EDITING
+        ):
+            return False
+        else:
+            return True
+
+    def get_object(self, queryset=None):
+        obj = super().get_object()
+        if not self.editable(obj):
+            raise PermissionDenied
+        else:
+            return obj

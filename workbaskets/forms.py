@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
@@ -8,6 +10,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.urls import reverse
 
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
@@ -353,3 +356,31 @@ class WorkBasketCommentCreateForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class WorkBasketCommentDeleteForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Div(
+                Submit(
+                    "submit",
+                    "Delete",
+                    css_class="govuk-button--warning",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f"<a class='govuk-button govuk-button--secondary' href={reverse('workbaskets:current-workbasket')}>Cancel</a>",
+                ),
+                css_class="govuk-button-group",
+            ),
+        )

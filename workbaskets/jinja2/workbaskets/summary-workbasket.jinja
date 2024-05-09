@@ -182,6 +182,16 @@
                 <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">{{ comment.author.get_displayname() }}</span>
                 <time>{{ localtime(comment.created_at).strftime("%d %B %Y, %I:%M %p") }}</time>
               </p>
+              {% if comment.author == request.user %}
+                <ul class="govuk-list comment-actions">
+                  <li>
+                    <a
+                      class="govuk-link"
+                      href="{{ url("workbaskets:workbasket-ui-comment-delete", kwargs={"wb_pk": workbasket.pk, "pk": comment.pk}) }}"
+                    >Delete</a>
+                  </li>
+                </ul>
+              {% endif %}
             </header>
             <div>{{ comment.content }}</div>
           </article>

@@ -69,3 +69,19 @@ table.workbasket-transactions tbody {
     display: inline;
   }
 }
+
+ul.comment-actions {
+  display: inline;
+  float: inline-end;
+
+  li {
+    display: inline;
+    border-right: 1px solid govuk-colour("mid-grey");
+    padding-right: govuk-spacing(2);
+    margin-right: govuk-spacing(2);
+  }
+  li:last-child{
+    border-right: 0;
+    margin-right: 0;
+  }
+}

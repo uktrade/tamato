@@ -1,0 +1,34 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Delete comment ID " ~ object.id %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title},
+    ])
+  }}
+{% endblock %}
+
+{% block form %}
+  {{ govukWarningText({
+    "text": "Are you sure you want to delete this comment?"
+  }) }}
+
+  <article>
+    <header>
+      <p class="govuk-body">
+        <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">{{ object.author.get_displayname() }}</span>
+        <time>{{ localtime(object.created_at).strftime("%d %B %Y, %I:%M %p") }}</time>
+      </p>
+    </header>
+    <div>{{ object.content }}</div>
+  </article>
+
+  {% call django_form(action=url("workbaskets:workbasket-ui-comment-delete", kwargs={"wb_pk": request.user.current_workbasket.pk, "pk": object.pk})) %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}
