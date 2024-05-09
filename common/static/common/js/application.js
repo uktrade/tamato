@@ -14,6 +14,7 @@ import { initAll } from "govuk-frontend";
 import showHideCheckboxes from "./showHideCheckboxes";
 import { initAutocomplete } from "./autocomplete";
 import { initAutocompleteProgressiveEnhancement } from "./autocompleteProgressiveEnhancement";
+import { initAddNewDefinition } from "./addNewQuotaDefinitionForm";
 import { initAddNewEnhancement } from "./addNewForm";
 import { initCopyToNextDuties } from "./copyDuties";
 import initCheckboxes from "./checkboxes";
@@ -30,6 +31,7 @@ showHideCheckboxes();
 // to avoid the "dummy" autocomplete field being submitted as part of the form
 // to the server.
 initAll();
+initAddNewDefinition();
 initAddNewEnhancement();
 initAutocomplete(false);
 initCopyToNextDuties();

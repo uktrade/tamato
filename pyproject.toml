@@ -97,5 +97,6 @@ norecursedirs = [
     "venv",
 ]
 markers = [
-    "importer_v2"
+    "importer_v2",
+    "reference_documents"
 ]
