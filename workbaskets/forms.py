@@ -358,6 +358,41 @@ class WorkBasketCommentCreateForm(forms.ModelForm):
         return instance
 
 
+class WorkBasketCommentUpdateForm(forms.ModelForm):
+    content = forms.CharField(
+        label="Comment",
+        error_messages={"required": "Enter your comment"},
+        widget=forms.widgets.Textarea,
+        max_length=5000,
+    )
+
+    class Meta:
+        model = Comment
+        fields = ("content",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Field.textarea("content"),
+            Div(
+                Submit(
+                    "submit",
+                    "Save",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f"<a class='govuk-button govuk-button--secondary' href={reverse('workbaskets:current-workbasket')}>Cancel</a>",
+                ),
+                css_class="govuk-button-group",
+            ),
+        )
+
+
 class WorkBasketCommentDeleteForm(forms.ModelForm):
     class Meta:
         model = Comment

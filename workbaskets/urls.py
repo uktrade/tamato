@@ -197,6 +197,11 @@ ui_patterns = [
         name="workbasket-ui-comments",
     ),
     path(
+        f"<wb_pk>/comments/<pk>/edit/",
+        ui_views.WorkBasketCommentUpdate.as_view(),
+        name="workbasket-ui-comment-edit",
+    ),
+    path(
         f"<wb_pk>/comments/<pk>/delete/",
         ui_views.WorkBasketCommentDelete.as_view(),
         name="workbasket-ui-comment-delete",

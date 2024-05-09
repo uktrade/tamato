@@ -1635,6 +1635,29 @@ class WorkBasketCommentListView(
         return context
 
 
+class WorkBasketCommentUpdate(UpdateView):
+    model = Comment
+    form_class = forms.WorkBasketCommentUpdateForm
+    template_name = "workbaskets/comments/edit.jinja"
+    success_url = reverse_lazy("workbaskets:current-workbasket")
+
+    def editable(self, comment):
+        if (
+            comment.author != self.request.user
+            or comment.task.workbasket.status != WorkflowStatus.EDITING
+        ):
+            return False
+        else:
+            return True
+
+    def get_object(self, queryset=None):
+        obj = super().get_object()
+        if not self.editable(obj):
+            raise PermissionDenied
+        else:
+            return obj
+
+
 class WorkBasketCommentDelete(DeleteView):
     model = Comment
     form_class = forms.WorkBasketCommentDeleteForm
