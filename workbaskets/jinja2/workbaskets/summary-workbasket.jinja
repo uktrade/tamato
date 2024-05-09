@@ -152,6 +152,15 @@
         {% endif %}
       </dd>
     </div>
+
+    {% if workbasket.tasks.exists() and can_add_comment %}
+      <div class="govuk-summary-list__row govuk-summary-list__row--no-border">
+        <dt class="govuk-summary-list__key">Activity</dt>
+        <dd class="govuk-summary-list__value govuk-!-padding-top-4">
+          {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
+        </dd>
+      </div>
+    {% endif %}
   </dl>
 
   <script nonce="{{ request.csp_nonce }}">

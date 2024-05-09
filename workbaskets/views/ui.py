@@ -328,12 +328,20 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CurrentWorkBasket(TemplateView):
+class CurrentWorkBasket(FormView):
     template_name = "workbaskets/summary-workbasket.jinja"
+    form_class = forms.WorkBasketCommentCreateForm
 
     @property
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
+
+    def form_valid(self, form):
+        form.save(user=self.request.user, workbasket=self.workbasket)
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse("workbaskets:current-workbasket")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -367,12 +375,15 @@ class CurrentWorkBasket(TemplateView):
             {"pk": user.pk, "name": user.get_full_name()} for user in users
         ]
 
+        can_add_comment = self.request.user.has_perm("tasks.add_comment")
+
         context.update(
             {
                 "workbasket": self.workbasket,
                 "assigned_workers": assigned_workers,
                 "assigned_reviewers": assigned_reviewers,
                 "assignable_users": assignable_users,
+                "can_add_comment": can_add_comment,
             },
         )
 
