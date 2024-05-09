@@ -331,86 +331,12 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 class CurrentWorkBasket(TemplateView):
     template_name = "workbaskets/summary-workbasket.jinja"
 
-    # Form action mappings to URL names.
-    action_success_url_names = {
-        "page-prev": "workbaskets:current-workbasket",
-        "page-next": "workbaskets:current-workbasket",
-        "compare-data": "workbaskets:current-workbasket",
-    }
-
     @property
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
-    @property
-    def paginator(self):
-        return Paginator(
-            self.workbasket.tracked_models.with_transactions_and_models().order_by(
-                "transaction__order",
-            ),
-            per_page=50,
-        )
-
-    @property
-    def latest_upload(self):
-        return Upload.objects.order_by("created_date").last()
-
-    @property
-    def uploaded_envelope_dates(self):
-        """Gets a list of all transactions from the `latest_approved_workbasket`
-        in the order they were updated and returns a dict with the first and
-        last transactions as values for "start" and "end" keys respectively."""
-        if self.latest_upload:
-            transactions = self.latest_upload.envelope.transactions.order_by(
-                "updated_at",
-            )
-            return {
-                "start": transactions.first().updated_at,
-                "end": transactions.last().updated_at,
-            }
-        return None
-
-    def _append_url_page_param(self, url, form_action):
-        """Based upon 'form_action', append a 'page' URL parameter to the given
-        url param and return the result."""
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        page_number = 1
-        if form_action == "page-prev":
-            page_number = page.previous_page_number()
-        elif form_action == "page-next":
-            page_number = page.next_page_number()
-        return f"{url}?page={page_number}"
-
-    def get_success_url(self):
-        form_action = self.request.POST.get("form-action")
-        if form_action in ["remove-selected", "remove-all"]:
-            return reverse(
-                "workbaskets:workbasket-ui-changes-delete",
-                kwargs={"pk": self.workbasket.pk},
-            )
-        try:
-            return self._append_url_page_param(
-                reverse(
-                    self.action_success_url_names[form_action],
-                ),
-                form_action,
-            )
-        except KeyError:
-            return reverse("home")
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        kwargs["objects"] = page.object_list
-        return kwargs
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        user_can_delete_workbasket = (
-            self.request.user.is_superuser
-            or self.request.user.has_perm("workbaskets.delete_workbasket")
-        )
 
         assigned_workers = [
             {"pk": user.pk, "name": user.user.get_full_name()}
@@ -441,46 +367,14 @@ class CurrentWorkBasket(TemplateView):
             {"pk": user.pk, "name": user.get_full_name()} for user in users
         ]
 
-        # set to true if there is an associated goods import batch with an unsent notification
-        try:
-            import_batch = self.workbasket.importbatch
-            unsent_notifcation = (
-                import_batch
-                and import_batch.goods_import
-                and not Notification.objects.filter(
-                    notified_object_pk=import_batch.pk,
-                    notification_type=NotificationTypeChoices.GOODS_REPORT,
-                ).exists()
-            )
-        except ObjectDoesNotExist:
-            unsent_notifcation = False
-
         context.update(
             {
                 "workbasket": self.workbasket,
-                "page_obj": page,
-                "uploaded_envelope_dates": self.uploaded_envelope_dates,
-                "rule_check_in_progress": False,
-                "user_can_delete_workbasket": user_can_delete_workbasket,
-                "unsent_notification": unsent_notifcation,
                 "assigned_workers": assigned_workers,
                 "assigned_reviewers": assigned_reviewers,
                 "assignable_users": assignable_users,
             },
         )
-        if self.workbasket.rule_check_task_id:
-            result = AsyncResult(self.workbasket.rule_check_task_id)
-            if result.status != "SUCCESS":
-                context.update({"rule_check_in_progress": True})
-            else:
-                self.workbasket.set_as_current(self.request.user)
-
-            num_completed, total = self.workbasket.rule_check_progress()
-            context.update(
-                {
-                    "rule_check_progress": f"Completed {num_completed} out of {total} checks",
-                },
-            )
 
         return context
 
