@@ -17,7 +17,7 @@ Prerequisites
 
 The following dependencies are required to run this app:
 
-- Python_ 3.10.x
+- Python_ 3.11.x
 - Node.js_ 20.10.0 (LTS)
 - PostgreSQL_ 12
 - Redis_ 5.x
@@ -82,7 +82,7 @@ substituting your own python version as appropriate:
     $ pip uninstall psycopg2
     $ brew install postgresql
     $ export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
-    $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.10/lib"
+    $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.11/lib"
     $ arch -arm64 pip install psycopg2 --no-binary :all:
 
 Credit due to armenzg and his `answer here
