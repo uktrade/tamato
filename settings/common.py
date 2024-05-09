@@ -136,6 +136,7 @@ TAMATO_APPS = [
     "importer",
     "notifications",
     # XXX need to keep this for migrations. delete later.
+    "reference_documents",
     "publishing",
     "taric",
     "tasks",
