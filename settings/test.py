@@ -25,11 +25,11 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get("TEST_AWS_STORAGE_BUCKET_NAME", "")
 AWS_S3_ENDPOINT_URL = os.environ.get("TEST_AWS_S3_ENDPOINT_URL")
 AWS_S3_REGION_NAME = os.environ.get("TEST_AWS_S3_REGION_NAME", "eu-west-2")
 
-# Cache settings - put things in memory to minimise dependencies.
+# Cache settings - put things in fake redis cache.
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",  # "django_redis.cache.RedisCache"
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  # Local dummy address
         "OPTIONS": {
             "REDIS_CLIENT_CLASS": "fakeredis.FakeRedis",
             "CONNECTION_POOL_KWARGS": {"connection_class": FakeConnection},
