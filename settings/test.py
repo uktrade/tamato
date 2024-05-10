@@ -1,3 +1,5 @@
+from fakeredis import FakeConnection
+
 from settings.common import *
 
 ENV = "test"
@@ -26,7 +28,12 @@ AWS_S3_REGION_NAME = os.environ.get("TEST_AWS_S3_REGION_NAME", "eu-west-2")
 # Cache settings - put things in memory to minimise dependencies.
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        "BACKEND": "django_redis.cache.RedisCache",  # "django_redis.cache.RedisCache"
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "REDIS_CLIENT_CLASS": "fakeredis.FakeRedis",
+            "CONNECTION_POOL_KWARGS": {"connection_class": FakeConnection},
+        },
     },
 }
 
