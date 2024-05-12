@@ -1636,10 +1636,8 @@ class WorkBasketCommentListView(
         return context
 
 
-class WorkBasketCommentUpdate(UpdateView):
+class WorkBasketCommentUpdateDeleteMixin:
     model = Comment
-    form_class = forms.WorkBasketCommentUpdateForm
-    template_name = "workbaskets/comments/edit.jinja"
     success_url = reverse_lazy("workbaskets:current-workbasket")
 
     def editable(self, comment):
@@ -1658,31 +1656,28 @@ class WorkBasketCommentUpdate(UpdateView):
         else:
             return obj
 
+
+class WorkBasketCommentUpdate(
+    PermissionRequiredMixin,
+    WorkBasketCommentUpdateDeleteMixin,
+    UpdateView,
+):
+    form_class = forms.WorkBasketCommentUpdateForm
+    template_name = "workbaskets/comments/edit.jinja"
+    permission_required = ["tasks.change_comment"]
+
     def get_initial(self):
         initial = super().get_initial()
-        markdown = markdownify(self.object.content, heading_style="ATX")
+        markdown = markdownify(self.object.content, heading_style="atx")
         initial["content"] = markdown
         return initial
 
 
-class WorkBasketCommentDelete(DeleteView):
-    model = Comment
+class WorkBasketCommentDelete(
+    PermissionRequiredMixin,
+    WorkBasketCommentUpdateDeleteMixin,
+    DeleteView,
+):
     form_class = forms.WorkBasketCommentDeleteForm
     template_name = "workbaskets/comments/delete.jinja"
-    success_url = reverse_lazy("workbaskets:current-workbasket")
-
-    def editable(self, comment):
-        if (
-            comment.author != self.request.user
-            or comment.task.workbasket.status != WorkflowStatus.EDITING
-        ):
-            return False
-        else:
-            return True
-
-    def get_object(self, queryset=None):
-        obj = super().get_object()
-        if not self.editable(obj):
-            raise PermissionDenied
-        else:
-            return obj
+    permission_required = ["tasks.delete_comment"]

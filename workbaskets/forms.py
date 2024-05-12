@@ -324,7 +324,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
         return user_assignments
 
 
-class WorkBasketCommentCreateForm(forms.ModelForm):
+class WorkBasketCommentForm(forms.ModelForm):
     content = forms.CharField(
         label="",
         error_messages={"required": "Enter your comment"},
@@ -336,6 +336,19 @@ class WorkBasketCommentCreateForm(forms.ModelForm):
         model = Comment
         fields = ("content",)
 
+    def clean_content(self):
+        content = self.cleaned_data["content"]
+        html = markdown.markdown(text=content, extensions=["sane_lists", "tables"])
+        content = bleach.clean(
+            text=html,
+            tags=markdown_tags_allowlist,
+            attributes=[],
+            strip=True,
+        )
+        return content
+
+
+class WorkBasketCommentCreateForm(WorkBasketCommentForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -352,17 +365,6 @@ class WorkBasketCommentCreateForm(forms.ModelForm):
             ),
         )
 
-    def clean_content(self):
-        content = self.cleaned_data["content"]
-        html = markdown.markdown(text=content, extensions=["sane_lists", "tables"])
-        content = bleach.clean(
-            text=html,
-            tags=markdown_tags_allowlist,
-            attributes=[],
-            strip=True,
-        )
-        return content
-
     def save(self, user, workbasket, commit=True):
         instance = super().save(commit=False)
         instance.author = user
@@ -372,18 +374,7 @@ class WorkBasketCommentCreateForm(forms.ModelForm):
         return instance
 
 
-class WorkBasketCommentUpdateForm(forms.ModelForm):
-    content = forms.CharField(
-        label="Comment",
-        error_messages={"required": "Enter your comment"},
-        widget=forms.widgets.Textarea,
-        max_length=5000,
-    )
-
-    class Meta:
-        model = Comment
-        fields = ("content",)
-
+class WorkBasketCommentUpdateForm(WorkBasketCommentForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -405,17 +396,6 @@ class WorkBasketCommentUpdateForm(forms.ModelForm):
                 css_class="govuk-button-group",
             ),
         )
-
-    def clean_content(self):
-        content = self.cleaned_data["content"]
-        html = markdown.markdown(text=content, extensions=["sane_lists", "tables"])
-        content = bleach.clean(
-            text=html,
-            tags=markdown_tags_allowlist,
-            attributes=[],
-            strip=True,
-        )
-        return content
 
 
 class WorkBasketCommentDeleteForm(forms.ModelForm):
