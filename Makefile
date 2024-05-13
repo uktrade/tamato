@@ -86,12 +86,18 @@ run: collectstatic migrate
 test-fast:
 	@echo
 	@echo "> Running tests..."
-	@${PYTHON} -m pytest -x -n=auto --dist=loadfile
+	@${PYTHON} -m pytest -x -n=auto --dist=loadfile --ignore=tests/e2e
 
 test:
 	@echo
 	@echo "> Running tests..."
-	@${PYTHON} -m pytest -n=auto --dist=loadfile --alluredir=allure-results --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
+	@${PYTHON} -m pytest -n=auto --dist=loadfile --ignore=tests/e2e --alluredir=allure-results --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
+
+## test-e2e: Run e2e tests
+test-e2e:
+	@echo
+	@echo "> Running E2E tests..."
+	@${PYTHON} -m pytest tests/e2e/ -x -n=auto --dist=loadfile
 
 ## docker-build: Build docker image
 docker-build:

@@ -1,7 +1,14 @@
 class PytestTestRunner:
     """Runs pytest to discover and run tests."""
 
-    def __init__(self, verbosity=1, failfast=False, keepdb=False, **kwargs):
+    def __init__(
+        self,
+        verbosity=1,
+        failfast=False,
+        keepdb=False,
+        excludeE2E=True,
+        **kwargs,
+    ):
         self.verbosity = verbosity
         self.failfast = failfast
         self.keepdb = keepdb
@@ -25,6 +32,8 @@ class PytestTestRunner:
             argv.append("--exitfirst")
         if self.keepdb:
             argv.append("--reuse-db")
+        if self.excludeE2E:
+            argv.append("--ignore=tests/e2e")
 
         argv.extend(test_labels)
         return pytest.main(argv)
