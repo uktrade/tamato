@@ -2103,7 +2103,7 @@ def test_require_current_workbasket_redirect(workbasket_factory, client, valid_u
     editing state."""
     client.force_login(valid_user)
 
-    valid_user.current_workbasket == workbasket_factory()
+    valid_user.current_workbasket = workbasket_factory()
     valid_user.save()
 
     # view that has require_current_workbasket decorator
