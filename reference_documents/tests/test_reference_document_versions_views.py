@@ -203,7 +203,6 @@ class TestReferenceDocumentVersionViews:
         resp = valid_user_client.post(delete_url)
         assert resp.status_code == 403
 
-
     @pytest.mark.reference_documents
     def test_ref_doc_version_detail_view(self, superuser_client):
         """Test that the reference document version detail view shows preferential
@@ -400,12 +399,12 @@ class TestReferenceDocumentVersionChangeStatePublished:
             kwargs={"ref_doc_pk": ref_doc_ver.reference_document.pk, "pk": ref_doc_ver.pk},
             )
 
-            resp = client.get(url)
-            assert resp.status_code == 200
+        resp = client.get(url)
+        assert resp.status_code == 200
 
-            ref_doc_ver.refresh_from_db()
+        ref_doc_ver.refresh_from_db()
 
-            assert ref_doc_ver.status == ReferenceDocumentVersionStatus.PUBLISHED
+        assert ref_doc_ver.status == ReferenceDocumentVersionStatus.PUBLISHED
 
     def test_get_does_not_change_state_to_in_review_no_permission(self, valid_user_client):
         ref_doc_ver = factories.ReferenceDocumentVersionFactory.create(status=ReferenceDocumentVersionStatus.IN_REVIEW)

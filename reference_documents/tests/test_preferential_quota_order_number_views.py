@@ -35,11 +35,10 @@ class TestPreferentialQuotaOrderNumberEditView:
         assert resp.status_code == 200
 
     def test_post_with_permission_pass_not_sub_quota(self, superuser_client):
-        factories.PreferentialQuotaOrderNumberFactory.create()
         pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory.create()
 
         post_data = {
-            "quota_order_number": "012345",
+            "quota_order_number": "054321",
             "start_date_0": 1,
             "start_date_1": 1,
             "start_date_2": 2022,
@@ -47,7 +46,7 @@ class TestPreferentialQuotaOrderNumberEditView:
             "end_date_1": 1,
             "end_date_2": 2023,
             "coefficient": "",
-            "main_order_number_id": "",
+            "main_order_number": "",
             "reference_document_version_id": pref_quota_order_number.reference_document_version.pk,
         }
 
@@ -67,7 +66,7 @@ class TestPreferentialQuotaOrderNumberEditView:
         assert pref_quota_order_number.valid_between.lower == date(2022, 1, 1)
         assert pref_quota_order_number.valid_between.upper == date(2023, 1, 1)
         assert pref_quota_order_number.coefficient is None
-        assert pref_quota_order_number.quota_order_number == "052345"
+        assert pref_quota_order_number.quota_order_number == "054321"
         assert pref_quota_order_number.main_order_number_id is None
 
     def test_post_with_permission_pass_with_sub_quota(self, superuser_client):
@@ -82,7 +81,7 @@ class TestPreferentialQuotaOrderNumberEditView:
         )
 
         post_data = {
-            "quota_order_number": "012345",
+            "quota_order_number": "054321",
             "start_date_0": 1,
             "start_date_1": 1,
             "start_date_2": 2022,
@@ -91,7 +90,7 @@ class TestPreferentialQuotaOrderNumberEditView:
             "end_date_2": 2023,
             "coefficient": "1.2",
             "main_order_number_id": pref_quota_order_number_main.pk,
-            "reference_document_version_id": pref_quota_order_number.reference_document_version.pk,
+            "reference_document_version_id": pref_quota_order_number_main.reference_document_version.pk,
         }
 
         resp = superuser_client.post(
@@ -110,7 +109,7 @@ class TestPreferentialQuotaOrderNumberEditView:
         assert pref_quota_order_number.valid_between.lower == date(2022, 1, 1)
         assert pref_quota_order_number.valid_between.upper == date(2023, 1, 1)
         assert pref_quota_order_number.coefficient == Decimal("1.2")
-        assert pref_quota_order_number.quota_order_number == "012345"
+        assert pref_quota_order_number.quota_order_number == "054321"
         assert pref_quota_order_number.main_order_number_id == None
 
 
@@ -142,7 +141,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
 
         post_data = {
-            "quota_order_number": "012345",
+            "quota_order_number": "054321",
             "start_date_0": 1,
             "start_date_1": 1,
             "start_date_2": 2022,
@@ -172,7 +171,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
         assert pref_quota_order_number.valid_between.lower == date(2022, 1, 1)
         assert pref_quota_order_number.valid_between.upper == date(2023, 1, 1)
         assert pref_quota_order_number.coefficient is None
-        assert pref_quota_order_number.quota_order_number == "012345"
+        assert pref_quota_order_number.quota_order_number == "054321"
         assert pref_quota_order_number.main_order_number_id is None
 
     def test_post_with_permission_pass_with_sub_quota(self, superuser_client):
@@ -184,7 +183,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
         )
 
         post_data = {
-            "quota_order_number": "012345",
+            "quota_order_number": "054321",
             "start_date_0": 1,
             "start_date_1": 1,
             "start_date_2": 2022,
@@ -214,7 +213,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
         assert pref_quota_order_number.valid_between.lower == date(2022, 1, 1)
         assert pref_quota_order_number.valid_between.upper == date(2023, 1, 1)
         assert pref_quota_order_number.coefficient == Decimal("1.2")
-        assert pref_quota_order_number.quota_order_number == "012345"
+        assert pref_quota_order_number.quota_order_number == "054321"
         assert pref_quota_order_number.main_order_number_id == None
 
 
