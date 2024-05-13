@@ -1,3 +1,4 @@
+import datetime
 import io
 import logging
 import os
@@ -387,3 +388,34 @@ class AutoCompleteSerializer(serializers.BaseSerializer):
             "value": instance.pk,
             "label": instance.autocomplete_label,
         }
+
+
+SERIALIZED_DATE_FORMAT = "%Y-%m-%d"
+
+
+def serialize_date(date: Optional[datetime.date]) -> Optional[str]:
+    """
+    Serialize a date instance, which may be None, to a string representation
+    whose format SERIALIZED_DATE_FORMAT.
+
+    If `date` is None, then None is returned.
+    """
+
+    if isinstance(date, datetime.date):
+        return date.strftime(SERIALIZED_DATE_FORMAT)
+
+    return None
+
+
+def deserialize_date(str_date: Optional[str]) -> Optional[datetime.date]:
+    """
+    Deserialize a string representation of a date with format
+    SERIALIZED_DATE_FORMAT.
+
+    If `str_date` is falsy, then a value of None is returned.
+    """
+
+    if not str_date:
+        return None
+
+    return datetime.datetime.strptime(str_date, SERIALIZED_DATE_FORMAT).date()

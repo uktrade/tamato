@@ -1,8 +1,9 @@
 import pytest
 
 from common.tests.factories import GeographicalAreaFactory
-from reference_documents.models import ReferenceDocument, ReferenceDocumentVersionStatus
+from reference_documents.models import ReferenceDocumentVersionStatus
 from reference_documents.tests import factories
+from reference_documents.models import ReferenceDocument
 
 pytestmark = pytest.mark.django_db
 

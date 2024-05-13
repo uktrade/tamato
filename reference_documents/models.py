@@ -1,8 +1,10 @@
 from django.db import models
+from django_fsm import FSMField
 from django.db.models import fields, Q
 from django_fsm import FSMField, transition
 
 from common.fields import TaricDateRangeField
+from common.models import TimestampedMixin
 
 
 class ReferenceDocumentVersionStatus(models.TextChoices):
@@ -23,8 +25,7 @@ class AlignmentReportCheckStatus(models.TextChoices):
     WARNING = "WARNING", "Warning"
 
 
-class ReferenceDocument(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
+class ReferenceDocument(TimestampedMixin):
 
     title = models.CharField(
         max_length=255,
@@ -68,10 +69,7 @@ class ReferenceDocument(models.Model):
             return
         super(ReferenceDocument, self).save(*args, **kwargs)
 
-
-class ReferenceDocumentVersion(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+class ReferenceDocumentVersion(TimestampedMixin):
     version = models.FloatField()
     published_date = models.DateField(blank=True, null=True)
     entry_into_force_date = models.DateField(blank=True, null=True)

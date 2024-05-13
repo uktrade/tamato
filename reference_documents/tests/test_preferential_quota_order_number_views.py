@@ -67,14 +67,19 @@ class TestPreferentialQuotaOrderNumberEditView:
         assert pref_quota_order_number.valid_between.lower == date(2022, 1, 1)
         assert pref_quota_order_number.valid_between.upper == date(2023, 1, 1)
         assert pref_quota_order_number.coefficient is None
-        assert pref_quota_order_number.quota_order_number == "012345"
+        assert pref_quota_order_number.quota_order_number == "052345"
         assert pref_quota_order_number.main_order_number_id is None
 
     def test_post_with_permission_pass_with_sub_quota(self, superuser_client):
+        ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
         pref_quota_order_number_main = (
-            factories.PreferentialQuotaOrderNumberFactory.create()
+            factories.PreferentialQuotaOrderNumberFactory.create(
+                reference_document_version=ref_doc_version,
+            )
         )
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory.create()
+        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory.create(
+            reference_document_version=ref_doc_version,
+        )
 
         post_data = {
             "quota_order_number": "012345",
@@ -171,10 +176,12 @@ class TestPreferentialQuotaOrderNumberCreateView:
         assert pref_quota_order_number.main_order_number_id is None
 
     def test_post_with_permission_pass_with_sub_quota(self, superuser_client):
-        pref_quota_order_number_main = (
-            factories.PreferentialQuotaOrderNumberFactory.create()
-        )
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
+        pref_quota_order_number_main = (
+            factories.PreferentialQuotaOrderNumberFactory.create(
+                reference_document_version=ref_doc_version,
+            )
+        )
 
         post_data = {
             "quota_order_number": "012345",

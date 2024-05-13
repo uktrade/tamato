@@ -120,7 +120,7 @@ class TestPreferentialQuotaCreateUpdateForm:
         with pytest.raises(ValidationError) as ve:
             target.clean_preferential_quota_order_number()
 
-        assert "Quota Order Number is not valid - it must have a value" in str(ve)
+        assert "Quota order number is required" in str(ve)
 
 
 @pytest.mark.reference_documents

@@ -10,6 +10,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from common.forms import ValidityPeriodForm
+from quotas.validators import quota_order_number_validator
 from reference_documents.models import PreferentialQuota
 from reference_documents.models import PreferentialQuotaOrderNumber
 
@@ -97,7 +98,7 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
     quota_order_number = forms.CharField(
         label="Order number",
         help_text="Enter a six digit number",
-        validators=[],
+        validators=[quota_order_number_validator],
         error_messages={
             "invalid": "Quota order number is invalid",
             "required": "Quota order number is required",
@@ -116,7 +117,7 @@ class PreferentialQuotaOrderNumberCreateUpdateForm(
         validators=[],
         required=False,
         error_messages={
-            "invalid": "Coefficient is invalid",
+            "invalid": "Coefficient is not a valid number",
         },
         widget=forms.TextInput(attrs={"style": "max-width: 6em"}),
     )

@@ -45,6 +45,10 @@ class PreferentialQuotaCreateUpdateForm(
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self.fields["end_date"].help_text = ""
+        self.fields["preferential_quota_order_number"].help_text = (
+            "If the quota order number does not appear, you must first create it for this reference document version."
+        )
 
         if preferential_quota_order_number:
             self.initial["preferential_quota_order_number"] = (
@@ -101,7 +105,7 @@ class PreferentialQuotaCreateUpdateForm(
         return data
 
     def clean_preferential_quota_order_number(self):
-        error_message = "Quota Order Number is not valid - it must have a value"
+        error_message = "Quota order number is required"
 
         if "preferential_quota_order_number" in self.cleaned_data.keys():
             data = self.cleaned_data["preferential_quota_order_number"]
@@ -123,13 +127,14 @@ class PreferentialQuotaCreateUpdateForm(
     )
 
     quota_duty_rate = forms.CharField(
-        help_text="Quota Duty Rate",
+        help_text="Quota duty rate",
         validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
             "required": "Duty rate is required",
         },
     )
+
 
     quota_order_number = forms.ModelChoiceField(
         label="Quota Order Number",
@@ -145,6 +150,7 @@ class PreferentialQuotaCreateUpdateForm(
 
     volume = forms.CharField(
         help_text="Volume",
+        widget=forms.TextInput(),
         validators=[],
         error_messages={
             "invalid": "Volume invalid",
@@ -241,6 +247,7 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
                 "invalid": "Volume invalid",
                 "required": "Volume is required",
             },
+            widget=forms.TextInput(),
             help_text="<br>",
         )
         # Add frontend dynamically added fields to the backend Django form
@@ -266,6 +273,7 @@ class PreferentialQuotaBulkCreateForm(forms.Form):
             self.fields[f"valid_between_{index}"] = GovukDateRangeField()
             self.fields[f"volume_{index}"] = forms.CharField(
                 label="Volume",
+                widget=forms.TextInput(),
                 help_text="<br>",
             )
         self.fields["preferential_quota_order_number"].queryset = (

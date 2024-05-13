@@ -56,7 +56,6 @@ class TestReferenceDocumentVersionViews:
             kwargs={"pk": ref_doc.pk},
         )
 
-
     @pytest.mark.reference_documents
     def test_ref_doc_version_edit_updates_ref_doc_object(self, client, valid_user):
         """Tests that posting the reference document version edit form updates the
@@ -399,14 +398,14 @@ class TestReferenceDocumentVersionChangeStatePublished:
         url = reverse(
             "reference_documents:version-status-change-to-published",
             kwargs={"ref_doc_pk": ref_doc_ver.reference_document.pk, "pk": ref_doc_ver.pk},
-        )
+            )
 
-        resp = client.get(url)
-        assert resp.status_code == 200
+            resp = client.get(url)
+            assert resp.status_code == 200
 
-        ref_doc_ver.refresh_from_db()
+            ref_doc_ver.refresh_from_db()
 
-        assert ref_doc_ver.status == ReferenceDocumentVersionStatus.PUBLISHED
+            assert ref_doc_ver.status == ReferenceDocumentVersionStatus.PUBLISHED
 
     def test_get_does_not_change_state_to_in_review_no_permission(self, valid_user_client):
         ref_doc_ver = factories.ReferenceDocumentVersionFactory.create(status=ReferenceDocumentVersionStatus.IN_REVIEW)

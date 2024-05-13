@@ -1,7 +1,11 @@
 {% extends 'layouts/form.jinja' %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = "Edit quota order number " %}
+    {% if object %}
+    {% set page_title = "Edit quota order number " %}
+    {% else %}
+    {% set page_title = "Create quota order number " %}
+    {% endif %}
 
 {% block breadcrumb %}
     {% if object %}

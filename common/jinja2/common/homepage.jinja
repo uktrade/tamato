@@ -16,9 +16,9 @@
     </div>
   {% endblock %}
 
-  <div id="homepage-articles" class="govuk-grid-row">
+  <div id="masonry-container" class="govuk-grid-row">
     {% if can_view_workbasket %}
-      <article class="homepage-card">
+      <article class="masonry-card">
         <h3 class="govuk-heading-m">What would you like to do?</h3>
         <p class="govuk-body">
           Create a new workbasket, edit an existing workbasket, package or search for workbaskets.
@@ -63,7 +63,7 @@
     {% endif %}
 
     {% if can_edit_workbasket %}
-      <article class="homepage-card">
+      <article class="masonry-card">
         <h3 class="govuk-heading-m">Currently working on</h3>
         {% if not assigned_workbaskets %}
           <p class="govuk-body">You are not currently assigned to a workbasket.</p>
@@ -93,7 +93,7 @@
     {% endif %}
 
     {% if can_import_taric %}
-      <article class="homepage-card">
+      <article class="masonry-card">
         <h3 class="govuk-heading-m">EU TARIC files</h3>
         <p class="govuk-body">
           <a href="{{ url('commodity_importer-ui-list') }}"
@@ -104,7 +104,7 @@
     {% endif %}
 
     {% if can_consume_packaging %}
-      <article class="homepage-card">
+      <article class="masonry-card">
         <h3 class="govuk-heading-m">Envelopes</h3>
         <p class="govuk-body">
           <a href="{{ url('publishing:envelope-queue-ui-list') }}"
@@ -114,7 +114,21 @@
       </article>
     {% endif %}
 
-    <article class="homepage-card">
+    {% if can_view_processing_queues %}
+      <article class="masonry-card">
+        <h3 class="govuk-heading-m">Processing queues</h3>
+        <p class="govuk-body">
+          <a href="{{ url('measure-create-process-queue') }}"
+            class="govuk-link"
+          >Measures process queue</a>
+          <br>
+          This queue shows the status of measures that you submitted for
+          creation.
+        </p>
+      </article>
+    {% endif %}
+
+    <article class="masonry-card">
       <h3 class="govuk-heading-m">Resources</h3>
       <p class="govuk-body">
         We have a range of resources you can use with the Tariff Application Platform.
@@ -152,7 +166,7 @@
   <div class="govuk-grid-row">
     <h2 class="govuk-heading-l govuk-grid-column-full govuk-!-margin-bottom-3">How can we support you?</h2>
 
-    <article class="homepage-card">
+    <article class="masonry-card">
       <h3 class="govuk-heading-m">Get help</h3>
       <p class="govuk-body">
         Find documentation, guidance, training and updates in the
@@ -165,7 +179,7 @@
       </p>
     </article>
 
-    <article class="homepage-card govuk-!-padding-bottom-5">
+    <article class="masonry-card govuk-!-padding-bottom-5">
       <h3 class="govuk-heading-m">Get in touch</h3>
       <p class="govuk-body"><a class="govuk-link" href="mailto:9cf0f83c.trade.gov.uk@uk.teams.ms">Contact us</a> if you have a question or suggestion.</p>
     </article>

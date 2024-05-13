@@ -18,6 +18,7 @@ class ReferenceDocumentVersionsCreateUpdateForm(forms.ModelForm):
         error_messages={
             "required": "A version number is required",
             "invalid": "Version must be a number",
+            "unique": "This version number already exists",
         },
     )
     published_date = DateInputFieldFixed(

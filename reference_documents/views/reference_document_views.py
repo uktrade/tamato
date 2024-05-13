@@ -45,8 +45,8 @@ class ReferenceDocumentContext:
                         {"text": 0},
                         {
                             "html": f'<a href="/reference_documents/{reference.id}">Details</a><br>'
-                                    f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
-                                    f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>",
+                            f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
+                            f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>",
                         },
                     ],
                 )
@@ -244,5 +244,3 @@ class ReferenceDocumentConfirmDelete(TemplateView):
         context_data = super().get_context_data(**kwargs)
         context_data["deleted_pk"] = self.kwargs["deleted_pk"]
         return context_data
-
-
