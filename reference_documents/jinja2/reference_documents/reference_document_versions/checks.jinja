@@ -24,7 +24,11 @@
             Run check
 </a>
 <p class="govuk-body govuk-!-font-weight-bold" style="float:right">
-      Last Run: (16 Apr 2024 09:47)
+    {% if last_run %}
+      Last Run: ({{ last_run }})
+    {% else %}
+      Never Ran
+    {% endif %}
     </p>
 <h2 class="govuk-heading-m">Latest check results</h2>
 {% set table_rows = [

@@ -425,6 +425,11 @@ class ReferenceDocumentVersionCheck(DetailView):
     template_name = "reference_documents/reference_document_versions/checks.jinja"
     model = ReferenceDocumentVersion
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["last_run"] = self.object.alignment_reports.all().last().created_at
+        return context
+
 
 class ReferenceDocumentVersionCheckResults(ListView):
     model = AlignmentReportCheck

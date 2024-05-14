@@ -259,8 +259,7 @@ class PreferentialRate(models.Model):
         super(PreferentialRate, self).save(*args, **kwargs)
 
 
-class AlignmentReport(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
+class AlignmentReport(TimestampedMixin):
     reference_document_version = models.ForeignKey(
         "reference_documents.ReferenceDocumentVersion",
         on_delete=models.PROTECT,
@@ -268,9 +267,7 @@ class AlignmentReport(models.Model):
     )
 
 
-class AlignmentReportCheck(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-
+class AlignmentReportCheck(TimestampedMixin):
     alignment_report = models.ForeignKey(
         "reference_documents.AlignmentReport",
         on_delete=models.PROTECT,
