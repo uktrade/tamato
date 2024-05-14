@@ -249,6 +249,32 @@ class DateInputFieldFixed(DateInputField):
             return None
 
 
+class DateInputFieldTakesParameters(DateInputField):
+    def __init__(self, day, month, year, **kwargs):
+        error_messages = {
+            "required": "Enter the day, month and year",
+            "incomplete": "Enter the day, month and year",
+        }
+        fields = (day, month, year)
+
+        forms.MultiValueField.__init__(
+            self,
+            error_messages=error_messages,
+            fields=fields,
+            **kwargs,
+        )
+
+    def compress(self, data_list):
+        day, month, year = data_list or [None, None, None]
+        if day and month and year:
+            try:
+                return date(day=int(day), month=int(month), year=int(year))
+            except ValueError as e:
+                raise ValidationError(str(e).capitalize()) from e
+        else:
+            return None
+
+
 class GovukDateRangeField(DateRangeField):
     base_field = DateInputFieldFixed
 
