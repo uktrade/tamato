@@ -304,8 +304,6 @@ class HealthCheckView(View):
         try:
             client = boto3.client(
                 "s3",
-                aws_access_key_id=settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY,
                 endpoint_url=settings.S3_ENDPOINT_URL,
                 region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
             )

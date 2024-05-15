@@ -176,7 +176,9 @@ if MAINTENANCE_MODE:
     INSTALLED_APPS.remove("django.contrib.admin")
 
     MIDDLEWARE.remove("django.contrib.sessions.middleware.SessionMiddleware")
-    MIDDLEWARE.remove("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.remove(
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
+    )
     MIDDLEWARE.remove("django.contrib.messages.middleware.MessageMiddleware")
     MIDDLEWARE.remove("common.models.utils.TransactionMiddleware")
     MIDDLEWARE.remove("common.models.utils.ValidateUserWorkBasketMiddleware")
@@ -282,7 +284,8 @@ if is_copilot():
     ALLOWED_HOSTS = setup_allowed_hosts(ALLOWED_HOSTS)
 # Govuk PaaS
 elif "VCAP_APPLICATION" in os.environ:
-    # Under PaaS, if ALLOW_PAAS_URIS is set, fetch trusted domains from VCAP_APPLICATION env var
+    # Under PaaS, if ALLOW_PAAS_URIS is set
+    # fetch trusted domains from VCAP_APPLICATION env var
     paas_hosts = json.loads(os.environ["VCAP_APPLICATION"])["uris"]
     ALLOWED_HOSTS.extend(paas_hosts)
 
@@ -324,10 +327,8 @@ if MAINTENANCE_MODE:
 
 # DBT PaaS
 elif is_copilot():
-    DB_URL = dj_database_url.config(
-        default=database_url_from_env("DATABASE_CREDENTIALS"),
-    )
-    DATABASES = {"default": DB_URL}
+    DB_URL = database_url_from_env("DATABASE_CREDENTIALS")
+    DATABASES = {"default": dj_database_url.parse(DB_URL)}
 # Govuk PaaS
 elif VCAP_SERVICES.get("postgres"):
     DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
@@ -386,7 +387,9 @@ MAX_IMPORT_FILE_SIZE = 1024 * 1024 * 50
 # Settings about retrying uploads if the bucket or endpoint cannot be contacted.
 # Names correspond to celery settings for retrying tasks:
 #   https://docs.celeryproject.org/en/master/userguide/tasks.html#automatic-retry-for-known-exceptions
-EXPORTER_UPLOAD_MAX_RETRIES = int(os.environ.get("EXPORTER_UPLOAD_MAX_RETRIES", "3"))
+EXPORTER_UPLOAD_MAX_RETRIES = int(
+    os.environ.get("EXPORTER_UPLOAD_MAX_RETRIES", "3"),
+)
 EXPORTER_UPLOAD_RETRY_BACKOFF_MAX = int(
     os.environ.get("EXPORTER_UPLOAD_RETRY_BACKOFF_MAX", "600"),
 )
@@ -429,7 +432,10 @@ TIME_ZONE = "Europe/London"
 
 # HMRC AWS settings (override the defaults) - DEPRECATED.
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
-HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
+HMRC_STORAGE_DIRECTORY = os.environ.get(
+    "HMRC_STORAGE_DIRECTORY",
+    "tohmrc/staging/",
+)
 
 
 # S3 settings for packaging automation.
@@ -539,12 +545,18 @@ else:
         "test_sqlite_key",
     )
 
-SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
+SQLITE_STORAGE_BUCKET_NAME = os.environ.get(
+    "SQLITE_STORAGE_BUCKET_NAME",
+    "sqlite",
+)
 SQLITE_S3_ENDPOINT_URL = os.environ.get(
     "SQLITE_S3_ENDPOINT_URL",
     "https://test-sqlite-url.local/",
 )
-SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
+SQLITE_STORAGE_DIRECTORY = os.environ.get(
+    "SQLITE_STORAGE_DIRECTORY",
+    "sqlite/",
+)
 
 # Default AWS settings.
 if is_copilot():
@@ -574,8 +586,14 @@ CROWN_DEPENDENCIES_API_URL_PATH = os.environ.get(
     "CROWN_DEPENDENCIES_API_URL_PATH",
     "api/v1/taricfiles/",
 )
-CROWN_DEPENDENCIES_GET_API_KEY = os.environ.get("CROWN_DEPENDENCIES_GET_API_KEY", "")
-CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KEY", "")
+CROWN_DEPENDENCIES_GET_API_KEY = os.environ.get(
+    "CROWN_DEPENDENCIES_GET_API_KEY",
+    "",
+)
+CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get(
+    "CROWN_DEPENDENCIES_POST_API_KEY",
+    "",
+)
 
 
 if is_copilot():
@@ -596,7 +614,10 @@ else:
         CACHES["default"]["LOCATION"],
     )
 
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_RESULT_BACKEND = os.environ.get(
+    "CELERY_RESULT_BACKEND",
+    CELERY_BROKER_URL,
+)
 CELERY_TRACK_STARTED = True
 CELERY_TASK_TRACK_STARTED = True
 CELERY_RESULT_PERSISTENT = True
@@ -668,14 +689,19 @@ SQLITE_EXCLUDED_APPS = [
 
 # -- Google Tag Manager
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID")
-GOOGLE_ANALYTICS_APP_ID = os.environ.get("GOOGLE_ANALYTICS_APP_ID", GOOGLE_ANALYTICS_ID)
+GOOGLE_ANALYTICS_APP_ID = os.environ.get(
+    "GOOGLE_ANALYTICS_APP_ID",
+    GOOGLE_ANALYTICS_ID,
+)
 
 # -- Logging
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
+        "default": {
+            "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
+        },
         "asim_formatter": {
             "()": ASIMFormatter,
         },
@@ -799,7 +825,9 @@ TEST_RUNNER = "settings.tests.runner.PytestTestRunner"
 
 # -- REST Framework
 REST_FRAMEWORK = {
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+    ],
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     "DEFAULT_PERMISSION_CLASSES": [
@@ -826,7 +854,10 @@ PATH_XSD_COMMODITIES_ENVELOPE = Path(
     PATH_COMMODITIES_ASSETS,
     "commodities_envelope.xsd",
 )
-PATH_XSD_COMMODITIES_TARIC = Path(PATH_COMMODITIES_ASSETS, "commodities_taric3.xsd")
+PATH_XSD_COMMODITIES_TARIC = Path(
+    PATH_COMMODITIES_ASSETS,
+    "commodities_taric3.xsd",
+)
 
 
 # Default username for envelope data imports
@@ -844,12 +875,16 @@ HMRC = {
     "client_id": os.environ.get("HMRC_API_CLIENT_ID"),
     "client_secret": os.environ.get("HMRC_API_CLIENT_SECRET"),
     "token_url": os.environ.get("HMRC_API_TOKEN_URL", "/oauth/token"),
-    "service_reference_number": os.environ.get("HMRC_API_SERVICE_REFERENCE_NUMBER"),
+    "service_reference_number": os.environ.get(
+        "HMRC_API_SERVICE_REFERENCE_NUMBER",
+    ),
     "device_id": str(uuid.uuid4()),
 }
 
 SKIP_VALIDATION = is_truthy(os.getenv("SKIP_VALIDATION", False))
-SKIP_WORKBASKET_VALIDATION = is_truthy(os.getenv("SKIP_WORKBASKET_VALIDATION", False))
+SKIP_WORKBASKET_VALIDATION = is_truthy(
+    os.getenv("SKIP_WORKBASKET_VALIDATION", False),
+)
 USE_IMPORTER_CACHE = is_truthy(os.getenv("USE_IMPORTER_CACHE", True))
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = ["gds"]
@@ -863,7 +898,10 @@ WEBPACK_LOADER = {
     },
 }
 
-TRANSACTION_SCHEMA = os.getenv("TRANSACTION_SCHEMA", "workbaskets.models.SEED_FIRST")
+TRANSACTION_SCHEMA = os.getenv(
+    "TRANSACTION_SCHEMA",
+    "workbaskets.models.SEED_FIRST",
+)
 
 # Default max number of objects that will be accurately counted by LimitedPaginator.
 LIMITED_PAGINATOR_MAX_COUNT = 200
@@ -886,8 +924,12 @@ MAX_LOADING_REPORT_FILE_SIZE_MEGABYTES = int(
 READY_FOR_CDS_TEMPLATE_ID = os.environ.get("READY_FOR_CDS_TEMPLATE_ID")
 CDS_ACCEPTED_TEMPLATE_ID = os.environ.get("CDS_ACCEPTED_TEMPLATE_ID")
 CDS_REJECTED_TEMPLATE_ID = os.environ.get("CDS_REJECTED_TEMPLATE_ID")
-API_PUBLISH_SUCCESS_TEMPLATE_ID = os.environ.get("API_PUBLISH_SUCCESS_TEMPLATE_ID")
-API_PUBLISH_FAILED_TEMPLATE_ID = os.environ.get("API_PUBLISH_FAILED_TEMPLATE_ID")
+API_PUBLISH_SUCCESS_TEMPLATE_ID = os.environ.get(
+    "API_PUBLISH_SUCCESS_TEMPLATE_ID",
+)
+API_PUBLISH_FAILED_TEMPLATE_ID = os.environ.get(
+    "API_PUBLISH_FAILED_TEMPLATE_ID",
+)
 GOODS_REPORT_TEMPLATE_ID = os.environ.get("GOODS_REPORT_TEMPLATE_ID")
 
 # Base service URL - required when constructing an absolute TAP URL to a page
@@ -909,8 +951,12 @@ FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.MemoryFileUploadHandler",  # defaults
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
 )  # Order is important
-DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "10000"))
+DATA_MIGRATION_BATCH_SIZE = int(
+    os.environ.get("DATA_MIGRATION_BATCH_SIZE", "10000"),
+)
 
 
 # Asynchronous / background (bulk) object creation and editing config.
-MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))
+MEASURES_ASYNC_CREATION = is_truthy(
+    os.environ.get("MEASURES_ASYNC_CREATION", "true"),
+)

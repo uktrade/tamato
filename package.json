@@ -44,6 +44,7 @@
     "clean": "rm -f ./run/static/webpack_bundles/*",
     "heroku-prebuild": "",
     "heroku-postbuild": "npm run build",
+    "start": "echo starting",
     "test": "jest",
     "lint:js": "npx eslint . --ext .jsx,.js",
     "lint:js:fix": "npx eslint . --ext .jsx,.js --fix",
