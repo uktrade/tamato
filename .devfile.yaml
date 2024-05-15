@@ -1,0 +1,51 @@
+schemaVersion: 2.0.0
+metadata:
+  name: aws-universal
+  version: 1.0.1
+  displayName: AWS Universal
+  description: Stack with AWS Universal Tooling
+  tags: ["aws", "al2"]
+  projectType: "aws"
+components:
+  - name: aws-runtime
+    container:
+      image: public.ecr.aws/aws-mde/universal-image:latest
+      mountSources: true
+      volumeMounts:
+        - name: docker-store
+          path: /var/lib/docker
+  - name: docker-store
+    volume:
+      size: 16Gi
+commands:
+- id: install-zsh
+  exec:
+    component: aws-runtime
+    commandLine: "sudo yum install zsh -y"
+- id: install-util-linux-user
+  exec:
+    component: aws-runtime
+    commandLine: "sudo yum install util-linux-user -y"
+- id: make-zsh-default
+  exec:
+    component: aws-runtime
+    commandLine: "sudo chsh -s $(whichzsh) $(whoami)"
+- id: make-zsh-default
+  exec:
+    component: aws-runtime
+    commandLine: "sudo chsh -s $(whichzsh) $(whoami)"
+# - id: install-psycopg2
+#   exec:
+#     component: aws-runtime
+#     commandLine: "sudo yum install libpq-devel -y"
+# - id: install-postgres12
+#   exec:
+#     component: aws-runtime
+#     commandLine: "sudo amazon-linux-extras install postgresql14"
+events:
+  postStart:
+    - install-zsh
+    - install-util-linux-user
+    - make-zsh-default
+    # - install-psycopg2
+    # - install-postgres-14
