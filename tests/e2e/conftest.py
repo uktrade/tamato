@@ -13,23 +13,34 @@ os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 
 @pytest.fixture
-def user():
-    def add_permissions():
+def tariff_manager_group():
+
+    def set_permissions():
         for app_label, codename in [
             ("common", "add_trackedmodel"),
+            ("publishing", "manage_packaging_queue"),
+            ("tasks", "add_userassignment"),
             ("workbaskets", "add_workbasket"),
             ("workbaskets", "view_workbasket"),
         ]:
-            permission = Permission.objects.get(
-                content_type__app_label=app_label,
-                codename=codename,
+            group.permissions.add(
+                Permission.objects.get(
+                    content_type__app_label=app_label,
+                    codename=codename,
+                ),
             )
-            user.user_permissions.add(permission)
 
+    group = factories.UserGroupFactory.create(name="Tariff Managers")
+    set_permissions()
+    return group
+
+
+@pytest.fixture
+def user(tariff_manager_group):
     user = factories.UserFactory.create(username="test_user")
     user.set_password("password")
     user.save()
-    add_permissions()
+    tariff_manager_group.user_set.add(user)
     return user
 
 

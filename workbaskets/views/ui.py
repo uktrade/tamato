@@ -413,7 +413,7 @@ class CurrentWorkBasket(TemplateView):
         )
 
         assigned_workers = [
-            {"pk": user.pk, "name": user.user.get_full_name()}
+            {"pk": user.pk, "name": user.user.get_displayname()}
             for user in self.workbasket.worker_assignments.order_by(
                 "user__first_name",
                 "user__last_name",
@@ -421,7 +421,7 @@ class CurrentWorkBasket(TemplateView):
         ]
 
         assigned_reviewers = [
-            {"pk": user.pk, "name": user.user.get_full_name()}
+            {"pk": user.pk, "name": user.user.get_displayname()}
             for user in self.workbasket.reviewer_assignments.order_by(
                 "user__first_name",
                 "user__last_name",
@@ -438,7 +438,7 @@ class CurrentWorkBasket(TemplateView):
             .order_by("first_name", "last_name")
         )
         assignable_users = [
-            {"pk": user.pk, "name": user.get_full_name()} for user in users
+            {"pk": user.pk, "name": user.get_displayname()} for user in users
         ]
 
         # set to true if there is an associated goods import batch with an unsent notification

@@ -16,3 +16,29 @@ def test_create_a_new_workbasket(page):
 
     expect(page).to_have_url(re.compile("workbaskets/.+/confirm-create/"))
     expect(page.get_by_text("You have created a new workbasket")).to_be_visible()
+
+
+def test_assign_worker_to_workbasket(page, user, empty_current_workbasket):
+    page.goto("/workbaskets/current/")
+
+    page.get_by_role("link", name="Assign workers").click()
+
+    page.get_by_label("Assign user").fill(user.get_displayname())
+    page.get_by_role("option", name=user.get_displayname()).click()
+    page.get_by_role("button", name="Save").click()
+
+    expect(page).to_have_url("/workbaskets/current/")
+    expect(page.get_by_text(f"{user.get_displayname()}")).to_be_visible()
+
+
+def test_assign_reviewer_to_workbasket(page, user, empty_current_workbasket):
+    page.goto("/workbaskets/current/")
+
+    page.get_by_role("link", name="Assign reviewers").click()
+
+    page.get_by_label("Assign user").fill(user.get_displayname())
+    page.get_by_role("option", name=user.get_displayname()).click()
+    page.get_by_role("button", name="Save").click()
+
+    expect(page).to_have_url("/workbaskets/current/")
+    expect(page.get_by_text(f"{user.get_displayname()}")).to_be_visible()
