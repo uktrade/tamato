@@ -6,6 +6,7 @@ from playwright.sync_api import Page
 from pytest_django.live_server_helper import LiveServer
 
 from common.tests import factories
+from publishing.models import QueueState
 
 from .utils import login
 
@@ -49,6 +50,22 @@ def empty_current_workbasket(user):
     workbasket = factories.WorkBasketFactory.create(author=user)
     workbasket.set_as_current(user)
     return workbasket
+
+
+@pytest.fixture()
+def paused_queue():
+    return factories.OperationalStatusFactory(
+        created_by=None,
+        queue_state=QueueState.PAUSED,
+    )
+
+
+@pytest.fixture()
+def unpaused_queue():
+    return factories.OperationalStatusFactory(
+        created_by=None,
+        queue_state=QueueState.UNPAUSED,
+    )
 
 
 @pytest.fixture(scope="session")
