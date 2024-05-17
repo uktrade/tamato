@@ -327,9 +327,7 @@ if MAINTENANCE_MODE:
 
 # DBT PaaS
 elif is_copilot():
-    DB_URL = dj_database_url.config(
-        default=database_url_from_env("DATABASE_CREDENTIALS")
-    )
+    DB_URL = database_url_from_env("DATABASE_CREDENTIALS")
     DATABASES = {"default": DB_URL}
 # Govuk PaaS
 elif VCAP_SERVICES.get("postgres"):
