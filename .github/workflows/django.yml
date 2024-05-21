@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [master, paas-migration]
+    branches: [master]
   pull_request:
-    branches: [master, paas-migration]
+    branches: [master]
 
 jobs:
   test:
