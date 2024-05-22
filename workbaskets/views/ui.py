@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import date
 from functools import cached_property
+from typing import Tuple
 from urllib.parse import urlencode
 
 import boto3
@@ -351,7 +352,10 @@ class CurrentWorkBasket(FormView):
     def paginator(self):
         return Paginator(self.comments, per_page=20)
 
-    def get_comments_ordering(self):
+    def get_comments_ordering(self) -> Tuple[str, str]:
+        """Returns the ordering for `self.comments` based on `ordered` GET param
+        together with the title to use for the sort by filter (which will be the
+        opposite of the applied ordering)."""
         ordered = self.request.GET.get("ordered")
         if ordered == "desc":
             ordering = "created_at"
