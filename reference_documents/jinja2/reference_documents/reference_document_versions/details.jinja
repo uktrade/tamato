@@ -7,7 +7,7 @@
 {% set page_title = "Reference document " ~ object.reference_document.area_id ~ " version " ~ object.version %}
 
 {% block breadcrumb %}
-  {{ govukBreadcrumbs({
+    {{ govukBreadcrumbs({
     "items": [{"text": "Home", "href": url("home")},
     {"text": "View reference documents", "href": url("reference_documents:index")},
     {"text": "Reference document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
@@ -16,10 +16,10 @@
 {% endblock %}
 
 {% set preferential_rates_html %}
-    {% include "includes/tabs/preferential_rates.jinja" %}
+{% include "includes/tabs/preferential_rates.jinja" %}
 {% endset %}
 {% set preferential_quotas_html %}
-    {% include "includes/tabs/preferential_quotas.jinja" %}
+{% include "includes/tabs/preferential_quotas.jinja" %}
 {% endset %}
 
 {% set tabs = {
@@ -51,7 +51,9 @@
     <p class="govuk-body govuk-!-margin-bottom-6">{{ object.published_date }}</p>
     <h2 class="govuk-heading-s govuk-!-margin-bottom-1">Entry into force date:</h2>
     <p class="govuk-body govuk-!-margin-bottom-6">{{ object.entry_into_force_date or 'unknown' }}</p>
-    <a class="govuk-link" href="{{ url('reference_documents:version-checks', kwargs={"pk": object.pk}) }}">Check this reference document version again TAP data</a>
+    {% if request.user.has_perm("reference_documents.view_alignmentreport") %}
+        <a class="govuk-link" href="{{ url('reference_documents:alignment-reports', kwargs={"pk": object.pk}) }}">View alignment reports</a>
+    {% endif %}
     </br>
     </br>
 

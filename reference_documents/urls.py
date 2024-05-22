@@ -170,9 +170,9 @@ urlpatterns = [
         name="version-confirm-delete",
     ),
     path(
-        "reference_document_versions/<pk>/checks/",
+        "reference_document_versions/<pk>/alignment-reports/",
         ReferenceDocumentVersionCheck.as_view(),
-        name="version-checks",
+        name="alignment-reports",
     ),
     path(
         "reference_document_versions/<pk>/check-results/",

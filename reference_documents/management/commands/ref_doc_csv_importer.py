@@ -20,6 +20,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "duties_csv_path",
             type=str,
+            required=True,
             help="The absolute path to the duties csv file to import",
         )
         parser.add_argument(

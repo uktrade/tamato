@@ -1,3 +1,5 @@
+from datetime import datetime, date
+
 from django.db import models
 from django_fsm import FSMField
 from django.db.models import fields, Q
@@ -5,6 +7,7 @@ from django_fsm import FSMField, transition
 
 from common.fields import TaricDateRangeField
 from common.models import TimestampedMixin
+from common.util import TaricDateRange
 
 
 class ReferenceDocumentVersionStatus(models.TextChoices):
@@ -26,7 +29,6 @@ class AlignmentReportCheckStatus(models.TextChoices):
 
 
 class ReferenceDocument(TimestampedMixin):
-
     title = models.CharField(
         max_length=255,
         help_text="Short name for this reference document",
@@ -68,6 +70,7 @@ class ReferenceDocument(TimestampedMixin):
         if not self.editable():
             return
         super(ReferenceDocument, self).save(*args, **kwargs)
+
 
 class ReferenceDocumentVersion(TimestampedMixin):
     version = models.FloatField()
@@ -204,6 +207,7 @@ class PreferentialQuota(models.Model):
         blank=True,
         default=None,
     )
+
     commodity_code = models.CharField(
         max_length=10,
         db_index=True,
@@ -229,6 +233,148 @@ class PreferentialQuota(models.Model):
             return
         super(PreferentialQuota, self).save(*args, **kwargs)
 
+    class PreferentialQuotaSuspension(models.Model):
+        preferential_quota = models.ForeignKey(
+            "reference_documents.PreferentialQuota",
+            on_delete=models.PROTECT,
+            related_name="preferential_quota_suspensions",
+        )
+
+        valid_between = TaricDateRangeField(
+            db_index=True,
+            null=True,
+            blank=True,
+            default=None,
+        )
+
+        def save(self, *args, **kwargs):
+            if not self.preferential_quota.preferential_quota_order_number.reference_document_version.editable():
+                return
+            super(PreferentialQuotaSuspension, self).save(*args, **kwargs)
+
+
+class PreferentialQuotaTemplate(models.Model):
+    preferential_quota_order_number = models.ForeignKey(
+        "reference_documents.PreferentialQuotaOrderNumber",
+        on_delete=models.PROTECT,
+        related_name="preferential_quota_templates",
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    commodity_code = models.CharField(max_length=10, db_index=True)
+    quota_duty_rate = models.CharField(max_length=255)
+    initial_volume = models.CharField(max_length=255)
+    yearly_volume_increment = models.CharField(max_length=255)
+
+    start_day = models.PositiveSmallIntegerField()
+    start_month = models.PositiveSmallIntegerField()
+    start_year = models.PositiveSmallIntegerField()
+    end_day = models.PositiveSmallIntegerField()
+    end_month = models.PositiveSmallIntegerField()
+    end_year = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        default=None
+    )
+
+    measurement = models.CharField(
+        max_length=255,
+    )
+
+    def dynamic_preferential_quotas(self):
+        # This method will create in memory objects representing PreferentialQuotas
+        # note: PreferentialQuotas will be generated up to 3 years in the future.
+        # the dynamic nature of this class negates the need to create / modify records
+        # once the reference document has been signed off and published (preventing further changes)
+
+        result = []
+
+        if not self.end_year:
+            end_year = date.today().year + 3
+        else:
+            end_year = self.end_year
+
+        for index, year in enumerate(range(self.start_year, end_year)):
+            start_date = date(year, self.start_month, self.start_day)
+            end_date = date(year, self.end_month, self.end_day)
+            valid_between = TaricDateRange(start_date, end_date)
+            volume_increment = 0
+            if self.yearly_volume_increment:
+                volume_increment = self.yearly_volume_increment
+
+            result += PreferentialQuota(
+                preferential_quota_order_number=self.preferential_quota_order_number,
+                valid_between=valid_between,
+                commodity_code=self.commodity_code,
+                quota_duty_rate=self.quota_duty_rate,
+                volume=self.initial_volume + (index * volume_increment),
+                measurement=self.measurement,
+            )
+
+        return result
+
+    def save(self, *args, **kwargs):
+        if not self.preferential_quota_order_number.reference_document_version.editable():
+            return
+        super(PreferentialQuotaTemplate, self).save(*args, **kwargs)
+
+
+class PreferentialQuotaSuspensionTemplate(models.Model):
+    preferential_quota_template = models.ForeignKey(
+        "reference_documents.PreferentialQuotaTemplate",
+        on_delete=models.PROTECT,
+        related_name="preferential_quota_suspension_templates"
+    )
+
+    start_day = models.PositiveSmallIntegerField()
+    start_month = models.PositiveSmallIntegerField()
+    start_year = models.PositiveSmallIntegerField()
+    end_day = models.PositiveSmallIntegerField()
+    end_month = models.PositiveSmallIntegerField()
+    end_year = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        default=None
+    )
+
+    def dynamic_preferential_quota_suspensions(self):
+        # This method will create in memory objects representing PreferentialQuotaSuspensions
+        # note: PreferentialQuotaSuspensions will be generated up to 3 years in the future.
+        # the dynamic nature of this class negates the need to create / modify records
+        # once the reference document has been signed off and published (preventing further changes)
+
+        result = []
+
+        if not self.end_year:
+            end_year = date.today().year + 3
+        else:
+            end_year = self.end_year
+
+        for index, year in enumerate(range(self.start_year, end_year)):
+            start_date = date(year, self.start_month, self.start_day)
+            end_date = date(year, self.end_month, self.end_day)
+            valid_between = TaricDateRange(start_date, end_date)
+            volume_increment = 0
+            if self.yearly_volume_increment:
+                volume_increment = self.yearly_volume_increment
+
+            result += PreferentialQuota(
+                preferential_quota_order_number=self.preferential_quota_order_number,
+                valid_between=valid_between,
+                commodity_code=self.commodity_code,
+                quota_duty_rate=self.quota_duty_rate,
+                volume=self.initial_volume + (index * volume_increment),
+                measurement=self.measurement,
+            )
+
+        return result
+
+    def save(self, *args, **kwargs):
+        if not self.preferential_quota_order_number.reference_document_version.editable():
+            return
+        super(PreferentialQuotaTemplate, self).save(*args, **kwargs)
 
 class PreferentialRate(models.Model):
     reference_document_version = models.ForeignKey(

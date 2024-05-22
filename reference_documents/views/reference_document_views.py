@@ -19,8 +19,9 @@ from reference_documents.models import ReferenceDocument, ReferenceDocumentVersi
 
 
 class ReferenceDocumentContext:
-    def __init__(self, object_list):
+    def __init__(self, object_list, user):
         self.object_list = object_list
+        self.user = user
 
     def get_reference_document_context_headers(self):
         return [
@@ -35,6 +36,18 @@ class ReferenceDocumentContext:
         reference_documents = []
         for reference in self.object_list.order_by("area_id"):
             if reference.reference_document_versions.count() == 0:
+
+                actions = ''
+
+                if self.user.has_perm("reference_documents.view_referencedocument"):
+                    actions += f'<a href="/reference_documents/{reference.id}">Details</a><br>'
+
+                if self.user.has_perm("reference_documents.change_referencedocument"):
+                    actions += f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
+
+                if self.user.has_perm("reference_documents.delete_referencedocument"):
+                    actions += f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>"
+
                 reference_documents.append(
                     [
                         {"text": "None"},
@@ -44,18 +57,23 @@ class ReferenceDocumentContext:
                         {"text": 0},
                         {"text": 0},
                         {
-                            "html": f'<a href="/reference_documents/{reference.id}">Details</a><br>'
-                            f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
-                            f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>",
+                            "html": actions
                         },
                     ],
                 )
 
             else:
-                actions = f'<a href="/reference_documents/{reference.id}">Details</a><br>'
+                actions = ""
+
+                if self.user.has_perm("reference_documents.view_referencedocument"):
+                    actions += f'<a href="/reference_documents/{reference.id}">Details</a><br>'
+
                 if reference.editable():
-                    actions += f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
-                    actions += f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>"
+                    if self.user.has_perm("reference_documents.change_referencedocument"):
+                        actions += f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
+
+                    if self.user.has_perm("reference_documents.delete_referencedocument"):
+                        actions += f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>"
 
                 reference_documents.append(
                     [
@@ -85,18 +103,18 @@ class ReferenceDocumentContext:
 
 class ReferenceDocumentList(PermissionRequiredMixin, ListView):
     template_name = "reference_documents/index.jinja"
-    permission_required = "reference_documents.view_reference_document"
+    permission_required = "reference_documents.view_referencedocument"
     model = ReferenceDocument
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(ReferenceDocumentContext(context["object_list"]).get_context())
+        context.update(ReferenceDocumentContext(context["object_list"], self.request.user).get_context())
         return context
 
 
 class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
     template_name = "reference_documents/details.jinja"
-    permission_required = "reference_documents.view_reference_document"
+    permission_required = "reference_documents.view_referencedocument"
     model = ReferenceDocument
 
     def get_context_data(self, *args, **kwargs):
@@ -118,28 +136,26 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
         for version in context["object"].reference_document_versions.order_by(
                 "version",
         ):
-            actions = (
-                f'<a href="{reverse("reference_documents:version-details", kwargs={"pk": version.id})}">Version details</a><br>'
-            )
+            actions = ""
+
+            if self.request.user.has_perm("reference_documents.view_referencedocumentversion"):
+                actions += f'<a href="{reverse("reference_documents:version-details", kwargs={"pk": version.id})}">Version details</a><br>'
 
             if version.status == ReferenceDocumentVersionStatus.EDITING:
-                actions += (
-                    f'<a href="{reverse("reference_documents:version-edit", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Edit</a><br>'
-                    f'<a href="{reverse("reference_documents:version-delete", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Delete</a><br>'
-                    f'<a href="{reverse("reference_documents:version-status-change-to-in-review", kwargs={"ref_doc_pk": context["object"].pk,"pk": version.id})}">Ready for review</a><br>'
-                )
+                if self.request.user.has_perm("reference_documents.change_referencedocumentversion"):
+                    actions += f'<a href="{reverse("reference_documents:version-edit", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Edit</a><br>'
+                if self.request.user.has_perm("reference_documents.delete_referencedocumentversion"):
+                    actions += f'<a href="{reverse("reference_documents:version-delete", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Delete</a><br>'
+                if self.request.user.has_perm("reference_documents.change_referencedocumentversion"):
+                    actions += f'<a href="{reverse("reference_documents:version-status-change-to-in-review", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Ready for review</a><br>'
             elif version.status == ReferenceDocumentVersionStatus.IN_REVIEW:
-                actions += (
-                    f'<a href="{reverse("reference_documents:version-status-change-to-published", kwargs={"ref_doc_pk": context["object"].pk,"pk": version.id})}">Ready to publish</a><br>'
-                    f'<a href="{reverse("reference_documents:version-status-change-to-editing", kwargs={"ref_doc_pk": context["object"].pk,"pk": version.id})}">Revert to editable</a><br>'
-                )
+                if self.request.user.has_perm("reference_documents.change_referencedocumentversion"):
+                    actions += f'<a href="{reverse("reference_documents:version-status-change-to-published", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Ready to publish</a><br>'
+                if self.request.user.has_perm("reference_documents.change_referencedocumentversion"):
+                    actions += f'<a href="{reverse("reference_documents:version-status-change-to-editing", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Revert to editable</a><br>'
             else:
                 if self.request.user.is_superuser:
-                    actions += (
-                        f'<a href="{reverse("reference_documents:version-status-change-to-editing", kwargs={"ref_doc_pk": context["object"].pk,"pk": version.id})}">Revert to editable</a><br>'
-                    )
-
-
+                    actions += f'<a href="{reverse("reference_documents:version-status-change-to-editing", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Revert to editable</a><br>'
 
             reference_document_versions.append(
                 [

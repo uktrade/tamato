@@ -144,6 +144,8 @@
           <li>
             <a href="{{ url('taric_parser_import_ui_list') }}" class="govuk-link">Importer V2</a>
           </li>
+            {% endif %}
+      {% if request.user.has_perm('reference_documents.view_referencedocument') %}
           <li>
             <a href="{{ url('reference_documents:index') }}" class="govuk-link">Reference documents</a>
           </li>

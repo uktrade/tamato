@@ -25,19 +25,20 @@ from reference_documents.models import ReferenceDocumentVersionStatus
 
 
 class ReferenceDocumentVersionContext:
-    def __init__(self, reference_document_version: ReferenceDocumentVersion):
+    def __init__(self, reference_document_version: ReferenceDocumentVersion, user):
         self.reference_document_version = reference_document_version
+        self.user = user
 
     def alignment_report(self):
         return self.reference_document_version.alignment_reports.last()
 
     @staticmethod
     def get_tap_order_number(
-        ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
+            ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
     ):
         if (
-            ref_doc_quota_order_number.reference_document_version.entry_into_force_date
-            is not None
+                ref_doc_quota_order_number.reference_document_version.entry_into_force_date
+                is not None
         ):
             contains_date = (
                 ref_doc_quota_order_number.reference_document_version.entry_into_force_date
@@ -59,8 +60,8 @@ class ReferenceDocumentVersionContext:
 
     @staticmethod
     def get_tap_comm_code(
-        ref_doc_version: ReferenceDocumentVersion,
-        comm_code: str,
+            ref_doc_version: ReferenceDocumentVersion,
+            comm_code: str,
     ):
         if ref_doc_version.entry_into_force_date is not None:
             contains_date = ref_doc_version.entry_into_force_date
@@ -98,7 +99,7 @@ class ReferenceDocumentVersionContext:
     def duties_row_data(self):
         rows = []
         for (
-            preferential_rate
+                preferential_rate
         ) in self.reference_document_version.preferential_rates.order_by(
             "commodity_code",
         ):
@@ -115,10 +116,10 @@ class ReferenceDocumentVersionContext:
             actions = "<span></span>"
 
             if self.reference_document_version.editable():
-                actions = (
-                    f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a> | "
-                    f"<a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>"
-                )
+                if self.user.has_perm("reference_documents.change_preferentialrate"):
+                    actions += f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a>"
+                if self.user.has_perm("reference_documents.delete_preferentialrate"):
+                    actions += f" | <a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>"
 
             rows.append(
                 [
@@ -141,7 +142,7 @@ class ReferenceDocumentVersionContext:
     def quotas_data_orders_and_rows(self):
         data = {}
         for (
-            ref_doc_order_number
+                ref_doc_order_number
         ) in self.reference_document_version.preferential_quota_order_numbers.order_by(
             "quota_order_number",
         ):
@@ -166,7 +167,7 @@ class ReferenceDocumentVersionContext:
     def order_number_rows(self, data, ref_doc_order_number):
         # Add Data Rows
         for quota in ref_doc_order_number.preferential_quotas.order_by(
-            "commodity_code",
+                "commodity_code",
         ):
             comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
                 quota.preferential_quota_order_number.reference_document_version,
@@ -180,10 +181,11 @@ class ReferenceDocumentVersionContext:
             actions = "<span></span>"
 
             if self.reference_document_version.editable():
-                actions = (
-                    f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a> | "
-                    f"<a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>"
-                )
+
+                if self.user.has_perm("reference_documents.change_preferentialquotaordernumber"):
+                    actions += f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a>"
+                if self.user.has_perm("reference_documents.delete_preferentialquotaordernumber"):
+                    actions += f" | <a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>"
 
             row_to_add = [
                 {
@@ -210,7 +212,7 @@ class ReferenceDocumentVersionContext:
 
 class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
     template_name = "reference_documents/reference_document_versions/details.jinja"
-    permission_required = "reference_documents.view_reference_documentversion"
+    permission_required = "reference_documents.view_referencedocumentversion"
     model = ReferenceDocumentVersion
 
     def get_context_data(self, *args, **kwargs):
@@ -224,7 +226,7 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             f"Reference document for {context['object'].reference_document.get_area_name_by_area_id()}"
         )
 
-        context_data = ReferenceDocumentVersionContext(context["object"])
+        context_data = ReferenceDocumentVersionContext(context["object"], self.request.user)
         context["reference_document_version_duties_headers"] = (
             context_data.duties_headers()
         )
@@ -427,7 +429,11 @@ class ReferenceDocumentVersionCheck(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["last_run"] = self.object.alignment_reports.all().last().created_at
+        last_alignment_report = self.object.alignment_reports.all().last()
+        if last_alignment_report:
+            context["last_run"] = last_alignment_report.created_at
+        else:
+            context["last_run"] = None
         return context
 
 
