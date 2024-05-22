@@ -1644,14 +1644,11 @@ class WorkBasketCommentUpdateDeleteMixin:
     model = Comment
     success_url = reverse_lazy("workbaskets:current-workbasket")
 
-    def editable(self, comment):
-        if (
-            comment.author != self.request.user
-            or comment.task.workbasket.status != WorkflowStatus.EDITING
-        ):
-            return False
-        else:
-            return True
+    def editable(self, comment: Comment) -> bool:
+        return (
+            comment.author == self.request.user
+            and comment.task.workbasket.status == WorkflowStatus.EDITING
+        )
 
     def get_object(self, queryset=None):
         obj = super().get_object()
