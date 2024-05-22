@@ -753,7 +753,7 @@ LOGGING = {
         },
         "celery": {
             "handlers": ["celery"],
-            "level": "DEBUG",
+            "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
     },
