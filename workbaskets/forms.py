@@ -382,7 +382,7 @@ class WorkBasketCommentUpdateForm(WorkBasketCommentForm):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            Field.textarea("content"),
+            Field.textarea("content", placeholder="Add a comment"),
             Div(
                 Submit(
                     "submit",
