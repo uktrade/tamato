@@ -1388,10 +1388,20 @@ class MeasureGeographicalAreaForm(
         )
 
     def __init__(self, *args, **kwargs):
-        request = kwargs.pop("request")
-        exclusions_options = kwargs.pop("exclusions_options")
-        groups_options = kwargs.pop("groups_options")
-        country_regions_options = kwargs.pop("country_regions_options")
+        request = None
+        exclusions_options = []
+        groups_options = []
+        country_regions_options = []
+
+        if "request" in kwargs:
+            request = kwargs.pop("request")
+        if "exclusions_options" in kwargs:
+            exclusions_options = kwargs.pop("exclusions_options")
+        if "groups_options" in kwargs:
+            groups_options = kwargs.pop("groups_options")
+        if "country_regions_options" in kwargs:
+            country_regions_options = kwargs.pop("country_regions_options")
+
         super().__init__(*args, **kwargs)
         nested_forms_initial = self.get_initial_data()
         kwargs.pop("initial", None)
@@ -1403,6 +1413,21 @@ class MeasureGeographicalAreaForm(
             groups_options,
             country_regions_options,
         )
+
+    def clean_react_form_exclusions(self):
+        # Data from the react form is formatted as a single list
+        # rather than field names with the index appended
+        exclusion_pks = None
+        for key, value in self.data.lists():
+            if key == "geographical_area-erga_omnes_exclusions":
+                exclusion_pks = value
+        # we assume the react filtering has prevented the user selecting an exclusion that is not valid for the group
+        validated_exclusion_pks = [
+            pk
+            for pk in exclusion_pks
+            if GeographicalArea.objects.filter(pk=pk).exists()
+        ]
+        return list(GeographicalArea.objects.filter(pk__in=validated_exclusion_pks))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1435,17 +1460,28 @@ class MeasureGeographicalAreaForm(
                         for geo_area in cleaned_data[data_key]
                     ]
 
-                geo_area_exclusions = cleaned_data.get(
-                    constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
-                )
-                if geo_area_exclusions:
-                    exclusions = [
-                        exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
-                        for exclusion in geo_area_exclusions
-                    ]
-                    cleaned_data["geo_areas_and_exclusions"][0][
-                        "exclusions"
-                    ] = exclusions
+                # format exclusions for all options
+                if self.data.get("react") == "true":
+                    if geo_area_choice in [
+                        constants.GeoAreaType.ERGA_OMNES,
+                        constants.GeoAreaType.GROUP,
+                    ]:
+                        cleaned_data["geo_areas_and_exclusions"][0][
+                            "exclusions"
+                        ] = self.clean_react_form_exclusions()
+
+                else:
+                    geo_area_exclusions = cleaned_data.get(
+                        constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
+                    )
+                    if geo_area_exclusions:
+                        exclusions = [
+                            exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
+                            for exclusion in geo_area_exclusions
+                        ]
+                        cleaned_data["geo_areas_and_exclusions"][0][
+                            "exclusions"
+                        ] = exclusions
 
         return cleaned_data
 
@@ -1453,11 +1489,10 @@ class MeasureGeographicalAreaForm(
         # Perculiarly, serializable data in this form keeps its prefix.
         return super().serializable_data()
 
-    @classmethod
-    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+    def deserialize_init_kwargs(self, form_kwargs: Dict) -> Dict:
         # Perculiarly, this Form requires a prefix of "geographical_area".
         return {
-            "prefix": "geographical_area",
+            "prefix": self.prefix,
         }
 
 

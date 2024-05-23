@@ -32,6 +32,7 @@ function GeoAreaField({
 
   return (
     <>
+      <input type="hidden" name="react" value={true} />
       <div className="govuk-radios">
         <div className="govuk-radios__item">
           <input
