@@ -20,6 +20,13 @@ def celery_config():
     }
 
 
+@pytest.fixture(scope="session")
+def celery_includes():
+    return [
+        "measures.tasks",
+    ]
+
+
 @pytest.fixture
 def tariff_manager_group():
 
