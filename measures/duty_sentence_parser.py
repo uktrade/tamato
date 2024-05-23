@@ -149,7 +149,7 @@ class DutySentenceParser:
                 | (expr_amount_mandatory | expr_amount_permitted) duty_amount monetary_unit [slash measurement_unit [slash measurement_unit_qualifier]]
                 | measurement_unit [slash measurement_unit_qualifier]
 
-            !sentence: phrase+
+            !sentence: phrase+ |
 
             %import common.NUMBER
             %import common.WS
