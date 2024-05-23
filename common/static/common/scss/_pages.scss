@@ -1,0 +1,7 @@
+// Page-specific styling
+
+.measure-create-wizard__duty-commodities {
+    .govuk-error-summary {
+        width: calc(100% / 3 * 2);
+    }
+}

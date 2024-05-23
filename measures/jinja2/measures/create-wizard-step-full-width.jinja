@@ -1,0 +1,25 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/details/macro.njk" import govukDetails %}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+{% set info = "Create a new measure" %}
+
+{% block content %}
+  <span class="govuk-caption-l">{{ page_subtitle|default("") }}</span>
+  <h1 class="govuk-heading-xl govuk-!-width-two-thirds">
+    {% block page_title_heading %}
+      {{ page_title }}
+    {% endblock %}
+  </h1>
+
+  {% if step_metadata[wizard.steps.current].info %}
+  <p class="govuk-body">{{ step_metadata[wizard.steps.current].info }}</p>
+  {% endif %}
+
+  <div class="measure-create-wizard__duty-commodities">
+    {% call django_form(action=view.get_step_url(wizard.steps.current)) %}
+      {{ wizard.management_form }}
+      {% block form %}{{ crispy(form) }}{% endblock %}
+    {% endcall %}
+  </div>
+{% endblock %}
