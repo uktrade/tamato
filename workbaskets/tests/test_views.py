@@ -23,6 +23,7 @@ from exporter.tasks import upload_workbaskets
 from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from measures.models import Measure
+from tasks.models import Comment
 from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets.tasks import check_workbasket_sync
@@ -2202,3 +2203,169 @@ def test_workbasket_unassign_users_view_without_permission(client, user_workbask
         ),
     )
     assert response.status_code == 403
+
+
+def test_workbasket_summary_view_add_comment(valid_user_client, user_workbasket):
+    """Tests that a comment can be added to a workbasket from the workbasket's
+    summary view."""
+    content = "Test comment."
+    form_data = {"content": content}
+    url = reverse("workbaskets:current-workbasket")
+    assert not Comment.objects.exists()
+
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+    assert response.url == url
+    assert content in Comment.objects.get(task__workbasket=user_workbasket).content
+
+
+def test_workbasket_summary_view_displays_comments(
+    valid_user,
+    valid_user_client,
+    user_workbasket,
+):
+    """Tests that workbasket comments are displayed on the summary view."""
+    factories.CommentFactory.create_batch(
+        2,
+        author=valid_user,
+        task__workbasket=user_workbasket,
+    )
+    comments = Comment.objects.all().order_by("-created_at")
+
+    url = reverse("workbaskets:current-workbasket")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    container = soup.find("div", id="workbasket-comments-container")
+    headers = container.find_all("header")
+    contents = container.find_all("div", "comment")
+    assert len(headers) == len(comments)
+    assert len(contents) == len(comments)
+
+    for i, details in enumerate(headers):
+        assert comments[i].author.get_displayname() in details.span
+        assert (
+            localtime(comments[i].created_at).strftime("%d %B %Y, %I:%M %p")
+            in details.time
+        )
+
+    for i, content in enumerate(contents):
+        assert comments[i].content in content
+
+
+def test_workbasket_comment_update_view(valid_user, valid_user_client, user_workbasket):
+    """Tests that workbasket comments can be edited."""
+    comment = factories.CommentFactory.create(
+        author=valid_user,
+        task__workbasket=user_workbasket,
+    )
+
+    url = reverse(
+        "workbaskets:workbasket-ui-comment-edit",
+        kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    content = "Edited comment."
+    form_data = {"content": content}
+
+    response = valid_user_client.post(url, data=form_data)
+    assert response.status_code == 302
+    assert response.url == reverse("workbaskets:current-workbasket")
+
+    assert content in Comment.objects.get(pk=comment.pk).content
+
+
+def test_workbasket_comment_update_view_permission_denied(
+    valid_user_client,
+    user_workbasket,
+):
+    """Tests that editing another user's workbasket comment is not permitted."""
+    comment = factories.CommentFactory.create(task__workbasket=user_workbasket)
+    url = reverse(
+        "workbaskets:workbasket-ui-comment-edit",
+        kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 403
+
+    response = valid_user_client.post(url, data={})
+    assert response.status_code == 403
+
+
+def test_workbasket_comment_delete_view(valid_user, valid_user_client, user_workbasket):
+    """Tests that workbasket comments can be deleted."""
+    comment = factories.CommentFactory.create(
+        author=valid_user,
+        task__workbasket=user_workbasket,
+    )
+
+    url = reverse(
+        "workbaskets:workbasket-ui-comment-delete",
+        kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    response = valid_user_client.post(url, data={})
+    assert response.status_code == 302
+    assert response.url == reverse("workbaskets:current-workbasket")
+
+    with pytest.raises(Comment.DoesNotExist):
+        Comment.objects.get(pk=comment.pk)
+
+
+def test_workbasket_comment_delete_view_permission_denied(
+    valid_user_client,
+    user_workbasket,
+):
+    """Tests that deleting another user's workbasket comment is not
+    permitted."""
+    comment = factories.CommentFactory.create(task__workbasket=user_workbasket)
+    url = reverse(
+        "workbaskets:workbasket-ui-comment-delete",
+        kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 403
+
+    response = valid_user_client.post(url, data={})
+    assert response.status_code == 403
+
+
+def test_workbasket_comment_list_view(valid_user_client, user_workbasket):
+    """Tests that `WorkBasketCommentListView` displays workbasket comments."""
+    factories.CommentFactory.create_batch(
+        2,
+        author=user_workbasket.author,
+        task__workbasket=user_workbasket,
+    )
+    comments = Comment.objects.all().order_by("-created_at")
+    url = reverse(
+        "workbaskets:workbasket-ui-comments",
+        kwargs={"pk": user_workbasket.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    headers = soup.select("article > header")
+    contents = soup.find_all("div", "comment")
+    assert len(headers) == len(comments)
+    assert len(contents) == len(comments)
+
+    for i, details in enumerate(headers):
+        assert comments[i].author.get_displayname() in details.span
+        assert (
+            localtime(comments[i].created_at).strftime("%d %B %Y, %I:%M %p")
+            in details.time
+        )
+
+    for i, content in enumerate(contents):
+        assert comments[i].content in content

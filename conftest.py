@@ -301,6 +301,12 @@ def policy_group(db) -> Group:
         ("publishing", "consume_from_packaging_queue"),
         ("publishing", "manage_packaging_queue"),
         ("publishing", "view_envelope"),
+        ("tasks", "add_userassignment"),
+        ("tasks", "change_userassignment"),
+        ("tasks", "add_comment"),
+        ("tasks", "view_comment"),
+        ("tasks", "change_comment"),
+        ("tasks", "delete_comment"),
     ]:
         group.permissions.add(
             Permission.objects.get(
