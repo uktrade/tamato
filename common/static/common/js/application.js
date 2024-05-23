@@ -14,6 +14,7 @@ import { initAll } from "govuk-frontend";
 import showHideCheckboxes from "./showHideCheckboxes";
 import { initAutocomplete } from "./autocomplete";
 import { initAutocompleteProgressiveEnhancement } from "./autocompleteProgressiveEnhancement";
+import { initAddNewDefinition } from "./addNewQuotaDefinitionForm";
 import { initAddNewEnhancement } from "./addNewForm";
 import { initCopyToNextDuties } from "./copyDuties";
 import initCheckboxes from "./checkboxes";
@@ -23,12 +24,14 @@ import initOpenCloseAccordionSection from "./openCloseAccordion";
 import initTapDebounce from "./buttonDebounce";
 import { setupQuotaOriginFormset } from "./components/QuotaOriginFormset/index";
 import { setupWorkbasketUserAssignment } from "./components/WorkbasketUserAssignment/index";
+import { initMasonry } from "./masonry";
 
 showHideCheckboxes();
 // Initialise accessible-autocomplete components without a `name` attr in order
 // to avoid the "dummy" autocomplete field being submitted as part of the form
 // to the server.
 initAll();
+initAddNewDefinition();
 initAddNewEnhancement();
 initAutocomplete(false);
 initCopyToNextDuties();
@@ -40,3 +43,4 @@ initOpenCloseAccordionSection();
 initTapDebounce();
 setupQuotaOriginFormset();
 setupWorkbasketUserAssignment();
+initMasonry();

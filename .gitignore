@@ -109,10 +109,9 @@ celerybeat.pid
 .env.*
 .venv
 env/
-venv/
+venv*/
 ENV/
 env.bak/
-venv.bak/
 docker-compose.override.yml
 settings/envs/docker.override.env
 
@@ -145,6 +144,8 @@ webpack-stats.json
 # PyCharm
 .idea/
 
+# VS Code
+.vscode/
 
 *.gz
 
@@ -166,3 +167,4 @@ _dumped_cache.pkl
 
 # Database dumps
 *.sql
+/.vscode/settings.json

@@ -17,7 +17,7 @@ Prerequisites
 
 The following dependencies are required to run this app:
 
-- Python_ 3.8.x
+- Python_ 3.9.x
 - Node.js_ 20.10.0 (LTS)
 - PostgreSQL_ 12
 - Redis_ 5.x
@@ -82,7 +82,7 @@ substituting your own python version as appropriate:
     $ pip uninstall psycopg2
     $ brew install postgresql
     $ export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
-    $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.8.10/lib"
+    $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.9/lib"
     $ arch -arm64 pip install psycopg2 --no-binary :all:
 
 Credit due to armenzg and his `answer here
@@ -397,6 +397,21 @@ There are no command line tools available for this tool.
 This tool is available as an importer alternative found within the web front end in the footer menu under "New TARIC parser".
 
 This tool addresses several short falls that the current importer has.
+
+Reference document data import
+------------------------------
+
+WARNING: this feature is in alpha : do not use in production until this feature has been
+fully tested.
+
+In order to populate the reference document data from extracted data from an external tool
+you can use the management command ref_doc_csv_importer
+
+Example:
+
+   .. code:: sh
+
+      $ python manage.py ref_doc_csv_importer "/absolute/path/to/duties.csv" "/absolute/path/to/quotas.csv"
 
 Using the exporter
 ------------------

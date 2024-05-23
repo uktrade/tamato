@@ -4,6 +4,7 @@ import unittest
 from datetime import date
 from decimal import Decimal
 from typing import OrderedDict
+from unittest.mock import PropertyMock
 from unittest.mock import patch
 from urllib.parse import urlencode
 
@@ -11,6 +12,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.forms.models import model_to_dict
+from django.test import override_settings
 from django.urls import reverse
 
 from common.models.transactions import Transaction
@@ -37,11 +39,15 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureConditionComponent
 from measures.models import MeasureExcludedGeographicalArea
+from measures.models import MeasuresBulkCreator
+from measures.models import ProcessingState
+from measures.tests.factories import MeasuresBulkCreatorFactory
 from measures.validators import MeasureExplosionLevel
 from measures.validators import validate_duties
 from measures.views import MeasureCreateWizard
 from measures.views import MeasureFootnotesUpdate
 from measures.views import MeasureList
+from measures.views import MeasuresCreateProcessQueue
 from measures.views import MeasureUpdate
 from measures.wizard import MeasureCreateSessionStorage
 from workbaskets.models import WorkBasket
@@ -1161,6 +1167,7 @@ def test_measure_form_wizard_start(client_with_current_workbasket):
     assert response.status_code == 200
 
 
+@override_settings(MEASURES_ASYNC_CREATION=False)
 @unittest.mock.patch("measures.parsers.DutySentenceParser")
 @unittest.mock.patch("measures.forms.LarkDutySentenceParser")
 def test_measure_form_wizard_finish(
@@ -2682,3 +2689,308 @@ def test_measure_list_results_show_chosen_filters(valid_user_client, date_ranges
             f"Regulation {measure.generating_regulation.autocomplete_label}" in items[3]
         )
         assert f"Measure Type {measure.measure_type.autocomplete_label}" in items[4]
+
+
+def test_measures_wizard_create_confirm_view(valid_user_client):
+    """Test the confirmation page for measures creation, validating URL lookup
+    and correct rendering applying captured params to content."""
+
+    expected_measures_count = 99
+    url = reverse(
+        "measure-ui-create-confirm",
+        kwargs={
+            "expected_measures_count": expected_measures_count,
+        },
+    )
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    expected_h1_text = (
+        f"You successfully submitted {expected_measures_count} measures to be "
+        f"created or edited on TAP."
+    )
+
+    assert expected_h1_text in page.find("h1").text
+
+
+def test_measures_create_process_queue_view_renders(
+    valid_user_client,
+    session_request,
+):
+    MeasuresBulkCreatorFactory.create()
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+    with patch("measures.views.MeasuresCreateProcessQueue.paginate_by", 3):
+        url = reverse("measure-create-process-queue")
+        response = valid_user_client.get(url)
+        assert response.status_code == 200
+
+        page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+        pagination_nav = page.find("nav", class_="pagination")
+        assert pagination_nav
+        assert "Showing 3 of 5" in pagination_nav.find("div", class_="govuk-body").text
+
+
+def test_measures_create_process_queue_view_status_tag_generator(
+    session_request,
+):
+    awaiting_processing = MeasuresBulkCreatorFactory.create()
+    currently_processing = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    failed_processing = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    cancelled = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
+    processed = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+    view = MeasuresCreateProcessQueue(request=session_request)
+
+    for task in [currently_processing, awaiting_processing]:
+        assert view.status_tag_generator(task)["text"] == "Processing"
+    assert view.status_tag_generator(failed_processing)["text"] == "Failed"
+    assert view.status_tag_generator(cancelled)["text"] == "Terminated"
+    assert view.status_tag_generator(processed)["text"] == "Completed"
+
+
+def test_measures_create_process_queue_view_task_action_options(
+    valid_user_client,
+):
+    """
+    There are 4 possible Action options for a task:
+    1. Terminate, if a user has permissions and the task has not yet processed.
+    This is tested in test_measures_create_process_queue_terminate_link_renders
+    2. Contact TAP, if a task has failed
+    3. Terminated, if a task has been cancelled
+    4. N/A, everything else
+    """
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.AWAITING_PROCESSING,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
+
+    url = reverse("measure-create-process-queue")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    assert page.find("span", class_="contact-tap")
+    assert page.find("span", class_="terminated")
+    assert page.find("span", class_="not-applicable")
+
+
+@pytest.mark.parametrize(
+    ("expected_measures_count", "successfully_processed_count"),
+    (
+        (1, 0),
+        (1, 1),
+    ),
+)
+def test_measures_create_process_queue_view_processed_count(
+    expected_measures_count,
+    successfully_processed_count,
+    valid_user_client,
+):
+    """Test that the item count column displays the correct values for different
+    states."""
+
+    MeasuresBulkCreatorFactory.create(
+        successfully_processed_count=successfully_processed_count,
+    )
+    url = reverse("measure-create-process-queue")
+
+    with patch(
+        "measures.models.bulk_processing.MeasuresBulkCreator.expected_measures_count",
+        new_callable=PropertyMock,
+    ) as mock_expected_measures_count:
+        mock_expected_measures_count.return_value = expected_measures_count
+        response = valid_user_client.get(url)
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    processed_count = page.find("span", class_="processed-count")
+    expected_substring = f"{successfully_processed_count} of {expected_measures_count}"
+
+    assert expected_substring in processed_count.text
+
+
+def test_measures_create_process_queue_view_task_is_failed(
+    valid_user_client,
+    session_request_with_workbasket,
+):
+    failed_task = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    view = MeasuresCreateProcessQueue(request=session_request_with_workbasket)
+    url = reverse("measure-create-process-queue")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    assert view.is_task_failed(failed_task)
+
+
+def test_measures_create_process_queue_view_admin_can_cancel_task(session_request):
+    """Tests that an appropriately empowered user can cancel a task, if that
+    task is in Awaiting or Currently Processing States."""
+    super_user = factories.UserFactory(is_superuser=True)
+    awaiting_processing = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.AWAITING_PROCESSING,
+    )
+    currently_processing = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    cancelled = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CANCELLED,
+    )
+    failed = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.FAILED_PROCESSING,
+    )
+    processed = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.SUCCESSFULLY_PROCESSED,
+    )
+    session_request.user = super_user
+    view = MeasuresCreateProcessQueue(
+        request=session_request,
+    )
+
+    for task in [awaiting_processing, currently_processing]:
+        assert view.can_terminate_task(task)
+    for task in [cancelled, failed, processed]:
+        assert not view.can_terminate_task(task)
+
+
+def test_measures_create_process_queue_terminate_link_renders(admin_client):
+    MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.AWAITING_PROCESSING,
+    )
+
+    url = reverse("measure-create-process-queue")
+    response = admin_client.get(url)
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    assert page.find("a", class_="terminate-task")
+
+
+def test_cancel_bulk_processor_task_insufficient_permission(valid_user_client):
+    """Test that users without superuser setting have no access to the cancel
+    view."""
+
+    measures_bulk_creator = MeasuresBulkCreatorFactory.create(
+        processing_state=ProcessingState.CURRENTLY_PROCESSING,
+    )
+    url = reverse(
+        "cancel-bulk-processor-task",
+        kwargs={
+            "pk": measures_bulk_creator.pk,
+        },
+    )
+    response = valid_user_client.get(url)
+
+    assert response.status_code == 403
+
+    response = valid_user_client.post(url, {})
+
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize(
+    "processing_state",
+    [
+        *ProcessingState.done_processing_states(),
+    ],
+)
+def test_cancel_bulk_processor_completed_task(processing_state, superuser_client):
+    """
+    Test that cancelling a done task has no side-effect on the
+    MeasuresBulkCreator instance.
+
+    This ensures that even when a task transitions from a queued state to a
+    completed state while the user is accessing the cancel view (i.e. the view
+    has become stale), that there is no bad side effect.
+    """
+
+    measures_bulk_creator = MeasuresBulkCreatorFactory.create(
+        processing_state=processing_state,
+    )
+    url = reverse(
+        "cancel-bulk-processor-task",
+        kwargs={
+            "pk": measures_bulk_creator.pk,
+        },
+    )
+    response = superuser_client.post(url, {})
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "cancel-bulk-processor-task-done",
+        kwargs={"pk": measures_bulk_creator.pk},
+    )
+    # MeasuresBulkCreator.processing_state restrictions prevent use of
+    # Model.refresh_from_db(), so a fresh Model.get() is required.
+    updated_measures_bulk_creator = MeasuresBulkCreator.objects.get(
+        pk=measures_bulk_creator.pk,
+    )
+    assert updated_measures_bulk_creator.processing_state == processing_state
+
+
+@pytest.mark.parametrize(
+    "processing_state",
+    [
+        *ProcessingState.queued_states(),
+    ],
+)
+def test_cancel_bulk_processor_task(processing_state, superuser_client):
+    """Test that a user with necessary permissions, cancelling a task in one of
+    the queued states, can perform task cancellation."""
+
+    measures_bulk_creator = MeasuresBulkCreatorFactory.create(
+        processing_state=processing_state,
+    )
+    url = reverse(
+        "cancel-bulk-processor-task",
+        kwargs={
+            "pk": measures_bulk_creator.pk,
+        },
+    )
+    response = superuser_client.get(url)
+
+    assert response.status_code == 200
+
+    response = superuser_client.post(url, {})
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "cancel-bulk-processor-task-done",
+        kwargs={"pk": measures_bulk_creator.pk},
+    )
+    # MeasuresBulkCreator.processing_state restrictions prevent use of
+    # Model.refresh_from_db(), so a fresh Model.get() is required.
+    updated_measures_bulk_creator = MeasuresBulkCreator.objects.get(
+        pk=measures_bulk_creator.pk,
+    )
+    assert updated_measures_bulk_creator.processing_state == ProcessingState.CANCELLED

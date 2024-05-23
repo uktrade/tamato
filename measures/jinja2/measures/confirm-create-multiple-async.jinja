@@ -1,0 +1,43 @@
+{% extends "layouts/confirm.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Confirmation" %}
+
+{% macro panel_title(created_measures) %}
+  You successfully submitted {{ expected_measures_count }} measure{{ expected_measures_count|pluralize}} to be created or edited on TAP.
+{% endmacro %}
+
+{% macro panel_subtitle(created_measures) %}
+  You can view {% if expected_measures_count > 1 %}their{% else %}its{% endif %} status on the Measures process queue page.
+{% endmacro %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request,
+    [
+      {"text": page_title}
+    ]
+  ) }}
+{% endblock %}
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        "titleText": panel_title(created_measures),
+        "text": panel_subtitle(created_measures),
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+      <div class="govuk-button-group">
+        {{ govukButton({
+          "text": "View status",
+          "href": url("measure-create-process-queue"),
+          "classes": "govuk-button--primary"
+        }) }}
+        {{ govukButton({
+          "text": "Homepage",
+          "href": url("home"),
+          "classes": "govuk-button--secondary"
+        }) }}
+      </div>
+    </div>
+  </div>
+{% endblock %}

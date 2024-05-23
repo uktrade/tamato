@@ -2,9 +2,10 @@
 ###############
 # Build on Python-based image using default target platform (TARGETPLATFORM).
 
-FROM python:3.8
+FROM python:3.9-bookworm
 
 ARG TARGETPLATFORM
+ARG TARGETARCH
 RUN echo "Building for ${TARGETPLATFORM} platform..."
 
 ENV PYTHONUNBUFFERED=1
@@ -29,14 +30,22 @@ RUN apt-get update -qqy --fix-missing && \
 ###############
 # Download and setup Node.
 
-ENV NODE_VERION="v20.10.0"
-ENV NODE_NAME="node-${NODE_VERION}-linux-arm64"
+ENV NODE_VERSION="v20.10.0"
 
-RUN curl "https://nodejs.org/dist/${NODE_VERION}/${NODE_NAME}.tar.gz" -O
-RUN tar xzf "${NODE_NAME}.tar.gz"
-RUN ln -s "/${NODE_NAME}/bin/node" /usr/local/bin/node
-RUN ln -s "/${NODE_NAME}/bin/npm" /usr/local/bin/npm
-RUN ln -s "/${NODE_NAME}/bin/npx" /usr/local/bin/npx
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+        NODE_ARCH="linux-arm64"; \
+    elif [ "$TARGETARCH" = "amd64" ]; then \
+        NODE_ARCH="linux-x64"; \
+    else \
+        echo "Unsupported node binary package platform architecture: ${TARGETARCH}"; \
+        exit 1; \
+    fi \
+    && NODE_NAME="node-${NODE_VERSION}-${NODE_ARCH}" \
+    && curl "https://nodejs.org/dist/${NODE_VERSION}/${NODE_NAME}.tar.gz" -O \
+    && tar xzf "${NODE_NAME}.tar.gz" \
+    && ln -s "/${NODE_NAME}/bin/node" /usr/local/bin/node \
+    && ln -s "/${NODE_NAME}/bin/npm" /usr/local/bin/npm \
+    && ln -s "/${NODE_NAME}/bin/npx" /usr/local/bin/npx
 
 ###############
 # Install Node packages and Python packages.
@@ -58,5 +67,3 @@ COPY . /app/
 
 RUN npm run build
 RUN python manage.py collectstatic --noinput
-
-CMD ["pytest"]
