@@ -13,12 +13,20 @@ from .utils import login
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 
+@pytest.fixture(scope="session")
+def celery_config():
+    return {
+        "task_always_eager": False,
+    }
+
+
 @pytest.fixture
 def tariff_manager_group():
 
     def set_permissions():
         for app_label, codename in [
             ("common", "add_trackedmodel"),
+            ("common", "change_trackedmodel"),
             ("publishing", "manage_packaging_queue"),
             ("tasks", "add_userassignment"),
             ("workbaskets", "add_workbasket"),
