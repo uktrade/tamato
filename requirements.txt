@@ -5,6 +5,7 @@ apsw==3.43.0.0
 beautifulsoup4==4.10.0
 better-exceptions==0.3.3
 black==24.3.0
+bleach==6.1.0
 boto3==1.18.51
 celery[redis]>=5.2.2
 coverage[toml]==5.4
@@ -46,6 +47,8 @@ gunicorn==22.0.0
 Jinja2==3.1.4
 lark==1.1.9
 lxml==4.9.1
+markdown==3.6
+markdownify==0.12.1
 markupsafe==2.1.2
 moto==2.1.0
 notifications-python-client==6.4.1

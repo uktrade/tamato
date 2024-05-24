@@ -1525,3 +1525,12 @@ class AssignedWorkBasketFactory(WorkBasketFactory):
             assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
             task=task,
         )
+
+
+class CommentFactory(factory.django.DjangoModelFactory):
+    author = factory.SubFactory(UserFactory)
+    content = factory.Faker("sentence")
+    task = factory.SubFactory(TaskFactory)
+
+    class Meta:
+        model = "tasks.Comment"
