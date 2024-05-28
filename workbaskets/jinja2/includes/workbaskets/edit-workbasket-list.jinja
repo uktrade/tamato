@@ -1,7 +1,16 @@
-{% from "components/button/macro.njk" import govukButton %}
-{% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
-{% from "workbaskets/macros/workbasket_status_tag.jinja" import create_workbasket_status_tag %}
+
+{% macro display_assigned_users(assigned_users, assignment_type) %}
+  {% if not assigned_users and assignment_type == "workers" %}
+    No users have been assigned to this workbasket yet.
+  {% elif not assigned_users and assignment_type == "reviewers" %}
+    No users have been assigned to review this workbasket yet.
+  {% else %}
+    {% for user in assigned_users %}
+      {{ user.get_full_name() }}{% if not loop.last %}<br> {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endmacro %}
 
 {%- set table_rows = [] -%}
 {% for workbasket in object_list %}
@@ -20,7 +29,8 @@
     {"text": workbasket_linked_pk},
     {"text": workbasket.title},
     {"text": workbasket.reason},
-    {"html": create_workbasket_status_tag(workbasket.status)},
+    {"html": display_assigned_users(workbasket.assigned_workers, "workers") },
+    {"html": display_assigned_users(workbasket.assigned_reviewers, "reviewers") },
   ]) or "" }}
 {% endfor %}
 
@@ -29,7 +39,8 @@
     {"text": "ID"},
     {"text": "TOPS/Jira number"},
     {"text": "Description"},
-    {"text": "Status"},
+    {"text": "Assigned to"},
+    {"text": "Assigned to review"},
   ],
   "rows": table_rows
 }) }}

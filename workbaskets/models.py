@@ -669,6 +669,16 @@ class WorkBasket(TimestampedMixin):
         assignments = self.worker_assignments | self.reviewer_assignments
         return assignments
 
+    @property
+    def assigned_workers(self):
+        user_ids = self.worker_assignments.values_list("user_id")
+        return User.objects.filter(id__in=user_ids)
+
+    @property
+    def assigned_reviewers(self):
+        user_ids = self.reviewer_assignments.values_list("user_id")
+        return User.objects.filter(id__in=user_ids)
+
     class Meta:
         verbose_name = "workbasket"
         verbose_name_plural = "workbaskets"
