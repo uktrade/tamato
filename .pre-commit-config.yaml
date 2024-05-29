@@ -4,7 +4,7 @@ repos:
     hooks:
       - id: add-trailing-comma
   - repo: https://github.com/myint/autoflake.git
-    rev: v2.3.1
+    rev: v2.2.1
     hooks:
       - id: autoflake
         args: [
@@ -13,7 +13,7 @@ repos:
             "--remove-unused-variable",
           ]
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 5.12.0
     hooks:
       - id: isort
         args: [--force-single-line-imports]
@@ -28,7 +28,7 @@ repos:
             "--pre-summary-newline",
           ]
   - repo: https://github.com/psf/black
-    rev: 24.4.2
+    rev: 24.3.0
     hooks:
       - id: black
   - repo: https://github.com/ikamensh/flynt/
