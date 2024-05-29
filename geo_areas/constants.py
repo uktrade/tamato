@@ -38,6 +38,11 @@ EXCLUSIONS_FORMSET_PREFIX_MAPPING = {
     GeoAreaType.COUNTRY: None,
 }
 
+EXCLUSIONS_REACT_PREFIX_MAPPING = {
+    GeoAreaType.ERGA_OMNES: ERGA_OMNES_EXCLUSIONS_PREFIX,
+    GeoAreaType.GROUP: GROUP_EXCLUSIONS_PREFIX,
+}
+
 FIELD_NAME_MAPPING = {
     GeoAreaType.ERGA_OMNES: "erga_omnes_exclusion",
     GeoAreaType.GROUP: "geo_group_exclusion",

@@ -1414,12 +1414,13 @@ class MeasureGeographicalAreaForm(
             country_regions_options,
         )
 
-    def clean_react_form_exclusions(self):
+    def clean_react_form_exclusions(self, key):
         # Data from the react form is formatted as a single list
         # rather than field names with the index appended
+        field_name = f"{self.prefix}-{key}"
         exclusion_pks = None
-        for key, value in self.data.lists():
-            if key == "geographical_area-erga_omnes_exclusions":
+        for k, value in self.data.lists():
+            if k == field_name:
                 exclusion_pks = value
         # we assume the react filtering has prevented the user selecting an exclusion that is not valid for the group
         validated_exclusion_pks = [
@@ -1463,12 +1464,15 @@ class MeasureGeographicalAreaForm(
                 # format exclusions for all options
                 if self.data.get("react") == "true":
                     if geo_area_choice in [
-                        constants.GeoAreaType.ERGA_OMNES,
                         constants.GeoAreaType.GROUP,
+                        constants.GeoAreaType.ERGA_OMNES,
                     ]:
+                        exclusions = self.clean_react_form_exclusions(
+                            constants.EXCLUSIONS_REACT_PREFIX_MAPPING[geo_area_choice],
+                        )
                         cleaned_data["geo_areas_and_exclusions"][0][
                             "exclusions"
-                        ] = self.clean_react_form_exclusions()
+                        ] = exclusions
 
                 else:
                     geo_area_exclusions = cleaned_data.get(
