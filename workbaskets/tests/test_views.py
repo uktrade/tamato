@@ -230,23 +230,79 @@ def test_select_workbasket_page_200(valid_user_client):
     we don't want users to be able to edit workbaskets that are archived, sent,
     or published.
     """
-    factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.PUBLISHED)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.QUEUED)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.ERRORED)
-    valid_statuses = {
-        WorkflowStatus.EDITING,
-        WorkflowStatus.ERRORED,
-    }
+    archived_workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.ARCHIVED,
+    )
+    published_workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.PUBLISHED,
+    )
+    editing_workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    queued_workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.QUEUED)
+    errored_workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.ERRORED,
+    )
+
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
     assert response.status_code == 200
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    statuses = [
-        element.text.strip() for element in soup.select(".govuk-table__row .govuk-tag")
-    ]
-    assert len(statuses) == 2
-    assert not set(statuses).difference(valid_statuses)
+    table_rows = [element for element in soup.select(".govuk-table__row")]
+    assert len(table_rows) == 3
+
+    # Assert the editing and errored workbaskets appear in the list but the rest do not
+    workbasket_links = [element for element in soup.select(".button-link")]
+    workbasket_pks = [int(workbasket.get("value")) for workbasket in workbasket_links]
+
+    assert all(
+        pk in workbasket_pks for pk in [editing_workbasket.pk, errored_workbasket.pk]
+    )
+    assert all(
+        pk not in workbasket_pks
+        for pk in [
+            archived_workbasket.pk,
+            published_workbasket.pk,
+            queued_workbasket.pk,
+        ]
+    )
+
+
+def test_workbasket_assignments_appear(valid_user_client):
+    """Test that workbasket assignments are shown on the edit a workbasket
+    page."""
+    workbasket = factories.WorkBasketFactory.create()
+    response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
+    assert "No users have been assigned to this workbasket yet." in str(
+        response.content,
+    )
+    assert "No users have been assigned to review this workbasket yet." in str(
+        response.content,
+    )
+
+    # Fully assign the workbasket
+    task = factories.TaskFactory.create(workbasket=workbasket)
+    worker = factories.UserFactory.create(first_name="Worker", last_name="User")
+    reviewer = factories.UserFactory.create(first_name="Reviewer", last_name="User")
+    worker_assignment = factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+        user=worker,
+    )
+    reviewer_assignment = factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=task,
+        user=reviewer,
+    )
+    # Assert that the assigned names appear in the table
+    response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
+    assert worker_assignment.user.get_full_name() in str(response.content)
+    assert reviewer_assignment.user.get_full_name() in str(response.content)
+    assert "No users have been assigned to this workbasket yet." not in str(
+        response.content,
+    )
+    assert "No users have been assigned to review this workbasket yet." not in str(
+        response.content,
+    )
 
 
 def test_select_workbasket_with_errored_status(valid_user_client):
