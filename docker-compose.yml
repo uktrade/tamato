@@ -143,8 +143,6 @@ services:
     env_file:
       - .env
       - settings/envs/docker.env
-    environment:
-      SQLITE_EXPORT_CRONTAB: "05 19 * * *"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     stdin_open: true
     tty: true
