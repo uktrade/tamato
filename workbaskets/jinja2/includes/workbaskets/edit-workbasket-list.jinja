@@ -1,6 +1,6 @@
 {% from "components/table/macro.njk" import govukTable %}
 
-{% macro display_assigned_users(assigned_users, assignment_type) %}
+{% macro display_assigned_users(assigned_users) %}
     {% for user in assigned_users %}
       {{ user.get_full_name() }}{% if not loop.last %}, {% endif %}
     {% endfor %}
@@ -23,8 +23,8 @@
     {"text": workbasket_linked_pk},
     {"text": workbasket.title},
     {"text": workbasket.reason},
-    {"html": display_assigned_users(workbasket.assigned_workers, "workers") },
-    {"html": display_assigned_users(workbasket.assigned_reviewers, "reviewers") },
+    {"html": display_assigned_users(workbasket.assigned_workers) },
+    {"html": display_assigned_users(workbasket.assigned_reviewers) },
   ]) or "" }}
 {% endfor %}
 

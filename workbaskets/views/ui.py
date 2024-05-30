@@ -112,15 +112,16 @@ class WorkBasketAssignmentFilter(FilterSet):
             return queryset.filter(
                 Q(id__in=active_workers) & Q(id__in=active_reviewers),
             )
-        if value == "Reviewer":
+        elif value == "Reviewer":
             return queryset.filter(id__in=active_reviewers)
-        if value == "Worker":
+        elif value == "Worker":
             return queryset.filter(id__in=active_workers)
-        if value == "Awaiting":
+        elif value == "Awaiting":
             return queryset.filter(
                 ~Q(id__in=active_workers) & ~Q(id__in=active_reviewers),
             )
-        return queryset
+        else:
+            return queryset
 
     assignment = django_filters.CharFilter(method="assignment_filter")
 
