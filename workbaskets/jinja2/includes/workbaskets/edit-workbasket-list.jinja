@@ -1,15 +1,9 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 {% macro display_assigned_users(assigned_users, assignment_type) %}
-  {% if not assigned_users and assignment_type == "workers" %}
-    No users have been assigned to this workbasket yet.
-  {% elif not assigned_users and assignment_type == "reviewers" %}
-    No users have been assigned to review this workbasket yet.
-  {% else %}
     {% for user in assigned_users %}
-      {{ user.get_full_name() }}{% if not loop.last %}<br> {% endif %}
+      {{ user.get_full_name() }}{% if not loop.last %}, {% endif %}
     {% endfor %}
-  {% endif %}
 {% endmacro %}
 
 {%- set table_rows = [] -%}

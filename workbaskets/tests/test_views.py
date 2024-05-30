@@ -271,18 +271,15 @@ def test_workbasket_assignments_appear(valid_user_client):
     """Test that workbasket assignments are shown on the edit a workbasket
     page."""
     workbasket = factories.WorkBasketFactory.create()
+    worker = factories.UserFactory.create(first_name="Worker", last_name="User")
+    reviewer = factories.UserFactory.create(first_name="Reviewer", last_name="User")
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
-    assert "No users have been assigned to this workbasket yet." in str(
-        response.content,
-    )
-    assert "No users have been assigned to review this workbasket yet." in str(
-        response.content,
-    )
+    assert worker.get_full_name() not in str(response.content)
+    assert reviewer.get_full_name() not in str(response.content)
 
     # Fully assign the workbasket
     task = factories.TaskFactory.create(workbasket=workbasket)
-    worker = factories.UserFactory.create(first_name="Worker", last_name="User")
-    reviewer = factories.UserFactory.create(first_name="Reviewer", last_name="User")
+
     worker_assignment = factories.UserAssignmentFactory.create(
         assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
         task=task,
@@ -297,12 +294,6 @@ def test_workbasket_assignments_appear(valid_user_client):
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
     assert worker_assignment.user.get_full_name() in str(response.content)
     assert reviewer_assignment.user.get_full_name() in str(response.content)
-    assert "No users have been assigned to this workbasket yet." not in str(
-        response.content,
-    )
-    assert "No users have been assigned to review this workbasket yet." not in str(
-        response.content,
-    )
 
 
 def test_select_workbasket_with_errored_status(valid_user_client):
