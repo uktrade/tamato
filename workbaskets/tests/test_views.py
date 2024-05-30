@@ -296,6 +296,70 @@ def test_workbasket_assignments_appear(valid_user_client):
     assert reviewer_assignment.user.get_full_name() in str(response.content)
 
 
+@pytest.mark.parametrize(
+    "url, included_wb_ids, excluded_wb_ids",
+    [
+        ("?assignment=Full", [1], [2, 3, 4]),
+        ("?assignment=Reviewer", [1, 3], [2, 4]),
+        ("?assignment=Worker", [1, 4], [2, 3]),
+        ("?assignment=Awaiting", [2], [1, 3, 4]),
+    ],
+)
+def test_select_workbasket_filtering(
+    valid_user_client,
+    url,
+    included_wb_ids,
+    excluded_wb_ids,
+):
+    """
+    Test that workbaskets appear or do not appear on each tab depending on their
+    assignment.
+
+    Parametrized testing for each tab with a list of workbasket ids that should
+    be appearing on that page and those that should not.
+    """
+    # Create a fully assigned workbasket
+    fully_assigned_workbasket = factories.WorkBasketFactory.create(id=1)
+
+    task = factories.TaskFactory.create(workbasket=fully_assigned_workbasket)
+
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=task,
+    )
+    # Create an unassigned workbasket
+    factories.WorkBasketFactory.create(id=2)
+    # Create workbasket with only a reviewer assigned
+    reviewer_assigned_workbasket = factories.WorkBasketFactory.create(id=3)
+    reviewer_task = factories.TaskFactory.create(
+        workbasket=reviewer_assigned_workbasket,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=reviewer_task,
+    )
+    # Create a workbasket with only a worker assigned
+    worker_assigned_workbasket = factories.WorkBasketFactory.create(id=4)
+    worker_task = factories.TaskFactory.create(workbasket=worker_assigned_workbasket)
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=worker_task,
+    )
+
+    # Test that the workbaskets are appearing on the correct tabs
+    response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list") + url)
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    workbasket_links = [element for element in soup.select(".button-link")]
+    workbasket_pks = [int(workbasket.get("value")) for workbasket in workbasket_links]
+
+    assert all(pk in workbasket_pks for pk in included_wb_ids)
+    assert all(pk not in workbasket_pks for pk in excluded_wb_ids)
+
+
 def test_select_workbasket_with_errored_status(valid_user_client):
     """Test that the workbasket is transitioned correctly to editing if it is
     selected for editing while in ERRORED status."""
