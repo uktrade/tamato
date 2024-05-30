@@ -10,7 +10,10 @@ function CountryRegionForm({
 }) {
   if (renderCondition) {
     return (
-      <div className="govuk-radios__conditional">
+      <div
+        className="govuk-radios__conditional"
+        data-testid="country_region_select"
+      >
         <div className="govuk-form-group">
           <Select
             className="react-select-container"
@@ -20,6 +23,7 @@ function CountryRegionForm({
             isMulti={true}
             max={2}
             name={`${fieldsPrefix}-countries`}
+            id="country_region_select"
           />
         </div>
       </div>

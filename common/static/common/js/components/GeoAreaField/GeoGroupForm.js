@@ -29,7 +29,7 @@ function GeoGroupForm({
 
   if (renderCondition) {
     return (
-      <div className="govuk-radios__conditional">
+      <div className="govuk-radios__conditional" data-testid="group_select">
         <div className="govuk-form-group">
           <Select
             className="react-select-container"
@@ -38,6 +38,7 @@ function GeoGroupForm({
             defaultValue={geoGroupInitial}
             onChange={updateExclusionOptions}
             name={`${fieldsPrefix}-geographical_area_group`}
+            id="group_select"
           />
         </div>
         <div className="govuk-form-group">
@@ -53,6 +54,7 @@ function GeoGroupForm({
             onChange={(value) => setGeoGroupExclusions(value)}
             isMulti={true}
             name={`${fieldsPrefix}-geo_group_exclusions`}
+            id="group_exclusions_select"
           />
         </div>
       </div>

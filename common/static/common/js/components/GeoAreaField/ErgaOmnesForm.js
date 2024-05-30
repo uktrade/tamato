@@ -11,7 +11,10 @@ function ErgaOmnesForm({
   if (renderCondition) {
     return (
       <div className="govuk-radios__conditional">
-        <div className="govuk-form-group">
+        <div
+          className="govuk-form-group"
+          data-testid="erga_omnes_exclusions_select"
+        >
           <div className="govuk-hint">
             Select one or more countries to be excluded:
           </div>
@@ -22,6 +25,7 @@ function ErgaOmnesForm({
             defaultValue={ergaOmnesExclusionsInitial}
             isMulti={true}
             name={`${fieldsPrefix}-erga_omnes_exclusions`}
+            id="erga_omnes_exclusions_select"
           />
         </div>
       </div>
