@@ -3,6 +3,7 @@ import json
 import unittest
 from datetime import date
 from decimal import Decimal
+from functools import reduce
 from typing import OrderedDict
 from unittest.mock import PropertyMock
 from unittest.mock import patch
@@ -1927,7 +1928,7 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
 
 
 @pytest.mark.parametrize(
-    "step,data",
+    "step, form_data, updated_attribute, expected_data",
     [
         (
             "start_date",
@@ -1937,6 +1938,8 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
                 "start_date-start_date_1": "01",
                 "start_date-start_date_2": "2000",
             },
+            "valid_between.lower",
+            datetime.date(2000, 1, 1),
         ),
         (
             "end_date",
@@ -1946,12 +1949,27 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
                 "end_date-end_date_1": "01",
                 "end_date-end_date_2": "2100",
             },
+            "valid_between.upper",
+            datetime.date(2100, 1, 1),
+        ),
+        (
+            "end_date",
+            {
+                "measure_edit_wizard-current_step": MeasureEditSteps.END_DATE,
+                "end_date-end_date_0": "",
+                "end_date-end_date_1": "",
+                "end_date-end_date_2": "",
+            },
+            "valid_between.upper",
+            None,
         ),
     ],
 )
 def test_multiple_measure_edit_single_form_functionality(
     step,
-    data,
+    form_data,
+    updated_attribute,
+    expected_data,
     valid_user_client,
     user_workbasket,
     mocked_diff_components,
@@ -1987,7 +2005,7 @@ def test_multiple_measure_edit_single_form_functionality(
             "next_step": step,
         },
         {
-            "data": data,
+            "data": form_data,
             "next_step": "complete",
         },
     ]
@@ -2017,6 +2035,7 @@ def test_multiple_measure_edit_single_form_functionality(
     assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
     for measure in workbasket_measures:
         assert measure.update_type == UpdateType.UPDATE
+        assert reduce(getattr, updated_attribute.split("."), measure) == expected_data
 
 
 def test_multiple_measure_edit_only_regulation(
