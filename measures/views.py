@@ -1,4 +1,3 @@
-import datetime
 import json
 import logging
 from itertools import groupby
@@ -621,13 +620,7 @@ class MeasureEditWizard(
         selected_measures = self.get_queryset()
         workbasket = WorkBasket.current(self.request)
         new_start_date = cleaned_data.get("start_date", None)
-        new_end_date = None
-        if cleaned_data.get("end_date"):
-            new_end_date = datetime.date(
-                cleaned_data["end_date"].year,
-                cleaned_data["end_date"].month,
-                cleaned_data["end_date"].day,
-            )
+        new_end_date = cleaned_data.get("end_date", None)
         new_quota_order_number = cleaned_data.get("order_number", None)
         new_generating_regulation = cleaned_data.get("generating_regulation", None)
         new_duties = cleaned_data.get("duties", None)
