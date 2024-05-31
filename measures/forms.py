@@ -1765,20 +1765,13 @@ class MeasureStartDateForm(forms.Form):
         cleaned_data = super().clean()
 
         if "start_date" in cleaned_data:
+            start_date = cleaned_data["start_date"]
             for measure in self.selected_measures:
-                year = int(cleaned_data["start_date"].year)
-                month = int(cleaned_data["start_date"].month)
-                day = int(cleaned_data["start_date"].day)
-
-                upper = measure.valid_between.upper
-                lower = datetime.date(year, month, day)
-                # for an open-ended measure the end date can be None
-                if upper and lower > upper:
-                    formatted_lower = lower.strftime("%d/%m/%Y")
-                    formatted_upper = upper.strftime("%d/%m/%Y")
+                end_date = measure.valid_between.upper
+                if end_date and start_date > end_date:
                     raise ValidationError(
                         f"The start date cannot be after the end date: "
-                        f"Start date {formatted_lower} does not start before {formatted_upper}",
+                        f"Start date {start_date:%d/%m/%Y} does not start before {end_date:%d/%m/%Y}",
                     )
 
         return cleaned_data

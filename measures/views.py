@@ -620,14 +620,8 @@ class MeasureEditWizard(
         cleaned_data = self.get_all_cleaned_data()
         selected_measures = self.get_queryset()
         workbasket = WorkBasket.current(self.request)
-        new_start_date = None
+        new_start_date = cleaned_data.get("start_date", None)
         new_end_date = None
-        if cleaned_data.get("start_date"):
-            new_start_date = datetime.date(
-                cleaned_data["start_date"].year,
-                cleaned_data["start_date"].month,
-                cleaned_data["start_date"].day,
-            )
         if cleaned_data.get("end_date"):
             new_end_date = datetime.date(
                 cleaned_data["end_date"].year,
