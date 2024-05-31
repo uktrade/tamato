@@ -1697,6 +1697,7 @@ class MeasureEndDateForm(forms.Form):
     end_date = DateInputFieldFixed(
         label="End date",
         help_text="For example, 27 3 2008",
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -1719,8 +1720,8 @@ class MeasureEndDateForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
 
-        if "end_date" in cleaned_data:
-            end_date = cleaned_data["end_date"]
+        end_date = cleaned_data.get("end_date", None)
+        if end_date:
             for measure in self.selected_measures:
                 start_date = measure.valid_between.lower
                 if start_date > end_date:
@@ -1728,6 +1729,8 @@ class MeasureEndDateForm(forms.Form):
                         f"The end date cannot be before the start date: "
                         f"Start date {start_date:%d/%m/%Y} does not start before {end_date:%d/%m/%Y}",
                     )
+        else:
+            cleaned_data["end_date"] = None
 
         return cleaned_data
 
