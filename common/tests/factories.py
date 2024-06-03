@@ -130,6 +130,17 @@ class WorkBasketFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("sentence", nb_words=4)
 
 
+class EditingWorkBasketFactory(WorkBasketFactory):
+    class Meta:
+        model = "workbaskets.WorkBasket"
+
+    status = WorkflowStatus.EDITING
+    transaction = factory.RelatedFactory(
+        "common.tests.factories.UnapprovedTransactionFactory",
+        factory_related_name="workbasket",
+    )
+
+
 class QueuedWorkBasketFactory(WorkBasketFactory):
     class Meta:
         model = "workbaskets.WorkBasket"
