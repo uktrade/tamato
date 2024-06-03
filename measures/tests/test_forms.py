@@ -1398,6 +1398,18 @@ def test_measure_end_date_validation_fail():
     )
 
 
+def test_measure_end_date_form_no_end_date():
+    """Tests that `MeasureEndDateForm` allows an empty end date value and sets
+    the cleaned data value to `None`."""
+    selected_measures = factories.MeasureFactory.create_batch(3)
+    form = MeasureEndDateForm(
+        data={},
+        selected_measures=selected_measures,
+    )
+    assert form.is_valid()
+    assert form.cleaned_data["end_date"] == None
+
+
 def test_measure_forms_footnotes_valid():
     footnote = factories.FootnoteFactory.create()
     data = {
