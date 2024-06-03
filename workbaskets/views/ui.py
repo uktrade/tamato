@@ -376,7 +376,7 @@ class CurrentWorkBasket(FormView):
         context = super().get_context_data(**kwargs)
 
         assigned_workers = [
-            {"pk": user.pk, "name": user.user.get_full_name()}
+            {"pk": user.pk, "name": user.user.get_displayname()}
             for user in self.workbasket.worker_assignments.order_by(
                 "user__first_name",
                 "user__last_name",
@@ -384,7 +384,7 @@ class CurrentWorkBasket(FormView):
         ]
 
         assigned_reviewers = [
-            {"pk": user.pk, "name": user.user.get_full_name()}
+            {"pk": user.pk, "name": user.user.get_displayname()}
             for user in self.workbasket.reviewer_assignments.order_by(
                 "user__first_name",
                 "user__last_name",
@@ -401,7 +401,7 @@ class CurrentWorkBasket(FormView):
             .order_by("first_name", "last_name")
         )
         assignable_users = [
-            {"pk": user.pk, "name": user.get_full_name()} for user in users
+            {"pk": user.pk, "name": user.get_displayname()} for user in users
         ]
 
         can_add_comment = self.request.user.has_perm("tasks.add_comment")

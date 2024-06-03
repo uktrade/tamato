@@ -1,12 +1,13 @@
 import logging
 
-from common.celery import app
+from celery import shared_task
+
 from measures.models import MeasuresBulkCreator
 
 logger = logging.getLogger(__name__)
 
 
-@app.task
+@shared_task
 def bulk_create_measures(measures_bulk_creator_pk: int) -> None:
     """Bulk create measures from serialized measures form data saved within an
     instance of MeasuresBulkCreator."""

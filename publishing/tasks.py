@@ -3,6 +3,7 @@ import time
 from contextlib import contextmanager
 
 import requests
+from celery import shared_task
 from django.conf import settings
 from django.core.cache import cache
 
@@ -11,7 +12,7 @@ from common.celery import app
 logger = logging.getLogger(__name__)
 
 
-@app.task
+@shared_task
 def create_xml_envelope_file(
     packaged_work_basket_id: int,
     notify_when_done: bool = True,

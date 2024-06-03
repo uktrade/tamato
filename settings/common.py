@@ -11,12 +11,9 @@ from os.path import join
 from pathlib import Path
 
 import dj_database_url
-
+from celery.schedules import crontab
 from dbt_copilot_python.database import database_url_from_env
 from dbt_copilot_python.network import setup_allowed_hosts
-from dbt_copilot_python.utility import is_copilot
-
-from celery.schedules import crontab
 from dbt_copilot_python.utility import is_copilot
 from django.urls import reverse_lazy
 from django_log_formatter_asim import ASIMFormatter
@@ -27,7 +24,7 @@ from common.util import is_truthy
 ENV = os.environ.get("ENV", "dev")
 
 # Global variables
-SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
+SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "False"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
 VCAP_APPLICATION = json.loads(os.environ.get("VCAP_APPLICATION", "{}"))
 
@@ -328,7 +325,7 @@ if MAINTENANCE_MODE:
 # DBT PaaS
 elif is_copilot():
     DB_URL = dj_database_url.config(
-        default=database_url_from_env("DATABASE_CREDENTIALS")
+        default=database_url_from_env("DATABASE_CREDENTIALS"),
     )
     DATABASES = {"default": DB_URL}
 # Govuk PaaS
@@ -595,7 +592,8 @@ elif VCAP_SERVICES.get("redis"):
             break
 else:
     CELERY_BROKER_URL = os.environ.get(
-        "CELERY_BROKER_URL", CACHES["default"]["LOCATION"]
+        "CELERY_BROKER_URL",
+        CACHES["default"]["LOCATION"],
     )
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
