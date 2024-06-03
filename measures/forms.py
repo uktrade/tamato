@@ -1322,8 +1322,6 @@ class MeasureGeographicalAreaForm(
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
 
-        print(initial)
-
         group_initial = self.data.get(f"{self.prefix}-geographical_area_group", "")
 
         react_initial = {
