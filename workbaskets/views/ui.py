@@ -6,6 +6,7 @@ from typing import Tuple
 from urllib.parse import urlencode
 
 import boto3
+import django_filters
 from botocore.client import Config
 from celery.result import AsyncResult
 from django.conf import settings
@@ -31,6 +32,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
+from django_filters import FilterSet
 from markdownify import markdownify
 
 from additional_codes.models import AdditionalCode
@@ -61,6 +63,7 @@ from quotas.models import QuotaSuspension
 from regulations.models import Regulation
 from tasks.models import Comment
 from tasks.models import Task
+from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
@@ -88,6 +91,43 @@ class WorkBasketFilter(TamatoFilter):
     class Meta:
         model = WorkBasket
         fields = ["search", "status"]
+
+
+class WorkBasketAssignmentFilter(FilterSet):
+    """Filter a workbasket queryset based on different assignment
+    possibilities."""
+
+    def assignment_filter(self, queryset, name, value):
+        active_workers = (
+            UserAssignment.objects.workbasket_workers()
+            .assigned()
+            .values_list("task__workbasket_id")
+        )
+        active_reviewers = (
+            UserAssignment.objects.workbasket_reviewers()
+            .assigned()
+            .values_list("task__workbasket_id")
+        )
+        if value == "Full":
+            return queryset.filter(
+                Q(id__in=active_workers) & Q(id__in=active_reviewers),
+            )
+        elif value == "Reviewer":
+            return queryset.filter(id__in=active_reviewers)
+        elif value == "Worker":
+            return queryset.filter(id__in=active_workers)
+        elif value == "Awaiting":
+            return queryset.filter(
+                ~Q(id__in=active_workers) & ~Q(id__in=active_reviewers),
+            )
+        else:
+            return queryset
+
+    assignment = django_filters.CharFilter(method="assignment_filter")
+
+    class Meta:
+        model = WorkBasket
+        fields = ["assignment"]
 
 
 class WorkBasketConfirmCreate(DetailView):
@@ -146,7 +186,7 @@ class WorkBasketConfirmUpdate(DetailView):
 class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
     """UI endpoint for viewing and filtering workbaskets."""
 
-    filterset_class = WorkBasketFilter
+    filterset_class = WorkBasketAssignmentFilter
     template_name = "workbaskets/select-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
 
