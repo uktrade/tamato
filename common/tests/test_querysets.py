@@ -73,6 +73,7 @@ def test_published_transaction_queryset():
     Transactions that are approved and associated with a workbasket that has
     been published."""
 
+    errored_workbasket = factories.ErroredWorkBasketFactory()
     editing_workbasket = factories.EditingWorkBasketFactory()
     queued_workbasket = factories.QueuedWorkBasketFactory()
     published_workbasket = factories.PublishedWorkBasketFactory()
@@ -84,14 +85,20 @@ def test_published_transaction_queryset():
     assert set(published_tranx_ids) == set(
         published_workbasket.transactions.values_list("id", flat=True),
     )
+
     assert not (
         set(published_tranx_ids).intersection(
-            set(queued_workbasket.transactions.values_list("id", flat=True)),
+            set(errored_workbasket.transactions.values_list("id", flat=True)),
         )
     )
     assert not (
         set(published_tranx_ids).intersection(
             set(editing_workbasket.transactions.values_list("id", flat=True)),
+        )
+    )
+    assert not (
+        set(published_tranx_ids).intersection(
+            set(queued_workbasket.transactions.values_list("id", flat=True)),
         )
     )
 
@@ -101,6 +108,10 @@ def test_published_trackedmodels_queryset():
     TrackedModels that are associated with approved transactions and also
     associated with a workbasket that has been published."""
 
+    errored_workbasket = factories.ErroredWorkBasketFactory()
+    factories.TestModel1Factory(
+        transaction=errored_workbasket.transactions.first(),
+    )
     editing_workbasket = factories.EditingWorkBasketFactory()
     factories.TestModel1Factory(
         transaction=editing_workbasket.transactions.first(),
@@ -121,13 +132,19 @@ def test_published_trackedmodels_queryset():
     assert set(published_models_ids) == set(
         published_workbasket.tracked_models.values_list("id", flat=True),
     )
+
     assert not (
         set(published_models_ids).intersection(
-            set(queued_workbasket.tracked_models.values_list("id", flat=True)),
+            set(errored_workbasket.tracked_models.values_list("id", flat=True)),
         )
     )
     assert not (
         set(published_models_ids).intersection(
             set(editing_workbasket.tracked_models.values_list("id", flat=True)),
+        )
+    )
+    assert not (
+        set(published_models_ids).intersection(
+            set(queued_workbasket.tracked_models.values_list("id", flat=True)),
         )
     )

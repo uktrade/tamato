@@ -141,6 +141,17 @@ class EditingWorkBasketFactory(WorkBasketFactory):
     )
 
 
+class ErroredWorkBasketFactory(WorkBasketFactory):
+    class Meta:
+        model = "workbaskets.WorkBasket"
+
+    status = WorkflowStatus.ERRORED
+    transaction = factory.RelatedFactory(
+        "common.tests.factories.UnapprovedTransactionFactory",
+        factory_related_name="workbasket",
+    )
+
+
 class QueuedWorkBasketFactory(WorkBasketFactory):
     class Meta:
         model = "workbaskets.WorkBasket"
