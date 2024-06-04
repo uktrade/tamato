@@ -109,8 +109,8 @@ class Plan:
             queryset, output_column = add_column_to_queryset(column, queryset)
             output_columns.append(output_column)
 
-        if hasattr(queryset, "has_approved_state"):
-            queryset = queryset.has_approved_state()
+        if hasattr(queryset, "published"):
+            queryset = queryset.published()
 
         queryset = queryset.values_list(*output_columns).iterator()
         operation = (

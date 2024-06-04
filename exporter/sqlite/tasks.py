@@ -15,7 +15,7 @@ def get_output_filename():
 
     If no revisions are present the filename is prefixed with seed_.
     """
-    tx = Transaction.objects.approved().last()
+    tx = Transaction.objects.published().last()
     order = tx.order if tx else 0
     if tx.partition == TransactionPartition.REVISION:
         return f"{order:0>9}.db"
