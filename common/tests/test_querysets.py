@@ -1,5 +1,6 @@
 import pytest
 
+from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from common.models.utils import override_current_transaction
@@ -91,5 +92,42 @@ def test_published_transaction_queryset():
     assert not (
         set(published_tranx_ids).intersection(
             set(editing_workbasket.transactions.values_list("id", flat=True)),
+        )
+    )
+
+
+def test_published_trackedmodels_queryset():
+    """Test that the TrackedModelQuerySet.published() custom filter only returns
+    TrackedModels that are associated with approved transactions and also
+    associated with a workbasket that has been published."""
+
+    editing_workbasket = factories.EditingWorkBasketFactory()
+    factories.TestModel1Factory(
+        transaction=editing_workbasket.transactions.first(),
+    )
+    queued_workbasket = factories.QueuedWorkBasketFactory()
+    factories.TestModel1Factory(
+        transaction=queued_workbasket.transactions.first(),
+    )
+    published_workbasket = factories.PublishedWorkBasketFactory()
+    factories.TestModel1Factory(
+        transaction=published_workbasket.transactions.first(),
+    )
+
+    published_models = TrackedModel.objects.published()
+    published_models_ids = published_models.values_list("id", flat=True)
+
+    assert published_models.count() == published_workbasket.tracked_models.count()
+    assert set(published_models_ids) == set(
+        published_workbasket.tracked_models.values_list("id", flat=True),
+    )
+    assert not (
+        set(published_models_ids).intersection(
+            set(queued_workbasket.tracked_models.values_list("id", flat=True)),
+        )
+    )
+    assert not (
+        set(published_models_ids).intersection(
+            set(editing_workbasket.tracked_models.values_list("id", flat=True)),
         )
     )
