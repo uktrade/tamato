@@ -437,6 +437,10 @@ class AppInfoView(
                 if last_transaction
                 else "No transactions"
             )
+            last_published_tranx = Transaction.objects.published().last()
+            data["LAST_PUBLISHED_TRANSACTION_ORDER"] = (
+                last_published_tranx.order if last_published_tranx else 0
+            )
 
         return data
 
