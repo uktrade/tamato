@@ -148,8 +148,18 @@ class TrackedModelQuerySet(
         """
         return self.exclude(version_group=version_group)
 
+    def published(self):
+        """Return a queryset of TrackedModels that are associated with approved
+        Transactions and Workbaskets whose status is PUBLISHED."""
+        from workbaskets.validators import WorkflowStatus
+
+        return self.has_approved_state().filter(
+            transaction__workbasket__status=WorkflowStatus.PUBLISHED,
+        )
+
     def has_approved_state(self):
-        """Get objects which have been approved/sent-to-cds/published."""
+        """Get objects which have been approved, though not necessarily
+        "published" - see `published()` filter."""
         return self.filter(self.approved_query_filter())
 
     def annotate_record_codes(self) -> TrackedModelQuerySet:
