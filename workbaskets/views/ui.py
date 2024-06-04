@@ -7,10 +7,12 @@ from urllib.parse import urlencode
 
 import boto3
 import django_filters
+import kombu
 from botocore.client import Config
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import PermissionDenied
@@ -39,6 +41,7 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
+from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
 from common.util import format_date_string
@@ -1722,3 +1725,25 @@ class WorkBasketCommentDelete(
     form_class = forms.WorkBasketCommentDeleteForm
     template_name = "workbaskets/comments/delete.jinja"
     permission_required = ["tasks.delete_comment"]
+
+
+class RuleViolationsQueueView(
+    LoginRequiredMixin,
+    TemplateView,
+):
+    template_name = "workbaskets/rule_violations_queue.jinja"
+    TapTasks = TAPTasks()
+    TASK_NAME = "workbaskets.tasks.call_check_workbasket_sync"
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        try:
+            data["celery_healthy"] = True
+            current_rule_checks = self.TapTasks.current_rule_checks(
+                task_name=self.TASK_NAME,
+            )
+            data["current_rule_checks"] = current_rule_checks
+        except kombu.exceptions.OperationalError as oe:
+            data["celery_healthy"] = False
+
+        return data
