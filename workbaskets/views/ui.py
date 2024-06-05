@@ -1736,14 +1736,34 @@ class RuleViolationsQueueView(
     TASK_NAME = "workbaskets.tasks.call_check_workbasket_sync"
 
     def get_context_data(self, **kwargs):
-        data = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         try:
-            data["celery_healthy"] = True
+            context["celery_healthy"] = True
             current_rule_checks = self.TapTasks.current_rule_checks(
                 task_name=self.TASK_NAME,
             )
-            data["current_rule_checks"] = current_rule_checks
+            context["current_rule_checks"] = current_rule_checks
         except kombu.exceptions.OperationalError as oe:
-            data["celery_healthy"] = False
+            context["celery_healthy"] = False
+        context["status_tag_generator"] = self.status_tag_generator
+        return context
 
-        return data
+    def status_tag_generator(self, task_status) -> dict:
+        """Returns a dict with text and a CSS class for a UI-friendly label for
+        a rule check task."""
+
+        if task_status == "Active":
+            return {
+                "text": "Running",
+                "tag_class": "tamato-badge-light-green",
+            }
+        elif task_status == "Queued":
+            return {
+                "text": "Queued",
+                "tag_class": "tamato-badge-light-blue",
+            }
+        else:
+            return {
+                "text": task_status,
+                "tag_class": "",
+            }

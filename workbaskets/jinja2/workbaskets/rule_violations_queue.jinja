@@ -4,6 +4,12 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/button/macro.njk" import govukButton %}
 
+{% macro status_tag(task_status) %}
+    <span class="{{ status_tag_generator(task_status).tag_class }}">
+            {{ status_tag_generator(task_status).text | upper }}
+        </span>
+{% endmacro %}
+
 {% set list_include = "includes/measures/create-task-list.jinja"%}
 
 {% set page_title = "Rule violations queue" %}
@@ -26,7 +32,7 @@
   {% set table_head = [
         {"text": "Workbasket ID"},
         {"text": "Checks completed"},
-        {"text": "Submitted date"},
+        {"text": "Time started"},
         {"text": "Celery task ID"},
         {"text": "Status"},
       ] %}
@@ -39,13 +45,15 @@
                 {"text": task.checks_completed},
                 {"text": task.date_time_start},
                 {"text": task.task_id},
-                {"text": task.status},
+                {"html": status_tag(task.status)},
             ]) or "" }}
 {% endfor %}
+  <div class="govuk-grid-column-full">
 
   {{ govukTable({
           "head": table_head,
           "rows": table_rows
       }) }}
+</div>
 </div>
 {% endblock %}
