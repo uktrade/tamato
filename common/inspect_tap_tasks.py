@@ -32,7 +32,9 @@ class TAPTasks:
 
         tasks = active_tasks.values()
         # Cleaning out celery workers? with no current tasks
-        tasks_cleaned = [item for item in tasks if len(item) != 0][0]
+        tasks_cleaned = [item for item in tasks if len(item) != 0]
+        # If there is an item then take it otherwise leave the list blank
+        tasks_cleaned = tasks_cleaned[0] if len(tasks_cleaned) > 0 else tasks_cleaned
 
         if task_name:
             filtered_active_tasks = [
@@ -55,7 +57,9 @@ class TAPTasks:
 
         tasks = queued_tasks.values()
         # Cleaning out celery workers? with no current tasks
-        tasks_cleaned = [item for item in tasks if len(item) != 0][0]
+        tasks_cleaned = [item for item in tasks if len(item) != 0]
+        # If there is an item then take it otherwise leave the list blank
+        tasks_cleaned = tasks_cleaned[0] if len(tasks_cleaned) > 0 else tasks_cleaned
 
         if task_name:
             filtered_active_tasks = [

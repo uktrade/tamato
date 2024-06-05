@@ -1746,6 +1746,7 @@ class RuleViolationsQueueView(
         except kombu.exceptions.OperationalError as oe:
             context["celery_healthy"] = False
         context["status_tag_generator"] = self.status_tag_generator
+        context["selected_tab"] = "rule-check-queue"
         return context
 
     def status_tag_generator(self, task_status) -> dict:

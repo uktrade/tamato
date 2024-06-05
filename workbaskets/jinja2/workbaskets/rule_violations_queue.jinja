@@ -1,4 +1,4 @@
-{% extends "layouts/layout.jinja" %}
+{% extends "common/celery_queues.jinja" %}
 
 {% from "macros/inline_filter_links.jinja" import inline_filter_links %}
 {% from "components/table/macro.njk" import govukTable %}
@@ -10,6 +10,9 @@
         </span>
 {% endmacro %}
 
+{% macro workbasket_link(workbasket_id) %}
+    <a href="{{ url("workbaskets:workbasket-ui-detail", args=[workbasket_id]) }}"> {{ workbasket_id }} </a>
+{% endmacro %}
 {% set list_include = "includes/measures/create-task-list.jinja"%}
 
 {% set page_title = "Rule violations queue" %}
@@ -22,13 +25,22 @@
   ) }}
 {% endblock %}
 
-{% block content %}
+{% block tab_content %}
 <div class="govuk-grid-row">
 
   <div class="govuk-grid-column-full">
     <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+        {{ govukButton({
+            "html": refresh_button_content,
+            "href": url("workbaskets:rule-violations-queue"),
+            "classes": "govuk-button--primary align-right govuk-!-margin-bottom-0 refresh-button",
+      }) }}
   </div>
 
+ <div class="govuk-grid-column-full">
+
+{% if current_rule_checks %}
   {% set table_head = [
         {"text": "Workbasket ID"},
         {"text": "Checks completed"},
@@ -41,19 +53,23 @@
 
 {% for task in current_rule_checks %}
 {{ table_rows.append([
-                {"text": task.workbasket_id},
+                {"text": workbasket_link(task.workbasket_id)},
                 {"text": task.checks_completed},
                 {"text": task.date_time_start},
                 {"text": task.task_id},
                 {"html": status_tag(task.status)},
             ]) or "" }}
 {% endfor %}
-  <div class="govuk-grid-column-full">
+
 
   {{ govukTable({
           "head": table_head,
           "rows": table_rows
       }) }}
+
+    {% else %}
+    <p class="govuk-body">There are currently no rule checks running or queued.</p>
+    {% endif %}
 </div>
 </div>
 {% endblock %}

@@ -1,0 +1,34 @@
+{% extends "layouts/layout.jinja" %}
+{% from "macros/fake_tabs.jinja" import fake_tabs %}
+
+{% block breadcrumb %}
+{% endblock %}
+
+{% set links = [
+    {
+      "text": "Measure process queue",
+      "href": url('measure-create-process-queue'),
+      "selected": selected_tab == "measure-process-queue"
+    },
+    {
+      "text": "Rule violations queue",
+      "href": url('workbaskets:rule-violations-queue'),
+      "selected": selected_tab == "rule-check-queue",
+    }
+  ]
+%}
+
+{% set refresh_button_content -%}
+  Refresh
+  <img
+    src="{{ static('common/images/mdi_refresh.svg') }}"
+    alt="refresh filter results"
+  >
+{%- endset %}
+
+{% block content %}
+  {{ fake_tabs(links) }}
+  <div class="govuk-tabs__panel">
+    {% block tab_content %}{% endblock %}
+  </div>
+{% endblock %}
