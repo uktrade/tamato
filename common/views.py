@@ -95,6 +95,7 @@ class HomeView(LoginRequiredMixin, FormView):
             assigned_workbaskets.append(
                 {
                     "id": workbasket.id,
+                    "title": workbasket.title,
                     "rule_violations_count": rule_violations_count,
                     "assignment_type": assignment_type,
                 },
