@@ -136,7 +136,10 @@ function setupGeoAreaField() {
 GeoAreaField.propTypes = {
   initial: PropTypes.shape({
     geoAreaType: PropTypes.string,
-    geographicalAreaGroup: PropTypes.number,
+    geographicalAreaGroup: PropTypes.oneOfType([
+      PropTypes.oneOf([""]),
+      PropTypes.number,
+    ]),
     ergaOmnesExclusions: PropTypes.arrayOf(PropTypes.number),
     geoGroupExclusions: PropTypes.arrayOf(PropTypes.number),
     countryRegions: PropTypes.arrayOf(PropTypes.number),
