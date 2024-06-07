@@ -160,36 +160,35 @@ describe("GeoAreaField", () => {
     ).not.toBeInTheDocument();
   });
 
-  // it("should update the exclusions options list when a group is selected", () => {
-  //   const mockInitial = {
-  //     geoAreaType: "GROUP",
-  //     geographicalAreaGroup: "",
-  //     ergaOmnesExclusions: [],
-  //     geoGroupExclusions: [],
-  //     countryRegions: [],
-  //   };
+  it.skip("should update the exclusions options list when a group is selected", () => {
+    const mockInitial = {
+      geoAreaType: "GROUP",
+      geographicalAreaGroup: "",
+      ergaOmnesExclusions: [],
+      geoGroupExclusions: [],
+      countryRegions: [],
+    };
 
-  //   render(
-  //     <GeoAreaField
-  //       initial={mockInitial}
-  //       exclusionsOptions={mockExclusionsOptions}
-  //       groupsOptions={mockGroupsOptions}
-  //       countryRegionsOptions={mockCountryRegionsOptions}
-  //       groupsWithMembers={mockGroupsWithMembers}
-  //     />,
-  //   );
+    render(
+      <GeoAreaField
+        initial={mockInitial}
+        exclusionsOptions={mockExclusionsOptions}
+        groupsOptions={mockGroupsOptions}
+        countryRegionsOptions={mockCountryRegionsOptions}
+        groupsWithMembers={mockGroupsWithMembers}
+      />,
+    );
 
-  //   // group
-  //   fireEvent.click(screen.getAllByRole("combobox")[0]);
-  //   screen.getAllByRole("listbox");
-  //   fireEvent.click(screen.getByText("Channel Islands"));
-  //   // exclusions
-  //   fireEvent.click(screen.getAllByRole("combobox")[1]);
-  //   screen.getAllByRole("listbox");
-  //   fireEvent.click(screen.getByText("Jersey"));
+    // group
+    fireEvent.click(screen.getAllByRole("combobox")[0]);
+    fireEvent.click(screen.getByText("Channel Islands"));
+    // exclusions
+    fireEvent.click(screen.getAllByRole("combobox")[1]);
+    expect(screen.getAllByRole("listbox").length).toBe(2);
+    fireEvent.click(screen.getByText("Jersey"));
 
-  // clicking the element with "combobox" role doesn't show the list of options
-  // no idea what element has the click event handler for the select box
-  // not sure how we're supposed to test this
-  // });
+    // clicking the element with "combobox" role doesn't show the list of options
+    // no idea what element has the click event handler for the select box
+    // not sure how we're supposed to test this
+  });
 });
