@@ -112,6 +112,11 @@ class QuotaOrderNumber(TrackedModel, ValidityMixin):
 
         return sorted(descriptions)
 
+    def get_current_origins(self):
+        return QuotaOrderNumberOrigin.objects.filter(
+            order_number__sid=self.sid,
+        ).current()
+
     class Meta:
         verbose_name = "quota"
 
