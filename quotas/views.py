@@ -311,17 +311,13 @@ class QuotaUpdateMixin(
             .order_by("description")
         )
         kwargs["existing_origins"] = (
-            self.object.quotaordernumberorigin_set.current().with_latest_geo_area_description()
+            self.object.get_current_origins().with_latest_geo_area_description()
         )
         return kwargs
 
     def update_origins(self, instance, form_origins):
-        existing_origin_pks = {
-            o.pk
-            for o in models.QuotaOrderNumberOrigin.objects.current().filter(
-                order_number__sid=instance.sid,
-            )
-        }
+        existing_origin_pks = {origin.pk for origin in instance.get_current_origins()}
+
         if form_origins:
             submitted_origin_pks = {o["pk"] for o in form_origins}
             deleted_origin_pks = existing_origin_pks.difference(submitted_origin_pks)
