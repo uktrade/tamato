@@ -10,6 +10,9 @@ from reference_documents.views.preferential_quota_order_number_views import (
 from reference_documents.views.preferential_quota_order_number_views import (
     PreferentialQuotaOrderNumberEdit,
 )
+from reference_documents.views.preferential_quota_suspension_template_views import PreferentialQuotaSuspensionTemplateCreate, PreferentialQuotaSuspensionTemplateEdit, PreferentialQuotaSuspensionTemplateDelete
+from reference_documents.views.preferential_quota_suspension_views import PreferentialQuotaSuspensionDelete, PreferentialQuotaSuspensionEdit, PreferentialQuotaSuspensionCreate
+from reference_documents.views.preferential_quota_template_views import PreferentialQuotaTemplateDelete, PreferentialQuotaTemplateCreate, PreferentialQuotaTemplateEdit
 from reference_documents.views.preferential_quota_views import (
     PreferentialQuotaBulkCreate,
 )
@@ -21,7 +24,7 @@ from reference_documents.views.preferential_rate_views import PreferentialRateCr
 from reference_documents.views.preferential_rate_views import PreferentialRateDelete
 from reference_documents.views.preferential_rate_views import PreferentialRateEdit
 from reference_documents.views.reference_document_version_views import (
-    ReferenceDocumentVersionChangeStateToEditable,
+    ReferenceDocumentVersionChangeStateToEditable, ReferenceDocumentVersionAlignmentCheckQueued,
 )
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionChangeStateToInReview,
@@ -30,7 +33,7 @@ from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionChangeStateToPublished,
 )
 from reference_documents.views.reference_document_version_views import (
-    ReferenceDocumentVersionCheck,
+    ReferenceDocumentVersionAlignmentCheck,
 )
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionCheckResults,
@@ -171,8 +174,13 @@ urlpatterns = [
     ),
     path(
         "reference_document_versions/<pk>/alignment-reports/",
-        ReferenceDocumentVersionCheck.as_view(),
+        ReferenceDocumentVersionAlignmentCheck.as_view(),
         name="alignment-reports",
+    ),
+    path(
+        "reference_document_versions/<pk>/alignment-check-queued/",
+        ReferenceDocumentVersionAlignmentCheckQueued.as_view(),
+        name="alignment-check-queued",
     ),
     path(
         "reference_document_versions/<pk>/check-results/",
@@ -246,5 +254,53 @@ urlpatterns = [
         "reference_document_versions/<pk>/create_preferential_quota_order_number/",
         PreferentialQuotaOrderNumberCreate.as_view(),
         name="preferential_quota_order_number_create",
+    ),
+    # preferential quota templates
+    path(
+        "preferential_quota_templates/delete/<pk>/<version_pk>/",
+        PreferentialQuotaTemplateDelete.as_view(),
+        name="preferential-quota-template-delete",
+    ),
+    path(
+        "preferential_quota_templates/edit/<pk>/",
+        PreferentialQuotaTemplateEdit.as_view(),
+        name="preferential-quotas-template-edit",
+    ),
+    path(
+        "preferential_quota_order_numbers/<version_pk>/create_preferential_quota_template/",
+        PreferentialQuotaTemplateCreate.as_view(),
+        name="preferential-quotas-template-create",
+    ),
+    # preferential quota suspensions
+    path(
+        "preferential_quota_suspensions/delete/<pk>/<version_pk>/",
+        PreferentialQuotaSuspensionDelete.as_view(),
+        name="preferential-quota-suspension-delete",
+    ),
+    path(
+        "preferential_quota_suspensions/edit/<pk>/",
+        PreferentialQuotaSuspensionEdit.as_view(),
+        name="preferential-quotas-suspension-edit",
+    ),
+    path(
+        "preferential_quota_order_numbers/<version_pk>/create_preferential_quota_suspension/",
+        PreferentialQuotaSuspensionCreate.as_view(),
+        name="preferential-quotas-suspension-create",
+    ),
+    # preferential quota suspension templates
+    path(
+        "preferential_quota_suspension_templates/delete/<pk>/<version_pk>/",
+        PreferentialQuotaSuspensionTemplateDelete.as_view(),
+        name="preferential-quota-suspension-template-delete",
+    ),
+    path(
+        "preferential_quota_suspension_templates/edit/<pk>/",
+        PreferentialQuotaSuspensionTemplateEdit.as_view(),
+        name="preferential-quotas-suspension-template-edit",
+    ),
+    path(
+        "preferential_quota_suspension_templates/<version_pk>/create_preferential_quota_suspension_template/",
+        PreferentialQuotaSuspensionTemplateCreate.as_view(),
+        name="preferential-quotas-suspension-template-create",
     ),
 ]

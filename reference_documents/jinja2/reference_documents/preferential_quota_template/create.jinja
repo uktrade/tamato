@@ -1,0 +1,20 @@
+{% extends 'layouts/form.jinja' %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Create preferential quota template" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ reference_document_version.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":reference_document_version.reference_document.pk})},
+    {"text": "Version " ~ reference_document_version.version, "href": url("reference_documents:version-details", kwargs={"pk":reference_document_version.pk})},
+      {"text": page_title}]
+  }) }}
+{% endblock %}
+
+{% block form %}
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

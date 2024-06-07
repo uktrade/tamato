@@ -21,7 +21,7 @@ from reference_documents.models import ReferenceDocumentVersion
 
 class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/preferential_quotas/edit.jinja"
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.change_preferentialquota"
     model = PreferentialQuota
     form_class = PreferentialQuotaCreateUpdateForm
 
@@ -49,7 +49,7 @@ class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
 
 class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/preferential_quotas/create.jinja"
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.add_preferentialquota"
     model = PreferentialQuota
     form_class = PreferentialQuotaCreateUpdateForm
 
@@ -80,8 +80,6 @@ class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
         return context_data
 
     def form_valid(self, form):
-        form.instance.order = 1
-        form.save()
         return super(PreferentialQuotaCreate, self).form_valid(form)
 
     def get_success_url(self):
@@ -157,7 +155,7 @@ class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
 class PreferentialQuotaDelete(PermissionRequiredMixin, DeleteView):
     form_class = PreferentialQuotaDeleteForm
     template_name = "reference_documents/preferential_quotas/delete.jinja"
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.delete_preferentialquota"
     model = PreferentialQuota
 
     def get_success_url(self) -> str:

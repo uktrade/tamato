@@ -17,7 +17,7 @@ from reference_documents.models import ReferenceDocumentVersion
 
 class PreferentialQuotaOrderNumberEdit(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/preferential_quota_order_numbers/edit.jinja"
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.change_preferentialquotaordernumber"
     model = PreferentialQuotaOrderNumber
     form_class = PreferentialQuotaOrderNumberCreateUpdateForm
 
@@ -40,7 +40,7 @@ class PreferentialQuotaOrderNumberEdit(PermissionRequiredMixin, UpdateView):
 
 class PreferentialQuotaOrderNumberCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/preferential_quota_order_numbers/edit.jinja"
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.add_preferentialquotaordernumber"
     model = PreferentialQuotaOrderNumber
     form_class = PreferentialQuotaOrderNumberCreateUpdateForm
 
@@ -85,7 +85,7 @@ class PreferentialQuotaOrderNumberDelete(
 ):
     form_class = PreferentialQuotaOrderNumberDeleteForm
     template_name = "reference_documents/preferential_quota_order_numbers/delete.jinja"
-    permission_required = "reference_documents.edit_reference_document"
+    permission_required = "reference_documents.delete_preferentialquotaordernumber"
     model = PreferentialQuotaOrderNumber
 
     def get_success_url(self) -> str:

@@ -1,17 +1,26 @@
-from reference_documents.checks.base import BasePreferentialQuotaCheck
-from reference_documents.checks.base import BasePreferentialQuotaOrderNumberCheck
-from reference_documents.checks.base import BasePreferentialRateCheck
-from reference_documents.checks.preferential_quota_order_numbers import *  # noqa
-from reference_documents.checks.preferential_quotas import *  # noqa
-from reference_documents.checks.preferential_rates import *  # noqa
-from reference_documents.checks.utils import Utils
+import logging
+
+from reference_documents.check.base import BasePreferentialQuotaCheck
+from reference_documents.check.base import BasePreferentialQuotaOrderNumberCheck
+from reference_documents.check.base import BasePreferentialRateCheck
+
+# import additional checks
+from reference_documents.check.preferential_rates import MeasureExists  # noqa
+from reference_documents.check.preferential_quotas import PreferentialQuotaExists  # noqa
+from reference_documents.check.preferential_quota_order_numbers import OrderNumberExists  # noqa
+
+
+from reference_documents.check.utils import Utils
 from reference_documents.models import AlignmentReport
 from reference_documents.models import AlignmentReportCheck
 from reference_documents.models import ReferenceDocumentVersion
 
+logger = logging.getLogger(__name__)
+
 
 class Checks:
     def __init__(self, reference_document_version: ReferenceDocumentVersion):
+        self.logger = logger
         self.reference_document_version = reference_document_version
         self.alignment_report = AlignmentReport.objects.create(
             reference_document_version=self.reference_document_version,
@@ -22,11 +31,14 @@ class Checks:
         return Utils().get_child_checks(check_class)
 
     def run(self):
+        logger.info('starting alignment check run')
         for check in Checks.get_checks_for(BasePreferentialRateCheck):
+            logger.info(f'starting run: check {check.__class__.__name__}')
             for pref_rate in self.reference_document_version.preferential_rates.all():
                 self.capture_check_result(check(pref_rate), pref_rate=pref_rate)
 
         for check in Checks.get_checks_for(BasePreferentialQuotaOrderNumberCheck):
+            logger.info(f'starting run: check {check.__class__.__name__}')
             for (
                 pref_quota_order_number
             ) in self.reference_document_version.preferential_quota_order_numbers.all():
@@ -40,6 +52,7 @@ class Checks:
                             sub_check(pref_quota),
                             pref_quota=pref_quota,
                         )
+        logger.info('finished alignment check run')
 
     def capture_check_result(
         self,

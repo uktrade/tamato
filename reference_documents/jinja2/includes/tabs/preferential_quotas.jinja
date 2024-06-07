@@ -38,6 +38,10 @@
                            href="{{ url('reference_documents:preferential_quota_order_number_delete', args=[value['ref_doc_order_number'].id, value['ref_doc_order_number'].reference_document_version.id]) }}">Delete</a>
                     {% endif %}
 
+                    {% if request.user.has_perm("reference_documents.add_preferentialquotatemplate") %}
+                        <a class="order_number_link" href="{{ url('reference_documents:preferential-quotas-template-create', args=[object.pk]) }}">Add new quota template</a>
+                    {% endif %}
+
                     {% if request.user.has_perm("reference_documents.add_preferentialquota") %}
                         <a class="order_number_link" href="{{ url('reference_documents:preferential_quotas_create_for_order', args=[object.pk, value['ref_doc_order_number'].pk]) }}">Add quota to order number</a>
                     {% endif %}
@@ -46,16 +50,125 @@
                         <a class="order_number_link" href="{{ url('reference_documents:preferential_quotas_bulk_create_for_order', kwargs={"pk": object.pk, "order_pk": value['ref_doc_order_number'].pk}) }}">Bulk add
                             quotas</a>
                     {% endif %}
+
                 {% endif %}
             </div>
             {% if value['data_rows'] != [] %}
+                <h3 class="govuk-heading-m" id="subsection-title">Quota definitions</h3>
                 {{ govukTable({
                 "head": reference_document_version_quotas_headers,
                 "rows": value['data_rows']
                 }) }}
             {% else %}
                 <div class="govuk-body govuk-!-margin-bottom-2">
-                    No quota definitions defined
+                    <i>No quota definitions defined</i>
+                </div>
+            {% endif %}
+
+            {% if value['suspension_data_rows'] != [] %}
+                <h3 class="govuk-heading-m" id="subsection-title">Quota suspensions</h3>
+                {{ govukTable({
+                "head": reference_document_version_suspension_headers,
+                "rows": value['suspension_data_rows']
+                }) }}
+            {% else %}
+                <div class="govuk-body govuk-!-margin-bottom-2">
+                    <i>No quota suspensions defined</i>
+                </div>
+            {% endif %}
+
+            {% if value['templated_data'].keys() %}
+                <h3 class="govuk-heading-m" id="subsection-title">Templated quota definitions</h3>
+                {% for k, v in value['templated_data'].items() %}
+                    {% for item in v %}
+                        <div class="govuk-body govuk-!-margin-bottom-2">
+                            Duty Rate: {{ item['preferential_quota_template'].quota_duty_rate }}<br>
+                            First years volume : {{ item['preferential_quota_template'].initial_volume }} <br>
+                            Incremental yearly change there after : {{ item['preferential_quota_template'].yearly_volume_increment }} <br>
+                            Incremental yearly change text : {{ item['preferential_quota_template'].yearly_volume_increment_text }} <br>
+                            Yearly period :
+                            from {{ item['preferential_quota_template'].start_day }}-{{ item['preferential_quota_template'].start_month }}-20XX to
+                            {{ item['preferential_quota_template'].end_day }}-{{ item['preferential_quota_template'].end_month }}-20XX<br>
+                            Yearly range : from {{ item['preferential_quota_template'].start_year }}
+                            {% if item['preferential_quota_template'].end_year %}
+                                to {{ item['preferential_quota_template'].end_year }} <br>
+                            {% else %}
+                                onwards (no end year)<br>
+                            {% endif %}
+
+                        </div>
+                        <div class="govuk-body govuk-!-margin-bottom-2">
+                            <i>Note: For templated quota definitions that extend longer than three years in the future only the next three years will be displayed.</i>
+                        </div>
+                        <div class="govuk-body govuk-!-margin-bottom-2">
+                            {% if object.editable() %}
+                                {% if request.user.has_perm("reference_documents.change_preferentialquotatemplate") %}
+                                    <a class="order_number_link" href="{{ url('reference_documents:preferential-quotas-template-edit', args=[item['preferential_quota_template'].id]) }}">Edit</a>
+                                {% endif %}
+
+                                {% if request.user.has_perm("reference_documents.delete_preferentialquotatemplate") %}
+                                    <a class="order_number_link"
+                                       href="{{ url('reference_documents:preferential-quota-template-delete', args=[item['preferential_quota_template'].id, value['ref_doc_order_number'].reference_document_version.id]) }}">Delete</a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        {{ govukTable({
+                        "head": reference_document_version_quotas_headers,
+                        "rows": item['data_rows']
+                    }) }}
+
+
+                    {% endfor %}
+                {% endfor %}
+            {% else %}
+                <div class="govuk-body govuk-!-margin-bottom-2">
+                    <i>No templated quota suspensions defined</i>
+                </div>
+            {% endif %}
+
+            {% if value['templated_suspension_data'].keys() %}
+                <h3 class="govuk-heading-m" id="subsection-title">Templated quota suspensions</h3>
+                {% for k, v in value['templated_data'].items() %}
+                    {% for item in v %}
+                        <div class="govuk-body govuk-!-margin-bottom-2">
+                            Yearly period :
+                            from {{ item['preferential_quota_template'].start_day }}-{{ item['preferential_quota_template'].start_month }}-20XX to
+                            {{ item['preferential_quota_template'].end_day }}-{{ item['preferential_quota_template'].end_month }}-20XX<br>
+                            Yearly range : from {{ item['preferential_quota_template'].start_year }}
+                            {% if item['preferential_quota_template'].end_year %}
+                                to {{ item['preferential_quota_template'].end_year }} <br>
+                            {% else %}
+                                onwards (no end year)<br>
+                            {% endif %}
+
+                        </div>
+                        <div class="govuk-body govuk-!-margin-bottom-2">
+                            <i>Note: For templated quota suspensions that extend longer than three years in the future only the next three years will be displayed.</i>
+                        </div>
+                        <div class="govuk-body govuk-!-margin-bottom-2">
+                            {% if object.editable() %}
+                                {% if request.user.has_perm("reference_documents.change_preferentialquotatemplate") %}
+                                    <a class="order_number_link" href="{{ url('reference_documents:preferential-quotas-template-edit', args=[item['preferential_quota_template'].id]) }}">Edit</a>
+                                {% endif %}
+
+                                {% if request.user.has_perm("reference_documents.delete_preferentialquotatemplate") %}
+                                    <a class="order_number_link"
+                                       href="{{ url('reference_documents:preferential-quota-template-delete', args=[item['preferential_quota_template'].id, value['ref_doc_order_number'].reference_document_version.id]) }}">Delete</a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        {{ govukTable({
+                        "head": reference_document_version_quotas_headers,
+                        "rows": item['data_rows']
+                    }) }}
+
+
+                    {% endfor %}
+                {% endfor %}
+
+            {% else %}
+                <div class="govuk-body govuk-!-margin-bottom-2">
+                    <i>No templated quota suspensions defined</i>
                 </div>
             {% endif %}
         {% endfor %}
@@ -70,13 +183,24 @@
                         <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quota_order_number_create', args=[object.pk]) }}">Add new order number</a></li>
                     {% endif %}
 
+                    {% if request.user.has_perm("reference_documents.add_preferentialquotatemplate") %}
+                        <li><a class="govuk-link" href="{{ url('reference_documents:preferential-quotas-template-create', args=[object.pk]) }}">Add new quota template</a></li>
+                    {% endif %}
+
+                    {% if request.user.has_perm("reference_documents.add_preferentialquotasuspension") %}
+                        <li><a class="govuk-link" href="{{ url('reference_documents:preferential-quotas-suspension-create', args=[object.pk]) }}">Add new quota suspension</a></li>
+                    {% endif %}
+
+                    {% if request.user.has_perm("reference_documents.add_preferentialquotasuspensiontemplate") %}
+                        <li><a class="govuk-link" href="{{ url('reference_documents:preferential-quotas-suspension-template-create', args=[object.pk]) }}">Add new quota suspension template</a></li>
+                    {% endif %}
+
                     {% if request.user.has_perm("reference_documents.add_preferentialquota") %}
                         <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quotas_create', args=[object.pk]) }}">Add new quota</a></li>
                         <li><a class="govuk-link" href="{{ url('reference_documents:preferential_quotas_bulk_create', args=[object.pk]) }}">Bulk add quotas</a></li>
                     {% endif %}
                 {% endif %}
             </ul>
-
         </div>
     </div>
 </div>

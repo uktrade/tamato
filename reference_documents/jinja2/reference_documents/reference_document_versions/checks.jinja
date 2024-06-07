@@ -6,7 +6,7 @@
 {% set page_title = "Reference document " ~ object.reference_document.area_id ~ " version " ~ object.version ~ " check" %}
 
 {% block breadcrumb %}
-  {{ govukBreadcrumbs({
+    {{ govukBreadcrumbs({
     "items": [{"text": "Home", "href": url("home")},
     {"text": "View reference documents", "href": url("reference_documents:index")},
     {"text": "Reference document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
@@ -18,20 +18,26 @@
 
 {% block content %}
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
-<h2 class="govuk-heading-m">Run check against TAP data</h2>
-<p class=govuk-body>Run a check to see how this reference document's data compares to the data held in TAP. Any discrepancies will be flagged.</p>
-<a href="#" class="govuk-button govuk-button--primary">
-            Run check
-</a>
-<p class="govuk-body govuk-!-font-weight-bold" style="float:right">
-    {% if last_run %}
-      Last Run: ({{ last_run }})
+    {% if request.user.has_perm("reference_documents.add_alignmentreportcheck") %}
+        <h2 class="govuk-heading-m">Run check against TAP data</h2>
+        <p class=govuk-body>Run a check to see how this reference document's data compares to the data held in TAP. Any discrepancies will be flagged.</p>
+        <form method="post" action="{{ url("reference_documents:alignment-reports", kwargs={"pk":object.pk}) }}">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <input class="govuk-button govuk-button--primary" type="submit" value="Run new check"/>
+        </form>
     {% else %}
-      Never Ran
+        <h2 class="govuk-heading-m">You do not have permission to run checks against TAP data</h2>
+        <p class=govuk-body>If you believe you should have permission to run this check, please contact someone on the TAP team for support.</p>
     {% endif %}
+    <p class="govuk-body govuk-!-font-weight-bold" style="float:right">
+        {% if last_run %}
+            Last Run: ({{ last_run }})
+        {% else %}
+            Never Ran
+        {% endif %}
     </p>
-<h2 class="govuk-heading-m">Latest check results</h2>
-{% set table_rows = [
+    <h2 class="govuk-heading-m">Latest check results</h2>
+    {% set table_rows = [
     [
         {"text": "Preferential rates"},
         {"text": object.preferential_rates.count() },
@@ -52,7 +58,7 @@
         {"text": "%"}
         ]] %}
 
-{{ govukTable({
+    {{ govukTable({
     "firstCellIsHeader": true,
     "head": [
         {"text": "Object"},
@@ -63,9 +69,9 @@
     "rows": table_rows
 }) }}
 
-<p class=govuk-body>View results in further detail to see discrepancies.</p>
-<a href="{{ url('reference_documents:version-check-results', kwargs={"pk": object.pk}) }}" class="govuk-button govuk-button--secondary">
-            View results
-</a>
+    <p class=govuk-body>View results in further detail to see discrepancies.</p>
+    <a href="{{ url('reference_documents:version-check-results', kwargs={"pk": object.pk}) }}" class="govuk-button govuk-button--secondary">
+        View results
+    </a>
 
 {% endblock %}
