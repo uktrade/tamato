@@ -21,8 +21,7 @@ function CountryRegionForm({
             options={countryRegionsOptions}
             defaultValue={countryRegionsInitial}
             isMulti={true}
-            max={2}
-            name={`${fieldsPrefix}-countries`}
+            name={`${fieldsPrefix}-country_region`}
             id="country_region_select"
           />
         </div>
