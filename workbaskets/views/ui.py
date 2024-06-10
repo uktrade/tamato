@@ -1732,16 +1732,14 @@ class RuleViolationsQueueView(
     TemplateView,
 ):
     template_name = "workbaskets/rule_violations_queue.jinja"
-    TapTasks = TAPTasks()
     TASK_NAME = "workbaskets.tasks.call_check_workbasket_sync"
+    TapTasks = TAPTasks(task_name=TASK_NAME)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         try:
             context["celery_healthy"] = True
-            current_rule_checks = self.TapTasks.current_rule_checks(
-                task_name=self.TASK_NAME,
-            )
+            current_rule_checks = self.TapTasks.current_rule_checks()
             context["current_rule_checks"] = current_rule_checks
         except kombu.exceptions.OperationalError as oe:
             context["celery_healthy"] = False

@@ -12,6 +12,9 @@ from workbaskets.models import WorkBasket
 class TAPTasks:
     """Get and filter Celery tasks on TAP's Celery queues."""
 
+    def __init__(self, task_name=None):
+        self.task_name = task_name
+
     @staticmethod
     def timestamp_to_datetime_string(timestamp) -> datetime:
         """Utility function used to convert a timestamp to a string formatted
@@ -20,7 +23,7 @@ class TAPTasks:
             datetime.fromtimestamp(timestamp),
         ).strftime(settings.DATETIME_FORMAT)
 
-    def clean_tasks(self, tasks_info, task_name=None, task_status="") -> List[Dict]:
+    def clean_tasks(self, tasks_info, task_status="") -> List[Dict]:
         """Return a list of dictionaries, each describing Celery task,
         adding the given status """
         if not tasks_info:
@@ -28,8 +31,6 @@ class TAPTasks:
 
         tasks = tasks_info.values()
 
-        # Cleaning out celery workers? with no current tasks
-        tasks_cleaned = [item for item in tasks if len(item) != 0]
         # The task_info.values() has a strange structure:
         # it is a list of list of dictionaries, with several empty entries
         #  if the entry is not empty,  only the first element contains the required
@@ -39,24 +40,24 @@ class TAPTasks:
                 item[0]["status"]=task_status
                 tasks_cleaned.append(item[0])
 
-        if task_name:
+        if self.task_name:
             filtered_active_tasks = [
-                task for task in tasks_cleaned if task["name"] == task_name
+                task for task in tasks_cleaned if task["name"] == self.task_name
             ]
             return filtered_active_tasks
 
         return tasks_cleaned
 
-    def current_rule_checks(self, task_name=None) -> List[Dict]:
+    def current_rule_checks(self) -> List[Dict]:
         """ Return the list of tasks queued or started, ready to display in the view
         """
         inspect = app.control.inspect()
         if not inspect:
-            return {}
+            return []
 
         due_tasks = \
-            self.clean_tasks(inspect.active(), task_name=task_name, task_status = "Active") + \
-            self.clean_tasks(inspect.reserved(), task_name=task_name, task_status = "Queued")
+            self.clean_tasks(inspect.active(), task_status = "Active") + \
+            self.clean_tasks(inspect.reserved(), task_status = "Queued")
 
         results = []
 
