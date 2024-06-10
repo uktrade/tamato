@@ -24,8 +24,8 @@ class TAPTasks:
         ).strftime(settings.DATETIME_FORMAT)
 
     def clean_tasks(self, tasks_info, task_status="") -> List[Dict]:
-        """Return a list of dictionaries, each describing Celery task,
-        adding the given status """
+        """Return a list of dictionaries, each describing Celery task, adding
+        the given status."""
         if not tasks_info:
             return []
 
@@ -33,12 +33,12 @@ class TAPTasks:
 
         # The task_info.values() has a strange structure:
         # it is a list of list of dictionaries, with several empty entries
-        #  if the entry is not empty,  only the first element contains the required
         tasks_cleaned = []
-        for item in tasks:
-            if len(item)  and len(item[0]):
-                item[0]["status"]=task_status
-                tasks_cleaned.append(item[0])
+        for task in tasks:
+            for item in task:
+                if item:
+                    item["status"] = task_status
+                    tasks_cleaned.append(item)
 
         if self.task_name:
             filtered_active_tasks = [
@@ -49,15 +49,16 @@ class TAPTasks:
         return tasks_cleaned
 
     def current_rule_checks(self) -> List[Dict]:
-        """ Return the list of tasks queued or started, ready to display in the view
-        """
+        """Return the list of tasks queued or started, ready to display in the
+        view."""
         inspect = app.control.inspect()
         if not inspect:
             return []
 
-        due_tasks = \
-            self.clean_tasks(inspect.active(), task_status = "Active") + \
-            self.clean_tasks(inspect.reserved(), task_status = "Queued")
+        due_tasks = self.clean_tasks(
+            inspect.active(),
+            task_status="Active",
+        ) + self.clean_tasks(inspect.reserved(), task_status="Queued")
 
         results = []
 
