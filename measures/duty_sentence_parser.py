@@ -171,6 +171,40 @@ class DutySentenceParser:
             measurement_unit_qualifiers=measurement_unit_qualifiers,
         )
 
+    @property
+    def example_errors(self):
+        """Returns a mapping of example duty sentence syntax errors that may be
+        matched against the current parsing error to provide more user-friendly
+        error reporting."""
+        mapping = {
+            InvalidDutyExpression: [
+                "10% + Blah duty (reduced)",
+                "5.5% + ABCDE + Some other fake duty expression",
+                "10%&@#^&",
+                "ABC",
+                "@(*&$#)",
+            ],
+            DutyAmountRequired: [
+                "+",
+            ],
+            InvalidMonetaryUnit: [
+                "10% + 100 ABC / 100 kg",
+                "100 DEF",
+                "5.5% + 100 XYZ + AC (reduced)",
+            ],
+            InvalidMeasurementUnit: [
+                "10% + 100 GBP / 100 abc",
+                "100 GBP / foobar measurement",
+                "5.5% + 100 EUR / foobar",
+            ],
+            InvalidMeasurementUnitQualififer: [
+                "10% + 100 GBP / 100 kg / ABC",
+                "100 GBP / 100 kg / XYZ foo bar",
+                "5.5% + 100 EUR / % vol / foo bar",
+            ],
+        }
+        return mapping
+
     def parse(self, duty_sentence):
         try:
             return self.parser.parse(duty_sentence)
@@ -178,33 +212,7 @@ class DutySentenceParser:
         except UnexpectedInput as u:
             exc_class = u.match_examples(
                 self.parser.parse,
-                {
-                    InvalidDutyExpression: [
-                        "10% + Blah duty (reduced)",
-                        "5.5% + ABCDE + Some other fake duty expression",
-                        "10%&@#^&",
-                        "ABC",
-                        "@(*&$#)",
-                    ],
-                    DutyAmountRequired: [
-                        "+",
-                    ],
-                    InvalidMonetaryUnit: [
-                        "10% + 100 ABC / 100 kg",
-                        "100 DEF",
-                        "5.5% + 100 XYZ + AC (reduced)",
-                    ],
-                    InvalidMeasurementUnit: [
-                        "10% + 100 GBP / 100 abc",
-                        "100 GBP / foobar measurement",
-                        "5.5% + 100 EUR / foobar",
-                    ],
-                    InvalidMeasurementUnitQualififer: [
-                        "10% + 100 GBP / 100 kg / ABC",
-                        "100 GBP / 100 kg / XYZ foo bar",
-                        "5.5% + 100 EUR / % vol / foo bar",
-                    ],
-                },
+                self.example_errors,
                 use_accepts=True,
             )
             if not exc_class:
