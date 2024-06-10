@@ -229,6 +229,10 @@ class SeedFileTransactionFactory(TransactionFactory):
     seed = True
 
 
+class PublishedTransactionFactory(TransactionFactory):
+    published = True
+
+
 class ApprovedTransactionFactory(TransactionFactory):
     approved = True
 
