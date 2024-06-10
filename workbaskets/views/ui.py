@@ -1731,7 +1731,7 @@ class RuleViolationsQueueView(
     LoginRequiredMixin,
     TemplateView,
 ):
-    template_name = "workbaskets/rule_violations_queue.jinja"
+    template_name = "workbaskets/rule_check_queue.jinja"
     TASK_NAME = "workbaskets.tasks.call_check_workbasket_sync"
     TapTasks = TAPTasks(task_name=TASK_NAME)
 

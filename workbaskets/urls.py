@@ -142,9 +142,9 @@ ui_patterns = [
         name="no-active-workbasket",
     ),
     path(
-        f"rule-violations-queue/",
+        f"rule-check-queue/",
         ui_views.RuleViolationsQueueView.as_view(),
-        name="rule-violations-queue",
+        name="rule-check-queue",
     ),
     path(
         f"<pk>/",

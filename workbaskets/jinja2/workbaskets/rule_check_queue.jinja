@@ -15,7 +15,7 @@
 {% endmacro %}
 {% set list_include = "includes/measures/create-task-list.jinja"%}
 
-{% set page_title = "Rule violations queue" %}
+{% set page_title = "Rule check queue" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
@@ -33,7 +33,7 @@
 
         {{ govukButton({
             "html": refresh_button_content,
-            "href": url("workbaskets:rule-violations-queue"),
+            "href": url("workbaskets:rule-check-queue"),
             "classes": "govuk-button--primary align-right govuk-!-margin-bottom-0 refresh-button",
       }) }}
   </div>

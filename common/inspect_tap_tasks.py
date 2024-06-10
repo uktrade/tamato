@@ -31,14 +31,17 @@ class TAPTasks:
 
         tasks = tasks_info.values()
 
-        # The task_info.values() has a strange structure:
-        # it is a list of list of dictionaries, with several empty entries
+        # tasks_info should be a dictionary of {celery worker : [related tasks]}
+        # tasks_info.values() therefore is a list of lists of celery tasks grouped by worker
         tasks_cleaned = []
         for task in tasks:
             for item in task:
                 if item:
                     item["status"] = task_status
                     tasks_cleaned.append(item)
+
+        # As we cannot filter by worker name (in this case rule-check-worker), it filters by task name supplied when
+        # initialising the class
 
         if self.task_name:
             filtered_active_tasks = [
