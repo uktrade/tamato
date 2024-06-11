@@ -54,7 +54,6 @@ from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import MeasureEditSteps
 from measures.duty_sentence_parser import DutySentenceParser as LarkDutySentenceParser
 from measures.models import MeasureExcludedGeographicalArea
-from measures.parsers import DutySentenceParser
 from measures.util import diff_components
 from measures.validators import validate_components_applicability
 from measures.validators import validate_conditions_formset
@@ -331,20 +330,19 @@ class MeasureConditionsFormMixin(forms.ModelForm):
         We get the reference_price from cleaned_data and the measure_start_date
         from the form's initial data.
 
-        If both are present, we call validate_duties with measure_start_date.
-        Then, if reference_price is provided, we use DutySentenceParser with
-        measure_start_date, if present, or the current_date, to check that we
+        If reference_price is provided, we use LarkDutySentenceParser with
+        measure_start_date, if present, or the current date, to check that we
         are dealing with a simple duty (i.e. only one component). We then update
         cleaned_data with key-value pairs created from this single, unsaved
         component.
 
         Args:
-            cleaned_data the cleaned data submitted in the form,
-            measure_start_date the start date set for the measure,
-            is_negative_action_code is a boolean by default false and is used to
+            cleaned_data: the cleaned data submitted in the form,
+            measure_start_date: the start date set for the measure,
+            is_negative_action_code: a boolean by default false and is used to
             carry out different validation depending on the action code type
         Returns:
-            returns cleaned_data
+            cleaned_data
         """
         price = cleaned_data.get("reference_price")
         certificate = cleaned_data.get("required_certificate")
@@ -369,32 +367,25 @@ class MeasureConditionsFormMixin(forms.ModelForm):
                 ),
             )
 
-        price_errored = False
-        if price and measure_start_date is not None:
+        if price:
+            date = measure_start_date or datetime.datetime.now()
+            parser = LarkDutySentenceParser(full_grammar=False, date=date)
             try:
-                validate_duties(price, measure_start_date)
-            except ValidationError:
-                # invalid price's will not parse
-                price_errored = True
-                self.add_error(
-                    "reference_price",
-                    "Enter a valid reference price or quantity.",
+                components = parser.transform(price)
+                cleaned_data["duty_amount"] = components[0].get("duty_amount")
+                cleaned_data["monetary_unit"] = components[0].get("monetary_unit")
+                cleaned_data["condition_measurement"] = (
+                    models.Measurement.objects.as_at(date)
+                    .filter(
+                        measurement_unit=components[0].get("measurement_unit"),
+                        measurement_unit_qualifier=components[0].get(
+                            "measurement_unit_qualifier",
+                        ),
+                    )
+                    .first()
                 )
-
-        if price and not price_errored:
-            # TODO: add condition sentence parsing functionality to the new parser
-            parser = DutySentenceParser.create(measure_start_date)
-            components = parser.parse(price)
-            if len(components) > 1:
-                self.add_error(
-                    "reference_price",
-                    ValidationError(
-                        "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
-                    ),
-                )
-            cleaned_data["duty_amount"] = components[0].duty_amount
-            cleaned_data["monetary_unit"] = components[0].monetary_unit
-            cleaned_data["condition_measurement"] = components[0].component_measurement
+            except (SyntaxError, ValidationError) as error:
+                self.add_error("reference_price", error)
 
         # The JS autocomplete does not allow for clearing unnecessary certificates
         # In case of a user changing data, the information is cleared here.
