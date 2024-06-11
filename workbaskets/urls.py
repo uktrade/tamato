@@ -143,7 +143,7 @@ ui_patterns = [
     ),
     path(
         f"rule-check-queue/",
-        ui_views.RuleViolationsQueueView.as_view(),
+        ui_views.RuleCheckQueueView.as_view(),
         name="rule-check-queue",
     ),
     path(

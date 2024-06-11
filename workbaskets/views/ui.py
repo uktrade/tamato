@@ -1727,7 +1727,7 @@ class WorkBasketCommentDelete(
     permission_required = ["tasks.delete_comment"]
 
 
-class RuleViolationsQueueView(
+class RuleCheckQueueView(
     LoginRequiredMixin,
     TemplateView,
 ):
@@ -1741,9 +1741,9 @@ class RuleViolationsQueueView(
             context["celery_healthy"] = True
             current_rule_checks = self.TapTasks.current_rule_checks()
             context["current_rule_checks"] = current_rule_checks
+            context["status_tag_generator"] = self.status_tag_generator
         except kombu.exceptions.OperationalError as oe:
             context["celery_healthy"] = False
-        context["status_tag_generator"] = self.status_tag_generator
         context["selected_tab"] = "rule-check-queue"
         return context
 
@@ -1759,7 +1759,7 @@ class RuleViolationsQueueView(
         elif task_status == "Queued":
             return {
                 "text": "Queued",
-                "tag_class": "tamato-badge-light-blue",
+                "tag_class": "tamato-badge-light-grey",
             }
         else:
             return {

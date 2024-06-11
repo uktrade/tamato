@@ -40,8 +40,7 @@
 
  <div class="govuk-grid-column-full">
 
-{% if current_rule_checks %}
-  {% set table_head = [
+   {% set table_head = [
         {"text": "Workbasket ID"},
         {"text": "Checks completed"},
         {"text": "Time started"},
@@ -51,25 +50,28 @@
 
 {% set table_rows = [] %}
 
-{% for task in current_rule_checks %}
-{{ table_rows.append([
-                {"text": workbasket_link(task.workbasket_id)},
-                {"text": task.checks_completed},
-                {"text": task.date_time_start},
-                {"text": task.task_id},
-                {"html": status_tag(task.status)},
-            ]) or "" }}
-{% endfor %}
-
-
-  {{ govukTable({
-          "head": table_head,
-          "rows": table_rows
-      }) }}
+{% if celery_healthy %}
+    {% if current_rule_checks %}
+        {% for task in current_rule_checks %}
+            {{ table_rows.append([
+                            {"text": workbasket_link(task.workbasket_id)},
+                            {"text": task.checks_completed},
+                            {"text": task.date_time_start},
+                            {"text": task.task_id},
+                            {"html": status_tag(task.status)},
+                        ]) or "" }}
+        {% endfor %}
+          {{ govukTable({
+                  "head": table_head,
+                  "rows": table_rows
+              }) }}
 
     {% else %}
-    <p class="govuk-body">There are currently no rule checks running or queued.</p>
+        <p class="govuk-body">There are currently no rule checks running or queued.</p>
     {% endif %}
+{% else %}
+    <p class="govuk-body">Business rule check details are currently unavailable.</p>
+{% endif %}
 </div>
 </div>
 {% endblock %}
