@@ -14,6 +14,7 @@ from django_fsm import transition
 from common.models.mixins import TimestampedMixin
 from common.models.utils import lazy_string
 from common.renderers import counter_generator
+from workbaskets.validators import WorkflowStatus
 
 logger = getLogger(__name__)
 PREEMPTIVE_TRANSACTION_SEED = -100000
@@ -76,6 +77,14 @@ class TransactionQueryset(models.QuerySet):
         return self.model.tracked_models.rel.related_model.objects.filter(
             transaction__in=self,
         )
+
+    def published(self) -> "TransactionQueryset":
+        """Return a queryset of Transactions that have been both approved (are
+        in the SEED_FILE or REVISION partitions) and are associated with a
+        Workbaskets whose status is PUBLISHED."""
+        return self.filter(
+            workbasket__status=WorkflowStatus.PUBLISHED,
+        ).approved()
 
     def approved(self):
         """Currently approved Transactions are SEED_FILE and REVISION this can
