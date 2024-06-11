@@ -65,3 +65,31 @@ def test_follow_path_with_many_to_many_auto(assert_path_returns):
     cert = obj.required_certificates.first()
 
     assert_path_returns(obj, "required_certificates", {cert})
+
+
+def test_published_transaction_queryset():
+    """Test that the TransactionQuerySet.published() custom filter only returns
+    Transactions that are approved and associated with a workbasket that has
+    been published."""
+
+    editing_workbasket = factories.EditingWorkBasketFactory()
+    queued_workbasket = factories.QueuedWorkBasketFactory()
+    published_workbasket = factories.PublishedWorkBasketFactory()
+
+    published_tranx = Transaction.objects.published()
+    published_tranx_ids = published_tranx.values_list("id", flat=True)
+
+    assert published_tranx.count() == published_workbasket.transactions.count()
+    assert set(published_tranx_ids) == set(
+        published_workbasket.transactions.values_list("id", flat=True),
+    )
+    assert not (
+        set(published_tranx_ids).intersection(
+            set(queued_workbasket.transactions.values_list("id", flat=True)),
+        )
+    )
+    assert not (
+        set(published_tranx_ids).intersection(
+            set(editing_workbasket.transactions.values_list("id", flat=True)),
+        )
+    )
