@@ -139,7 +139,7 @@ def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings
     constantly uploading files and wasting bandwidth/money.
     """
     factories.SeedFileTransactionFactory.create(order="999")
-    transaction = factories.SinglePublishedTransactionFactory.create()
+    transaction = factories.PublishedTransactionFactory.create()
 
     expected_key = path.join(
         settings.SQLITE_STORAGE_DIRECTORY,
@@ -160,7 +160,7 @@ def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings
 def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
     """The export system should actually upload a file to S3."""
     factories.SeedFileTransactionFactory.create(order="999")
-    transaction = factories.SinglePublishedTransactionFactory.create()
+    transaction = factories.PublishedTransactionFactory.create()
 
     expected_key = path.join(
         settings.SQLITE_STORAGE_DIRECTORY,
@@ -185,7 +185,7 @@ def test_export_task_ignores_unpublished_and_unapproved_transactions(
     upload as draft data may be sensitive and unpublished, and shouldn't be
     included."""
     factories.SeedFileTransactionFactory.create(order="999")
-    transaction = factories.SinglePublishedTransactionFactory.create(order="123")
+    transaction = factories.PublishedTransactionFactory.create(order="123")
     factories.ApprovedTransactionFactory.create(order="124")
     factories.UnapprovedTransactionFactory.create(order="125")
 

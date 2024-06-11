@@ -248,10 +248,6 @@ class SeedFileTransactionFactory(TransactionFactory):
 
 
 class PublishedTransactionFactory(TransactionFactory):
-    published = True
-
-
-class SinglePublishedTransactionFactory(TransactionFactory):
     single_published = True
 
 
