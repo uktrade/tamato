@@ -12,7 +12,6 @@ from botocore.client import Config
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import PermissionDenied
@@ -1728,10 +1727,14 @@ class WorkBasketCommentDelete(
 
 
 class RuleCheckQueueView(
-    LoginRequiredMixin,
+    PermissionRequiredMixin,
     TemplateView,
 ):
     template_name = "workbaskets/rule_check_queue.jinja"
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
     TASK_NAME = "workbaskets.tasks.call_check_workbasket_sync"
     TapTasks = TAPTasks(task_name=TASK_NAME)
 
