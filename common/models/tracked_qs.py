@@ -148,7 +148,7 @@ class TrackedModelQuerySet(
         """
         return self.exclude(version_group=version_group)
 
-    def published(self):
+    def published(self) -> TrackedModelQuerySet:
         """Return a queryset of TrackedModels that are associated with approved
         Transactions and Workbaskets whose status is PUBLISHED."""
         from workbaskets.validators import WorkflowStatus
