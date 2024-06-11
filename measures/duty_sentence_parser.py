@@ -44,6 +44,11 @@ class InvalidMeasurementUnitQualififer(DutySyntaxError):
     hint = "Check the validity period of the measurement unit qualifier and that you are using the correct abbreviation."
 
 
+class CompoundDutyNotPermitted(DutySyntaxError):
+    label = "A compound duty expression was found"
+    hint = "Check that you are entering a single duty amount or a duty amount together with a measurement unit (and measurement unit qualifier if required)."
+
+
 INVALID_DUTY_EXPERESSION_MESSAGE = (
     f"{InvalidDutyExpression.label}. {InvalidDutyExpression.hint}"
 )
@@ -89,6 +94,7 @@ class DutySentenceParser:
 
     def __init__(
         self,
+        full_grammar: bool = True,
         date: datetime = datetime.now(),
         duty_expressions: Sequence[models.DutyExpression] = None,
         monetary_units: Sequence[models.MonetaryUnit] = None,
@@ -97,10 +103,11 @@ class DutySentenceParser:
         measurement_unit_qualifiers: Sequence[models.MeasurementUnitQualifier] = None,
     ):
         """
-        This class can be optionally loaded up with custom lists of duty
-        expressions, monetary units, and measurements on init.
+        By default this class uses the complete duty sentence grammar to parse all three types of duty: ad valorem, specific and compound.
+        Setting `full_grammar` to `False` will result in a parser instance that expects either an ad valorem duty or a specific duty only (i.e no compound duties).
 
-        Mainly useful for testing.
+        This class can also be optionally loaded up with custom lists of duty
+        expressions, monetary units, and measurements on init (mainly useful for testing).
         """
         duty_expressions = models.DutyExpression.objects.as_at(date) or duty_expressions
         monetary_units = models.MonetaryUnit.objects.as_at(date) or monetary_units
@@ -122,6 +129,8 @@ class DutySentenceParser:
         amount_not_permitted = duty_expressions.filter(
             duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         )
+
+        self.full_grammar = full_grammar
 
         self.parser_rules = f"""
             slash: "/"
@@ -159,7 +168,7 @@ class DutySentenceParser:
 
         self.parser = Lark(
             self.parser_rules,
-            start="sentence",
+            start="sentence" if full_grammar else "phrase",
         )
 
         self.transformer = DutyTransformer(
@@ -169,6 +178,7 @@ class DutySentenceParser:
             measurements=measurements,
             measurement_units=measurement_units,
             measurement_unit_qualifiers=measurement_unit_qualifiers,
+            full_grammar=full_grammar,
         )
 
     @property
@@ -177,6 +187,10 @@ class DutySentenceParser:
         matched against the current parsing error to provide more user-friendly
         error reporting."""
         mapping = {
+            CompoundDutyNotPermitted: [
+                "9.10% + 45.10 GBP / 100 KG MAX 18.90% + 16.50 GBP / 100 KG",
+                "5.5% + AC (reduced)",
+            ],
             InvalidDutyExpression: [
                 "10% + Blah duty (reduced)",
                 "5.5% + ABCDE + Some other fake duty expression",
@@ -203,6 +217,8 @@ class DutySentenceParser:
                 "5.5% + 100 EUR / % vol / foo bar",
             ],
         }
+        if self.full_grammar:
+            del mapping[CompoundDutyNotPermitted]
         return mapping
 
     def parse(self, duty_sentence):
@@ -236,6 +252,7 @@ class DutyTransformer(Transformer):
         self.monetary_units = kwargs.pop("monetary_units")
         self.measurement_units = kwargs.pop("measurement_units")
         self.measurement_unit_qualifiers = kwargs.pop("measurement_unit_qualifiers")
+        self.full_grammar = kwargs.pop("full_grammar")
         super().__init__()
 
     def validate_duty_expressions(self, transformed):
@@ -377,9 +394,14 @@ class DutyTransformer(Transformer):
 
         return True
 
-    def transform(self, tree):
-        # perform validation and raise any errors before returning the transformed tree
+    def transform(self, tree) -> list[dict]:
+        """Performs validation and raises any errors before returning the
+        transformed tree."""
         transformed = self._transform_tree(tree)
+        if not self.full_grammar and not isinstance(transformed, list):
+            to_list = []
+            to_list.append(transformed)
+            transformed = to_list
         if self.is_valid(transformed):
             return transformed
 
