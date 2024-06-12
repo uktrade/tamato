@@ -75,7 +75,7 @@
                   <a
                     href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket["id"]}) }}"
                     class="govuk-link"
-                  >Workbasket TOPS {{ workbasket["title"] }}</a>
+                  >{{ workbasket["description"] }}</a>
                   <span>
                     {% if workbasket["rule_violations_count"] %}
                       - {{ workbasket["assignment_type"] }}, rule violation{{ workbasket["rule_violations_count"]|pluralize }}
