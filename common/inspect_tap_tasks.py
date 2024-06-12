@@ -63,6 +63,10 @@ class TAPTasks:
             task_status="Active",
         ) + self.clean_tasks(inspect.reserved(), task_status="Queued")
 
+        # Remove any lingering tasks that have actually been revoked
+        revoked_tasks = sum(inspect.revoked().values(), [])
+        due_tasks = [task for task in due_tasks if task["id"] not in revoked_tasks]
+
         results = []
 
         for task_info in due_tasks:
