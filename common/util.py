@@ -580,7 +580,7 @@ def get_mime_type(file):
     return mime_type
 
 
-def as_date(date_or_datetime: Union(date, datetime)) -> date:
+def as_date(date_or_datetime: Union[date, datetime]) -> date:
     """Given an object of type datetime.date or datetime.datetime return the
     date portion as type datetime.date."""
     if type(date_or_datetime) is datetime:

@@ -78,9 +78,9 @@ class TransactionQueryset(models.QuerySet):
             transaction__in=self,
         )
 
-    def published(self) -> "TransactionQueryset":
+    def published(self) -> TransactionQueryset:
         """Return a queryset of Transactions that have been both approved (are
-        in the SEED_FILE or REVISION partitions) and are associated with a
+        in the SEED_FILE or REVISION partitions) and are associated with
         Workbaskets whose status is PUBLISHED."""
         return self.filter(
             workbasket__status=WorkflowStatus.PUBLISHED,
