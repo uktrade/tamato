@@ -207,9 +207,9 @@
             <span class="n">transaction__in</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">published</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TransactionQueryset&quot;</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">published</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionQueryset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a queryset of Transactions that have been both approved (are</span>
-<span class="sd">        in the SEED_FILE or REVISION partitions) and are associated with a</span>
+<span class="sd">        in the SEED_FILE or REVISION partitions) and are associated with</span>
 <span class="sd">        Workbaskets whose status is PUBLISHED.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">workbasket__status</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">PUBLISHED</span><span class="p">,</span>
