@@ -6,6 +6,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from lark import Token
 
+from measures.duty_sentence_parser import CompoundDutyNotPermitted
 from measures.duty_sentence_parser import DutyAmountRequired
 from measures.duty_sentence_parser import DutySentenceParser
 from measures.duty_sentence_parser import InvalidDutyExpression
@@ -271,6 +272,20 @@ def test_only_permitted_measurements_allowed(lark_duty_sentence_parser):
 def test_duty_syntax_errors(sentence, exp_error_class, lark_duty_sentence_parser):
     with pytest.raises(exp_error_class):
         lark_duty_sentence_parser.parse(sentence)
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "1% + 2 GBP / m3",
+        "1% + AC (reduced)",
+    ],
+)
+def test_compound_duty_not_permitted_error(sentence, simple_lark_duty_sentence_parser):
+    """Tests that a parser not using the complete duty sentence grammar raises a
+    `CompoundDutyNotPermitted` exception when parsing a compound duty."""
+    with pytest.raises(CompoundDutyNotPermitted):
+        simple_lark_duty_sentence_parser.parse(sentence)
 
 
 @pytest.mark.parametrize(
