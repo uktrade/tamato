@@ -264,13 +264,14 @@ def test_homepage_cards_contain_expected_links(superuser_client):
     ],
 )
 def test_homepage_card_currently_working_on(status, valid_user, valid_user_client):
-    workbasket = factories.WorkBasketFactory.create(status=status)
-    review_assignment = factories.UserAssignmentFactory.create(
+    test_reason = "test reason"
+    workbasket = factories.WorkBasketFactory.create(status=status, reason=test_reason)
+    factories.UserAssignmentFactory.create(
         user=valid_user,
         assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
         task__workbasket=workbasket,
     )
-    rule_violation = TrackedModelCheckFactory.create(
+    TrackedModelCheckFactory.create(
         transaction_check__transaction=workbasket.new_transaction(),
         successful=False,
     )
@@ -281,7 +282,8 @@ def test_homepage_card_currently_working_on(status, valid_user, valid_user_clien
     assigned_workbasket = card.find_next("a")
     details = card.find_next("span")
 
-    assert f"Workbasket ID {workbasket.pk}" in assigned_workbasket.text
+    assert test_reason in assigned_workbasket.text
+    assert str(workbasket.pk) in assigned_workbasket.attrs["href"]
     assert "Reviewing" and "rule violation" in details.text
 
 
