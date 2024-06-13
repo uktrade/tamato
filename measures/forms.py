@@ -1412,21 +1412,23 @@ class MeasureGeographicalAreaForm(
             country_regions_options,
         )
 
-    def clean_react_form_exclusions(self, key):
+    def clean_react_form_countries_exclusions(self, key):
         # Data from the react form is formatted as a single list
         # rather than field names with the index appended
         field_name = f"{self.prefix}-{key}"
-        exclusion_pks = None
-        for k, value in self.data.lists():
+        country_pks = []
+        for k, value_list in self.data.lists():
             if k == field_name:
-                exclusion_pks = value
+                for value in value_list:
+                    try:
+                        country_pks.append(int(value))
+                    except ValueError:
+                        continue
         # we assume the react filtering has prevented the user selecting an exclusion that is not valid for the group
-        validated_exclusion_pks = [
-            pk
-            for pk in exclusion_pks
-            if GeographicalArea.objects.filter(pk=pk).exists()
+        validated_country_pks = [
+            pk for pk in country_pks if GeographicalArea.objects.filter(pk=pk).exists()
         ]
-        return list(GeographicalArea.objects.filter(pk__in=validated_exclusion_pks))
+        return list(GeographicalArea.objects.filter(pk__in=validated_country_pks))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1465,12 +1467,19 @@ class MeasureGeographicalAreaForm(
                         constants.GeoAreaType.GROUP,
                         constants.GeoAreaType.ERGA_OMNES,
                     ]:
-                        exclusions = self.clean_react_form_exclusions(
+                        exclusions = self.clean_react_form_countries_exclusions(
                             constants.EXCLUSIONS_REACT_PREFIX_MAPPING[geo_area_choice],
                         )
                         cleaned_data["geo_areas_and_exclusions"][0][
                             "exclusions"
                         ] = exclusions
+                    else:
+                        countries = self.clean_react_form_countries_exclusions(
+                            constants.EXCLUSIONS_REACT_PREFIX_MAPPING[geo_area_choice],
+                        )
+                        cleaned_data["geo_areas_and_exclusions"] = [
+                            {"geo_area": country} for country in countries
+                        ]
 
                 else:
                     geo_area_exclusions = cleaned_data.get(
