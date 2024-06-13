@@ -11,7 +11,7 @@
         </p>
         {% endfor %}
     {% endif %}
-    {% set selected_code = field.initial | int %}
+    {% set selected_code = field.data|int or field.initial|int %}
     <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}">
         <option value="">-- Please select a condition code --</option>
         {% for condition in form.fields.condition_code.queryset %}
