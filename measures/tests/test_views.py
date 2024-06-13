@@ -3,6 +3,7 @@ import json
 import unittest
 from datetime import date
 from decimal import Decimal
+from functools import reduce
 from typing import OrderedDict
 from unittest.mock import PropertyMock
 from unittest.mock import patch
@@ -678,7 +679,7 @@ def test_measure_update_removes_footnote_association(
 def test_measure_update_create_conditions(
     client_with_current_workbasket,
     measure_edit_conditions_data,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
     erga_omnes,
 ):
     """
@@ -738,7 +739,7 @@ def test_measure_update_create_conditions(
 def test_measure_update_edit_conditions(
     client_with_current_workbasket,
     measure_edit_conditions_data,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
     erga_omnes,
 ):
     """
@@ -830,7 +831,7 @@ def test_measure_update_edit_conditions(
 def test_measure_update_remove_conditions(
     client_with_current_workbasket,
     measure_edit_conditions_data,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
     erga_omnes,
 ):
     """
@@ -889,7 +890,7 @@ def test_measure_update_remove_conditions(
 def test_measure_update_negative_condition(
     client_with_current_workbasket,
     measure_edit_conditions_and_negative_action_data,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
     erga_omnes,
 ):
     """Tests that html contains appropriate form validation errors after posting
@@ -926,10 +927,11 @@ def test_measure_update_negative_condition(
     assert components.first().duty_amount == 3.5
 
 
-def test_measure_update_invalid_conditions(
+def test_measure_update_invalid_conditions_only(
     client_with_current_workbasket,
     measure_edit_conditions_and_negative_action_data,
     duty_sentence_parser,
+    lark_duty_sentence_parser,
     erga_omnes,
 ):
     """Tests that html contains appropriate form validation errors after posting
@@ -945,7 +947,7 @@ def test_measure_update_invalid_conditions(
         f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-1-reference_price"
     ] = "3.5%"
 
-    measure = Measure.objects.first()
+    measure = factories.MeasureFactory.create()
     url = reverse("measure-ui-edit", args=(measure.sid,))
     response = client_with_current_workbasket.post(
         url,
@@ -960,31 +962,33 @@ def test_measure_update_invalid_conditions(
     )
     a_tags = page.select("ul.govuk-list.govuk-error-summary__list a")
 
-    assert (
-        a_tags[0].attrs["href"]
-        == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty"
-    )
-    assert a_tags[0].text == "Enter a valid duty sentence."
+    assert len(a_tags) == 3
 
-    assert a_tags[1].attrs["href"] == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-__all__"
+    errors = [tag.text for tag in a_tags]
+    urls = [tag.attrs["href"] for tag in a_tags]
+
+    assert f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-applicable_duty" in urls
+    assert f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price" in urls
+    assert f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-__all__" in urls
+
     assert (
-        a_tags[1].text
-        == "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’."
+        "No matching duty expression found at character 1. \n\nCheck the validity period of the duty expression and that you are using the correct prefix. "
+        in errors
     )
     assert (
-        a_tags[2].attrs["href"]
-        == f"#{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-reference_price"
+        "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
+        in errors
     )
     assert (
-        a_tags[2].text
-        == "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
+        "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’."
+        in errors
     )
 
 
 def test_measure_update_invalid_conditions_invalid_actions(
     client_with_current_workbasket,
     measure_edit_conditions_and_negative_action_data,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
     erga_omnes,
 ):
     # set up invalid action under the same condition code
@@ -1166,10 +1170,13 @@ def test_measure_form_wizard_start(client_with_current_workbasket):
 
 @override_settings(MEASURES_ASYNC_CREATION=False)
 @unittest.mock.patch("measures.parsers.DutySentenceParser")
+@unittest.mock.patch("measures.forms.LarkDutySentenceParser")
 def test_measure_form_wizard_finish(
+    mock_lark_duty_sentence_parser,
     mock_duty_sentence_parser,
     client_with_current_workbasket,
     regulation,
+    lark_duty_sentence_parser,
     duty_sentence_parser,
     erga_omnes,
 ):
@@ -1180,15 +1187,13 @@ def test_measure_form_wizard_finish(
     )
     commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
 
+    mock_lark_duty_sentence_parser.return_value = lark_duty_sentence_parser
     mock_duty_sentence_parser.return_value = duty_sentence_parser
 
     wizard_data = [
-        {
-            "data": {"measure_create_wizard-current_step": "start"},
-            "next_step": "measure_details",
-        },
-        {
-            "data": {
+        ({"measure_create_wizard-current_step": "start"}, "measure_details"),
+        (
+            {
                 "measure_create_wizard-current_step": "measure_details",
                 "measure_details-measure_type": measure_type.pk,
                 "measure_details-start_date_0": 2,
@@ -1196,73 +1201,62 @@ def test_measure_form_wizard_finish(
                 "measure_details-start_date_2": 2021,
                 "measure_details-min_commodity_count": 2,
             },
-            "next_step": "regulation_id",
-        },
-        {
-            "data": {
+            "regulation_id",
+        ),
+        (
+            {
                 "measure_create_wizard-current_step": "regulation_id",
                 "regulation_id-generating_regulation": regulation.pk,
             },
-            "next_step": "quota_order_number",
-        },
-        {
-            "data": {
+            "quota_order_number",
+        ),
+        (
+            {
                 "measure_create_wizard-current_step": "quota_order_number",
                 "quota_order_number-order_number": "",
             },
-            "next_step": "geographical_area",
-        },
-        {
-            "data": {
+            "geographical_area",
+        ),
+        (
+            {
                 "measure_create_wizard-current_step": "geographical_area",
                 "geographical_area-geo_area": "ERGA_OMNES",
                 "erga_omnes_exclusions_formset-0-erga_omnes_exclusion": "",
                 "submit": "submit",
             },
-            "next_step": "commodities",
-        },
-        {
-            "data": {
+            "commodities",
+        ),
+        (
+            {
                 "measure_create_wizard-current_step": "commodities",
-                "measure_commodities_duties_formset-0-commodity": commodity1.pk,  # /PS-IGNORE
-                "measure_commodities_duties_formset-0-duties": "33 GBP/100kg",  # /PS-IGNORE
+                "measure_commodities_duties_formset-0-commodity": commodity1.pk,
+                "measure_commodities_duties_formset-0-duties": "33 GBP/100kg",
                 "measure_commodities_duties_formset-1-commodity": commodity2.pk,
                 "measure_commodities_duties_formset-1-duties": "40 GBP/100kg",
                 "submit": "submit",
             },
-            "next_step": "additional_code",
-        },
-        {
-            "data": {"measure_create_wizard-current_step": "additional_code"},
-            "next_step": "conditions",
-        },
-        {
-            "data": {"measure_create_wizard-current_step": "conditions"},
-            "next_step": "footnotes",
-        },
-        {
-            "data": {"measure_create_wizard-current_step": "footnotes"},
-            "next_step": "summary",
-        },
-        {
-            "data": {"measure_create_wizard-current_step": "summary"},
-            "next_step": "complete",
-        },
+            "additional_code",
+        ),
+        ({"measure_create_wizard-current_step": "additional_code"}, "conditions"),
+        ({"measure_create_wizard-current_step": "conditions"}, "footnotes"),
+        ({"measure_create_wizard-current_step": "footnotes"}, "summary"),
+        ({"measure_create_wizard-current_step": "summary"}, "complete"),
     ]
-    for step_data in wizard_data:
+
+    for data, next_step in wizard_data:
         url = reverse(
             "measure-ui-create",
-            kwargs={"step": step_data["data"]["measure_create_wizard-current_step"]},
+            kwargs={"step": data["measure_create_wizard-current_step"]},
         )
         response = client_with_current_workbasket.get(url)
         assert response.status_code == 200
 
-        response = client_with_current_workbasket.post(url, step_data["data"])
+        response = client_with_current_workbasket.post(url, data)
         assert response.status_code == 302
 
         assert response.url == reverse(
             "measure-ui-create",
-            kwargs={"step": step_data["next_step"]},
+            kwargs={"step": next_step},
         )
 
     complete_response = client_with_current_workbasket.get(response.url)
@@ -1934,7 +1928,7 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
 
 
 @pytest.mark.parametrize(
-    "step,data",
+    "step, form_data, updated_attribute, expected_data",
     [
         (
             "start_date",
@@ -1944,6 +1938,8 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
                 "start_date-start_date_1": "01",
                 "start_date-start_date_2": "2000",
             },
+            "valid_between.lower",
+            datetime.date(2000, 1, 1),
         ),
         (
             "end_date",
@@ -1953,12 +1949,27 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
                 "end_date-end_date_1": "01",
                 "end_date-end_date_2": "2100",
             },
+            "valid_between.upper",
+            datetime.date(2100, 1, 1),
+        ),
+        (
+            "end_date",
+            {
+                "measure_edit_wizard-current_step": MeasureEditSteps.END_DATE,
+                "end_date-end_date_0": "",
+                "end_date-end_date_1": "",
+                "end_date-end_date_2": "",
+            },
+            "valid_between.upper",
+            None,
         ),
     ],
 )
 def test_multiple_measure_edit_single_form_functionality(
     step,
-    data,
+    form_data,
+    updated_attribute,
+    expected_data,
     valid_user_client,
     user_workbasket,
     mocked_diff_components,
@@ -1994,7 +2005,7 @@ def test_multiple_measure_edit_single_form_functionality(
             "next_step": step,
         },
         {
-            "data": data,
+            "data": form_data,
             "next_step": "complete",
         },
     ]
@@ -2024,6 +2035,7 @@ def test_multiple_measure_edit_single_form_functionality(
     assert valid_user_client.session["MULTIPLE_MEASURE_SELECTIONS"] == {}
     for measure in workbasket_measures:
         assert measure.update_type == UpdateType.UPDATE
+        assert reduce(getattr, updated_attribute.split("."), measure) == expected_data
 
 
 def test_multiple_measure_edit_only_regulation(

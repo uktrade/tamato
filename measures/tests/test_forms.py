@@ -54,7 +54,7 @@ def test_diff_components_called(diff_components, measure_form, duty_sentence_par
 
 def test_measure_conditions_formset_invalid(
     measure_form_data,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
 ):
     """Tests MeasureConditionsFormSet validation."""
     condition_code1 = factories.MeasureConditionCodeFactory.create()
@@ -81,7 +81,11 @@ def test_measure_conditions_formset_invalid(
     )
 
     assert not form.is_valid()
-    assert {"applicable_duty": ["Enter a valid duty sentence."]} in form.errors
+    assert "No matching duty expression found" in form.errors[0]["applicable_duty"][0]
+    assert (
+        "Check the validity period of the duty expression and that you are using the correct prefix."
+        in form.errors[0]["applicable_duty"][0]
+    )
 
 
 def test_measure_form_invalid_conditions_data(
@@ -89,7 +93,7 @@ def test_measure_form_invalid_conditions_data(
     session_request_with_workbasket,
     date_ranges,
     erga_omnes,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
 ):
     """Tests that MeasureForm.is_valid() returns False when
     MeasureConditionsFormSet returns False."""
@@ -647,7 +651,7 @@ def test_measure_forms_additional_code_invalid_data():
 def test_measure_forms_commodity_and_duties_form_invalid_selection(
     commodity,
     error_message,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
     date_ranges,
 ):
     data = {
@@ -662,7 +666,9 @@ def test_measure_forms_commodity_and_duties_form_invalid_selection(
     assert error_message in form.errors["commodity"]
 
 
-def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
+def test_measure_forms_commodity_and_duties_form_duties_not_permitted(
+    lark_duty_sentence_parser,
+):
     """Test that form is invalid when a duty is specified on a commodity but not
     permitted for measure type."""
     measure_type = factories.MeasureTypeFactory.create(
@@ -693,6 +699,7 @@ def test_measure_forms_commodity_and_duties_form_duties_not_permitted():
 def test_measure_forms_commodity_and_duties_form_measure_explosion_level(
     item_id,
     is_valid,
+    lark_duty_sentence_parser,
 ):
     """Test that form is invalid when a commodity at 8 digit level or higher is
     selected for an export measure type (measure_explosion_level=8)"""
@@ -725,7 +732,10 @@ def test_measure_forms_commodity_and_duties_form_measure_explosion_level(
         {},
     ],
 )
-def test_measure_forms_commodity_and_duties_formset_no_data(data):
+def test_measure_forms_commodity_and_duties_formset_no_data(
+    data,
+    lark_duty_sentence_parser,
+):
     formset = forms.MeasureCommodityAndDutiesFormSet(
         data=data,
         initial=unprefix_formset_data(MEASURE_CONDITIONS_FORMSET_PREFIX, data),
@@ -736,7 +746,7 @@ def test_measure_forms_commodity_and_duties_formset_no_data(data):
 
 def test_measure_forms_commodity_and_duties_formset_valid_data(
     date_ranges,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
 ):
     commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
     data = {
@@ -757,11 +767,10 @@ def test_measure_forms_commodity_and_duties_formset_valid_data(
 
 def test_measure_forms_commodity_and_duties_formset_invalid_data(
     date_ranges,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
 ):
     commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
     invalid_duty_sentence = "1% + 2GBP / m1"
-    invalid_expression = " / m1"
     data = {
         f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-commodity": commodity1.pk,
         f"{MEASURE_COMMODITIES_FORMSET_PREFIX}-0-duties": invalid_duty_sentence,
@@ -777,12 +786,16 @@ def test_measure_forms_commodity_and_duties_formset_invalid_data(
     )
     assert not formset.is_valid()
     assert (
-        f'"{invalid_expression}" is an invalid duty expression'
-        in formset.forms[0].errors["duties"]
+        "Check the validity period of the measurement unit and that you are using the correct abbreviation (not code)."
+        in formset.forms[0].errors["duties"][0]
     )
+    assert "No matching measurement unit found" in formset.forms[0].errors["duties"][0]
 
 
-def test_measure_forms_conditions_form_valid_data(date_ranges):
+def test_measure_forms_conditions_form_valid_data(
+    lark_duty_sentence_parser,
+    date_ranges,
+):
     """Tests that MeasureConditionsForm is valid when initialised with minimal
     required fields."""
     certificate = factories.CertificateFactory.create()
@@ -817,7 +830,7 @@ def test_measure_forms_conditions_form_actions_validation_skipped(
     code,
     valid,
     date_ranges,
-    duty_sentence_parser,
+    lark_duty_sentence_parser,
 ):
     """
     Tests that MeasureConditionsForm is valid when actions 1-4 is used and no
@@ -1066,7 +1079,11 @@ def test_measure_forms_conditions_applicable_duty(
     assert form.is_valid() == is_valid
 
     if not is_valid:
-        assert "Enter a valid duty sentence." in form.errors["applicable_duty"]
+        assert "No matching duty expression found" in form.errors["applicable_duty"][0]
+        assert (
+            "Check the validity period of the duty expression and that you are using the correct prefix"
+            in form.errors["applicable_duty"][0]
+        )
 
 
 @pytest.mark.parametrize(
@@ -1098,7 +1115,11 @@ def test_measure_forms_conditions_wizard_applicable_duty(
     assert form.is_valid() == is_valid
 
     if not is_valid:
-        assert "Enter a valid duty sentence." in form.errors["applicable_duty"]
+        assert "No matching duty expression found" in form.errors["applicable_duty"][0]
+        assert (
+            "Check the validity period of the duty expression and that you are using the correct prefix."
+            in form.errors["applicable_duty"][0]
+        )
 
 
 def test_measure_forms_conditions_wizard_applicable_duty_not_permitted():
@@ -1375,6 +1396,18 @@ def test_measure_end_date_validation_fail():
         "The end date cannot be before the start date: Start date 01/01/2000 does not start before 01/01/1999"
         in form.errors["__all__"]
     )
+
+
+def test_measure_end_date_form_no_end_date():
+    """Tests that `MeasureEndDateForm` allows an empty end date value and sets
+    the cleaned data value to `None`."""
+    selected_measures = factories.MeasureFactory.create_batch(3)
+    form = MeasureEndDateForm(
+        data={},
+        selected_measures=selected_measures,
+    )
+    assert form.is_valid()
+    assert form.cleaned_data["end_date"] == None
 
 
 def test_measure_forms_footnotes_valid():

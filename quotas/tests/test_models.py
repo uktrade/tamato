@@ -2,6 +2,8 @@ import pytest
 from django.db import IntegrityError
 from django.urls import reverse
 
+from common.models.transactions import Transaction
+from common.models.utils import override_current_transaction
 from common.serializers import AutoCompleteSerializer
 from common.tests import factories
 from common.tests.util import raises_if
@@ -26,6 +28,22 @@ def test_quota_order_number_origin_in_use(in_use_check_respects_deletes):
         "order_number",
         through="order_number",
     )
+
+
+def test_quota_order_number_get_current_origins():
+    """Test that `get_current_origins()` returns the current version of origins
+    associated to a quota order number via SID not PK."""
+    workbasket = factories.WorkBasketFactory.create()
+
+    old_version = factories.QuotaOrderNumberFactory.create()
+    new_version = old_version.new_version(workbasket=workbasket)
+
+    origin1 = factories.QuotaOrderNumberOriginFactory.create(order_number=old_version)
+    origin2 = factories.QuotaOrderNumberOriginFactory.create(order_number=new_version)
+
+    with override_current_transaction(Transaction.objects.last()):
+        assert origin1 in new_version.get_current_origins()
+        assert origin2 in new_version.get_current_origins()
 
 
 @pytest.mark.parametrize(
