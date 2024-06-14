@@ -1,3 +1,4 @@
+import datetime
 from unittest.mock import patch
 
 import pytest
@@ -106,17 +107,28 @@ def test_app_info_superuser(superuser_client, new_workbasket):
     The new_workbasket fixture provides access to transaction information in the
     deployment infomation section.
     """
-    response = superuser_client.get(reverse("app-info"))
+
+    sqlite_dumps = [
+        {
+            "file_name": "123456789.db",
+            "file_size": 1000000,
+            "created_datetime": datetime.datetime.now(),
+        },
+    ]
+
+    with patch("common.views.sqlite_dumps", return_value=sqlite_dumps):
+        response = superuser_client.get(reverse("app-info"))
 
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
     h2_elements = page.select(".info-section h2")
 
-    assert len(h2_elements) == 3
+    assert len(h2_elements) == 4
     assert "Deployment information" in h2_elements[0].text
     assert "Active business rule checks" in h2_elements[1].text
     assert "Active envelope generation tasks" in h2_elements[2].text
+    assert "Sqlite dumps (past 30 days)" in h2_elements[3].text
 
 
 def test_index_displays_footer_links(valid_user_client):

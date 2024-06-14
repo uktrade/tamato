@@ -9,18 +9,24 @@ from exporter.storages import SQLiteStorage
 logger = logging.getLogger(__name__)
 
 
+def normalised_order(order):
+    """Return a transaction's normalised order value - left-padded with zeroes
+    to a normalised width of nine digits."""
+    return f"{order:0>9}"
+
+
 def get_output_filename():
     """
     Generate output filename with transaction order field.
 
     If no revisions are present the filename is prefixed with seed_.
     """
-    tx = Transaction.objects.approved().last()
+    tx = Transaction.objects.published().last()
     order = tx.order if tx else 0
     if tx.partition == TransactionPartition.REVISION:
-        return f"{order:0>9}.db"
+        return f"{normalised_order(order)}.db"
 
-    return f"seed_{order:0>9}.db"
+    return f"seed_{normalised_order(order)}.db"
 
 
 @app.task

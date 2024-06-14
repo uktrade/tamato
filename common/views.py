@@ -52,6 +52,7 @@ from common.models import TrackedModel
 from common.models import Transaction
 from common.pagination import build_pagination_list
 from common.validators import UpdateType
+from exporter.sqlite.util import sqlite_dumps
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from measures.models import Measure
@@ -438,6 +439,12 @@ class AppInfoView(
                 if last_transaction
                 else "No transactions"
             )
+            last_published_tranx = Transaction.objects.published().last()
+            data["LAST_PUBLISHED_TRANSACTION_ORDER"] = (
+                last_published_tranx.order if last_published_tranx else 0
+            )
+            data["SQLITE_DUMP_DAYS"] = 30
+            data["SQLITE_DUMP_LIST"] = sqlite_dumps(days_past=30)
 
         return data
 
