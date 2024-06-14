@@ -50,7 +50,7 @@ lxml==5.2.2
 markdown==3.6
 markdownify==0.12.1
 markupsafe==2.1.2
-moto==2.1.0
+moto==5.0.9
 notifications-python-client==6.4.1
 openpyxl==3.0.7
 pandas~=2.0

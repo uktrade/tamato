@@ -29,7 +29,7 @@ from django.test.html import parse_html
 from django.urls import reverse
 from factory.django import DjangoModelFactory
 from lxml import etree
-from moto import mock_s3
+from moto import mock_aws
 from pytest_bdd import given
 from pytest_bdd import parsers
 from pytest_bdd import then
@@ -1035,7 +1035,7 @@ def imported_fields_match(run_xml_import, update_type):
 
 @pytest.fixture
 def s3():
-    with mock_s3() as moto:
+    with mock_aws() as moto:
         moto.start()
         s3 = boto3.client("s3")
         yield s3
@@ -1043,7 +1043,7 @@ def s3():
 
 @pytest.fixture
 def s3_resource():
-    with mock_s3() as moto:
+    with mock_aws() as moto:
         moto.start()
         s3 = boto3.resource("s3")
         yield s3
@@ -1099,7 +1099,7 @@ def make_storage_mock(s3, storage_class, **override_settings):
                 "LocationConstraint": settings.AWS_S3_REGION_NAME,
             },
         )
-    except s3.exceptions.BucketAlreadyExists:
+    except (s3.exceptions.BucketAlreadyExists, s3.exceptions.BucketAlreadyOwnedByYou):
         return storage
 
     return storage
