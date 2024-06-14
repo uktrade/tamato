@@ -2486,7 +2486,7 @@ def test_workbasket_comment_list_view(valid_user_client, user_workbasket):
 def test_clean_tasks():
     """Test that the clean_tasks function of TAPTasks class returns a cleaned
     list of tasks from Celery task dictionary."""
-    taptasks = TAPTasks("workbaskets.tasks.call_check_workbasket_sync")
+    taptasks = TAPTasks()
 
     celery_dictionary = {
         "celery@1": [
@@ -2548,7 +2548,12 @@ def test_clean_tasks():
     ]
 
     assert (
-        taptasks.clean_tasks(celery_dictionary, task_status="Active") == expected_result
+        taptasks.clean_tasks(
+            celery_dictionary,
+            task_status="Active",
+            task_name="workbaskets.tasks.call_check_workbasket_sync",
+        )
+        == expected_result
     )
 
 
