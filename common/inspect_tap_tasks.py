@@ -12,9 +12,6 @@ from workbaskets.models import WorkBasket
 class TAPTasks:
     """Get and filter Celery tasks on TAP's Celery queues."""
 
-    def __init__(self, task_name=None):
-        self.task_name = task_name
-
     @staticmethod
     def timestamp_to_datetime_string(timestamp) -> datetime:
         """Utility function used to convert a timestamp to a string formatted
@@ -23,13 +20,11 @@ class TAPTasks:
             datetime.fromtimestamp(timestamp),
         ).strftime(settings.DATETIME_FORMAT)
 
-    def clean_tasks(self, tasks_info, task_status="") -> List[Dict]:
+    def clean_tasks(self, tasks, task_status="", task_name="") -> List[Dict]:
         """Return a list of dictionaries, each describing Celery task, adding
         the given status."""
-        if not tasks_info:
+        if not tasks:
             return []
-
-        tasks = tasks_info.values()
 
         # tasks_info should be a dictionary of {celery worker : [related tasks]}
         # tasks_info.values() therefore is a list of lists of celery tasks grouped by worker
@@ -43,15 +38,15 @@ class TAPTasks:
         # As we cannot filter by worker name (in this case rule-check-worker), it filters by task name supplied when
         # initialising the class
 
-        if self.task_name:
+        if task_name:
             filtered_active_tasks = [
-                task for task in tasks_cleaned if task["name"] == self.task_name
+                task for task in tasks_cleaned if task["name"] == task_name
             ]
             return filtered_active_tasks
 
         return tasks_cleaned
 
-    def current_rule_checks(self) -> List[Dict]:
+    def current_rule_checks(self, task_name="") -> List[Dict]:
         """Return the list of tasks queued or started, ready to display in the
         view."""
         inspect = app.control.inspect()
@@ -59,9 +54,14 @@ class TAPTasks:
             return []
 
         due_tasks = self.clean_tasks(
-            inspect.active(),
+            inspect.active().values(),
             task_status="Active",
-        ) + self.clean_tasks(inspect.reserved(), task_status="Queued")
+            task_name=task_name,
+        ) + self.clean_tasks(
+            inspect.reserved().values(),
+            task_status="Queued",
+            task_name=task_name,
+        )
 
         # Remove any lingering tasks that have actually been revoked
         revoked_tasks = sum(inspect.revoked().values(), [])

@@ -1735,14 +1735,16 @@ class RuleCheckQueueView(
         "common.add_trackedmodel",
         "common.change_trackedmodel",
     ]
-    TASK_NAME = "workbaskets.tasks.call_check_workbasket_sync"
-    TapTasks = TAPTasks(task_name=TASK_NAME)
+
+    TapTasks = TAPTasks()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         try:
             context["celery_healthy"] = True
-            current_rule_checks = self.TapTasks.current_rule_checks()
+            current_rule_checks = self.TapTasks.current_rule_checks(
+                "workbaskets.tasks.call_check_workbasket_sync",
+            )
             context["current_rule_checks"] = current_rule_checks
             context["status_tag_generator"] = self.status_tag_generator
         except kombu.exceptions.OperationalError as oe:
