@@ -282,7 +282,7 @@ def test_duty_syntax_errors(sentence, exp_error_class, lark_duty_sentence_parser
     ],
 )
 def test_compound_duty_not_permitted_error(sentence, simple_lark_duty_sentence_parser):
-    """Tests that a parser not using the complete duty sentence grammar raises a
+    """Tests that a parser with `compound_duties` set to `False` raises a
     `CompoundDutyNotPermitted` exception when parsing a compound duty."""
     with pytest.raises(CompoundDutyNotPermitted):
         simple_lark_duty_sentence_parser.parse(sentence)

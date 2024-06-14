@@ -94,7 +94,7 @@ class DutySentenceParser:
 
     def __init__(
         self,
-        full_grammar: bool = True,
+        compound_duties: bool = True,
         date: datetime = datetime.now(),
         duty_expressions: Sequence[models.DutyExpression] = None,
         monetary_units: Sequence[models.MonetaryUnit] = None,
@@ -104,7 +104,7 @@ class DutySentenceParser:
     ):
         """
         By default this class uses the complete duty sentence grammar to parse all three types of duty: ad valorem, specific and compound.
-        Setting `full_grammar` to `False` will result in a parser instance that expects either an ad valorem duty or a specific duty only (i.e no compound duties).
+        Setting `compound_duties` to `False` will result in a parser instance that expects either an ad valorem duty or a specific duty only (i.e no compound duties).
 
         This class can also be optionally loaded up with custom lists of duty
         expressions, monetary units, and measurements on init (mainly useful for testing).
@@ -130,7 +130,7 @@ class DutySentenceParser:
             duty_amount_applicability_code=ApplicabilityCode.NOT_PERMITTED,
         )
 
-        self.full_grammar = full_grammar
+        self.compound_duties = compound_duties
 
         self.parser_rules = f"""
             slash: "/"
@@ -168,7 +168,7 @@ class DutySentenceParser:
 
         self.parser = Lark(
             self.parser_rules,
-            start="sentence" if full_grammar else "phrase",
+            start="sentence" if compound_duties else "phrase",
         )
 
         self.transformer = DutyTransformer(
@@ -178,7 +178,7 @@ class DutySentenceParser:
             measurements=measurements,
             measurement_units=measurement_units,
             measurement_unit_qualifiers=measurement_unit_qualifiers,
-            full_grammar=full_grammar,
+            compound_duties=compound_duties,
         )
 
     @property
@@ -217,7 +217,7 @@ class DutySentenceParser:
                 "5.5% + 100 EUR / % vol / foo bar",
             ],
         }
-        if self.full_grammar:
+        if self.compound_duties:
             del mapping[CompoundDutyNotPermitted]
         return mapping
 
@@ -252,7 +252,7 @@ class DutyTransformer(Transformer):
         self.monetary_units = kwargs.pop("monetary_units")
         self.measurement_units = kwargs.pop("measurement_units")
         self.measurement_unit_qualifiers = kwargs.pop("measurement_unit_qualifiers")
-        self.full_grammar = kwargs.pop("full_grammar")
+        self.compound_duties = kwargs.pop("compound_duties")
         super().__init__()
 
     def validate_duty_expressions(self, transformed):
@@ -398,7 +398,7 @@ class DutyTransformer(Transformer):
         """Performs validation and raises any errors before returning the
         transformed tree."""
         transformed = self._transform_tree(tree)
-        if not self.full_grammar and not isinstance(transformed, list):
+        if not self.compound_duties and not isinstance(transformed, list):
             to_list = []
             to_list.append(transformed)
             transformed = to_list

@@ -369,7 +369,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
 
         if price:
             date = measure_start_date or datetime.datetime.now()
-            parser = LarkDutySentenceParser(full_grammar=False, date=date)
+            parser = LarkDutySentenceParser(compound_duties=False, date=date)
             try:
                 components = parser.transform(price)
                 cleaned_data["duty_amount"] = components[0].get("duty_amount")

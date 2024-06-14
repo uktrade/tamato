@@ -1735,7 +1735,6 @@ def lark_duty_sentence_parser(
     measurement_units,
     unit_qualifiers,
 ) -> LarkDutySentenceParser:
-
     return LarkDutySentenceParser(
         duty_expressions=duty_expressions_list,
         monetary_units=monetary_units_list,
@@ -1756,7 +1755,7 @@ def simple_lark_duty_sentence_parser(
     """Returns a duty sentence parser instance that parses ad valorem and
     specific duties only (i.e no compound duties)."""
     return LarkDutySentenceParser(
-        full_grammar=False,
+        compound_duties=False,
         duty_expressions=duty_expressions_list,
         monetary_units=monetary_units_list,
         measurements=measurements,
