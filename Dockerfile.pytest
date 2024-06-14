@@ -2,7 +2,7 @@
 ###############
 # Build on Python-based image using default target platform (TARGETPLATFORM).
 
-FROM python:3.12-slim-bookworm
+FROM python:3.12-bookworm
 
 ARG TARGETPLATFORM
 ARG TARGETARCH
