@@ -29,7 +29,7 @@ class TAPTasks:
         # tasks_info should be a dictionary of {celery worker : [related tasks]}
         # tasks_info.values() therefore is a list of lists of celery tasks grouped by worker
         tasks_cleaned = []
-        for task in tasks:
+        for task in tasks.values():
             for item in task:
                 if item:
                     item["status"] = task_status
@@ -54,11 +54,11 @@ class TAPTasks:
             return []
 
         due_tasks = self.clean_tasks(
-            inspect.active().values(),
+            inspect.active(),
             task_status="Active",
             task_name=task_name,
         ) + self.clean_tasks(
-            inspect.reserved().values(),
+            inspect.reserved(),
             task_status="Queued",
             task_name=task_name,
         )
