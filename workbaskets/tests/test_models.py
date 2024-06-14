@@ -327,7 +327,7 @@ def test_workbasket_clean_does_not_run_business_rules():
     with add_business_rules(type(model), TestRule):
         model.transaction.workbasket.full_clean()
 
-    assert TestRule.validate.not_called()
+    TestRule.validate.assert_not_called()
 
 
 def test_current_transaction_returns_last_approved_transaction(
