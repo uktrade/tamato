@@ -1736,13 +1736,12 @@ class RuleCheckQueueView(
         "common.change_trackedmodel",
     ]
 
-    tap_tasks = TAPTasks()
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tap_tasks = TAPTasks()
         try:
             context["celery_healthy"] = True
-            current_rule_checks = self.tap_tasks.current_rule_checks(
+            current_rule_checks = tap_tasks.current_rule_checks(
                 "workbaskets.tasks.call_check_workbasket_sync",
             )
             context["current_rule_checks"] = current_rule_checks
