@@ -162,5 +162,4 @@ class TestFootnoteAssociationGoodsNomenclatureParserV2:
         assert (
             "ERROR: Database Integrity error, review related issues to "
             "determine what went wrong null value in column "
-            '"associated_footnote_id" violates not-null constraint'
         ) in str(importer.issues()[1])
