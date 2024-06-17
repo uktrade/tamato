@@ -614,16 +614,20 @@ CROWN_DEPENDENCIES_API_CRON = (
     else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
 )
 
+CELERY_BEAT_SCHEDULE = {}
+
 # `SQLITE_EXPORT_CRONTAB` sets the time, in crontab format, that an Sqlite
 # snapshot task is scheduled by Celery Beat for execution by a Celery task.
 # (See https://en.wikipedia.org/wiki/Cron for format description.)
 SQLITE_EXPORT_CRONTAB = os.environ.get("SQLITE_EXPORT_CRONTAB", "05 19 * * *")
-CELERY_BEAT_SCHEDULE = {
-    "sqlite_export": {
+ENABLE_SQLITE_PUBLISHING = is_truthy(
+    os.environ.get("ENABLE_SQLITE_PUBLISHING", "True"),
+)
+if ENABLE_SQLITE_PUBLISHING:
+    CELERY_BEAT_SCHEDULE["sqlite_export"] = {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
         "schedule": crontab(*SQLITE_EXPORT_CRONTAB.split()),
-    },
-}
+    }
 
 if ENABLE_CROWN_DEPENDENCIES_PUBLISHING:
     CELERY_BEAT_SCHEDULE["crown_dependencies_api_publish"] = {
