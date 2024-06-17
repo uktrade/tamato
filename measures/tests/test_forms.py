@@ -978,10 +978,13 @@ def test_measure_forms_conditions_wizard_valid_duty(date_ranges, duty_sentence_p
 @pytest.mark.parametrize(
     "reference_price, message",
     [
-        ("invalid duty", "Enter a valid reference price or quantity."),
+        (
+            "invalid duty",
+            "No matching duty expression found at character 1. \n\nCheck the validity period of the duty expression and that you are using the correct prefix. ",
+        ),
         (
             "3.5 % + 11 GBP / 100 kg",
-            "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+            "A compound duty expression was found at character 7. \n\nCheck that you are entering a single duty amount or a duty amount together with a measurement unit (and measurement unit qualifier if required). ",
         ),
     ],
 )
@@ -1014,10 +1017,13 @@ def test_measure_forms_conditions_invalid_duty(
 @pytest.mark.parametrize(
     "reference_price, message",
     [
-        ("invalid duty", "Enter a valid reference price or quantity."),
+        (
+            "invalid duty",
+            "No matching duty expression found at character 1. \n\nCheck the validity period of the duty expression and that you are using the correct prefix. ",
+        ),
         (
             "3.5 % + 11 GBP / 100 kg",
-            "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+            "A compound duty expression was found at character 7. \n\nCheck that you are entering a single duty amount or a duty amount together with a measurement unit (and measurement unit qualifier if required). ",
         ),
     ],
 )
