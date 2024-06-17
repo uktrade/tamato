@@ -1,3 +1,5 @@
+import itertools
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict
 from typing import List
@@ -7,6 +9,17 @@ from django.utils.timezone import make_aware
 
 from common.celery import app
 from workbaskets.models import WorkBasket
+
+
+@dataclass
+class CeleryTask:
+    """Data class for active and queued celery tasks."""
+
+    task_id: str
+    workbasket_id: int
+    date_time_start: str
+    checks_completed: str
+    status: str
 
 
 class TAPTasks:
@@ -46,7 +59,7 @@ class TAPTasks:
 
         return tasks_cleaned
 
-    def current_rule_checks(self, task_name="") -> List[Dict]:
+    def current_rule_checks(self, task_name="") -> List[CeleryTask]:
         """Return the list of tasks queued or started, ready to display in the
         view."""
         inspect = app.control.inspect()
@@ -64,8 +77,9 @@ class TAPTasks:
         )
 
         # Remove any lingering tasks that have actually been revoked
-        revoked_tasks = sum(inspect.revoked().values(), [])
-        due_tasks = [task for task in due_tasks if task["id"] not in revoked_tasks]
+        if inspect.revoked():
+            revoked_tasks = list(itertools.chain(*inspect.revoked().values()))
+            due_tasks = [task for task in due_tasks if task["id"] not in revoked_tasks]
 
         results = []
 
@@ -81,14 +95,23 @@ class TAPTasks:
             workbasket = WorkBasket.objects.get(id=workbasket_id)
             num_completed, total = workbasket.rule_check_progress()
 
+            # results.append(
+            #     {
+            #         "task_id": task_info["id"],
+            #         "workbasket_id": workbasket_id,
+            #         "date_time_start": date_time_start,
+            #         "checks_completed": f"{num_completed} out of {total}",
+            #         "status": task_info["status"],
+            #     },
+            # )
             results.append(
-                {
-                    "task_id": task_info["id"],
-                    "workbasket_id": workbasket_id,
-                    "date_time_start": date_time_start,
-                    "checks_completed": f"{num_completed} out of {total}",
-                    "status": task_info["status"],
-                },
+                CeleryTask(
+                    task_info["id"],
+                    workbasket_id,
+                    date_time_start,
+                    f"{num_completed} out of {total}",
+                    task_info["status"],
+                ),
             )
 
         return results

@@ -15,6 +15,7 @@ from django.utils.timezone import localtime
 
 from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
+from common.inspect_tap_tasks import CeleryTask
 from common.inspect_tap_tasks import TAPTasks
 from common.models.utils import override_current_transaction
 from common.tests import factories
@@ -2486,7 +2487,7 @@ def test_workbasket_comment_list_view(valid_user_client, user_workbasket):
 def test_clean_tasks():
     """Test that the clean_tasks function of TAPTasks class returns a cleaned
     list of tasks from Celery task dictionary."""
-    taptasks = TAPTasks()
+    tap_tasks = TAPTasks()
 
     celery_dictionary = {
         "celery@1": [
@@ -2548,7 +2549,7 @@ def test_clean_tasks():
     ]
 
     assert (
-        taptasks.clean_tasks(
+        tap_tasks.clean_tasks(
             celery_dictionary,
             task_status="Active",
             task_name="workbaskets.tasks.call_check_workbasket_sync",
@@ -2561,31 +2562,19 @@ def test_current_rule_checks_is_called(valid_user_client):
     """Test that current_rule_checks function gets called when a user goes to
     the rule check page and the page correctly displays the returned list of
     rule check tasks."""
+
     return_value = [
-        {
-            "task_id": "12345",
-            "workbasket_id": "1",
-            "date_time_start": TAPTasks.timestamp_to_datetime_string(
-                1718098484.8248513,
-            ),
-            "checks_completed": "54 out of 100",
-            "status": "Active",
-        },
-        {
-            "task_id": "234567",
-            "workbasket_id": "2",
-            "date_time_start": "",
-            "checks_completed": "0 out of 100",
-            "status": "Queued",
-        },
-        {
-            "task_id": "334568",
-            "workbasket_id": "3",
-            "date_time_start": "",
-            "checks_completed": "0 out of 100",
-            "status": "Queued",
-        },
+        CeleryTask(
+            "12345",
+            1,
+            TAPTasks.timestamp_to_datetime_string(1718098484.8248514),
+            "54 out of 100",
+            "Active",
+        ),
+        CeleryTask("23456", 2, "", "0 out of 100", "Queued"),
+        CeleryTask("34567", 3, "", "0 out of 100", "Queued"),
     ]
+
     with patch.object(
         TAPTasks,
         "current_rule_checks",
