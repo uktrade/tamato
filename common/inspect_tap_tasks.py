@@ -95,15 +95,6 @@ class TAPTasks:
             workbasket = WorkBasket.objects.get(id=workbasket_id)
             num_completed, total = workbasket.rule_check_progress()
 
-            # results.append(
-            #     {
-            #         "task_id": task_info["id"],
-            #         "workbasket_id": workbasket_id,
-            #         "date_time_start": date_time_start,
-            #         "checks_completed": f"{num_completed} out of {total}",
-            #         "status": task_info["status"],
-            #     },
-            # )
             results.append(
                 CeleryTask(
                     task_info["id"],
