@@ -55,7 +55,7 @@ notifications-python-client==6.4.1
 openpyxl==3.0.7
 pandas~=2.0
 parsec==3.8
-psycopg2-binary==2.9.*
+psycopg[binary]==3.1.18
 py_w3c==0.3.1
 pygments>=2.8
 pytest-asyncio==0.20.3

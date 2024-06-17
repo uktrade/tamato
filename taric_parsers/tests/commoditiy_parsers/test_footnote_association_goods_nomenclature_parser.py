@@ -156,11 +156,11 @@ class TestFootnoteAssociationGoodsNomenclatureParserV2:
         assert type(target_message.taric_object) == self.target_parser_class
 
         assert len(importer.issues()) == 2
-        assert "ERROR: Missing expected linked object FootnoteParserV2\n" in str(
+        assert ("ERROR: Missing expected linked object FootnoteParserV2") in str(
             importer.issues()[0],
         )
         assert (
-            "ERROR: Database Integrity error, review related issues to determine what went wrong null value in column "
-            '"associated_footnote_id" of relation "commodities_footnoteassociationgoodsnomenclature" violates not-null '
-            "constraint\n" in str(importer.issues()[1])
-        )
+            "ERROR: Database Integrity error, review related issues to "
+            "determine what went wrong null value in column "
+            '"associated_footnote_id" violates not-null constraint'
+        ) in str(importer.issues()[1])
