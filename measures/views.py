@@ -1126,6 +1126,7 @@ class MeasuresCreateProcessQueue(
         context = super().get_context_data(**kwargs)
 
         context["selected_link"] = "all"
+        context["selected_tab"] = "measure-process-queue"
         processing_state = self.request.GET.get("processing_state")
 
         if processing_state == "PROCESSING":

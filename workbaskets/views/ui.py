@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 
 import boto3
 import django_filters
+import kombu
 from botocore.client import Config
 from celery.result import AsyncResult
 from django.conf import settings
@@ -39,6 +40,7 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
+from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
 from common.util import format_date_string
@@ -1722,3 +1724,49 @@ class WorkBasketCommentDelete(
     form_class = forms.WorkBasketCommentDeleteForm
     template_name = "workbaskets/comments/delete.jinja"
     permission_required = ["tasks.delete_comment"]
+
+
+class RuleCheckQueueView(
+    PermissionRequiredMixin,
+    TemplateView,
+):
+    template_name = "workbaskets/rule_check_queue.jinja"
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tap_tasks = TAPTasks()
+        try:
+            context["celery_healthy"] = True
+            current_rule_checks = tap_tasks.current_rule_checks(
+                "workbaskets.tasks.call_check_workbasket_sync",
+            )
+            context["current_rule_checks"] = current_rule_checks
+            context["status_tag_generator"] = self.status_tag_generator
+        except kombu.exceptions.OperationalError as oe:
+            context["celery_healthy"] = False
+        context["selected_tab"] = "rule-check-queue"
+        return context
+
+    def status_tag_generator(self, task_status) -> dict:
+        """Returns a dict with text and a CSS class for a UI-friendly label for
+        a rule check task."""
+
+        if task_status == "Active":
+            return {
+                "text": "Running",
+                "tag_class": "tamato-badge-light-green",
+            }
+        elif task_status == "Queued":
+            return {
+                "text": "Queued",
+                "tag_class": "tamato-badge-light-grey",
+            }
+        else:
+            return {
+                "text": task_status,
+                "tag_class": "",
+            }
