@@ -42,8 +42,9 @@ from django.db.models.functions.text import Upper
 from django.db.transaction import atomic
 from django.template import loader
 from lxml import etree
-from psycopg2.extras import DateRange
-from psycopg2.extras import DateTimeRange
+from psycopg.types.range import DateRange
+from psycopg.types.range import TimestampRange
+# from psycopg.extras import DateTimeRange
 
 major, minor, patch = python_version_tuple()
 
@@ -190,7 +191,7 @@ class TaricDateRange(DateRange):
 
 
 # XXX keep for migrations
-class TaricDateTimeRange(DateTimeRange):
+class TaricDateTimeRange(TimestampRange):
     def __init__(self, lower=None, upper=None, bounds="[]", empty=False):
         if not upper:
             bounds = "[)"
