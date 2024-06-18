@@ -11,7 +11,6 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.models import TextChoices
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
@@ -974,23 +973,29 @@ class QuotaSuspensionOrBlockingCreateForm(
 
         return cleaned_data
 
-    @transaction.atomic
     def save(self, workbasket):
-        if self.cleaned_data["suspension_type"] == QuotaSuspensionType.SUSPENSION:
-            object = models.QuotaSuspension.objects.create(
-                quota_definition=self.cleaned_data["quota_definition"],
-                description=self.cleaned_data["description"],
-                valid_between=self.cleaned_data["valid_between"],
-                update_type=UpdateType.CREATE,
-                transaction=workbasket.new_transaction(),
-            )
-        else:
-            object = models.QuotaBlocking.objects.create(
-                quota_definition=self.cleaned_data["quota_definition"],
-                blocking_period_type=self.cleaned_data["blocking_period_type"],
-                description=self.cleaned_data["description"],
-                valid_between=self.cleaned_data["valid_between"],
-                update_type=UpdateType.CREATE,
-                transaction=workbasket.new_transaction(),
-            )
-        return object
+        type_to_create_map = {
+            QuotaSuspensionType.SUSPENSION: self.create_suspension_period,
+            QuotaSuspensionType.BLOCKING: self.create_blocking_period,
+        }
+        create_object = type_to_create_map.get(self.cleaned_data["suspension_type"])
+        return create_object(workbasket=workbasket)
+
+    def create_suspension_period(self, workbasket):
+        return models.QuotaSuspension.objects.create(
+            quota_definition=self.cleaned_data["quota_definition"],
+            description=self.cleaned_data["description"],
+            valid_between=self.cleaned_data["valid_between"],
+            update_type=UpdateType.CREATE,
+            transaction=workbasket.new_transaction(),
+        )
+
+    def create_blocking_period(self, workbasket):
+        return models.QuotaBlocking.objects.create(
+            quota_definition=self.cleaned_data["quota_definition"],
+            blocking_period_type=self.cleaned_data["blocking_period_type"],
+            description=self.cleaned_data["description"],
+            valid_between=self.cleaned_data["valid_between"],
+            update_type=UpdateType.CREATE,
+            transaction=workbasket.new_transaction(),
+        )

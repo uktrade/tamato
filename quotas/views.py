@@ -745,16 +745,17 @@ class QuotaSuspensionOrBlockingCreate(
         return super().form_valid(form)
 
     def get_success_url(self):
-        if isinstance(self.object, QuotaSuspension):
-            return reverse(
+        redirect_map = {
+            QuotaSuspension: reverse(
                 "quota_suspension-ui-confirm-create",
                 kwargs={"sid": self.object.sid},
-            )
-        else:
-            return reverse(
+            ),
+            QuotaBlocking: reverse(
                 "quota_blocking-ui-confirm-create",
                 kwargs={"sid": self.object.sid},
-            )
+            ),
+        }
+        return redirect_map.get(type(self.object))
 
 
 class QuotaSuspensionConfirmCreate(TrackedModelDetailView):
