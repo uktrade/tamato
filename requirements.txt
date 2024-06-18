@@ -88,5 +88,5 @@ tenacity==8.3.0
 urllib3==1.26.19
 Werkzeug==3.0.3
 whitenoise==5.2.0
-wrapt==1.12.1
+wrapt==1.16.0
 xmldiff==2.4
