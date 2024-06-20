@@ -3,7 +3,7 @@ from datetime import datetime
 
 import factory
 import pytest
-from psycopg2._range import DateTimeTZRange
+from psycopg.types.range import TimestamptzRange
 
 from common.models import TrackedModel
 from common.models.transactions import TransactionPartition
@@ -121,7 +121,7 @@ def test_timestamp_migration(migrator, setup_content_types):
         FACTORY_CLASS=factories.FootnoteTypeFactory,
         transaction=transaction,
         version_group=version_groups[0],
-        valid_between=DateTimeTZRange(date.today()),
+        valid_between=TimestamptzRange(date.today()),
         polymorphic_ctype=footnotetype_content_type,
     )
     trked2 = factory.create(
@@ -129,7 +129,7 @@ def test_timestamp_migration(migrator, setup_content_types):
         FACTORY_CLASS=factories.FootnoteTypeFactory,
         transaction=transaction,
         version_group=version_groups[1],
-        valid_between=DateTimeTZRange(date.today()),
+        valid_between=TimestamptzRange(date.today()),
         polymorphic_ctype=footnotetype_content_type,
     )
 

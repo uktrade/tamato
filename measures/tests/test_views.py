@@ -976,9 +976,10 @@ def test_measure_update_invalid_conditions_only(
         in errors
     )
     assert (
-        "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)"
-        in errors
-    )
+        "A compound duty expression was found at character 6. \n\n"
+        "Check that you are entering a single duty amount "
+        "or a duty amount together with a measurement unit (and measurement unit qualifier if required). "
+    ) in errors
     assert (
         "For each condition you must complete either ‘reference price or quantity’ or ‘certificate, licence or document’."
         in errors
