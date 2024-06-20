@@ -46,7 +46,7 @@ def test_create_and_upload_envelope(
         name
         for name in s3_object_names(expected_bucket)
         if re.match(
-            f"^envelope/{envelope_name}__.*\.xml$",
+            rf"^envelope/{envelope_name}__.*\.xml$",
             name,
         )
     )
