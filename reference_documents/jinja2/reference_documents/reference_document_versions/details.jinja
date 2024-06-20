@@ -15,10 +15,10 @@
   }) }}
 {% endblock %}
 
-{% set preferential_rates_html %}
+{% set rates_html %}
 {% include "includes/tabs/preferential_rates.jinja" %}
 {% endset %}
-{% set preferential_quotas_html %}
+{% set quota_definitions_html %}
 {% include "includes/tabs/preferential_quotas.jinja" %}
 {% endset %}
 
@@ -28,14 +28,14 @@
             "label": "Preferential duty rates",
             "id": "core-data",
             "panel": {
-            "html": preferential_rates_html
+            "html": rates_html
             }
         },
         {
             "label": "Tariff quotas",
             "id": "tariff-quotas",
             "panel": {
-            "html": preferential_quotas_html
+            "html": quota_definitions_html
             }
         },
         ]

@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
 from django.urls import reverse
 
-from reference_documents.models import PreferentialQuota
+from reference_documents.models import RefQuotaDefinition
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.reference_documents
 class TestPreferentialQuotaEditView:
     def test_get_without_permissions(self, valid_user_client):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
 
         resp = valid_user_client.get(
             reverse(
@@ -23,7 +23,7 @@ class TestPreferentialQuotaEditView:
         assert resp.status_code == 403
 
     def test_get_with_permissions(self, superuser_client):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
 
         resp = superuser_client.get(
             reverse(
@@ -34,12 +34,12 @@ class TestPreferentialQuotaEditView:
         assert resp.status_code == 200
 
     def test_post_with_permissions(self, superuser_client):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
 
         post_data = {
-            "preferential_quota_order_number": pref_quota.preferential_quota_order_number.pk,
+            "ref_order_number": pref_quota.ref_order_number.pk,
             "commodity_code": pref_quota.commodity_code,
-            "quota_duty_rate": "33%",
+            "duty_rate": "33%",
             "volume": 3000,
             "measurement": "tonnes",
             "start_date_0": 1,
@@ -64,15 +64,15 @@ class TestPreferentialQuotaEditView:
 
         assert pref_quota.volume == "3000"
         assert pref_quota.measurement == "tonnes"
-        assert pref_quota.quota_duty_rate == "33%"
+        assert pref_quota.duty_rate == "33%"
 
     def test_post_without_permissions(self, valid_user_client):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
 
         post_data = {
-            "preferential_quota_order_number": pref_quota.preferential_quota_order_number.pk,
+            "ref_order_number": pref_quota.ref_order_number.pk,
             "commodity_code": pref_quota.commodity_code,
-            "quota_duty_rate": "33%",
+            "duty_rate": "33%",
             "volume": 3000,
             "measurement": "tonnes",
             "start_date_0": 1,
@@ -109,7 +109,7 @@ class TestPreferentialQuotaCreate:
         assert resp.status_code == 403
 
     def test_get_without_permissions_with_order_number(self, valid_user_client):
-        pref_order_number = factories.PreferentialQuotaOrderNumberFactory.create()
+        pref_order_number = factories.RefOrderNumberFactory.create()
 
         resp = valid_user_client.get(
             reverse(
@@ -136,7 +136,7 @@ class TestPreferentialQuotaCreate:
         assert resp.status_code == 200
 
     def test_get_with_permissions_with_order_number(self, superuser_client):
-        pref_order_number = factories.PreferentialQuotaOrderNumberFactory.create()
+        pref_order_number = factories.RefOrderNumberFactory.create()
 
         resp = superuser_client.get(
             reverse(
@@ -151,12 +151,12 @@ class TestPreferentialQuotaCreate:
         assert resp.status_code == 200
 
     def test_post_without_permissions(self, valid_user_client):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory.create()
+        pref_quota_order_number = factories.RefOrderNumberFactory.create()
 
         post_data = {
-            "preferential_quota_order_number": pref_quota_order_number.pk,
+            "ref_order_number": pref_quota_order_number.pk,
             "commodity_code": "1231231230",
-            "quota_duty_rate": "33%",
+            "duty_rate": "33%",
             "volume": 3000,
             "measurement": "tonnes",
             "start_date_0": 1,
@@ -178,12 +178,12 @@ class TestPreferentialQuotaCreate:
         assert resp.status_code == 403
 
     def test_post_without_permissions_with_order_number(self, valid_user_client):
-        pref_order_number = factories.PreferentialQuotaOrderNumberFactory.create()
+        pref_order_number = factories.RefOrderNumberFactory.create()
 
         post_data = {
-            "preferential_quota_order_number": pref_order_number.pk,
+            "ref_order_number": pref_order_number.pk,
             "commodity_code": "1231231230",
-            "quota_duty_rate": "33%",
+            "duty_rate": "33%",
             "volume": 3000,
             "measurement": "tonnes",
             "start_date_0": 1,
@@ -208,12 +208,12 @@ class TestPreferentialQuotaCreate:
         assert resp.status_code == 403
 
     def test_post_with_permissions(self, superuser_client):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory.create()
+        pref_quota_order_number = factories.RefOrderNumberFactory.create()
 
         post_data = {
-            "preferential_quota_order_number": pref_quota_order_number.pk,
+            "ref_order_number": pref_quota_order_number.pk,
             "commodity_code": "1231231230",
-            "quota_duty_rate": "33%",
+            "duty_rate": "33%",
             "volume": 3000,
             "measurement": "tonnes",
             "start_date_0": 1,
@@ -237,12 +237,12 @@ class TestPreferentialQuotaCreate:
         assert resp.status_code == 302
 
     def test_post_with_permissions_with_order_number(self, superuser_client):
-        pref_order_number = factories.PreferentialQuotaOrderNumberFactory.create()
+        pref_order_number = factories.RefOrderNumberFactory.create()
 
         post_data = {
-            "preferential_quota_order_number": pref_order_number.pk,
+            "ref_order_number": pref_order_number.pk,
             "commodity_code": "1231231230",
-            "quota_duty_rate": "33%",
+            "duty_rate": "33%",
             "volume": 3000,
             "measurement": "tonnes",
             "start_date_0": 1,
@@ -278,17 +278,17 @@ class TestPreferentialQuotaBulkCreate:
         client.force_login(valid_user)
 
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        preferential_quota_order_number = (
-            factories.PreferentialQuotaOrderNumberFactory.create(
+        ref_order_number = (
+            factories.RefOrderNumberFactory.create(
                 reference_document_version=ref_doc_version,
             )
         )
         assert not ref_doc_version.preferential_quotas()
 
         data = {
-            "preferential_quota_order_number": preferential_quota_order_number.pk,
+            "ref_order_number": ref_order_number.pk,
             "commodity_codes": "1234567890\r\n2345678901",
-            "quota_duty_rate": "5%",
+            "duty_rate": "5%",
             "measurement": "KG",
             "start_date_0_0": "1",
             "start_date_0_1": "1",
@@ -317,7 +317,7 @@ class TestPreferentialQuotaBulkCreate:
             "reference_documents:preferential_quotas_bulk_create_for_order",
             kwargs={
                 "pk": ref_doc_version.pk,
-                "order_pk": preferential_quota_order_number.pk,
+                "order_pk": ref_order_number.pk,
             },
         )
         resp = client.get(create_url)
@@ -345,17 +345,17 @@ class TestPreferentialQuotaBulkCreate:
         client.force_login(valid_user)
 
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        preferential_quota_order_number = (
-            factories.PreferentialQuotaOrderNumberFactory.create(
+        ref_order_number = (
+            factories.RefOrderNumberFactory.create(
                 reference_document_version=ref_doc_version,
             )
         )
         assert not ref_doc_version.preferential_quotas()
 
         data = {
-            "preferential_quota_order_number": preferential_quota_order_number.pk,
+            "ref_order_number": ref_order_number.pk,
             "commodity_codes": "1234567890\r\n2345678901\r\n12345678910",
-            "quota_duty_rate": "",
+            "duty_rate": "",
             "measurement": "",
             "start_date_0_0": "1",
             "start_date_0_1": "1",
@@ -409,17 +409,17 @@ class TestPreferentialQuotaBulkCreate:
         """Test that posting the bulk create form without relevant user
         permissions does not work."""
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        preferential_quota_order_number = (
-            factories.PreferentialQuotaOrderNumberFactory.create(
+        ref_order_number = (
+            factories.RefOrderNumberFactory.create(
                 reference_document_version=ref_doc_version,
             )
         )
         assert not ref_doc_version.preferential_quotas()
 
         data = {
-            "preferential_quota_order_number": preferential_quota_order_number.pk,
+            "ref_order_number": ref_order_number.pk,
             "commodity_codes": "1234567890\r\n2345678901",
-            "quota_duty_rate": "5%",
+            "duty_rate": "5%",
             "measurement": "KG",
             "start_date_0_0": "1",
             "start_date_0_1": "1",
@@ -457,9 +457,9 @@ class TestPreferentialQuotaBulkCreate:
 @pytest.mark.reference_documents
 class TestPreferentialQuotaDelete:
     def test_get_without_permissions(self, valid_user_client):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
         ref_doc_version = (
-            pref_quota.preferential_quota_order_number.reference_document_version
+            pref_quota.ref_order_number.reference_document_version
         )
 
         resp = valid_user_client.get(
@@ -474,14 +474,14 @@ class TestPreferentialQuotaDelete:
         assert resp.status_code == 403
 
     def test_get_with_permissions(self, superuser_client):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
         ref_doc_version = (
-            pref_quota.preferential_quota_order_number.reference_document_version
+            pref_quota.ref_order_number.reference_document_version
         )
 
         resp = superuser_client.get(
             reverse(
-                "reference_documents:preferential_quotas_delete",
+                "reference_documents:ref-quota-definition-delete",
                 kwargs={
                     "pk": pref_quota.pk,
                     "version_pk": ref_doc_version.pk,
@@ -492,15 +492,15 @@ class TestPreferentialQuotaDelete:
         assert resp.status_code == 200
 
     def test_post_with_permission(self, superuser_client):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
         pref_quota_id = pref_quota.pk
         ref_doc_version = (
-            pref_quota.preferential_quota_order_number.reference_document_version
+            pref_quota.ref_order_number.reference_document_version
         )
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:preferential_quotas_delete",
+                "reference_documents:ref-quota-definition-delete",
                 kwargs={
                     "pk": pref_quota.pk,
                     "version_pk": ref_doc_version.pk,
@@ -510,21 +510,21 @@ class TestPreferentialQuotaDelete:
         )
 
         assert resp.status_code == 302
-        results = PreferentialQuota.objects.all().filter(
+        results = RefQuotaDefinition.objects.all().filter(
             id=pref_quota_id,
         )
         assert len(results) == 0
 
     def test_post_without_permission(self, valid_user_client):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
         pref_quota_id = pref_quota.pk
         ref_doc_version = (
-            pref_quota.preferential_quota_order_number.reference_document_version
+            pref_quota.ref_order_number.reference_document_version
         )
 
         resp = valid_user_client.post(
             reverse(
-                "reference_documents:preferential_quotas_delete",
+                "reference_documents:ref-quota-definition-delete",
                 kwargs={
                     "pk": pref_quota.pk,
                     "version_pk": ref_doc_version.pk,
@@ -534,7 +534,7 @@ class TestPreferentialQuotaDelete:
         )
 
         assert resp.status_code == 403
-        results = PreferentialQuota.objects.all().filter(
+        results = RefQuotaDefinition.objects.all().filter(
             id=pref_quota_id,
         )
         assert len(results) == 1

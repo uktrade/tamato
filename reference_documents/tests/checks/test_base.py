@@ -13,13 +13,13 @@ from geo_areas.models import GeographicalArea, GeographicalAreaDescription
 from measures.models import Measure
 from quotas.models import QuotaOrderNumber, QuotaDefinition
 from reference_documents.check.base import BaseCheck, BasePreferentialQuotaCheck
-from reference_documents.forms.preferential_quota_order_number_forms import (
-    PreferentialQuotaOrderNumberCreateUpdateForm,
+from reference_documents.forms.ref_order_number_forms import (
+    ,
 )
-from reference_documents.forms.preferential_quota_order_number_forms import (
+from reference_documents.forms.ref_order_number_forms import (
     PreferentialQuotaOrderNumberDeleteForm,
 )
-from reference_documents.models import PreferentialQuotaOrderNumber, PreferentialRate
+from reference_documents.models import PreferentialQuotaOrderNumber, PreferentialRate, RefOrderNumber
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -38,48 +38,48 @@ class TestBaseCheck:
 
 class TestBasePreferentialQuotaCheck:
     def test_init(self):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
         target = BasePreferentialQuotaCheck(pref_quota)
         assert target.dependent_on_passing_check is None
         assert target.preferential_quota == pref_quota
-        assert target.preferential_quota_order_number == pref_quota.preferential_quota_order_number
+        assert target.ref_order_number == pref_quota.ref_order_number
         assert target.reference_document_version == pref_quota.reference_document_version
         assert target.reference_document == pref_quota.reference_document_version.reference_document
 
     def test_order_number_no_match(self):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
         target = BasePreferentialQuotaCheck(pref_quota)
         assert target.order_number() is None
 
     def test_order_number_match(self):
         tap_order_number = QuotaOrderNumberFactory.create()
-        pref_quota = factories.PreferentialQuotaFactory.create(
-            preferential_quota_order_number__quota_order_number=tap_order_number.order_number
+        pref_quota = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__quota_order_number=tap_order_number.order_number
         )
         target = BasePreferentialQuotaCheck(pref_quota)
         assert target.order_number() == tap_order_number
 
     def test_geo_area_no_match(self):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
         target = BasePreferentialQuotaCheck(pref_quota)
         assert target.geo_area() is None
 
     def test_geo_area_match(self):
         tap_geo_area = GeographicalAreaFactory.create()
-        pref_quota = factories.PreferentialQuotaFactory.create(
+        pref_quota = factories.RefQuotaDefinitionFactory.create(
             reference_document_version__reference_document__area_id=tap_geo_area.descriptions.first().description
         )
         target = BasePreferentialQuotaCheck(pref_quota)
         assert target.geo_area() == tap_geo_area
 
     def test_commodity_code_no_match(self):
-        pref_quota = factories.PreferentialQuotaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create()
         target = BasePreferentialQuotaCheck(pref_quota)
         assert target.commodity_code() is None
 
     def test_commodity_code_match(self):
         comm_code = GoodsNomenclatureFactory.create()
-        pref_quota = factories.PreferentialQuotaFactory.create(
+        pref_quota = factories.RefQuotaDefinitionFactory.create(
             commodity_code=comm_code.item_id
         )
         target = BasePreferentialQuotaCheck(pref_quota)
@@ -175,15 +175,15 @@ class TestBasePreferentialQuotaCheck:
 
 
 class BasePreferentialQuotaOrderNumberCheck(BaseCheck):
-    def __init__(self, preferential_quota_order_number: PreferentialQuotaOrderNumber):
+    def __init__(self, ref_order_number: RefOrderNumber):
         super().__init__()
-        self.preferential_quota_order_number = preferential_quota_order_number
+        self.ref_order_number = ref_order_number
 
     def order_number(self):
         try:
             order_number = QuotaOrderNumber.objects.all().get(
-                order_number=self.preferential_quota_order_number.quota_order_number,
-                valid_between=self.preferential_quota_order_number.valid_between,
+                order_number=self.ref_order_number.order_number,
+                valid_between=self.ref_order_number.valid_between,
             )
             return order_number
         except QuotaOrderNumber.DoesNotExist:

@@ -1,16 +1,16 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from reference_documents.forms.preferential_quota_forms import (
-    PreferentialQuotaBulkCreateForm,
+from reference_documents.forms.ref_quota_definition_forms import  (
+    RefQuotaDefinitionBulkCreateForm,
 )
-from reference_documents.forms.preferential_quota_forms import (
-    PreferentialQuotaCreateUpdateForm,
+from reference_documents.forms.ref_quota_definition_forms import (
+    RefQuotaDefinitionCreateUpdateForm,
 )
-from reference_documents.forms.preferential_quota_forms import (
-    PreferentialQuotaDeleteForm,
+from reference_documents.forms.ref_quota_definition_forms import (
+    RefQuotaDefinitionDeleteForm,
 )
-from reference_documents.models import PreferentialQuota
+from reference_documents.models import RefQuotaDefinition
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -19,106 +19,106 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.reference_documents
 class TestPreferentialQuotaCreateUpdateForm:
     def test_init(self):
-        pref_quota = factories.PreferentialQuotaFactory()
+        ref_quota_definition = factories.RefQuotaDefinitionFactory()
 
-        target = PreferentialQuotaCreateUpdateForm(
-            pref_quota.preferential_quota_order_number.reference_document_version,
-            pref_quota.preferential_quota_order_number,
-            instance=pref_quota,
+        target = RefQuotaDefinitionCreateUpdateForm(
+            ref_quota_definition.ref_order_number.reference_document_version,
+            ref_quota_definition.ref_order_number,
+            instance=ref_quota_definition,
         )
 
         # it sets initial values
         assert (
-            target.initial["preferential_quota_order_number"]
-            == pref_quota.preferential_quota_order_number
+            target.initial["ref_order_number"]
+            == ref_quota_definition.ref_order_number
         )
         assert (
             target.reference_document_version
-            == pref_quota.preferential_quota_order_number.reference_document_version
+            == ref_quota_definition.ref_order_number.reference_document_version
         )
         assert target.Meta.fields == [
-            "preferential_quota_order_number",
+            "ref_order_number",
             "commodity_code",
-            "quota_duty_rate",
+            "duty_rate",
             "volume",
             "measurement",
             "valid_between",
         ]
 
-    def test_clean_quota_duty_rate_pass(self):
-        pref_quota = factories.PreferentialQuotaFactory()
+    def test_clean_duty_rate_pass(self):
+        ref_quota_definition = factories.RefQuotaDefinitionFactory()
 
         data = {
-            "quota_duty_rate": "10%",
+            "duty_rate": "10%",
         }
 
-        target = PreferentialQuotaCreateUpdateForm(
-            pref_quota.preferential_quota_order_number.reference_document_version,
-            pref_quota.preferential_quota_order_number,
-            instance=pref_quota,
+        target = RefQuotaDefinitionCreateUpdateForm(
+            ref_quota_definition.ref_order_number.reference_document_version,
+            ref_quota_definition.ref_order_number,
+            instance=ref_quota_definition,
             data=data,
         )
 
         assert not target.is_valid()
-        assert target.clean_quota_duty_rate() == "10%"
+        assert target.clean_duty_rate() == "10%"
 
-    def test_clean_quota_duty_rate_fail(self):
-        pref_quota = factories.PreferentialQuotaFactory()
+    def test_clean_duty_rate_fail(self):
+        ref_quota_definition = factories.RefQuotaDefinitionFactory()
 
         data = {
-            "quota_duty_rate": "",
+            "duty_rate": "",
         }
 
-        target = PreferentialQuotaCreateUpdateForm(
-            pref_quota.preferential_quota_order_number.reference_document_version,
-            pref_quota.preferential_quota_order_number,
-            instance=pref_quota,
+        target = RefQuotaDefinitionCreateUpdateForm(
+            ref_quota_definition.ref_order_number.reference_document_version,
+            ref_quota_definition.ref_order_number,
+            instance=ref_quota_definition,
             data=data,
         )
 
         assert not target.is_valid()
 
         with pytest.raises(ValidationError) as ve:
-            target.clean_quota_duty_rate()
+            target.clean_duty_rate()
 
         assert "Quota duty Rate is not valid - it must have a value" in str(ve)
 
-    def test_clean_preferential_quota_order_number_pass(self):
-        pref_quota = factories.PreferentialQuotaFactory()
+    def test_clean_ref_order_number_pass(self):
+        ref_quota_definition = factories.RefQuotaDefinitionFactory()
 
         data = {
-            "preferential_quota_order_number": pref_quota.preferential_quota_order_number.pk,
+            "ref_order_number": ref_quota_definition.ref_order_number.pk,
         }
 
-        target = PreferentialQuotaCreateUpdateForm(
-            pref_quota.preferential_quota_order_number.reference_document_version,
-            pref_quota.preferential_quota_order_number,
-            instance=pref_quota,
+        target = RefQuotaDefinitionCreateUpdateForm(
+            ref_quota_definition.ref_order_number.reference_document_version,
+            ref_quota_definition.ref_order_number,
+            instance=ref_quota_definition,
             data=data,
         )
 
         assert not target.is_valid()
 
-        assert target.clean_preferential_quota_order_number() is not None
+        assert target.clean_ref_order_number() is not None
 
-    def test_preferential_quota_order_number_fail(self):
-        pref_quota = factories.PreferentialQuotaFactory()
+    def test_ref_order_number_fail(self):
+        ref_quota_definition = factories.RefQuotaDefinitionFactory()
 
         data = {
-            "preferential_quota_order_number": None,
+            "ref_order_number": None,
         }
 
-        target = PreferentialQuotaCreateUpdateForm(
-            pref_quota.preferential_quota_order_number.reference_document_version,
-            pref_quota.preferential_quota_order_number,
-            instance=pref_quota,
+        target = RefQuotaDefinitionCreateUpdateForm(
+            ref_quota_definition.ref_order_number.reference_document_version,
+            ref_quota_definition.ref_order_number,
+            instance=ref_quota_definition,
             data=data,
         )
 
         assert not target.is_valid()
 
         with pytest.raises(ValidationError) as ve:
-            target.clean_preferential_quota_order_number()
+            target.clean_ref_order_number()
 
         assert "Quota order number is required" in str(ve)
 
@@ -126,15 +126,15 @@ class TestPreferentialQuotaCreateUpdateForm:
 @pytest.mark.reference_documents
 class TestPreferentialQuotaDeleteForm:
     def test_init(self):
-        pref_quota = factories.PreferentialQuotaFactory()
+        ref_quota_definition = factories.RefQuotaDefinitionFactory()
 
-        target = PreferentialQuotaDeleteForm(
-            instance=pref_quota,
+        target = RefQuotaDefinitionDeleteForm(
+            instance=ref_quota_definition,
         )
 
-        assert target.instance == pref_quota
+        assert target.instance == ref_quota_definition
         assert target.Meta.fields == []
-        assert target.Meta.model == PreferentialQuota
+        assert target.Meta.model == RefQuotaDefinition
 
 
 @pytest.mark.reference_documents
@@ -142,15 +142,15 @@ def test_preferential_quota_bulk_create_valid_data():
     """Test that preferential quota bulk create is valid when completed
     correctly."""
     ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-    preferential_quota_order_number = (
-        factories.PreferentialQuotaOrderNumberFactory.create(
+    ref_order_number = (
+        factories.RefOrderNumberFactory.create(
             reference_document_version=ref_doc_version,
         )
     )
     data = {
-        "preferential_quota_order_number": preferential_quota_order_number.pk,
+        "ref_order_number": ref_order_number.pk,
         "commodity_codes": "1234567890\r\n2345678901",
-        "quota_duty_rate": "5%",
+        "duty_rate": "5%",
         "measurement": "KG",
         "start_date_0_0": "1",
         "start_date_0_1": "1",
@@ -175,7 +175,7 @@ def test_preferential_quota_bulk_create_valid_data():
         "volume_2": "300",
     }
 
-    form = PreferentialQuotaBulkCreateForm(
+    form = RefQuotaDefinitionBulkCreateForm(
         data=data,
         reference_document_version=ref_doc_version,
     )
@@ -187,15 +187,15 @@ def test_preferential_quota_bulk_create_invalid_data():
     """Test that preferential quota bulk create is invalid when completed
     incorrectly."""
     ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-    preferential_quota_order_number = (
-        factories.PreferentialQuotaOrderNumberFactory.create(
+    ref_order_number = (
+        factories.RefOrderNumberFactory.create(
             reference_document_version=ref_doc_version,
         )
     )
     data = {
-        "preferential_quota_order_number": preferential_quota_order_number,
+        "ref_order_number": ref_order_number,
         "commodity_codes": "1234567890\r\n2345678901\r\n12345678910",
-        "quota_duty_rate": "",
+        "duty_rate": "",
         "measurement": "",
         "start_date_0_0": "1",
         "start_date_0_1": "1",
@@ -220,7 +220,7 @@ def test_preferential_quota_bulk_create_invalid_data():
         "volume_2": "300",
     }
 
-    form = PreferentialQuotaBulkCreateForm(
+    form = RefQuotaDefinitionBulkCreateForm(
         data=data,
         reference_document_version=ref_doc_version,
     )
@@ -229,7 +229,7 @@ def test_preferential_quota_bulk_create_invalid_data():
         "Ensure all commodity codes are 10 digits and each on a new line"
         in form.errors["commodity_codes"]
     )
-    assert "Duty rate is required" in form.errors["quota_duty_rate"]
+    assert "Duty rate is required" in form.errors["duty_rate"]
     assert "Measurement is required" in form.errors["measurement"]
     assert (
         "The end date must be the same as or after the start date."

@@ -149,7 +149,7 @@ class TestReferenceDocumentVersionViews:
         )
         client.force_login(valid_user)
 
-        preferential_rate = factories.PreferentialRateFactory.create()
+        preferential_rate = factories.RefRateFactory.create()
         ref_doc_version = preferential_rate.reference_document_version
         ref_doc = ref_doc_version.reference_document
 
@@ -215,12 +215,12 @@ class TestReferenceDocumentVersionViews:
             reference_document=ref_doc,
             version=1.0,
         )
-        preferential_rate_batch = factories.PreferentialRateFactory.create_batch(
+        preferential_rate_batch = factories.RefRateFactory.create_batch(
             10,
             reference_document_version=ref_doc_version,
         )
         first_preferential_rate = preferential_rate_batch[0]
-        order_number_batch = factories.PreferentialQuotaOrderNumberFactory.create_batch(
+        order_number_batch = factories.RefOrderNumberFactory.create_batch(
             5,
             reference_document_version=ref_doc_version,
         )
@@ -286,12 +286,12 @@ class TestReferenceDocumentVersionViews:
             status=state
         )
 
-        preferential_rate_batch = factories.PreferentialRateFactory.create_batch(
+        preferential_rate_batch = factories.RefRateFactory.create_batch(
             10,
             reference_document_version=ref_doc_version,
         )
         first_preferential_rate = preferential_rate_batch[0]
-        order_number_batch = factories.PreferentialQuotaOrderNumberFactory.create_batch(
+        order_number_batch = factories.RefOrderNumberFactory.create_batch(
             5,
             reference_document_version=ref_doc_version,
         )

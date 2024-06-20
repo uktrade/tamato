@@ -36,42 +36,27 @@
             Never Ran
         {% endif %}
     </p>
+    {% if last_alignment_report %}
     <h2 class="govuk-heading-m">Latest check results</h2>
-    {% set table_rows = [
-    [
-        {"text": "Preferential rates"},
-        {"text": object.preferential_rates.count() },
-        {"text": "xxx"},
-        {"text": "%"}
-    ],
-    [
-        {"text": "Quota order numbers"},
-        {"text": object.preferential_quota_order_numbers.count() },
-        {"text": "yyy"},
-        {"text": "%"}
-        ],
-
-    [
-        {"text": "Preferential quotas"},
-        {"text": object.preferential_quotas().count()},
-        {"text": "qqq"},
-        {"text": "%"}
-        ]] %}
-
     {{ govukTable({
     "firstCellIsHeader": true,
     "head": [
-        {"text": "Object"},
+        {"text": "Check name"},
         {"text": "Total"},
-        {"text": "Found in TAP"},
-        {"text": "Pass rate"},
+        {"text": "Passed"},
+        {"text": "Warning"},
+        {"text": "Failed"},
+        {"text": "Skipped"},
+        {"text": "Failed Percentage"},
     ],
-    "rows": table_rows
-}) }}
-
+    "rows": alignment_report_stats
+    }) }}
+    {%  endif %}
     <p class=govuk-body>View results in further detail to see discrepancies.</p>
-    <a href="{{ url('reference_documents:version-check-results', kwargs={"pk": object.pk}) }}" class="govuk-button govuk-button--secondary">
-        View results
+    {% if last_alignment_report %}
+    <a href="{{ url('reference_documents:alignment-report-details', kwargs={"version_pk": object.pk, "pk": last_alignment_report.pk}) }}" class="govuk-button govuk-button--secondary">
+        View full report
     </a>
+    {% endif %}
 
 {% endblock %}

@@ -152,6 +152,12 @@ class TaricDateRange(DateRange):
 
         return False
 
+    def contains(self, compared_date_range: TaricDateRange):
+        lower_contained = self.lower <= compared_date_range.lower
+        upper_contained = self.upper_inf or self.upper >= compared_date_range.upper
+
+        return lower_contained and upper_contained
+
     def upper_is_greater(self, compared_date_range: TaricDateRange) -> bool:
         """
         Checks whether this date range ends after the specified date range.
@@ -163,7 +169,7 @@ class TaricDateRange(DateRange):
         if self.upper_inf and not compared_date_range.upper_inf:
             return True
         return (
-            None not in {self.upper, compared_date_range.upper}
+                None not in {self.upper, compared_date_range.upper}
         ) and self.upper > compared_date_range.upper
 
     @staticmethod
@@ -198,9 +204,9 @@ class TaricDateTimeRange(DateTimeRange):
 
 
 def get_inclusive_date(
-    field_name: str,
-    extractor: Type[Func],
-    add_on_exclusive: int,
+        field_name: str,
+        extractor: Type[Func],
+        add_on_exclusive: int,
 ) -> Expression:
     """
     Our date ranges are inclusive but Postgres stores them as exclusive on the
@@ -230,8 +236,8 @@ EndDate = partial(get_inclusive_date, extractor=Upper, add_on_exclusive=1)
 
 
 def validity_range_contains_range(
-    overall_range: DateRange,
-    contained_range: DateRange,
+        overall_range: DateRange,
+        contained_range: DateRange,
 ) -> bool:
     """
     If the contained_range has both an upper and lower bound, check they are
@@ -250,14 +256,14 @@ def validity_range_contains_range(
         return True
 
     if (contained_range.lower_inf and not overall_range.lower_inf) or (
-        contained_range.upper_inf and not overall_range.upper_inf
+            contained_range.upper_inf and not overall_range.upper_inf
     ):
         return False
 
     if not overall_range.lower_inf:
         if (
-            not contained_range.upper_inf
-            and contained_range.upper < overall_range.lower
+                not contained_range.upper_inf
+                and contained_range.upper < overall_range.lower
         ):
             return False
 
@@ -266,8 +272,8 @@ def validity_range_contains_range(
 
     if not overall_range.upper_inf:
         if (
-            not contained_range.lower_inf
-            and contained_range.lower > overall_range.upper
+                not contained_range.lower_inf
+                and contained_range.lower > overall_range.upper
         ):
             return False
 
@@ -327,9 +333,9 @@ def date_ranges_overlap(a: TaricDateRange, b: TaricDateRange) -> bool:
 
 
 def contained_date_range(
-    date_range: TaricDateRange,
-    containing_date_range: TaricDateRange,
-    fallback: Optional[Any] = None,
+        date_range: TaricDateRange,
+        containing_date_range: TaricDateRange,
+        fallback: Optional[Any] = None,
 ) -> Optional[TaricDateRange]:
     """
     Returns a trimmed contained range that is fully contained by the container
@@ -535,8 +541,8 @@ def get_latest_versions(qs):
     keys = set()
 
     for model in qs.order_by(
-        "-transaction__partition",
-        "-transaction__order",
+            "-transaction__partition",
+            "-transaction__order",
     ):
         key = tuple(model.get_identifying_fields().values())
         if key not in keys:

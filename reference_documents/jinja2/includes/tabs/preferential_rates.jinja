@@ -4,8 +4,8 @@
 <div class="quota__core-data govuk-grid-row">
     <div class="quota__core-data__content govuk-grid-column-three-quarters">
         {{ govukTable({
-        "head": reference_document_version_duties_headers,
-        "rows": reference_document_version_duties
+        "head": rate_headers,
+        "rows": rate_data
         }) }}
     </div>
 
@@ -15,10 +15,10 @@
             {% if object.editable() and request.user.has_perm("reference_documents.add_preferentialrate") %}
                 <ul class="govuk-list govuk-!-font-size-16">
                     <li>
-                        <a class="govuk-link" href="{{ url('reference_documents:preferential_rates_create', args=[object.pk]) }}">Add new rate</a>
+                        <a class="govuk-link" href="{{ url('reference_documents:rate-create', args=[object.pk]) }}">Add new rate</a>
                     </li>
                     <li>
-                        <a class="govuk-link" href="{{ url('reference_documents:preferential_rates_bulk_create', args=[object.pk]) }}">Bulk add rates</a>
+                        <a class="govuk-link" href="{{ url('reference_documents:rates-bulk-create', args=[object.pk]) }}">Bulk add rates</a>
                     </li>
                 </ul>
             {% endif %}

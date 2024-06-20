@@ -1,17 +1,7 @@
-import os
-from datetime import date
-
-import pandas as pd
 from django.core.management import BaseCommand
 
-from common.util import TaricDateRange
 from reference_documents.check.check_runner import Checks
-from reference_documents.models import PreferentialQuota
-from reference_documents.models import PreferentialQuotaOrderNumber
-from reference_documents.models import PreferentialRate
-from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
-from reference_documents.models import ReferenceDocumentVersionStatus
 
 
 class Command(BaseCommand):

@@ -1,13 +1,13 @@
 import pytest
 
-from reference_documents.forms.preferential_rate_forms import (
-    PreferentialRateBulkCreateForm,
+from reference_documents.forms.ref_rate_forms import (
+    RefRateBulkCreateForm,
 )
-from reference_documents.forms.preferential_rate_forms import (
-    PreferentialRateCreateUpdateForm,
+from reference_documents.forms.ref_rate_forms import (
+    RefRateCreateUpdateForm,
 )
-from reference_documents.forms.preferential_rate_forms import PreferentialRateDeleteForm
-from reference_documents.models import PreferentialRate
+from reference_documents.forms.ref_rate_forms import RefRateDeleteForm
+from reference_documents.models import RefRate
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.reference_documents
 class TestPreferentialRateCreateUpdateForm:
     def test_validation_valid(self):
-        form = PreferentialRateCreateUpdateForm(
+        form = RefRateCreateUpdateForm(
             data={
                 "commodity_code": "0100000000",
                 "duty_rate": "10%",
@@ -30,7 +30,7 @@ class TestPreferentialRateCreateUpdateForm:
         assert form.is_valid()
 
     def test_validation_no_comm_code(self):
-        form = PreferentialRateCreateUpdateForm(
+        form = RefRateCreateUpdateForm(
             data={
                 "commodity_code": "",
                 "duty_rate": "",
@@ -51,15 +51,15 @@ class TestPreferentialRateCreateUpdateForm:
 @pytest.mark.reference_documents
 class TestPreferentialRateDeleteForm:
     def test_init(self):
-        pref_rate = factories.PreferentialRateFactory()
+        ref_rate = factories.RefRateFactory()
 
-        target = PreferentialRateDeleteForm(
-            instance=pref_rate,
+        target = RefRateDeleteForm(
+            instance=ref_rate,
         )
 
-        assert target.instance == pref_rate
+        assert target.instance == ref_rate
         assert target.Meta.fields == []
-        assert target.Meta.model == PreferentialRate
+        assert target.Meta.model == RefRate
 
 
 @pytest.mark.reference_documents
@@ -79,7 +79,7 @@ def test_preferential_rate_bulk_create_valid_data():
         "end_date_2": "2023",
     }
 
-    form = PreferentialRateBulkCreateForm(
+    form = RefRateBulkCreateForm(
         data=data,
     )
     assert form.is_valid()
@@ -102,7 +102,7 @@ def test_preferential_rate_bulk_create_invalid_data():
         "end_date_2": "2022",
     }
 
-    form = PreferentialRateBulkCreateForm(
+    form = RefRateBulkCreateForm(
         data=data,
     )
     assert not form.is_valid()

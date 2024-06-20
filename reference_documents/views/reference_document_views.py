@@ -27,35 +27,41 @@ class ReferenceDocumentContext:
         return [
             {"text": "Latest Version"},
             {"text": "Country"},
-            {"text": "Duties"},
+            {"text": "Rates"},
             {"text": "Order Numbers"},
+            {"text": "Regulations"},
             {"text": "Actions"},
         ]
 
     def get_reference_document_context_rows(self):
         reference_documents = []
-        for reference in self.object_list.order_by("area_id"):
-            if reference.reference_document_versions.count() == 0:
+        for ref_doc in self.object_list.order_by("area_id"):
+            if ref_doc.reference_document_versions.count() == 0:
+
+                latest_version = None
+                if ref_doc.reference_document_versions.count() > 0:
+                    latest_version = ref_doc.reference_document_versions.latest()
 
                 actions = ''
 
                 if self.user.has_perm("reference_documents.view_referencedocument"):
-                    actions += f'<a href="/reference_documents/{reference.id}">Details</a><br>'
+                    actions += f'<a href="/reference_documents/{ref_doc.id}">Details</a><br>'
 
                 if self.user.has_perm("reference_documents.change_referencedocument"):
-                    actions += f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
+                    actions += f"<a href={reverse('reference_documents:edit', kwargs={'pk': ref_doc.id})}>Edit</a><br>"
 
                 if self.user.has_perm("reference_documents.delete_referencedocument"):
-                    actions += f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>"
+                    actions += f"<a href={reverse('reference_documents:delete', kwargs={'pk': ref_doc.id})}>Delete</a>"
 
                 reference_documents.append(
                     [
-                        {"text": "None"},
+                        {"text": "-"},
                         {
-                            "text": f"{reference.area_id} - ({reference.get_area_name_by_area_id()})",
+                            "text": f"{ref_doc.area_id} - ({ref_doc.get_area_name_by_area_id()})",
                         },
-                        {"text": 0},
-                        {"text": 0},
+                        {"text": '-'},
+                        {"text": '-'},
+                        {"text": ref_doc.regulations},
                         {
                             "html": actions
                         },
@@ -66,26 +72,29 @@ class ReferenceDocumentContext:
                 actions = ""
 
                 if self.user.has_perm("reference_documents.view_referencedocument"):
-                    actions += f'<a href="/reference_documents/{reference.id}">Details</a><br>'
+                    actions += f'<a href="/reference_documents/{ref_doc.id}">Details</a><br>'
 
-                if reference.editable():
+                if ref_doc.editable():
                     if self.user.has_perm("reference_documents.change_referencedocument"):
-                        actions += f"<a href={reverse('reference_documents:edit', kwargs={'pk': reference.id})}>Edit</a><br>"
+                        actions += f"<a href={reverse('reference_documents:edit', kwargs={'pk': ref_doc.id})}>Edit</a><br>"
 
                     if self.user.has_perm("reference_documents.delete_referencedocument"):
-                        actions += f"<a href={reverse('reference_documents:delete', kwargs={'pk': reference.id})}>Delete</a>"
+                        actions += f"<a href={reverse('reference_documents:delete', kwargs={'pk': ref_doc.id})}>Delete</a>"
 
                 reference_documents.append(
                     [
-                        {"text": reference.reference_document_versions.last().version},
+                        {"text": ref_doc.reference_document_versions.last().version},
                         {
-                            "text": f"{reference.area_id} - ({reference.get_area_name_by_area_id()})",
+                            "text": f"{ref_doc.area_id} - ({ref_doc.get_area_name_by_area_id()})",
                         },
                         {
-                            "text": reference.reference_document_versions.last().preferential_rates.count(),
+                            "text": ref_doc.reference_document_versions.last().ref_rates.count(),
                         },
                         {
-                            "text": reference.reference_document_versions.last().preferential_quota_order_numbers.count(),
+                            "text": ref_doc.reference_document_versions.last().ref_order_numbers.count(),
+                        },
+                        {
+                            "text": ref_doc.regulations,
                         },
                         {
                             "html": actions
@@ -166,10 +175,10 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
                         "text": version.status,
                     },
                     {
-                        "text": version.preferential_rates.count(),
+                        "text": version.ref_rates.count(),
                     },
                     {
-                        "text": version.preferential_quota_order_numbers.count(),
+                        "text": version.ref_order_numbers.count(),
                     },
                     {
                         "text": version.entry_into_force_date,

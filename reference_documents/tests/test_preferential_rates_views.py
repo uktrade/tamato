@@ -37,7 +37,7 @@ class TestPreferentialRateEditView:
             user = valid_user
 
         client.force_login(user)
-        pref_rate = factories.PreferentialRateFactory.create()
+        pref_rate = factories.RefRateFactory.create()
 
         resp = client.get(
             reverse(
@@ -49,7 +49,7 @@ class TestPreferentialRateEditView:
         assert resp.status_code == expected_http_status
 
     def test_success_url(self):
-        pref_rate = factories.PreferentialRateFactory.create()
+        pref_rate = factories.RefRateFactory.create()
 
         target = PreferentialRateEdit()
         target.object = pref_rate
@@ -59,7 +59,7 @@ class TestPreferentialRateEditView:
         )
 
     def test_form_valid(self):
-        pref_rate = factories.PreferentialRateFactory.create()
+        pref_rate = factories.RefRateFactory.create()
         target = PreferentialRateEdit()
         target.object = pref_rate
 
@@ -78,7 +78,7 @@ class TestPreferentialRateEditView:
         assert target.form_valid(form)
 
     def test_form_invalid(self):
-        pref_rate = factories.PreferentialRateFactory.create()
+        pref_rate = factories.RefRateFactory.create()
         target = PreferentialRateEdit()
         target.object = pref_rate
 
@@ -134,7 +134,7 @@ class TestPreferentialRateCreate:
         assert resp.status_code == expected_http_status
 
     def test_success_url(self):
-        pref_rate = factories.PreferentialRateFactory.create()
+        pref_rate = factories.RefRateFactory.create()
         target = PreferentialRateCreate()
         target.object = pref_rate
         assert target.get_success_url() == reverse(
@@ -200,7 +200,7 @@ class TestPreferentialRateDeleteView:
         http_method,
         expected_http_status,
     ):
-        pref_rate = factories.PreferentialRateFactory.create()
+        pref_rate = factories.RefRateFactory.create()
 
         client = superuser_client
 
@@ -227,7 +227,7 @@ class TestPreferentialRateDeleteView:
         http_method,
         expected_http_status,
     ):
-        pref_rate = factories.PreferentialRateFactory.create()
+        pref_rate = factories.RefRateFactory.create()
 
         client = valid_user_client
 

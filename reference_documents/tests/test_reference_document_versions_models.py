@@ -24,8 +24,8 @@ class TestReferenceDocumentVersion:
     def test_preferential_quotas(self):
         target = factories.ReferenceDocumentVersionFactory.create()
         # add a pref quota
-        factories.PreferentialQuotaFactory.create(
-            preferential_quota_order_number__reference_document_version=target,
+        factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__reference_document_version=target,
         )
 
         assert len(target.preferential_quotas()) == 1

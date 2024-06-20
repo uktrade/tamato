@@ -58,9 +58,9 @@ class ReferenceDocumentVersionFactory(factory.django.DjangoModelFactory):
         )
 
 
-class PreferentialRateFactory(factory.django.DjangoModelFactory):
+class RefRateFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "reference_documents.PreferentialRate"
+        model = "reference_documents.RefRate"
 
     commodity_code = FuzzyText(length=6, chars=string.digits, suffix="0000")
 
@@ -106,9 +106,9 @@ class PreferentialRateFactory(factory.django.DjangoModelFactory):
         )
 
 
-class PreferentialQuotaOrderNumberFactory(factory.django.DjangoModelFactory):
+class RefOrderNumberFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "reference_documents.PreferentialQuotaOrderNumber"
+        model = "reference_documents.RefOrderNumber"
 
     quota_order_number = FuzzyText(prefix="054", length=3, chars=string.digits)
 
@@ -128,16 +128,16 @@ class PreferentialQuotaOrderNumberFactory(factory.django.DjangoModelFactory):
     )
 
 
-class PreferentialQuotaFactory(factory.django.DjangoModelFactory):
+class RefQuotaDefinitionFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "reference_documents.PreferentialQuota"
+        model = "reference_documents.RefQuotaDefinition"
 
     commodity_code = FuzzyText(length=6, chars=string.digits, suffix="0000")
 
-    quota_duty_rate = FuzzyText(length=2, chars=string.digits, suffix="%")
+    duty_rate = FuzzyText(length=2, chars=string.digits, suffix="%")
 
-    preferential_quota_order_number = factory.SubFactory(
-        PreferentialQuotaOrderNumberFactory,
+    ref_order_number = factory.SubFactory(
+        RefOrderNumberFactory,
     )
 
     volume = FuzzyDecimal(100.0, 10000.0, 1)

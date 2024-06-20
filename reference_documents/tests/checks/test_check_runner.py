@@ -1,5 +1,5 @@
 from reference_documents.check.base import BasePreferentialRateCheck
-from reference_documents.check.preferential_quota_order_numbers import *  # noqa
+from reference_documents.check.ref_order_numbers import *  # noqa
 from reference_documents.check.preferential_quotas import *  # noqa
 from reference_documents.check.preferential_rates import *  # noqa
 from reference_documents.check.utils import Utils
@@ -27,7 +27,7 @@ class Checks:
         for check in Checks.get_checks_for(BasePreferentialQuotaOrderNumberCheck):
             for (
                 pref_quota_order_number
-            ) in self.reference_document_version.preferential_quota_order_numbers.all():
+            ) in self.reference_document_version.ref_order_numbers.all():
                 self.capture_check_result(
                     check(pref_quota_order_number),
                     pref_quota_order_number=pref_quota_order_number,
@@ -53,7 +53,7 @@ class Checks:
             "check_name": check.__class__.__name__,
             "preferential_rate": pref_rate,
             "preferential_quota": pref_quota,
-            "preferential_quota_order_number": pref_quota_order_number,
+            "ref_order_number": pref_quota_order_number,
             "status": status,
             "message": message,
         }

@@ -81,7 +81,7 @@ def test_ref_doc_version_delete_invalid():
     """Test that ReferenceDocumentVersionDeleteForm is invalid for a reference
     document with versions."""
     version = factories.ReferenceDocumentVersionFactory.create()
-    factories.PreferentialRateFactory.create(reference_document_version=version)
+    factories.RefRateFactory.create(reference_document_version=version)
     form = ReferenceDocumentVersionDeleteForm(data={}, instance=version)
     assert not form.is_valid()
     assert (

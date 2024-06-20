@@ -29,7 +29,7 @@ def run_alignment_check(
         f"Reference Document Version Details:\n" +
         f" - Geo Area : {ref_doc_ver.reference_document.area_id}\n" +
         f" - Pref Rates : {ref_doc_ver.preferential_rates.count()}\n" +
-        f" - Order Numbers : {ref_doc_ver.preferential_quota_order_numbers.count()}\n" +
+        f" - Order Numbers : {ref_doc_ver.ref_order_numbers.count()}\n" +
         f" - Quota Defs : {ref_doc_ver.preferential_quotas().count()}"
     )
 

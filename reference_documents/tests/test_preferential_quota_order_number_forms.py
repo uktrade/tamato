@@ -3,13 +3,13 @@ from decimal import Decimal
 import pytest
 from django.core.exceptions import ValidationError
 
-from reference_documents.forms.preferential_quota_order_number_forms import (
-    PreferentialQuotaOrderNumberCreateUpdateForm,
+from reference_documents.forms.ref_order_number_forms import (
+    RefOrderNumberCreateUpdateForm,
 )
-from reference_documents.forms.preferential_quota_order_number_forms import (
-    PreferentialQuotaOrderNumberDeleteForm,
+from reference_documents.forms.ref_order_number_forms import (
+    RefOrderNumberDeleteForm,
 )
-from reference_documents.models import PreferentialQuotaOrderNumber
+from reference_documents.models import RefOrderNumber
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -18,9 +18,9 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.reference_documents
 class TestPreferentialQuotaOrderNumberCreateUpdateForm:
     def test_init(self):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        pref_quota_order_number = factories.RefOrderNumberFactory()
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
+        target = RefOrderNumberCreateUpdateForm(
             pref_quota_order_number.reference_document_version,
             instance=pref_quota_order_number,
         )
@@ -30,7 +30,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
             target.reference_document_version
             == pref_quota_order_number.reference_document_version
         )
-        assert target.Meta.model == PreferentialQuotaOrderNumber
+        assert target.Meta.model == RefOrderNumber
         assert target.Meta.fields == [
             "quota_order_number",
             "coefficient",
@@ -39,13 +39,13 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         ]
 
     def test_clean_coefficient_pass_valid(self):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        pref_quota_order_number = factories.RefOrderNumberFactory()
 
         data = {
             "coefficient": "1.6",
         }
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
+        target = RefOrderNumberCreateUpdateForm(
             pref_quota_order_number.reference_document_version,
             instance=pref_quota_order_number,
             data=data,
@@ -55,13 +55,13 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         assert target.instance.coefficient == Decimal("1.6")
 
     def test_clean_coefficient_fail_invalid(self):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        pref_quota_order_number = factories.RefOrderNumberFactory()
 
         data = {
             "coefficient": "zz",
         }
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
+        target = RefOrderNumberCreateUpdateForm(
             pref_quota_order_number.reference_document_version,
             instance=pref_quota_order_number,
             data=data,
@@ -71,13 +71,13 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         assert target.errors["coefficient"] == ["Coefficient is not a valid number"]
 
     def test_clean_coefficient_pass_blank(self):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        pref_quota_order_number = factories.RefOrderNumberFactory()
 
         data = {
             "coefficient": "",
         }
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
+        target = RefOrderNumberCreateUpdateForm(
             pref_quota_order_number.reference_document_version,
             instance=pref_quota_order_number,
             data=data,
@@ -87,11 +87,11 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         assert "coefficient" not in target.errors.keys()
 
     def test_clean_coefficient_pass_not_provided(self):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        pref_quota_order_number = factories.RefOrderNumberFactory()
 
         data = {}
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
+        target = RefOrderNumberCreateUpdateForm(
             pref_quota_order_number.reference_document_version,
             instance=pref_quota_order_number,
             data=data,
@@ -101,13 +101,13 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         assert "coefficient" not in target.errors.keys()
 
     def test_clean_quota_order_number_valid_adding(self):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        pref_quota_order_number = factories.RefOrderNumberFactory()
 
         data = {
             "quota_order_number": "054333",
         }
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
+        target = RefOrderNumberCreateUpdateForm(
             pref_quota_order_number.reference_document_version,
             data=data,
         )
@@ -116,7 +116,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         assert "quota_order_number" not in target.errors.keys()
 
     def test_clean_quota_order_number_invalid_already_exists_adding(self):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory(
+        pref_quota_order_number = factories.RefOrderNumberFactory(
             quota_order_number="054333",
         )
 
@@ -124,7 +124,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
             "quota_order_number": "054333",
         }
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
+        target = RefOrderNumberCreateUpdateForm(
             pref_quota_order_number.reference_document_version,
             data=data,
         )
@@ -139,7 +139,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
             "quota_order_number": "zzaabb",
         }
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
+        target = RefOrderNumberCreateUpdateForm(
             ref_doc_ver,
             data=data,
         )
@@ -148,17 +148,17 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         assert "quota_order_number" in target.errors.keys()
 
     def test_clean_coefficient_no_main_order(self):
-        factories.PreferentialQuotaOrderNumberFactory()
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        factories.RefOrderNumberFactory()
+        ref_order_number = factories.RefOrderNumberFactory()
 
         data = {
-            "quota_order_number": pref_quota_order_number.quota_order_number,
+            "order_number": ref_order_number.order_number,
             "coefficient": "1.0",
-            "valid_between": pref_quota_order_number.valid_between,
+            "valid_between": ref_order_number.valid_between,
         }
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
-            pref_quota_order_number.reference_document_version,
+        target = RefOrderNumberCreateUpdateForm(
+            ref_order_number.reference_document_version,
             data=data,
         )
 
@@ -173,21 +173,21 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
 
     def test_clean_main_order_no_coefficient(self):
         ref_doc_version = factories.ReferenceDocumentVersionFactory()
-        pref_quota_order_number_main = factories.PreferentialQuotaOrderNumberFactory(
+        pref_quota_order_number_main = factories.RefOrderNumberFactory(
             reference_document_version=ref_doc_version,
         )
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory(
+        ref_order_number = factories.RefOrderNumberFactory(
             reference_document_version=ref_doc_version,
         )
 
         data = {
             "main_order_number_id": pref_quota_order_number_main.id,
-            "quota_order_number": pref_quota_order_number.quota_order_number,
-            "valid_between": pref_quota_order_number.valid_between,
+            "quota_order_number": ref_order_number.order_number,
+            "valid_between": ref_order_number.valid_between,
         }
 
-        target = PreferentialQuotaOrderNumberCreateUpdateForm(
-            pref_quota_order_number.reference_document_version,
+        target = RefOrderNumberCreateUpdateForm(
+            ref_order_number.reference_document_version,
             data=data,
         )
 
@@ -205,21 +205,21 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
 @pytest.mark.reference_documents
 class TestPreferentialQuotaOrderNumberDeleteForm:
     def test_init(self):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        ref_order_number = factories.RefOrderNumberFactory()
 
-        target = PreferentialQuotaOrderNumberDeleteForm(
-            instance=pref_quota_order_number,
+        target = RefOrderNumberDeleteForm(
+            instance=ref_order_number,
         )
 
-        assert target.instance == pref_quota_order_number
+        assert target.instance == ref_order_number
         assert target.Meta.fields == []
-        assert target.Meta.model == PreferentialQuotaOrderNumber
+        assert target.Meta.model == RefOrderNumber
 
     def test_clean_with_child_records(self):
-        pref_quota = factories.PreferentialQuotaFactory()
+        pref_quota = factories.RefQuotaDefinitionFactory()
 
-        target = PreferentialQuotaOrderNumberDeleteForm(
-            instance=pref_quota.preferential_quota_order_number,
+        target = RefOrderNumberDeleteForm(
+            instance=pref_quota.ref_order_number,
             data={},
         )
 
@@ -229,17 +229,17 @@ class TestPreferentialQuotaOrderNumberDeleteForm:
             target.clean()
 
         expected_string = (
-            f"Quota order number {pref_quota.preferential_quota_order_number} "
+            f"Quota order number {pref_quota.ref_order_number} "
             f"cannot be deleted as it has associated preferential quotas."
         )
 
         assert expected_string in str(ve)
 
     def test_clean_with_no_child_records(self):
-        pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
+        ref_order_number = factories.RefOrderNumberFactory()
 
-        target = PreferentialQuotaOrderNumberDeleteForm(
-            instance=pref_quota_order_number,
+        target = RefOrderNumberDeleteForm(
+            instance=ref_order_number,
             data={},
         )
 

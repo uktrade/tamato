@@ -16,7 +16,7 @@ class TestPreferentialRate:
         assert target.valid_between is None
 
     def test_state_not_editable_prevents_save(self):
-        target = factories.PreferentialRateFactory()
+        target = factories.RefRateFactory()
         target_original_duty_rate = target.duty_rate
         rdv = target.reference_document_version
 

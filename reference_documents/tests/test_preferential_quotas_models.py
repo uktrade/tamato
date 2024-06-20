@@ -1,27 +1,27 @@
 import pytest
 
-from reference_documents.models import PreferentialQuota, ReferenceDocumentVersionStatus
+from reference_documents.models import RefQuotaDefinition, ReferenceDocumentVersionStatus
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.reference_documents
-class TestPreferentialQuota:
+class TestRefQuotaDefinition:
     def test_init(self):
-        target = PreferentialQuota()
+        target = RefQuotaDefinition()
 
-        assert target.preferential_quota_order_number is None
+        assert target.ref_order_number is None
         assert target.commodity_code == ""
-        assert target.quota_duty_rate == ""
+        assert target.duty_rate == ""
         assert target.volume == ""
         assert target.valid_between is None
         assert target.measurement == ""
 
     def test_state_not_editable_prevents_save(self):
-        target = factories.PreferentialQuotaFactory()
+        target = factories.RefQuotaDefinitionFactory()
         target_original_volume = target.volume
-        rdv = target.preferential_quota_order_number.reference_document_version
+        rdv = target.ref_order_number.reference_document_version
 
         assert rdv.status == ReferenceDocumentVersionStatus.EDITING
         assert rdv.editable()

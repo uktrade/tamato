@@ -5,7 +5,7 @@
 {% for object in checks.quota_order_numbers %}
   {{ table_rows.append([
     {"html": object.id},
-    {"html": object.preferential_quota_order_number_id},
+    {"html": object.ref_order_number_id},
     {"html": object.check_name},
     {"text": object.message},
     {"text": object.status}

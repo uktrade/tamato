@@ -5,9 +5,9 @@ import pandas as pd
 from django.core.management import BaseCommand
 
 from common.util import TaricDateRange
-from reference_documents.models import PreferentialQuota
-from reference_documents.models import PreferentialQuotaOrderNumber
-from reference_documents.models import PreferentialRate
+from reference_documents.models import RefQuotaDefinition
+from reference_documents.models import RefOrderNumber
+from reference_documents.models import RefRate
 from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
 from reference_documents.models import ReferenceDocumentVersionStatus
@@ -79,7 +79,7 @@ class Command(BaseCommand):
 
         comm_code = df_row["Standardised Commodity Code"]
         comm_code = comm_code + ("0" * (len(comm_code) - 10))
-        quota_duty_rate = df_row["Quota Duty Rate"]
+        duty_rate = df_row["Duty Rate"]
         volume = df_row["Quota Volume"].replace(",", "")
         units = df_row["Units"]
 
@@ -94,7 +94,7 @@ class Command(BaseCommand):
             order_number_valid_between = None
 
         # add a new one
-        order_number_record, created = PreferentialQuotaOrderNumber.objects.get_or_create(
+        order_number_record, created =RefOrderNumber.objects.get_or_create(
             quota_order_number=order_number,
             reference_document_version_id=reference_document_version.id,
             valid_between=order_number_valid_between,
@@ -106,10 +106,10 @@ class Command(BaseCommand):
             order_number_record.save()
 
         # add a new one
-        quota, created = PreferentialQuota.objects.get_or_create(
+        quota, created = RefQuotaDefinition.objects.get_or_create(
             commodity_code=comm_code,
-            preferential_quota_order_number=order_number_record,
-            quota_duty_rate=quota_duty_rate,
+            ref_order_number=order_number_record,
+            duty_rate=duty_rate,
             volume=volume,
             valid_between=quota_definition_valid_between,
             measurement=units,
@@ -124,7 +124,7 @@ class Command(BaseCommand):
         comm_code = comm_code + ("0" * (len(comm_code) - 10))
 
         # add a new one
-        pref_rate, created = PreferentialRate.objects.get_or_create(
+        pref_rate, created = RefRate.objects.get_or_create(
             commodity_code=comm_code,
             duty_rate=df_row["Preferential Duty Rate"],
             reference_document_version=reference_document_version,

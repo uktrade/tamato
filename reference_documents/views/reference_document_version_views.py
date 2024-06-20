@@ -18,25 +18,210 @@ from reference_documents.forms.reference_document_version_forms import (
 from reference_documents.forms.reference_document_version_forms import (
     ReferenceDocumentVersionsCreateUpdateForm,
 )
-from reference_documents.models import AlignmentReportCheck, AlignmentReport, PreferentialQuotaSuspension
-from reference_documents.models import PreferentialQuotaOrderNumber
+from reference_documents.models import AlignmentReportCheck, AlignmentReport, RefQuotaSuspension, RefQuotaSuspensionRange, RefQuotaDefinition, RefQuotaDefinitionRange, AlignmentReportStatus
+from reference_documents.models import RefOrderNumber
 from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
 from reference_documents.models import ReferenceDocumentVersionStatus
 from reference_documents.tasks import run_alignment_check
 
 
+class QuotaDefinitionContext:
+    def __init__(self, quota_definition: RefQuotaDefinition, user):
+        self.user = user
+        self.quota_definition = quota_definition
+        self.reference_document_version = quota_definition.ref_order_number.reference_document_version
+
+    def row(self):
+        # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
+        #     self.reference_document_version,
+        #     self.quota_definition.commodity_code,
+        # )
+        # if comm_code:
+        #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
+        # else:
+        comm_code_link = f"{self.quota_definition.commodity_code}"
+
+        actions = "<span></span>"
+
+        if self.reference_document_version.editable():
+            if self.quota_definition and self.quota_definition.pk:
+                if self.user.has_perm("reference_documents.change_preferentialquotaordernumber"):
+                    actions += f"<a href='{reverse('reference_documents:quota-definition-edit', args=[self.quota_definition.pk])}'>Edit</a>"
+                if self.user.has_perm("reference_documents.delete_preferentialquotaordernumber"):
+                    actions += f" | <a href='{reverse('reference_documents:quota-definition-delete', args=[self.quota_definition.pk, self.quota_definition.ref_order_number.reference_document_version.pk])}'>Delete</a>"
+
+        row_data = [
+            {
+                "html": comm_code_link,
+            },
+            {
+                "text": self.quota_definition.duty_rate,
+            },
+            {
+                "text": f"{self.quota_definition.volume} {self.quota_definition.measurement}",
+            },
+            {
+                "text": self.quota_definition.valid_between,
+            },
+            {
+                "html": actions,
+            },
+        ]
+
+        return row_data
+
+
+class QuotaDefinitionTemplateContext:
+    def __init__(self, quota_definition_range: RefQuotaDefinitionRange, user):
+        self.user = user
+        self.quota_definition_range = quota_definition_range
+        self.reference_document_version = quota_definition_range.ref_order_number.reference_document_version
+        self.quota_defs = []
+
+    def quota_def_template_data_rows(self):
+        for quota_def in self.quota_defs:
+            yield quota_def.row()
+
+
+class QuotaSuspensionTemplateContext:
+    def __init__(self, quota_suspension_range: RefQuotaSuspensionRange, user):
+        self.user = user
+        self.quota_suspension_template = quota_suspension_range
+        self.reference_document_version = quota_suspension_range.ref_quota_definition_range.ref_order_number.reference_document_version
+        self.quota_suspensions = []
+
+    def quota_suspensions_template_data_rows(self):
+        for quota_suspension in self.quota_suspensions:
+            yield quota_suspension.row()
+
+
+class QuotaSuspensionContext:
+
+    def __init__(self, quota_suspension: RefQuotaSuspension, user):
+        self.user = user
+        self.quota_suspension = quota_suspension
+        self.reference_document_version = quota_suspension.ref_quota_definition.ref_order_number.reference_document_version
+
+    def row(self):
+        # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
+        #     self.reference_document_version,
+        #     self.quota_suspension.preferential_quota.commodity_code,
+        # )
+
+        # if comm_code:
+        #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
+        # else:
+        comm_code_link = f"{self.quota_suspension.ref_quota_definition.commodity_code}"
+
+        actions = "<span></span>"
+
+        if self.reference_document_version.editable():
+            if self.quota_suspension.pk:
+                if self.user.has_perm("reference_documents.change_preferentialquotasuspension"):
+                    actions += f"<a href='{reverse('reference_documents:quota-suspension-edit', args=[self.quota_suspension.pk])}'>Edit</a>"
+                if self.user.has_perm("reference_documents.delete_preferentialquotasuspension"):
+                    actions += f" | <a href='{reverse('reference_documents:quota-suspension-delete', args=[self.quota_suspension.pk, self.reference_document_version.pk])}'>Delete</a>"
+
+        row_data = [
+            {
+                "html": comm_code_link,
+            },
+            {
+                "text": self.quota_suspension.valid_between,
+            },
+            {
+                "text": self.quota_suspension.ref_quota_definition.valid_between,
+            },
+            {
+                "html": actions,
+            },
+        ]
+
+        return row_data
+
+
+class OrderNumberContext:
+    def __init__(self, order_number: RefOrderNumber, version: ReferenceDocumentVersion, tap_order_number):
+        self.order_number = order_number
+        self.tap_order_number = tap_order_number
+        self.version = version
+        self.quota_defs = []
+        self.quota_suspension_defs = []
+        self.quota_def_templates = []
+        self.quota_suspension_templates = []
+
+    def quota_def_data_rows(self):
+        for quota_def in self.quota_defs:
+            yield quota_def.row()
+
+    def quota_suspensions_data_rows(self):
+        for quota_suspension in self.quota_suspension_defs:
+            yield quota_suspension.row()
+
+
 class ReferenceDocumentVersionContext:
     def __init__(self, reference_document_version: ReferenceDocumentVersion, user):
         self.reference_document_version = reference_document_version
         self.user = user
+        self.order_numbers = []
+        self._populate_order_numbers()
+        self._populate_quota_definitions()
+        self._populate_quota_suspensions()
+        self._populate_quota_definition_ranges()
+        self._populate_quota_suspension_templates()
+
+    def _populate_order_numbers(self):
+
+        for ref_doc_order_number in self.reference_document_version.ref_order_numbers.order_by(
+                "order_number",
+        ):
+            tap_order_number = self.get_tap_order_number(ref_doc_order_number)
+
+            self.order_numbers.append(
+                OrderNumberContext(
+                    ref_doc_order_number,
+                    self.reference_document_version,
+                    tap_order_number=tap_order_number
+                )
+            )
+
+    def _populate_quota_definitions(self):
+        for context_order_number in self.order_numbers:
+            for quota in context_order_number.order_number.ref_quota_definitions.order_by(
+                    "commodity_code"
+            ):
+                context_order_number.quota_defs.append(QuotaDefinitionContext(quota, self.user))
+
+    def _populate_quota_suspensions(self):
+        for context_order_number in self.order_numbers:
+            for context_quota_def in context_order_number.quota_defs:
+                for suspension in context_quota_def.quota_definition.ref_quota_suspensions.all():
+                    context_order_number.quota_suspension_defs.append(QuotaSuspensionContext(suspension, self.user))
+
+    def _populate_quota_definition_ranges(self):
+        for context_order_number in self.order_numbers:
+            for quota_definition_range in context_order_number.order_number.ref_quota_definition_ranges.all():
+                new_context = QuotaDefinitionTemplateContext(quota_definition_range, self.user)
+                context_order_number.quota_def_templates.append(new_context)
+                for quota_definition in quota_definition_range.dynamic_quota_definitions():
+                    new_context.quota_defs.append(QuotaDefinitionContext(quota_definition, self.user))
+
+    def _populate_quota_suspension_templates(self):
+        for context_order_number in self.order_numbers:
+            for quota_definition_range in context_order_number.order_number.ref_quota_definition_ranges.all():
+                for quota_suspension_range in quota_definition_range.ref_quota_suspension_ranges.all():
+                    new_context = QuotaSuspensionTemplateContext(quota_suspension_range, self.user)
+                    context_order_number.quota_suspension_templates.append(new_context)
+                    for quota_suspension in quota_suspension_range.dynamic_quota_suspensions():
+                        new_context.quota_suspensions.append(QuotaSuspensionContext(quota_suspension, self.user))
 
     def alignment_report(self):
         return self.reference_document_version.alignment_reports.last()
 
     @staticmethod
     def get_tap_order_number(
-            ref_doc_quota_order_number: PreferentialQuotaOrderNumber,
+            ref_doc_quota_order_number: RefOrderNumber,
     ):
         if (
                 ref_doc_quota_order_number.reference_document_version.entry_into_force_date
@@ -51,7 +236,7 @@ class ReferenceDocumentVersionContext:
             )
 
         quota_order_number = QuotaOrderNumber.objects.latest_approved().filter(
-            order_number=ref_doc_quota_order_number.quota_order_number,
+            order_number=ref_doc_quota_order_number.order_number,
             valid_between__contains=contains_date,
         )
 
@@ -118,26 +303,26 @@ class ReferenceDocumentVersionContext:
         rows = []
         for (
                 preferential_rate
-        ) in self.reference_document_version.preferential_rates.order_by(
-            "commodity_code",
+        ) in self.reference_document_version.ref_rates.order_by(
+            "commodity_code", "valid_between"
         ):
-            comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
-                preferential_rate.reference_document_version,
-                preferential_rate.commodity_code,
-            )
+            # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
+            #     preferential_rate.reference_document_version,
+            #     preferential_rate.commodity_code,
+            # )
 
-            if comm_code:
-                comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.item_id}</a>'
-            else:
-                comm_code_link = f"{preferential_rate.commodity_code}"
+            # if comm_code:
+            #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.item_id}</a>'
+            # else:
+            comm_code_link = f"{preferential_rate.commodity_code}"
 
             actions = "<span></span>"
 
             if self.reference_document_version.editable():
                 if self.user.has_perm("reference_documents.change_preferentialrate"):
-                    actions += f"<a href='{reverse('reference_documents:preferential_rates_edit', args=[preferential_rate.pk])}'>Edit</a>"
+                    actions += f"<a href='{reverse('reference_documents:rate-edit', args=[preferential_rate.pk])}'>Edit</a>"
                 if self.user.has_perm("reference_documents.delete_preferentialrate"):
-                    actions += f" | <a href='{reverse('reference_documents:preferential_rates_delete', args=[preferential_rate.pk])}'>Delete</a>"
+                    actions += f" | <a href='{reverse('reference_documents:rate-delete', args=[preferential_rate.pk])}'>Delete</a>"
 
             rows.append(
                 [
@@ -157,46 +342,16 @@ class ReferenceDocumentVersionContext:
             )
         return rows
 
-    def quotas_data_orders_and_rows(self):
-        data = {}
-        for (
-                ref_doc_order_number
-        ) in self.reference_document_version.preferential_quota_order_numbers.order_by(
-            "quota_order_number",
-        ):
-            tap_quota_order_number = (
-                ReferenceDocumentVersionContext.get_tap_order_number(
-                    ref_doc_order_number,
-                )
-            )
-
-            data[ref_doc_order_number.quota_order_number] = {
-                "data_rows": [],
-                "suspension_data_rows": [],
-                "templated_data": {},
-                "templated_suspension_data": {},
-                "quota_order_number": tap_quota_order_number,
-                "ref_doc_order_number": ref_doc_order_number,
-                "quota_order_number_text": ref_doc_order_number.quota_order_number,
-            }
-
-            # Add the rows from the order number
-            self.order_number_rows(data, ref_doc_order_number)
-            self.order_number_suspension_rows(data, ref_doc_order_number)
-            self.templated_order_number_rows(data, ref_doc_order_number)
-
-        return data
-
     def get_quota_row(self, commodity_code: str, volume, measurement, duty_rate, valid_between, quota=None):
 
-        comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
-            self.reference_document_version,
-            commodity_code,
-        )
-        if comm_code:
-            comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
-        else:
-            comm_code_link = f"{commodity_code}"
+        # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
+        #     self.reference_document_version,
+        #     commodity_code,
+        # )
+        # if comm_code:
+        #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
+        # else:
+        comm_code_link = f"{commodity_code}"
 
         actions = "<span></span>"
 
@@ -205,7 +360,7 @@ class ReferenceDocumentVersionContext:
                 if self.user.has_perm("reference_documents.change_preferentialquotaordernumber"):
                     actions += f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a>"
                 if self.user.has_perm("reference_documents.delete_preferentialquotaordernumber"):
-                    actions += f" | <a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>"
+                    actions += f" | <a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.ref_order_number.reference_document_version.pk])}'>Delete</a>"
 
         row_to_add = [
             {
@@ -227,18 +382,16 @@ class ReferenceDocumentVersionContext:
 
         return row_to_add
 
-    def get_suspension_row(self, quota, suspension, templated=False):
+    def get_suspension_row(self, quota_valid_between, suspension, commodity_code, reference_document_version, templated=False):
 
-        commodity_code = quota.commodity_code
-
-        comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
-            self.reference_document_version,
-            commodity_code,
-        )
-        if comm_code:
-            comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
-        else:
-            comm_code_link = f"{commodity_code}"
+        # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
+        #     self.reference_document_version,
+        #     commodity_code,
+        # )
+        # if comm_code:
+        #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
+        # else:
+        comm_code_link = f"{commodity_code}"
 
         actions = "<span></span>"
 
@@ -247,12 +400,7 @@ class ReferenceDocumentVersionContext:
                 if self.user.has_perm("reference_documents.change_preferentialquotasuspension"):
                     actions += f"<a href='{reverse('reference_documents:preferential-quotas-suspension-edit', args=[suspension.pk])}'>Edit</a>"
                 if self.user.has_perm("reference_documents.delete_preferentialquotasuspension"):
-                    actions += f" | <a href='{reverse('reference_documents:preferential-quota-suspension-delete', args=[suspension.pk, quota.preferential_quota_order_number.reference_document_version.pk])}'>Delete</a>"
-
-        # {"text": "Comm Code"},
-        # {"text": "Validity"},
-        # {"text": "Quota Validity"},
-        # {"text": "Actions"},
+                    actions += f" | <a href='{reverse('reference_documents:preferential-quota-suspension-delete', args=[suspension.pk, reference_document_version.pk])}'>Delete</a>"
 
         row_to_add = [
             {
@@ -262,7 +410,7 @@ class ReferenceDocumentVersionContext:
                 "text": suspension.valid_between,
             },
             {
-                "text": quota.valid_between,
+                "text": quota_valid_between,
             },
             {
                 "html": actions,
@@ -276,21 +424,23 @@ class ReferenceDocumentVersionContext:
         for quota in ref_doc_order_number.preferential_quotas.order_by(
                 "commodity_code",
         ):
-            row_to_add = self.get_quota_row(quota.commodity_code, quota.volume, quota.measurement, quota.quota_duty_rate, quota.valid_between, quota)
+            row_to_add = self.get_quota_row(quota.commodity_code, quota.volume, quota.measurement, quota.duty_rate, quota.valid_between, quota)
 
             data[ref_doc_order_number.quota_order_number]["data_rows"].append(
                 row_to_add,
             )
 
     def order_number_suspension_rows(self, data, ref_doc_order_number):
-        for suspension in PreferentialQuotaSuspension.objects.all().filter(
-                preferential_quota__preferential_quota_order_number__quota_order_number=ref_doc_order_number
+        for suspension in RefQuotaSuspension.objects.all().filter(
+                preferential_quota__ref_order_number__quota_order_number=ref_doc_order_number
         ).order_by(
-                "preferential_quota__commodity_code",
+            "preferential_quota__commodity_code",
         ):
             row_to_add = self.get_suspension_row(
+                suspension.preferential_quota.vaid_between,
                 suspension.preferential_quota,
-                suspension,
+                suspension.preferential_quota.commodity_code,
+                suspension.preferential_quota.ref_order_number.reference_document_version,
                 False
             )
 
@@ -298,21 +448,49 @@ class ReferenceDocumentVersionContext:
                 row_to_add,
             )
 
-    def templated_order_number_rows(self, data, ref_doc_order_number):
-        # Add templated data rows
-
-        for quota_template in ref_doc_order_number.preferential_quota_templates.order_by("commodity_code"):
+    def templated_order_number_suspension_rows(self, data, ref_doc_order_number):
+        for templated_suspension in RefQuotaSuspensionRange.objects.all().filter(
+                ref_quota_definition_range__ref_order_number=ref_doc_order_number
+        ):
 
             data_to_add = {
                 'data_rows': [],
-                'preferential_quota_template': quota_template
+                'preferential_quota_suspension_template': templated_suspension
+            }
+
+            if templated_suspension.pk not in data[ref_doc_order_number.quota_order_number]["templated_suspension_data"].keys():
+                data[ref_doc_order_number.quota_order_number]["templated_suspension_data"][templated_suspension.pk] = []
+
+            for suspension in templated_suspension.dynamic_preferential_quota_suspensions():
+                row_to_add = self.get_suspension_row(
+                    suspension.preferential_quota.valid_between,
+                    suspension,
+                    suspension.preferential_quota.commodity_code,
+                    suspension.preferential_quota.ref_order_number.reference_document_version,
+                    templated=True
+                )
+
+                data_to_add['data_rows'].append(
+                    row_to_add
+                )
+
+            data[ref_doc_order_number.quota_order_number]["templated_data"][templated_suspension.ref_quota_definition_range.commodity_code].append(data_to_add)
+
+    def templated_order_number_rows(self, data, ref_doc_order_number):
+        # Add templated data rows
+
+        for quota_template in ref_doc_order_number.ref_quota_definition_range.order_by("commodity_code"):
+
+            data_to_add = {
+                'data_rows': [],
+                'ref_quota_definition_range': quota_template
             }
 
             if quota_template.commodity_code not in data[ref_doc_order_number.quota_order_number]["templated_data"].keys():
                 data[ref_doc_order_number.quota_order_number]["templated_data"][quota_template.commodity_code] = []
 
             for quota in quota_template.dynamic_preferential_quotas():
-                row_to_add = self.get_quota_row(quota.commodity_code, quota.volume, quota.measurement, quota.quota_duty_rate, quota.valid_between)
+                row_to_add = self.get_quota_row(quota.commodity_code, quota.volume, quota.measurement, quota.duty_rate, quota.valid_between)
 
                 data_to_add['data_rows'].append(
                     row_to_add
@@ -338,19 +516,21 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
         )
 
         context_data = ReferenceDocumentVersionContext(context["object"], self.request.user)
-        context["reference_document_version_duties_headers"] = (
-            context_data.duties_headers()
-        )
-        context["reference_document_version_quotas_headers"] = (
+
+        # rates
+        context["rate_data"] = context_data.duties_row_data()
+        context["rate_headers"] = context_data.duties_headers()
+
+        # Order numbers
+        context['order_numbers'] = context_data.order_numbers
+
+        # headers
+        context["quota_definition_headers"] = (
             context_data.quotas_headers()
         )
-        context["reference_document_version_suspension_headers"] = (
+        context["suspension_headers"] = (
             context_data.suspension_headers()
         )
-        context["reference_document_version_duties"] = context_data.duties_row_data()
-        context["reference_document_version_quotas"] = context_data.quotas_data_orders_and_rows()
-        context["reference_document_version_quotas"] = context_data.quotas_data_orders_and_rows()
-
         return context
 
 
@@ -543,12 +723,41 @@ class ReferenceDocumentVersionAlignmentCheck(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        last_alignment_report = self.object.alignment_reports.all().last()
+        last_alignment_report = self.object.alignment_reports.all().filter(
+            status=AlignmentReportStatus.COMPLETE
+        ).last()
+
         if last_alignment_report:
-            context["last_run"] = last_alignment_report.created_at
+            context["last_alignment_report"] = last_alignment_report
+            context['alignment_report_stats'] = self.alignment_report_stats_context(last_alignment_report)
+            context["last_run"] = last_alignment_report.created_at.strftime('%Y-%m-%d %H:%M')
         else:
+            context["last_alignment_report"] = None
+            context['alignment_report_stats'] = None
             context["last_run"] = None
         return context
+
+    def alignment_report_stats_context(self, alignment_report: AlignmentReport):
+        stats = []
+
+        for key, value in alignment_report.check_stats().items():
+            percentage_calc = '-'
+
+            if value['total'] > 0 and value['failed'] > 0:
+                percentage_calc = round((value['failed'] / value['total']) * 100, 1)
+
+            row = [
+                {"text": key},
+                {"text": value['total']},
+                {"text": value['passed']},
+                {"text": value['warning']},
+                {"text": value['failed']},
+                {"text": value['skipped']},
+                {"text": percentage_calc},
+            ]
+            stats.append(row)
+
+        return stats
 
     def post(self, request, *args, **kwargs):
         if request.user.has_perm("reference_documents.add_alignmentreportcheck"):
@@ -586,14 +795,14 @@ class ReferenceDocumentVersionCheckResults(ListView):
             alignment_report__reference_document_version=self.reference_document_version,
         )
         queryset = {
-            "preferential_rates": alignment_checks.filter(
-                preferential_rate__isnull=False,
+            "ref_rates": alignment_checks.filter(
+                ref_rate__isnull=False,
             ),
-            "preferential_quotas": alignment_checks.filter(
-                preferential_quota__isnull=False,
+            "ref_quota_definitions": alignment_checks.filter(
+                ref_quota_definition__isnull=False,
             ),
-            "quota_order_numbers": alignment_checks.filter(
-                preferential_quota_order_number__isnull=False,
+            "ref_order_numbers": alignment_checks.filter(
+                ref_order_number__isnull=False,
             ),
         }
         return queryset

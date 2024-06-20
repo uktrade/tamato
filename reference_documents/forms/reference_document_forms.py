@@ -29,6 +29,16 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
         },
     )
 
+    regulations = forms.CharField(
+        label="Regulation IDs",
+        widget=forms.Textarea,
+        help_text="Enter one or more regulation ids with each one on a new line.",
+        error_messages={
+            "invalid": "Regulation ids invalid"
+        },
+        required=False,
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -50,6 +60,7 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
                 "area_id",
                 field_width=Fixed.TEN,
             ),
+            "regulations",
             Submit(
                 "submit",
                 "Save",
@@ -60,7 +71,7 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
 
     class Meta:
         model = ReferenceDocument
-        fields = ["title", "area_id"]
+        fields = ["title", "area_id", 'regulations']
 
 
 class ReferenceDocumentDeleteForm(forms.Form):
