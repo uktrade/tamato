@@ -765,12 +765,16 @@ class QuotaSuspensionConfirmCreate(TrackedModelDetailView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         quota_order_number = self.object.quota_definition.order_number
+        list_url = reverse(
+            "quota_definition-ui-list",
+            kwargs={"sid": quota_order_number.sid},
+        )
+        url_param = urlencode({"quota_type": "suspension_periods"})
         context.update(
             {
-                "page_title": "Suspension period created",
                 "quota_order_number": quota_order_number,
                 "object_name": "Suspension period",
-                "tab_url": f"{quota_order_number.get_url()}#suspension-periods",
+                "list_url": f"{list_url}?{url_param}",
             },
         )
         return context
@@ -783,12 +787,16 @@ class QuotaBlockingConfirmCreate(TrackedModelDetailView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         quota_order_number = self.object.quota_definition.order_number
+        list_url = reverse(
+            "quota_definition-ui-list",
+            kwargs={"sid": quota_order_number.sid},
+        )
+        url_param = urlencode({"quota_type": "blocking_periods"})
         context.update(
             {
-                "page_title": "Blocking period created",
                 "quota_order_number": quota_order_number,
                 "object_name": "Blocking period",
-                "tab_url": f"{quota_order_number.get_url()}#blocking-periods",
+                "list_url": f"{list_url}?{url_param}",
             },
         )
         return context

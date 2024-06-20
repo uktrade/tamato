@@ -2,6 +2,8 @@
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
 
+{% set page_title = object_name ~ " created" %}
+
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
     {"text": "Find and edit quotas", "href": url("quota-ui-list")},
@@ -21,25 +23,21 @@
   }) }}
 {% endblock %}
 
-{% block main_button %}
-  {{ govukButton({
-    "text": "Return to quota ID " ~ quota_order_number,
-    "href": quota_order_number.get_url(),
-    "classes": "govuk-button--primary",
-  }) }}
-{% endblock %}
-
 {% block button_group %}
   {{ govukButton({
     "text": "View workbasket summary",
     "href": url("workbaskets:current-workbasket"),
-    "classes": "govuk-button",
+    "classes": "govuk-button--primary",
   }) }}
   {{ govukButton({
-    "text": "View quota ID " ~ quota_order_number ~ " " ~ object_name|lower ~ "s",
-    "href": tab_url,
-    "classes": "govuk-button--secondary"
+    "text": "Return to quota ID " ~ quota_order_number,
+    "href": quota_order_number.get_url(),
+    "classes": "govuk-button--secondary",
   }) }}
 {% endblock %}
 
-{% block actions %}{% endblock %}
+{% block actions %}
+  <li>
+    <a class="govuk-link" href="{{ list_url }}">View quota ID {{ quota_order_number }} {{ object_name|lower }}s</a>
+  </li>
+{% endblock %}
