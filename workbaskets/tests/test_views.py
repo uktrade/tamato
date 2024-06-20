@@ -15,6 +15,8 @@ from django.utils.timezone import localtime
 
 from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
+from common.inspect_tap_tasks import CeleryTask
+from common.inspect_tap_tasks import TAPTasks
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import date_post_data
@@ -2484,3 +2486,117 @@ def test_workbasket_comment_list_view(valid_user_client, user_workbasket):
 
     for i, content in enumerate(contents):
         assert comments[i].content in content
+
+
+def test_clean_tasks():
+    """Test that the clean_tasks function of TAPTasks class returns a cleaned
+    list of tasks from Celery task dictionary."""
+    tap_tasks = TAPTasks()
+
+    celery_dictionary = {
+        "celery@1": [
+            {
+                "id": "task1_id",
+                "name": "workbaskets.tasks.call_check_workbasket_sync",
+                "args": [1591],
+                "kwargs": {},
+                "type": "workbaskets.tasks.call_check_workbasket_sync",
+                "hostname": "celery@1",
+                "time_start": None,
+                "acknowledged": False,
+                "delivery_info": {},
+                "worker_pid": None,
+            },
+            {
+                "id": "task2_id",
+                "name": "workbaskets.tasks.call_check_workbasket_sync",
+                "args": [1587],
+                "kwargs": {},
+                "type": "workbaskets.tasks.call_check_workbasket_sync",
+                "hostname": "celery@1",
+                "time_start": None,
+                "acknowledged": False,
+                "delivery_info": {},
+                "worker_pid": None,
+            },
+        ],
+        "celery@2": [],
+        "celery@3": [],
+    }
+    expected_result = [
+        {
+            "id": "task1_id",
+            "name": "workbaskets.tasks.call_check_workbasket_sync",
+            "args": [1591],
+            "kwargs": {},
+            "type": "workbaskets.tasks.call_check_workbasket_sync",
+            "hostname": "celery@1",
+            "time_start": None,
+            "acknowledged": False,
+            "delivery_info": {},
+            "worker_pid": None,
+            "status": "Active",
+        },
+        {
+            "id": "task2_id",
+            "name": "workbaskets.tasks.call_check_workbasket_sync",
+            "args": [1587],
+            "kwargs": {},
+            "type": "workbaskets.tasks.call_check_workbasket_sync",
+            "hostname": "celery@1",
+            "time_start": None,
+            "acknowledged": False,
+            "delivery_info": {},
+            "worker_pid": None,
+            "status": "Active",
+        },
+    ]
+
+    assert (
+        tap_tasks.clean_tasks(
+            celery_dictionary,
+            task_status="Active",
+            task_name="workbaskets.tasks.call_check_workbasket_sync",
+        )
+        == expected_result
+    )
+
+
+def test_current_rule_checks_is_called(valid_user_client):
+    """Test that current_rule_checks function gets called when a user goes to
+    the rule check page and the page correctly displays the returned list of
+    rule check tasks."""
+
+    return_value = [
+        CeleryTask(
+            "12345",
+            1,
+            TAPTasks.timestamp_to_datetime_string(1718098484.8248514),
+            "54 out of 100",
+            "Active",
+        ),
+        CeleryTask("23456", 2, "", "0 out of 100", "Queued"),
+        CeleryTask("34567", 3, "", "0 out of 100", "Queued"),
+    ]
+
+    with patch.object(
+        TAPTasks,
+        "current_rule_checks",
+        return_value=return_value,
+    ) as mock_current_rule_checks:
+        response = valid_user_client.get(reverse("workbaskets:rule-check-queue"))
+        assert response.status_code == 200
+        # Assert current_rule_checks gets called
+        mock_current_rule_checks.assert_called_once()
+        # Assert the mocked response is formatted correctly on the page
+        soup = BeautifulSoup(str(response.content), "html.parser")
+        table_rows = [element for element in soup.select(".govuk-table__row")]
+        assert "10:34 11 Jun 2024" in str(table_rows[1])
+        assert len(table_rows) == 4
+        active_checks = soup.find_all("span", {"class": "tamato-badge-light-green"})
+        assert len(active_checks) == 1
+        assert "RUNNING" in active_checks[0].get_text()
+        queued_checks = soup.find_all("span", {"class": "tamato-badge-light-grey"})
+        assert len(queued_checks) == 2
+        assert "QUEUED" in queued_checks[0].get_text()
+        assert "QUEUED" in queued_checks[1].get_text()
