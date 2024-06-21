@@ -3,13 +3,13 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
 from django.urls import reverse
 
-from reference_documents.forms.preferential_rate_forms import (
-    PreferentialRateCreateUpdateForm,
+from reference_documents.forms.ref_rate_forms import (
+    RefRateCreateUpdateForm,
 )
-from reference_documents.models import PreferentialRate
+from reference_documents.models import RefRate
 from reference_documents.tests import factories
-from reference_documents.views.preferential_rate_views import PreferentialRateCreate
-from reference_documents.views.preferential_rate_views import PreferentialRateEdit
+from reference_documents.views.rate_views import RefRateCreate
+from reference_documents.views.rate_views import RefRateEdit
 
 pytestmark = pytest.mark.django_db
 
@@ -41,7 +41,7 @@ class TestPreferentialRateEditView:
 
         resp = client.get(
             reverse(
-                "reference_documents:preferential_rates_edit",
+                "reference_documents:rate-edit",
                 kwargs={"pk": pref_rate.pk},
             ),
         )
@@ -51,7 +51,7 @@ class TestPreferentialRateEditView:
     def test_success_url(self):
         pref_rate = factories.RefRateFactory.create()
 
-        target = PreferentialRateEdit()
+        target = RefRateEdit()
         target.object = pref_rate
         assert target.get_success_url() == reverse(
             "reference_documents:version-details",
@@ -60,10 +60,10 @@ class TestPreferentialRateEditView:
 
     def test_form_valid(self):
         pref_rate = factories.RefRateFactory.create()
-        target = PreferentialRateEdit()
+        target = RefRateEdit()
         target.object = pref_rate
 
-        form = PreferentialRateCreateUpdateForm(
+        form = RefRateCreateUpdateForm(
             data={
                 "start_date_0": 1,
                 "start_date_1": 1,
@@ -79,10 +79,10 @@ class TestPreferentialRateEditView:
 
     def test_form_invalid(self):
         pref_rate = factories.RefRateFactory.create()
-        target = PreferentialRateEdit()
+        target = RefRateEdit()
         target.object = pref_rate
 
-        form = PreferentialRateCreateUpdateForm(
+        form = RefRateCreateUpdateForm(
             data={
                 "start_date_0": 1,
                 "start_date_1": 1,
@@ -126,7 +126,7 @@ class TestPreferentialRateCreate:
 
         resp = client.get(
             reverse(
-                "reference_documents:preferential_rates_create",
+                "reference_documents:rate-create",
                 kwargs={"version_pk": ref_doc_ver.pk},
             ),
         )
@@ -135,7 +135,7 @@ class TestPreferentialRateCreate:
 
     def test_success_url(self):
         pref_rate = factories.RefRateFactory.create()
-        target = PreferentialRateCreate()
+        target = RefRateCreate()
         target.object = pref_rate
         assert target.get_success_url() == reverse(
             "reference_documents:version-details",
@@ -176,7 +176,7 @@ class TestPreferentialRateCreate:
 
         resp = client.post(
             reverse(
-                "reference_documents:preferential_rates_create",
+                "reference_documents:rate-create",
                 kwargs={"version_pk": ref_doc_ver.pk},
             ),
             data=post_data,
@@ -206,7 +206,7 @@ class TestPreferentialRateDeleteView:
 
         resp = getattr(client, http_method)(
             reverse(
-                "reference_documents:preferential_rates_delete",
+                "reference_documents:rate-delete",
                 kwargs={
                     "pk": pref_rate.pk,
                 },
@@ -233,7 +233,7 @@ class TestPreferentialRateDeleteView:
 
         resp = getattr(client, http_method)(
             reverse(
-                "reference_documents:preferential_rates_delete",
+                "reference_documents:rate-delete",
                 kwargs={
                     "pk": pref_rate.pk,
                 },
@@ -247,12 +247,12 @@ def test_preferential_rate_bulk_create_creates_object_and_redirects(valid_user, 
     """Test that posting the bulk create from creates all preferential rates and
     redirects."""
     valid_user.user_permissions.add(
-        Permission.objects.get(codename="add_preferentialrate"),
+        Permission.objects.get(codename="add_refrate"),
     )
     client.force_login(valid_user)
 
     ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-    preferential_rates = PreferentialRate.objects.all().filter(
+    preferential_rates = RefRate.objects.all().filter(
         reference_document_version=ref_doc_version,
     )
     assert len(preferential_rates) == 0
@@ -269,14 +269,14 @@ def test_preferential_rate_bulk_create_creates_object_and_redirects(valid_user, 
     }
 
     create_url = reverse(
-        "reference_documents:preferential_rates_bulk_create",
+        "reference_documents:rates-bulk-create",
         kwargs={"pk": ref_doc_version.pk},
     )
     resp = client.get(create_url)
     assert resp.status_code == 200
     resp = client.post(create_url, data)
     assert resp.status_code == 302
-    preferential_rates = PreferentialRate.objects.all().filter(
+    preferential_rates = RefRate.objects.all().filter(
         reference_document_version=ref_doc_version,
     )
     assert len(preferential_rates) == 4
@@ -291,12 +291,12 @@ def test_preferential_rate_bulk_create_invalid(valid_user, client):
     """Test that posting the bulk create form with invalid data fails and
     reloads the form with errors."""
     valid_user.user_permissions.add(
-        Permission.objects.get(codename="add_preferentialrate"),
+        Permission.objects.get(codename="add_refrate"),
     )
     client.force_login(valid_user)
 
     ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-    preferential_rates = PreferentialRate.objects.all().filter(
+    preferential_rates = RefRate.objects.all().filter(
         reference_document_version=ref_doc_version,
     )
     assert len(preferential_rates) == 0
@@ -312,7 +312,7 @@ def test_preferential_rate_bulk_create_invalid(valid_user, client):
         "end_date_2": "2023",
     }
     create_url = reverse(
-        "reference_documents:preferential_rates_bulk_create",
+        "reference_documents:rates-bulk-create",
         kwargs={"pk": ref_doc_version.pk},
     )
     resp = client.post(create_url, data)
@@ -345,12 +345,12 @@ def test_preferential_rate_bulk_create_without_permission(valid_user_client):
     }
 
     create_url = reverse(
-        "reference_documents:preferential_rates_bulk_create",
+        "reference_documents:rates-bulk-create",
         kwargs={"pk": ref_doc_version.pk},
     )
     resp = valid_user_client.post(create_url, data)
     assert resp.status_code == 403
-    preferential_rates = PreferentialRate.objects.all().filter(
+    preferential_rates = RefRate.objects.all().filter(
         reference_document_version=ref_doc_version,
     )
     assert len(preferential_rates) == 0

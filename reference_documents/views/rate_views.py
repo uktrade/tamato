@@ -16,9 +16,9 @@ from reference_documents.models import RefRate
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class PreferentialRateEdit(PermissionRequiredMixin, UpdateView):
+class RefRateEdit(PermissionRequiredMixin, UpdateView):
     form_class = RefRateCreateUpdateForm
-    permission_required = "reference_documents.change_preferentialrate"
+    permission_required = "reference_documents.change_refrate"
     model = RefRate
     template_name = "reference_documents/ref_rates/edit.jinja"
 
@@ -29,9 +29,9 @@ class PreferentialRateEdit(PermissionRequiredMixin, UpdateView):
         )
 
 
-class PreferentialRateCreate(PermissionRequiredMixin, CreateView):
+class RefRateCreate(PermissionRequiredMixin, CreateView):
     form_class = RefRateCreateUpdateForm
-    permission_required = "reference_documents.add_preferentialrate"
+    permission_required = "reference_documents.add_refrate"
     model = RefRate
     template_name = "reference_documents/ref_rates/create.jinja"
 
@@ -48,7 +48,7 @@ class PreferentialRateCreate(PermissionRequiredMixin, CreateView):
         )
         instance.reference_document_version = reference_document_version
         form.save()
-        return super(PreferentialRateCreate, self).form_valid(form)
+        return super(RefRateCreate, self).form_valid(form)
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -60,9 +60,9 @@ class PreferentialRateCreate(PermissionRequiredMixin, CreateView):
         return context_data
 
 
-class PreferentialRateDelete(PermissionRequiredMixin, DeleteView):
+class RefRateDelete(PermissionRequiredMixin, DeleteView):
     template_name = "reference_documents/ref_rates/delete.jinja"
-    permission_required = "reference_documents.delete_preferentialrate"
+    permission_required = "reference_documents.delete_refrate"
     model = RefRate
     form_class = RefRateDeleteForm
 
@@ -73,9 +73,9 @@ class PreferentialRateDelete(PermissionRequiredMixin, DeleteView):
         )
 
 
-class PreferentialRateBulkCreate(PermissionRequiredMixin, FormView):
+class RefRateBulkCreate(PermissionRequiredMixin, FormView):
     template_name = "reference_documents/ref_rates/bulk_create.jinja"
-    permission_required = "reference_documents.add_preferentialrate"
+    permission_required = "reference_documents.add_refrate"
     form_class = RefRateBulkCreateForm
     queryset = ReferenceDocumentVersion.objects.all()
 

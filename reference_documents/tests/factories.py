@@ -110,7 +110,7 @@ class RefOrderNumberFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "reference_documents.RefOrderNumber"
 
-    quota_order_number = FuzzyText(prefix="054", length=3, chars=string.digits)
+    order_number = FuzzyText(prefix="054", length=3, chars=string.digits)
 
     coefficient = None
     main_order_number = None

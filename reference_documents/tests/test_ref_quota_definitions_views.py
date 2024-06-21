@@ -16,7 +16,7 @@ class TestPreferentialQuotaEditView:
 
         resp = valid_user_client.get(
             reverse(
-                "reference_documents:preferential_quotas_edit",
+                "reference_documents:quota-definition-edit",
                 kwargs={"pk": pref_quota.pk},
             ),
         )
@@ -27,7 +27,7 @@ class TestPreferentialQuotaEditView:
 
         resp = superuser_client.get(
             reverse(
-                "reference_documents:preferential_quotas_edit",
+                "reference_documents:quota-definition-edit",
                 kwargs={"pk": pref_quota.pk},
             ),
         )
@@ -52,7 +52,7 @@ class TestPreferentialQuotaEditView:
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:preferential_quotas_edit",
+                "reference_documents:quota-definition-edit",
                 kwargs={"pk": pref_quota.pk},
             ),
             data=post_data,
@@ -85,7 +85,7 @@ class TestPreferentialQuotaEditView:
 
         resp = valid_user_client.post(
             reverse(
-                "reference_documents:preferential_quotas_edit",
+                "reference_documents:quota-definition-edit",
                 kwargs={"pk": pref_quota.pk},
             ),
             data=post_data,
@@ -101,7 +101,7 @@ class TestPreferentialQuotaCreate:
 
         resp = valid_user_client.get(
             reverse(
-                "reference_documents:preferential_quotas_create",
+                "reference_documents:quota-definition-create",
                 kwargs={"version_pk": ref_doc_version.pk},
             ),
         )
@@ -113,7 +113,7 @@ class TestPreferentialQuotaCreate:
 
         resp = valid_user_client.get(
             reverse(
-                "reference_documents:preferential_quotas_create_for_order",
+                "reference_documents:quota-definition-create-for-order",
                 kwargs={
                     "version_pk": pref_order_number.reference_document_version.pk,
                     "order_pk": pref_order_number.pk,
@@ -128,7 +128,7 @@ class TestPreferentialQuotaCreate:
 
         resp = superuser_client.get(
             reverse(
-                "reference_documents:preferential_quotas_create",
+                "reference_documents:quota-definition-create",
                 kwargs={"version_pk": ref_doc_version.pk},
             ),
         )
@@ -140,7 +140,7 @@ class TestPreferentialQuotaCreate:
 
         resp = superuser_client.get(
             reverse(
-                "reference_documents:preferential_quotas_create_for_order",
+                "reference_documents:quota-definition-create-for-order",
                 kwargs={
                     "version_pk": pref_order_number.reference_document_version.pk,
                     "order_pk": pref_order_number.pk,
@@ -169,7 +169,7 @@ class TestPreferentialQuotaCreate:
 
         resp = valid_user_client.post(
             reverse(
-                "reference_documents:preferential_quotas_create",
+                "reference_documents:quota-definition-create",
                 kwargs={"version_pk": pref_quota_order_number.pk},
             ),
             data=post_data,
@@ -196,7 +196,7 @@ class TestPreferentialQuotaCreate:
 
         resp = valid_user_client.post(
             reverse(
-                "reference_documents:preferential_quotas_create_for_order",
+                "reference_documents:quota-definition-create-for-order",
                 kwargs={
                     "version_pk": pref_order_number.reference_document_version.pk,
                     "order_pk": pref_order_number.pk,
@@ -226,7 +226,7 @@ class TestPreferentialQuotaCreate:
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:preferential_quotas_create",
+                "reference_documents:quota-definition-create",
                 kwargs={
                     "version_pk": pref_quota_order_number.reference_document_version.pk,
                 },
@@ -255,7 +255,7 @@ class TestPreferentialQuotaCreate:
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:preferential_quotas_create_for_order",
+                "reference_documents:quota-definition-create-for-order",
                 kwargs={
                     "version_pk": pref_order_number.reference_document_version.pk,
                     "order_pk": pref_order_number.pk,
@@ -273,7 +273,7 @@ class TestPreferentialQuotaBulkCreate:
         """Test that posting the bulk create from creates all preferential
         quotas and redirects."""
         valid_user.user_permissions.add(
-            Permission.objects.get(codename="add_preferentialquota"),
+            Permission.objects.get(codename="add_refquotadefinition"),
         )
         client.force_login(valid_user)
 
@@ -283,7 +283,7 @@ class TestPreferentialQuotaBulkCreate:
                 reference_document_version=ref_doc_version,
             )
         )
-        assert not ref_doc_version.preferential_quotas()
+        assert not ref_doc_version.ref_quota_definitions()
 
         data = {
             "ref_order_number": ref_order_number.pk,
@@ -314,7 +314,7 @@ class TestPreferentialQuotaBulkCreate:
         }
 
         create_url = reverse(
-            "reference_documents:preferential_quotas_bulk_create_for_order",
+            "reference_documents:quota-definition-bulk-create-for-order",
             kwargs={
                 "pk": ref_doc_version.pk,
                 "order_pk": ref_order_number.pk,
@@ -325,7 +325,7 @@ class TestPreferentialQuotaBulkCreate:
 
         resp = client.post(create_url, data)
         assert resp.status_code == 302
-        new_preferential_quotas = ref_doc_version.preferential_quotas()
+        new_preferential_quotas = ref_doc_version.ref_quota_definitions()
         assert len(new_preferential_quotas) == 6
         assert (
             resp.url
@@ -340,7 +340,7 @@ class TestPreferentialQuotaBulkCreate:
         """Test that posting the bulk create form with invalid data fails and
         reloads the form with errors."""
         valid_user.user_permissions.add(
-            Permission.objects.get(codename="add_preferentialquota"),
+            Permission.objects.get(codename="add_refquotadefinition"),
         )
         client.force_login(valid_user)
 
@@ -350,7 +350,7 @@ class TestPreferentialQuotaBulkCreate:
                 reference_document_version=ref_doc_version,
             )
         )
-        assert not ref_doc_version.preferential_quotas()
+        assert not ref_doc_version.ref_quota_definitions()
 
         data = {
             "ref_order_number": ref_order_number.pk,
@@ -381,7 +381,7 @@ class TestPreferentialQuotaBulkCreate:
         }
 
         create_url = reverse(
-            "reference_documents:preferential_quotas_bulk_create",
+            "reference_documents:quota-definition-bulk-create",
             kwargs={"pk": ref_doc_version.pk},
         )
 
@@ -402,7 +402,7 @@ class TestPreferentialQuotaBulkCreate:
             in error_messages[4].text
         )
 
-        new_preferential_quotas = ref_doc_version.preferential_quotas()
+        new_preferential_quotas = ref_doc_version.ref_quota_definitions()
         assert len(new_preferential_quotas) == 0
 
     def test_quota_bulk_create_without_permission(self, valid_user_client):
@@ -414,7 +414,7 @@ class TestPreferentialQuotaBulkCreate:
                 reference_document_version=ref_doc_version,
             )
         )
-        assert not ref_doc_version.preferential_quotas()
+        assert not ref_doc_version.ref_quota_definitions()
 
         data = {
             "ref_order_number": ref_order_number.pk,
@@ -445,13 +445,13 @@ class TestPreferentialQuotaBulkCreate:
         }
 
         create_url = reverse(
-            "reference_documents:preferential_quotas_bulk_create",
+            "reference_documents:quota-definition-bulk-create",
             kwargs={"pk": ref_doc_version.pk},
         )
 
         resp = valid_user_client.post(create_url, data)
         assert resp.status_code == 403
-        assert not ref_doc_version.preferential_quotas()
+        assert not ref_doc_version.ref_quota_definitions()
 
 
 @pytest.mark.reference_documents
@@ -464,7 +464,7 @@ class TestPreferentialQuotaDelete:
 
         resp = valid_user_client.get(
             reverse(
-                "reference_documents:preferential_quotas_delete",
+                "reference_documents:quota-definition-delete",
                 kwargs={
                     "pk": pref_quota.pk,
                     "version_pk": ref_doc_version.pk,
@@ -481,7 +481,7 @@ class TestPreferentialQuotaDelete:
 
         resp = superuser_client.get(
             reverse(
-                "reference_documents:ref-quota-definition-delete",
+                "reference_documents:quota-definition-delete",
                 kwargs={
                     "pk": pref_quota.pk,
                     "version_pk": ref_doc_version.pk,
@@ -500,7 +500,7 @@ class TestPreferentialQuotaDelete:
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:ref-quota-definition-delete",
+                "reference_documents:quota-definition-delete",
                 kwargs={
                     "pk": pref_quota.pk,
                     "version_pk": ref_doc_version.pk,
@@ -524,7 +524,7 @@ class TestPreferentialQuotaDelete:
 
         resp = valid_user_client.post(
             reverse(
-                "reference_documents:ref-quota-definition-delete",
+                "reference_documents:quota-definition-delete",
                 kwargs={
                     "pk": pref_quota.pk,
                     "version_pk": ref_doc_version.pk,

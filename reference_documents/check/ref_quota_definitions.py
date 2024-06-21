@@ -1,8 +1,8 @@
-from reference_documents.check.base import BasePreferentialQuotaCheck
+from reference_documents.check.base import BaseQuotaDefinitionCheck
 from reference_documents.models import AlignmentReportCheckStatus
 
 
-class QuotaDefinitionExists(BasePreferentialQuotaCheck):
+class QuotaDefinitionExists(BaseQuotaDefinitionCheck):
     name = 'Preferential Quota Exists'
     def run_check(self):
         if not self.order_number():

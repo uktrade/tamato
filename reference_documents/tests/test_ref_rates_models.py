@@ -1,6 +1,6 @@
 import pytest
 
-from reference_documents.models import PreferentialRate, ReferenceDocumentVersionStatus
+from reference_documents.models import RefRate, ReferenceDocumentVersionStatus
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.reference_documents
 class TestPreferentialRate:
     def test_init(self):
-        target = PreferentialRate()
+        target = RefRate()
         assert target.commodity_code == ""
         assert target.duty_rate == ""
         assert target.reference_document_version is None

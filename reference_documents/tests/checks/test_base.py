@@ -12,14 +12,11 @@ from common.util import TaricDateRange
 from geo_areas.models import GeographicalArea, GeographicalAreaDescription
 from measures.models import Measure
 from quotas.models import QuotaOrderNumber, QuotaDefinition
-from reference_documents.check.base import BaseCheck, BasePreferentialQuotaCheck
+from reference_documents.check.base import BaseCheck, BaseQuotaDefinitionCheck
 from reference_documents.forms.ref_order_number_forms import (
-    ,
+    RefOrderNumberDeleteForm,
 )
-from reference_documents.forms.ref_order_number_forms import (
-    PreferentialQuotaOrderNumberDeleteForm,
-)
-from reference_documents.models import PreferentialQuotaOrderNumber, PreferentialRate, RefOrderNumber
+from reference_documents.models import RefOrderNumber, RefRate, RefOrderNumber
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -38,17 +35,17 @@ class TestBaseCheck:
 
 class TestBasePreferentialQuotaCheck:
     def test_init(self):
-        pref_quota = factories.RefQuotaDefinitionFactory.create()
-        target = BasePreferentialQuotaCheck(pref_quota)
+        ref_quota_definition = factories.RefQuotaDefinitionFactory.create()
+        target = BaseQuotaDefinitionCheck(ref_quota_definition)
         assert target.dependent_on_passing_check is None
-        assert target.preferential_quota == pref_quota
-        assert target.ref_order_number == pref_quota.ref_order_number
-        assert target.reference_document_version == pref_quota.reference_document_version
-        assert target.reference_document == pref_quota.reference_document_version.reference_document
+        assert target.ref_quota_definition == ref_quota_definition
+        assert target.ref_order_number == ref_quota_definition.ref_order_number
+        assert target.reference_document_version == ref_quota_definition.reference_document_version
+        assert target.reference_document == ref_quota_definition.reference_document_version.reference_document
 
     def test_order_number_no_match(self):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
-        target = BasePreferentialQuotaCheck(pref_quota)
+        target = BaseQuotaDefinitionCheck(pref_quota)
         assert target.order_number() is None
 
     def test_order_number_match(self):
@@ -56,12 +53,12 @@ class TestBasePreferentialQuotaCheck:
         pref_quota = factories.RefQuotaDefinitionFactory.create(
             ref_order_number__quota_order_number=tap_order_number.order_number
         )
-        target = BasePreferentialQuotaCheck(pref_quota)
+        target = BaseQuotaDefinitionCheck(pref_quota)
         assert target.order_number() == tap_order_number
 
     def test_geo_area_no_match(self):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
-        target = BasePreferentialQuotaCheck(pref_quota)
+        target = BaseQuotaDefinitionCheck(pref_quota)
         assert target.geo_area() is None
 
     def test_geo_area_match(self):
@@ -69,12 +66,12 @@ class TestBasePreferentialQuotaCheck:
         pref_quota = factories.RefQuotaDefinitionFactory.create(
             reference_document_version__reference_document__area_id=tap_geo_area.descriptions.first().description
         )
-        target = BasePreferentialQuotaCheck(pref_quota)
+        target = BaseQuotaDefinitionCheck(pref_quota)
         assert target.geo_area() == tap_geo_area
 
     def test_commodity_code_no_match(self):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
-        target = BasePreferentialQuotaCheck(pref_quota)
+        target = BaseQuotaDefinitionCheck(pref_quota)
         assert target.commodity_code() is None
 
     def test_commodity_code_match(self):
@@ -82,7 +79,7 @@ class TestBasePreferentialQuotaCheck:
         pref_quota = factories.RefQuotaDefinitionFactory.create(
             commodity_code=comm_code.item_id
         )
-        target = BasePreferentialQuotaCheck(pref_quota)
+        target = BaseQuotaDefinitionCheck(pref_quota)
         assert target.commodity_code() == comm_code
 
     def quota_definition(self):
@@ -191,9 +188,9 @@ class BasePreferentialQuotaOrderNumberCheck(BaseCheck):
 
 
 class BasePreferentialRateCheck(BaseCheck):
-    def __init__(self, preferential_rate: PreferentialRate):
+    def __init__(self, rate: RefRate):
         super().__init__()
-        self.preferential_rate = preferential_rate
+        self.rate = rate
 
     def get_snapshot(self) -> CommodityTreeSnapshot:
         # not liking having to use CommodityTreeSnapshot, but it does to the job
@@ -216,7 +213,7 @@ class BasePreferentialRateCheck(BaseCheck):
 
     def comm_code(self):
         goods = GoodsNomenclature.objects.latest_approved().filter(
-            item_id=self.preferential_rate.commodity_code,
+            item_id=self.rate.commodity_code,
             valid_between__contains=self.ref_doc_version_eif_date(),
             suffix=80,
         )
@@ -230,7 +227,7 @@ class BasePreferentialRateCheck(BaseCheck):
         return (
             GeographicalArea.objects.latest_approved()
             .filter(
-                area_id=self.preferential_rate.reference_document_version.reference_document.area_id,
+                area_id=self.rate.reference_document_version.reference_document.area_id,
             )
             .first()
         )
@@ -245,7 +242,7 @@ class BasePreferentialRateCheck(BaseCheck):
 
     def ref_doc_version_eif_date(self):
         eif_date = (
-            self.preferential_rate.reference_document_version.entry_into_force_date
+            self.rate.reference_document_version.entry_into_force_date
         )
 
         # todo : make sure EIf dates are all populated correctly - and remove this

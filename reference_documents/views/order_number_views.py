@@ -11,14 +11,14 @@ from reference_documents.forms.ref_order_number_forms import (
 from reference_documents.models import ReferenceDocumentVersion, RefOrderNumber
 
 
-class PreferentialQuotaOrderNumberEdit(PermissionRequiredMixin, UpdateView):
+class RefOrderNumberEdit(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/ref_order_numbers/edit.jinja"
-    permission_required = "reference_documents.change_preferentialquotaordernumber"
+    permission_required = "change_refordernumber"
     model = RefOrderNumber
     form_class = RefOrderNumberCreateUpdateForm
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaOrderNumberEdit, self).get_form_kwargs()
+        kwargs = super(RefOrderNumberEdit, self).get_form_kwargs()
         kwargs["reference_document_version"] = RefOrderNumber.objects.get(
             id=self.kwargs["pk"],
         ).reference_document_version
@@ -34,14 +34,14 @@ class PreferentialQuotaOrderNumberEdit(PermissionRequiredMixin, UpdateView):
         )
 
 
-class PreferentialQuotaOrderNumberCreate(PermissionRequiredMixin, CreateView):
+class RefOrderNumberCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/ref_order_numbers/edit.jinja"
-    permission_required = "reference_documents.add_preferentialquotaordernumber"
+    permission_required = "reference_documents.add_refordernumber"
     model = RefOrderNumber
     form_class = RefOrderNumberCreateUpdateForm
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaOrderNumberCreate, self).get_form_kwargs()
+        kwargs = super(RefOrderNumberCreate, self).get_form_kwargs()
         kwargs["reference_document_version"] = ReferenceDocumentVersion.objects.get(
             id=self.kwargs["pk"],
         )
@@ -55,7 +55,7 @@ class PreferentialQuotaOrderNumberCreate(PermissionRequiredMixin, CreateView):
         )
         instance.reference_document_version = reference_document_version
         self.object = instance
-        return super(PreferentialQuotaOrderNumberCreate, self).form_valid(form)
+        return super(RefOrderNumberCreate, self).form_valid(form)
 
     def get_success_url(self):
         return (
@@ -74,13 +74,13 @@ class PreferentialQuotaOrderNumberCreate(PermissionRequiredMixin, CreateView):
         return context_data
 
 
-class PreferentialQuotaOrderNumberDelete(
+class RefOrderNumberDelete(
     PermissionRequiredMixin,
     DeleteView,
 ):
     form_class = RefOrderNumberDeleteForm
     template_name = "reference_documents/ref_order_numbers/delete.jinja"
-    permission_required = "reference_documents.delete_preferentialquotaordernumber"
+    permission_required = "delete_refordernumber"
     model = RefOrderNumber
 
     def get_success_url(self) -> str:

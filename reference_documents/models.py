@@ -121,7 +121,7 @@ class ReferenceDocumentVersion(TimestampedMixin):
     def ref_quota_definitions(self):
         order_numbers = self.ref_order_numbers.all()
         return RefQuotaDefinition.objects.all().filter(
-            order_number__in=order_numbers,
+            ref_order_number__in=order_numbers,
         )
 
     def editable(self):
@@ -175,13 +175,13 @@ class ReferenceDocumentVersion(TimestampedMixin):
         super(ReferenceDocumentVersion, self).save()
         return
 
-    def preferential_rate_count(self):
+    def ref_rate_count(self):
         return self.ref_rates.count()
 
     def ref_order_number_count(self):
         return self.ref_order_numbers.count()
 
-    def preferential_quota_count(self):
+    def ref_quota_count(self):
         quota_count = RefQuotaDefinition.objects.all().filter(
             ref_order_number__reference_document_version=self
         ).count()
@@ -193,7 +193,7 @@ class ReferenceDocumentVersion(TimestampedMixin):
 
         return quota_count
 
-    def preferential_quota_suspension_count(self):
+    def ref_quota_suspension_count(self):
         suspension_count = RefQuotaSuspension.objects.all().filter(
             ref_quota_suspension__ref_order_number__reference_document_version=self
         ).count()

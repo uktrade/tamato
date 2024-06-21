@@ -17,7 +17,7 @@ class TestPreferentialQuotaOrderNumberEditView:
 
         resp = valid_user_client.get(
             reverse(
-                "reference_documents:ref_order_number_edit",
+                "reference_documents:order-number-edit",
                 kwargs={"pk": pref_quota_order_number.pk},
             ),
         )
@@ -28,7 +28,7 @@ class TestPreferentialQuotaOrderNumberEditView:
 
         resp = superuser_client.get(
             reverse(
-                "reference_documents:ref_order_number_edit",
+                "reference_documents:order-number-edit",
                 kwargs={"pk": pref_quota_order_number.pk},
             ),
         )
@@ -38,7 +38,7 @@ class TestPreferentialQuotaOrderNumberEditView:
         pref_quota_order_number = factories.RefOrderNumberFactory.create()
 
         post_data = {
-            "quota_order_number": "054321",
+            "order_number": "054321",
             "start_date_0": 1,
             "start_date_1": 1,
             "start_date_2": 2022,
@@ -52,7 +52,7 @@ class TestPreferentialQuotaOrderNumberEditView:
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:ref_order_number_edit",
+                "reference_documents:order-number-edit",
                 kwargs={"pk": pref_quota_order_number.pk},
             ),
             post_data,
@@ -89,13 +89,14 @@ class TestPreferentialQuotaOrderNumberEditView:
             "end_date_1": 1,
             "end_date_2": 2023,
             "coefficient": "1.2",
-            "main_order_number_id": pref_quota_order_number_main.pk,
+            'relation_type': 'EQ',
+            "main_order_number": pref_quota_order_number_main.pk,
             "reference_document_version_id": pref_quota_order_number_main.reference_document_version.pk,
         }
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:ref_order_number_edit",
+                "reference_documents:order-number-edit",
                 kwargs={"pk": pref_quota_order_number.pk},
             ),
             post_data,
@@ -110,7 +111,8 @@ class TestPreferentialQuotaOrderNumberEditView:
         assert pref_quota_order_number.valid_between.upper == date(2023, 1, 1)
         assert pref_quota_order_number.coefficient == Decimal("1.2")
         assert pref_quota_order_number.order_number == "054321"
-        assert pref_quota_order_number.main_order_number_id is None
+        assert pref_quota_order_number.relation_type == "EQ"
+        assert pref_quota_order_number.main_order_number == pref_quota_order_number_main
 
 
 @pytest.mark.reference_documents
@@ -120,7 +122,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
 
         resp = valid_user_client.get(
             reverse(
-                "reference_documents:ref_order_number_create",
+                "reference_documents:order-number-create",
                 kwargs={"pk": ref_doc_version.pk},
             ),
         )
@@ -131,7 +133,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
 
         resp = superuser_client.get(
             reverse(
-                "reference_documents:ref_order_number_create",
+                "reference_documents:order-number-create",
                 kwargs={"pk": ref_doc_version.pk},
             ),
         )
@@ -141,7 +143,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
 
         post_data = {
-            "quota_order_number": "054321",
+            "order_number": "054321",
             "start_date_0": 1,
             "start_date_1": 1,
             "start_date_2": 2022,
@@ -149,13 +151,14 @@ class TestPreferentialQuotaOrderNumberCreateView:
             "end_date_1": 1,
             "end_date_2": 2023,
             "coefficient": "",
-            "main_order_number_id": "",
+            "main_order_number": "",
+            "relation_type": "",
             "reference_document_version_id": ref_doc_version.pk,
         }
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:ref_order_number_create",
+                "reference_documents:order-number-create",
                 kwargs={"pk": ref_doc_version.pk},
             ),
             post_data,
@@ -172,7 +175,8 @@ class TestPreferentialQuotaOrderNumberCreateView:
         assert pref_quota_order_number.valid_between.upper == date(2023, 1, 1)
         assert pref_quota_order_number.coefficient is None
         assert pref_quota_order_number.order_number == "054321"
-        assert pref_quota_order_number.main_order_number_id is None
+        assert pref_quota_order_number.main_order_number is None
+        assert pref_quota_order_number.relation_type == ''
 
     def test_post_with_permission_pass_with_sub_quota(self, superuser_client):
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
@@ -183,7 +187,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
         )
 
         post_data = {
-            "quota_order_number": "054321",
+            "order_number": "054321",
             "start_date_0": 1,
             "start_date_1": 1,
             "start_date_2": 2022,
@@ -191,13 +195,14 @@ class TestPreferentialQuotaOrderNumberCreateView:
             "end_date_1": 1,
             "end_date_2": 2023,
             "coefficient": "1.2",
-            "main_order_number_id": pref_quota_order_number_main.pk,
+            "main_order_number": pref_quota_order_number_main.pk,
+            "relation_type": "EQ",
             "reference_document_version_id": ref_doc_version.pk,
         }
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:ref_order_number_create",
+                "reference_documents:order-number-create",
                 kwargs={"pk": ref_doc_version.pk},
             ),
             post_data,
@@ -214,7 +219,8 @@ class TestPreferentialQuotaOrderNumberCreateView:
         assert pref_quota_order_number.valid_between.upper == date(2023, 1, 1)
         assert pref_quota_order_number.coefficient == Decimal("1.2")
         assert pref_quota_order_number.order_number == "054321"
-        assert pref_quota_order_number.main_order_number_id is None
+        assert pref_quota_order_number.main_order_number == pref_quota_order_number_main
+        assert pref_quota_order_number.relation_type == 'EQ'
 
 
 @pytest.mark.reference_documents
@@ -225,7 +231,7 @@ class TestPreferentialQuotaOrderNumberDeleteView:
 
         resp = valid_user_client.get(
             reverse(
-                "reference_documents:ref_order_number_delete",
+                "reference_documents:order-number-delete",
                 kwargs={
                     "pk": pref_quota_order_number.pk,
                     "version_pk": ref_doc_version.pk,
@@ -240,7 +246,7 @@ class TestPreferentialQuotaOrderNumberDeleteView:
 
         resp = superuser_client.get(
             reverse(
-                "reference_documents:ref_order_number_delete",
+                "reference_documents:order-number-delete",
                 kwargs={
                     "pk": pref_quota_order_number.pk,
                     "version_pk": ref_doc_version.pk,
@@ -256,7 +262,7 @@ class TestPreferentialQuotaOrderNumberDeleteView:
         pref_quota_order_number_id = pref_quota_order_number.id
         resp = superuser_client.post(
             reverse(
-                "reference_documents:ref_order_number_delete",
+                "reference_documents:order-number-delete",
                 kwargs={
                     "pk": pref_quota_order_number.pk,
                     "version_pk": ref_doc_version.pk,
@@ -277,7 +283,7 @@ class TestPreferentialQuotaOrderNumberDeleteView:
         pref_quota_order_number_id = pref_quota_order_number.id
         resp = valid_user_client.post(
             reverse(
-                "reference_documents:ref_order_number_delete",
+                "reference_documents:order-number-delete",
                 kwargs={
                     "pk": pref_quota_order_number.pk,
                     "version_pk": ref_doc_version.pk,
@@ -301,7 +307,7 @@ class TestPreferentialQuotaOrderNumberDeleteView:
 
         resp = superuser_client.post(
             reverse(
-                "reference_documents:ref_order_number_delete",
+                "reference_documents:order-number-delete",
                 kwargs={
                     "pk": pref_quota_order_number.pk,
                     "version_pk": ref_doc_version.pk,

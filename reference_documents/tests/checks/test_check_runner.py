@@ -1,7 +1,6 @@
-from reference_documents.check.base import BasePreferentialRateCheck
-from reference_documents.check.ref_order_numbers import *  # noqa
-from reference_documents.check.preferential_quotas import *  # noqa
-from reference_documents.check.preferential_rates import *  # noqa
+from reference_documents.check.ref_order_numbers import *
+from reference_documents.check.ref_quota_definitions import *
+from reference_documents.check.ref_rates import *
 from reference_documents.check.utils import Utils
 from reference_documents.models import AlignmentReport
 from reference_documents.models import AlignmentReportCheck
@@ -20,11 +19,11 @@ class Checks:
         return Utils().get_child_checks(check_class)
 
     def run(self):
-        for check in Checks.get_checks_for(BasePreferentialRateCheck):
+        for check in Checks.get_checks_for(BaseRateCheck):
             for pref_rate in self.reference_document_version.preferential_rates.all():
                 self.capture_check_result(check(pref_rate), pref_rate=pref_rate)
 
-        for check in Checks.get_checks_for(BasePreferentialQuotaOrderNumberCheck):
+        for check in Checks.get_checks_for(BaseOrderNumberCheck):
             for (
                 pref_quota_order_number
             ) in self.reference_document_version.ref_order_numbers.all():
@@ -32,7 +31,7 @@ class Checks:
                     check(pref_quota_order_number),
                     pref_quota_order_number=pref_quota_order_number,
                 )
-                for sub_check in Checks.get_checks_for(BasePreferentialQuotaCheck):
+                for sub_check in Checks.get_checks_for(BaseQuotaDefinitionCheck):
                     for pref_quota in pref_quota_order_number.preferential_quotas.all():
                         self.capture_check_result(
                             sub_check(pref_quota),

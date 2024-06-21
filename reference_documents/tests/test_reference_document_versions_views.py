@@ -224,7 +224,7 @@ class TestReferenceDocumentVersionViews:
             5,
             reference_document_version=ref_doc_version,
         )
-        first_quota_order_number = order_number_batch[0].quota_order_number
+        first_quota_order_number = order_number_batch[0].order_number
         # Recreate the first quota and first preferential rate's commodity code in TAP
         tap_quota = QuotaOrderNumberFactory.create(order_number=first_quota_order_number)
         tap_commodity_code = SimpleGoodsNomenclatureFactory.create(
@@ -243,7 +243,7 @@ class TestReferenceDocumentVersionViews:
         page = BeautifulSoup(resp.content, "html.parser")
         assert resp.status_code == 200
         # Assert the first rate's commodity code which exists in TAP appears as a link
-        assert page.find("a", href=True, text=f"{first_preferential_rate.commodity_code}")
+        assert page.find("td", text=f"{first_preferential_rate.commodity_code}")
         table_rows = page.select("tr")
         # Assert there is a row for each preferential rate
         assert len(table_rows) == 11
@@ -262,7 +262,7 @@ class TestReferenceDocumentVersionViews:
         assert resp.status_code == 200
         # Assert the remaining four quotas appear too
         for order_number in order_number_batch[1:]:
-            assert f"Order number {order_number.quota_order_number}" in str(
+            assert f"Order number {order_number.order_number}" in str(
                 resp.content,
             )
 
@@ -295,7 +295,7 @@ class TestReferenceDocumentVersionViews:
             5,
             reference_document_version=ref_doc_version,
         )
-        first_quota_order_number = order_number_batch[0].quota_order_number
+        first_quota_order_number = order_number_batch[0].order_number
         tap_quota = QuotaOrderNumberFactory.create(order_number=first_quota_order_number)
         tap_commodity_code = SimpleGoodsNomenclatureFactory.create(
             item_id=first_preferential_rate.commodity_code,

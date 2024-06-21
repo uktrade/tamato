@@ -12,7 +12,7 @@
     <div class="govuk-grid-column-one-quarter">
         <div class="app-related-items" role="complementary">
             <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
-            {% if object.editable() and request.user.has_perm("reference_documents.add_preferentialrate") %}
+            {% if object.editable() and request.user.has_perm("reference_documents.add_refrate") %}
                 <ul class="govuk-list govuk-!-font-size-16">
                     <li>
                         <a class="govuk-link" href="{{ url('reference_documents:rate-create', args=[object.pk]) }}">Add new rate</a>

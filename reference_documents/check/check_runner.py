@@ -1,8 +1,8 @@
 import logging
 
-from reference_documents.check.base import BasePreferentialQuotaCheck, BaseCheck
-from reference_documents.check.base import BasePreferentialQuotaOrderNumberCheck
-from reference_documents.check.base import BasePreferentialRateCheck, BasePreferentialSuspensionCheck
+from reference_documents.check.base import BaseRateCheck, BaseCheck
+from reference_documents.check.base import BaseQuotaDefinitionCheck
+from reference_documents.check.base import BaseOrderNumberCheck, BaseQuotaSuspensionCheck
 
 # import additional checks
 from reference_documents.check.ref_rates import MeasureExists  # noqa
@@ -38,13 +38,13 @@ class Checks:
             self.alignment_report.save()
 
             # Preferential rate checks
-            for ref_rate_check in Checks.get_checks_for(BasePreferentialRateCheck):
+            for ref_rate_check in Checks.get_checks_for(BaseRateCheck):
                 logger.info(f'starting run: check {ref_rate_check.__class__.__name__}')
                 for ref_rate in self.reference_document_version.ref_rates.all():
                     self.capture_check_result(ref_rate_check(ref_rate), ref_rate=ref_rate)
 
             # Order number checks
-            for order_number_check in Checks.get_checks_for(BasePreferentialQuotaOrderNumberCheck):
+            for order_number_check in Checks.get_checks_for(BaseOrderNumberCheck):
                 logger.info(f'starting run: check {order_number_check.__class__.__name__}')
                 for ref_order_number in self.reference_document_version.ref_order_numbers.all():
                     order_number_check_status = self.capture_check_result(
@@ -52,7 +52,7 @@ class Checks:
                         ref_order_number=ref_order_number,
                     )
                     # Quota definition checks
-                    for pref_quota_check in Checks.get_checks_for(BasePreferentialQuotaCheck):
+                    for pref_quota_check in Checks.get_checks_for(BaseQuotaDefinitionCheck):
                         for ref_quota_definition in ref_order_number.preferential_quotas.all():
                             pref_quota_check_status = self.capture_check_result(
                                 pref_quota_check(ref_quota_definition),
@@ -60,7 +60,7 @@ class Checks:
                                 parent_check_status=order_number_check_status
                             )
                             # Quota suspension checks
-                            for pref_suspension_check in Checks.get_checks_for(BasePreferentialSuspensionCheck):
+                            for pref_suspension_check in Checks.get_checks_for(BaseQuotaSuspensionCheck):
                                 for ref_quota_suspension in RefQuotaSuspension.objects.all().filter(
                                         ref_quota_definition=ref_quota_definition
                                 ):
@@ -79,7 +79,7 @@ class Checks:
                                 )
 
                                 # Quota suspension checks (templated)
-                                for pref_suspension_check in Checks.get_checks_for(BasePreferentialSuspensionCheck):
+                                for pref_suspension_check in Checks.get_checks_for(BaseQuotaSuspensionCheck):
                                     for ref_quota_suspension_range in ref_quota_definition_range.preferential_quota_suspension_templates.all():
                                         for pref_suspension in ref_quota_suspension_range.dynamic_preferential_quota_suspensions():
                                             self.capture_check_result(

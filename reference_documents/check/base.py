@@ -27,8 +27,8 @@ class BaseCheck:
         raise NotImplemented("Please implement on child classes")
 
 
-class BasePreferentialQuotaCheck(BaseCheck):
-    name = 'Base preferential quota check'
+class BaseQuotaDefinitionCheck(BaseCheck):
+    name = 'Base quota definition check'
 
     def __init__(self, ref_quota_definition: RefQuotaDefinition):
         super().__init__()
@@ -174,7 +174,7 @@ class BasePreferentialQuotaCheck(BaseCheck):
         return False
 
 
-class BasePreferentialQuotaOrderNumberCheck(BaseCheck):
+class BaseOrderNumberCheck(BaseCheck):
     name = 'Base preferential quota order number check'
 
     def __init__(self, ref_order_number: RefOrderNumber):
@@ -216,7 +216,7 @@ class BasePreferentialQuotaOrderNumberCheck(BaseCheck):
         order_number = self.order_number()
 
 
-class BasePreferentialSuspensionCheck(BaseCheck):
+class BaseQuotaSuspensionCheck(BaseCheck):
 
     def __init__(self, ref_quota_suspension: RefQuotaSuspension):
         super().__init__()
@@ -262,7 +262,7 @@ class BasePreferentialSuspensionCheck(BaseCheck):
         return suspensions.first()
 
 
-class BasePreferentialRateCheck(BaseCheck):
+class BaseRateCheck(BaseCheck):
     name = 'Base preferential rate check'
 
     def __init__(self, preferential_rate: RefRate):
@@ -322,7 +322,7 @@ class BasePreferentialRateCheck(BaseCheck):
             self.preferential_rate.reference_document_version.entry_into_force_date
         )
 
-        # todo : make sure EIf dates are all populated correctly - and remove this
+        # todo : make sure EIF dates are all populated correctly - and remove this
         if eif_date is None:
             eif_date = date.today()
 

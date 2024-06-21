@@ -28,7 +28,7 @@ class TestReferenceDocumentVersion:
             ref_order_number__reference_document_version=target,
         )
 
-        assert len(target.preferential_quotas()) == 1
+        assert len(target.ref_quota_definitions()) == 1
 
     # FSM tests
     @pytest.mark.parametrize(

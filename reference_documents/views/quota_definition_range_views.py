@@ -9,9 +9,9 @@ from reference_documents.models import RefQuotaDefinitionRange
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class PreferentialQuotaTemplateEdit(PermissionRequiredMixin, UpdateView):
+class RefQuotaDefinitionRangeEdit(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/ref_quota_definition_ranges/edit.jinja"
-    permission_required = "reference_documents.change_preferentialquotatemplate"
+    permission_required = "reference_documents.change_refquotadefinitionrange"
     model = RefQuotaDefinitionRange
     form_class = RefQuotaDefinitionRangeCreateUpdateForm
 
@@ -27,7 +27,7 @@ class PreferentialQuotaTemplateEdit(PermissionRequiredMixin, UpdateView):
         )
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaTemplateEdit, self).get_form_kwargs()
+        kwargs = super(RefQuotaDefinitionRangeEdit, self).get_form_kwargs()
         kwargs["reference_document_version"] = RefQuotaDefinitionRange.objects.get(
             id=self.kwargs["pk"],
         ).ref_order_number.reference_document_version
@@ -37,14 +37,14 @@ class PreferentialQuotaTemplateEdit(PermissionRequiredMixin, UpdateView):
         return kwargs
 
 
-class PreferentialQuotaTemplateCreate(PermissionRequiredMixin, CreateView):
+class RefQuotaDefinitionRangeCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/ref_quota_definition_ranges/create.jinja"
-    permission_required = "reference_documents.add_preferentialquotatemplate"
+    permission_required = "reference_documents.add_refquotadefinitionrange"
     model = RefQuotaDefinitionRange
     form_class = RefQuotaDefinitionRangeCreateUpdateForm
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaTemplateCreate, self).get_form_kwargs()
+        kwargs = super(RefQuotaDefinitionRangeCreate, self).get_form_kwargs()
         kwargs["reference_document_version"] = ReferenceDocumentVersion.objects.get(
             id=self.kwargs["version_pk"],
         )
@@ -72,7 +72,7 @@ class PreferentialQuotaTemplateCreate(PermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.order = 1
         form.save()
-        return super(PreferentialQuotaTemplateCreate, self).form_valid(form)
+        return super(RefQuotaDefinitionRangeCreate, self).form_valid(form)
 
     def get_success_url(self):
         return (
@@ -86,7 +86,7 @@ class PreferentialQuotaTemplateCreate(PermissionRequiredMixin, CreateView):
         )
 
 
-class PreferentialQuotaTemplateDelete(PermissionRequiredMixin, DeleteView):
+class RefQuotaDefinitionRangeDelete(PermissionRequiredMixin, DeleteView):
     form_class = RefQuotaDefinitionRangeDeleteForm
     template_name = "reference_documents/ref_quota_definition_ranges/delete.jinja"
     permission_required = "reference_documents.delete_preferentialquotatemplate"

@@ -1,8 +1,8 @@
-from reference_documents.check.base import BasePreferentialQuotaOrderNumberCheck
+from reference_documents.check.base import BaseOrderNumberCheck
 from reference_documents.models import AlignmentReportCheckStatus
 
 
-class OrderNumberChecks(BasePreferentialQuotaOrderNumberCheck):
+class OrderNumberChecks(BaseOrderNumberCheck):
     name = 'Order Number Exists'
 
     def run_check(self):

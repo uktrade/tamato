@@ -1,8 +1,8 @@
-from reference_documents.check.base import BasePreferentialSuspensionCheck
+from reference_documents.check.base import BaseQuotaSuspensionCheck
 from reference_documents.models import AlignmentReportCheckStatus
 
 
-class QuotaSuspensionExists(BasePreferentialSuspensionCheck):
+class QuotaSuspensionExists(BaseQuotaSuspensionCheck):
     name = 'Preferential Suspension Exists'
 
     def run_check(self):

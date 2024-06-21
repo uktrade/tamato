@@ -38,7 +38,7 @@ class TestPreferentialQuotaOrderNumber:
 
         target.refresh_from_db()
 
-        assert target.quota_order_number == target_original_order_number
+        assert target.order_number == target_original_order_number
 
         rdv.published()
         rdv.save(force_save=True)
@@ -50,5 +50,5 @@ class TestPreferentialQuotaOrderNumber:
 
         assert rdv.status == ReferenceDocumentVersionStatus.PUBLISHED
         assert not rdv.editable()
-        assert target.quota_order_number == target_original_order_number
+        assert target.order_number == target_original_order_number
 

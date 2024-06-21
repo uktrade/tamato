@@ -46,9 +46,9 @@ class QuotaDefinitionContext:
 
         if self.reference_document_version.editable():
             if self.quota_definition and self.quota_definition.pk:
-                if self.user.has_perm("reference_documents.change_preferentialquotaordernumber"):
+                if self.user.has_perm("change_refordernumber"):
                     actions += f"<a href='{reverse('reference_documents:quota-definition-edit', args=[self.quota_definition.pk])}'>Edit</a>"
-                if self.user.has_perm("reference_documents.delete_preferentialquotaordernumber"):
+                if self.user.has_perm("delete_refordernumber"):
                     actions += f" | <a href='{reverse('reference_documents:quota-definition-delete', args=[self.quota_definition.pk, self.quota_definition.ref_order_number.reference_document_version.pk])}'>Delete</a>"
 
         row_data = [
@@ -118,9 +118,9 @@ class QuotaSuspensionContext:
 
         if self.reference_document_version.editable():
             if self.quota_suspension.pk:
-                if self.user.has_perm("reference_documents.change_preferentialquotasuspension"):
+                if self.user.has_perm("reference_documents.change_refquotasuspension"):
                     actions += f"<a href='{reverse('reference_documents:quota-suspension-edit', args=[self.quota_suspension.pk])}'>Edit</a>"
-                if self.user.has_perm("reference_documents.delete_preferentialquotasuspension"):
+                if self.user.has_perm("reference_documents.delete_refquotasuspension"):
                     actions += f" | <a href='{reverse('reference_documents:quota-suspension-delete', args=[self.quota_suspension.pk, self.reference_document_version.pk])}'>Delete</a>"
 
         row_data = [
@@ -319,9 +319,9 @@ class ReferenceDocumentVersionContext:
             actions = "<span></span>"
 
             if self.reference_document_version.editable():
-                if self.user.has_perm("reference_documents.change_preferentialrate"):
+                if self.user.has_perm("reference_documents.change_refrate"):
                     actions += f"<a href='{reverse('reference_documents:rate-edit', args=[preferential_rate.pk])}'>Edit</a>"
-                if self.user.has_perm("reference_documents.delete_preferentialrate"):
+                if self.user.has_perm("reference_documents.delete_refrate"):
                     actions += f" | <a href='{reverse('reference_documents:rate-delete', args=[preferential_rate.pk])}'>Delete</a>"
 
             rows.append(
@@ -357,9 +357,9 @@ class ReferenceDocumentVersionContext:
 
         if self.reference_document_version.editable():
             if quota:
-                if self.user.has_perm("reference_documents.change_preferentialquotaordernumber"):
+                if self.user.has_perm("change_refordernumber"):
                     actions += f"<a href='{reverse('reference_documents:preferential_quotas_edit', args=[quota.pk])}'>Edit</a>"
-                if self.user.has_perm("reference_documents.delete_preferentialquotaordernumber"):
+                if self.user.has_perm("delete_refordernumber"):
                     actions += f" | <a href='{reverse('reference_documents:preferential_quotas_delete', args=[quota.pk, quota.ref_order_number.reference_document_version.pk])}'>Delete</a>"
 
         row_to_add = [
@@ -397,9 +397,9 @@ class ReferenceDocumentVersionContext:
 
         if self.reference_document_version.editable():
             if not templated:
-                if self.user.has_perm("reference_documents.change_preferentialquotasuspension"):
+                if self.user.has_perm("reference_documents.change_refquotasuspension"):
                     actions += f"<a href='{reverse('reference_documents:preferential-quotas-suspension-edit', args=[suspension.pk])}'>Edit</a>"
-                if self.user.has_perm("reference_documents.delete_preferentialquotasuspension"):
+                if self.user.has_perm("reference_documents.delete_refquotasuspension"):
                     actions += f" | <a href='{reverse('reference_documents:preferential-quota-suspension-delete', args=[suspension.pk, reference_document_version.pk])}'>Delete</a>"
 
         row_to_add = [

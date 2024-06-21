@@ -1,8 +1,8 @@
-from reference_documents.check.base import BasePreferentialRateCheck
+from reference_documents.check.base import BaseRateCheck
 from reference_documents.models import AlignmentReportCheckStatus
 
 
-class MeasureExists(BasePreferentialRateCheck):
+class MeasureExists(BaseRateCheck):
     def run_check(self):
         # comm code live on EIF date
         if not self.comm_code():

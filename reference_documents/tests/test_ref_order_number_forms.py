@@ -18,36 +18,37 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.reference_documents
 class TestPreferentialQuotaOrderNumberCreateUpdateForm:
     def test_init(self):
-        pref_quota_order_number = factories.RefOrderNumberFactory()
+        ref_order_number = factories.RefOrderNumberFactory()
 
         target = RefOrderNumberCreateUpdateForm(
-            pref_quota_order_number.reference_document_version,
-            instance=pref_quota_order_number,
+            ref_order_number.reference_document_version,
+            instance=ref_order_number,
         )
 
         # it sets initial values
         assert (
             target.reference_document_version
-            == pref_quota_order_number.reference_document_version
+            == ref_order_number.reference_document_version
         )
         assert target.Meta.model == RefOrderNumber
         assert target.Meta.fields == [
-            "quota_order_number",
+            "order_number",
             "coefficient",
+            "relation_type",
             "main_order_number",
             "valid_between",
         ]
 
     def test_clean_coefficient_pass_valid(self):
-        pref_quota_order_number = factories.RefOrderNumberFactory()
+        ref_order_number = factories.RefOrderNumberFactory()
 
         data = {
             "coefficient": "1.6",
         }
 
         target = RefOrderNumberCreateUpdateForm(
-            pref_quota_order_number.reference_document_version,
-            instance=pref_quota_order_number,
+            ref_order_number.reference_document_version,
+            instance=ref_order_number,
             data=data,
         )
 
@@ -116,27 +117,27 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         assert "quota_order_number" not in target.errors.keys()
 
     def test_clean_quota_order_number_invalid_already_exists_adding(self):
-        pref_quota_order_number = factories.RefOrderNumberFactory(
-            quota_order_number="054333",
+        ref_order_number = factories.RefOrderNumberFactory(
+            order_number="054333",
         )
 
         data = {
-            "quota_order_number": "054333",
+            "order_number": "054333",
         }
 
         target = RefOrderNumberCreateUpdateForm(
-            pref_quota_order_number.reference_document_version,
+            ref_order_number.reference_document_version,
             data=data,
         )
 
         assert not target.is_valid()
-        assert "quota_order_number" in target.errors.keys()
+        assert "order_number" in target.errors.keys()
 
     def test_clean_quota_order_number_invalid_order_number_adding(self):
         ref_doc_ver = factories.ReferenceDocumentVersionFactory()
 
         data = {
-            "quota_order_number": "zzaabb",
+            "order_number": "zzaabb",
         }
 
         target = RefOrderNumberCreateUpdateForm(
@@ -145,7 +146,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         )
 
         assert not target.is_valid()
-        assert "quota_order_number" in target.errors.keys()
+        assert "order_number" in target.errors.keys()
 
     def test_clean_coefficient_no_main_order(self):
         factories.RefOrderNumberFactory()
@@ -167,7 +168,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         with pytest.raises(ValidationError) as ve:
             target.clean()
         assert (
-            "If you provide a value for the coefficient you must also select a main order number"
+            "You can only specify coefficient if a main quota is selected"
             in str(ve.value)
         )
 
@@ -181,8 +182,8 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         )
 
         data = {
-            "main_order_number_id": pref_quota_order_number_main.id,
-            "quota_order_number": ref_order_number.order_number,
+            "main_order_number": pref_quota_order_number_main.id,
+            "order_number": ref_order_number.order_number,
             "valid_between": ref_order_number.valid_between,
         }
 
@@ -197,7 +198,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
             target.clean()
 
         assert (
-            "If you select a main order number a coefficient must also be provided"
+            "Sub quotas must have a coefficient"
             in str(ve.value)
         )
 

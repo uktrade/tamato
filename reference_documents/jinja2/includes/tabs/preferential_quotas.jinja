@@ -37,24 +37,24 @@
 
             <div class="govuk-body govuk-!-margin-bottom-2">
                 {% if object.editable() %}
-                    {% if request.user.has_perm("reference_documents.change_preferentialquotaordernumber") %}
+                    {% if request.user.has_perm("change_refordernumber") %}
                         <a class="order_number_link" href="{{ url('reference_documents:order-number-edit', args=[on_ctx.order_number.id]) }}">Edit</a>
                     {% endif %}
 
-                    {% if request.user.has_perm("reference_documents.delete_preferentialquotaordernumber") %}
+                    {% if request.user.has_perm("delete_refordernumber") %}
                         <a class="order_number_link"
                            href="{{ url('reference_documents:order-number-delete', args=[on_ctx.order_number.id, on_ctx.order_number.reference_document_version.id]) }}">Delete</a>
                     {% endif %}
 
-                    {% if request.user.has_perm("reference_documents.add_preferentialquotatemplate") %}
+                    {% if request.user.has_perm("add_refquotadefinitionrange") %}
                         <a class="order_number_link" href="{{ url('reference_documents:quota-definition-range-create', args=[object.pk]) }}">Add new quota template</a>
                     {% endif %}
 
-                    {% if request.user.has_perm("reference_documents.add_preferentialquota") %}
+                    {% if request.user.has_perm("reference_documents.add_refquotadefinition") %}
                         <a class="order_number_link" href="{{ url('reference_documents:quota-definition-create-for-order', args=[object.pk, on_ctx.order_number.pk]) }}">Add quota to order number</a>
                     {% endif %}
 
-                    {% if request.user.has_perm("reference_documents.add_preferentialquota") %}
+                    {% if request.user.has_perm("reference_documents.add_refquotadefinition") %}
                         <a class="order_number_link" href="{{ url('reference_documents:quota-definition-bulk-create-for-order', kwargs={"pk": object.pk, "order_pk": on_ctx.order_number.pk}) }}">Bulk add
                             quotas</a>
                     {% endif %}
@@ -110,7 +110,7 @@
                     </div>
                     <div class="govuk-body govuk-!-margin-bottom-2">
                         {% if object.editable() %}
-                            {% if request.user.has_perm("reference_documents.change_preferentialquotatemplate") %}
+                            {% if request.user.has_perm("reference_documents.change_refquotadefinitionrange") %}
                                 <a class="order_number_link" href="{{ url('reference_documents:quota-definition-range-edit', args=[qdt.quota_definition_range.id]) }}">Edit</a>
                             {% endif %}
 
@@ -151,7 +151,7 @@
                     </div>
                     <div class="govuk-body govuk-!-margin-bottom-2">
                         {% if object.editable() %}
-                            {% if request.user.has_perm("reference_documents:change_preferentialquotatemplate") %}
+                            {% if request.user.has_perm("reference_documents.change_refquotadefinitionrange") %}
                                 <a class="order_number_link" href="{{ url('reference_documents:quota-suspension-range-edit', args=[qst.quota_suspension_template.id]) }}">Edit</a>
                             {% endif %}
 
@@ -182,23 +182,23 @@
             <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
             <ul class="govuk-list govuk-!-font-size-16">
                 {% if object.editable() %}
-                    {% if request.user.has_perm("reference_documents.add_preferentialquotaordernumber") %}
+                    {% if request.user.has_perm("reference_documents.add_refordernumber") %}
                         <li><a class="govuk-link" href="{{ url('reference_documents:order-number-create', args=[object.pk]) }}">Add new order number</a></li>
                     {% endif %}
 
-                    {% if request.user.has_perm("reference_documents.add_preferentialquotatemplate") %}
+                    {% if request.user.has_perm("reference_documents.add_refquotadefinitionrange") %}
                         <li><a class="govuk-link" href="{{ url('reference_documents:quota-definition-range-create', args=[object.pk]) }}">Add new quota template</a></li>
                     {% endif %}
 
-                    {% if request.user.has_perm("reference_documents.add_preferentialquotasuspension") %}
+                    {% if request.user.has_perm("reference_documents.add_refquotasuspension") %}
                         <li><a class="govuk-link" href="{{ url('reference_documents:quota-suspension-create', args=[object.pk]) }}">Add new quota suspension</a></li>
                     {% endif %}
 
-                    {% if request.user.has_perm("reference_documents.add_preferentialquotasuspensiontemplate") %}
+                    {% if request.user.has_perm("reference_documents.add_refquotasuspensionrange") %}
                         <li><a class="govuk-link" href="{{ url('reference_documents:quota-suspension-range-create', args=[object.pk]) }}">Add new quota suspension template</a></li>
                     {% endif %}
 
-                    {% if request.user.has_perm("reference_documents.add_preferentialquota") %}
+                    {% if request.user.has_perm("reference_documents.add_refquotadefinition") %}
                         <li><a class="govuk-link" href="{{ url('reference_documents:quota-definition-create', args=[object.pk]) }}">Add new quota</a></li>
                         <li><a class="govuk-link" href="{{ url('reference_documents:quota-definition-bulk-create', args=[object.pk]) }}">Bulk add quotas</a></li>
                     {% endif %}

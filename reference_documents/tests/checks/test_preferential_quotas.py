@@ -1,8 +1,8 @@
-from reference_documents.check.base import BasePreferentialQuotaCheck
+from reference_documents.check.base import BaseQuotaDefinitionCheck
 from reference_documents.models import AlignmentReportCheckStatus
 
 
-class PreferentialQuotaExists(BasePreferentialQuotaCheck):
+class PreferentialQuotaExists(BaseQuotaDefinitionCheck):
     def run_check(self):
         if not self.order_number():
             message = f"FAIL - order number  not found"

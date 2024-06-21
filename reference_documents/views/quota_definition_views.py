@@ -16,7 +16,7 @@ from reference_documents.models import RefQuotaDefinition
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
+class RefQuotaDefinitionEdit(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/ref_quota_definitions/edit.jinja"
     permission_required = "reference_documents.change_preferentialquota"
     model = RefQuotaDefinition
@@ -34,7 +34,7 @@ class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
         )
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaEdit, self).get_form_kwargs()
+        kwargs = super(RefQuotaDefinitionEdit, self).get_form_kwargs()
         kwargs["reference_document_version"] = RefQuotaDefinition.objects.get(
             id=self.kwargs["pk"],
         ).ref_order_number.reference_document_version
@@ -44,14 +44,14 @@ class PreferentialQuotaEdit(PermissionRequiredMixin, UpdateView):
         return kwargs
 
 
-class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
+class RefQuotaDefinitionCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/ref_quota_definitions/create.jinja"
-    permission_required = "reference_documents.add_preferentialquota"
+    permission_required = "reference_documents.add_refquotadefinition"
     model = RefQuotaDefinition
     form_class = RefQuotaDefinitionCreateUpdateForm
 
     def get_form_kwargs(self):
-        kwargs = super(PreferentialQuotaCreate, self).get_form_kwargs()
+        kwargs = super(RefQuotaDefinitionCreate, self).get_form_kwargs()
         kwargs["reference_document_version"] = ReferenceDocumentVersion.objects.get(
             id=self.kwargs["version_pk"],
         )
@@ -75,7 +75,7 @@ class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
         return context_data
 
     def form_valid(self, form):
-        return super(PreferentialQuotaCreate, self).form_valid(form)
+        return super(RefQuotaDefinitionCreate, self).form_valid(form)
 
     def get_success_url(self):
         return (
@@ -89,9 +89,9 @@ class PreferentialQuotaCreate(PermissionRequiredMixin, CreateView):
         )
 
 
-class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
+class RefQuotaDefinitionBulkCreate(PermissionRequiredMixin, FormView):
     template_name = "reference_documents/ref_quota_definitions/bulk_create.jinja"
-    permission_required = "reference_documents.add_preferentialquota"
+    permission_required = "reference_documents.add_refquotadefinition"
     form_class = RefQuotaDefinitionBulkCreateForm
     queryset = ReferenceDocumentVersion.objects.all()
 
@@ -147,10 +147,10 @@ class PreferentialQuotaBulkCreate(PermissionRequiredMixin, FormView):
         )
 
 
-class PreferentialQuotaDelete(PermissionRequiredMixin, DeleteView):
+class RefQuotaDefinitionDelete(PermissionRequiredMixin, DeleteView):
     form_class = RefQuotaDefinitionDeleteForm
     template_name = "reference_documents/ref_quota_definitions/delete.jinja"
-    permission_required = "reference_documents.delete_preferentialquota"
+    permission_required = "reference_documents.delete_refquotadefinition"
     model = RefQuotaDefinition
 
     def get_success_url(self) -> str:

@@ -10,9 +10,9 @@ from reference_documents.models import RefQuotaSuspensionRange
 from reference_documents.models import ReferenceDocumentVersion
 
 
-class RefQuotaSuspensionTemplateEdit(PermissionRequiredMixin, UpdateView):
+class RefQuotaSuspensionRangeEdit(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/ref_quota_suspension_ranges/edit.jinja"
-    permission_required = "reference_documents.change_preferentialquotasuspension"
+    permission_required = "reference_documents.change_refquotasuspension"
     model = RefQuotaSuspensionRange
     form_class = RefQuotaSuspensionRangeCreateUpdateForm
 
@@ -28,7 +28,7 @@ class RefQuotaSuspensionTemplateEdit(PermissionRequiredMixin, UpdateView):
         )
 
     def get_form_kwargs(self):
-        kwargs = super(RefQuotaSuspensionTemplateEdit, self).get_form_kwargs()
+        kwargs = super(RefQuotaSuspensionRangeEdit, self).get_form_kwargs()
         kwargs["reference_document_version"] = RefQuotaSuspensionRange.objects.get(
             id=self.kwargs["pk"],
         ).ref_quota_definition_range.ref_order_number.reference_document_version
@@ -41,14 +41,14 @@ class RefQuotaSuspensionTemplateEdit(PermissionRequiredMixin, UpdateView):
         return kwargs
 
 
-class RefQuotaSuspensionTemplateCreate(PermissionRequiredMixin, CreateView):
+class RefQuotaSuspensionRangeCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/ref_quota_suspension_ranges/create.jinja"
-    permission_required = "reference_documents.add_preferentialquotasuspension"
+    permission_required = "reference_documents.add_refquotasuspension"
     model = RefQuotaSuspensionRange
     form_class = RefQuotaSuspensionRangeCreateUpdateForm
 
     def get_form_kwargs(self):
-        kwargs = super(RefQuotaSuspensionTemplateCreate, self).get_form_kwargs()
+        kwargs = super(RefQuotaSuspensionRangeCreate, self).get_form_kwargs()
         kwargs["reference_document_version"] = ReferenceDocumentVersion.objects.get(
             id=self.kwargs["version_pk"],
         )
@@ -69,7 +69,7 @@ class RefQuotaSuspensionTemplateCreate(PermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.order = 1
         form.save()
-        return super(RefQuotaSuspensionTemplateCreate, self).form_valid(form)
+        return super(RefQuotaSuspensionRangeCreate, self).form_valid(form)
 
     def get_success_url(self):
         return (
@@ -83,10 +83,10 @@ class RefQuotaSuspensionTemplateCreate(PermissionRequiredMixin, CreateView):
         )
 
 
-class RefQuotaSuspensionTemplateDelete(PermissionRequiredMixin, DeleteView):
+class RefQuotaSuspensionRangeDelete(PermissionRequiredMixin, DeleteView):
     form_class = RefQuotaSuspensionRangeDeleteForm
     template_name = "reference_documents/ref_quota_suspension_ranges/delete.jinja"
-    permission_required = "reference_documents.delete_preferentialquotasuspension"
+    permission_required = "reference_documents.delete_refquotasuspension"
     model = RefQuotaSuspensionRange
 
     def get_success_url(self) -> str:

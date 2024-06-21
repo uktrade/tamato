@@ -12,7 +12,7 @@ from reference_documents.models import ReferenceDocumentVersion
 
 class RefQuotaSuspensionEdit(PermissionRequiredMixin, UpdateView):
     template_name = "reference_documents/ref_quota_suspensions/edit.jinja"
-    permission_required = "reference_documents.change_preferentialquotasuspension"
+    permission_required = "reference_documents.change_refquotasuspension"
     model = RefQuotaSuspension
     form_class = RefQuotaSuspensionCreateUpdateForm
 
@@ -47,7 +47,7 @@ class RefQuotaSuspensionEdit(PermissionRequiredMixin, UpdateView):
 
 class RefQuotaSuspensionCreate(PermissionRequiredMixin, CreateView):
     template_name = "reference_documents/ref_quota_suspensions/create.jinja"
-    permission_required = "reference_documents.add_preferentialquotasuspension"
+    permission_required = "reference_documents.add_refquotasuspension"
     model = RefQuotaSuspension
     form_class = RefQuotaSuspensionCreateUpdateForm
 
@@ -92,7 +92,7 @@ class RefQuotaSuspensionCreate(PermissionRequiredMixin, CreateView):
 class RefQuotaSuspensionDelete(PermissionRequiredMixin, DeleteView):
     form_class = RefQuotaSuspensionDeleteForm
     template_name = "reference_documents/ref_quota_suspensions/delete.jinja"
-    permission_required = "reference_documents.delete_preferentialquotasuspension"
+    permission_required = "reference_documents.delete_refquotasuspension"
     model = RefQuotaSuspension
 
     def get_success_url(self) -> str:
