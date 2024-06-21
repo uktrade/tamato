@@ -301,6 +301,12 @@ def policy_group(db) -> Group:
         ("publishing", "consume_from_packaging_queue"),
         ("publishing", "manage_packaging_queue"),
         ("publishing", "view_envelope"),
+        ("tasks", "add_userassignment"),
+        ("tasks", "change_userassignment"),
+        ("tasks", "add_comment"),
+        ("tasks", "view_comment"),
+        ("tasks", "change_comment"),
+        ("tasks", "delete_comment"),
     ]:
         group.permissions.add(
             Permission.objects.get(
@@ -1730,6 +1736,26 @@ def lark_duty_sentence_parser(
     unit_qualifiers,
 ) -> LarkDutySentenceParser:
     return LarkDutySentenceParser(
+        duty_expressions=duty_expressions_list,
+        monetary_units=monetary_units_list,
+        measurements=measurements,
+        measurement_units=measurement_units,
+        measurement_unit_qualifiers=unit_qualifiers,
+    )
+
+
+@pytest.fixture
+def simple_lark_duty_sentence_parser(
+    duty_expressions_list,
+    monetary_units_list,
+    measurements,
+    measurement_units,
+    unit_qualifiers,
+) -> LarkDutySentenceParser:
+    """Returns a duty sentence parser instance that parses ad valorem and
+    specific duties only (i.e no compound duties)."""
+    return LarkDutySentenceParser(
+        compound_duties=False,
         duty_expressions=duty_expressions_list,
         monetary_units=monetary_units_list,
         measurements=measurements,

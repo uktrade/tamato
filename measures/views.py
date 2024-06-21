@@ -1,4 +1,3 @@
-import datetime
 import json
 import logging
 from itertools import groupby
@@ -620,20 +619,8 @@ class MeasureEditWizard(
         cleaned_data = self.get_all_cleaned_data()
         selected_measures = self.get_queryset()
         workbasket = WorkBasket.current(self.request)
-        new_start_date = None
-        new_end_date = None
-        if cleaned_data.get("start_date"):
-            new_start_date = datetime.date(
-                cleaned_data["start_date"].year,
-                cleaned_data["start_date"].month,
-                cleaned_data["start_date"].day,
-            )
-        if cleaned_data.get("end_date"):
-            new_end_date = datetime.date(
-                cleaned_data["end_date"].year,
-                cleaned_data["end_date"].month,
-                cleaned_data["end_date"].day,
-            )
+        new_start_date = cleaned_data.get("start_date", None)
+        new_end_date = cleaned_data.get("end_date", False)
         new_quota_order_number = cleaned_data.get("order_number", None)
         new_generating_regulation = cleaned_data.get("generating_regulation", None)
         new_duties = cleaned_data.get("duties", None)
@@ -651,7 +638,11 @@ class MeasureEditWizard(
                         if new_start_date
                         else measure.valid_between.lower
                     ),
-                    upper=new_end_date if new_end_date else measure.valid_between.upper,
+                    upper=(
+                        new_end_date
+                        if new_end_date is not False
+                        else measure.valid_between.upper
+                    ),
                 ),
                 order_number=(
                     new_quota_order_number
@@ -1135,6 +1126,7 @@ class MeasuresCreateProcessQueue(
         context = super().get_context_data(**kwargs)
 
         context["selected_link"] = "all"
+        context["selected_tab"] = "measure-process-queue"
         processing_state = self.request.GET.get("processing_state")
 
         if processing_state == "PROCESSING":
