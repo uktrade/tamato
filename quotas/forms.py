@@ -26,6 +26,7 @@ from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
 from common.util import validity_range_contains_range
+from common.validators import SymbolValidator
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from measures.models import MeasurementUnit
@@ -903,6 +904,7 @@ class QuotaSuspensionOrBlockingCreateForm(
 
     description = forms.CharField(
         label="Description",
+        validators=[SymbolValidator],
         widget=forms.Textarea(),
         required=False,
     )
