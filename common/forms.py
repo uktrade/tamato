@@ -356,27 +356,13 @@ class DescriptionForm(forms.ModelForm):
         fields = ("description", "validity_start")
 
 
-class ValidityPeriodForm(forms.ModelForm):
+class ValidityPeriodBaseForm(forms.Form):
     start_date = DateInputFieldFixed(label="Start date")
     end_date = DateInputFieldFixed(
         label="End date",
         required=False,
     )
     valid_between = GovukDateRangeField(required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.fields["end_date"].help_text = (
-            f"Leave empty if {get_model_indefinite_article(self.instance)} "
-            f"{self.instance._meta.verbose_name} is needed for an unlimited time."
-        )
-
-        if self.instance.valid_between:
-            if self.instance.valid_between.lower:
-                self.fields["start_date"].initial = self.instance.valid_between.lower
-            if self.instance.valid_between.upper:
-                self.fields["end_date"].initial = self.instance.valid_between.upper
 
     def clean_validity_period(
         self,
@@ -429,6 +415,22 @@ class ValidityPeriodForm(forms.ModelForm):
         cleaned_data = super().clean()
         self.clean_validity_period(cleaned_data)
         return cleaned_data
+
+
+class ValidityPeriodForm(ValidityPeriodBaseForm, forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["end_date"].help_text = (
+            f"Leave empty if {get_model_indefinite_article(self.instance)} "
+            f"{self.instance._meta.verbose_name} is needed for an unlimited time."
+        )
+
+        if self.instance.valid_between:
+            if self.instance.valid_between.lower:
+                self.fields["start_date"].initial = self.instance.valid_between.lower
+            if self.instance.valid_between.upper:
+                self.fields["end_date"].initial = self.instance.valid_between.upper
 
 
 class CreateDescriptionForm(DescriptionForm):
