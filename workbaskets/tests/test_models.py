@@ -323,7 +323,7 @@ def test_workbasket_clean_does_not_run_business_rules():
     their model cleaning, because business rules are slow to run and for a
     moderate sized workbasket will time out a web request."""
 
-    model = factories.TestModel1.create()
+    model = factories.TestModel1Factory.create()
     with add_business_rules(type(model), TestRule):
         model.transaction.workbasket.full_clean()
 
