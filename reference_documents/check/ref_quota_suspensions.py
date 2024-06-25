@@ -8,7 +8,7 @@ class QuotaSuspensionExists(BaseQuotaSuspensionCheck):
     def run_check(self):
         # check if suspension exists - what criteria do we need?
         # comm code, order number and some dates
-        if not self.order_number():
+        if not self.tap_order_number():
             message = f"FAIL - order number not found"
             print(message)
             return AlignmentReportCheckStatus.FAIL, message

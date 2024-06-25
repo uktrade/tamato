@@ -5,7 +5,7 @@ from reference_documents.models import AlignmentReportCheckStatus
 class QuotaDefinitionExists(BaseQuotaDefinitionCheck):
     name = 'Preferential Quota Exists'
     def run_check(self):
-        if not self.order_number():
+        if not self.tap_order_number():
             message = f"FAIL - order number  not found"
             print(message)
             return AlignmentReportCheckStatus.FAIL, message

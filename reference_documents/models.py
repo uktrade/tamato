@@ -189,7 +189,7 @@ class ReferenceDocumentVersion(TimestampedMixin):
         for quota_definition_range in RefQuotaDefinitionRange.objects.all().filter(
                 ref_order_number__reference_document_version=self
         ):
-            quota_count += len(quota_definition_range.dynamic_preferential_quotas())
+            quota_count += len(quota_definition_range.dynamic_quota_definitions())
 
         return quota_count
 

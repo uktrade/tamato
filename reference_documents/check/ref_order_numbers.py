@@ -12,7 +12,7 @@ class OrderNumberChecks(BaseOrderNumberCheck):
             print("FAIL", message)
             return AlignmentReportCheckStatus.FAIL, message
         # Verify that the order number exists in TAP
-        elif not self.order_number():
+        elif not self.tap_order_number():
             message = f"order number not found matching {self.ref_order_number.order_number}"
             print("FAIL", message)
             return AlignmentReportCheckStatus.FAIL, message
@@ -27,5 +27,5 @@ class OrderNumberChecks(BaseOrderNumberCheck):
                 print("FAIL", message)
                 return AlignmentReportCheckStatus.FAIL, message
         else:
-            print(f"PASS - order number {self.order_number()} found")
+            print(f"PASS - order number {self.tap_order_number()} found")
             return AlignmentReportCheckStatus.PASS, ""

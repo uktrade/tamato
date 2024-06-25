@@ -479,24 +479,24 @@ class ReferenceDocumentVersionContext:
     def templated_order_number_rows(self, data, ref_doc_order_number):
         # Add templated data rows
 
-        for quota_template in ref_doc_order_number.ref_quota_definition_range.order_by("commodity_code"):
+        for quota_definition_range in ref_doc_order_number.ref_quota_definition_range.order_by("commodity_code"):
 
             data_to_add = {
                 'data_rows': [],
-                'ref_quota_definition_range': quota_template
+                'ref_quota_definition_range': quota_definition_range
             }
 
-            if quota_template.commodity_code not in data[ref_doc_order_number.quota_order_number]["templated_data"].keys():
-                data[ref_doc_order_number.quota_order_number]["templated_data"][quota_template.commodity_code] = []
+            if quota_definition_range.commodity_code not in data[ref_doc_order_number.quota_order_number]["templated_data"].keys():
+                data[ref_doc_order_number.quota_order_number]["templated_data"][quota_definition_range.commodity_code] = []
 
-            for quota in quota_template.dynamic_preferential_quotas():
+            for quota in quota_definition_range.dynamic_quota_definitions():
                 row_to_add = self.get_quota_row(quota.commodity_code, quota.volume, quota.measurement, quota.duty_rate, quota.valid_between)
 
                 data_to_add['data_rows'].append(
                     row_to_add
                 )
 
-            data[ref_doc_order_number.quota_order_number]["templated_data"][quota_template.commodity_code].append(data_to_add)
+            data[ref_doc_order_number.quota_order_number]["templated_data"][quota_definition_range.commodity_code].append(data_to_add)
 
 
 class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):

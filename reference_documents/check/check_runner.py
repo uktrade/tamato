@@ -53,7 +53,7 @@ class Checks:
                     )
                     # Quota definition checks
                     for pref_quota_check in Checks.get_checks_for(BaseQuotaDefinitionCheck):
-                        for ref_quota_definition in ref_order_number.preferential_quotas.all():
+                        for ref_quota_definition in ref_order_number.ref_quota_definitions.all():
                             pref_quota_check_status = self.capture_check_result(
                                 pref_quota_check(ref_quota_definition),
                                 ref_quota_definition=ref_quota_definition,
@@ -70,8 +70,8 @@ class Checks:
                                         parent_check_status=pref_quota_check_status
                                     )
                         # Quota definition checks (templated)
-                        for ref_quota_definition_range in ref_order_number.ref_quota_suspension_ranges.all():
-                            for ref_quota_definition in ref_quota_definition_range.dynamic_preferential_quotas():
+                        for ref_quota_definition_range in ref_order_number.ref_quota_definition_ranges.all():
+                            for ref_quota_definition in ref_quota_definition_range.dynamic_quota_definitions():
                                 pref_quota_check_status = self.capture_check_result(
                                     pref_quota_check(ref_quota_definition),
                                     ref_quota_definition_range=ref_quota_definition_range,

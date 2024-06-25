@@ -41,7 +41,7 @@ class BaseQuotaDefinitionCheck(BaseCheck):
         )
         self.reference_document = self.reference_document_version.reference_document
 
-    def order_number(self):
+    def tap_order_number(self):
         """Finds order number in TAP for a given preferential quota."""
         try:
             order_number = QuotaOrderNumber.objects.all().get(
@@ -181,7 +181,7 @@ class BaseOrderNumberCheck(BaseCheck):
         super().__init__()
         self.ref_order_number = ref_order_number
 
-    def order_number(self):
+    def tap_order_number(self):
 
         kwargs = {}
         kwargs['order_number'] = self.ref_order_number.order_number
@@ -201,7 +201,7 @@ class BaseOrderNumberCheck(BaseCheck):
             return None
 
     def main_quota_matches(self):
-        order_number = self.order_number()
+        order_number = self.tap_order_number()
         # There should be only one association
         associations = QuotaAssociation.objects.latest_approved().filter(
             sub_quota=order_number,
@@ -213,7 +213,7 @@ class BaseOrderNumberCheck(BaseCheck):
 
     def coefficient_matches(self):
 
-        order_number = self.order_number()
+        order_number = self.tap_order_number()
 
 
 class BaseQuotaSuspensionCheck(BaseCheck):
@@ -237,7 +237,7 @@ class BaseQuotaSuspensionCheck(BaseCheck):
             quota_definition = None
         return quota_definition
 
-    def order_number(self):
+    def tap_order_number(self):
         """Finds order number in TAP for a given preferential quota."""
         try:
             order_number = QuotaOrderNumber.objects.all().get(

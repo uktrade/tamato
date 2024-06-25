@@ -1,22 +1,15 @@
-from datetime import timedelta, date
-from decimal import Decimal
+from datetime import date
 
 import pytest
-from django.core.exceptions import ValidationError
 
 from commodities.models import GoodsNomenclature
 from commodities.models.dc import CommodityTreeSnapshot, CommodityCollectionLoader, SnapshotMoment
 from common.models import Transaction
 from common.tests.factories import QuotaOrderNumberFactory, GeographicalAreaFactory, GoodsNomenclatureFactory
-from common.util import TaricDateRange
 from geo_areas.models import GeographicalArea, GeographicalAreaDescription
-from measures.models import Measure
-from quotas.models import QuotaOrderNumber, QuotaDefinition
+from quotas.models import QuotaOrderNumber
 from reference_documents.check.base import BaseCheck, BaseQuotaDefinitionCheck
-from reference_documents.forms.ref_order_number_forms import (
-    RefOrderNumberDeleteForm,
-)
-from reference_documents.models import RefOrderNumber, RefRate, RefOrderNumber
+from reference_documents.models import RefRate, RefOrderNumber
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -82,79 +75,79 @@ class TestBasePreferentialQuotaCheck:
         target = BaseQuotaDefinitionCheck(pref_quota)
         assert target.commodity_code() == comm_code
 
-    def quota_definition(self):
-        """Searches for the quota definition period in TAP of a given
-        preferential quota."""
-        # TODO: Some kind of filtering by measurement / unit
-        # TODO: Consider the possibility there could be two valid contiguous quota definitions instead of one
-        volume = float(self.preferential_quota.volume)
-        order_number = self.order_number()
-        try:
-            quota_definition = QuotaDefinition.objects.all().get(
-                order_number=order_number,
-                initial_volume=volume,
-                valid_between=self.preferential_quota.valid_between,
-            )
-        except QuotaDefinition.DoesNotExist:
-            quota_definition = None
-        return quota_definition
+    # def quota_definition(self):
+    #     """Searches for the quota definition period in TAP of a given
+    #     preferential quota."""
+    #     # TODO: Some kind of filtering by measurement / unit
+    #     # TODO: Consider the possibility there could be two valid contiguous quota definitions instead of one
+    #     volume = float(self.ref_quota_definition.volume)
+    #     order_number = self.order_number()
+    #     try:
+    #         quota_definition = QuotaDefinition.objects.all().get(
+    #             order_number=order_number,
+    #             initial_volume=volume,
+    #             valid_between=self.preferential_quota.valid_between,
+    #         )
+    #     except QuotaDefinition.DoesNotExist:
+    #         quota_definition = None
+    #     return quota_definition
 
-    def measure(self):
-        """
-        Looks for a measure(s) in TAP for a given preferential quota.
+    # def measure(self):
+    #     """
+    #     Looks for a measure(s) in TAP for a given preferential quota.
+    #
+    #     It may find more than one if the original measure was end dated and a
+    #     new one was created.
+    #     """
+    #     measures = (
+    #         Measure.objects.all()
+    #         .latest_approved()
+    #         .filter(
+    #             order_number=self.order_number(),
+    #             goods_nomenclature=self.commodity_code(),
+    #             geographical_area=self.geo_area(),
+    #             measure_type__sid__in=[
+    #                 142,
+    #                 143,
+    #             ],
+    #         )
+    #         .order_by("valid_between")
+    #     )
+    #     return self.check_measure_validity(measures)
 
-        It may find more than one if the original measure was end dated and a
-        new one was created.
-        """
-        measures = (
-            Measure.objects.all()
-            .latest_approved()
-            .filter(
-                order_number=self.order_number(),
-                goods_nomenclature=self.commodity_code(),
-                geographical_area=self.geo_area(),
-                measure_type__sid__in=[
-                    142,
-                    143,
-                ],
-            )
-            .order_by("valid_between")
-        )
-        return self.check_measure_validity(measures)
-
-    def check_measure_validity(self, measures):
-        """
-        Checks the validity period of the measure(s).
-
-        If there is more than one measure it checks that they are contiguous. It
-        then checks that the validity period of the quota order number spans the
-        validity period of the measure (ON9).
-        """
-        if len(measures) == 0:
-            return None
-        if len(measures) == 1:
-            start_date = measures[0].valid_between.lower
-            end_date = measures[0].valid_between.upper
-            measure_span_period = TaricDateRange(start_date, end_date)
-        else:
-            for index in range(len(measures) - 1):
-                # Check the dates are contiguous and when one measure ends the next one begins
-                measure1_end_date = measures[index].valid_between.upper
-                measure2_start_date = measures[index + 1].valid_between.lower
-                if measure1_end_date + timedelta(days=1) != measure2_start_date:
-                    return None
-            # Getting start date of first measure and final end date of last measure to get the full validity span
-            start_date = measures[0].valid_between.lower
-            last_item = len(measures) - 1
-            end_date = measures[last_item].valid_between.upper
-            measure_span_period = TaricDateRange(start_date, end_date)
-        # Check that the validity period of the measure is within the validity period of the order number 0N9
-        if not self.validity_period_contains(
-            outer_period=self.order_number().valid_between,
-            inner_period=measure_span_period,
-        ):
-            return False
-        return measures
+    # def check_measure_validity(self, measures):
+    #     """
+    #     Checks the validity period of the measure(s).
+    #
+    #     If there is more than one measure it checks that they are contiguous. It
+    #     then checks that the validity period of the quota order number spans the
+    #     validity period of the measure (ON9).
+    #     """
+    #     if len(measures) == 0:
+    #         return None
+    #     if len(measures) == 1:
+    #         start_date = measures[0].valid_between.lower
+    #         end_date = measures[0].valid_between.upper
+    #         measure_span_period = TaricDateRange(start_date, end_date)
+    #     else:
+    #         for index in range(len(measures) - 1):
+    #             # Check the dates are contiguous and when one measure ends the next one begins
+    #             measure1_end_date = measures[index].valid_between.upper
+    #             measure2_start_date = measures[index + 1].valid_between.lower
+    #             if measure1_end_date + timedelta(days=1) != measure2_start_date:
+    #                 return None
+    #         # Getting start date of first measure and final end date of last measure to get the full validity span
+    #         start_date = measures[0].valid_between.lower
+    #         last_item = len(measures) - 1
+    #         end_date = measures[last_item].valid_between.upper
+    #         measure_span_period = TaricDateRange(start_date, end_date)
+    #     # Check that the validity period of the measure is within the validity period of the order number 0N9
+    #     if not self.validity_period_contains(
+    #         outer_period=self.order_number().valid_between,
+    #         inner_period=measure_span_period,
+    #     ):
+    #         return False
+    #     return measures
 
     @staticmethod
     def validity_period_contains(outer_period, inner_period):
