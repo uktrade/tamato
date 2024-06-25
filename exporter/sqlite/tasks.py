@@ -40,10 +40,16 @@ def export_and_upload_sqlite() -> bool:
     Returns a boolean that is ``True`` if a file was uploaded and ``False`` if
     not.
     """
+    from django.conf import settings
+
     storage = SQLiteStorage()
     db_name = get_output_filename()
 
     export_filename = storage.generate_filename(db_name)
+    logger.debug(
+        f" In export_and_upload_sqlite "
+        f"SQLITE_S3_ENDPOINT_URL {settings.SQLITE_S3_ENDPOINT_URL}",
+    )
 
     logger.debug("Checking for need to upload tariff database %s", export_filename)
     if storage.exists(export_filename):

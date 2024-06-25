@@ -713,7 +713,7 @@ LOGGING = {
         },
         "exporter": {
             "handlers": ["console"],
-            "level": os.environ.get("LOG_LEVEL", "DEBUG"),
+            "level": os.environ.get("LOG_LEVEL_EXPORTER", "DEBUG"),
             "propagate": False,
         },
         "commodities": {
