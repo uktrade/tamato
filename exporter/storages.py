@@ -1,9 +1,12 @@
+import logging
 from functools import cached_property
 from os import path
 
 import apsw
 from sqlite_s3vfs import S3VFS
 from storages.backends.s3boto3 import S3Boto3Storage
+
+logger = logging.getLogger(__name__)
 
 
 class HMRCStorage(S3Boto3Storage):
@@ -47,7 +50,18 @@ class SQLiteStorage(S3Boto3Storage):
         return super().generate_filename(filename)
 
     def exists(self, filename: str) -> bool:
+        from django.conf import settings
+
+        logger.debug(f"Check that filename {filename} exists")
+        logger.debug(
+            f" ****** SQLITE_S3_ENDPOINT_URL {settings.SQLITE_S3_ENDPOINT_URL}",
+        )
         return any(self.listdir(filename))
+
+        # except Exception as e:
+        #     logger.error(f"Error encountered while checking {filename}")
+        #     logger.error(f"Exception: {e}")
+        #     return False
 
     def serialize(self, filename):
         vfs_fileobj = self.vfs.serialize_fileobj(key_prefix=filename)
