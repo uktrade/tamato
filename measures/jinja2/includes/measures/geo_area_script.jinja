@@ -2,6 +2,11 @@
 <script nonce="{{ request.csp_nonce }}">
   {# data used by react form component: common/static/common/js/components/GeoAreaField/index.js #}
   const groupsWithMembers = {{groups_with_members|safe}};
+  const geoAreaErrors = {
+    {% for k, errorlist in errors.as_data().items() %}
+      "{{ k }}": "{% for errors in errorlist %}{% for error in errors %}{{ error|safe }}{% if not loop.last %}\n{% endif %}{% endfor %}{% endfor %}",
+    {% endfor %}
+  };
   const initial = {{initial|safe}};
   const exclusionsOptions = [
     {"label": "", "value": ""},

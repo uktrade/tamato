@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { createRoot } from "react-dom/client";
+import React from "react";
 import PropTypes from "prop-types";
 
 import { GeoGroupForm } from "./GeoGroupForm";
@@ -8,6 +7,9 @@ import { ErgaOmnesForm } from "./ErgaOmnesForm";
 
 function GeoAreaField({
   initial,
+  errors,
+  updateForm,
+  data,
   exclusionsOptions,
   groupsOptions,
   countryRegionsOptions,
@@ -15,7 +17,6 @@ function GeoAreaField({
 }) {
   const fieldName = "geographical_area-geo_area";
   const fieldsPrefix = "geographical_area";
-  const [geoArea, setGeoArea] = useState(initial.geoAreaType);
 
   const countryRegionsInitial = countryRegionsOptions.filter(
     (option) => initial.countryRegions.indexOf(option.value) >= 0,
@@ -30,18 +31,34 @@ function GeoAreaField({
     (option) => initial.geoGroupExclusions.indexOf(option.value) >= 0,
   );
 
+  function errorDisplay() {
+    if (errors.geo_area) {
+      return (
+        <span
+          id="id_geographical_area-geo_area_1_error"
+          className="govuk-error-message"
+        >
+          {" "}
+          <span className="govuk-visually-hidden">Error:</span>{" "}
+          {errors.geo_area}
+        </span>
+      );
+    }
+  }
+
   return (
-    <>
+    <div className="govuk-form-group">
       <input type="hidden" name="react" value={true} />
+      {errorDisplay()}
       <div className="govuk-radios">
         <div className="govuk-radios__item">
           <input
             className="govuk-radios__input"
             id="erga_omnes"
             name={fieldName}
-            checked={geoArea == "ERGA_OMNES"}
+            checked={data.geoAreaType == "ERGA_OMNES"}
             onChange={(e) => {
-              setGeoArea(e.target.value);
+              updateForm("geoAreaType", e.target.value);
             }}
             type="radio"
             value="ERGA_OMNES"
@@ -55,7 +72,10 @@ function GeoAreaField({
         </div>
         <ErgaOmnesForm
           fieldsPrefix={fieldsPrefix}
-          renderCondition={geoArea == "ERGA_OMNES"}
+          renderCondition={data.geoAreaType == "ERGA_OMNES"}
+          updateForm={updateForm}
+          data={data}
+          errors={errors}
           ergaOmnesExclusionsInitial={ergaOmnesExclusionsInitial}
           exclusionsOptions={exclusionsOptions}
         />
@@ -64,9 +84,9 @@ function GeoAreaField({
             className="govuk-radios__input"
             id="group"
             name={fieldName}
-            checked={geoArea == "GROUP"}
+            checked={data.geoAreaType == "GROUP"}
             onChange={(e) => {
-              setGeoArea(e.target.value);
+              updateForm("geoAreaType", e.target.value);
             }}
             type="radio"
             value="GROUP"
@@ -77,7 +97,11 @@ function GeoAreaField({
         </div>
         <GeoGroupForm
           fieldsPrefix={fieldsPrefix}
-          renderCondition={geoArea == "GROUP"}
+          renderCondition={data.geoAreaType == "GROUP"}
+          updateForm={updateForm}
+          errors={errors}
+          geographicalAreaGroup={data.geographicalAreaGroup}
+          geoGroupExclusions={data.geoGroupExclusions}
           geoGroupInitial={geoGroupInitial}
           groupsWithMembers={groupsWithMembers}
           geoGroupExclusionsInitial={geoGroupExclusionsInitial}
@@ -89,9 +113,9 @@ function GeoAreaField({
             className="govuk-radios__input"
             id="country"
             name={fieldName}
-            checked={geoArea == "COUNTRY"}
+            checked={data.geoAreaType == "COUNTRY"}
             onChange={(e) => {
-              setGeoArea(e.target.value);
+              updateForm("geoAreaType", e.target.value);
             }}
             type="radio"
             value="COUNTRY"
@@ -102,35 +126,16 @@ function GeoAreaField({
         </div>
         <CountryRegionForm
           fieldsPrefix={fieldsPrefix}
-          renderCondition={geoArea == "COUNTRY"}
+          renderCondition={data.geoAreaType == "COUNTRY"}
+          updateForm={updateForm}
+          data={data}
+          errors={errors}
           countryRegionsInitial={countryRegionsInitial}
           countryRegionsOptions={countryRegionsOptions}
         />
       </div>
-    </>
+    </div>
   );
-}
-
-function init() {
-  const container = document.getElementById("geo-area-form-field");
-  if (!container) return;
-  const root = createRoot(container);
-  /* eslint-disable */
-  // initial, exclusionsOptions, groupsOptions, countryRegionsOptions, groupsWithMembers come from template measures/jinja2/includes/measures/geo_area_script.jinja and MeasureGeographicalAreaForm.init_layout
-  root.render(
-    <GeoAreaField
-      initial={initial}
-      exclusionsOptions={exclusionsOptions}
-      groupsOptions={groupsOptions}
-      countryRegionsOptions={countryRegionsOptions}
-      groupsWithMembers={groupsWithMembers}
-    />,
-  );
-  /* eslint-enable */
-}
-
-function setupGeoAreaField() {
-  document.addEventListener("DOMContentLoaded", init());
 }
 
 GeoAreaField.propTypes = {
@@ -144,25 +149,37 @@ GeoAreaField.propTypes = {
     geoGroupExclusions: PropTypes.arrayOf(PropTypes.number),
     countryRegions: PropTypes.arrayOf(PropTypes.number),
   }).isRequired,
+  errors: PropTypes.objectOf(PropTypes.string).isRequired,
+  updateForm: PropTypes.func.isRequired,
+  data: PropTypes.shape({
+    geoAreaType: PropTypes.string,
+    geographicalAreaGroup: PropTypes.oneOfType([
+      PropTypes.oneOf([""]),
+      PropTypes.number,
+    ]),
+    ergaOmnesExclusions: PropTypes.arrayOf(PropTypes.number),
+    geoGroupExclusions: PropTypes.arrayOf(PropTypes.number),
+    countryRegions: PropTypes.arrayOf(PropTypes.number),
+  }).isRequired,
   exclusionsOptions: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,
-      value: PropTypes.number.isRequired,
+      value: PropTypes.oneOfType([PropTypes.oneOf([""]), PropTypes.number]),
     }),
   ).isRequired,
   groupsOptions: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,
-      value: PropTypes.number.isRequired,
+      value: PropTypes.oneOfType([PropTypes.oneOf([""]), PropTypes.number]),
     }),
   ).isRequired,
   countryRegionsOptions: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,
-      value: PropTypes.number.isRequired,
+      value: PropTypes.oneOfType([PropTypes.oneOf([""]), PropTypes.number]),
     }),
   ).isRequired,
-  groupsWithMembers: PropTypes.objectOf(PropTypes.number),
+  groupsWithMembers: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.number)),
 };
 
-export { setupGeoAreaField, GeoAreaField };
+export { GeoAreaField };
