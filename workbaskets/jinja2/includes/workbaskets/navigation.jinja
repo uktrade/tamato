@@ -32,6 +32,9 @@
     <li class="{% if active_tab == "review" %}active{% endif %}">
       <a href="{{ url("workbaskets:workbasket-ui-review-measures", args=[workbasket.pk]) }}" class="govuk-link">Review</a>
     </li>
+    <li class="{% if active_tab == "comments" %}active{% endif %}">
+      <a href="{{ url("workbaskets:workbasket-ui-comments", args=[workbasket.pk]) }}" class="govuk-link">Comments</a>
+    </li>
   </ul>
 </nav>
 {% endmacro %}

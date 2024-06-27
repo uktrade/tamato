@@ -142,6 +142,11 @@ ui_patterns = [
         name="no-active-workbasket",
     ),
     path(
+        f"rule-check-queue/",
+        ui_views.RuleCheckQueueView.as_view(),
+        name="rule-check-queue",
+    ),
+    path(
         f"<pk>/",
         ui_views.WorkBasketDetailView.as_view(),
         name="workbasket-ui-detail",
@@ -190,6 +195,21 @@ ui_patterns = [
         f"<pk>/unassign-users/",
         ui_views.WorkBasketUnassignUsersView.as_view(),
         name="workbasket-ui-unassign-users",
+    ),
+    path(
+        f"<pk>/comments/",
+        ui_views.WorkBasketCommentListView.as_view(),
+        name="workbasket-ui-comments",
+    ),
+    path(
+        f"<wb_pk>/comments/<pk>/edit/",
+        ui_views.WorkBasketCommentUpdate.as_view(),
+        name="workbasket-ui-comment-edit",
+    ),
+    path(
+        f"<wb_pk>/comments/<pk>/delete/",
+        ui_views.WorkBasketCommentDelete.as_view(),
+        name="workbasket-ui-comment-delete",
     ),
 ]
 

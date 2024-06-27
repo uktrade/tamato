@@ -1,0 +1,12 @@
+{% extends "layouts/create.jinja" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+    {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+    {
+        "text": "Quota ID: " ~ quota_order_number,
+        "href": url("quota-ui-detail", kwargs={"sid": quota_order_number.sid})
+    },
+    {"text": page_title}
+  ])}}
+{% endblock %}

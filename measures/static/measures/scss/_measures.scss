@@ -1,31 +1,7 @@
-
 .tap-inline {
     .tap-row {
         display: flex;
         flex-direction: row;
-    }
-
-    .tap-column {
-        flex-grow: 1;
-        display: flex;
-
-        .govuk-form-group {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-
-            .autocomplete__wrapper {
-                margin-bottom: 0 !important;
-            }
-            .autocomplete,
-            > input,
-            > .tap-copy-down-wrapper {
-                margin-top: auto;
-            }
-        }
-    }
-    .tap-column:nth-child(2) {
-        margin-left: 15px;
     }
 }
 
@@ -39,6 +15,7 @@
     border: 0;
     cursor: pointer;
 }
+
 .tap-copy-down:hover {
     color: #0b0c0c;
     background-color: #dbdad9;

@@ -1,0 +1,21 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Edit preferential rate" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.reference_document_version.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document_version.reference_document.pk})},
+    {"text": "Version " ~ object.reference_document_version.version, "href": url("reference_documents:version-details", kwargs={"pk":object.reference_document_version.pk})},
+    {"text": page_title}]
+  }) }}
+{% endblock %}
+
+{% block form %}
+<p class="govuk-body"> Editing preferential rate for reference document {{ object.reference_document_version.reference_document.area_id }} version {{ object.reference_document_version.version }}.</p>
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

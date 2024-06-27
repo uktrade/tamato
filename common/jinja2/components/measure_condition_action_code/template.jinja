@@ -1,5 +1,4 @@
 <div id="div_id_{{ field.html_name }}" class="govuk-form-group {% if field.errors %} govuk-form-group--error{% endif %}">
-    {% set selected_action = field.initial | int %}
     <label for="id_{{ field.html_name }}" class="govuk-label">
         Action code
     </label>
@@ -12,6 +11,7 @@
         </p>
         {% endfor %}
     {% endif %}
+    {% set selected_action = field.data|int or field.initial|int %}
     <select name="{{ field.html_name }}" class="govuk-select" id="id_{{ field.html_name }}"> 
         <option value="">-- Please select an action code --</option>
         {% for action in form.fields.action.queryset %}

@@ -1,0 +1,57 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/tabs/macro.njk" import govukTabs %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Reference document " ~ object.reference_document.area_id ~ " version " ~ object.version %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
+    {"text": "Version " ~ object.version}]
+  }) }}
+{% endblock %}
+
+{% set preferential_rates_html %}
+    {% include "includes/tabs/preferential_rates.jinja" %}
+{% endset %}
+{% set preferential_quotas_html %}
+    {% include "includes/tabs/preferential_quotas.jinja" %}
+{% endset %}
+
+{% set tabs = {
+        "items": [
+        {
+            "label": "Preferential duty rates",
+            "id": "core-data",
+            "panel": {
+            "html": preferential_rates_html
+            }
+        },
+        {
+            "label": "Tariff quotas",
+            "id": "tariff-quotas",
+            "panel": {
+            "html": preferential_quotas_html
+            }
+        },
+        ]
+    } %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+    <h2 class="govuk-heading-s govuk-!-margin-bottom-1">Title:</h2>
+    <p class="govuk-body govuk-!-margin-bottom-2">{{ ref_doc_title }}</p>
+    <h2 class="govuk-heading-s govuk-!-margin-bottom-1">Version:</h2>
+    <p class="govuk-body govuk-!-margin-bottom-2">{{ object.version }}</p>
+    <h2 class="govuk-heading-s govuk-!-margin-bottom-1">Date published:</h2>
+    <p class="govuk-body govuk-!-margin-bottom-6">{{ object.published_date }}</p>
+    <h2 class="govuk-heading-s govuk-!-margin-bottom-1">Entry into force date:</h2>
+    <p class="govuk-body govuk-!-margin-bottom-6">{{ object.entry_into_force_date or 'unknown' }}</p>
+
+    {{ govukTabs(tabs) }}
+
+{% endblock %}

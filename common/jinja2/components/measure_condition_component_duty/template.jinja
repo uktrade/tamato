@@ -1,7 +1,5 @@
 <div class="govuk-radios__conditional" id="div_id_{{ field.html_name }}">
-    
     <div class="govuk-form-group {% if field.errors %}govuk-form-group--error{% endif %}">
-    
         <label class="govuk-label" for="id_{{ field.html_name}}">Duty</label>
         <div id="condition-duty-hint" class="govuk-hint">
             If this condition should apply a different duty, enter it here.
@@ -16,7 +14,8 @@
                 </p>
                 {% endfor %}
             {% endif %}
-            <input class="govuk-input" id="id_{{ field.html_name }}" name="{{ field.html_name }}" type="text" spellcheck="false" value="{{ field.initial if field.initial else ""}}">
+            {% set duty = field.data or field.initial or "" %}
+            <input class="govuk-input" id="id_{{ field.html_name }}" name="{{ field.html_name }}" type="text" spellcheck="false" value="{{ duty }}">
         </div>
     </div>  
 </div>

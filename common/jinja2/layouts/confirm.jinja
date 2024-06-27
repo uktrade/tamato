@@ -19,16 +19,18 @@
       <h2 class="govuk-heading-m">Next steps</h2>
       <div>{% block main_button %}{% endblock%}</div>
       <div class="govuk-button-group">
-      {{ govukButton({
-        "text": "View workbasket summary",
-        "href": url("workbaskets:current-workbasket"),
-        "classes": "govuk-button"
-      }) }}
-      {{ govukButton({
-        "text": "View " ~ object._meta.verbose_name ~ ": " ~ object|string,
-        "href": object.get_url(),
-        "classes": "govuk-button--secondary"
-      }) }}
+        {% block button_group %}
+          {{ govukButton({
+            "text": "View workbasket summary",
+            "href": url("workbaskets:current-workbasket"),
+            "classes": "govuk-button"
+          }) }}
+          {{ govukButton({
+            "text": "View " ~ object._meta.verbose_name ~ ": " ~ object|string,
+            "href": object.get_url(),
+            "classes": "govuk-button--secondary"
+          }) }}
+        {% endblock %}
       </div>
       <ul class="govuk-list govuk-list-spaced">
         {% block actions %}

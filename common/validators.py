@@ -105,3 +105,25 @@ class PasswordPolicyValidator:
 
     def get_help_text(self):
         return self.HELP_TEXT
+
+
+markdown_tags_allowlist = [
+    "h1",
+    "h2",
+    "h3",
+    "em",
+    "strong",
+    "p",
+    "br",
+    "blockquote",
+    "hr",
+    "ul",
+    "ol",
+    "li",
+    "table",
+    "thead",
+    "tr",
+    "th",
+    "tbody",
+    "td",
+]

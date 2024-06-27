@@ -27,7 +27,7 @@ dependencies = [
     "djangorestframework",
     "gunicorn",
     "jinja2",
-    "psycopg2-binary",
+    "psycopg[binary]",
     "sentry-sdk",
     "werkzeug",
     "whitenoise",
@@ -97,5 +97,6 @@ norecursedirs = [
     "venv",
 ]
 markers = [
-    "importer_v2"
+    "importer_v2",
+    "reference_documents"
 ]

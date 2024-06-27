@@ -3,7 +3,7 @@ services:
 
   # Database instance.
   db:
-    image: "postgres:12.8"
+    image: "postgres:16"
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
@@ -51,6 +51,12 @@ services:
     tty: true
     depends_on:
       - celery-redis
+    healthcheck:
+      test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 5s
 
   # Celery worker used to execute business rule checks on workbaskets.
   rule-check-celery:
@@ -69,6 +75,13 @@ services:
     tty: true
     depends_on:
       - celery-redis
+    healthcheck:
+      test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 5s
+
 
   # Celery worker for bulk creating and editing of objects.
   bulk-create-celery:
@@ -87,6 +100,13 @@ services:
     tty: true
     depends_on:
       - celery-redis
+    healthcheck:
+      test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 5s
+
 
   # Celery worker used to execute importer parser and objection creation.
   importer-celery:
@@ -103,6 +123,13 @@ services:
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     depends_on:
       - celery-redis
+    healthcheck:
+      test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 5s
+
 
   # Celery Beat process, used to execute scheduled, cron-like tasks.
   celery-beat:
@@ -165,34 +192,6 @@ services:
       - settings/envs/docker.env
     command: sh -c "python manage.py runserver 0.0.0.0:8000"
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
-    stdin_open: true
-    tty: true
-
-  pytest-db:
-    # With no persistent volume, it's possible to clear the database contents by
-    # simply stopping this service: docker-compose stop pytest-db.
-    image: "postgres:16"
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: "trust"
-      POSTGRES_USER: postgres
-      POSTGRES_DB: tamato
-    ports:
-      # Map a port from the host to allow inspection via DB clients, e.g.:
-      # $ psql --host=127.0.0.1 --port=5430 --username=postgres --dbname=tamato
-      - "127.0.0.1:5430:5432"
-
-  pytest:
-    build:
-      context: .
-      dockerfile: Dockerfile.pytest
-    image: pytest
-    depends_on:
-      - pytest-db
-    environment:
-      DATABASE_URL: postgres://postgres@pytest-db/tamato
-      DJANGO_SETTINGS_MODULE: settings.test
-      ENV: test
-    command: sh -c "python manage.py migrate && pytest"
     stdin_open: true
     tty: true
 

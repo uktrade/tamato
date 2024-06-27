@@ -11,6 +11,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.timezone import template_localtime
+from humanize import naturalsize
 from jinja2.utils import markupsafe
 from webpack_loader.contrib.jinja2ext import _render_bundle
 from webpack_loader.templatetags.webpack_loader import webpack_static
@@ -139,6 +140,8 @@ def environment(**kwargs):
             "get_messages": messages.get_messages,
             "get_current_workbasket": WorkBasket.current,
             "localtime": template_localtime,
+            "mark_safe": mark_safe,
+            "naturalsize": naturalsize,
             "pluralize": pluralize,
             "render_bundle": _render_bundle,
             "settings": settings,
@@ -147,7 +150,6 @@ def environment(**kwargs):
             "intcomma": intcomma,
             "url": reverse,
             "webpack_static": webpack_static,
-            "mark_safe": mark_safe,
         },
     )
 

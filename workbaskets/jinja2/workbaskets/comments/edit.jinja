@@ -1,0 +1,17 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Edit comment ID " ~ object.id %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block form %}
+  {% call django_form(action=url("workbaskets:workbasket-ui-comment-edit", kwargs={"wb_pk": request.user.current_workbasket.pk, "pk": object.pk})) %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

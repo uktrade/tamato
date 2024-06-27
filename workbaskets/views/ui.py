@@ -2,15 +2,19 @@ import logging
 import re
 from datetime import date
 from functools import cached_property
+from typing import Tuple
 from urllib.parse import urlencode
 
 import boto3
+import django_filters
+import kombu
 from botocore.client import Config
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import F
 from django.db.models import ProtectedError
@@ -29,15 +33,19 @@ from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
+from django_filters import FilterSet
+from markdownify import markdownify
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
+from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
 from common.util import format_date_string
 from common.views import SortingMixin
+from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
 from common.views import build_pagination_list
 from exporter.models import Upload
@@ -55,7 +63,9 @@ from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from regulations.models import Regulation
+from tasks.models import Comment
 from tasks.models import Task
+from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
@@ -83,6 +93,43 @@ class WorkBasketFilter(TamatoFilter):
     class Meta:
         model = WorkBasket
         fields = ["search", "status"]
+
+
+class WorkBasketAssignmentFilter(FilterSet):
+    """Filter a workbasket queryset based on different assignment
+    possibilities."""
+
+    def assignment_filter(self, queryset, name, value):
+        active_workers = (
+            UserAssignment.objects.workbasket_workers()
+            .assigned()
+            .values_list("task__workbasket_id")
+        )
+        active_reviewers = (
+            UserAssignment.objects.workbasket_reviewers()
+            .assigned()
+            .values_list("task__workbasket_id")
+        )
+        if value == "Full":
+            return queryset.filter(
+                Q(id__in=active_workers) & Q(id__in=active_reviewers),
+            )
+        elif value == "Reviewer":
+            return queryset.filter(id__in=active_reviewers)
+        elif value == "Worker":
+            return queryset.filter(id__in=active_workers)
+        elif value == "Awaiting":
+            return queryset.filter(
+                ~Q(id__in=active_workers) & ~Q(id__in=active_reviewers),
+            )
+        else:
+            return queryset
+
+    assignment = django_filters.CharFilter(method="assignment_filter")
+
+    class Meta:
+        model = WorkBasket
+        fields = ["assignment"]
 
 
 class WorkBasketConfirmCreate(DetailView):
@@ -141,7 +188,7 @@ class WorkBasketConfirmUpdate(DetailView):
 class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
     """UI endpoint for viewing and filtering workbaskets."""
 
-    filterset_class = WorkBasketFilter
+    filterset_class = WorkBasketAssignmentFilter
     template_name = "workbaskets/select-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
 
@@ -328,89 +375,47 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CurrentWorkBasket(TemplateView):
+class CurrentWorkBasket(FormView):
     template_name = "workbaskets/summary-workbasket.jinja"
-
-    # Form action mappings to URL names.
-    action_success_url_names = {
-        "page-prev": "workbaskets:current-workbasket",
-        "page-next": "workbaskets:current-workbasket",
-        "compare-data": "workbaskets:current-workbasket",
-    }
+    form_class = forms.WorkBasketCommentCreateForm
 
     @property
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
-    @property
-    def paginator(self):
-        return Paginator(
-            self.workbasket.tracked_models.with_transactions_and_models().order_by(
-                "transaction__order",
-            ),
-            per_page=50,
+    @cached_property
+    def comments(self):
+        ordering = self.get_comments_ordering()[0]
+        return Comment.objects.filter(task__workbasket=self.workbasket).order_by(
+            ordering,
         )
 
-    @property
-    def latest_upload(self):
-        return Upload.objects.order_by("created_date").last()
+    @cached_property
+    def paginator(self):
+        return Paginator(self.comments, per_page=20)
 
-    @property
-    def uploaded_envelope_dates(self):
-        """Gets a list of all transactions from the `latest_approved_workbasket`
-        in the order they were updated and returns a dict with the first and
-        last transactions as values for "start" and "end" keys respectively."""
-        if self.latest_upload:
-            transactions = self.latest_upload.envelope.transactions.order_by(
-                "updated_at",
-            )
-            return {
-                "start": transactions.first().updated_at,
-                "end": transactions.last().updated_at,
-            }
-        return None
+    def get_comments_ordering(self) -> Tuple[str, str]:
+        """Returns the ordering for `self.comments` based on `ordered` GET param
+        together with the title to use for the sort by filter (which will be the
+        opposite of the applied ordering)."""
+        ordered = self.request.GET.get("ordered")
+        if ordered == "desc":
+            ordering = "created_at"
+            new_sort_by_title = "Newest first"
+        else:
+            ordering = "-created_at"
+            new_sort_by_title = "Oldest first"
+        return ordering, new_sort_by_title
 
-    def _append_url_page_param(self, url, form_action):
-        """Based upon 'form_action', append a 'page' URL parameter to the given
-        url param and return the result."""
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        page_number = 1
-        if form_action == "page-prev":
-            page_number = page.previous_page_number()
-        elif form_action == "page-next":
-            page_number = page.next_page_number()
-        return f"{url}?page={page_number}"
+    def form_valid(self, form):
+        form.save(user=self.request.user, workbasket=self.workbasket)
+        return redirect(self.get_success_url())
 
     def get_success_url(self):
-        form_action = self.request.POST.get("form-action")
-        if form_action in ["remove-selected", "remove-all"]:
-            return reverse(
-                "workbaskets:workbasket-ui-changes-delete",
-                kwargs={"pk": self.workbasket.pk},
-            )
-        try:
-            return self._append_url_page_param(
-                reverse(
-                    self.action_success_url_names[form_action],
-                ),
-                form_action,
-            )
-        except KeyError:
-            return reverse("home")
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        kwargs["objects"] = page.object_list
-        return kwargs
+        return reverse("workbaskets:current-workbasket")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        page = self.paginator.get_page(self.request.GET.get("page", 1))
-        user_can_delete_workbasket = (
-            self.request.user.is_superuser
-            or self.request.user.has_perm("workbaskets.delete_workbasket")
-        )
 
         assigned_workers = [
             {"pk": user.pk, "name": user.user.get_full_name()}
@@ -441,46 +446,30 @@ class CurrentWorkBasket(TemplateView):
             {"pk": user.pk, "name": user.get_full_name()} for user in users
         ]
 
-        # set to true if there is an associated goods import batch with an unsent notification
-        try:
-            import_batch = self.workbasket.importbatch
-            unsent_notifcation = (
-                import_batch
-                and import_batch.goods_import
-                and not Notification.objects.filter(
-                    notified_object_pk=import_batch.pk,
-                    notification_type=NotificationTypeChoices.GOODS_REPORT,
-                ).exists()
-            )
-        except ObjectDoesNotExist:
-            unsent_notifcation = False
+        can_add_comment = self.request.user.has_perm("tasks.add_comment")
+        can_view_comment = self.request.user.has_perm("tasks.view_comment")
+
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
 
         context.update(
             {
                 "workbasket": self.workbasket,
-                "page_obj": page,
-                "uploaded_envelope_dates": self.uploaded_envelope_dates,
-                "rule_check_in_progress": False,
-                "user_can_delete_workbasket": user_can_delete_workbasket,
-                "unsent_notification": unsent_notifcation,
                 "assigned_workers": assigned_workers,
                 "assigned_reviewers": assigned_reviewers,
                 "assignable_users": assignable_users,
+                "can_add_comment": can_add_comment,
+                "can_view_comment": can_view_comment,
+                "comments": page.object_list,
+                "sort_by_title": self.get_comments_ordering()[1],
+                "paginator": self.paginator,
+                "page_obj": page,
+                "page_links": page_links,
             },
         )
-        if self.workbasket.rule_check_task_id:
-            result = AsyncResult(self.workbasket.rule_check_task_id)
-            if result.status != "SUCCESS":
-                context.update({"rule_check_in_progress": True})
-            else:
-                self.workbasket.set_as_current(self.request.user)
-
-            num_completed, total = self.workbasket.rule_check_progress()
-            context.update(
-                {
-                    "rule_check_progress": f"Completed {num_completed} out of {total} checks",
-                },
-            )
 
         return context
 
@@ -1664,3 +1653,120 @@ class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse("workbaskets:current-workbasket")
+
+
+class WorkBasketCommentListView(
+    PermissionRequiredMixin,
+    WithPaginationListMixin,
+    ListView,
+):
+    permission_required = [
+        "workbaskets.view_workbasket",
+        "tasks.view_comment",
+    ]
+    template_name = "workbaskets/comments/list.jinja"
+    paginate_by = 20
+
+    @cached_property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    def get_queryset(self):
+        return Comment.objects.filter(task__workbasket=self.workbasket).order_by(
+            "-created_at",
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["workbasket"] = self.workbasket
+        return context
+
+
+class WorkBasketCommentUpdateDeleteMixin:
+    model = Comment
+    success_url = reverse_lazy("workbaskets:current-workbasket")
+
+    def editable(self, comment: Comment) -> bool:
+        return (
+            comment.author == self.request.user
+            and comment.task.workbasket.status == WorkflowStatus.EDITING
+        )
+
+    def get_object(self, queryset=None):
+        obj = super().get_object()
+        if not self.editable(obj):
+            raise PermissionDenied
+        else:
+            return obj
+
+
+class WorkBasketCommentUpdate(
+    PermissionRequiredMixin,
+    WorkBasketCommentUpdateDeleteMixin,
+    UpdateView,
+):
+    form_class = forms.WorkBasketCommentUpdateForm
+    template_name = "workbaskets/comments/edit.jinja"
+    permission_required = ["tasks.change_comment"]
+
+    def get_initial(self):
+        initial = super().get_initial()
+        markdown = markdownify(self.object.content, heading_style="atx")
+        initial["content"] = markdown
+        return initial
+
+
+class WorkBasketCommentDelete(
+    PermissionRequiredMixin,
+    WorkBasketCommentUpdateDeleteMixin,
+    DeleteView,
+):
+    form_class = forms.WorkBasketCommentDeleteForm
+    template_name = "workbaskets/comments/delete.jinja"
+    permission_required = ["tasks.delete_comment"]
+
+
+class RuleCheckQueueView(
+    PermissionRequiredMixin,
+    TemplateView,
+):
+    template_name = "workbaskets/rule_check_queue.jinja"
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tap_tasks = TAPTasks()
+        try:
+            context["celery_healthy"] = True
+            current_rule_checks = tap_tasks.current_rule_checks(
+                "workbaskets.tasks.call_check_workbasket_sync",
+            )
+            context["current_rule_checks"] = current_rule_checks
+            context["status_tag_generator"] = self.status_tag_generator
+        except kombu.exceptions.OperationalError as oe:
+            context["celery_healthy"] = False
+        context["selected_tab"] = "rule-check-queue"
+        return context
+
+    def status_tag_generator(self, task_status) -> dict:
+        """Returns a dict with text and a CSS class for a UI-friendly label for
+        a rule check task."""
+
+        if task_status == "Active":
+            return {
+                "text": "Running",
+                "tag_class": "tamato-badge-light-green",
+            }
+        elif task_status == "Queued":
+            return {
+                "text": "Queued",
+                "tag_class": "tamato-badge-light-grey",
+            }
+        else:
+            return {
+                "text": task_status,
+                "tag_class": "",
+            }

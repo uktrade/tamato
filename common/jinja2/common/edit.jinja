@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block form %}
-  {% call django_form(action=object.get_url("edit")) %}
+  {% call django_form() %}
     {{ crispy(form) }}
   {% endcall %}
 {% endblock %}

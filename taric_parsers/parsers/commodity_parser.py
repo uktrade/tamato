@@ -179,6 +179,7 @@ class GoodsNomenclatureDescriptionParserV2(Writable, BaseTaricParser):
     xml_object_tag = "goods.nomenclature.description"
 
     identity_fields = [
+        "sid",
         "described_goods_nomenclature__sid",
         "described_goods_nomenclature__item_id",
         "described_goods_nomenclature__suffix",

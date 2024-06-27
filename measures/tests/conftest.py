@@ -230,7 +230,7 @@ def measure_edit_conditions_data(measure_form_data):
         accepts_certificate=True,
     )
     certificate = factories.CertificateFactory.create()
-    action = factories.MeasureActionFactory.create()
+    action = factories.MeasureActionFactory.create(code="05")
     edit_data = {k: v for k, v in measure_form_data.items() if v is not None}
     edit_data["update_type"] = 1
     edit_data[f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-TOTAL_FORMS"] = 1
@@ -254,7 +254,7 @@ def measure_edit_conditions_data(measure_form_data):
 @pytest.fixture
 def measure_edit_conditions_and_negative_action_data(measure_edit_conditions_data):
     # set up second condition with negative action
-    negative_action = factories.MeasureActionFactory.create()
+    negative_action = factories.MeasureActionFactory.create(code="05")
     positive_action = MeasureAction.objects.get(
         pk=measure_edit_conditions_data[
             f"{MEASURE_CONDITIONS_FORMSET_PREFIX}-0-action"

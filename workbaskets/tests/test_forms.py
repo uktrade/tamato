@@ -203,3 +203,78 @@ def test_workbasket_unassign_users_form_required_fields(
     )
     assert not form.is_valid()
     assert f"Select one or more users to unassign" in form.errors["assignments"]
+
+
+def test_workbasket_comment_create_form(assigned_workbasket):
+    """Tests that `WorkBasketCommentCreateForm` creates a comment for a given
+    workbasket and user."""
+    expected_content = "Test comment."
+    data = {"content": expected_content}
+    form = forms.WorkBasketCommentCreateForm(data=data)
+    assert form.is_valid()
+
+    user = assigned_workbasket.author
+    comment = form.save(user=user, workbasket=assigned_workbasket)
+    assert comment.author == user
+    assert comment.task == assigned_workbasket.tasks.get()
+    assert expected_content in comment.content
+
+
+markdown_and_html: list[tuple[str, str]] = [
+    ("# Heading", "<h1>Heading</h1>"),
+    ("> Blockquote", "<blockquote>\n<p>Blockquote</p>\n</blockquote>"),
+    ("**Bold**", "<p><strong>Bold</strong></p>"),
+    ("*Italic*", "<p><em>Italic</em></p>"),
+    ("1. List", "<ol>\n<li>List</li>\n</ol>"),
+    ("- List", "<ul>\n<li>List</li>\n</ul>"),
+    (f"[Link](https://example.org)", "<p>Link</p>"),
+    ("<a href='www.example.org'>Link</a>", "<p>Link</p>"),
+    (f"![Image](path/to/file)", "<p></p>"),
+    ("<img src='path/to/image'></img>", "<p></p>"),
+    ("<script>alert('Test')</script>", "alert('Test')"),
+]
+
+
+@pytest.mark.parametrize(
+    "markdown, html",
+    markdown_and_html,
+)
+def test_workbasket_comment_create_form_cleans_content(
+    markdown,
+    html,
+):
+    """Tests that `WorkBasketCommentCreateForm` converts Markdown to sanitised
+    HTML."""
+    data = {"content": markdown}
+    form = forms.WorkBasketCommentCreateForm(data=data)
+    assert form.is_valid()
+    assert form.cleaned_data["content"] == html
+
+
+@pytest.mark.parametrize(
+    "markdown, html",
+    markdown_and_html,
+)
+def test_workbasket_comment_update_form_cleans_content(
+    markdown,
+    html,
+):
+    """Tests that `WorkBasketCommentUpdateForm` converts Markdown to sanitised
+    HTML."""
+    comment = factories.CommentFactory.create()
+    data = {"content": markdown}
+    form = forms.WorkBasketCommentCreateForm(instance=comment, data=data)
+    assert form.is_valid()
+    assert form.cleaned_data["content"] == html
+
+
+def test_workbasket_comment_update_form():
+    """Tests that `WorkBasketCommentUpdateForm` updates a comment's content."""
+    comment = factories.CommentFactory.create()
+    content = "Edited comment."
+    data = {"content": content}
+    form = forms.WorkBasketCommentUpdateForm(instance=comment, data=data)
+    assert form.is_valid()
+    form.save()
+    comment.refresh_from_db()
+    assert content in comment.content

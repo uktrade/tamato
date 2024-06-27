@@ -9,7 +9,8 @@ from django.db import models
 from django.db.models.expressions import RawSQL
 from django.forms import ModelChoiceField
 from django.urls import reverse_lazy
-from psycopg2.extras import DateRange
+from psycopg.types.range import DateRange
+from psycopg.types.range import Range
 
 from common import validators
 from common.util import TaricDateRange
@@ -98,27 +99,45 @@ class ApplicabilityCode(models.PositiveSmallIntegerField):
 
 
 class TaricDateRangeField(DateRangeField):
+    """Model field that converts between `common.util.TaricDateRange` and its
+    database representation."""
+
     range_type = TaricDateRange
 
     def from_db_value(
         self,
-        value: Union[DateRange, TaricDateRange],
+        value: Union[Range, DateRange, TaricDateRange],
         *_args,
         **_kwargs,
     ) -> TaricDateRange:
         """
-        By default Django ignores the range_type and just returns a Psycopg2
+        By default Django ignores the range_type and just returns a Psycopg
         DateRange.
+
+        Additionally, from the Psycopg docs
+        (https://www.psycopg.org/psycopg3/docs/basic/pgtypes.html#range-adaptation):
+
+            All the PostgreSQL range types are loaded as the Range Python type,
+            which is a Generic type and can hold bounds of different types.
 
         This method forces the conversion to a TaricDateRange and shifts the
         upper date to be inclusive (it is exclusive by default).
         """
-        if not isinstance(value, DateRange):
+
+        if not value:
             return value
+
+        if isinstance(value, TaricDateRange):
+            # Avoid re-applying the date shift / inclusive bound change to
+            # `upper` (i.e. a TaricDateRange instance implies a shift has
+            # already been applied).
+            return value
+
         lower = value.lower
         upper = value.upper
         if not value.upper_inc and not value.upper_inf:
             upper = upper - relativedelta(days=1)
+
         return TaricDateRange(lower=lower, upper=upper)
 
 

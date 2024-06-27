@@ -25,6 +25,21 @@ class Runner:
         self.database = database
 
     @classmethod
+    def normalise_loglevel(cls, loglevel):
+        """
+        Attempt conversion of `loglevel` from a string integer value (e.g. "20")
+        to its loglevel name (e.g. "INFO").
+
+        This function can be used after, for instance, copying log levels from
+        environment variables, when the incorrect representation (int as string
+        rather than the log level name) may occur.
+        """
+        try:
+            return logging._levelToName.get(int(loglevel))
+        except:
+            return loglevel
+
+    @classmethod
     def manage(cls, db: Path, *args: str):
         """
         Runs a Django management command on the SQLite database.
@@ -34,6 +49,13 @@ class Runner:
         using the value of this setting.
         """
         sqlite_env = os.environ.copy()
+
+        # Correct log levels that are incorrectly expressed as string ints.
+        if "CELERY_LOG_LEVEL" in sqlite_env:
+            sqlite_env["CELERY_LOG_LEVEL"] = cls.normalise_loglevel(
+                sqlite_env["CELERY_LOG_LEVEL"],
+            )
+
         sqlite_env["DATABASE_URL"] = f"sqlite:///{str(db)}"
         # Required to make sure the postgres default isn't set as the DB_URL
         if sqlite_env.get("VCAP_SERVICES"):

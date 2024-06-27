@@ -92,3 +92,21 @@ class UserAssignment(TimestampedMixin):
             return True
         except cls.DoesNotExist:
             return False
+
+
+class Comment(TimestampedMixin):
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="authored_comments",
+    )
+    content = models.TextField(
+        max_length=1000 * 5,  # Max words * average character word length.
+    )
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name="comments",
+    )

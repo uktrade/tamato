@@ -75,7 +75,7 @@
                   <a
                     href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket["id"]}) }}"
                     class="govuk-link"
-                  >Workbasket ID {{ workbasket["id"] }}</a>
+                  >{{ workbasket["description"] }}</a>
                   <span>
                     {% if workbasket["rule_violations_count"] %}
                       - {{ workbasket["assignment_type"] }}, rule violation{{ workbasket["rule_violations_count"]|pluralize }}
@@ -124,6 +124,14 @@
           <br>
           This queue shows the status of measures that you submitted for
           creation.
+          </p>
+          <p class="govuk-body">
+          <a href="{{ url('workbaskets:rule-check-queue') }}"
+            class="govuk-link"
+          >Rule check queue</a>
+          <br>
+          This queue shows currently running and queued business rule
+          checks.
         </p>
       </article>
     {% endif %}
@@ -144,6 +152,10 @@
           <li>
             <a href="{{ url('taric_parser_import_ui_list') }}" class="govuk-link">Importer V2</a>
           </li>
+          <li>
+            <a href="{{ url('reference_documents:index') }}" class="govuk-link">Reference documents</a>
+          </li>
+
         {% endif %}
         {% if can_view_reports %}
           <li>

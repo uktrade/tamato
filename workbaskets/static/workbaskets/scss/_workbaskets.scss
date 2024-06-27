@@ -60,3 +60,81 @@ table.workbasket-transactions tbody {
     height: 1.5rem;
   }
 }
+
+#workbasket-comments-container {
+  width: 70%;
+  float: right;
+
+  header > p{
+    display: inline;
+  }
+}
+
+ul.comment-actions {
+  display: inline;
+  float: inline-end;
+
+  li {
+    display: inline;
+    border-right: 1px solid govuk-colour("mid-grey");
+    padding-right: govuk-spacing(2);
+    margin-right: govuk-spacing(2);
+  }
+  li:last-child{
+    border-right: 0;
+    margin-right: 0;
+  }
+}
+
+.comment {
+  h1 {
+    @extend .govuk-heading-l;
+  }
+
+  h2 {
+    @extend .govuk-heading-m;
+  }
+
+  h3 {
+    @extend .govuk-heading-s;
+  }
+  
+  p {
+    @extend .govuk-body;
+  }
+  
+  blockquote {
+    @extend .govuk-inset-text;
+  }
+
+  hr {
+    @extend .govuk-section-break;
+    @extend .govuk-section-break--visible;
+  }
+
+  strong {
+    @extend .govuk-\!-font-weight-bold;
+  }
+
+  ul {
+    @extend .govuk-list;
+    @extend .govuk-list--bullet;
+  }
+
+  ol {
+    @extend .govuk-list;
+    @extend .govuk-list--number;
+  }
+
+  table {
+    @extend .govuk-table;
+  }
+  
+  th {
+    @extend .govuk-table__header;
+  }
+
+  td {
+    @extend .govuk-table__cell
+  }
+}

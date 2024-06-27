@@ -1,6 +1,10 @@
 from datetime import datetime
 
+import bleach
+import markdown
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
@@ -8,9 +12,13 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.urls import reverse
 
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
+from common.validators import markdown_tags_allowlist
+from tasks.models import Comment
+from tasks.models import Task
 from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets import validators
@@ -314,3 +322,105 @@ class WorkBasketUnassignUsersForm(forms.Form):
             fields=["unassigned_at"],
         )
         return user_assignments
+
+
+class WorkBasketCommentForm(forms.ModelForm):
+    content = forms.CharField(
+        label="",
+        error_messages={"required": "Enter your comment"},
+        widget=forms.widgets.Textarea,
+        max_length=5000,
+    )
+
+    class Meta:
+        model = Comment
+        fields = ("content",)
+
+    def clean_content(self):
+        content = self.cleaned_data["content"]
+        html = markdown.markdown(text=content, extensions=["sane_lists", "tables"])
+        content = bleach.clean(
+            text=html,
+            tags=markdown_tags_allowlist,
+            attributes=[],
+            strip=True,
+        )
+        return content
+
+
+class WorkBasketCommentCreateForm(WorkBasketCommentForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Field.textarea("content", rows=1, placeholder="Add a comment"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def save(self, user, workbasket, commit=True):
+        instance = super().save(commit=False)
+        instance.author = user
+        instance.task = Task.objects.get(workbasket=workbasket)
+        if commit:
+            instance.save()
+        return instance
+
+
+class WorkBasketCommentUpdateForm(WorkBasketCommentForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Field.textarea("content", placeholder="Add a comment"),
+            Div(
+                Submit(
+                    "submit",
+                    "Save",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f"<a class='govuk-button govuk-button--secondary' href={reverse('workbaskets:current-workbasket')}>Cancel</a>",
+                ),
+                css_class="govuk-button-group",
+            ),
+        )
+
+
+class WorkBasketCommentDeleteForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Div(
+                Submit(
+                    "submit",
+                    "Delete",
+                    css_class="govuk-button--warning",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f"<a class='govuk-button govuk-button--secondary' href={reverse('workbaskets:current-workbasket')}>Cancel</a>",
+                ),
+                css_class="govuk-button-group",
+            ),
+        )

@@ -15,6 +15,8 @@ from django.utils.timezone import localtime
 
 from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
+from common.inspect_tap_tasks import CeleryTask
+from common.inspect_tap_tasks import TAPTasks
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import date_post_data
@@ -23,6 +25,7 @@ from exporter.tasks import upload_workbaskets
 from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from measures.models import Measure
+from tasks.models import Comment
 from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets.tasks import check_workbasket_sync
@@ -229,23 +232,134 @@ def test_select_workbasket_page_200(valid_user_client):
     we don't want users to be able to edit workbaskets that are archived, sent,
     or published.
     """
-    factories.WorkBasketFactory.create(status=WorkflowStatus.ARCHIVED)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.PUBLISHED)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.EDITING)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.QUEUED)
-    factories.WorkBasketFactory.create(status=WorkflowStatus.ERRORED)
-    valid_statuses = {
-        WorkflowStatus.EDITING,
-        WorkflowStatus.ERRORED,
-    }
+    archived_workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.ARCHIVED,
+    )
+    published_workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.PUBLISHED,
+    )
+    editing_workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    queued_workbasket = factories.WorkBasketFactory.create(status=WorkflowStatus.QUEUED)
+    errored_workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.ERRORED,
+    )
+
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
     assert response.status_code == 200
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    statuses = [
-        element.text.strip() for element in soup.select(".govuk-table__row .govuk-tag")
-    ]
-    assert len(statuses) == 2
-    assert not set(statuses).difference(valid_statuses)
+    table_rows = [element for element in soup.select(".govuk-table__row")]
+    assert len(table_rows) == 3
+
+    # Assert the editing and errored workbaskets appear in the list but the rest do not
+    workbasket_links = [element for element in soup.select(".button-link")]
+    workbasket_pks = [int(workbasket.get("value")) for workbasket in workbasket_links]
+
+    assert all(
+        pk in workbasket_pks for pk in [editing_workbasket.pk, errored_workbasket.pk]
+    )
+    assert all(
+        pk not in workbasket_pks
+        for pk in [
+            archived_workbasket.pk,
+            published_workbasket.pk,
+            queued_workbasket.pk,
+        ]
+    )
+
+
+def test_workbasket_assignments_appear(valid_user_client):
+    """Test that workbasket assignments are shown on the edit a workbasket
+    page."""
+    workbasket = factories.WorkBasketFactory.create()
+    worker = factories.UserFactory.create(first_name="Worker", last_name="User")
+    reviewer = factories.UserFactory.create(first_name="Reviewer", last_name="User")
+    response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
+    assert worker.get_full_name() not in str(response.content)
+    assert reviewer.get_full_name() not in str(response.content)
+
+    # Fully assign the workbasket
+    task = factories.TaskFactory.create(workbasket=workbasket)
+
+    worker_assignment = factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+        user=worker,
+    )
+    reviewer_assignment = factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=task,
+        user=reviewer,
+    )
+    # Assert that the assigned names appear in the table
+    response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
+    assert worker_assignment.user.get_full_name() in str(response.content)
+    assert reviewer_assignment.user.get_full_name() in str(response.content)
+
+
+@pytest.mark.parametrize(
+    "url, included_wb_ids, excluded_wb_ids",
+    [
+        ("?assignment=Full", [1], [2, 3, 4]),
+        ("?assignment=Reviewer", [1, 3], [2, 4]),
+        ("?assignment=Worker", [1, 4], [2, 3]),
+        ("?assignment=Awaiting", [2], [1, 3, 4]),
+    ],
+)
+def test_select_workbasket_filtering(
+    valid_user_client,
+    url,
+    included_wb_ids,
+    excluded_wb_ids,
+):
+    """
+    Test that workbaskets appear or do not appear on each tab depending on their
+    assignment.
+
+    Parametrized testing for each tab with a list of workbasket ids that should
+    be appearing on that page and those that should not.
+    """
+    # Create a fully assigned workbasket
+    fully_assigned_workbasket = factories.WorkBasketFactory.create(id=1)
+
+    task = factories.TaskFactory.create(workbasket=fully_assigned_workbasket)
+
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=task,
+    )
+    # Create an unassigned workbasket
+    factories.WorkBasketFactory.create(id=2)
+    # Create workbasket with only a reviewer assigned
+    reviewer_assigned_workbasket = factories.WorkBasketFactory.create(id=3)
+    reviewer_task = factories.TaskFactory.create(
+        workbasket=reviewer_assigned_workbasket,
+    )
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        task=reviewer_task,
+    )
+    # Create a workbasket with only a worker assigned
+    worker_assigned_workbasket = factories.WorkBasketFactory.create(id=4)
+    worker_task = factories.TaskFactory.create(workbasket=worker_assigned_workbasket)
+    factories.UserAssignmentFactory.create(
+        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        task=worker_task,
+    )
+
+    # Test that the workbaskets are appearing on the correct tabs
+    response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list") + url)
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    workbasket_links = [element for element in soup.select(".button-link")]
+    workbasket_pks = [int(workbasket.get("value")) for workbasket in workbasket_links]
+
+    assert all(pk in workbasket_pks for pk in included_wb_ids)
+    assert all(pk not in workbasket_pks for pk in excluded_wb_ids)
 
 
 def test_select_workbasket_with_errored_status(valid_user_client):
@@ -2103,7 +2217,7 @@ def test_require_current_workbasket_redirect(workbasket_factory, client, valid_u
     editing state."""
     client.force_login(valid_user)
 
-    valid_user.current_workbasket == workbasket_factory()
+    valid_user.current_workbasket = workbasket_factory()
     valid_user.save()
 
     # view that has require_current_workbasket decorator
@@ -2202,3 +2316,283 @@ def test_workbasket_unassign_users_view_without_permission(client, user_workbask
         ),
     )
     assert response.status_code == 403
+
+
+def test_workbasket_summary_view_add_comment(valid_user_client, user_workbasket):
+    """Tests that a comment can be added to a workbasket from the workbasket's
+    summary view."""
+    content = "Test comment."
+    form_data = {"content": content}
+    url = reverse("workbaskets:current-workbasket")
+    assert not Comment.objects.exists()
+
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+    assert response.url == url
+    assert content in Comment.objects.get(task__workbasket=user_workbasket).content
+
+
+def test_workbasket_summary_view_displays_comments(
+    valid_user,
+    valid_user_client,
+    user_workbasket,
+):
+    """Tests that workbasket comments are displayed on the summary view."""
+    factories.CommentFactory.create_batch(
+        2,
+        author=valid_user,
+        task__workbasket=user_workbasket,
+    )
+    comments = Comment.objects.all().order_by("-created_at")
+
+    url = reverse("workbaskets:current-workbasket")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    container = soup.find("div", id="workbasket-comments-container")
+    headers = container.find_all("header")
+    contents = container.find_all("div", "comment")
+    assert len(headers) == len(comments)
+    assert len(contents) == len(comments)
+
+    for i, details in enumerate(headers):
+        assert comments[i].author.get_displayname() in details.span
+        assert (
+            localtime(comments[i].created_at).strftime("%d %B %Y, %I:%M %p")
+            in details.time
+        )
+
+    for i, content in enumerate(contents):
+        assert comments[i].content in content
+
+
+def test_workbasket_comment_update_view(valid_user, valid_user_client, user_workbasket):
+    """Tests that workbasket comments can be edited."""
+    comment = factories.CommentFactory.create(
+        author=valid_user,
+        task__workbasket=user_workbasket,
+    )
+
+    url = reverse(
+        "workbaskets:workbasket-ui-comment-edit",
+        kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    content = "Edited comment."
+    form_data = {"content": content}
+
+    response = valid_user_client.post(url, data=form_data)
+    assert response.status_code == 302
+    assert response.url == reverse("workbaskets:current-workbasket")
+
+    assert content in Comment.objects.get(pk=comment.pk).content
+
+
+def test_workbasket_comment_update_view_permission_denied(
+    valid_user_client,
+    user_workbasket,
+):
+    """Tests that editing another user's workbasket comment is not permitted."""
+    comment = factories.CommentFactory.create(task__workbasket=user_workbasket)
+    url = reverse(
+        "workbaskets:workbasket-ui-comment-edit",
+        kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 403
+
+    response = valid_user_client.post(url, data={})
+    assert response.status_code == 403
+
+
+def test_workbasket_comment_delete_view(valid_user, valid_user_client, user_workbasket):
+    """Tests that workbasket comments can be deleted."""
+    comment = factories.CommentFactory.create(
+        author=valid_user,
+        task__workbasket=user_workbasket,
+    )
+
+    url = reverse(
+        "workbaskets:workbasket-ui-comment-delete",
+        kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    response = valid_user_client.post(url, data={})
+    assert response.status_code == 302
+    assert response.url == reverse("workbaskets:current-workbasket")
+
+    with pytest.raises(Comment.DoesNotExist):
+        Comment.objects.get(pk=comment.pk)
+
+
+def test_workbasket_comment_delete_view_permission_denied(
+    valid_user_client,
+    user_workbasket,
+):
+    """Tests that deleting another user's workbasket comment is not
+    permitted."""
+    comment = factories.CommentFactory.create(task__workbasket=user_workbasket)
+    url = reverse(
+        "workbaskets:workbasket-ui-comment-delete",
+        kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 403
+
+    response = valid_user_client.post(url, data={})
+    assert response.status_code == 403
+
+
+def test_workbasket_comment_list_view(valid_user_client, user_workbasket):
+    """Tests that `WorkBasketCommentListView` displays workbasket comments."""
+    factories.CommentFactory.create_batch(
+        2,
+        author=user_workbasket.author,
+        task__workbasket=user_workbasket,
+    )
+    comments = Comment.objects.all().order_by("-created_at")
+    url = reverse(
+        "workbaskets:workbasket-ui-comments",
+        kwargs={"pk": user_workbasket.pk},
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    headers = soup.select("article > header")
+    contents = soup.find_all("div", "comment")
+    assert len(headers) == len(comments)
+    assert len(contents) == len(comments)
+
+    for i, details in enumerate(headers):
+        assert comments[i].author.get_displayname() in details.span
+        assert (
+            localtime(comments[i].created_at).strftime("%d %B %Y, %I:%M %p")
+            in details.time
+        )
+
+    for i, content in enumerate(contents):
+        assert comments[i].content in content
+
+
+def test_clean_tasks():
+    """Test that the clean_tasks function of TAPTasks class returns a cleaned
+    list of tasks from Celery task dictionary."""
+    tap_tasks = TAPTasks()
+
+    celery_dictionary = {
+        "celery@1": [
+            {
+                "id": "task1_id",
+                "name": "workbaskets.tasks.call_check_workbasket_sync",
+                "args": [1591],
+                "kwargs": {},
+                "type": "workbaskets.tasks.call_check_workbasket_sync",
+                "hostname": "celery@1",
+                "time_start": None,
+                "acknowledged": False,
+                "delivery_info": {},
+                "worker_pid": None,
+            },
+            {
+                "id": "task2_id",
+                "name": "workbaskets.tasks.call_check_workbasket_sync",
+                "args": [1587],
+                "kwargs": {},
+                "type": "workbaskets.tasks.call_check_workbasket_sync",
+                "hostname": "celery@1",
+                "time_start": None,
+                "acknowledged": False,
+                "delivery_info": {},
+                "worker_pid": None,
+            },
+        ],
+        "celery@2": [],
+        "celery@3": [],
+    }
+    expected_result = [
+        {
+            "id": "task1_id",
+            "name": "workbaskets.tasks.call_check_workbasket_sync",
+            "args": [1591],
+            "kwargs": {},
+            "type": "workbaskets.tasks.call_check_workbasket_sync",
+            "hostname": "celery@1",
+            "time_start": None,
+            "acknowledged": False,
+            "delivery_info": {},
+            "worker_pid": None,
+            "status": "Active",
+        },
+        {
+            "id": "task2_id",
+            "name": "workbaskets.tasks.call_check_workbasket_sync",
+            "args": [1587],
+            "kwargs": {},
+            "type": "workbaskets.tasks.call_check_workbasket_sync",
+            "hostname": "celery@1",
+            "time_start": None,
+            "acknowledged": False,
+            "delivery_info": {},
+            "worker_pid": None,
+            "status": "Active",
+        },
+    ]
+
+    assert (
+        tap_tasks.clean_tasks(
+            celery_dictionary,
+            task_status="Active",
+            task_name="workbaskets.tasks.call_check_workbasket_sync",
+        )
+        == expected_result
+    )
+
+
+def test_current_rule_checks_is_called(valid_user_client):
+    """Test that current_rule_checks function gets called when a user goes to
+    the rule check page and the page correctly displays the returned list of
+    rule check tasks."""
+
+    return_value = [
+        CeleryTask(
+            "12345",
+            1,
+            TAPTasks.timestamp_to_datetime_string(1718098484.8248514),
+            "54 out of 100",
+            "Active",
+        ),
+        CeleryTask("23456", 2, "", "0 out of 100", "Queued"),
+        CeleryTask("34567", 3, "", "0 out of 100", "Queued"),
+    ]
+
+    with patch.object(
+        TAPTasks,
+        "current_rule_checks",
+        return_value=return_value,
+    ) as mock_current_rule_checks:
+        response = valid_user_client.get(reverse("workbaskets:rule-check-queue"))
+        assert response.status_code == 200
+        # Assert current_rule_checks gets called
+        mock_current_rule_checks.assert_called_once()
+        # Assert the mocked response is formatted correctly on the page
+        soup = BeautifulSoup(str(response.content), "html.parser")
+        table_rows = [element for element in soup.select(".govuk-table__row")]
+        assert "10:34 11 Jun 2024" in str(table_rows[1])
+        assert len(table_rows) == 4
+        active_checks = soup.find_all("span", {"class": "tamato-badge-light-green"})
+        assert len(active_checks) == 1
+        assert "RUNNING" in active_checks[0].get_text()
+        queued_checks = soup.find_all("span", {"class": "tamato-badge-light-grey"})
+        assert len(queued_checks) == 2
+        assert "QUEUED" in queued_checks[0].get_text()
+        assert "QUEUED" in queued_checks[1].get_text()
