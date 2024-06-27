@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import renderer from "react-test-renderer";
 
-import { GeoAreaField } from "../index";
+import { GeoAreaForm } from "../index";
 
 const mockGroupsOptions = [
   {
@@ -64,6 +64,10 @@ const mockExclusionsOptions = [
   ...mockCountryRegionsOptions,
 ];
 
+const mockCsrfToken = "123456789";
+const mockErrors = {};
+const helpText = "Some help text";
+
 describe("GeoAreaField", () => {
   it("renders field with props", () => {
     const mockInitial = {
@@ -75,8 +79,11 @@ describe("GeoAreaField", () => {
     };
 
     const component = renderer.create(
-      <GeoAreaField
+      <GeoAreaForm
         initial={mockInitial}
+        errors={mockErrors}
+        csrfToken={mockCsrfToken}
+        helpText={helpText}
         exclusionsOptions={mockExclusionsOptions}
         groupsOptions={mockGroupsOptions}
         countryRegionsOptions={mockCountryRegionsOptions}
@@ -98,8 +105,11 @@ describe("GeoAreaField", () => {
     };
 
     const component = renderer.create(
-      <GeoAreaField
+      <GeoAreaForm
         initial={mockInitial}
+        errors={mockErrors}
+        csrfToken={mockCsrfToken}
+        helpText={helpText}
         exclusionsOptions={mockExclusionsOptions}
         groupsOptions={mockGroupsOptions}
         countryRegionsOptions={mockCountryRegionsOptions}
@@ -122,8 +132,11 @@ describe("GeoAreaField", () => {
 
     // render field with erga omnes selected
     render(
-      <GeoAreaField
+      <GeoAreaForm
         initial={mockInitial}
+        errors={mockErrors}
+        csrfToken={mockCsrfToken}
+        helpText={helpText}
         exclusionsOptions={mockExclusionsOptions}
         groupsOptions={mockGroupsOptions}
         countryRegionsOptions={mockCountryRegionsOptions}
@@ -170,8 +183,11 @@ describe("GeoAreaField", () => {
     };
 
     render(
-      <GeoAreaField
+      <GeoAreaForm
         initial={mockInitial}
+        errors={mockErrors}
+        csrfToken={mockCsrfToken}
+        helpText={helpText}
         exclusionsOptions={mockExclusionsOptions}
         groupsOptions={mockGroupsOptions}
         countryRegionsOptions={mockCountryRegionsOptions}

@@ -168,4 +168,4 @@ GeoAreaForm.propTypes = {
   groupsWithMembers: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.number)),
 };
 
-export { setupGeoAreaForm, GeoAreaField };
+export { setupGeoAreaForm, GeoAreaField, GeoAreaForm };
