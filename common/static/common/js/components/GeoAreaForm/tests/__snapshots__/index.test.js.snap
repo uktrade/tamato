@@ -1,12 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`GeoAreaField renders empty field when no initial data 1`] = `
-[
+<div
+  className="govuk-form-group"
+>
   <input
     name="react"
     type="hidden"
     value={true}
-  />,
+  />
   <div
     className="govuk-radios"
   >
@@ -189,17 +191,19 @@ exports[`GeoAreaField renders empty field when no initial data 1`] = `
         Specific countries or regions
       </label>
     </div>
-  </div>,
-]
+  </div>
+</div>
 `;
 
 exports[`GeoAreaField renders field with props 1`] = `
-[
+<div
+  className="govuk-form-group"
+>
   <input
     name="react"
     type="hidden"
     value={true}
-  />,
+  />
   <div
     className="govuk-radios"
   >
@@ -270,12 +274,13 @@ exports[`GeoAreaField renders field with props 1`] = `
             onTouchEnd={[Function]}
           >
             <div
-              className="react-select__value-container react-select__value-container--has-value css-1fdsijx-ValueContainer"
+              className="react-select__value-container css-1fdsijx-ValueContainer"
             >
               <div
-                className="react-select__single-value css-1dimb5e-singleValue"
+                className="react-select__placeholder css-1jqq78o-placeholder"
+                id="react-select-2-placeholder"
               >
-                EU
+                Select...
               </div>
               <div
                 className="react-select__input-container css-qbdosj-Input"
@@ -284,6 +289,7 @@ exports[`GeoAreaField renders field with props 1`] = `
                 <input
                   aria-activedescendant=""
                   aria-autocomplete="list"
+                  aria-describedby="react-select-2-placeholder"
                   aria-expanded={false}
                   aria-haspopup={true}
                   autoCapitalize="none"
@@ -349,7 +355,7 @@ exports[`GeoAreaField renders field with props 1`] = `
           <input
             name="geographical_area-geographical_area_group"
             type="hidden"
-            value={11}
+            value=""
           />
         </div>
       </div>
@@ -390,11 +396,9 @@ exports[`GeoAreaField renders field with props 1`] = `
               >
                 <div
                   className="react-select__multi-value__label css-wsp0cs-MultiValueGeneric"
-                >
-                  Germany
-                </div>
+                />
                 <div
-                  aria-label="Remove Germany"
+                  aria-label="Remove option"
                   className="react-select__multi-value__remove css-12a83d4-MultiValueRemove"
                   onClick={[Function]}
                   onMouseDown={[Function]}
@@ -507,7 +511,6 @@ exports[`GeoAreaField renders field with props 1`] = `
             <input
               name="geographical_area-geo_group_exclusions"
               type="hidden"
-              value={5}
             />
           </div>
         </div>
@@ -532,6 +535,6 @@ exports[`GeoAreaField renders field with props 1`] = `
         Specific countries or regions
       </label>
     </div>
-  </div>,
-]
+  </div>
+</div>
 `;
