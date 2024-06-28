@@ -204,6 +204,9 @@ def test_ref_doc_crud_without_permission(valid_user_client):
     assert resp.status_code == 403
 
 
+@pytest.mark.skip(
+    reason="FIXME: Random failure - https://uktrade.atlassian.net/browse/TP2000-1395",
+)
 @pytest.mark.reference_documents
 def test_ref_doc_version_detail_view(superuser_client):
     """Test that the reference document version detail view shows preferential

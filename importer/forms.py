@@ -15,6 +15,7 @@ from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 from sentry_sdk import capture_exception
+from werkzeug.utils import secure_filename
 
 from common.util import get_mime_type
 from common.util import parse_xml
@@ -72,6 +73,14 @@ class ImporterV2FormMixin:
         mime_type = get_mime_type(uploaded_taric_file)
         if mime_type not in ["text/xml", "application/xml"]:
             raise ValidationError("The selected file must be XML")
+
+        secure_file_name = secure_filename(uploaded_taric_file.name)
+        if uploaded_taric_file.name.replace(" ", "_") == secure_file_name:
+            uploaded_taric_file.name == secure_file_name
+        else:
+            raise ValidationError(
+                "File name must only include alphanumeric characters and special characters such as spaces, hyphens and underscores.",
+            )
 
         try:
             xml_file = parse_xml(uploaded_taric_file)
@@ -144,6 +153,14 @@ class ImportFormMixin:
         mime_type = get_mime_type(uploaded_taric_file)
         if mime_type not in ["text/xml", "application/xml"]:
             raise ValidationError("The selected file must be XML")
+
+        secure_file_name = secure_filename(uploaded_taric_file.name)
+        if uploaded_taric_file.name.replace(" ", "_") == secure_file_name:
+            uploaded_taric_file.name == secure_file_name
+        else:
+            raise ValidationError(
+                "File name must only include alphanumeric characters and special characters such as spaces, hyphens and underscores.",
+            )
 
         try:
             xml_file = parse_xml(uploaded_taric_file)

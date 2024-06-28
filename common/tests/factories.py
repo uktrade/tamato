@@ -141,6 +141,17 @@ class EditingWorkBasketFactory(WorkBasketFactory):
     )
 
 
+class ErroredWorkBasketFactory(WorkBasketFactory):
+    class Meta:
+        model = "workbaskets.WorkBasket"
+
+    status = WorkflowStatus.ERRORED
+    transaction = factory.RelatedFactory(
+        "common.tests.factories.UnapprovedTransactionFactory",
+        factory_related_name="workbasket",
+    )
+
+
 class QueuedWorkBasketFactory(WorkBasketFactory):
     class Meta:
         model = "workbaskets.WorkBasket"
@@ -163,6 +174,19 @@ class PublishedWorkBasketFactory(WorkBasketFactory):
         "common.tests.factories.ApprovedTransactionFactory",
         factory_related_name="workbasket",
     )
+
+
+class SimplePublishedWorkBasketFactory(WorkBasketFactory):
+    """SimplePublishedWorkBasketFactory is distinguished from
+    PublishedWorkBasketFactory by having no transactions, allowing Transaction
+    factories to add to the created workbasket without surplus, incidental
+    transactions."""
+
+    class Meta:
+        model = "workbaskets.WorkBasket"
+
+    approver = factory.SubFactory(UserFactory)
+    status = WorkflowStatus.PUBLISHED
 
 
 class SimpleQueuedWorkBasketFactory(WorkBasketFactory):
@@ -199,6 +223,11 @@ class TransactionFactory(factory.django.DjangoModelFactory):
             workbasket=factory.SubFactory(PublishedWorkBasketFactory),
         )
 
+        single_published = factory.Trait(
+            partition=TransactionPartition.REVISION,
+            workbasket=factory.SubFactory(SimplePublishedWorkBasketFactory),
+        )
+
         seed = factory.Trait(
             partition=TransactionPartition.SEED_FILE,
         )
@@ -216,6 +245,10 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
 class SeedFileTransactionFactory(TransactionFactory):
     seed = True
+
+
+class PublishedTransactionFactory(TransactionFactory):
+    single_published = True
 
 
 class ApprovedTransactionFactory(TransactionFactory):

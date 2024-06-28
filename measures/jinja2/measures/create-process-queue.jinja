@@ -1,4 +1,4 @@
-{% extends "layouts/layout.jinja" %}
+{% extends "common/celery_queues.jinja" %}
 
 {% from "macros/inline_filter_links.jinja" import inline_filter_links %}
 {% from "components/table/macro.njk" import govukTable %}
@@ -45,15 +45,7 @@
   },
 ]%}
 
-{% set refresh_button_content -%}
-  Refresh
-  <img
-    src="{{ static('common/images/mdi_refresh.svg') }}"
-    alt="refresh filter results"
-  >
-{%- endset %}
-
-{% block content %}
+{% block tab_content %}
 <div class="govuk-grid-row">
     
   <div class="govuk-grid-column-full">

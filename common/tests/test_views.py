@@ -1,3 +1,4 @@
+import datetime
 from unittest.mock import patch
 
 import pytest
@@ -106,17 +107,28 @@ def test_app_info_superuser(superuser_client, new_workbasket):
     The new_workbasket fixture provides access to transaction information in the
     deployment infomation section.
     """
-    response = superuser_client.get(reverse("app-info"))
+
+    sqlite_dumps = [
+        {
+            "file_name": "123456789.db",
+            "file_size": 1000000,
+            "created_datetime": datetime.datetime.now(),
+        },
+    ]
+
+    with patch("common.views.sqlite_dumps", return_value=sqlite_dumps):
+        response = superuser_client.get(reverse("app-info"))
 
     assert response.status_code == 200
 
     page = BeautifulSoup(str(response.content), "html.parser")
     h2_elements = page.select(".info-section h2")
 
-    assert len(h2_elements) == 3
+    assert len(h2_elements) == 4
     assert "Deployment information" in h2_elements[0].text
     assert "Active business rule checks" in h2_elements[1].text
     assert "Active envelope generation tasks" in h2_elements[2].text
+    assert "Sqlite dumps (past 30 days)" in h2_elements[3].text
 
 
 def test_index_displays_footer_links(valid_user_client):
@@ -264,13 +276,14 @@ def test_homepage_cards_contain_expected_links(superuser_client):
     ],
 )
 def test_homepage_card_currently_working_on(status, valid_user, valid_user_client):
-    workbasket = factories.WorkBasketFactory.create(status=status)
-    review_assignment = factories.UserAssignmentFactory.create(
+    test_reason = "test reason"
+    workbasket = factories.WorkBasketFactory.create(status=status, reason=test_reason)
+    factories.UserAssignmentFactory.create(
         user=valid_user,
         assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
         task__workbasket=workbasket,
     )
-    rule_violation = TrackedModelCheckFactory.create(
+    TrackedModelCheckFactory.create(
         transaction_check__transaction=workbasket.new_transaction(),
         successful=False,
     )
@@ -281,7 +294,8 @@ def test_homepage_card_currently_working_on(status, valid_user, valid_user_clien
     assigned_workbasket = card.find_next("a")
     details = card.find_next("span")
 
-    assert f"Workbasket ID {workbasket.pk}" in assigned_workbasket.text
+    assert test_reason in assigned_workbasket.text
+    assert str(workbasket.pk) in assigned_workbasket.attrs["href"]
     assert "Reviewing" and "rule violation" in details.text
 
 

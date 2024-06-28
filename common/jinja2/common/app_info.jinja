@@ -61,6 +61,12 @@
           {"text": LAST_TRANSACTION_TIME},
           {"text": "Last transaction change time"},
         ],
+        [
+          {"text": "LAST_PUBLISHED_TRANSACTION_ORDER"},
+          {"text": LAST_PUBLISHED_TRANSACTION_ORDER},
+          {"text": "Last published transaction order value"},
+        ],
+
       ] %}
 
       {{ govukTable({
@@ -156,7 +162,7 @@
               "colspan": 4,
             }
           ]) or "" }}
-      {% endif %}
+      {% endif -%}
 
       {{ govukTable({
           "head": table_head,
@@ -164,5 +170,46 @@
       }) }}
     </div>
   </div>
+
+
+  {%- if request.user.is_superuser and SQLITE_DUMP_LIST %}
+  <div class="govuk-grid-row govuk-!-margin-bottom-6 info-section">
+    <div class="govuk-grid-column-full">
+      <h2 class="govuk-heading-m">Sqlite dumps (past {{ SQLITE_DUMP_DAYS }} days)</h2>
+
+      {%- set table_head = [
+        {"text": "File name"},
+        {"text": "Size"},
+        {"text": "Created date"},
+      ] %}
+
+      {%- set table_rows = [] %}
+      {%- for obj in SQLITE_DUMP_LIST %}
+        {%- if obj.file_size != None %}
+          {%- set file_size = naturalsize(obj.file_size) %}
+        {% else -%}
+          {%- set file_size = "Unknown" %}
+        {% endif -%}
+
+        {%- if obj.created_datetime %}
+          {%- set created_datetime = obj.created_datetime.strftime("%d %b %Y, %H:%M") %}
+        {%- else %}
+          {%-set created_datetime = "Unknown" %}
+        {% endif %}
+
+        {{ table_rows.append([
+          {"text": obj.file_name},
+          {"text": file_size},
+          {"text": created_datetime},
+        ]) or "" }}
+      {% endfor -%}
+
+      {{ govukTable({
+          "head": table_head,
+          "rows": table_rows
+      }) }}
+    </div>
+  </div>
+  {% endif -%}
 
 {% endblock %}

@@ -75,7 +75,7 @@
                   <a
                     href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket["id"]}) }}"
                     class="govuk-link"
-                  >Workbasket ID {{ workbasket["id"] }}</a>
+                  >{{ workbasket["description"] }}</a>
                   <span>
                     {% if workbasket["rule_violations_count"] %}
                       - {{ workbasket["assignment_type"] }}, rule violation{{ workbasket["rule_violations_count"]|pluralize }}
@@ -124,6 +124,14 @@
           <br>
           This queue shows the status of measures that you submitted for
           creation.
+          </p>
+          <p class="govuk-body">
+          <a href="{{ url('workbaskets:rule-check-queue') }}"
+            class="govuk-link"
+          >Rule check queue</a>
+          <br>
+          This queue shows currently running and queued business rule
+          checks.
         </p>
       </article>
     {% endif %}
