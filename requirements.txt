@@ -46,7 +46,7 @@ govuk-tech-docs-sphinx-theme==1.0.0
 gunicorn==22.0.0
 Jinja2==3.1.4
 lark==1.1.9
-lxml==4.9.1
+lxml==5.2.2
 markdown==3.6
 markdownify==0.12.1
 markupsafe==2.1.2

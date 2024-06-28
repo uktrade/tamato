@@ -554,14 +554,16 @@ def check_docinfo(elementtree, forbid_dtd=False):
 
 
 def parse_xml(source, forbid_dtd=True):
-    elementtree = etree.parse(source)
+    parser = etree.XMLParser(resolve_entities=False)
+    elementtree = etree.parse(source, parser)
     check_docinfo(elementtree, forbid_dtd=forbid_dtd)
 
     return elementtree
 
 
 def xml_fromstring(text, forbid_dtd=True):
-    rootelement = etree.fromstring(text)
+    parser = etree.XMLParser(resolve_entities=False)
+    rootelement = etree.fromstring(text, parser)
     elementtree = rootelement.getroottree()
     check_docinfo(elementtree, forbid_dtd=forbid_dtd)
 
