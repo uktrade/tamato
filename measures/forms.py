@@ -30,6 +30,7 @@ from common.forms import DateInputFieldFixed
 from common.forms import FormSet
 from common.forms import FormSetSubmitMixin
 from common.forms import RadioNested
+from common.forms import RadioNestedWidget
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
@@ -1244,6 +1245,7 @@ class MeasureGeographicalAreaForm(
             constants.GeoAreaType.COUNTRY.value: [CountryRegionFormSet],
         },
         error_messages={"required": "A Geographical area must be selected"},
+        widget=RadioNestedWidget(attrs={"id": "geo-area-form-field"}),
     )
 
     @property
@@ -1309,6 +1311,7 @@ class MeasureGeographicalAreaForm(
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
+
         self.helper.layout = Layout(
             "geo_area",
             Submit(
@@ -1325,6 +1328,24 @@ class MeasureGeographicalAreaForm(
         kwargs.pop("initial", None)
         self.bind_nested_forms(*args, initial=nested_forms_initial, **kwargs)
         self.init_layout()
+
+    def clean_react_form_countries_exclusions(self, key):
+        # Data from the react form is formatted as a single list
+        # rather than field names with the index appended
+        field_name = f"{self.prefix}-{key}"
+        country_pks = []
+        for k, value_list in self.data.lists():
+            if k == field_name:
+                for value in value_list:
+                    try:
+                        country_pks.append(int(value))
+                    except ValueError:
+                        continue
+        # we assume the react filtering has prevented the user selecting an exclusion that is not valid for the group
+        validated_country_pks = [
+            pk for pk in country_pks if GeographicalArea.objects.filter(pk=pk).exists()
+        ]
+        return list(GeographicalArea.objects.filter(pk__in=validated_country_pks))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1357,17 +1378,38 @@ class MeasureGeographicalAreaForm(
                         for geo_area in cleaned_data[data_key]
                     ]
 
-                geo_area_exclusions = cleaned_data.get(
-                    constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
-                )
-                if geo_area_exclusions:
-                    exclusions = [
-                        exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
-                        for exclusion in geo_area_exclusions
-                    ]
-                    cleaned_data["geo_areas_and_exclusions"][0][
-                        "exclusions"
-                    ] = exclusions
+                # format exclusions for all options
+                if self.data.get("react") == "true":
+                    if geo_area_choice in [
+                        constants.GeoAreaType.GROUP,
+                        constants.GeoAreaType.ERGA_OMNES,
+                    ]:
+                        exclusions = self.clean_react_form_countries_exclusions(
+                            constants.EXCLUSIONS_REACT_PREFIX_MAPPING[geo_area_choice],
+                        )
+                        cleaned_data["geo_areas_and_exclusions"][0][
+                            "exclusions"
+                        ] = exclusions
+                    else:
+                        countries = self.clean_react_form_countries_exclusions(
+                            constants.EXCLUSIONS_REACT_PREFIX_MAPPING[geo_area_choice],
+                        )
+                        cleaned_data["geo_areas_and_exclusions"] = [
+                            {"geo_area": country} for country in countries
+                        ]
+
+                else:
+                    geo_area_exclusions = cleaned_data.get(
+                        constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
+                    )
+                    if geo_area_exclusions:
+                        exclusions = [
+                            exclusion[constants.FIELD_NAME_MAPPING[geo_area_choice]]
+                            for exclusion in geo_area_exclusions
+                        ]
+                        cleaned_data["geo_areas_and_exclusions"][0][
+                            "exclusions"
+                        ] = exclusions
 
         return cleaned_data
 
@@ -1375,11 +1417,10 @@ class MeasureGeographicalAreaForm(
         # Perculiarly, serializable data in this form keeps its prefix.
         return super().serializable_data()
 
-    @classmethod
-    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+    def deserialize_init_kwargs(self, form_kwargs: Dict) -> Dict:
         # Perculiarly, this Form requires a prefix of "geographical_area".
         return {
-            "prefix": "geographical_area",
+            "prefix": self.prefix,
         }
 
 
