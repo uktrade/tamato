@@ -1741,10 +1741,9 @@ class RuleCheckQueueView(
         tap_tasks = TAPTasks()
         try:
             context["celery_healthy"] = True
-            current_rule_checks = tap_tasks.current_rule_checks(
+            context["current_rule_checks"] = tap_tasks.current_tasks(
                 "workbaskets.tasks.call_check_workbasket_sync",
             )
-            context["current_rule_checks"] = current_rule_checks
             context["status_tag_generator"] = self.status_tag_generator
         except kombu.exceptions.OperationalError as oe:
             context["celery_healthy"] = False
