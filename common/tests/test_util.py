@@ -306,7 +306,7 @@ def test_parse_xml_vulnerabilities(file_name):
         "test_files",
         file_name,
     )
-    with pytest.raises(XMLSyntaxError):
+    with pytest.raises((XMLSyntaxError, DTDForbidden)):
         util.parse_xml(file)
 
 
@@ -318,5 +318,5 @@ def test_xml_fromstring_vulnerabilities(file_name):
         file_name,
     )
     string = open(file).read()
-    with pytest.raises(XMLSyntaxError):
+    with pytest.raises((XMLSyntaxError, DTDForbidden)):
         util.xml_fromstring(string)
