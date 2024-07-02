@@ -75,6 +75,13 @@ class ImporterV2FormMixin:
             raise ValidationError("The selected file must be XML")
 
         validate_filename(uploaded_taric_file)
+        full_path = os.path.normpath(
+            os.path.join(settings.BASE_DIR, uploaded_taric_file.name),
+        )
+        if not full_path.startswith(settings.BASE_DIR):
+            raise ValidationError(
+                "The selected file could not be uploaded because it has an invalid file path",
+            )
 
         try:
             xml_file = parse_xml(uploaded_taric_file)
@@ -149,6 +156,13 @@ class ImportFormMixin:
             raise ValidationError("The selected file must be XML")
 
         validate_filename(uploaded_taric_file)
+        full_path = os.path.normpath(
+            os.path.join(settings.BASE_DIR, uploaded_taric_file.name),
+        )
+        if not full_path.startswith(settings.BASE_DIR):
+            raise ValidationError(
+                "The selected file could not be uploaded because it has an invalid file path",
+            )
 
         try:
             xml_file = parse_xml(uploaded_taric_file)
