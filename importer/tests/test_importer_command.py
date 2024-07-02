@@ -46,7 +46,7 @@ def test_importer_inspect(importing_goods_import_batch):
         name is found amongst output_lines, else None.
         """
         matched_line = next(l for l in output_lines if l.startswith(line_name))
-        tokens = re.split("\W+", matched_line)
+        tokens = re.split(r"\W+", matched_line)
         return tokens[1] if tokens and len(tokens) > 1 else None
 
     assert str(importing_goods_import_batch.pk) == get_value_from_line_name(

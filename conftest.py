@@ -1099,7 +1099,7 @@ def make_storage_mock(s3, storage_class, **override_settings):
                 "LocationConstraint": settings.AWS_S3_REGION_NAME,
             },
         )
-    except s3.exceptions.BucketAlreadyExists:
+    except (s3.exceptions.BucketAlreadyExists, s3.exceptions.BucketAlreadyOwnedByYou):
         return storage
 
     return storage
