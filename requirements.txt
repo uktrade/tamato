@@ -36,7 +36,7 @@ django==4.2.11
 djangorestframework==3.15.2
 drf-extra-fields==3.7.0
 drf-flex-fields==1.0.2
-elastic-apm==6.15.1
+elastic-apm==6.15.1 # On GOV.UK PaaS, upgrading beyond this causes apm server compatibility issues
 factory-boy==3.3.0
 fakeredis==2.23.0
 flower==1.2.0
