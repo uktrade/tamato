@@ -1,9 +1,15 @@
 """Common validators."""
 
+import os
+from pathlib import Path
+from typing import IO
+from typing import Union
+
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.deconstruct import deconstructible
+from werkzeug.utils import secure_filename
 
 
 @deconstructible
@@ -127,3 +133,22 @@ markdown_tags_allowlist = [
     "tbody",
     "td",
 ]
+
+
+def validate_filename(source: Union[str, Path, IO]) -> None:
+    """Validate that a file name derived from `source` only includes
+    alphanumeric characters and special characters such as spaces, hyphens and
+    underscores, raising a `ValidationError` if it does not."""
+
+    if isinstance(source, str):
+        filename = Path(source).name
+    elif hasattr(source, "name"):
+        filename = os.path.basename(source.name)
+    else:
+        raise ValueError(f"Expected str, Path or File-like object, not {type(source)}")
+
+    # filename might include spaces which secure_filename replaces with underscores
+    if filename.replace(" ", "_") != secure_filename(filename):
+        raise ValidationError(
+            f"File name must only include alphanumeric characters and special characters such as spaces, hyphens and underscores.",
+        )

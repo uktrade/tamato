@@ -15,10 +15,10 @@ from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 from sentry_sdk import capture_exception
-from werkzeug.utils import secure_filename
 
 from common.util import get_mime_type
 from common.util import parse_xml
+from common.validators import validate_filename
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.models import ImportBatch
@@ -74,12 +74,13 @@ class ImporterV2FormMixin:
         if mime_type not in ["text/xml", "application/xml"]:
             raise ValidationError("The selected file must be XML")
 
-        secure_file_name = secure_filename(uploaded_taric_file.name)
-        if uploaded_taric_file.name.replace(" ", "_") == secure_file_name:
-            uploaded_taric_file.name == secure_file_name
-        else:
+        validate_filename(uploaded_taric_file)
+        full_path = os.path.normpath(
+            os.path.join(settings.BASE_DIR, uploaded_taric_file.name),
+        )
+        if not full_path.startswith(settings.BASE_DIR):
             raise ValidationError(
-                "File name must only include alphanumeric characters and special characters such as spaces, hyphens and underscores.",
+                "The selected file could not be uploaded because it has an invalid file path",
             )
 
         try:
@@ -154,12 +155,13 @@ class ImportFormMixin:
         if mime_type not in ["text/xml", "application/xml"]:
             raise ValidationError("The selected file must be XML")
 
-        secure_file_name = secure_filename(uploaded_taric_file.name)
-        if uploaded_taric_file.name.replace(" ", "_") == secure_file_name:
-            uploaded_taric_file.name == secure_file_name
-        else:
+        validate_filename(uploaded_taric_file)
+        full_path = os.path.normpath(
+            os.path.join(settings.BASE_DIR, uploaded_taric_file.name),
+        )
+        if not full_path.startswith(settings.BASE_DIR):
             raise ValidationError(
-                "File name must only include alphanumeric characters and special characters such as spaces, hyphens and underscores.",
+                "The selected file could not be uploaded because it has an invalid file path",
             )
 
         try:
