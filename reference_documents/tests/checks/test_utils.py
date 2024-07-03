@@ -1,8 +1,12 @@
+import pytest
+
 from reference_documents.check.base import BaseCheck
 
 
-class Utils:
-    def get_child_checks(self, check_class: BaseCheck.__class__):
+@pytest.mark.reference_documents
+class TestUtils:
+    @pytest.mark.skip(reason="test not implemented yet")
+    def test_get_child_checks(self, check_class: BaseCheck.__class__):
         result = []
 
         check_classes = self.subclasses_for(check_class)
@@ -11,6 +15,7 @@ class Utils:
 
         return result
 
+    @pytest.mark.skip(reason="test not implemented yet")
     def subclasses_for(self, cls) -> list:
         all_subclasses = []
 

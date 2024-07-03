@@ -1,330 +1,426 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
 from commodities.models import GoodsNomenclature
 from commodities.models.dc import CommodityTreeSnapshot, CommodityCollectionLoader, SnapshotMoment
 from common.models import Transaction
-from common.tests.factories import QuotaOrderNumberFactory, GeographicalAreaFactory, GoodsNomenclatureFactory
+from common.tests.factories import QuotaOrderNumberFactory, GeographicalAreaFactory, GoodsNomenclatureFactory, QuotaDefinitionFactory, MeasureFactory, QuotaAssociationFactory
+from common.util import TaricDateRange
 from geo_areas.models import GeographicalArea, GeographicalAreaDescription
+from quotas import validators
 from quotas.models import QuotaOrderNumber
-from reference_documents.check.base import BaseCheck, BaseQuotaDefinitionCheck
-from reference_documents.models import RefRate, RefOrderNumber
+from reference_documents.check.base import BaseCheck, BaseQuotaDefinitionCheck, BaseOrderNumberCheck
+from reference_documents.models import RefRate, RefOrderNumber, AlignmentReportCheckStatus
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.reference_documents
 class TestBaseCheck:
     def test_init(self):
-        target = BaseCheck()
-        assert target.dependent_on_passing_check is None
+        with pytest.raises(TypeError) as e:
+            BaseCheck()
+        assert "Can't instantiate abstract class BaseCheck with abstract method run_check" in str(e)
 
     def test_run_check(self):
-        target = BaseCheck()
-        with pytest.raises(NotImplemented):
-            target.run_check()
+        class Target(BaseCheck):
+            def run_check(self) -> (AlignmentReportCheckStatus, str):
+                super().run_check()
+
+        target = Target()
+
+        assert target.run_check() is None
 
 
-class TestBasePreferentialQuotaCheck:
+@pytest.mark.reference_documents
+class TestBaseQuotaDefinitionCheck:
+    class Target(BaseQuotaDefinitionCheck):
+        def run_check(self):
+            pass
+
     def test_init(self):
         ref_quota_definition = factories.RefQuotaDefinitionFactory.create()
-        target = BaseQuotaDefinitionCheck(ref_quota_definition)
+        target = self.Target(ref_quota_definition)
         assert target.dependent_on_passing_check is None
         assert target.ref_quota_definition == ref_quota_definition
         assert target.ref_order_number == ref_quota_definition.ref_order_number
-        assert target.reference_document_version == ref_quota_definition.reference_document_version
-        assert target.reference_document == ref_quota_definition.reference_document_version.reference_document
+        assert target.reference_document_version == ref_quota_definition.ref_order_number.reference_document_version
+        assert target.reference_document == ref_quota_definition.ref_order_number.reference_document_version.reference_document
 
     def test_order_number_no_match(self):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
-        target = BaseQuotaDefinitionCheck(pref_quota)
-        assert target.order_number() is None
+        target = self.Target(pref_quota)
+        assert target.tap_order_number() is None
 
     def test_order_number_match(self):
         tap_order_number = QuotaOrderNumberFactory.create()
         pref_quota = factories.RefQuotaDefinitionFactory.create(
-            ref_order_number__quota_order_number=tap_order_number.order_number
+            ref_order_number__order_number=tap_order_number.order_number,
+            ref_order_number__valid_between=tap_order_number.valid_between,
         )
-        target = BaseQuotaDefinitionCheck(pref_quota)
-        assert target.order_number() == tap_order_number
+        target = self.Target(pref_quota)
+        assert target.tap_order_number() == tap_order_number
 
     def test_geo_area_no_match(self):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
-        target = BaseQuotaDefinitionCheck(pref_quota)
+        target = self.Target(pref_quota)
         assert target.geo_area() is None
 
     def test_geo_area_match(self):
         tap_geo_area = GeographicalAreaFactory.create()
         pref_quota = factories.RefQuotaDefinitionFactory.create(
-            reference_document_version__reference_document__area_id=tap_geo_area.descriptions.first().description
+            ref_order_number__reference_document_version__reference_document__area_id=tap_geo_area.area_id
         )
-        target = BaseQuotaDefinitionCheck(pref_quota)
+        target = self.Target(pref_quota)
         assert target.geo_area() == tap_geo_area
+
+    def test_geo_area_description_match(self):
+        tap_geo_area = GeographicalAreaFactory.create()
+        pref_quota = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__reference_document_version__reference_document__area_id=tap_geo_area.area_id
+        )
+        target = self.Target(pref_quota)
+
+        description = (
+            GeographicalAreaDescription.objects.latest_approved()
+            .filter(described_geographicalarea=target.geo_area())
+            .last()
+        )
+
+        assert target.geo_area_description() == description.description
+
+    def test_geo_area_description_no_match(self):
+        pref_quota = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__reference_document_version__reference_document__area_id=''
+        )
+        target = self.Target(pref_quota)
+        assert target.geo_area() is None
 
     def test_commodity_code_no_match(self):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
-        target = BaseQuotaDefinitionCheck(pref_quota)
+        target = self.Target(pref_quota)
         assert target.commodity_code() is None
 
     def test_commodity_code_match(self):
-        comm_code = GoodsNomenclatureFactory.create()
-        pref_quota = factories.RefQuotaDefinitionFactory.create(
-            commodity_code=comm_code.item_id
+        comm_code_start_date = date.today() + timedelta(days=-365)
+        comm_code = GoodsNomenclatureFactory.create(
+            valid_between=TaricDateRange(comm_code_start_date)
         )
-        target = BaseQuotaDefinitionCheck(pref_quota)
+
+        # quota definition needs to start on or after comm code start date
+        pref_quota = factories.RefQuotaDefinitionFactory.create(
+            commodity_code=comm_code.item_id,
+            valid_between=TaricDateRange(comm_code_start_date + timedelta(days=200), comm_code_start_date + timedelta(days=300))
+        )
+        target = self.Target(pref_quota)
         assert target.commodity_code() == comm_code
 
-    # def quota_definition(self):
-    #     """Searches for the quota definition period in TAP of a given
-    #     preferential quota."""
-    #     # TODO: Some kind of filtering by measurement / unit
-    #     # TODO: Consider the possibility there could be two valid contiguous quota definitions instead of one
-    #     volume = float(self.ref_quota_definition.volume)
-    #     order_number = self.order_number()
-    #     try:
-    #         quota_definition = QuotaDefinition.objects.all().get(
-    #             order_number=order_number,
-    #             initial_volume=volume,
-    #             valid_between=self.preferential_quota.valid_between,
-    #         )
-    #     except QuotaDefinition.DoesNotExist:
-    #         quota_definition = None
-    #     return quota_definition
-
-    # def measure(self):
-    #     """
-    #     Looks for a measure(s) in TAP for a given preferential quota.
-    #
-    #     It may find more than one if the original measure was end dated and a
-    #     new one was created.
-    #     """
-    #     measures = (
-    #         Measure.objects.all()
-    #         .latest_approved()
-    #         .filter(
-    #             order_number=self.order_number(),
-    #             goods_nomenclature=self.commodity_code(),
-    #             geographical_area=self.geo_area(),
-    #             measure_type__sid__in=[
-    #                 142,
-    #                 143,
-    #             ],
-    #         )
-    #         .order_by("valid_between")
-    #     )
-    #     return self.check_measure_validity(measures)
-
-    # def check_measure_validity(self, measures):
-    #     """
-    #     Checks the validity period of the measure(s).
-    #
-    #     If there is more than one measure it checks that they are contiguous. It
-    #     then checks that the validity period of the quota order number spans the
-    #     validity period of the measure (ON9).
-    #     """
-    #     if len(measures) == 0:
-    #         return None
-    #     if len(measures) == 1:
-    #         start_date = measures[0].valid_between.lower
-    #         end_date = measures[0].valid_between.upper
-    #         measure_span_period = TaricDateRange(start_date, end_date)
-    #     else:
-    #         for index in range(len(measures) - 1):
-    #             # Check the dates are contiguous and when one measure ends the next one begins
-    #             measure1_end_date = measures[index].valid_between.upper
-    #             measure2_start_date = measures[index + 1].valid_between.lower
-    #             if measure1_end_date + timedelta(days=1) != measure2_start_date:
-    #                 return None
-    #         # Getting start date of first measure and final end date of last measure to get the full validity span
-    #         start_date = measures[0].valid_between.lower
-    #         last_item = len(measures) - 1
-    #         end_date = measures[last_item].valid_between.upper
-    #         measure_span_period = TaricDateRange(start_date, end_date)
-    #     # Check that the validity period of the measure is within the validity period of the order number 0N9
-    #     if not self.validity_period_contains(
-    #         outer_period=self.order_number().valid_between,
-    #         inner_period=measure_span_period,
-    #     ):
-    #         return False
-    #     return measures
-
-    @staticmethod
-    def validity_period_contains(outer_period, inner_period):
-        """Checks that the inner validity period is within the outer validity
-        period."""
-        if outer_period.upper:
-            if (
-                outer_period.upper >= inner_period.upper
-                and outer_period.lower <= inner_period.lower
-            ):
-                return True
-        elif outer_period.lower <= inner_period.lower:
-            return True
-        return False
-
-
-class BasePreferentialQuotaOrderNumberCheck(BaseCheck):
-    def __init__(self, ref_order_number: RefOrderNumber):
-        super().__init__()
-        self.ref_order_number = ref_order_number
-
-    def order_number(self):
-        try:
-            order_number = QuotaOrderNumber.objects.all().get(
-                order_number=self.ref_order_number.order_number,
-                valid_between=self.ref_order_number.valid_between,
-            )
-            return order_number
-        except QuotaOrderNumber.DoesNotExist:
-            return None
-
-
-class BasePreferentialRateCheck(BaseCheck):
-    def __init__(self, rate: RefRate):
-        super().__init__()
-        self.rate = rate
-
-    def get_snapshot(self) -> CommodityTreeSnapshot:
-        # not liking having to use CommodityTreeSnapshot, but it does to the job
-        item_id = self.comm_code().item_id
-        while item_id[-2:] == "00":
-            item_id = item_id[0 : len(item_id) - 2]
-
-        commodities_collection = CommodityCollectionLoader(
-            prefix=item_id,
-        ).load(current_only=True)
-
-        latest_transaction = Transaction.objects.order_by("created_at").last()
-
-        snapshot = CommodityTreeSnapshot(
-            commodities=commodities_collection.commodities,
-            moment=SnapshotMoment(transaction=latest_transaction),
+    def test_commodity_code_exact_validity_match(self):
+        comm_code_start_date = date.today() + timedelta(days=-365)
+        comm_code_end_date = date.today() + timedelta(days=365)
+        comm_code = GoodsNomenclatureFactory.create(
+            valid_between=TaricDateRange(comm_code_start_date)
         )
 
-        return snapshot
+        # quota definition needs to start on or after comm code start date
+        pref_quota = factories.RefQuotaDefinitionFactory.create(
+            commodity_code=comm_code.item_id,
+            valid_between=TaricDateRange(comm_code_start_date, comm_code_end_date)
+        )
+        target = self.Target(pref_quota)
+        assert target.commodity_code() == comm_code
 
-    def comm_code(self):
-        goods = GoodsNomenclature.objects.latest_approved().filter(
-            item_id=self.rate.commodity_code,
-            valid_between__contains=self.ref_doc_version_eif_date(),
-            suffix=80,
+    def test_commodity_code_no_match_validity_out_of_range(self):
+        comm_code_start_date = date.today() + timedelta(days=-365)
+        comm_code_end_date = date.today() + timedelta(days=-10)
+        comm_code = GoodsNomenclatureFactory.create(
+            valid_between=TaricDateRange(comm_code_start_date, comm_code_end_date)
         )
 
-        if len(goods) == 0:
-            return None
+        # quota definition needs to start on or after comm code start date
+        pref_quota = factories.RefQuotaDefinitionFactory.create(
+            commodity_code=comm_code.item_id,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=10))
+        )
+        target = self.Target(pref_quota)
+        assert target.commodity_code() is None
 
-        return goods.first()
-
-    def geo_area(self):
-        return (
-            GeographicalArea.objects.latest_approved()
-            .filter(
-                area_id=self.rate.reference_document_version.reference_document.area_id,
-            )
-            .first()
+    def test_commodity_code_no_match_validity_intersecting_ranges(self):
+        comm_code_start_date = date.today() + timedelta(days=-365)
+        comm_code_end_date = date.today() + timedelta(days=-10)
+        comm_code = GoodsNomenclatureFactory.create(
+            valid_between=TaricDateRange(comm_code_start_date, comm_code_end_date)
         )
 
-    def geo_area_description(self):
-        geo_area_desc = (
-            GeographicalAreaDescription.objects.latest_approved()
-            .filter(described_geographicalarea=self.geo_area())
-            .last()
+        # quota definition needs to start on or after comm code start date
+        pref_quota = factories.RefQuotaDefinitionFactory.create(
+            commodity_code=comm_code.item_id,
+            valid_between=TaricDateRange(date.today() + timedelta(days=-100), date.today() + timedelta(days=10))
         )
-        return geo_area_desc.description
+        target = self.Target(pref_quota)
+        assert target.commodity_code() is None
 
-    def ref_doc_version_eif_date(self):
-        eif_date = (
-            self.rate.reference_document_version.entry_into_force_date
+    def test_quota_definition_match(self):
+        tap_quota_definition = QuotaDefinitionFactory.create(
+            initial_volume=1200,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=10)),
+            order_number__order_number='054123',
+            order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+        )
+        ref_quota_definition = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__order_number=tap_quota_definition.order_number.order_number,
+            ref_order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+            volume=tap_quota_definition.initial_volume,
+            valid_between=tap_quota_definition.valid_between,
+        )
+        target = self.Target(ref_quota_definition)
+        assert target.ref_quota_definition.ref_order_number.order_number == tap_quota_definition.order_number.order_number
+        assert target.ref_quota_definition.volume == tap_quota_definition.initial_volume
+        assert target.ref_quota_definition.valid_between == tap_quota_definition.valid_between
+        assert target.quota_definition() == tap_quota_definition
+
+    def test_quota_definition_no_match(self):
+        tap_quota_definition = QuotaDefinitionFactory.create(
+            initial_volume=1200,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=10)),
+            order_number__order_number='054123',
+            order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+        )
+        ref_quota_definition = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__order_number=tap_quota_definition.order_number.order_number,
+            ref_order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+            volume=tap_quota_definition.initial_volume,
+            valid_between=TaricDateRange(date.today() + timedelta(days=-100), date.today() + timedelta(days=-50)),
+        )
+        target = self.Target(ref_quota_definition)
+        assert target.ref_quota_definition.valid_between != tap_quota_definition.valid_between
+        assert target.quota_definition() is None
+
+    def test_measures_match_single_measure(self):
+        comm_code = '0101010101'
+
+        tap_quota_definition = QuotaDefinitionFactory.create(
+            initial_volume=1200,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=10)),
+            order_number__order_number='054123',
+            order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+        )
+        ref_quota_definition = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__order_number=tap_quota_definition.order_number.order_number,
+            ref_order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+            volume=tap_quota_definition.initial_volume,
+            valid_between=tap_quota_definition.valid_between,
+            commodity_code=comm_code,
+            ref_order_number__reference_document_version__reference_document__area_id=tap_quota_definition.order_number.origins.first().area_id
         )
 
-        # todo : make sure EIf dates are all populated correctly - and remove this
-        if eif_date is None:
-            eif_date = date.today()
+        tap_measure = MeasureFactory.create(
+            goods_nomenclature__item_id=comm_code,
+            goods_nomenclature__valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
+            order_number=tap_quota_definition.order_number,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=10)),
+            geographical_area=tap_quota_definition.order_number.origins.first(),
+            measure_type__sid=143
+        )
 
-        return eif_date
+        target = self.Target(ref_quota_definition)
 
-    def related_measures(self, comm_code_item_id=None):
-        if comm_code_item_id:
-            good = GoodsNomenclature.objects.latest_approved().filter(
-                item_id=comm_code_item_id,
-                valid_between__contains=self.ref_doc_version_eif_date(),
-                suffix=80,
-            )
+        assert tap_measure in target.measures()
+        assert len(target.measures()) == 1
 
-            if len(good) == 1:
-                return (
-                    good.first()
-                    .measures.latest_approved()
-                    .filter(
-                        geographical_area=self.geo_area(),
-                        valid_between__contains=self.ref_doc_version_eif_date(),
-                        measure_type__sid__in=[
-                            142,
-                            143,
-                        ],  # note : these are the measure types used to identify preferential tariffs
-                    )
-                )
-            else:
-                return []
-        else:
-            return (
-                self.comm_code()
-                .measures.latest_approved()
-                .filter(
-                    geographical_area=self.geo_area(),
-                    valid_between__contains=self.ref_doc_version_eif_date(),
-                    measure_type__sid__in=[
-                        142,
-                        143,
-                    ],  # note : these are the measure types used to identify preferential tariffs
-                )
-            )
+    def test_measures_match_multiple_measures(self):
+        comm_code = '0101010101'
 
-    def recursive_comm_code_check(
-        self,
-        snapshot: CommodityTreeSnapshot,
-        parent_item_id,
-        parent_item_suffix,
-        level=1,
-    ):
-        # find comm code from snapshot
-        child_commodities = []
-        for commodity in snapshot.commodities:
-            if (
-                commodity.item_id == parent_item_id
-                and commodity.suffix == parent_item_suffix
-            ):
-                child_commodities = snapshot.get_children(commodity)
-                break
+        tap_quota_definition = QuotaDefinitionFactory.create(
+            initial_volume=1200,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=20)),
+            order_number__order_number='054123',
+            order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+        )
 
-        if len(child_commodities) == 0:
-            print(f'{"-" * level} no more children')
-            return False
+        ref_quota_definition = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__order_number=tap_quota_definition.order_number.order_number,
+            ref_order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+            volume=tap_quota_definition.initial_volume,
+            valid_between=tap_quota_definition.valid_between,
+            commodity_code=comm_code,
+            ref_order_number__reference_document_version__reference_document__area_id=tap_quota_definition.order_number.origins.first().area_id
+        )
 
-        results = []
-        for child_commodity in child_commodities:
-            related_measures = self.related_measures(child_commodity.item_id)
+        tap_measure_1 = MeasureFactory.create(
+            goods_nomenclature__item_id=comm_code,
+            goods_nomenclature__valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
+            order_number=tap_quota_definition.order_number,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=10)),
+            geographical_area=tap_quota_definition.order_number.origins.first(),
+            measure_type__sid=143
+        )
 
-            if len(related_measures) == 0:
-                print(f'{"-" * level} FAIL : {child_commodity.item_id}')
-                results.append(
-                    self.recursive_comm_code_check(
-                        snapshot,
-                        child_commodity.item_id,
-                        child_commodity.suffix,
-                        level + 1,
-                    ),
-                )
-            elif len(related_measures) == 1:
-                print(f'{"-" * level} PASS : {child_commodity.item_id}')
-                results.append(True)
-            else:
-                # Multiple measures
-                print(f'{"-" * level} PASS : multiple : {child_commodity.item_id}')
-                results.append(True)
+        tap_measure_2 = MeasureFactory.create(
+            goods_nomenclature=tap_measure_1.goods_nomenclature,
+            order_number=tap_quota_definition.order_number,
+            valid_between=TaricDateRange(date.today() + timedelta(days=11), date.today() + timedelta(days=20)),
+            geographical_area=tap_measure_1.geographical_area,
+            measure_type__sid=143
+        )
 
-        return False in results
+        target = self.Target(ref_quota_definition)
 
-    def run_check(self):
-        raise NotImplementedError("Please implement on child classes")
+        assert tap_measure_1 in target.measures()
+        assert tap_measure_2 in target.measures()
+        assert len(target.measures()) == 2
+
+    def test_check_measure_validity_no_match(self):
+
+        ref_quota_definition = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+        )
+
+        target = self.Target(ref_quota_definition)
+
+        assert len(target.measures()) == 0
+        assert target._check_measure_validity(target.measures()) == []
+
+    def test_check_measure_validity_match_not_continuous(self):
+        comm_code = '0101010101'
+
+        tap_quota_definition = QuotaDefinitionFactory.create(
+            initial_volume=1200,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=20)),
+            order_number__order_number='054123',
+            order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+        )
+
+        ref_quota_definition = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__order_number=tap_quota_definition.order_number.order_number,
+            ref_order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+            volume=tap_quota_definition.initial_volume,
+            valid_between=tap_quota_definition.valid_between,
+            commodity_code=comm_code,
+            ref_order_number__reference_document_version__reference_document__area_id=tap_quota_definition.order_number.origins.first().area_id
+        )
+
+        tap_measure_1 = MeasureFactory.create(
+            goods_nomenclature__item_id=comm_code,
+            goods_nomenclature__valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
+            order_number=tap_quota_definition.order_number,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=5)),
+            geographical_area=tap_quota_definition.order_number.origins.first(),
+            measure_type__sid=143
+        )
+
+        MeasureFactory.create(
+            goods_nomenclature=tap_measure_1.goods_nomenclature,
+            order_number=tap_quota_definition.order_number,
+            valid_between=TaricDateRange(date.today() + timedelta(days=12), date.today() + timedelta(days=20)),
+            geographical_area=tap_measure_1.geographical_area,
+            measure_type__sid=143
+        )
+
+        target = self.Target(ref_quota_definition)
+
+        assert target.measures() == []
+
+    def test_check_measure_validity_match_outside_order_number_validity_range(self):
+        comm_code = '0101010101'
+
+        tap_quota_definition = QuotaDefinitionFactory.create(
+            initial_volume=1200,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=20)),
+            order_number__order_number='054123',
+            order_number__valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=5)),
+        )
+
+        ref_quota_definition = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__order_number=tap_quota_definition.order_number.order_number,
+            ref_order_number__valid_between=TaricDateRange(date.today() + timedelta(days=-1000)),
+            volume=tap_quota_definition.initial_volume,
+            valid_between=tap_quota_definition.valid_between,
+            commodity_code=comm_code,
+            ref_order_number__reference_document_version__reference_document__area_id=tap_quota_definition.order_number.origins.first().area_id
+        )
+
+        MeasureFactory.create(
+            goods_nomenclature__item_id=comm_code,
+            goods_nomenclature__valid_between=TaricDateRange(date.today() + timedelta(days=-100)),
+            order_number=tap_quota_definition.order_number,
+            valid_between=TaricDateRange(date.today(), date.today() + timedelta(days=20)),
+            geographical_area=tap_quota_definition.order_number.origins.first(),
+            measure_type__sid=143
+        )
+
+        target = self.Target(ref_quota_definition)
+
+        assert target.measures() == []
+
+    def test_main_quota_matches_matches(self):
+        ref_main_quota_definition = factories.RefQuotaDefinitionFactory.create()
+
+        ref_sub_quota_definition = factories.RefQuotaDefinitionFactory.create(
+            ref_order_number__main_order_number=ref_main_quota_definition.ref_order_number,
+            ref_order_number__coefficient=1.2,
+            ref_order_number__relation_type=validators.SubQuotaType.EQUIVALENT
+        )
+
+        tap_main_quota_definition = QuotaDefinitionFactory.create(
+            order_number__order_number=ref_main_quota_definition.ref_order_number.order_number,
+            order_number__valid_between=ref_main_quota_definition.valid_between
+        )
+
+        tap_sub_quota_definition = QuotaDefinitionFactory.create(
+            order_number__order_number=ref_sub_quota_definition.ref_order_number.order_number,
+            order_number__valid_between=ref_sub_quota_definition.valid_between
+        )
+
+        tap_association = QuotaAssociationFactory.create(
+            main_quota=tap_main_quota_definition,
+            sub_quota=tap_sub_quota_definition,
+            sub_quota_relation_type=validators.SubQuotaType.EQUIVALENT,
+            coefficient=1.2
+        )
+
+        target = self.Target(ref_sub_quota_definition)
+
+        assert target.association_exists()
+
+
+@pytest.mark.reference_documents
+class TestBaseOrderNumberCheck:
+    target_class = BaseOrderNumberCheck
+
+    class Target(BaseOrderNumberCheck):
+        def run_check(self):
+            pass
+
+    class TargetSubclass(BaseOrderNumberCheck):
+        def run_check(self):
+            return super().run_check()
+
+    def test_init(self, ref_order_number=None):
+        with pytest.raises(TypeError) as e:
+            if not ref_order_number:
+                ref_order_number = factories.RefOrderNumberFactory.create()
+            self.target_class(ref_order_number)
+        assert "Can't instantiate abstract class BaseOrderNumberCheck with abstract method run_check" in str(e)
+
+    def test_run_check(self):
+        ref_order_number = factories.RefOrderNumberFactory.create()
+        target = self.TargetSubclass(ref_order_number)
+
+        assert target.run_check() is None
+
+    def test_tap_order_number_match(self):
+        ref_order_number = factories.RefOrderNumberFactory.create()
+        tap_order_number = QuotaOrderNumberFactory.create(
+            order_number=ref_order_number.order_number,
+            valid_between=ref_order_number.valid_between
+        )
+
+        target = self.TargetSubclass(ref_order_number)
+
+        assert target.tap_order_number() == tap_order_number
+        assert target.tap_order_number() == tap_order_number
+
+
