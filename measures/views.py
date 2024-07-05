@@ -388,7 +388,7 @@ class MeasureList(
             self.session_store.add_items(selected_objects)
 
             params = urlencode(self.request.GET)
-            url = f"{reverse('measure-ui-list')}?{params}"
+            url = reverse("measure-ui-list") + "?" + params
         else:
             url = reverse("measure-ui-list")
 
