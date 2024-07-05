@@ -41,7 +41,7 @@ class PackagedWorkbasketQueueView(
 
     model = PackagedWorkBasket
     permission_required = "publishing.manage_packaging_queue"
-    redirect_url = reverse_lazy("publishing:packaged-workbasket-queue-ui-list")
+    view_url = reverse_lazy("publishing:packaged-workbasket-queue-ui-list")
 
     def get_template_names(self):
         return ["publishing/packaged_workbasket_queue.jinja"]
@@ -80,7 +80,7 @@ class PackagedWorkbasketQueueView(
             url = self._remove_from_queue(post.get("remove_from_queue"))
         else:
             # Handle invalid post content by redisplaying the page.
-            url = self.redirect_url
+            url = self.view_url
 
         return redirect(url)
 
@@ -88,11 +88,11 @@ class PackagedWorkbasketQueueView(
 
     def _pause_queue(self, request):
         OperationalStatus.pause_queue(user=request.user)
-        return self.redirect_url
+        return self.view_url
 
     def _unpause_queue(self, request):
         OperationalStatus.unpause_queue(user=request.user)
-        return self.redirect_url
+        return self.view_url
 
     def _promote_position(self, pk):
         try:
@@ -104,7 +104,7 @@ class PackagedWorkbasketQueueView(
         ):
             # Nothing to do in the case of these exceptions.
             pass
-        return self.redirect_url
+        return self.view_url
 
     def _demote_position(self, pk):
         try:
@@ -116,7 +116,7 @@ class PackagedWorkbasketQueueView(
         ):
             # Nothing to do in the case of these exceptions.
             pass
-        return self.redirect_url
+        return self.view_url
 
     def _promote_to_top_position(self, pk):
         try:
@@ -128,7 +128,7 @@ class PackagedWorkbasketQueueView(
         ):
             # Nothing to do in the case of these exceptions.
             pass
-        return self.redirect_url
+        return self.view_url
 
     def _remove_from_queue(self, pk):
         try:
@@ -144,7 +144,7 @@ class PackagedWorkbasketQueueView(
             TransitionNotAllowed,
         ):
             # Nothing to do in the case of these exceptions.
-            return self.redirect_url
+            return self.view_url
 
 
 class EnvelopeQueueView(
