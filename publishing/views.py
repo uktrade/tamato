@@ -174,20 +174,19 @@ class EnvelopeQueueView(
         return data
 
     def post(self, request, *args, **kwargs):
-        """Manage POST requests, including download, accept and reject
-        envelopes."""
+        """
+        Manage POST requests that signal the start of envelope processing.
 
-        post = request.POST
+        Valid and invalid POST requests alike redisplay the envelope queue view.
+        """
 
-        if post.get("process_envelope"):
-            url = self._process_envelope(request, post.get("process_envelope"))
-        else:
-            # Handle invalid post content by redisplaying the page.
-            url = request.build_absolute_uri()
+        envelope_pk = request.POST.get("process_envelope")
+        if envelope_pk:
+            self._process_envelope(envelope_pk)
 
-        return redirect(url)
+        return redirect(reverse("publishing:envelope-queue-ui-list"))
 
-    def _process_envelope(self, request, pk):
+    def _process_envelope(self, pk):
         if not OperationalStatus.is_queue_paused():
             packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             try:
@@ -195,7 +194,6 @@ class EnvelopeQueueView(
             except TransitionNotAllowed:
                 # No error page right now, just reshow the list view.
                 pass
-        return request.build_absolute_uri()
 
 
 class DownloadEnvelopeMixin:
