@@ -1,9 +1,14 @@
+import logging
 from functools import cached_property
 from os import path
+from pathlib import Path
 
 import apsw
+from django.core.files.storage import Storage
 from sqlite_s3vfs import S3VFS
 from storages.backends.s3boto3 import S3Boto3Storage
+
+logger = logging.getLogger(__name__)
 
 
 class HMRCStorage(S3Boto3Storage):
@@ -24,7 +29,15 @@ class HMRCStorage(S3Boto3Storage):
         return super().get_object_parameters(name)
 
 
-class SQLiteStorage(S3Boto3Storage):
+class SQLiteStorageMixin:
+    def get_connection(self, filename: str) -> apsw.Connection:
+        """Creates a new empty SQLite database."""
+        raise NotImplementedError
+
+
+class SQLiteStorage(SQLiteStorageMixin, S3Boto3Storage):
+    """Remote (S3) Sqlite DB storage."""
+
     def get_default_settings(self):
         from django.conf import settings
 
@@ -58,5 +71,23 @@ class SQLiteStorage(S3Boto3Storage):
         return S3VFS(bucket=self.bucket, block_size=65536)
 
     def get_connection(self, filename: str) -> apsw.Connection:
-        """Creates a new empty SQLite database."""
         return apsw.Connection(filename, vfs=self.vfs.name)
+
+
+class LocalSQLiteStorage(SQLiteStorageMixin, Storage):
+    def __init__(self, location) -> None:
+        self._location = Path(location).expanduser().resolve()
+        logger.info(f"Normalised path `{location}` to `{self._location}`.")
+        if not self._location.is_dir():
+            raise Exception(f"Directory does not exist: {location}.")
+
+    def path(self, name: str) -> str:
+        return str(self._location.joinpath(name))
+
+    def exists(self, name: str) -> bool:
+        return Path(self.path(name)).exists()
+
+    def get_connection(self, filename: str) -> apsw.Connection:
+        if self.exists(filename):
+            raise Exception("File already exists at {path}.")
+        return apsw.Connection(self.path(filename))
