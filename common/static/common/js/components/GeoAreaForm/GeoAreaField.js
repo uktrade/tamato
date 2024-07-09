@@ -34,12 +34,8 @@ function GeoAreaField({
   function errorDisplay() {
     if (errors.geo_area) {
       return (
-        <span
-          id="id_geographical_area-geo_area_1_error"
-          className="govuk-error-message"
-        >
-          {" "}
-          <span className="govuk-visually-hidden">Error:</span>{" "}
+        <span className="govuk-error-message">
+          <span className="govuk-visually-hidden">Error: </span>
           {errors.geo_area}
         </span>
       );

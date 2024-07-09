@@ -72,6 +72,11 @@ function GeoAreaForm({
           name={`${fieldPrefix}-geo_area`}
           value={data.geoAreaType}
         />
+        <input
+          type="hidden"
+          name={`${fieldPrefix}-geographical_area_group`}
+          value={data.geographicalAreaGroup.value}
+        />
         {data.ergaOmnesExclusions.map((exclusion, i) => (
           <input
             type="hidden"

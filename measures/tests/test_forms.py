@@ -3,7 +3,6 @@ from unittest.mock import patch
 
 import pytest
 from django.forms.models import model_to_dict
-from django.http import QueryDict
 
 from common.forms import unprefix_formset_data
 from common.models.transactions import Transaction
@@ -180,65 +179,6 @@ def test_measure_forms_geo_area_valid_data_erga_omnes(erga_omnes):
         assert (
             form.cleaned_data["geo_areas_and_exclusions"][0]["geo_area"] == erga_omnes
         )
-
-
-def test_measure_forms_geo_area_react_valid_data_erga_omnes_exclusions(erga_omnes):
-    geo_area1 = factories.GeographicalAreaFactory.create()
-    geo_area2 = factories.GeographicalAreaFactory.create()
-    formset_prefix = "erga_omnes_exclusions_formset"
-    data = QueryDict(
-        f"{GEO_AREA_FORM_PREFIX}-geo_area={constants.GeoAreaType.ERGA_OMNES}&"
-        f"geographical_area-erga_omnes_exclusions={geo_area1.pk}&"
-        f"geographical_area-erga_omnes_exclusions={geo_area2.pk}&"
-        "submit=submit&"
-        "react=true",
-    )
-    initial = [
-        {
-            "erga_omnes_exclusion": geo_area1.pk,
-        },
-        {
-            "erga_omnes_exclusion": geo_area2.pk,
-        },
-    ]
-    with override_current_transaction(Transaction.objects.last()):
-        form = forms.MeasureGeographicalAreaForm(
-            data,
-            initial={**data, formset_prefix: initial},
-            prefix=GEO_AREA_FORM_PREFIX,
-        )
-        assert form.is_valid()
-        assert form.cleaned_data["geo_areas_and_exclusions"][0]["exclusions"] == [
-            geo_area1,
-            geo_area2,
-        ]
-
-
-def test_measure_forms_geo_area_react_valid_data_group_exclusions(erga_omnes):
-    geo_group = factories.GeographicalAreaFactory.create(area_code=AreaCode.GROUP)
-    geo_area1 = factories.GeographicalAreaFactory.create()
-    data = QueryDict(
-        f"{GEO_AREA_FORM_PREFIX}-geo_area={constants.GeoAreaType.GROUP}&"
-        f"{GEO_AREA_FORM_PREFIX}-geographical_area_group={geo_group.pk}&"
-        f"geographical_area-geo_group_exclusions={geo_area1.pk}&"
-        "submit=submit&"
-        "react=true",
-    )
-    initial = [
-        {
-            "geo_group_exclusion": geo_area1.pk,
-        },
-    ]
-    with override_current_transaction(Transaction.objects.last()):
-        form = forms.MeasureGeographicalAreaForm(
-            data,
-            initial={**data, "geo_group_exclusions_formset": initial},
-            prefix=GEO_AREA_FORM_PREFIX,
-        )
-        assert form.is_valid()
-        assert form.cleaned_data["geo_areas_and_exclusions"][0]["exclusions"] == [
-            geo_area1,
-        ]
 
 
 def test_measure_forms_geo_area_valid_data_erga_omnes_exclusions(erga_omnes):

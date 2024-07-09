@@ -3,7 +3,11 @@ import PropTypes from "prop-types";
 
 function SubmitButton({ buttonText }) {
   return (
-    <button className="govuk-button" id="submit-id-submit">
+    <button
+      className="govuk-button"
+      id="submit-id-submit"
+      data-prevent-double-click="true"
+    >
       {buttonText}
     </button>
   );
