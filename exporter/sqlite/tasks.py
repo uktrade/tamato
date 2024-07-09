@@ -1,9 +1,13 @@
 import logging
+import os
+
+from django.utils import timezone
 
 from common.celery import app
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
 from exporter import sqlite
+from exporter.storages import LocalSQLiteStorage
 from exporter.storages import SQLiteStorage
 
 logger = logging.getLogger(__name__)
@@ -30,7 +34,7 @@ def get_output_filename():
 
 
 @app.task
-def export_and_upload_sqlite() -> bool:
+def export_and_upload_sqlite(local_path: str = None) -> bool:
     """
     Generates an export of the currently attached database to a portable SQLite
     file and uploads it to the configured S3 bucket.
@@ -40,23 +44,48 @@ def export_and_upload_sqlite() -> bool:
     Returns a boolean that is ``True`` if a file was uploaded and ``False`` if
     not.
     """
-    storage = SQLiteStorage()
+    start_time = timezone.localtime()
+    logger.info(
+        f"SQLite export process, pid={os.getpid()}, started at {start_time.isoformat()}",
+    )
+
     db_name = get_output_filename()
+
+    if local_path:
+        logger.info("SQLite export process targetting local file system.")
+        storage = LocalSQLiteStorage(location=local_path)
+    else:
+        logger.info("SQLite export process targetting S3 file system.")
+        storage = SQLiteStorage()
 
     export_filename = storage.generate_filename(db_name)
 
-    logger.debug("Checking for need to upload tariff database %s", export_filename)
+    logger.info(f"Checking for existing database {export_filename}")
     if storage.exists(export_filename):
-        logger.debug("Database %s already present", export_filename)
+        elapsed_time = timezone.localtime() - start_time
+        logger.info(
+            f"Database {export_filename} already exists. "
+            f"Exiting process, pid={os.getpid()}, after elapsed time {elapsed_time}.",
+        )
         return False
 
-    logger.info("Generating database %s", export_filename)
+    # TODO: --- Start ---
+    # Refactor into new method, SQLiteStorageMixin.make_export()
+
+    logger.info(f"Generating SQLite database {export_filename} ...")
     sqlite.make_export(storage.get_connection(export_filename))
-    logger.info("Generation complete")
+    logger.info(f"Generating SQLite database {export_filename} done")
 
-    logger.info("Serializing %s", export_filename)
-    storage.serialize(export_filename)
-    logger.info("Serializing complete")
+    if not local_path:
+        logger.info(f"Serializing {export_filename}")
+        storage.serialize(export_filename)
+        logger.info(f"Serializing {export_filename} complete")
 
-    logger.info("Upload complete")
+    # TODO: --- End ---
+
+    elapsed_time = timezone.localtime() - start_time
+    logger.info(
+        f"SQLite export process, pid={os.getpid()}, "
+        f"done creating {export_filename} after elapsed time of {elapsed_time}.",
+    )
     return True
