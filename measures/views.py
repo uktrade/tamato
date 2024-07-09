@@ -61,6 +61,7 @@ from measures.filters import MeasureCreateTaskFilter
 from measures.filters import MeasureFilter
 from measures.filters import MeasureTypeFilterBackend
 from measures.models.bulk_processing import MeasuresBulkCreator
+from measures.models.bulk_processing import MeasuresBulkEditor
 from measures.models.bulk_processing import ProcessingState
 from measures.pagination import MeasurePaginator
 from measures.parsers import DutySentenceParser
@@ -439,7 +440,7 @@ class MeasureEditWizard(
     data_form_list = [
         (MeasureEditSteps.START_DATE, forms.MeasureStartDateForm),
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
-        (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm), 
+        (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
         (MeasureEditSteps.REGULATION, forms.MeasureRegulationForm),
         (MeasureEditSteps.DUTIES, forms.MeasureDutiesForm),
         (
@@ -451,7 +452,7 @@ class MeasureEditWizard(
 
     form_list = [
         (START, forms.MeasuresEditFieldsForm),
-        *data_form_list
+        *data_form_list,
     ]
     """All Forms in this wizard's steps, including both those that collect user
     data and those that don't."""
@@ -621,7 +622,7 @@ class MeasureEditWizard(
                 footnoted_measure=measure,
                 workbasket=workbasket,
             )
-    
+
     def get_data_form_list(self) -> dict:
         """
         Returns a form list based on form_list, conditionally including only
@@ -653,6 +654,8 @@ class MeasureEditWizard(
 
         for form_key in self.get_data_form_list().keys():
             all_data[form_key] = self.serializable_form_data_for_step(form_key)
+
+        all_data["selected_measures"] = self.selected_measure_ids()
 
         return all_data
 
@@ -691,6 +694,37 @@ class MeasureEditWizard(
 
         return form_class.serializable_init_kwargs(form_kwargs)
 
+    def selected_measure_ids(self) -> list:
+        """Return a list of selected measure ids from the measures stored in the
+        session data."""
+
+        return self.measure_selections
+
+    @classmethod
+    def fixup_form(cls, form, transaction):
+        """Filter queryset form fields to approved transactions up to the
+        workbasket's current transaction."""
+        forms = [form]
+        if hasattr(form, "forms"):
+            forms = form.forms
+        for f in forms:
+            if hasattr(f, "fields"):
+                for field in f.fields.values():
+                    if hasattr(field, "queryset"):
+                        field.queryset = field.queryset.approved_up_to_transaction(
+                            transaction,
+                        )
+
+        form.is_valid()
+        if hasattr(form, "cleaned_data"):
+            form.initial = form.cleaned_data
+
+        return form
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
     def done(self, form_list, **kwargs):
         if settings.MEASURES_ASYNC_EDIT:
             return self.async_done(form_list, **kwargs)
@@ -698,10 +732,25 @@ class MeasureEditWizard(
             return self.sync_done(form_list, **kwargs)
 
     def async_done(self, form_list, **kwargs):
-        logger.info("Creating measures asynchronously.")
-
+        logger.info("Editing measures asynchronously.")
         serializable_data = self.all_serializable_form_data()
         serializable_form_kwargs = self.all_serializable_form_kwargs()
+
+        measures_bulk_editor = MeasuresBulkEditor.objects.create(
+            form_data=serializable_data,
+            form_kwargs=serializable_form_kwargs,
+            workbasket=self.workbasket,
+            user=self.request.user,
+        )
+        self.session_store.clear()  # TODO: Is this the best point to clear the session store?
+        measures_bulk_editor.schedule_task()
+
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-review-measures",
+                kwargs={"pk": self.workbasket.pk},
+            ),
+        )  # TODO: Update to a measure edit confirm page
 
     def sync_done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()

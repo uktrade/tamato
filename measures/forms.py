@@ -1863,7 +1863,7 @@ class MeasureDutiesForm(forms.Form, SerializableFormMixin):
         return cleaned_data
 
 
-class MeasureGeographicalAreaExclusionsForm(forms.Form, SerializableFormMixin):
+class MeasureGeographicalAreaExclusionsForm(forms.Form):
     excluded_area = forms.ModelChoiceField(
         label="",
         queryset=GeographicalArea.objects.all(),
