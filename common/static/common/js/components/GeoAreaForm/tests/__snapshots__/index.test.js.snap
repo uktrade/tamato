@@ -225,8 +225,13 @@ exports[`GeoAreaField renders empty field when no initial data 1`] = `
       type="hidden"
       value="ERGA_OMNES"
     />
+    <input
+      name="geographical_area-geographical_area_group"
+      type="hidden"
+    />
     <button
       className="govuk-button"
+      data-prevent-double-click="true"
       id="submit-id-submit"
     >
       Continue
@@ -610,11 +615,16 @@ exports[`GeoAreaField renders field with props 1`] = `
       value="GROUP"
     />
     <input
+      name="geographical_area-geographical_area_group"
+      type="hidden"
+    />
+    <input
       name="geo_group_exclusions_formset-0-geo_group_exclusion"
       type="hidden"
     />
     <button
       className="govuk-button"
+      data-prevent-double-click="true"
       id="submit-id-submit"
     >
       Continue
