@@ -2,6 +2,7 @@ import logging
 from functools import cached_property
 from os import path
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import apsw
 from django.core.files.storage import Storage
@@ -37,9 +38,8 @@ class SQLiteExportMixin:
         raise NotImplementedError
 
 
-class SQLiteS3VFSStorage(SQLiteExportMixin, S3Boto3Storage):
-    """Remote Sqlite DB creation and storage using s3sqlite to provide virtual
-    file system storage (see https://pypi.org/project/s3sqlite/)."""
+class SQLiteS3StorageBase(S3Boto3Storage):
+    """Storage class used for remotely storing SQLite dump files."""
 
     def get_default_settings(self):
         from django.conf import settings
@@ -65,22 +65,32 @@ class SQLiteS3VFSStorage(SQLiteExportMixin, S3Boto3Storage):
     def exists(self, filename: str) -> bool:
         return any(self.listdir(filename))
 
+
+class SQLiteS3VFSStorage(SQLiteExportMixin, SQLiteS3StorageBase):
+    """Remote SQLite DB creation and storage using s3sqlite to provide virtual
+    file system storage (see https://pypi.org/project/s3sqlite/)."""
+
     @cached_property
     def vfs(self) -> apsw.VFS:
         return S3VFS(bucket=self.bucket, block_size=65536)
 
     def make_export(self, filename: str):
-        logger.info(f"Generating SQLite database {filename}")
-
         connection = apsw.Connection(filename, vfs=self.vfs.name)
         sqlite.make_export(connection)
-
-        logger.info(f"Serializing {filename}")
-
+        logger.info(f"Serializing {filename} to S3 storage.")
         vfs_fileobj = self.vfs.serialize_fileobj(key_prefix=filename)
         self.bucket.Object(filename).upload_fileobj(vfs_fileobj)
 
-        logger.info(f"Export {filename} complete")
+
+class SQLiteS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
+    """Remote SQLite DB creation and storage."""
+
+    def make_export(self, filename: str):
+        with NamedTemporaryFile() as temp_sqlite_db:
+            connection = apsw.Connection(temp_sqlite_db.name)
+            sqlite.make_export(connection)
+            logger.info(f"Saving {filename} to S3 storage.")
+            self.save(filename, temp_sqlite_db.file)
 
 
 class SQLiteLocalStorage(SQLiteExportMixin, Storage):
@@ -99,9 +109,6 @@ class SQLiteLocalStorage(SQLiteExportMixin, Storage):
         return Path(self.path(name)).exists()
 
     def make_export(self, filename: str):
-        logger.info(f"Generating SQLite database {filename} ...")
-
         connection = apsw.Connection(self.path(filename))
+        logger.info(f"Saving {filename} to local file system storage.")
         sqlite.make_export(connection)
-
-        logger.info(f"Export {filename} done")
