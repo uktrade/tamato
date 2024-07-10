@@ -113,7 +113,7 @@ function init() {
   ).value;
   const helpText = document.querySelector(
     "#id_geographical_area-geo_area_hint",
-  ).innerHTML;
+  )?.innerHTML;
   const container = document.querySelector("#measure-wizard-form-container");
   if (!container) return;
   const root = createRoot(container);
