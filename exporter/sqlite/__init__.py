@@ -65,9 +65,10 @@ def make_export_plan(sqlite_runner: runner.Runner) -> plan.Plan:
 
 def make_export(connection: apsw.Connection):
     with NamedTemporaryFile() as temp_sqlite_db:
-        # Create Runner instance pointing at sqlite DB on local file system.
-        # This is only required temporarily in order to create an in-memory plan
-        # that can be run against a target database object.
+        # Create Runner instance with its SQLite file name pointing at a path on
+        # the local file system. This is only required temporarily in order to
+        # create an in-memory plan that can be run against a target database
+        # object.
         sqlite_runner = runner.Runner.make_tamato_database(
             Path(temp_sqlite_db.name),
         )
