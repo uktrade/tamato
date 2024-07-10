@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        "Create a snapshot of the application database in Sqlite format. "
+        "Create a snapshot of the application database in SQLite format. "
         "Snapshot file names take the form <transaction-order>.db, where "
         "<transaction-order> is the value of the last published transaction's "
         "order attribute."
@@ -20,9 +20,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
-            "--immediately",
+            "--asynchronous",
             action="store_const",
-            help="Run the task in this process now rather than queueing it up",
+            help="Queue the snapshot task to run in an asynchronous process.",
             const=True,
             default=False,
         )
@@ -40,7 +40,7 @@ class Command(BaseCommand):
         logger.info(f"Triggering tariff database export to SQLite")
 
         local_path = options["DIRECTORY_PATH"]
-        if options["immediately"]:
-            export_and_upload_sqlite(local_path)
-        else:
+        if options["asynchronous"]:
             export_and_upload_sqlite.delay(local_path)
+        else:
+            export_and_upload_sqlite(local_path)
