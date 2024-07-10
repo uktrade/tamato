@@ -1,4 +1,6 @@
+import functools
 import logging
+import os
 from functools import cached_property
 from os import path
 from pathlib import Path
@@ -6,12 +8,39 @@ from tempfile import NamedTemporaryFile
 
 import apsw
 from django.core.files.storage import Storage
+from django.utils import timezone
 from sqlite_s3vfs import S3VFS
 from storages.backends.s3boto3 import S3Boto3Storage
 
 from exporter import sqlite
 
 logger = logging.getLogger(__name__)
+
+
+def info_log_timing(func):
+    """Decorator function to log start and end time of a decorated function."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = timezone.localtime()
+        logger.info(
+            f"Entering the function {func.__name__}() on process "
+            f"pid={os.getpid()} at {start_time.isoformat()}",
+        )
+
+        result = func(*args, **kwargs)
+
+        end_time = timezone.localtime()
+        elapsed_time = end_time - start_time
+        logger.info(
+            f"Exited the function {func.__name__}() on "
+            f"process pid={os.getpid()} at {end_time.isoformat()} after "
+            f"an elapsed time of {elapsed_time}.",
+        )
+
+        return result
+
+    return wrapper
 
 
 class HMRCStorage(S3Boto3Storage):
@@ -74,6 +103,7 @@ class SQLiteS3VFSStorage(SQLiteExportMixin, SQLiteS3StorageBase):
     def vfs(self) -> apsw.VFS:
         return S3VFS(bucket=self.bucket, block_size=65536)
 
+    @info_log_timing
     def make_export(self, filename: str):
         connection = apsw.Connection(filename, vfs=self.vfs.name)
         sqlite.make_export(connection)
@@ -85,6 +115,7 @@ class SQLiteS3VFSStorage(SQLiteExportMixin, SQLiteS3StorageBase):
 class SQLiteS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
     """Remote SQLite DB creation and storage."""
 
+    @info_log_timing
     def make_export(self, filename: str):
         with NamedTemporaryFile() as temp_sqlite_db:
             connection = apsw.Connection(temp_sqlite_db.name)
@@ -108,6 +139,7 @@ class SQLiteLocalStorage(SQLiteExportMixin, Storage):
     def exists(self, name: str) -> bool:
         return Path(self.path(name)).exists()
 
+    @info_log_timing
     def make_export(self, filename: str):
         connection = apsw.Connection(self.path(filename))
         logger.info(f"Saving {filename} to local file system storage.")

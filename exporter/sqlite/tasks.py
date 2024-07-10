@@ -1,8 +1,6 @@
 import logging
 import os
 
-from django.utils import timezone
-
 from common.celery import app
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
@@ -42,11 +40,6 @@ def export_and_upload_sqlite(local_path: str = None) -> bool:
     Returns a boolean that is ``True`` if a file was uploaded and ``False`` if
     not.
     """
-    start_time = timezone.localtime()
-    logger.info(
-        f"SQLite export process, pid={os.getpid()}, started at {start_time.isoformat()}",
-    )
-
     db_name = get_output_filename()
 
     if local_path:
@@ -71,10 +64,4 @@ def export_and_upload_sqlite(local_path: str = None) -> bool:
     logger.info(f"Generating SQLite database {export_filename}")
     storage.make_export(export_filename)
     logger.info(f"Export {export_filename} complete")
-
-    elapsed_time = timezone.localtime() - start_time
-    logger.info(
-        f"SQLite export process, pid={os.getpid()}, "
-        f"done creating {export_filename} after elapsed time of {elapsed_time}.",
-    )
     return True
