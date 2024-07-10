@@ -54,20 +54,23 @@ def export_and_upload_sqlite(local_path: str = None) -> bool:
         storage = storages.SQLiteLocalStorage(location=local_path)
     else:
         logger.info("SQLite export process targetting S3 file system.")
-        storage = storages.SQLiteS3VFSStorage()
+        # TODO - Remove:
+        # storage = storages.SQLiteS3VFSStorage()
+        storage = storages.SQLiteS3Storage()
 
     export_filename = storage.generate_filename(db_name)
 
     logger.info(f"Checking for existing database {export_filename}")
     if storage.exists(export_filename):
-        elapsed_time = timezone.localtime() - start_time
         logger.info(
-            f"Database {export_filename} already exists. "
-            f"Exiting process, pid={os.getpid()}, after elapsed time {elapsed_time}.",
+            f"Database {export_filename} already exists. Exiting process, "
+            f"pid={os.getpid()}.",
         )
         return False
 
+    logger.info(f"Generating SQLite database {export_filename}")
     storage.make_export(export_filename)
+    logger.info(f"Export {export_filename} complete")
 
     elapsed_time = timezone.localtime() - start_time
     logger.info(
