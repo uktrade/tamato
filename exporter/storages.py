@@ -8,6 +8,8 @@ from django.core.files.storage import Storage
 from sqlite_s3vfs import S3VFS
 from storages.backends.s3boto3 import S3Boto3Storage
 
+from exporter import sqlite
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,13 +32,14 @@ class HMRCStorage(S3Boto3Storage):
 
 
 class SQLiteStorageMixin:
-    def get_connection(self, filename: str) -> apsw.Connection:
-        """Creates a new empty SQLite database."""
+    def make_export(self, filename: str):
+        """Export to SQLite database."""
         raise NotImplementedError
 
 
-class SQLiteStorage(SQLiteStorageMixin, S3Boto3Storage):
-    """Remote (S3) Sqlite DB storage."""
+class SQLiteS3VFSStorage(SQLiteStorageMixin, S3Boto3Storage):
+    """Remote Sqlite DB storage using s3sqlite to provide virtual file system
+    storage (see https://pypi.org/project/s3sqlite/)."""
 
     def get_default_settings(self):
         from django.conf import settings
@@ -62,19 +65,25 @@ class SQLiteStorage(SQLiteStorageMixin, S3Boto3Storage):
     def exists(self, filename: str) -> bool:
         return any(self.listdir(filename))
 
-    def serialize(self, filename):
-        vfs_fileobj = self.vfs.serialize_fileobj(key_prefix=filename)
-        self.bucket.Object(filename).upload_fileobj(vfs_fileobj)
-
     @cached_property
     def vfs(self) -> apsw.VFS:
         return S3VFS(bucket=self.bucket, block_size=65536)
 
-    def get_connection(self, filename: str) -> apsw.Connection:
-        return apsw.Connection(filename, vfs=self.vfs.name)
+    def make_export(self, filename: str):
+        logger.info(f"Generating SQLite database {filename}")
+
+        connection = apsw.Connection(filename, vfs=self.vfs.name)
+        sqlite.make_export(connection)
+
+        logger.info(f"Serializing {filename}")
+
+        vfs_fileobj = self.vfs.serialize_fileobj(key_prefix=filename)
+        self.bucket.Object(filename).upload_fileobj(vfs_fileobj)
+
+        logger.info(f"Export {filename} complete")
 
 
-class LocalSQLiteStorage(SQLiteStorageMixin, Storage):
+class SQLiteLocalStorage(SQLiteStorageMixin, Storage):
     def __init__(self, location) -> None:
         self._location = Path(location).expanduser().resolve()
         logger.info(f"Normalised path `{location}` to `{self._location}`.")
@@ -87,7 +96,10 @@ class LocalSQLiteStorage(SQLiteStorageMixin, Storage):
     def exists(self, name: str) -> bool:
         return Path(self.path(name)).exists()
 
-    def get_connection(self, filename: str) -> apsw.Connection:
-        if self.exists(filename):
-            raise Exception("File already exists at {path}.")
-        return apsw.Connection(self.path(filename))
+    def make_export(self, filename: str):
+        logger.info(f"Generating SQLite database {filename} ...")
+
+        connection = apsw.Connection(self.path(filename))
+        sqlite.make_export(connection)
+
+        logger.info(f"Export {filename} done")

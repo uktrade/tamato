@@ -6,9 +6,7 @@ from django.utils import timezone
 from common.celery import app
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
-from exporter import sqlite
-from exporter.storages import LocalSQLiteStorage
-from exporter.storages import SQLiteStorage
+from exporter import storages
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +51,10 @@ def export_and_upload_sqlite(local_path: str = None) -> bool:
 
     if local_path:
         logger.info("SQLite export process targetting local file system.")
-        storage = LocalSQLiteStorage(location=local_path)
+        storage = storages.SQLiteLocalStorage(location=local_path)
     else:
         logger.info("SQLite export process targetting S3 file system.")
-        storage = SQLiteStorage()
+        storage = storages.SQLiteS3VFSStorage()
 
     export_filename = storage.generate_filename(db_name)
 
@@ -69,19 +67,7 @@ def export_and_upload_sqlite(local_path: str = None) -> bool:
         )
         return False
 
-    # TODO: --- Start ---
-    # Refactor into new method, SQLiteStorageMixin.make_export()
-
-    logger.info(f"Generating SQLite database {export_filename} ...")
-    sqlite.make_export(storage.get_connection(export_filename))
-    logger.info(f"Generating SQLite database {export_filename} done")
-
-    if not local_path:
-        logger.info(f"Serializing {export_filename}")
-        storage.serialize(export_filename)
-        logger.info(f"Serializing {export_filename} complete")
-
-    # TODO: --- End ---
+    storage.make_export(export_filename)
 
     elapsed_time = timezone.localtime() - start_time
     logger.info(
