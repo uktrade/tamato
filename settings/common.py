@@ -24,7 +24,7 @@ from common.util import is_truthy
 ENV = os.environ.get("ENV", "dev")
 
 # Global variables
-SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "False"))
+SSO_ENABLED = is_truthy(os.environ.get("SSO_ENABLED", "true"))
 VCAP_SERVICES = json.loads(os.environ.get("VCAP_SERVICES", "{}"))
 VCAP_APPLICATION = json.loads(os.environ.get("VCAP_APPLICATION", "{}"))
 
