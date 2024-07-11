@@ -12,7 +12,11 @@ from pathlib import Path
 
 import dj_database_url
 from celery.schedules import crontab
+from dbt_copilot_python.database import database_url_from_env
+from dbt_copilot_python.network import setup_allowed_hosts
+from dbt_copilot_python.utility import is_copilot
 from django.urls import reverse_lazy
+from django_log_formatter_asim import ASIMFormatter
 
 from common.util import is_truthy
 
@@ -129,6 +133,7 @@ TAMATO_APPS = [
     "importer",
     "notifications",
     # XXX need to keep this for migrations. delete later.
+    "reference_documents",
     "publishing",
     "taric",
     "tasks",
@@ -267,13 +272,20 @@ AUTH_USER_MODEL = "common.User"
 # -- Security
 SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")
 
+
 # Whitelist values for the HTTP Host header, to prevent certain attacks
 # App runs inside GOV.UK PaaS, so we can allow all hosts
 ALLOWED_HOSTS = re.split(r"\s|,", os.environ.get("ALLOWED_HOSTS", ""))
-if "VCAP_APPLICATION" in os.environ:
+
+# DBT PaaS
+if is_copilot():
+    ALLOWED_HOSTS = setup_allowed_hosts(ALLOWED_HOSTS)
+# Govuk PaaS
+elif "VCAP_APPLICATION" in os.environ:
     # Under PaaS, if ALLOW_PAAS_URIS is set, fetch trusted domains from VCAP_APPLICATION env var
     paas_hosts = json.loads(os.environ["VCAP_APPLICATION"])["uris"]
     ALLOWED_HOSTS.extend(paas_hosts)
+
 
 # Sets the X-Content-Type-Options: nosniff header
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -305,33 +317,47 @@ ROOT_URLCONF = f"urls"
 # URL path where static files are served
 STATIC_URL = "/assets/"
 
+
 # -- Database
+if MAINTENANCE_MODE:
+    DATABASES = {}
 
-if VCAP_SERVICES.get("postgres"):
+# DBT PaaS
+elif is_copilot():
+    DB_URL = dj_database_url.config(
+        default=database_url_from_env("DATABASE_CREDENTIALS"),
+    )
+    DATABASES = {"default": DB_URL}
+# Govuk PaaS
+elif VCAP_SERVICES.get("postgres"):
     DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
-else:
-    DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
-
-if not MAINTENANCE_MODE:
     DATABASES = {
         "default": dj_database_url.parse(DB_URL),
     }
 else:
-    DATABASES = {}
+    DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
+    DATABASES = {
+        "default": dj_database_url.parse(DB_URL),
+    }
 
 SQLITE = DB_URL.startswith("sqlite")
 
 # -- Cache
 
-CACHE_URL = os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1")
-
-if VCAP_SERVICES.get("redis"):
+# DBT PaaS
+if is_copilot():
+    CACHE_URL = os.getenv("CACHE_URL", default=None) + "?ssl_cert_reqs=required"
+# Govuk PaaS
+elif VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
         if redis_instance["name"] == "DJANGO_CACHE":
             credentials = redis_instance["credentials"]
             CACHE_URL = credentials["uri"]
             CACHE_URL += "?ssl_cert_reqs=required"
             break
+else:
+    CACHE_URL = os.getenv("CACHE_URL", "redis://0.0.0.0:6379/1")
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -408,7 +434,22 @@ HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/stagin
 
 # S3 settings for packaging automation.
 
-if VCAP_SERVICES.get("aws-s3-bucket"):
+if is_copilot():
+    IMPORTER_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
+    IMPORTER_S3_ACCESS_KEY_ID = None
+    IMPORTER_S3_SECRET_ACCESS_KEY = None
+    HMRC_PACKAGING_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
+    HMRC_PACKAGING_S3_ACCESS_KEY_ID = None
+    HMRC_PACKAGING_S3_SECRET_ACCESS_KEY = None
+    HMRC_PACKAGING_STORAGE_BUCKET_NAME = os.environ.get(
+        "HMRC_PACKAGING_STORAGE_BUCKET_NAME",
+        "hmrc-packaging",
+    )
+    IMPORTER_STORAGE_BUCKET_NAME = os.environ.get(
+        "IMPORTER_STORAGE_BUCKET_NAME",
+        "importer",
+    )
+elif VCAP_SERVICES.get("aws-s3-bucket"):
     app_bucket_creds = VCAP_SERVICES["aws-s3-bucket"][0]["credentials"]
 
     S3_REGION_NAME = app_bucket_creds["aws_region"]
@@ -485,15 +526,20 @@ CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY = int(
 
 
 # SQLite AWS settings
+if is_copilot():
+    SQLITE_S3_ACCESS_KEY_ID = None
+    SQLITE_S3_SECRET_ACCESS_KEY = None
+else:
+    SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
+        "SQLITE_S3_ACCESS_KEY_ID",
+        "test_sqlite_key_id",
+    )
+    SQLITE_S3_SECRET_ACCESS_KEY = os.environ.get(
+        "SQLITE_S3_SECRET_ACCESS_KEY",
+        "test_sqlite_key",
+    )
+
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
-SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
-    "SQLITE_S3_ACCESS_KEY_ID",
-    "test_sqlite_key_id",
-)
-SQLITE_S3_SECRET_ACCESS_KEY = os.environ.get(
-    "SQLITE_S3_SECRET_ACCESS_KEY",
-    "test_sqlite_key",
-)
 SQLITE_S3_ENDPOINT_URL = os.environ.get(
     "SQLITE_S3_ENDPOINT_URL",
     "https://test-sqlite-url.local/",
@@ -501,8 +547,13 @@ SQLITE_S3_ENDPOINT_URL = os.environ.get(
 SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
 
 # Default AWS settings.
-AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
-AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+if is_copilot():
+    AWS_ACCESS_KEY_ID = None
+    AWS_SECRET_ACCESS_KEY = None
+else:
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
 AWS_PRELOAD_METADATA = False
@@ -526,15 +577,24 @@ CROWN_DEPENDENCIES_API_URL_PATH = os.environ.get(
 CROWN_DEPENDENCIES_GET_API_KEY = os.environ.get("CROWN_DEPENDENCIES_GET_API_KEY", "")
 CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KEY", "")
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", CACHES["default"]["LOCATION"])
 
-if VCAP_SERVICES.get("redis"):
+if is_copilot():
+    CELERY_BROKER_URL = (
+        os.getenv("CELERY_BROKER_URL", default=None) + "?ssl_cert_reqs=required"
+    )
+
+elif VCAP_SERVICES.get("redis"):
     for redis_instance in VCAP_SERVICES["redis"]:
         if redis_instance["name"] == "CELERY_BROKER":
             credentials = redis_instance["credentials"]
             CELERY_BROKER_URL = credentials["uri"]
             CELERY_BROKER_URL += "?ssl_cert_reqs=required"
             break
+else:
+    CELERY_BROKER_URL = os.environ.get(
+        "CELERY_BROKER_URL",
+        CACHES["default"]["LOCATION"],
+    )
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
 CELERY_TRACK_STARTED = True
@@ -553,12 +613,18 @@ CROWN_DEPENDENCIES_API_CRON = (
     if os.environ.get("CROWN_DEPENDENCIES_API_CRON")
     else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
 )
+
+# `SQLITE_EXPORT_CRONTAB` sets the time, in crontab format, that an Sqlite
+# snapshot task is scheduled by Celery Beat for execution by a Celery task.
+# (See https://en.wikipedia.org/wiki/Cron for format description.)
+SQLITE_EXPORT_CRONTAB = os.environ.get("SQLITE_EXPORT_CRONTAB", "05 19 * * *")
 CELERY_BEAT_SCHEDULE = {
     "sqlite_export": {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
-        "schedule": crontab(hour=19, minute=5),
+        "schedule": crontab(*SQLITE_EXPORT_CRONTAB.split()),
     },
 }
+
 if ENABLE_CROWN_DEPENDENCIES_PUBLISHING:
     CELERY_BEAT_SCHEDULE["crown_dependencies_api_publish"] = {
         "task": "publishing.tasks.publish_to_api",
@@ -610,6 +676,9 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "default": {"format": "%(asctime)s %(name)s %(levelname)s %(message)s"},
+        "asim_formatter": {
+            "()": ASIMFormatter,
+        },
     },
     "handlers": {
         "console": {
@@ -617,11 +686,25 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "default",
         },
+        "asim": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "asim_formatter",
+        },
+        "celery": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
     },
     "loggers": {
-        "root": {
+        "django": {
             "handlers": ["console"],
-            "level": "WARNING",
+            "level": "INFO",
+            "propagate": False,
         },
         "importer": {
             "handlers": ["console"],
@@ -672,12 +755,20 @@ LOGGING = {
             "level": os.environ.get("LOG_LEVEL", "DEBUG"),
             "propagate": False,
         },
-    },
-    "celery": {
-        "handlers": ["celery"],
-        "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
+        "celery": {
+            "handlers": ["celery"],
+            "level": os.environ.get("CELERY_LOG_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
     },
 }
+
+if is_copilot():
+    LOGGING["root"]["handlers"] = ["asim"]
+    LOGGING["loggers"]["django"]["handlers"] = ["asim"]
+    LOGGING["loggers"]["celery"]["handlers"] = ["asim"]
+
+    DLFA_INCLUDE_RAW_LOG = True
 
 # -- Sentry error tracking
 

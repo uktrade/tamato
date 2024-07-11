@@ -71,22 +71,6 @@ Installing
     $ npm install
     $ npm run build
 
-Those using Mac m1 laptops may have problems installing certain packages (e.g.
-psycopg2 and lxml) via requirements-dev.txt. In this scenario you should run the
-following from a rosetta terminal (see `this article
-<https://www.courier.com/blog/tips-and-tricks-to-setup-your-apple-m1-for-development/>`_ ),
-substituting your own python version as appropriate:
-
-.. code:: sh
-
-    $ pip uninstall psycopg2
-    $ brew install postgresql
-    $ export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
-    $ export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib -L${HOME}/.pyenv/versions/3.9/lib"
-    $ arch -arm64 pip install psycopg2 --no-binary :all:
-
-Credit due to armenzg and his `answer here
-<https://github.com/psycopg/psycopg2/issues/1286#issuecomment-914286206>`_ .
 
 Running
 ~~~~~~~
@@ -397,6 +381,21 @@ There are no command line tools available for this tool.
 This tool is available as an importer alternative found within the web front end in the footer menu under "New TARIC parser".
 
 This tool addresses several short falls that the current importer has.
+
+Reference document data import
+------------------------------
+
+WARNING: this feature is in alpha : do not use in production until this feature has been
+fully tested.
+
+In order to populate the reference document data from extracted data from an external tool
+you can use the management command ref_doc_csv_importer
+
+Example:
+
+   .. code:: sh
+
+      $ python manage.py ref_doc_csv_importer "/absolute/path/to/duties.csv" "/absolute/path/to/quotas.csv"
 
 Using the exporter
 ------------------

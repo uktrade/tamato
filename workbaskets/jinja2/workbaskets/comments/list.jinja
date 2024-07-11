@@ -1,0 +1,55 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "includes/workbaskets/navigation.jinja" import create_workbasket_detail_navigation with context %}
+
+{% set base_url = url("workbaskets:workbasket-ui-comments", args=[workbasket.pk]) ~ "?page=" ~ page_obj.number %}
+
+{% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
+
+{% set items_name = "comments" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and view workbaskets", "href": url("workbaskets:workbasket-ui-list-all")},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+
+  {{ create_workbasket_detail_navigation(active_tab="comments") }}
+
+  <h2 class="govuk-heading-m">Comments</h2>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+    {% if not object_list %}
+      <p class="govuk-body">There are no comments for the workbasket.</p>
+    {% else %}
+      {% for comment in object_list %}
+        {% set comment_anchor = "comment-" ~ comment.id %}
+        <article>
+          <header>
+            <p class="govuk-body">
+              <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">{{ comment.author.get_displayname() }}</span>
+              <time>{{ localtime(comment.created_at).strftime("%d %B %Y, %I:%M %p") }}</time>
+            </p>
+          </header>
+          <div id="{{ comment_anchor }}" class="comment">{{ comment.content|safe }}</p>
+          <footer>
+            <a href="{{ base_url }}#{{ comment_anchor }}" class="govuk-link govuk-body-s">Link to this comment</a>
+          </footer>
+        </article>
+        {% if not loop.last %}
+          <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+        {% endif %}
+      {% endfor %}
+      <hr class="govuk-section-break">
+      {% include "includes/common/pagination.jinja" %}
+    {% endif %}
+    </div>
+  </div>
+{% endblock %}

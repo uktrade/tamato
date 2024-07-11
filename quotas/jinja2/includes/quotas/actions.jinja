@@ -5,6 +5,8 @@
             <li><a class="govuk-link" href="{{ url('quota_definition-ui-list', args=[object.sid]) }}">View definition periods</a></li>
             <li><a class="govuk-link" href="{{ url('quota_definition-ui-create', args=[object.sid]) }}">Create definition period</a></li>
             <br>
+            <li><a class="govuk-link" href="{{ url('quota_suspension_or_blocking-ui-create', args=[object.sid]) }}">Create suspension or blocking period</a></li>
+            <br>
             <li><a class="govuk-link" href="{{ measures_url }}">View all measures</a></li>
             <br>
           {% set edit_url = object.get_url('edit') %}
