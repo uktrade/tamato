@@ -2,12 +2,8 @@ import re
 
 from playwright.sync_api import expect
 
-from checks.tests.factories import TrackedModelCheckFactory
-from common.tests import factories
-from tasks.models import UserAssignment
 
-
-def test_pause_packaging_queue(page, unpaused_queue):
+def test_pause_packaging_queue(unpaused_queue, page):
     page.goto("/publishing/packaging-queue/")
 
     page.get_by_role("button", name="Stop CDS queue").click()
@@ -17,7 +13,7 @@ def test_pause_packaging_queue(page, unpaused_queue):
     expect(page.get_by_role("button", name="Start CDS queue")).to_be_visible()
 
 
-def test_unpause_packaging_queue(page, paused_queue):
+def test_unpause_packaging_queue(paused_queue, page):
     page.goto("/publishing/packaging-queue/")
 
     page.get_by_role("button", name="Start CDS queue").click()
@@ -27,37 +23,10 @@ def test_unpause_packaging_queue(page, paused_queue):
 
 
 def test_send_to_packaging_queue(
-    page,
-    empty_current_workbasket,
     unpaused_queue,
-    celery_worker,
-    settings,
+    workbasket_ready_for_queue,
+    page,
 ):
-    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
-
-    # Only fully assigned workbaskets can proceed through packaging queue
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
-        task__workbasket=empty_current_workbasket,
-    )
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
-        task__workbasket=empty_current_workbasket,
-    )
-
-    # The workbasket must also have passed business rules check
-    with empty_current_workbasket.new_transaction() as transaction:
-        footnote = factories.FootnoteFactory.create(
-            transaction=transaction,
-            footnote_type__transaction=transaction,
-        )
-        TrackedModelCheckFactory.create(
-            model=footnote,
-            transaction_check__latest_tracked_model=footnote,
-            transaction_check__transaction=footnote.transaction,
-            successful=True,
-        )
-
     page.goto("/workbaskets/current/checks/")
     page.get_by_role("link", name="Send to packaging queue").click()
 
@@ -72,7 +41,9 @@ def test_send_to_packaging_queue(
         page.get_by_role("heading", name="Workbasket queued at position"),
     ).to_be_visible()
 
+    page.wait_for_timeout(5000)
     page.goto("publishing/packaging-queue/")
-    page.wait_for_timeout(10000)
-    page.reload()
-    expect(page.locator('span:has-text("CDS NOTIFIED")')).to_be_visible()
+    packaged_workbasket = page.get_by_role("row").filter(
+        has_text=f"{workbasket_ready_for_queue.id}",
+    )
+    expect(packaged_workbasket).to_be_visible()

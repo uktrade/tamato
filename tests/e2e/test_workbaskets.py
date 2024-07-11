@@ -1,26 +1,30 @@
 import re
 
+import pytest
 from playwright.sync_api import expect
 
-from common.tests.factories import FootnoteFactory
+from .utils import get_unique_id
 
 
-def test_create_a_new_workbasket(page):
+@pytest.mark.django_db(transaction=True)
+def test_create_a_new_workbasket(user, page):
     page.goto("/")
     page.get_by_role("link", name="Create a workbasket").click()
 
     expect(page).to_have_url(re.compile("/workbaskets/create/"))
     expect(page.get_by_role("heading", name="Create a new workbasket")).to_be_visible()
 
-    page.get_by_label("TOPS/Jira number").fill("123")
-    page.get_by_label("Description").fill("Test description.")
+    page.get_by_label("TOPS/Jira number").fill(get_unique_id())
+    page.get_by_label("Description").fill(
+        f"End-to-end test by {user.get_displayname()}.",
+    )
     page.get_by_role("button", name="Create").click()
 
     expect(page).to_have_url(re.compile("workbaskets/.+/confirm-create/"))
     expect(page.get_by_text("You have created a new workbasket")).to_be_visible()
 
 
-def test_assign_worker_to_workbasket(page, user, empty_current_workbasket):
+def test_assign_worker_to_workbasket(user, empty_current_workbasket, page):
     page.goto("/workbaskets/current/")
 
     page.get_by_role("link", name="Assign workers").click()
@@ -30,10 +34,10 @@ def test_assign_worker_to_workbasket(page, user, empty_current_workbasket):
     page.get_by_role("button", name="Save").click()
 
     expect(page).to_have_url("/workbaskets/current/")
-    expect(page.get_by_text(f"{user.get_displayname()}")).to_be_visible()
+    expect(page.get_by_text(f"{user.get_displayname()}", exact=True)).to_be_visible()
 
 
-def test_assign_reviewer_to_workbasket(page, user, empty_current_workbasket):
+def test_assign_reviewer_to_workbasket(user, empty_current_workbasket, page):
     page.goto("/workbaskets/current/")
 
     page.get_by_role("link", name="Assign reviewers").click()
@@ -43,16 +47,10 @@ def test_assign_reviewer_to_workbasket(page, user, empty_current_workbasket):
     page.get_by_role("button", name="Save").click()
 
     expect(page).to_have_url("/workbaskets/current/")
-    expect(page.get_by_text(f"{user.get_displayname()}")).to_be_visible()
+    expect(page.get_by_text(f"{user.get_displayname()}", exact=True)).to_be_visible()
 
 
-def test_run_business_rules_on_workbasket(
-    page,
-    empty_current_workbasket,
-    celery_worker,
-):
-    FootnoteFactory.create(transaction__workbasket=empty_current_workbasket)
-
+def test_run_business_rules_on_workbasket(current_workbasket, page):
     page.goto("/workbaskets/current/checks/")
     expect(page.get_by_text("Business rule check has not been run")).to_be_visible()
 

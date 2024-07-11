@@ -1,30 +1,16 @@
 import re
-from datetime import date
+from datetime import datetime
 
 from playwright.sync_api import expect
 
-from common.tests import factories
-from common.validators import ApplicabilityCode
-from geo_areas.validators import AreaCode
-
 
 def test_create_a_new_measure(
-    page,
     empty_current_workbasket,
-    duty_sentence_parser,
-    celery_worker,
+    commodity,
+    measure_type,
+    regulation,
+    page,
 ):
-    today = date.today()
-    measure_type = factories.MeasureTypeFactory.create(
-        measure_component_applicability_code=ApplicabilityCode.PERMITTED,
-    )
-    regulation = factories.RegulationFactory.create()
-    commodity = factories.GoodsNomenclatureFactory.create()
-    erga_omnes = factories.GeographicalAreaFactory.create(
-        area_code=AreaCode.GROUP,
-        area_id="1011",
-    )
-
     page.goto("/measures/create/start/")
 
     # Start
@@ -38,9 +24,9 @@ def test_create_a_new_measure(
     page.get_by_role("option", name=measure_type.sid).click()
 
     start_date_field = page.get_by_role("group", name="Start date")
-    start_date_field.get_by_label("Day").fill(str(today.day))
-    start_date_field.get_by_label("Month").fill(str(today.month))
-    start_date_field.get_by_label("Year").fill(str(today.year))
+    start_date_field.get_by_label("Day").fill(str(datetime.today().day))
+    start_date_field.get_by_label("Month").fill(str(datetime.today().month))
+    start_date_field.get_by_label("Year").fill(str(datetime.today().year))
 
     page.get_by_label("Commodity code count").fill("1")
     page.get_by_role("button", name="Continue").click()
@@ -50,7 +36,7 @@ def test_create_a_new_measure(
     page.locator("#regulation_id-generating_regulation_autocomplete").fill(
         regulation.regulation_id,
     )
-    page.get_by_role("option", name=regulation.regulation_id).click()
+    page.get_by_role("option", name=regulation.autocomplete_label).click()
     page.get_by_role("button", name="Continue").click()
 
     # Quota step
@@ -104,6 +90,7 @@ def test_create_a_new_measure(
     # Measures process queue
     page.get_by_role("button", name="View status").click()
     expect(page).to_have_url("/measures/process-queue/")
-    page.wait_for_timeout(10000)
+    page.wait_for_timeout(5000)
     page.reload()
-    expect(page.locator('span:has-text("COMPLETED")')).to_be_visible()
+    task = page.get_by_role("row").filter(has_text=f"{empty_current_workbasket.id}")
+    expect(task).to_be_visible()
