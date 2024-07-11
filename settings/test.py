@@ -1,7 +1,7 @@
 from settings.common import *
 
 ENV = "test"
-BASE_SERVICE_URL = "http://localhost"
+BASE_SERVICE_URL = os.environ.get("BASE_SERVICE_URL", "http://localhost:8000")
 
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
@@ -46,3 +46,5 @@ NOTIFICATIONS_API_KEY = "test-key"
 TARIFF_API_INTERFACE = "publishing.tariff_api.interface.TariffAPIStubbed"
 
 FILE_UPLOAD_HANDLERS = ("django.core.files.uploadhandler.MemoryFileUploadHandler",)
+
+E2E_TEST_USER = os.environ.get("E2E_TEST_USER", "test_user")
