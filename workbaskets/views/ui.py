@@ -1182,6 +1182,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         )
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketChecksView(FormView):
     template_name = "workbaskets/checks.jinja"
     form_class = forms.SelectableObjectsForm
