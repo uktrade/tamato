@@ -34,8 +34,12 @@ class HMRCStorage(S3Boto3Storage):
 
 
 class SQLiteExportMixin:
-    def make_export(self, filename: str):
-        """Export to SQLite database."""
+    """Mixin class used to define a common export API among SQLite Storage
+    subclasses."""
+
+    def export_database(self, filename: str):
+        """Export Tamato's database in SQLite format, saving to Storage's
+        backing store (e.g. S3, local file system, etc)."""
         raise NotImplementedError
 
 
@@ -76,9 +80,10 @@ class SQLiteS3VFSStorage(SQLiteExportMixin, SQLiteS3StorageBase):
         return S3VFS(bucket=self.bucket, block_size=65536)
 
     @log_timing(logger_function=logger.info)
-    def make_export(self, filename: str):
+    def export_database(self, filename: str):
         connection = apsw.Connection(filename, vfs=self.vfs.name)
         sqlite.make_export(connection)
+        connection.close()
         logger.info(f"Serializing {filename} to S3 storage.")
         vfs_fileobj = self.vfs.serialize_fileobj(key_prefix=filename)
         self.bucket.Object(filename).upload_fileobj(vfs_fileobj)
@@ -88,10 +93,11 @@ class SQLiteS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
     """Remote SQLite DB creation and storage."""
 
     @log_timing(logger_function=logger.info)
-    def make_export(self, filename: str):
+    def export_database(self, filename: str):
         with NamedTemporaryFile() as temp_sqlite_db:
             connection = apsw.Connection(temp_sqlite_db.name)
             sqlite.make_export(connection)
+            connection.close()
             logger.info(f"Saving {filename} to S3 storage.")
             self.save(filename, temp_sqlite_db.file)
 
@@ -112,7 +118,8 @@ class SQLiteLocalStorage(SQLiteExportMixin, Storage):
         return Path(self.path(name)).exists()
 
     @log_timing(logger_function=logger.info)
-    def make_export(self, filename: str):
+    def export_database(self, filename: str):
         connection = apsw.Connection(self.path(filename))
         logger.info(f"Saving {filename} to local file system storage.")
         sqlite.make_export(connection)
+        connection.close()
