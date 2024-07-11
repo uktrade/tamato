@@ -30,6 +30,7 @@ if is_truthy(os.environ.get("ENABLE_DJANGO_DEBUG_TOOLBAR")):
     # Required for using debug in docker
     DEBUG_TOOLBAR_CONFIG = {
         "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+        "SHOW_COLLAPSED": True,
     }
 
 
