@@ -61,7 +61,7 @@ def export_and_upload_sqlite(local_path: str = None) -> bool:
         )
         return False
 
-    logger.info(f"Generating SQLite database {export_filename}")
+    logger.info(f"Generating SQLite database export {export_filename}.")
     storage.make_export(export_filename)
-    logger.info(f"Export {export_filename} complete")
+    logger.info(f"SQLite databae export {export_filename} complete.")
     return True
