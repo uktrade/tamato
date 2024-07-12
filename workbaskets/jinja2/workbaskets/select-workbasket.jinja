@@ -22,13 +22,19 @@
     <p class="govuk-body govuk-!-font-weight-bold">Filter results:</p>
     <ul class="govuk-list">
       <li>
-        <a href="{{ request.path }}?status=" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.status %}selected-link{% endif %}">All</a>
+        <a href="{{ request.path }}?assignment=" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if not request.GET.assignment %}selected-link{% endif %}">All</a>
       </li>
       <li>
-        <a href="{{ request.path }}?status=EDITING" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'EDITING' %}selected-link{% endif %}">Editing</a>
+        <a href="{{ request.path }}?assignment=Full" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.assignment == 'Full' %}selected-link{% endif %}">Fully assigned</a>
       </li>
       <li>
-        <a href="{{ request.path }}?status=QUEUED" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.status == 'QUEUED' %}selected-link{% endif %}">QUEUED</a>
+        <a href="{{ request.path }}?assignment=Reviewer" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.assignment == 'Reviewer' %}selected-link{% endif %}">Reviewer assigned</a>
+      </li>
+      <li>
+        <a href="{{ request.path }}?assignment=Worker" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.assignment == 'Worker' %}selected-link{% endif %}">Worker assigned</a>
+      </li>
+      <li>
+        <a href="{{ request.path }}?assignment=Awaiting" class="govuk-link govuk-link--no-underline govuk-link--no-visited-state {% if request.GET.assignment == 'Awaiting' %}selected-link{% endif %}">Awaiting assignment</a>
       </li>
     </ul>
   </nav>

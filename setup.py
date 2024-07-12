@@ -25,7 +25,7 @@ setup(
         "djangorestframework",
         "gunicorn",
         "jinja2",
-        "psycopg2-binary",
+        "psycopg[binary]",
         "sentry-sdk",
         "werkzeug",
         "whitenoise",

@@ -42,8 +42,8 @@ from django.db.models.functions.text import Upper
 from django.db.transaction import atomic
 from django.template import loader
 from lxml import etree
-from psycopg2.extras import DateRange
-from psycopg2.extras import DateTimeRange
+from psycopg.types.range import DateRange
+from psycopg.types.range import TimestampRange
 
 major, minor, patch = python_version_tuple()
 
@@ -190,7 +190,7 @@ class TaricDateRange(DateRange):
 
 
 # XXX keep for migrations
-class TaricDateTimeRange(DateTimeRange):
+class TaricDateTimeRange(TimestampRange):
     def __init__(self, lower=None, upper=None, bounds="[]", empty=False):
         if not upper:
             bounds = "[)"
@@ -554,14 +554,16 @@ def check_docinfo(elementtree, forbid_dtd=False):
 
 
 def parse_xml(source, forbid_dtd=True):
-    elementtree = etree.parse(source)
+    parser = etree.XMLParser(resolve_entities=False)
+    elementtree = etree.parse(source, parser)
     check_docinfo(elementtree, forbid_dtd=forbid_dtd)
 
     return elementtree
 
 
 def xml_fromstring(text, forbid_dtd=True):
-    rootelement = etree.fromstring(text)
+    parser = etree.XMLParser(resolve_entities=False)
+    rootelement = etree.fromstring(text, parser)
     elementtree = rootelement.getroottree()
     check_docinfo(elementtree, forbid_dtd=forbid_dtd)
 
@@ -580,7 +582,7 @@ def get_mime_type(file):
     return mime_type
 
 
-def as_date(date_or_datetime: Union(date, datetime)) -> date:
+def as_date(date_or_datetime: Union[date, datetime]) -> date:
     """Given an object of type datetime.date or datetime.datetime return the
     date portion as type datetime.date."""
     if type(date_or_datetime) is datetime:

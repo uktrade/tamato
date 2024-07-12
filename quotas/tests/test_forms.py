@@ -9,9 +9,12 @@ from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
+from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from quotas import forms
 from quotas import validators
+from quotas.models import QuotaBlocking
+from quotas.models import QuotaSuspension
 
 pytestmark = pytest.mark.django_db
 
@@ -309,3 +312,106 @@ def test_quota_update_add_extra_error_type_error(session_request_with_workbasket
                 "a_field",
                 {"some_field": "Error", "some_other_field": "Error"},
             )
+
+
+def test_quota_suspension_or_blocking_create_form_required():
+    """Tests that `QuotaSuspensionOrBlockingCreateForm` adds form errors for
+    missing required fields."""
+    quota_definition = factories.QuotaDefinitionFactory.create()
+    quota_order_number = quota_definition.order_number
+
+    form = forms.QuotaSuspensionOrBlockingCreateForm(
+        data={},
+        quota_order_number=quota_order_number,
+    )
+    assert not form.is_valid()
+    assert "Select a quota definition SID" in form.errors["quota_definition"]
+    assert (
+        "Select if you want to create a suspension or blocking period"
+        in form.errors["suspension_type"]
+    )
+    assert "Enter the day, month and year" in form.errors["start_date"]
+
+
+def test_quota_suspension_or_blockling_create_form_clean(date_ranges):
+    """Tests that `QuotaSuspensionOrBlockingCreateForm` raises a validation
+    error if the given validity period isn't contained within that of the
+    selected quota definition."""
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    quota_order_number = quota_definition.order_number
+    data = {
+        "quota_definition": quota_definition.pk,
+        "suspension_type": forms.QuotaSuspensionType.SUSPENSION,
+        "start_date_0": date_ranges.earlier.lower.day,
+        "start_date_1": date_ranges.earlier.lower.month,
+        "start_date_2": date_ranges.earlier.lower.year,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.QuotaSuspensionOrBlockingCreateForm(
+            data=data,
+            quota_order_number=quota_order_number,
+        )
+        assert not form.is_valid()
+        assert (
+            f"The start and end date must sit within the selected quota definition's start and end date ({quota_definition.valid_between.lower} - {quota_definition.valid_between.upper})"
+            in form.errors["__all__"]
+        )
+
+
+@pytest.mark.parametrize(
+    "data, expected_model",
+    [
+        (
+            {"suspension_type": forms.QuotaSuspensionType.SUSPENSION},
+            QuotaSuspension,
+        ),
+        (
+            {
+                "suspension_type": forms.QuotaSuspensionType.BLOCKING,
+                "blocking_period_type": validators.BlockingPeriodType.END_USER_DECISION,
+            },
+            QuotaBlocking,
+        ),
+    ],
+)
+def test_quota_suspension_or_blockling_create_form_save(
+    data,
+    expected_model,
+    workbasket,
+    date_ranges,
+):
+    """Tests that `QuotaSuspensionOrBlockingCreateForm.save()` creates a
+    suspension period or blocking period."""
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    quota_order_number = quota_definition.order_number
+    data.update(
+        {
+            "quota_definition": quota_definition.pk,
+            "description": "Test description",
+            "start_date_0": quota_definition.valid_between.lower.day,
+            "start_date_1": quota_definition.valid_between.lower.month,
+            "start_date_2": quota_definition.valid_between.lower.year,
+            "end_date_0": quota_definition.valid_between.upper.day,
+            "end_date_1": quota_definition.valid_between.upper.month,
+            "end_date_2": quota_definition.valid_between.upper.year,
+        },
+    )
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.QuotaSuspensionOrBlockingCreateForm(
+            data=data,
+            quota_order_number=quota_order_number,
+        )
+        assert form.is_valid()
+        object = form.save(workbasket)
+        assert isinstance(object, expected_model)
+        assert object.quota_definition == quota_definition
+        assert object.description == data["description"]
+        assert object.valid_between == quota_definition.valid_between
+        assert object.update_type == UpdateType.CREATE
+        assert object.transaction.workbasket == workbasket

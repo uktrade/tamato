@@ -1,0 +1,43 @@
+{% extends "common/confirm_create.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = object_name ~ " created" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+    {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+    {
+      "text": "Quota ID: " ~ quota_order_number,
+      "href": quota_order_number.get_url(),
+    },
+    {"text": page_title}
+  ])}}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": object_name ~ " SID " ~ object.sid,
+    "text": object_name ~ " SID " ~ object.sid ~ " has been created and added to workbasket ID " ~ request.user.current_workbasket.pk,
+    "classes": "govuk-!-margin-bottom-7",
+  }) }}
+{% endblock %}
+
+{% block button_group %}
+  {{ govukButton({
+    "text": "View workbasket summary",
+    "href": url("workbaskets:current-workbasket"),
+    "classes": "govuk-button--primary",
+  }) }}
+  {{ govukButton({
+    "text": "Return to quota ID " ~ quota_order_number,
+    "href": quota_order_number.get_url(),
+    "classes": "govuk-button--secondary",
+  }) }}
+{% endblock %}
+
+{% block actions %}
+  <li>
+    <a class="govuk-link" href="{{ list_url }}">View quota ID {{ quota_order_number }} {{ object_name|lower }}s</a>
+  </li>
+{% endblock %}

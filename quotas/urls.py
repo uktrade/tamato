@@ -140,5 +140,20 @@ urlpatterns = [
         views.QuotaOrderNumberOriginConfirmUpdate.as_view(),
         name="quota_order_number_origin-ui-confirm-update",
     ),
+    path(
+        f"quotas/<sid>/blocking-or-suspension-periods/create/",
+        views.QuotaSuspensionOrBlockingCreate.as_view(),
+        name="quota_suspension_or_blocking-ui-create",
+    ),
+    path(
+        f"quotas/suspension-periods/<sid>/confirm-create/",
+        views.QuotaSuspensionConfirmCreate.as_view(),
+        name="quota_suspension-ui-confirm-create",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/confirm-create/",
+        views.QuotaBlockingConfirmCreate.as_view(),
+        name="quota_blocking-ui-confirm-create",
+    ),
     path("api/", include(api_router.urls)),
 ]

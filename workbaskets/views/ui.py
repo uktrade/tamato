@@ -6,6 +6,8 @@ from typing import Tuple
 from urllib.parse import urlencode
 
 import boto3
+import django_filters
+import kombu
 from botocore.client import Config
 from celery.result import AsyncResult
 from django.conf import settings
@@ -31,12 +33,14 @@ from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormView
 from django.views.generic.list import ListView
+from django_filters import FilterSet
 from markdownify import markdownify
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
+from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
 from common.util import format_date_string
@@ -61,6 +65,7 @@ from quotas.models import QuotaSuspension
 from regulations.models import Regulation
 from tasks.models import Comment
 from tasks.models import Task
+from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
@@ -88,6 +93,43 @@ class WorkBasketFilter(TamatoFilter):
     class Meta:
         model = WorkBasket
         fields = ["search", "status"]
+
+
+class WorkBasketAssignmentFilter(FilterSet):
+    """Filter a workbasket queryset based on different assignment
+    possibilities."""
+
+    def assignment_filter(self, queryset, name, value):
+        active_workers = (
+            UserAssignment.objects.workbasket_workers()
+            .assigned()
+            .values_list("task__workbasket_id")
+        )
+        active_reviewers = (
+            UserAssignment.objects.workbasket_reviewers()
+            .assigned()
+            .values_list("task__workbasket_id")
+        )
+        if value == "Full":
+            return queryset.filter(
+                Q(id__in=active_workers) & Q(id__in=active_reviewers),
+            )
+        elif value == "Reviewer":
+            return queryset.filter(id__in=active_reviewers)
+        elif value == "Worker":
+            return queryset.filter(id__in=active_workers)
+        elif value == "Awaiting":
+            return queryset.filter(
+                ~Q(id__in=active_workers) & ~Q(id__in=active_reviewers),
+            )
+        else:
+            return queryset
+
+    assignment = django_filters.CharFilter(method="assignment_filter")
+
+    class Meta:
+        model = WorkBasket
+        fields = ["assignment"]
 
 
 class WorkBasketConfirmCreate(DetailView):
@@ -146,7 +188,7 @@ class WorkBasketConfirmUpdate(DetailView):
 class SelectWorkbasketView(PermissionRequiredMixin, WithPaginationListView):
     """UI endpoint for viewing and filtering workbaskets."""
 
-    filterset_class = WorkBasketFilter
+    filterset_class = WorkBasketAssignmentFilter
     template_name = "workbaskets/select-workbasket.jinja"
     permission_required = "workbaskets.change_workbasket"
 
@@ -930,8 +972,9 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
         return self.workbasket_transactions().last()
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketViolations(SortingMixin, WithPaginationListView):
-    """UI endpoint for viewing a specified workbasket's business rule
+    """UI endpoint for viewing the current workbasket's business rule
     violations."""
 
     model = TrackedModelCheck
@@ -1140,6 +1183,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         )
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketChecksView(FormView):
     template_name = "workbaskets/checks.jinja"
     form_class = forms.SelectableObjectsForm
@@ -1682,3 +1726,49 @@ class WorkBasketCommentDelete(
     form_class = forms.WorkBasketCommentDeleteForm
     template_name = "workbaskets/comments/delete.jinja"
     permission_required = ["tasks.delete_comment"]
+
+
+class RuleCheckQueueView(
+    PermissionRequiredMixin,
+    TemplateView,
+):
+    template_name = "workbaskets/rule_check_queue.jinja"
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tap_tasks = TAPTasks()
+        try:
+            context["celery_healthy"] = True
+            current_rule_checks = tap_tasks.current_rule_checks(
+                "workbaskets.tasks.call_check_workbasket_sync",
+            )
+            context["current_rule_checks"] = current_rule_checks
+            context["status_tag_generator"] = self.status_tag_generator
+        except kombu.exceptions.OperationalError as oe:
+            context["celery_healthy"] = False
+        context["selected_tab"] = "rule-check-queue"
+        return context
+
+    def status_tag_generator(self, task_status) -> dict:
+        """Returns a dict with text and a CSS class for a UI-friendly label for
+        a rule check task."""
+
+        if task_status == "Active":
+            return {
+                "text": "Running",
+                "tag_class": "tamato-badge-light-green",
+            }
+        elif task_status == "Queued":
+            return {
+                "text": "Queued",
+                "tag_class": "tamato-badge-light-grey",
+            }
+        else:
+            return {
+                "text": task_status,
+                "tag_class": "",
+            }

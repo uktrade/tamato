@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.views.generic import FormView
@@ -42,6 +43,7 @@ from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
+from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
@@ -316,17 +318,13 @@ class QuotaUpdateMixin(
             .order_by("description")
         )
         kwargs["existing_origins"] = (
-            self.object.quotaordernumberorigin_set.current().with_latest_geo_area_description()
+            self.object.get_current_origins().with_latest_geo_area_description()
         )
         return kwargs
 
     def update_origins(self, instance, form_origins):
-        existing_origin_pks = {
-            o.pk
-            for o in models.QuotaOrderNumberOrigin.objects.current().filter(
-                order_number__sid=instance.sid,
-            )
-        }
+        existing_origin_pks = {origin.pk for origin in instance.get_current_origins()}
+
         if form_origins:
             submitted_origin_pks = {o["pk"] for o in form_origins}
             deleted_origin_pks = existing_origin_pks.difference(submitted_origin_pks)
@@ -865,3 +863,93 @@ class DuplicateDefinitionsWizard(
     # 1. create new definition periods, with updated values where applicable
         # New definition periods should be associated to the child quota order number seleted in CHILD_QUOTA_ORDER_NUMBER
     # 2. create association between original and duplicated definition period
+@method_decorator(require_current_workbasket, name="dispatch")
+class QuotaSuspensionOrBlockingCreate(
+    PermissionRequiredMixin,
+    FormView,
+):
+    """UI endpoint for creating a suspension period or a blocking period."""
+
+    template_name = "quota-suspensions/create.jinja"
+    form_class = forms.QuotaSuspensionOrBlockingCreateForm
+    permission_required = "common.add_trackedmodel"
+
+    @property
+    def quota_order_number(self):
+        return models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
+
+    @property
+    def workbasket(self):
+        return WorkBasket.current(self.request)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["quota_order_number"] = self.quota_order_number
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Create a suspension or blocking period"
+        context["quota_order_number"] = self.quota_order_number
+        return context
+
+    def form_valid(self, form):
+        self.object = form.save(workbasket=self.workbasket)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        redirect_map = {
+            QuotaSuspension: reverse(
+                "quota_suspension-ui-confirm-create",
+                kwargs={"sid": self.object.sid},
+            ),
+            QuotaBlocking: reverse(
+                "quota_blocking-ui-confirm-create",
+                kwargs={"sid": self.object.sid},
+            ),
+        }
+        return redirect_map.get(type(self.object))
+
+
+class QuotaSuspensionConfirmCreate(TrackedModelDetailView):
+    model = models.QuotaSuspension
+    template_name = "quota-suspensions/confirm-create.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        quota_order_number = self.object.quota_definition.order_number
+        list_url = reverse(
+            "quota_definition-ui-list",
+            kwargs={"sid": quota_order_number.sid},
+        )
+        url_param = urlencode({"quota_type": "suspension_periods"})
+        context.update(
+            {
+                "quota_order_number": quota_order_number,
+                "object_name": "Suspension period",
+                "list_url": f"{list_url}?{url_param}",
+            },
+        )
+        return context
+
+
+class QuotaBlockingConfirmCreate(TrackedModelDetailView):
+    model = models.QuotaBlocking
+    template_name = "quota-suspensions/confirm-create.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        quota_order_number = self.object.quota_definition.order_number
+        list_url = reverse(
+            "quota_definition-ui-list",
+            kwargs={"sid": quota_order_number.sid},
+        )
+        url_param = urlencode({"quota_type": "blocking_periods"})
+        context.update(
+            {
+                "quota_order_number": quota_order_number,
+                "object_name": "Blocking period",
+                "list_url": f"{list_url}?{url_param}",
+            },
+        )
+        return context

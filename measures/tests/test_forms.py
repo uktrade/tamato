@@ -978,10 +978,13 @@ def test_measure_forms_conditions_wizard_valid_duty(date_ranges, duty_sentence_p
 @pytest.mark.parametrize(
     "reference_price, message",
     [
-        ("invalid duty", "Enter a valid reference price or quantity."),
+        (
+            "invalid duty",
+            "No matching duty expression found at character 1. \n\nCheck the validity period of the duty expression and that you are using the correct prefix. ",
+        ),
         (
             "3.5 % + 11 GBP / 100 kg",
-            "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+            "A compound duty expression was found at character 7. \n\nCheck that you are entering a single duty amount or a duty amount together with a measurement unit (and measurement unit qualifier if required). ",
         ),
     ],
 )
@@ -1014,10 +1017,13 @@ def test_measure_forms_conditions_invalid_duty(
 @pytest.mark.parametrize(
     "reference_price, message",
     [
-        ("invalid duty", "Enter a valid reference price or quantity."),
+        (
+            "invalid duty",
+            "No matching duty expression found at character 1. \n\nCheck the validity period of the duty expression and that you are using the correct prefix. ",
+        ),
         (
             "3.5 % + 11 GBP / 100 kg",
-            "A MeasureCondition cannot be created with a compound reference price (e.g. 3.5% + 11 GBP / 100 kg)",
+            "A compound duty expression was found at character 7. \n\nCheck that you are entering a single duty amount or a duty amount together with a measurement unit (and measurement unit qualifier if required). ",
         ),
     ],
 )
@@ -1396,6 +1402,18 @@ def test_measure_end_date_validation_fail():
         "The end date cannot be before the start date: Start date 01/01/2000 does not start before 01/01/1999"
         in form.errors["__all__"]
     )
+
+
+def test_measure_end_date_form_no_end_date():
+    """Tests that `MeasureEndDateForm` allows an empty end date value and sets
+    the cleaned data value to `None`."""
+    selected_measures = factories.MeasureFactory.create_batch(3)
+    form = MeasureEndDateForm(
+        data={},
+        selected_measures=selected_measures,
+    )
+    assert form.is_valid()
+    assert form.cleaned_data["end_date"] == None
 
 
 def test_measure_forms_footnotes_valid():
