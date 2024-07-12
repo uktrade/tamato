@@ -32,13 +32,17 @@ def get_output_filename():
 @app.task
 def export_and_upload_sqlite(local_path: str = None) -> bool:
     """
-    Generates an export of the currently attached database to a portable SQLite
-    file and uploads it to the configured S3 bucket.
+    Generates an export of latest published data from the primary database to a
+    portable SQLite database file. The most recently published Transaction's
+    `order` value is used to define latest published data, and its value is used
+    to name the generated SQLite database file.
 
-    If an SQLite export of the current state of the database (as given by the
-    most recently approved transaction ID) already exists, no action is taken.
-    Returns a boolean that is ``True`` if a file was uploaded and ``False`` if
-    not.
+    If `local_path` is provided, then the SQLite database file will be saved in
+    that directory location (note that in this case `local_path` must be an
+    existing directory path on the local file system).
+
+    If `local_path` is not provided, then the SQLite database file will be saved
+    to the configured S3 bucket.
     """
     db_name = get_output_filename()
 
@@ -47,13 +51,11 @@ def export_and_upload_sqlite(local_path: str = None) -> bool:
         storage = storages.SQLiteLocalStorage(location=local_path)
     else:
         logger.info("SQLite export process targetting S3 file system.")
-        # TODO - Remove:
-        # storage = storages.SQLiteS3VFSStorage()
         storage = storages.SQLiteS3Storage()
 
     export_filename = storage.generate_filename(db_name)
 
-    logger.info(f"Checking for existing database {export_filename}")
+    logger.info(f"Checking for existing database {export_filename}.")
     if storage.exists(export_filename):
         logger.info(
             f"Database {export_filename} already exists. Exiting process, "
