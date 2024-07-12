@@ -1,3 +1,4 @@
+from typing import Dict
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Accordion
@@ -5,6 +6,7 @@ from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -13,7 +15,10 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.views.generic import ListView
 
+from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import FormSet
 from common.forms import FormSetField
@@ -22,6 +27,7 @@ from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
+from common.views import WithPaginationListMixin
 from geo_areas.models import GeographicalArea
 from measures.models import MeasurementUnit
 from quotas import models
@@ -29,7 +35,10 @@ from quotas import validators
 from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
+from workbaskets.forms import SelectableObjectsForm
 
+RELATIONSHIP_TYPE_HELP_TEXT = "Select the relationship type for the quota association"
+COEFFICIENT_HELP_TEXT = "Select the coefficient for the quota association."
 CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
 SAFEGUARD_HELP_TEXT = (
     "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
@@ -311,6 +320,7 @@ class QuotaUpdateForm(
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
 
+        # CHARLIE REMOVE THIS COMMENT! Edie's hack to provide context for jinja template
         origins_html = render_to_string(
             "includes/quotas/quota-edit-origins.jinja",
             {
@@ -852,3 +862,247 @@ class QuotaOriginExclusionsReactForm(forms.Form):
             .as_at_today_and_beyond()
             .order_by("description")
         )
+
+
+class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):
+    pass
+
+
+class QuotaOrderNumersSelectForm(forms.Form):
+    class Meta:
+        fields = [
+            "parent_quota_order_number",
+            "child_quota_order_number",
+        ]
+    parent_quota_order_number = AutoCompleteField(
+            label="Parent quota order number",
+            queryset=models.QuotaOrderNumber.objects.all(),
+            required=True,
+        )
+    child_quota_order_number = AutoCompleteField(
+            label="Child quota order number",
+            queryset=models.QuotaOrderNumber.objects.all(),
+            required=True,
+        )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+        self.init_layout(self.request)
+
+    def init_layout(self, request):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Div(
+                "parent_quota_order_number",
+                "child_quota_order_number",
+            ),
+            Submit(
+                "submit",
+                "Save and continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # returns the child and parent OrderNumber objects
+        # if we're going to create asynchronously (arguably, even if we're not), we should just return the OrderNumber SIDs
+        cleaned_data["parent_quota_order_number"] = self.cleaned_data.get('parent_quota_order_number')
+        cleaned_data["child_quota_order_number"] = self.cleaned_data.get('child_quota_order_number')
+        return cleaned_data
+
+
+class SelectSubQuotaDefinitionsForm(
+    SelectableObjectsForm,
+):
+    def clean(self):
+        cleaned_data = super().clean()
+        selected_definitions = {key: value for key, value in cleaned_data.items() if value}
+        definitions_pks = [self.object_id_from_field_name(key) for key in selected_definitions]
+
+        selected_definitions = models.QuotaDefinition.objects.filter(pk__in=definitions_pks).current()
+        cleaned_data["selected_definitions"] = selected_definitions
+        return cleaned_data
+
+
+class SelectedDefinitionsForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.objects = kwargs.pop("objects", None)
+        for definition in self.objects:
+            print(f"{definition=}")
+
+        super().__init__(*args, **kwargs)
+        print('*'*30, 'SelectedDefinitionsForm', f'{self.objects}')
+
+    def clean(self):
+        pass
+
+
+class SubQuotaDefinitionsUpdatesForm(
+    forms.Form,
+    ValidityPeriodForm,
+):
+    class Meta:
+        model = models.QuotaDefinition
+        fields = [
+            "coefficient",
+            "relationship_type",
+            "volume",
+            "measurement_unit"
+        ]
+
+    relationship_type = forms.ChoiceField(
+        choices=[
+            ("EQ", "Equivalent"),
+            ("NM", "Normal"),
+        ],
+        help_text=RELATIONSHIP_TYPE_HELP_TEXT,
+        error_messages={
+            "required": "Choose the category",
+        },
+    )
+
+    coefficient = forms.DecimalField(
+        label="Coefficient",
+        widget=forms.TextInput(),
+        help_text=COEFFICIENT_HELP_TEXT,
+        error_messages={
+            "invalid": "Coefficient must be a number",
+            "required": "Enter the volume",
+        },
+    )
+
+    volume = forms.DecimalField(
+        label="Volume",
+        widget=forms.TextInput(),
+        error_messages={
+            "invalid": "Volume must be a number",
+            "required": "Enter the volume",
+        },
+    )
+
+    measurement_unit = forms.ModelChoiceField(
+        queryset=MeasurementUnit.objects.current(),
+        error_messages={"required": "Select the measurement unit"},
+    )
+
+    def set_initial_data(self):
+        # for testing/build checks, using quota definition with SID 5203
+        # in build, we'll need to pull this from args.
+        # quota_definition_sid = 5203
+        original_definition = models.QuotaDefinition.objects.get(sid='5203')
+        fields = self.fields
+        fields['start_date'].initial = original_definition.valid_between.lower
+        fields['end_date'].initial = original_definition.valid_between.upper
+        fields['measurement_unit'].initial = original_definition.measurement_unit
+        fields['volume'].initial = original_definition.volume
+        print('*'*30, f'set_data {fields=}')
+
+    def init_fields(self):
+        self.fields["measurement_unit"].queryset = self.fields[
+            "measurement_unit"
+        ].queryset.order_by("code")
+        self.fields["measurement_unit"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.set_initial_data()
+        self.init_layout(self.request)
+
+    def init_layout(self, request):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            HTML(
+                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
+            Div(
+                Div(
+                    HTML(
+                        '<h3 class="govuk-body">Quota association details</h3>',
+                    ),
+                    Div("relationship_type", css_class="govuk-grid-column-one-half"),
+                    Div("coefficient", css_class="govuk-grid-column-one-half"),
+                    css_class="govuk-grid-row",
+                ),
+            ),
+            HTML(
+                    '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
+            Div(
+                Div(
+                    HTML(
+                        '<h3 class="govuk-body">Quota definition details</h3>',
+                    ),
+                    Div(
+                        "start_date",
+                        css_class="govuk-grid-column-one-half",
+                    ),
+                    Div(
+                        "end_date",
+                        css_class="govuk-grid-column-one-half",
+                    ),
+                    Div(
+                        "volume", css_class="govuk-grid-column-one-half",
+                    ),
+                    Div(
+                        "measurement_unit", css_class="govuk-grid-column-one-half",
+                    ),
+                    css_class="govuk-grid-row",
+                ),
+                HTML(
+                    '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+                ),
+                Submit(
+                    "submit",
+                    "Save and continue",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            cleaned_data['relationship_type'] == 'NM'
+            and cleaned_data['coefficient'] != 1
+        ):
+            raise ValidationError(
+                "Where the relationship type is Normal, the coefficient value must be 1",
+            )
+        if (
+            cleaned_data['relationship_type'] == 'EQ'
+            and cleaned_data['coefficient'] == 1
+        ):
+            raise ValidationError(
+                "Where the relationship type is Equivalent, the coefficient value must be something other than 1",
+            )
+        cleaned_data['measurment_unit'] = cleaned_data['measurement_unit'].code
+        return cleaned_data
+
+    # TODO:
+    # for each definition from the previous step,
+    # display basic information:
+    # start & end date, volume, unit of measurement (?coefficient)
+    # provide options to update:
+    # Required fields:
+    # Coefficient
+    # Relationship type
+
+    # Optional fields:
+    # Start date
+    # End date
+    # Unit of measurement
+    # Volume

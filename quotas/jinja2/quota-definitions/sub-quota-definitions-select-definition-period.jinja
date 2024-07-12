@@ -1,0 +1,45 @@
+{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+{# page to take the select definitions #}
+<h1>select quota definitions</h1>
+{% from "macros/checkbox_item.jinja" import checkbox_item %}
+<h2 class="govuk-heading-l">Parent quota definitions</h2>
+{% block form %}
+<script nonce="{{ request.csp_nonce }}" id="definitions-select-checkboxes-script">
+  const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    {% set table_rows = [] %} 
+    {% for field in form %}
+    {% set checkbox = checkbox_item(field)%}
+    {{ table_rows.append([
+      {"html": checkbox },
+      {"text": field.field.obj },
+      {"text": "{:%d %b %Y}".format(field.field.obj.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(field.field.obj.valid_between.upper) if field.field.obj.valid_between.upper else "-" },
+      {"text": intcomma(field.field.obj.volume) },
+      {"text": field.field.obj.measurement_unit.abbreviation},
+    ]) or "" }}
+    {% endfor %}
+  
+    {% set start_date %}
+      {{ create_sortable_anchor(request, "valid_between", "Start date", base_url) }}
+    {% endset %}
+
+    {{ govukTable({
+      "head": [
+        {"text": "Checkbox", "classes": "govuk-visually-hidden"},
+        {"text": "Sid"},
+        {"text": start_date},
+        {"text": "End date"},
+        {"text": "Volume"},
+        {"text": "Measurement unit"},
+      ],
+      "rows": table_rows,
+    }) }}
+
+    {{ govukButton({
+    "text": "Continue",
+  }) }}
+{% endblock %}

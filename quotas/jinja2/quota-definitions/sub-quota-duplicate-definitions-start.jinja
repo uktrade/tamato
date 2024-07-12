@@ -1,0 +1,24 @@
+{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{# start page for form wizard #}
+{# {% set page_title = "Duplicate definition start page (sub-quota-duplicate-definitions-start.jinja)" %} #}
+{% set page_title = step_metadata[wizard.steps.current].title %}
+{% block form %}
+    <p class="govuk-body">
+        Before you start, you'll need:
+        <ul class="govuk-list govuk-list--bullet">
+            <li>the parent quota order number</li>
+            <li>the child quota order number</li>
+            <li>which definitions should be duplicated from parent to child</li>
+            <li>any updates to be made to the duplicated definitions</li>
+            <li>(additional updates can be made after duplication, via the edit definition page)</li>
+        </ul>
+    </p>
+    <div class="govuk-button-group">
+    {{ govukButton({"text": "Start now", "isStartButton": True}) }}
+    {{ govukButton({
+      "text": "Back",
+      "href": url("workbaskets:edit-workbasket"),
+      "classes": "govuk-button--secondary"
+    }) }}
+  </div>
+{% endblock %}

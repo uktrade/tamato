@@ -1,0 +1,45 @@
+{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+{% block form %}
+    {% set table_rows = [] %}
+    <p>Each form to be an 'update' form per definition period.</p>
+    <p>Each field in table below to populate individual definition period details.</p>
+    {# {% for field in form %} #}
+    {{ table_rows.append([
+        {"html": "Definition period info/identifier"},
+        {"html": "Relationship - select" },
+        {"html": "Coefficient - input"},
+        {"html": "Status - status badge"},
+        {"html": "Link to update form"},
+    ]) or ""}}
+    {# {% endfor %} #}
+    {{ govukTable({
+        "head": [
+            {"text": "Definition period"},
+            {"text": "Relationship type"},
+            {"text": "Coefficient"},
+            {"text": "Status"},
+            {"text": "Update"},
+        ],
+        "rows": table_rows
+    })
+    }}
+
+    {{super()}}
+{% endblock %}
+{# 
+Updates for the selected definition periods go here 
+This will need to include
+- start/end dates, 
+- relationship type, 
+- coefficient value, 
+- unit of measurement, 
+- volume
+
+Plan:
+1. each definition display and input is a table row.
+2.  first row: original definition information
+    second row: input boxes
+#}

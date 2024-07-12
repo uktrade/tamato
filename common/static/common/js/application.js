@@ -25,6 +25,7 @@ import initTapDebounce from "./buttonDebounce";
 import { setupQuotaOriginFormset } from "./components/QuotaOriginFormset/index";
 import { setupWorkbasketUserAssignment } from "./components/WorkbasketUserAssignment/index";
 import { initMasonry } from "./masonry";
+import { setupQuotaDefinitionFormset } from "./components/CreateSubQuotaDefinitions/index";
 
 showHideCheckboxes();
 // Initialise accessible-autocomplete components without a `name` attr in order
@@ -44,3 +45,4 @@ initTapDebounce();
 setupQuotaOriginFormset();
 setupWorkbasketUserAssignment();
 initMasonry();
+setupQuotaDefinitionFormset();

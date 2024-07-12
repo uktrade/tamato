@@ -1,0 +1,30 @@
+{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% block form %}
+    {% set table_rows = [] %}
+   
+    {#TODO:
+      1. get selected definition objects
+      2. populate rows below
+        a) create link
+        b) check status of cloned definition
+    #}
+
+    {{ govukTable({
+      "head": [
+        {"text": "Sid"},
+        {"text": "Start date"},
+        {"text": "End date"},
+        {"text": "Volume"},
+        {"text": "Measurement unit"},
+        {"text": "Status"},
+        {"text": "Action"},
+      ],
+      "rows": table_rows,
+    }) }}
+
+    {{ govukButton({
+    "text": "Continue",
+  }) }}
+{% endblock %}

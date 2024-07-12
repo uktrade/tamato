@@ -1,13 +1,17 @@
 from datetime import date
+from typing import Any, Dict
 from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
+from django.views.generic import FormView
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
+from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -36,6 +40,7 @@ from quotas.filters import QuotaFilter
 from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
+from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
@@ -708,3 +713,155 @@ class QuotaDefinitionConfirmDelete(
     TrackedModelDetailView,
 ):
     template_name = "quota-definitions/confirm-delete.jinja"
+
+
+class DuplicateDefinitionsWizard(
+    PermissionRequiredMixin,
+    NamedUrlSessionWizardView,
+):
+    """
+    Multipart form wizard for duplicating QuotaDefinitionPeriods from a parent QuotaOrderNumber
+    to a child QuotaOrderNumber.
+
+    https://django-formtools.readthedocs.io/en/latest/wizard.html
+    """
+    storage_name = "quotas.wizard.SubQuotaCreateSessionStorage"
+    permission_required = ["common.add_trackedmodel"]
+
+    START = "start"
+    # prompt user to pick the child quota order number
+    # from a list of existing quota order numbers
+    QUOTA_ORDER_NUMBERS = "quota_order_numbers"
+    # populate a table with the definition periods associated to the parent quota order number
+    # provide a check box for the user to select which definition periods are duplicated
+    SELECT_DEFINITION_PERIODS = "select_definition_periods"
+    # populate a table with
+    # - selected definition periods from the previous page
+    # - draft definition (to be duplicated) with link to definition_period_updates
+    SELECTED_DEFINITIONS = "selected_definition_periods"
+    # for each definition selected, collect any updates that are to be made
+    # if no updates are to be made, copy values from parent to child
+    DEFINITION_PERIOD_UPDATES = "definition_period_updates"
+
+    form_list = [
+        (START, forms.DuplicateQuotaDefinitionPeriodStartForm),
+        (QUOTA_ORDER_NUMBERS, forms.QuotaOrderNumersSelectForm),
+        (SELECT_DEFINITION_PERIODS, forms.SelectSubQuotaDefinitionsForm),
+        (SELECTED_DEFINITIONS, forms.SelectedDefinitionsForm),
+        (DEFINITION_PERIOD_UPDATES, forms.SubQuotaDefinitionsUpdatesForm),
+    ]
+
+    templates = {
+        START: "quota-definitions/sub-quota-duplicate-definitions-start.jinja",
+        QUOTA_ORDER_NUMBERS: "quota-definitions/sub-quota-definitions-select-order-numbers.jinja",
+        SELECT_DEFINITION_PERIODS: "quota-definitions/sub-quota-definitions-select-definition-period.jinja",
+        SELECTED_DEFINITIONS: "quota-definitions/sub-quota-definitions-selected.jinja",
+        DEFINITION_PERIOD_UPDATES: "quota-definitions/sub-quota-definitions-updates.jinja",
+    }
+
+    step_metadata = {
+        START: {
+            "title": "Duplicate quota definitions",
+            "link_text": "Start",
+        },
+        QUOTA_ORDER_NUMBERS: {
+            "title": "Select parent and child Quota order numbers",
+            "link_text": "Order numbers",
+        },
+        SELECT_DEFINITION_PERIODS: {
+            "title": "Select definition periods to duplicate",
+            "link_text": "Definition periods",
+        },
+        SELECTED_DEFINITIONS: {
+            "title": "Provide updates and details for duplicated definitions",
+            "link_text": "Selected definitions",
+        },
+        DEFINITION_PERIOD_UPDATES: {
+            "title": "Make any updates to definition periods",
+            "link_text": "Definition period updates",
+        }
+    }
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form=form, **kwargs)
+        context["step_metadata"] = self.step_metadata
+        return context
+
+    def get_template_names(self):
+        template = self.templates.get(
+            self.steps.current,
+            "quota-definitions/sub-quota-duplicate-definitions-step.jinja",
+        )
+        return template
+
+    def get_cleaned_data_for_step(self, step):
+        """
+        Returns cleaned data for a given `step`.
+
+        Note: This patched version of `super().get_cleaned_data_for_step` temporarily saves the cleaned_data
+        to provide quick retrieval should another call for it be made in the same request (as happens in
+        `get_form_kwargs()` and template for summary page) to avoid revalidating forms unnecessarily.
+        """
+        self.cleaned_data = getattr(self, "cleaned_data", {})
+        if step in self.cleaned_data:
+            return self.cleaned_data[step]
+
+        self.cleaned_data[step] = super().get_cleaned_data_for_step(step)
+        return self.cleaned_data[step]
+
+    @property
+    def parent_quota_definitions(self):
+        cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)
+        parent_quota_definitions = (
+            models.QuotaDefinition.objects.filter(
+                order_number__sid=cleaned_data['parent_quota_order_number'].sid,
+            )
+            .current()
+            .order_by("pk")
+        )
+        return parent_quota_definitions
+
+    @property
+    def selected_definitions(self):
+        selected_definitions = self.get_cleaned_data_for_step(self.SELECT_DEFINITION_PERIODS)['selected_definitions']
+        return selected_definitions
+
+    def get_form_kwargs(self, step):
+        kwargs = {}
+
+        print('*'*40, f'get_form_kwargs for {step=} {kwargs=}')
+        if step == self.SELECT_DEFINITION_PERIODS:
+            kwargs["objects"] = self.parent_quota_definitions
+
+        if step == self.SELECTED_DEFINITIONS:
+            kwargs["objects"] = self.selected_definitions
+            # for definition in self.selected_definitions:
+                # create 'cloned_definition' dict:
+                # {
+                    # start_date:
+                    # end_date:
+                    # volume:
+                    # units:
+                    # status: ready/needs edits
+                # }
+
+        return kwargs
+
+    def done():
+        # cleaned_data = self.get_all_cleaned_data()
+        # duplicated_definition_ids = self.get_duplicated_definition_ids()
+        # sub_quota_order_number (only need sid/id)
+
+        # for definition_id in duplicated_definition_ids:
+            # stage the definition data to be duplicated
+            # get_updated_details or get_original_detail
+            # create the new definition
+
+            # THEN:
+            # create association between new definition and sub_quota_order_number
+
+        pass
+    # on submit, perform the following in order:
+    # 1. create new definition periods, with updated values where applicable
+        # New definition periods should be associated to the child quota order number seleted in CHILD_QUOTA_ORDER_NUMBER
+    # 2. create association between original and duplicated definition period
