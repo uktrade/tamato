@@ -69,10 +69,13 @@ def make_export(connection: apsw.Connection):
         # the local file system. This is only required temporarily in order to
         # create an in-memory plan that can be run against a target database
         # object.
-        sqlite_runner = runner.Runner.make_tamato_database(
+        plan_runner = runner.Runner.make_tamato_database(
             Path(temp_sqlite_db.name),
         )
-        plan = make_export_plan(sqlite_runner)
+        plan = make_export_plan(plan_runner)
+        # make_export_plan() creates a Connection instance that needs closing
+        # once an in-memory plan has been created from it.
+        plan_runner.database.close()
 
-    s3_runner = runner.Runner(connection)
-    s3_runner.run_operations(plan.operations)
+    export_runner = runner.Runner(connection)
+    export_runner.run_operations(plan.operations)
