@@ -38,13 +38,14 @@ class SQLiteExportMixin:
     subclasses."""
 
     def export_database(self, filename: str):
-        """Export Tamato's database in SQLite format, saving to Storage's
-        backing store (e.g. S3, local file system, etc)."""
+        """Export Tamato's primary database to an SQLite file format, saving to
+        Storage's backing store (S3, local file system, etc)."""
         raise NotImplementedError
 
 
 class SQLiteS3StorageBase(S3Boto3Storage):
-    """Storage class used for remotely storing SQLite dump files."""
+    """Storage base class used for remotely storing SQLite database files to an
+    AWS S3-like backing store (AWS S3, Minio, etc)."""
 
     def get_default_settings(self):
         from django.conf import settings
@@ -69,8 +70,15 @@ class SQLiteS3StorageBase(S3Boto3Storage):
 
 
 class SQLiteS3VFSStorage(SQLiteExportMixin, SQLiteS3StorageBase):
-    """Remote SQLite DB creation and storage using s3sqlite to provide virtual
-    file system storage (see https://pypi.org/project/s3sqlite/)."""
+    """
+    Storage class used for remotely storing SQLite database files to an AWS
+    S3-like backing store.
+
+    This class uses the s3sqlite package (
+    https://pypi.org/project/s3sqlite/)
+    to apply an S3 virtual file system strategy when saving the SQLite file to
+    S3.
+    """
 
     def exists(self, filename: str) -> bool:
         return any(self.listdir(filename))
@@ -90,7 +98,13 @@ class SQLiteS3VFSStorage(SQLiteExportMixin, SQLiteS3StorageBase):
 
 
 class SQLiteS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
-    """Remote SQLite DB creation and storage."""
+    """
+    Storage class used for remotely storing SQLite database files to an AWS
+    S3-like backing store.
+
+    This class applies a strategy that first creates a temporary instance of the
+    SQLite file on the local file system before transfering its contents to S3.
+    """
 
     @log_timing(logger_function=logger.info)
     def export_database(self, filename: str):
@@ -103,7 +117,8 @@ class SQLiteS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
 
 
 class SQLiteLocalStorage(SQLiteExportMixin, Storage):
-    """Local file system SQLite DB creation and storage."""
+    """Storage class used for storing SQLite database files to the local file
+    system."""
 
     def __init__(self, location) -> None:
         self._location = Path(location).expanduser().resolve()
