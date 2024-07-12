@@ -2558,7 +2558,7 @@ def test_clean_tasks():
     )
 
 
-def test_active_tasks_is_called(valid_user_client):
+def test_current_tasks_is_called(valid_user_client):
     """Test that current_tasks function gets called when a user goes to the rule
     check page and the page correctly displays the returned list of rule check
     tasks."""
