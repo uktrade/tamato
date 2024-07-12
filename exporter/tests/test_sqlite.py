@@ -150,7 +150,7 @@ def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings
 
     names_before = s3_object_names(sqlite_storage.bucket_name)
     with mock.patch(
-        "exporter.sqlite.tasks.storages.SQLiteS3VFSStorage",
+        "exporter.sqlite.tasks.storages.SQLiteS3Storage",
         new=lambda: sqlite_storage,
     ):
         returned = tasks.export_and_upload_sqlite()
@@ -171,7 +171,7 @@ def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
     )
 
     with mock.patch(
-        "exporter.sqlite.tasks.storages.SQLiteS3VFSStorage",
+        "exporter.sqlite.tasks.storages.SQLiteS3Storage",
         new=lambda: sqlite_storage,
     ):
         returned = tasks.export_and_upload_sqlite()
@@ -204,7 +204,7 @@ def test_export_task_ignores_unpublished_and_unapproved_transactions(
 
     names_before = s3_object_names(sqlite_storage.bucket_name)
     with mock.patch(
-        "exporter.sqlite.tasks.storages.SQLiteS3VFSStorage",
+        "exporter.sqlite.tasks.storages.SQLiteS3Storage",
         new=lambda: sqlite_storage,
     ):
         returned = tasks.export_and_upload_sqlite()
