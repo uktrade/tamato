@@ -1379,10 +1379,11 @@ class MeasureGeographicalAreaForm(
         # Perculiarly, serializable data in this form keeps its prefix.
         return super().serializable_data()
 
-    def deserialize_init_kwargs(self, form_kwargs: Dict) -> Dict:
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         # Perculiarly, this Form requires a prefix of "geographical_area".
         return {
-            "prefix": self.prefix,
+            "prefix": cls.prefix,
         }
 
 
