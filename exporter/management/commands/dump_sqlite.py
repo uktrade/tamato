@@ -12,10 +12,13 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        "Create a snapshot of the application database in SQLite format. "
-        "Snapshot file names take the form <transaction-order>.db, where "
-        "<transaction-order> is the value of the last published transaction's "
-        "order attribute."
+        "Create a snapshot of the application database to a file in SQLite "
+        "format. Snapshot file names take the form <transaction-order>.db, "
+        "where <transaction-order> is the value of the last published "
+        "transaction's order attribute. Care should be taken to ensure that "
+        "there is sufficient local file system storage to accomodate the "
+        "SQLite file - if you choose to target remote S3 storage, then a "
+        "temporary local copy of the file will be created and cleaned up."
     )
 
     def add_arguments(self, parser: CommandParser) -> None:
