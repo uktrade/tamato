@@ -47,6 +47,7 @@ from psycopg.types.range import TimestampRange
 
 major, minor, patch = python_version_tuple()
 
+
 def classproperty(fn):
     return classmethod(property(fn))
 
