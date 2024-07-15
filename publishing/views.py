@@ -41,6 +41,7 @@ class PackagedWorkbasketQueueView(
 
     model = PackagedWorkBasket
     permission_required = "publishing.manage_packaging_queue"
+    view_url = reverse_lazy("publishing:packaged-workbasket-queue-ui-list")
 
     def get_template_names(self):
         return ["publishing/packaged_workbasket_queue.jinja"]
@@ -70,19 +71,16 @@ class PackagedWorkbasketQueueView(
         elif post.get("unpause_queue"):
             url = self._unpause_queue(request)
         elif post.get("promote_position"):
-            url = self._promote_position(request, post.get("promote_position"))
+            url = self._promote_position(post.get("promote_position"))
         elif post.get("demote_position"):
-            url = self._demote_position(request, post.get("demote_position"))
+            url = self._demote_position(post.get("demote_position"))
         elif post.get("promote_to_top_position"):
-            url = self._promote_to_top_position(
-                request,
-                post.get("promote_to_top_position"),
-            )
+            url = self._promote_to_top_position(post.get("promote_to_top_position"))
         elif post.get("remove_from_queue"):
-            url = self._remove_from_queue(request, post.get("remove_from_queue"))
+            url = self._remove_from_queue(post.get("remove_from_queue"))
         else:
             # Handle invalid post content by redisplaying the page.
-            url = request.build_absolute_uri()
+            url = self.view_url
 
         return redirect(url)
 
@@ -90,13 +88,13 @@ class PackagedWorkbasketQueueView(
 
     def _pause_queue(self, request):
         OperationalStatus.pause_queue(user=request.user)
-        return request.build_absolute_uri()
+        return self.view_url
 
     def _unpause_queue(self, request):
         OperationalStatus.unpause_queue(user=request.user)
-        return request.build_absolute_uri()
+        return self.view_url
 
-    def _promote_position(self, request, pk):
+    def _promote_position(self, pk):
         try:
             packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             packaged_work_basket.promote_position()
@@ -106,9 +104,9 @@ class PackagedWorkbasketQueueView(
         ):
             # Nothing to do in the case of these exceptions.
             pass
-        return request.build_absolute_uri()
+        return self.view_url
 
-    def _demote_position(self, request, pk):
+    def _demote_position(self, pk):
         try:
             packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             packaged_work_basket.demote_position()
@@ -118,9 +116,9 @@ class PackagedWorkbasketQueueView(
         ):
             # Nothing to do in the case of these exceptions.
             pass
-        return request.build_absolute_uri()
+        return self.view_url
 
-    def _promote_to_top_position(self, request, pk):
+    def _promote_to_top_position(self, pk):
         try:
             packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             packaged_work_basket.promote_to_top_position()
@@ -130,9 +128,9 @@ class PackagedWorkbasketQueueView(
         ):
             # Nothing to do in the case of these exceptions.
             pass
-        return request.build_absolute_uri()
+        return self.view_url
 
-    def _remove_from_queue(self, request, pk):
+    def _remove_from_queue(self, pk):
         try:
             packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             packaged_work_basket.abandon()
@@ -146,7 +144,7 @@ class PackagedWorkbasketQueueView(
             TransitionNotAllowed,
         ):
             # Nothing to do in the case of these exceptions.
-            return request.build_absolute_uri()
+            return self.view_url
 
 
 class EnvelopeQueueView(
@@ -174,20 +172,19 @@ class EnvelopeQueueView(
         return data
 
     def post(self, request, *args, **kwargs):
-        """Manage POST requests, including download, accept and reject
-        envelopes."""
+        """
+        Manage POST requests that signal the start of envelope processing.
 
-        post = request.POST
+        Valid and invalid POST requests alike redisplay the envelope queue view.
+        """
 
-        if post.get("process_envelope"):
-            url = self._process_envelope(request, post.get("process_envelope"))
-        else:
-            # Handle invalid post content by redisplaying the page.
-            url = request.build_absolute_uri()
+        envelope_pk = request.POST.get("process_envelope")
+        if envelope_pk:
+            self._process_envelope(envelope_pk)
 
-        return redirect(url)
+        return redirect(reverse("publishing:envelope-queue-ui-list"))
 
-    def _process_envelope(self, request, pk):
+    def _process_envelope(self, pk):
         if not OperationalStatus.is_queue_paused():
             packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             try:
@@ -195,7 +192,6 @@ class EnvelopeQueueView(
             except TransitionNotAllowed:
                 # No error page right now, just reshow the list view.
                 pass
-        return request.build_absolute_uri()
 
 
 class DownloadEnvelopeMixin:
