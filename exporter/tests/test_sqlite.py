@@ -2,6 +2,7 @@ import tempfile
 from io import BytesIO
 from os import path
 from pathlib import Path
+from typing import Iterator
 from unittest import mock
 
 import apsw
@@ -18,7 +19,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(scope="module")
-def sqlite_template() -> Runner:
+def sqlite_template() -> Iterator[Runner]:
     """
     Provides a template SQLite file with the correct TaMaTo schema but without
     any data.
@@ -33,7 +34,7 @@ def sqlite_template() -> Runner:
 
 
 @pytest.fixture(scope="function")
-def sqlite_database(sqlite_template: Runner) -> Runner:
+def sqlite_database(sqlite_template: Runner) -> Iterator[Runner]:
     """Copies the template file to a new location that will be cleaned up at the
     end of one test."""
     in_memory_database = apsw.Connection(":memory:")
