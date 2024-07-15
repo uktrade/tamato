@@ -42,11 +42,11 @@ from common.pagination import build_pagination_list
 from common.serializers import AutoCompleteSerializer
 from common.util import TaricDateRange
 from common.validators import UpdateType
-from common.views import SortingMixin
-from common.views import TamatoListView
-from common.views import TrackedModelDetailMixin
-from common.views import TrackedModelDetailView
-from common.views import WithPaginationListView
+from common.views.base import TamatoListView
+from common.views.base import TrackedModelDetailView
+from common.views.base import WithPaginationListView
+from common.views.mixins import SortingMixin
+from common.views.mixins import TrackedModelDetailMixin
 from footnotes.models import Footnote
 from geo_areas import constants
 from geo_areas.models import GeographicalArea
@@ -832,14 +832,6 @@ class MeasureCreateWizard(
             for form_key, form_class in self.get_form_list().items()
             if form_key in data_form_keys
         }
-
-    def show_step(self, step) -> bool:
-        """Convenience function to check whether a wizard step should be shown
-        and therefore has data."""
-        condition = self.condition_dict.get(step, True)
-        if callable(condition):
-            condition = condition(self)
-        return condition
 
     @property
     def workbasket(self) -> WorkBasket:

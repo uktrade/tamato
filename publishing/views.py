@@ -16,8 +16,8 @@ from django_fsm import TransitionNotAllowed
 
 from common.filters import TamatoFilter
 from common.util import get_mime_type
-from common.views import WithPaginationListMixin
-from common.views import WithPaginationListView
+from common.views.base import WithPaginationListView
+from common.views.mixins import WithPaginationListMixin
 from publishing.forms import LoadingReportForm
 from publishing.forms import PackagedWorkBasketCreateForm
 from publishing.models import Envelope

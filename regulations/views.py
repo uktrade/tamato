@@ -8,11 +8,11 @@ from rest_framework import viewsets
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
-from common.views import SortingMixin
-from common.views import TamatoListView
-from common.views import TrackedModelDetailMixin
-from common.views import TrackedModelDetailView
-from common.views import WithPaginationListMixin
+from common.views.base import TamatoListView
+from common.views.base import TrackedModelDetailView
+from common.views.mixins import SortingMixin
+from common.views.mixins import TrackedModelDetailMixin
+from common.views.mixins import WithPaginationListMixin
 from measures.models import Measure
 from regulations import business_rules
 from regulations.filters import RegulationFilter

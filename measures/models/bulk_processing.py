@@ -365,8 +365,8 @@ class MeasuresBulkCreator(BulkProcessor):
 
         for form_key, form_class in MeasureCreateWizard.data_form_list:
             if form_key not in self.form_data:
-                # Forms are conditionally included during step processing - see
-                # `MeasureCreateWizard.show_step()` for details.
+                # Forms are conditionally included during step processing
+                # https://django-formtools.readthedocs.io/en/latest/wizard.html#conditionally-view-skip-specific-steps
                 continue
 
             data = self.form_data[form_key]

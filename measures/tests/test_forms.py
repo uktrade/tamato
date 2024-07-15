@@ -1923,3 +1923,27 @@ def test_measure_forms_geo_area_serialize_deserialize(form_data, request):
         assert deserialized_form.is_valid()
         assert type(deserialized_form) == forms.MeasureGeographicalAreaForm
         assert deserialized_form.data == form.data
+
+
+def test_measure_forms_geo_area_serializable_form_data_prefix(erga_omnes):
+    form_data = {
+        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES.value,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaForm(
+            prefix=GEO_AREA_FORM_PREFIX,
+            data=form_data,
+        )
+        assert form.is_valid()
+
+        serializable_form_data = form.serializable_data(
+            remove_key_prefix="geographical_area",
+        )
+
+        deserialized_form = forms.MeasureGeographicalAreaForm(
+            data=serializable_form_data,
+        )
+        assert deserialized_form.is_valid()
+        assert type(deserialized_form) == forms.MeasureGeographicalAreaForm
+        assert deserialized_form.data == form.data

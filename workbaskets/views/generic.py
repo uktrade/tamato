@@ -2,7 +2,7 @@ from django.utils.decorators import method_decorator
 from django.views import generic
 
 from common.validators import UpdateType
-from common.views import TrackedModelChangeView
+from common.views.base import TrackedModelChangeView
 from workbaskets.views.decorators import require_current_workbasket
 
 

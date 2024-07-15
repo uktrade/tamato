@@ -22,11 +22,11 @@ from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from common.serializers import AutoCompleteSerializer
 from common.tariffs_api import URLs
 from common.tariffs_api import get_commodity_data
-from common.views import SortingMixin
-from common.views import TrackedModelDetailMixin
-from common.views import TrackedModelDetailView
-from common.views import WithPaginationListMixin
-from common.views import WithPaginationListView
+from common.views.base import TrackedModelDetailView
+from common.views.base import WithPaginationListView
+from common.views.mixins import SortingMixin
+from common.views.mixins import TrackedModelDetailMixin
+from common.views.mixins import WithPaginationListMixin
 from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView

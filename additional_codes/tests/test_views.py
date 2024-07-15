@@ -22,8 +22,8 @@ from common.tests.util import validity_period_post_data
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
-from common.views import TamatoListView
-from common.views import TrackedModelDetailMixin
+from common.views.base import TamatoListView
+from common.views.mixins import TrackedModelDetailMixin
 
 pytestmark = pytest.mark.django_db
 

@@ -44,10 +44,10 @@ from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
 from common.util import format_date_string
-from common.views import SortingMixin
-from common.views import WithPaginationListMixin
-from common.views import WithPaginationListView
-from common.views import build_pagination_list
+from common.views.base import WithPaginationListView
+from common.views.mixins import SortingMixin
+from common.views.mixins import WithPaginationListMixin
+from common.views.mixins import build_pagination_list
 from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
