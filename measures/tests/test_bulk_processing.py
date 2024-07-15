@@ -173,18 +173,9 @@ def test_bulk_creator_get_forms_cleaned_data_errors(
     mock_lark_duty_sentence_parser,
     mock_duty_sentence_parser,
     user_empty_workbasket,
-    regulation,
     lark_duty_sentence_parser,
     duty_sentence_parser,
-    erga_omnes,
 ):
-    measure_type = factories.MeasureTypeFactory.create(
-        measure_explosion_level=MeasureExplosionLevel.TARIC,
-        measure_component_applicability_code=ApplicabilityCode.PERMITTED,
-        valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
-    )
-    commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
-
     mock_lark_duty_sentence_parser.return_value = lark_duty_sentence_parser
     mock_duty_sentence_parser.return_value = duty_sentence_parser
 
