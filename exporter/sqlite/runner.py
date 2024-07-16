@@ -144,7 +144,8 @@ class Runner:
             yield column[1]
 
     def run_operations(self, operations: Iterable[Operation]):
-        """Runs each operation in `operations` against the SQLite database."""
+        """Runs each operation in `operations` against `database` member
+        attribute (a connection object to an SQLite database file)."""
         cursor = self.database.cursor()
         for operation in operations:
             logger.debug("%s: %s", self.database, operation[0])

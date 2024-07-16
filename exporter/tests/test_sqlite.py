@@ -131,10 +131,10 @@ def test_valid_between_export(
         assert validity_end is None
 
 
-def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings):
+def test_s3_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings):
     """
-    If a file has already been generated for this database state, we don't need
-    to upload it again.
+    If a file has already been generated and uploaded to S3 for this database
+    state, we don't need to upload it again.
 
     This idempotency allows us to regularly run an export check without
     constantly uploading files and wasting bandwidth/money.
@@ -159,6 +159,21 @@ def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings
 
     names_after = s3_object_names(sqlite_storage.bucket_name)
     assert names_before == names_after
+
+
+def test_local_export_task_does_not_replace(tmp_path):
+    """Test that if an SQLite file has already been generated on the local file
+    system at a specific directory location for this database state, then no
+    attempt is made to create it again."""
+    factories.SeedFileTransactionFactory.create(order="999")
+    transaction = factories.PublishedTransactionFactory.create()
+
+    sqlite_file_path = tmp_path / f"{tasks.normalised_order(transaction.order)}.db"
+    sqlite_file_path.write_bytes(b"")
+
+    files_before = set(tmp_path.iterdir())
+    assert not tasks.export_and_upload_sqlite(tmp_path)
+    assert files_before == set(tmp_path.iterdir())
 
 
 def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
