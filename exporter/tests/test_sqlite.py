@@ -170,13 +170,13 @@ def test_local_export_task_does_not_replace(tmp_path):
 
     sqlite_file_path = tmp_path / f"{tasks.normalised_order(transaction.order)}.db"
     sqlite_file_path.write_bytes(b"")
-
     files_before = set(tmp_path.iterdir())
+
     assert not tasks.export_and_upload_sqlite(tmp_path)
     assert files_before == set(tmp_path.iterdir())
 
 
-def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
+def test_s3_export_task_uploads(sqlite_storage, s3_object_names, settings):
     """The export system should actually upload a file to S3."""
     factories.SeedFileTransactionFactory.create(order="999")
     transaction = factories.PublishedTransactionFactory.create()
@@ -196,6 +196,18 @@ def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
     assert any(
         n.startswith(expected_key) for n in s3_object_names(sqlite_storage.bucket_name)
     )
+
+
+def test_local_export_task_saves(tmp_path):
+    """Test that export correctly saves a file to the local file system."""
+    factories.SeedFileTransactionFactory.create(order="999")
+    transaction = factories.PublishedTransactionFactory.create()
+
+    sqlite_file_path = tmp_path / f"{tasks.normalised_order(transaction.order)}.db"
+    files_before = set(tmp_path.iterdir())
+
+    assert tasks.export_and_upload_sqlite(tmp_path)
+    assert files_before | {sqlite_file_path} == set(tmp_path.iterdir())
 
 
 def test_export_task_ignores_unpublished_and_unapproved_transactions(
