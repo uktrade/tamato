@@ -210,14 +210,14 @@ def test_local_export_task_saves(tmp_path):
     assert files_before | {sqlite_file_path} == set(tmp_path.iterdir())
 
 
-def test_export_task_ignores_unpublished_and_unapproved_transactions(
+def test_s3_export_task_ignores_unpublished_and_unapproved_transactions(
     sqlite_storage,
     s3_object_names,
     settings,
 ):
-    """Only transactions that have been approved should be included in the
-    upload as draft data may be sensitive and unpublished, and shouldn't be
-    included."""
+    """Only transactions that have been published should be included in the
+    upload as draft and queued data may be sensitive and unpublished, and should
+    therefore not be included."""
     factories.SeedFileTransactionFactory.create(order="999")
     transaction = factories.PublishedTransactionFactory.create(order="123")
     factories.ApprovedTransactionFactory.create(order="124")
@@ -240,3 +240,19 @@ def test_export_task_ignores_unpublished_and_unapproved_transactions(
 
     names_after = s3_object_names(sqlite_storage.bucket_name)
     assert names_before == names_after
+
+
+def test_local_export_task_ignores_unpublished_and_unapproved_transactions(tmp_path):
+    """Only transactions that have been published should be included in the
+    upload as draft and queued data may be sensitive and unpublished, and should
+    therefore not be included."""
+    factories.SeedFileTransactionFactory.create(order="999")
+    transaction = factories.PublishedTransactionFactory.create(order="123")
+    factories.ApprovedTransactionFactory.create(order="124")
+    factories.UnapprovedTransactionFactory.create(order="125")
+
+    sqlite_file_path = tmp_path / f"{tasks.normalised_order(transaction.order)}.db"
+    files_before = set(tmp_path.iterdir())
+
+    assert tasks.export_and_upload_sqlite(tmp_path)
+    assert files_before | {sqlite_file_path} == set(tmp_path.iterdir())
