@@ -621,7 +621,9 @@ class PackagedWorkBasket(TimestampedMixin):
                 "because it is not at position 1.",
             )
 
-        PackagedWorkBasket.objects.filter(position__gt=0).update(
+        PackagedWorkBasket.objects.select_for_update(nowait=True).filter(
+            position__gt=0,
+        ).update(
             position=F("position") - 1,
         )
         self.refresh_from_db()
@@ -648,7 +650,9 @@ class PackagedWorkBasket(TimestampedMixin):
         self.position = 0
         self.save()
 
-        PackagedWorkBasket.objects.filter(position__gt=current_position).update(
+        PackagedWorkBasket.objects.select_for_update(nowait=True).filter(
+            position__gt=current_position,
+        ).update(
             position=F("position") - 1,
         )
         self.refresh_from_db()
@@ -666,7 +670,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
         position = self.position
 
-        PackagedWorkBasket.objects.filter(
+        PackagedWorkBasket.objects.select_for_update(nowait=True).filter(
             Q(position__gte=1) & Q(position__lt=position),
         ).update(position=F("position") + 1)
 
@@ -684,7 +688,9 @@ class PackagedWorkBasket(TimestampedMixin):
         if self.position == 1:
             return
 
-        obj_to_swap = PackagedWorkBasket.objects.get(position=self.position - 1)
+        obj_to_swap = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            position=self.position - 1,
+        )
         obj_to_swap.position += 1
         self.position -= 1
         PackagedWorkBasket.objects.bulk_update(
@@ -704,7 +710,9 @@ class PackagedWorkBasket(TimestampedMixin):
         if self.position == PackagedWorkBasket.objects.max_position():
             return
 
-        obj_to_swap = PackagedWorkBasket.objects.get(position=self.position + 1)
+        obj_to_swap = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            position=self.position + 1,
+        )
         obj_to_swap.position -= 1
         self.position += 1
         PackagedWorkBasket.objects.bulk_update(

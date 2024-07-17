@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
+from django.db import OperationalError
 from django.db.transaction import atomic
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -94,45 +95,60 @@ class PackagedWorkbasketQueueView(
         OperationalStatus.unpause_queue(user=request.user)
         return self.view_url
 
+    @atomic
     def _promote_position(self, pk):
         try:
-            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
+                nowait=True,
+            ).get(pk=pk)
             packaged_work_basket.promote_position()
         except (
             PackagedWorkBasket.DoesNotExist,
             PackagedWorkBasketInvalidQueueOperation,
+            OperationalError,
         ):
             # Nothing to do in the case of these exceptions.
             pass
         return self.view_url
 
+    @atomic
     def _demote_position(self, pk):
         try:
-            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
+                nowait=True,
+            ).get(pk=pk)
             packaged_work_basket.demote_position()
         except (
             PackagedWorkBasket.DoesNotExist,
             PackagedWorkBasketInvalidQueueOperation,
+            OperationalError,
         ):
             # Nothing to do in the case of these exceptions.
             pass
         return self.view_url
 
+    @atomic
     def _promote_to_top_position(self, pk):
         try:
-            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
+                nowait=True,
+            ).get(pk=pk)
             packaged_work_basket.promote_to_top_position()
         except (
             PackagedWorkBasket.DoesNotExist,
             PackagedWorkBasketInvalidQueueOperation,
+            OperationalError,
         ):
             # Nothing to do in the case of these exceptions.
             pass
         return self.view_url
 
+    @atomic
     def _remove_from_queue(self, pk):
         try:
-            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
+                nowait=True,
+            ).get(pk=pk)
             packaged_work_basket.abandon()
             return reverse(
                 "workbaskets:workbasket-ui-changes",
@@ -142,6 +158,7 @@ class PackagedWorkbasketQueueView(
             PackagedWorkBasket.DoesNotExist,
             PackagedWorkBasketInvalidQueueOperation,
             TransitionNotAllowed,
+            OperationalError,
         ):
             # Nothing to do in the case of these exceptions.
             return self.view_url
@@ -184,12 +201,15 @@ class EnvelopeQueueView(
 
         return redirect(reverse("publishing:envelope-queue-ui-list"))
 
+    @atomic
     def _process_envelope(self, pk):
         if not OperationalStatus.is_queue_paused():
-            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
+                nowait=True,
+            ).get(pk=pk)
             try:
                 packaged_work_basket.begin_processing()
-            except TransitionNotAllowed:
+            except (TransitionNotAllowed, OperationalError):
                 # No error page right now, just reshow the list view.
                 pass
 
