@@ -6,8 +6,8 @@ from django.urls import reverse_lazy
 from django.views.generic import DetailView
 from django.views.generic import FormView
 
-from common.views.base import WithPaginationListView
-from common.views.mixins import RequiresSuperuserMixin
+from common.views import RequiresSuperuserMixin
+from common.views import WithPaginationListView
 from importer.filters import ImportBatchFilter
 from importer.models import ImportBatch
 from importer.models import ImporterChunkStatus

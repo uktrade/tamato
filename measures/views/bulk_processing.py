@@ -11,7 +11,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormView
 
-from common.views.base import WithPaginationListView
+from common.views import WithPaginationListView
 from measures import models
 from measures.filters import MeasureCreateTaskFilter
 from measures.forms import CancelBulkProcessorTaskForm

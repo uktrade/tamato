@@ -11,8 +11,8 @@ from django.views.generic import View
 
 from common.forms import unprefix_formset_data
 from common.validators import UpdateType
-from common.views.base import TrackedModelDetailView
-from common.views.mixins import TrackedModelDetailMixin
+from common.views import TrackedModelDetailMixin
+from common.views import TrackedModelDetailView
 from measures import forms
 from measures import models
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX

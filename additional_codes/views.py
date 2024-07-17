@@ -26,10 +26,10 @@ from additional_codes.serializers import AdditionalCodeTypeSerializer
 from common.models import TrackedModel
 from common.serializers import AutoCompleteSerializer
 from common.validators import UpdateType
-from common.views.base import TamatoListView
-from common.views.base import TrackedModelDetailView
-from common.views.mixins import DescriptionDeleteMixin
-from common.views.mixins import TrackedModelDetailMixin
+from common.views import DescriptionDeleteMixin
+from common.views import TamatoListView
+from common.views import TrackedModelDetailMixin
+from common.views import TrackedModelDetailView
 from measures.models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricCreateView

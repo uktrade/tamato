@@ -15,8 +15,8 @@ from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
-from common.views.base import TamatoListView
-from common.views.mixins import TrackedModelDetailMixin
+from common.views import TamatoListView
+from common.views import TrackedModelDetailMixin
 from geo_areas.validators import AreaCode
 from quotas import models
 from quotas import validators

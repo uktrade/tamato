@@ -2,7 +2,7 @@ from itertools import groupby
 from operator import attrgetter
 from typing import Any
 
-from common.views.base import TrackedModelDetailView
+from common.views import TrackedModelDetailView
 from measures import models
 from measures.views.mixins import MeasureMixin
 

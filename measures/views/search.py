@@ -11,8 +11,8 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from commodities.models.orm import GoodsNomenclature
 from common.pagination import build_pagination_list
-from common.views.base import TamatoListView
-from common.views.mixins import SortingMixin
+from common.views import SortingMixin
+from common.views import TamatoListView
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from measures import models

@@ -13,9 +13,9 @@ from django.urls import reverse_lazy
 from checks.tests.factories import TrackedModelCheckFactory
 from common.tests import factories
 from common.util import xml_fromstring
-from common.views.base import handler403
-from common.views.base import handler500
-from common.views.pages import HealthCheckView
+from common.views import HealthCheckView
+from common.views import handler403
+from common.views import handler500
 from tasks.models import UserAssignment
 from workbaskets.validators import WorkflowStatus
 
@@ -54,19 +54,19 @@ def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
 @pytest.mark.parametrize(
     "check_to_mock, mock_result",
     [
-        ("common.views.pages.HealthCheckView.check_database", ("OK", 200)),
-        ("common.views.pages.HealthCheckView.check_redis_cache", ("OK", 200)),
-        ("common.views.pages.HealthCheckView.check_database", ("Not OK", 503)),
-        ("common.views.pages.HealthCheckView.check_redis_cache", ("Not OK", 503)),
-        ("common.views.pages.HealthCheckView.check_celery_broker", ("Not OK", 503)),
-        ("common.views.pages.HealthCheckView.check_s3", ("Not OK", 503)),
+        ("common.views.HealthCheckView.check_database", ("OK", 200)),
+        ("common.views.HealthCheckView.check_redis_cache", ("OK", 200)),
+        ("common.views.HealthCheckView.check_database", ("Not OK", 503)),
+        ("common.views.HealthCheckView.check_redis_cache", ("Not OK", 503)),
+        ("common.views.HealthCheckView.check_celery_broker", ("Not OK", 503)),
+        ("common.views.HealthCheckView.check_s3", ("Not OK", 503)),
     ],
 )
 @patch(
-    "common.views.pages.HealthCheckView.check_celery_broker",
+    "common.views.HealthCheckView.check_celery_broker",
     return_value=("OK", 200),
 )
-@patch("common.views.pages.HealthCheckView.check_s3", return_value=("OK", 200))
+@patch("common.views.HealthCheckView.check_s3", return_value=("OK", 200))
 def test_health_check_view_response(
     check_celery_broker_mock,
     check_s3_mock,
@@ -119,7 +119,7 @@ def test_app_info_superuser(superuser_client, new_workbasket):
         },
     ]
 
-    with patch("common.views.pages.sqlite_dumps", return_value=sqlite_dumps):
+    with patch("common.views.sqlite_dumps", return_value=sqlite_dumps):
         response = superuser_client.get(reverse("app-info"))
 
     assert response.status_code == 200

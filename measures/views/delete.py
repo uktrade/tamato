@@ -4,7 +4,7 @@ from django.views.generic import ListView
 from django.views.generic import TemplateView
 
 from common.validators import UpdateType
-from common.views.mixins import TrackedModelDetailMixin
+from common.views import TrackedModelDetailMixin
 from measures import forms
 from workbaskets.models import WorkBasket
 from workbaskets.views.generic import CreateTaricDeleteView

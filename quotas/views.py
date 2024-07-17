@@ -22,10 +22,10 @@ from common.tariffs_api import URLs
 from common.tariffs_api import get_quota_data
 from common.tariffs_api import get_quota_definitions_data
 from common.validators import UpdateType
-from common.views.base import TamatoListView
-from common.views.base import TrackedModelDetailView
-from common.views.mixins import SortingMixin
-from common.views.mixins import TrackedModelDetailMixin
+from common.views import SortingMixin
+from common.views import TamatoListView
+from common.views import TrackedModelDetailMixin
+from common.views import TrackedModelDetailView
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures.models import Measure

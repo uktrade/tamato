@@ -28,8 +28,8 @@ from common.tests.util import view_urlpattern_ids
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
-from common.views.base import TamatoListView
-from common.views.mixins import TrackedModelDetailMixin
+from common.views import TamatoListView
+from common.views import TrackedModelDetailMixin
 from geo_areas.validators import AreaCode
 from measures.business_rules import ME70
 from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX

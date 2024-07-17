@@ -18,8 +18,8 @@ from common.tests.util import validity_start_delta
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
 from common.validators import UpdateType
-from common.views.base import TamatoListView
-from common.views.mixins import TrackedModelDetailMixin
+from common.views import TamatoListView
+from common.views import TrackedModelDetailMixin
 from footnotes.models import Footnote
 from footnotes.models import FootnoteDescription
 from footnotes.views import FootnoteDetailMeasures

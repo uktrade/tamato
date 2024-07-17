@@ -8,10 +8,11 @@ from django.views.generic.edit import FormMixin
 from django_filters.views import FilterView
 
 from common.validators import UpdateType
-from common.views.mixins import BusinessRulesMixin
-from common.views.mixins import TrackedModelDetailMixin
-from common.views.mixins import WithPaginationListMixin
 from workbaskets.views.mixins import WithCurrentWorkBasket
+
+from .mixins import BusinessRulesMixin
+from .mixins import TrackedModelDetailMixin
+from .mixins import WithPaginationListMixin
 
 
 def handler403(request, *args, **kwargs):

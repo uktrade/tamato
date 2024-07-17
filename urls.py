@@ -46,13 +46,13 @@ if not settings.MAINTENANCE_MODE:
         path("admin/", admin.site.urls),
     }
 
-handler403 = "common.views.base.handler403"
-handler500 = "common.views.base.handler500"
+handler403 = "common.views.handler403"
+handler500 = "common.views.handler500"
 
 if settings.DEBUG:
     urlpatterns += [
-        path("403/", common.views.base.handler403, name="handler403"),
-        path("500/", common.views.base.handler500, name="handler500"),
+        path("403/", common.views.handler403, name="handler403"),
+        path("500/", common.views.handler500, name="handler500"),
     ]
 
 if settings.SSO_ENABLED:
