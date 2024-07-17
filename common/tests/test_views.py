@@ -119,7 +119,7 @@ def test_app_info_superuser(superuser_client, new_workbasket):
         },
     ]
 
-    with patch("common.views.sqlite_dumps", return_value=sqlite_dumps):
+    with patch("common.views.pages.sqlite_dumps", return_value=sqlite_dumps):
         response = superuser_client.get(reverse("app-info"))
 
     assert response.status_code == 200
