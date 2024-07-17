@@ -11,7 +11,7 @@ from django.urls import register_converter
 
 from common import views
 from common.path_converters import NumericSIDConverter
-from measures.views import DutySentenceReference
+from measures import views as measure_views
 
 register_converter(NumericSIDConverter, "sid")
 
@@ -23,7 +23,7 @@ urlpatterns = [
     path("app-info", views.AppInfoView.as_view(), name="app-info"),
     path(
         "duties/",
-        DutySentenceReference.as_view(),
+        measure_views.DutySentenceReference.as_view(),
         name="duties",
     ),
     path(
