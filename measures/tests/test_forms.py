@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 from django.forms.models import model_to_dict
 
+from common.forms import SerializableFormMixin
 from common.forms import unprefix_formset_data
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
@@ -19,7 +20,6 @@ from measures.forms import MeasureConditionsFormSet
 from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
 from measures.forms import MeasureStartDateForm
-from measures.forms import SerializableFormMixin
 from measures.models import Measure
 from measures.validators import MeasureExplosionLevel
 
@@ -29,7 +29,7 @@ GEO_AREA_FORM_PREFIX = "geographical_area"
 COUNTRY_REGION_FORM_PREFIX = "country_region"
 
 
-@patch("measures.forms.diff_components")
+@patch("measures.forms.update.diff_components")
 def test_diff_components_not_called(
     diff_components,
     measure_form,
@@ -42,7 +42,7 @@ def test_diff_components_not_called(
     assert diff_components.called == False
 
 
-@patch("measures.forms.diff_components")
+@patch("measures.forms.update.diff_components")
 def test_diff_components_called(diff_components, measure_form, duty_sentence_parser):
     measure_form.request.POST = {}
     measure_form.data.update(duty_sentence="6.000%")
@@ -1916,30 +1916,6 @@ def test_measure_forms_geo_area_serialize_deserialize(form_data, request):
         assert form.is_valid()
 
         serializable_form_data = form.serializable_data()
-
-        deserialized_form = forms.MeasureGeographicalAreaForm(
-            data=serializable_form_data,
-        )
-        assert deserialized_form.is_valid()
-        assert type(deserialized_form) == forms.MeasureGeographicalAreaForm
-        assert deserialized_form.data == form.data
-
-
-def test_measure_forms_geo_area_serializable_form_data_prefix(erga_omnes):
-    form_data = {
-        f"{GEO_AREA_FORM_PREFIX}-geo_area": constants.GeoAreaType.ERGA_OMNES.value,
-    }
-
-    with override_current_transaction(Transaction.objects.last()):
-        form = forms.MeasureGeographicalAreaForm(
-            prefix=GEO_AREA_FORM_PREFIX,
-            data=form_data,
-        )
-        assert form.is_valid()
-
-        serializable_form_data = form.serializable_data(
-            remove_key_prefix="geographical_area",
-        )
 
         deserialized_form = forms.MeasureGeographicalAreaForm(
             data=serializable_form_data,

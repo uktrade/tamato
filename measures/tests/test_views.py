@@ -32,9 +32,9 @@ from common.views.base import TamatoListView
 from common.views.mixins import TrackedModelDetailMixin
 from geo_areas.validators import AreaCode
 from measures.business_rules import ME70
+from measures.constants import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.constants import START
 from measures.constants import MeasureEditSteps
-from measures.forms import MEASURE_CONDITIONS_FORMSET_PREFIX
 from measures.models import FootnoteAssociationMeasure
 from measures.models import Measure
 from measures.models import MeasureCondition
@@ -1171,7 +1171,7 @@ def test_measure_form_wizard_start(client_with_current_workbasket):
 
 @override_settings(MEASURES_ASYNC_CREATION=False)
 @unittest.mock.patch("measures.parsers.DutySentenceParser")
-@unittest.mock.patch("measures.forms.LarkDutySentenceParser")
+@unittest.mock.patch("measures.forms.wizard.LarkDutySentenceParser")
 def test_measure_form_wizard_finish(
     mock_lark_duty_sentence_parser,
     mock_duty_sentence_parser,
