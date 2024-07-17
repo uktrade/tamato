@@ -142,15 +142,19 @@ class PackagedWorkBasketManager(Manager):
                 f"{packaged_work_baskets}.",
             )
 
-        position = (
-            PackagedWorkBasket.objects.aggregate(
-                out=Coalesce(
-                    Max("position"),
-                    Value(0),
-                ),
-            )["out"]
-            + 1
-        )
+        packaged_workbaskets = PackagedWorkBasket.objects.select_for_update().all()
+        if packaged_workbaskets:
+            position = (
+                packaged_workbaskets.aggregate(
+                    out=Coalesce(
+                        Max("position"),
+                        Value(0),
+                    ),
+                )["out"]
+                + 1
+            )
+        else:
+            position = 1
 
         new_obj = super().create(workbasket=workbasket, position=position, **kwargs)
 
