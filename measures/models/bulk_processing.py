@@ -414,3 +414,76 @@ class MeasuresBulkCreator(BulkProcessor):
         for form_errors in errors:
             for error_key, error_values in form_errors.items():
                 logger.error(f"{error_key}: {error_values}")
+
+
+class MeasuresBulkEditorManager(models.Manager):
+    """Model Manager for MeasuresBulkEditor models."""
+
+    def create(
+        self,
+        form_data: Dict,
+        form_kwargs: Dict,
+        workbasket,
+        user,
+        selected_measures,
+        **kwargs,
+    ) -> "MeasuresBulkCreator":
+        """Create and save an instance of MeasuresBulkEditor."""
+
+        return super().create(
+            form_data=form_data,
+            form_kwargs=form_kwargs,
+            workbasket=workbasket,
+            user=user,
+            selected_measures=selected_measures,
+            **kwargs,
+        )
+
+
+class MeasuresBulkEditor(BulkProcessor):
+    """
+    Model class used to bulk edit Measures instances from serialized form
+    data.
+
+    The stored form data is serialized and deserialized by Forms that subclass
+    SerializableFormMixin.
+    """
+
+    objects = MeasuresBulkEditorManager()
+
+    form_data = models.JSONField()
+    """Dictionary of all Form.data, used to reconstruct bound Form instances as
+    if the form data had been sumbitted by the user within the measure wizard
+    process."""
+
+    form_kwargs = models.JSONField()
+    """Dictionary of all form init data, excluding a form's `data` param (which
+    is preserved via this class's `form_data` attribute)."""
+
+    selected_measures = models.JSONField()
+    """List of all measures that have been selected for bulk editing."""
+
+    workbasket = models.ForeignKey(
+        "workbaskets.WorkBasket",
+        on_delete=REVOKE_TASKS_AND_SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The workbasket with which created measures are associated."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The user who submitted the task to create measures."""
+
+    def schedule_task(self) -> AsyncResult:
+        """Implementation of base class method."""
+        pass
+
+    @atomic
+    def edit_measures(self) -> Iterable[Measure]:
+        """TBC"""
+        pass
