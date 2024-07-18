@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 
 from common.tests.util import check_validator
 from common.validators import AlphanumericValidator
@@ -8,6 +9,8 @@ from common.validators import NumericSIDValidator
 from common.validators import NumericValidator
 from common.validators import PasswordPolicyValidator
 from common.validators import SymbolValidator
+from common.validators import validate_filename
+from common.validators import validate_filepath
 
 
 @pytest.mark.parametrize(
@@ -116,3 +119,63 @@ def test_numeric_validator(value, expected_valid):
 def test_password_policy_validator(value, expected_valid):
     validator = PasswordPolicyValidator()
     check_validator(validator.validate, value, expected_valid)
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "TGB123",
+        "TGB123-v2.xml",
+        "TGB123_v3.xml",
+    ],
+)
+def test_validate_filename_valid_name(filename):
+    try:
+        validate_filename(filename)
+    except ValidationError:
+        pytest.fail(
+            f'Unexpected ValidationError exception raised for filename "{filename}"',
+        )
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "../dotdot/separator",
+        "$p£(!@lc|-|ars).txt",
+        "test.html%00.xml",
+    ],
+)
+def test_validate_filename_raises_exception(filename):
+    with pytest.raises(ValidationError):
+        validate_filename(filename)
+
+
+@pytest.mark.parametrize(
+    ("source", "base_path"),
+    [
+        ("common", ""),
+        ("common/tests/", "common/"),
+        ("common/tests/test_files", "common/"),
+        ("common/tests/test_files/dtd.xml", "common/tests/test_files"),
+    ],
+)
+def test_validate_filepath_valid_path(source, base_path):
+    try:
+        validate_filepath(source, base_path)
+    except ValidationError:
+        pytest.fail(
+            f'Unexpected ValidationError exception raised for source "{source}" and base_path "{base_path}"',
+        )
+
+
+@pytest.mark.parametrize(
+    ("source", "base_path"),
+    [
+        ("../../etc/passwd", ""),
+        ("common/tests/../../../outside", "common/"),
+    ],
+)
+def test_validate_filepath_raises_exception(source, base_path):
+    with pytest.raises(ValidationError):
+        validate_filepath(source, base_path)
