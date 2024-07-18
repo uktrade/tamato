@@ -19,3 +19,8 @@
 .right-arrow {
   font-size: 1rem;
 }
+
+// Make sure any text that doesn't have explicit class styles is using the govuk font and not the default serif
+body {
+  @extend .govuk-body;
+}

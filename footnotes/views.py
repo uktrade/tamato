@@ -209,7 +209,7 @@ class FootnoteDetailMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     @property
     def footnote(self):
-        return models.Footnote.objects.get(
+        return models.Footnote.objects.current().get(
             footnote_type__footnote_type_id=self.kwargs[
                 "footnote_type__footnote_type_id"
             ],
