@@ -481,7 +481,8 @@ class MeasuresBulkEditor(BulkProcessor):
 
     def schedule_task(self) -> AsyncResult:
         """Implementation of base class method."""
-        pass
+        logger.info("Task was Scheduled!!")
+        
 
     @atomic
     def edit_measures(self) -> Iterable[Measure]:
