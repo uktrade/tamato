@@ -10,7 +10,9 @@ from datetime import datetime
 from datetime import timedelta
 from functools import lru_cache
 from functools import partial
+from pathlib import Path
 from platform import python_version_tuple
+from typing import IO
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -556,7 +558,7 @@ def check_docinfo(elementtree, forbid_dtd=False):
             raise DTDForbidden(docinfo.doctype, docinfo.system_url, docinfo.public_id)
 
 
-def parse_xml(source, forbid_dtd=True):
+def parse_xml(source: Union[str, Path, IO], forbid_dtd=True):
     parser = etree.XMLParser(resolve_entities=False)
     elementtree = etree.parse(source, parser)
     check_docinfo(elementtree, forbid_dtd=forbid_dtd)
