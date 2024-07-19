@@ -39,9 +39,13 @@ def test_dump_sqlite_command(asynchronous_flag, save_local_flag_value):
 
         if asynchronous_flag:
             mock_export_and_upload_sqlite.assert_not_called()
-            mock_export_and_upload_sqlite.delay.assert_called_once_with(save_local_flag_value)
+            mock_export_and_upload_sqlite.delay.assert_called_once_with(
+                save_local_flag_value,
+            )
         else:
-            mock_export_and_upload_sqlite.assert_called_once_with(save_local_flag_value)
+            mock_export_and_upload_sqlite.assert_called_once_with(
+                save_local_flag_value,
+            )
             mock_export_and_upload_sqlite.delay.assert_not_called()
 
 
