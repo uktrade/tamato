@@ -317,9 +317,7 @@ class HealthCheckView(View):
                     endpoint_url=settings.S3_ENDPOINT_URL,
                     region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
                 )
-            client.head_bucket(
-                Bucket=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME,
-            )
+            client.head_bucket(Bucket=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME)
             return "OK", 200
         except (ClientError, EndpointConnectionError):
             return "S3 health check failed", 503
@@ -441,14 +439,10 @@ class AppInfoView(
             data["APP_UPDATED_TIME"] = AppInfoView.timestamp_to_datetime_string(
                 os.path.getmtime(__file__),
             )
-            last_transaction = Transaction.objects.order_by(
-                "updated_at",
-            ).last()
+            last_transaction = Transaction.objects.order_by("updated_at").last()
             data["LAST_TRANSACTION_TIME"] = (
                 format(
-                    last_transaction.updated_at.strftime(
-                        AppInfoView.DATETIME_FORMAT,
-                    ),
+                    last_transaction.updated_at.strftime(AppInfoView.DATETIME_FORMAT),
                 )
                 if last_transaction
                 else "No transactions"
@@ -535,9 +529,7 @@ class TrackedModelDetailMixin:
         try:
             obj = queryset.get()
         except queryset.model.DoesNotExist:
-            raise Http404(
-                f"No {self.model.__name__} matching the query {self.kwargs}",
-            )
+            raise Http404(f"No {self.model.__name__} matching the query {self.kwargs}")
 
         return obj
 
@@ -670,15 +662,10 @@ class SortingMixin:
             self,
             "sort_by_fields",
         ), "SortingMixin requires class attribute sort_by_fields to be set"
-        assert isinstance(
-            self.sort_by_fields,
-            list,
-        ), "sort_by_fields must be a list"
+        assert isinstance(self.sort_by_fields, list), "sort_by_fields must be a list"
 
         if sort_by and sort_by in self.sort_by_fields:
-            if hasattr(self, "custom_sorting") and self.custom_sorting.get(
-                sort_by,
-            ):
+            if hasattr(self, "custom_sorting") and self.custom_sorting.get(sort_by):
                 sort_by = self.custom_sorting.get(sort_by)
 
             if ordered == "desc":
@@ -691,19 +678,11 @@ class SortingMixin:
 
 
 def handler403(request, *args, **kwargs):
-    return TemplateResponse(
-        request=request,
-        template="common/403.jinja",
-        status=403,
-    )
+    return TemplateResponse(request=request, template="common/403.jinja", status=403)
 
 
 def handler500(request, *args, **kwargs):
-    return TemplateResponse(
-        request=request,
-        template="common/500.jinja",
-        status=500,
-    )
+    return TemplateResponse(request=request, template="common/500.jinja", status=500)
 
 
 class MaintenanceView(TemplateView):

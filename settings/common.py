@@ -282,7 +282,7 @@ if is_copilot():
     ALLOWED_HOSTS = setup_allowed_hosts(ALLOWED_HOSTS)
 # Govuk PaaS
 elif "VCAP_APPLICATION" in os.environ:
-    # Under PaaS, if ALLOW_PAAS_URIS is set fetch trusted domains from VCAP_APPLICATION env var
+    # Under PaaS, if ALLOW_PAAS_URIS is set, fetch trusted domains from VCAP_APPLICATION env var
     paas_hosts = json.loads(os.environ["VCAP_APPLICATION"])["uris"]
     ALLOWED_HOSTS.extend(paas_hosts)
 
@@ -860,7 +860,6 @@ WEBPACK_LOADER = {
         "STATS_FILE": join(BASE_DIR, "webpack-stats.json"),
     },
 }
-
 
 TRANSACTION_SCHEMA = os.getenv("TRANSACTION_SCHEMA", "workbaskets.models.SEED_FIRST")
 
