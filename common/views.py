@@ -14,6 +14,7 @@ import django.contrib.auth.views
 import kombu.exceptions
 from botocore.exceptions import ClientError
 from botocore.exceptions import EndpointConnectionError
+from dbt_copilot_python.utility import is_copilot
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -302,13 +303,20 @@ class HealthCheckView(View):
 
     def check_s3(self) -> Tuple[str, int]:
         try:
-            client = boto3.client(
-                "s3",
-                aws_access_key_id=settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY,
-                endpoint_url=settings.S3_ENDPOINT_URL,
-                region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
-            )
+            if is_copilot():
+                client = boto3.client(
+                    "s3",
+                    endpoint_url=settings.S3_ENDPOINT_URL,
+                    region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
+                )
+            else:
+                client = boto3.client(
+                    "s3",
+                    aws_access_key_id=settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY,
+                    endpoint_url=settings.S3_ENDPOINT_URL,
+                    region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
+                )
             client.head_bucket(Bucket=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME)
             return "OK", 200
         except (ClientError, EndpointConnectionError):
