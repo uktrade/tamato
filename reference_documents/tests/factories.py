@@ -128,9 +128,16 @@ class RefOrderNumberFactory(factory.django.DjangoModelFactory):
     )
 
 
-class RefQuotaDefinitionFactory(factory.django.DjangoModelFactory):
+class RefQuotaDefinitionRangeFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "reference_documents.RefQuotaDefinition"
+        model = "reference_documents.RefQuotaDefinitionRange"
+
+    start_day = 1
+    start_month = 1
+    start_year = 2020
+    end_day = 31
+    end_month = 12
+    end_year = 2024
 
     commodity_code = FuzzyText(length=6, chars=string.digits, suffix="0000")
 
@@ -140,9 +147,69 @@ class RefQuotaDefinitionFactory(factory.django.DjangoModelFactory):
         RefOrderNumberFactory,
     )
 
-    volume = FuzzyDecimal(100.0, 10000.0, 1)
+    initial_volume = FuzzyDecimal(100.0, 10000.0, 1)
+    yearly_volume_increment = FuzzyDecimal(10.0, 30.0, 1)
+    yearly_volume_increment_text = ''
+    measurement = "Tonne"
 
-    measurement = "tonnes"
+
+class RefQuotaDefinitionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.RefQuotaDefinition"
+
+    commodity_code = FuzzyText(length=6, chars=string.digits, suffix="0000")
+    duty_rate = FuzzyText(length=2, chars=string.digits, suffix="%")
+    ref_order_number = factory.SubFactory(
+        RefOrderNumberFactory,
+    )
+    volume = FuzzyDecimal(100.0, 10000.0, 1)
+    measurement = "Tonne"
+    valid_between = TaricDateRange(
+        get_random_date(
+            date.today() + timedelta(days=-(365 * 2)),
+            date.today() + timedelta(days=-365),
+        ),
+        get_random_date(
+            date.today() + timedelta(days=-364),
+            date.today(),
+        ),
+    )
+
+    class Params:
+        valid_between_current = factory.Trait(
+            valid_between=TaricDateRange(
+                date.today() + timedelta(days=-200),
+                date.today() + timedelta(days=165),
+            ),
+        )
+        valid_between_current_open_ended = factory.Trait(
+            valid_between=TaricDateRange(
+                date.today() + timedelta(days=-200),
+                None,
+            ),
+        )
+        valid_between_in_past = factory.Trait(
+            valid_between=TaricDateRange(
+                date.today() + timedelta(days=-375),
+                date.today() + timedelta(days=-10),
+            ),
+        )
+        valid_between_in_future = factory.Trait(
+            valid_between=TaricDateRange(
+                date.today() + timedelta(days=10),
+                date.today() + timedelta(days=375),
+            ),
+        )
+
+
+
+class RefQuotaSuspensionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.RefQuotaSuspension"
+
+    ref_quota_definition = factory.SubFactory(
+        RefQuotaDefinitionFactory,
+    )
 
     valid_between = TaricDateRange(
         get_random_date(
@@ -180,3 +247,19 @@ class RefQuotaDefinitionFactory(factory.django.DjangoModelFactory):
                 date.today() + timedelta(days=375),
             ),
         )
+
+
+class RefQuotaSuspensionRangeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.RefQuotaSuspensionRange"
+
+    ref_quota_definition_range = factory.SubFactory(
+        RefQuotaDefinitionRangeFactory,
+    )
+
+    start_day = 1
+    start_month = 2
+    start_year = 2020
+    end_day = 28
+    end_month = 9
+    end_year = 2024

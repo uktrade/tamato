@@ -1,6 +1,7 @@
 import abc
 from datetime import date
 from datetime import timedelta
+from typing import Optional
 
 from django.db.models import Q
 
@@ -13,7 +14,7 @@ from common.util import TaricDateRange
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from measures.models import Measure
-from quotas.models import QuotaDefinition, QuotaAssociation
+from quotas.models import QuotaDefinition, QuotaAssociation, QuotaSuspension
 from quotas.models import QuotaOrderNumber
 from reference_documents.models import RefQuotaDefinition, RefQuotaSuspension, AlignmentReportCheckStatus
 from reference_documents.models import RefOrderNumber
@@ -26,18 +27,12 @@ class BaseCheck(abc.ABC):
     def __init__(self):
         self.dependent_on_passing_check = None
 
-    def tap_order_number(self, order_number: str, valid_between: TaricDateRange):
+    def tap_order_number(self, order_number: str):
         """Finds order number in TAP for a given preferential quota."""
 
         kwargs = {
             'order_number': order_number,
-            'valid_between__startswith__lte': valid_between.lower
         }
-
-        if valid_between.upper:
-            kwargs['valid_between__endswith__gte'] = valid_between.upper
-        else:
-            kwargs['valid_between__endswith'] = None
 
         try:
             order_number = QuotaOrderNumber.objects.latest_approved().get(
@@ -66,14 +61,12 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         )
         self.reference_document = self.reference_document_version.reference_document
 
-    def tap_order_number(self, order_number: str = None, valid_between: TaricDateRange = None):
+    def tap_order_number(self, order_number: str = None):
         """Finds order number in TAP for a given preferential quota."""
         if order_number is None:
             order_number = self.ref_order_number.order_number
-        if valid_between is None:
-            valid_between = self.ref_order_number.valid_between
 
-        return super().tap_order_number(order_number, valid_between)
+        return super().tap_order_number(order_number)
 
     def geo_area(self):
         """Finds the geo area in TAP for a given preferential quota."""
@@ -116,14 +109,10 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
     def quota_definition(self):
         """Searches for the quota definition period in TAP of a given
         preferential quota."""
-        # TODO: Some kind of filtering by measurement / unit
-        # TODO: Consider the possibility there could be two valid contiguous quota definitions instead of one
-        volume = float(self.ref_quota_definition.volume)
         order_number = self.tap_order_number()
         try:
             quota_definition = QuotaDefinition.objects.latest_approved().get(
                 order_number=order_number,
-                initial_volume=volume,
                 valid_between=self.ref_quota_definition.valid_between,
             )
         except QuotaDefinition.DoesNotExist:
@@ -140,6 +129,8 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         measures = (
             Measure.objects.latest_approved()
             .filter(
+                valid_between__startswith__lte=self.ref_quota_definition.valid_between.upper,
+                valid_between__endswith__gte=self.ref_quota_definition.valid_between.lower,
                 order_number=self.tap_order_number(),
                 goods_nomenclature=self.commodity_code(),
                 geographical_area=self.geo_area(),
@@ -147,9 +138,9 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
             )
             .order_by("valid_between")
         )
-        return self._check_measure_validity(measures)
+        return measures
 
-    def _check_measure_validity(self, measures):
+    def measures_cover_quota_definition_validity_period(self):
         """
         Checks the validity period of the measure(s).
 
@@ -157,54 +148,87 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         then checks that the validity period of the quota order number spans the
         validity period of the measure (ON9).
         """
+        measures = self.measures()
+
         if len(measures) == 0:
-            return []
+            return False
         if len(measures) == 1:
             start_date = measures[0].valid_between.lower
             end_date = measures[0].valid_between.upper
             measure_span_period = TaricDateRange(start_date, end_date)
+            return measure_span_period.contains(self.ref_quota_definition.valid_between)
         else:
-            for index in range(len(measures) - 1):
+            measure_span_periods = []
+            for index, measure in enumerate(measures):
+
+                if len(measure_span_periods) == 0:
+                    measure_span_periods.append(measure.valid_between)
+                    continue
+
                 # Check the dates are contiguous and when one measure ends the next one begins
-                measure1_end_date = measures[index].valid_between.upper
-                measure2_start_date = measures[index + 1].valid_between.lower
+                measure1_end_date = measure_span_periods[-1].upper
+                measure2_start_date = measure.valid_between.lower
                 if measure1_end_date + timedelta(days=1) != measure2_start_date:
-                    return []
-            # Getting start date of first measure and final end date of last measure to get the full validity span
-            start_date = measures[0].valid_between.lower
-            last_item = len(measures) - 1
-            end_date = measures[last_item].valid_between.upper
-            measure_span_period = TaricDateRange(start_date, end_date)
-        return measures
+                    measure_span_periods.append(measure.valid_between)
+                else:
+                    measure_span_periods[-1] = TaricDateRange(measure_span_periods[-1].lower, measure.valid_between.upper)
+
+            for period in measure_span_periods:
+                if period.contains(self.ref_quota_definition.valid_between):
+                    return True
+
+        return False
 
     def is_sub_quota(self):
         return self.ref_order_number.is_sub_quota()
 
-    def association_exists(self):
-        tap_order_number = self.tap_order_number()
+    def get_tap_association(self) -> Optional[QuotaAssociation]:
+        tap_sub_quota_definition = self.quota_definition()
 
-        tap_quota_definition = self.quota_definition()
+        if not self.ref_order_number.main_order_number:
+            return None
 
         tap_main_order_number = self.tap_order_number(
-            self.ref_order_number.main_order_number.order_number,
-            self.ref_order_number.main_order_number.valid_between
+            self.ref_order_number.main_order_number.order_number
         )
 
-        tap_quota_definition = tap_main_order_number.definitions.latest_approved().filter(
-            order_number=tap_main_order_number,
-            valid_between=self.ref_quota_definition.ref_order_number.main_order_number.valid_between,
-        )
+        if not tap_main_order_number:
+            return None
 
-        # There should be only one association
-        tap_associations = QuotaAssociation.objects.latest_approved().filter(
-            sub_quota=tap_order_number,
-            main_quota__order_number=tap_main_order_number
-        )
+        try:
+            # QA2 : The sub-quota’s validity period must be entirely enclosed within the validity period of the main quota
+            tap_main_quota_definition = tap_main_order_number.definitions.latest_approved().get(
+                valid_between__startswith__gte=self.ref_quota_definition.ref_order_number.main_order_number.valid_between.lower,
+                valid_between__endswith__lte=self.ref_quota_definition.ref_order_number.main_order_number.valid_between.upper,
+            )
+        except QuotaDefinition.DoesNotExist:
+            return None
 
-        return tap_associations.count() == 1
+        try:
+            # There should be only one association
+            tap_association = QuotaAssociation.objects.latest_approved().get(
+                sub_quota=tap_sub_quota_definition,
+                main_quota=tap_main_quota_definition,
+            )
+            return tap_association
+        except QuotaAssociation.DoesNotExist:
+            return None
 
-    def coefficient_matches(self):
-        order_number = self.tap_order_number()
+    def tap_association_exists(self):
+        tap_association = self.get_tap_association()
+
+        if tap_association:
+            return True
+        else:
+            return False
+
+    def check_coefficient(self):
+        if self.tap_association_exists():
+            association = self.get_tap_association()
+
+            return float(association.coefficient) == self.ref_order_number.coefficient
+        else:
+            return False
 
 
 class BaseOrderNumberCheck(BaseCheck, abc.ABC):
@@ -214,15 +238,11 @@ class BaseOrderNumberCheck(BaseCheck, abc.ABC):
         super().__init__()
         self.ref_order_number = ref_order_number
 
-    def tap_order_number(self, order_number: str = None, valid_between: TaricDateRange = None):
+    def tap_order_number(self, order_number: str = None):
         if order_number is None:
             order_number = self.ref_order_number.order_number
-        if valid_between is None:
-            valid_between = self.ref_order_number.valid_between
 
-        return super().tap_order_number(order_number, valid_between)
-
-
+        return super().tap_order_number(order_number)
 
 
 class BaseQuotaSuspensionCheck(BaseCheck, abc.ABC):
@@ -231,54 +251,58 @@ class BaseQuotaSuspensionCheck(BaseCheck, abc.ABC):
         super().__init__()
         self.ref_quota_suspension = ref_quota_suspension
 
-    def quota_definition(self):
+    def tap_quota_definition(self):
         """Searches for the quota definition period in TAP of a given
         preferential quota."""
-        volume = float(self.ref_quota_suspension.ref_quota_definition.volume)
         order_number = self.ref_quota_suspension.ref_quota_definition.ref_order_number.order_number
+
         try:
-            quota_definition = QuotaDefinition.objects.all().get(
-                order_number=order_number,
-                initial_volume=volume,
+            quota_definition = QuotaDefinition.objects.latest_approved().get(
+                order_number__order_number=order_number,
                 valid_between=self.ref_quota_suspension.ref_quota_definition.valid_between,
             )
         except QuotaDefinition.DoesNotExist:
             quota_definition = None
+
         return quota_definition
 
-    def tap_order_number(self, order_number: str = None, valid_between: TaricDateRange = None):
+    def tap_order_number(self, order_number: str = None):
         """Finds order number in TAP for a given preferential quota."""
         if order_number is None:
             order_number = self.ref_quota_suspension.ref_quota_definition.ref_order_number.order_number
-        if valid_between is None:
-            valid_between = self.ref_quota_suspension.ref_quota_definition.ref_order_number.valid_between
 
-        return super().tap_order_number(order_number, valid_between)
+        return super().tap_order_number(order_number)
 
-    def suspension(self):
+    def tap_suspension(self):
 
-        quota_definition = self.quota_definition()
+        quota_definition = self.tap_quota_definition()
 
-        suspensions = quota_definition.quotasuspension_set.latest_approved().filter(
-            valid_between=self.ref_quota_suspension.valid_between
-        )
+        try:
+            suspension = quota_definition.quotasuspension_set.latest_approved().get(
+                valid_between=self.ref_quota_suspension.valid_between
+            )
 
-        if len(suspensions) == 0:
+        except QuotaSuspension.DoesNotExist:
             return None
 
-        return suspensions.first()
+        return suspension
 
 
 class BaseRateCheck(BaseCheck, abc.ABC):
     name = 'Base preferential rate check'
 
-    def __init__(self, preferential_rate: RefRate):
+    def __init__(self, ref_rate: RefRate):
         super().__init__()
-        self.preferential_rate = preferential_rate
+        self.ref_rate = ref_rate
 
-    def get_snapshot(self) -> CommodityTreeSnapshot:
-        # not liking having to use CommodityTreeSnapshot, but it does to the job
-        item_id = self.comm_code().item_id
+    def get_snapshot(self, comm_code=None) -> Optional[CommodityTreeSnapshot]:
+        if comm_code:
+            item_id = comm_code
+        elif self.tap_comm_code():
+            item_id = self.tap_comm_code().item_id
+        else:
+            return None
+
         while item_id[-2:] == "00":
             item_id = item_id[0: len(item_id) - 2]
 
@@ -295,10 +319,13 @@ class BaseRateCheck(BaseCheck, abc.ABC):
 
         return snapshot
 
-    def comm_code(self):
+    def tap_comm_code(self):
         goods = GoodsNomenclature.objects.latest_approved().filter(
-            item_id=self.preferential_rate.commodity_code,
-            valid_between__contains=self.ref_doc_version_eif_date(),
+            (
+                    Q(valid_between__contains=self.ref_rate.valid_between.lower) &
+                    Q(valid_between__contains=self.ref_rate.valid_between.upper)
+            ),
+            item_id=self.ref_rate.commodity_code,
             suffix=80,
         )
 
@@ -307,39 +334,51 @@ class BaseRateCheck(BaseCheck, abc.ABC):
 
         return goods.first()
 
-    def geo_area(self):
-        return (
-            GeographicalArea.objects.latest_approved()
-            .filter(
-                area_id=self.preferential_rate.reference_document_version.reference_document.area_id,
+    def tap_geo_area(self):
+        try:
+            return GeographicalArea.objects.latest_approved().get(
+                area_id=self.ref_rate.reference_document_version.reference_document.area_id,
             )
-            .first()
-        )
 
-    def geo_area_description(self):
-        geo_area_desc = (
-            GeographicalAreaDescription.objects.latest_approved()
-            .filter(described_geographicalarea=self.geo_area())
+        except GeographicalArea.DoesNotExist:
+            return None
+
+    def tap_geo_area_description(self) -> Optional[str]:
+
+        geo_area = (
+            GeographicalAreaDescription.objects
+            .latest_approved()
+            .filter(described_geographicalarea=self.tap_geo_area())
             .last()
         )
-        return geo_area_desc.description
+
+        if geo_area:
+            return geo_area.description
+        else:
+            return None
 
     def ref_doc_version_eif_date(self):
         eif_date = (
-            self.preferential_rate.reference_document_version.entry_into_force_date
+            self.ref_rate.reference_document_version.entry_into_force_date
         )
 
-        # todo : make sure EIF dates are all populated correctly - and remove this
         if eif_date is None:
             eif_date = date.today()
 
         return eif_date
 
-    def related_measures(self, comm_code_item_id=None):
+    def tap_related_measures(self, comm_code_item_id=None):
         if comm_code_item_id:
             good = GoodsNomenclature.objects.latest_approved().filter(
+                (
+                        Q(
+                            valid_between__contains=self.ref_rate.valid_between.lower,
+                        ) &
+                        Q(
+                            valid_between__contains=self.ref_rate.valid_between.upper,
+                        )
+                ),
                 item_id=comm_code_item_id,
-                valid_between__contains=self.ref_doc_version_eif_date(),
                 suffix=80,
             )
 
@@ -348,8 +387,15 @@ class BaseRateCheck(BaseCheck, abc.ABC):
                     good.first()
                     .measures.latest_approved()
                     .filter(
-                        geographical_area=self.geo_area(),
-                        valid_between__contains=self.ref_doc_version_eif_date(),
+                        (
+                                Q(
+                                    valid_between__contains=self.ref_rate.valid_between.lower,
+                                ) &
+                                Q(
+                                    valid_between__contains=self.ref_rate.valid_between.upper,
+                                )
+                        ),
+                        geographical_area=self.tap_geo_area(),
                         measure_type__sid__in=[
                             142,
                         ],  # note : these are the measure types used to identify preferential tariffs
@@ -358,31 +404,61 @@ class BaseRateCheck(BaseCheck, abc.ABC):
             else:
                 return []
         else:
-            return (
-                self.comm_code()
-                .measures.latest_approved()
-                .filter(
-                    geographical_area=self.geo_area(),
-                    valid_between__contains=self.ref_doc_version_eif_date(),
-                    measure_type__sid__in=[
-                        142,
-                    ],  # note : these are the measure types used to identify preferential tariffs
-                )
-            )
+            tap_comm_code = self.tap_comm_code()
 
-    def recursive_comm_code_check(
+            if tap_comm_code:
+                return (
+                    self.tap_comm_code()
+                    .measures.latest_approved()
+                    .filter(
+                        (
+                                Q(
+                                    valid_between__contains=self.ref_rate.valid_between.lower,
+                                ) &
+                                Q(
+                                    valid_between__contains=self.ref_rate.valid_between.upper,
+                                )
+                        ),
+                        geographical_area=self.tap_geo_area(),
+                        measure_type__sid__in=[
+                            142,
+                        ],  # note : these are the measure types used to identify preferential tariffs
+                    )
+                )
+            else:
+                return []
+
+    def tap_recursive_comm_code_check(
             self,
             snapshot: CommodityTreeSnapshot,
-            parent_item_id,
-            parent_item_suffix,
-            level=1,
+            parent_item_id: str,
+            level: int = 1,
     ):
+        """
+        this function checks the coverage for a rate against children of a comm code.
+
+        In circumstances where coverage for a rate is not applied to the specified comm code
+        but to its children this function will check for coverage and if covered, wil return true
+        otherwise it will return false
+
+        This is a recursive function and will check the entire tree down to the 10 digit comm code level
+
+        Args:
+            snapshot: CommodityTreeSnapshot, A snapshot from self.ref_rate.comm_code and children
+            parent_item_id: str, The parent comm code item_id to check
+            level: int, the numeric level below the parent comm code that
+            is currently being performed at
+
+        Returns: bool, representing the presence or absence of coverage for the rate by children / grandchildren etc
+
+        """
+
         # find comm code from snapshot
         child_commodities = []
         for commodity in snapshot.commodities:
             if (
                     commodity.item_id == parent_item_id
-                    and commodity.suffix == parent_item_suffix
+                    and commodity.suffix == '80'
             ):
                 child_commodities = snapshot.get_children(commodity)
                 break
@@ -393,15 +469,14 @@ class BaseRateCheck(BaseCheck, abc.ABC):
 
         results = []
         for child_commodity in child_commodities:
-            related_measures = self.related_measures(child_commodity.item_id)
+            related_measures = self.tap_related_measures(child_commodity.item_id)
 
             if len(related_measures) == 0:
                 print(f'{"-" * level} FAIL : {child_commodity.item_id}')
                 results.append(
-                    self.recursive_comm_code_check(
+                    self.tap_recursive_comm_code_check(
                         snapshot,
                         child_commodity.item_id,
-                        child_commodity.suffix,
                         level + 1,
                     ),
                 )
@@ -413,4 +488,4 @@ class BaseRateCheck(BaseCheck, abc.ABC):
                 print(f'{"-" * level} PASS : multiple : {child_commodity.item_id}')
                 results.append(True)
 
-        return False in results
+        return False not in results

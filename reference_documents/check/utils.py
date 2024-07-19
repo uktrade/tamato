@@ -7,7 +7,8 @@ class Utils:
 
         check_classes = self.subclasses_for(check_class)
         for check_class in check_classes:
-            result.append(check_class)
+            if 'reference_documents.check.' in str(check_class):
+                result.append(check_class)
 
         return result
 

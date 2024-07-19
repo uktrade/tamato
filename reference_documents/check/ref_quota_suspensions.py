@@ -13,12 +13,14 @@ class QuotaSuspensionExists(BaseQuotaSuspensionCheck):
             print(message)
             return AlignmentReportCheckStatus.FAIL, message
 
-        if not self.quota_definition():
-            message = f"FAIL - quota definitino not found"
+        elif not self.tap_quota_definition():
+            message = f"FAIL - quota definition not found"
             print(message)
             return AlignmentReportCheckStatus.FAIL, message
 
-        if not self.suspension():
+        elif not self.tap_suspension():
             message = f"FAIL - quota suspension not found"
             print(message)
             return AlignmentReportCheckStatus.FAIL, message
+        else:
+            return AlignmentReportCheckStatus.PASS, ""
