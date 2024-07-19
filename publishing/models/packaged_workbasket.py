@@ -669,7 +669,7 @@ class PackagedWorkBasket(TimestampedMixin):
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
 
-        if self.position == 1:
+        if self.position <= 1:
             return self
 
         position = self.position
@@ -680,6 +680,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
         self.position = 1
         self.save()
+        self.refresh_from_db()
 
         return self
 
@@ -689,8 +690,8 @@ class PackagedWorkBasket(TimestampedMixin):
         """Promote the instance by one position up the package processing
         queue."""
 
-        if self.position == 1:
-            return
+        if self.position <= 1:
+            return self
 
         obj_to_swap = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
             position=self.position - 1,
@@ -711,8 +712,8 @@ class PackagedWorkBasket(TimestampedMixin):
         """Demote the instance by one position down the package processing
         queue."""
 
-        if self.position == PackagedWorkBasket.objects.max_position():
-            return
+        if self.position in {0, PackagedWorkBasket.objects.max_position()}:
+            return self
 
         obj_to_swap = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
             position=self.position + 1,
