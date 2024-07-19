@@ -1,5 +1,6 @@
 from io import StringIO
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 from django.core.management import call_command
@@ -12,6 +13,36 @@ from common.tests.util import taric_xml_record_codes
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.mark.parametrize(
+    ("asynchronous_flag", "save_local_flag_value"),
+    (
+        (None, None),
+        ("--asynchronous", None),
+        ("--asynchronous", "/tmp"),
+        (None, "/tmp"),
+    ),
+)
+def test_dump_sqlite_command(asynchronous_flag, save_local_flag_value):
+    flags = []
+    if asynchronous_flag:
+        flags.append(asynchronous_flag)
+    if save_local_flag_value:
+        flags.extend(("--save-local", save_local_flag_value))
+
+    with mock.patch(
+        "exporter.management.commands.dump_sqlite.export_and_upload_sqlite",
+        return_value=MagicMock(),
+    ) as mock_export_and_upload_sqlite:
+        call_command("dump_sqlite", *flags)
+
+        if asynchronous_flag:
+            mock_export_and_upload_sqlite.assert_not_called()
+            mock_export_and_upload_sqlite.delay.assert_called_once_with(save_local_flag_value)
+        else:
+            mock_export_and_upload_sqlite.assert_called_once_with(save_local_flag_value)
+            mock_export_and_upload_sqlite.delay.assert_not_called()
 
 
 @pytest.mark.skip()
