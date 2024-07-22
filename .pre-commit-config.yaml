@@ -36,7 +36,7 @@ repos:
     hooks:
       - id: flynt
   - repo: https://github.com/uktrade/pii-secret-check-hooks
-    rev: 0.0.0.35
+    rev: 0.0.0.36
     hooks:
     -   id: pii_secret_filename
         files: ''
