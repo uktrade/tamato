@@ -972,8 +972,9 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
         return self.workbasket_transactions().last()
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketViolations(SortingMixin, WithPaginationListView):
-    """UI endpoint for viewing a specified workbasket's business rule
+    """UI endpoint for viewing the current workbasket's business rule
     violations."""
 
     model = TrackedModelCheck
@@ -1182,6 +1183,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         )
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketChecksView(FormView):
     template_name = "workbaskets/checks.jinja"
     form_class = forms.SelectableObjectsForm

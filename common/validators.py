@@ -1,9 +1,16 @@
 """Common validators."""
 
+import os
+from pathlib import Path
+from typing import IO
+from typing import Union
+
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.deconstruct import deconstructible
+from werkzeug.utils import secure_filename
 
 
 @deconstructible
@@ -127,3 +134,41 @@ markdown_tags_allowlist = [
     "tbody",
     "td",
 ]
+
+
+def validate_filename(filename: str) -> None:
+    """
+    Validates that `filename` only includes alphanumeric characters and special
+    characters such as spaces, hyphens and underscores.
+
+    Raises a `ValidationError` if `filename` includes non-permitted characters.
+    """
+
+    # filename might include spaces which secure_filename normalises to underscores
+    if filename.replace(" ", "_") != secure_filename(filename):
+        raise ValidationError(
+            f"File name must only include alphanumeric characters and special characters such as spaces, hyphens and underscores.",
+        )
+
+
+def validate_filepath(source: Union[str, Path, IO], base_path: str = "") -> None:
+    """
+    Validates that `source` normalises to an absolute path located within
+    `base_path` directory (`settings.BASE_DIR` by default).
+
+    Raises a `ValidationError` if the resulting path would be located outside the expected base path.
+    """
+
+    if isinstance(source, str):
+        path = source
+    elif hasattr(source, "name"):
+        path = source.name
+    else:
+        raise ValueError(f"Expected str, Path or File-like object, not {type(source)}")
+
+    if not base_path:
+        base_path = settings.BASE_DIR
+
+    full_path = os.path.normpath(os.path.join(base_path, path))
+    if not full_path.startswith(base_path):
+        raise ValidationError("Invalid file path: {path}")

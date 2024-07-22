@@ -19,6 +19,7 @@ from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views import View
@@ -47,8 +48,11 @@ from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from common.views import WithPaginationListView
 from footnotes.models import Footnote
+from geo_areas import constants
 from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalMembership
 from geo_areas.utils import get_all_members_of_geo_groups
+from geo_areas.validators import AreaCode
 from measures import forms
 from measures import models
 from measures.conditions import show_step_geographical_area
@@ -1009,6 +1013,76 @@ class MeasureCreateWizard(
         order_number = cleaned_data.get("order_number") if cleaned_data else None
         return order_number
 
+    def get_react_script(self, form):
+
+        all_geo_areas = (
+            GeographicalArea.objects.current()
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description")
+        )
+        exclusions_options = all_geo_areas
+        groups_options = all_geo_areas.filter(area_code=AreaCode.GROUP)
+        country_regions_options = all_geo_areas.exclude(
+            area_code=AreaCode.GROUP,
+        )
+
+        group_initial = form.data.get(f"{self.prefix}-geographical_area_group", "")
+
+        react_initial = {
+            "geoAreaType": form.data.get(f"{form.prefix}-geo_area", ""),
+            "ergaOmnesExclusions": [
+                country["erga_omnes_exclusion"].pk
+                for country in form.initial.get(
+                    constants.ERGA_OMNES_EXCLUSIONS_FORMSET_PREFIX,
+                    [],
+                )
+                if country["erga_omnes_exclusion"]
+            ],
+            "geographicalAreaGroup": group_initial,
+            "geoGroupExclusions": [
+                country["geo_group_exclusion"].pk
+                for country in form.initial.get(
+                    constants.GROUP_EXCLUSIONS_FORMSET_PREFIX,
+                    [],
+                )
+                if country["geo_group_exclusion"]
+            ],
+            "countryRegions": [
+                country["geographical_area_country_or_region"].pk
+                for country in form.initial.get(
+                    constants.COUNTRY_REGION_FORMSET_PREFIX,
+                    [],
+                )
+                if country["geographical_area_country_or_region"]
+            ],
+        }
+
+        geo_group_pks = [group.pk for group in groups_options]
+        memberships = GeographicalMembership.objects.filter(
+            geo_group__pk__in=geo_group_pks,
+        ).prefetch_related("geo_group", "member")
+
+        groups_with_members = {}
+
+        for group_pk in geo_group_pks:
+            members = memberships.filter(geo_group__pk=group_pk)
+            groups_with_members[group_pk] = [m.member.pk for m in members]
+
+        script = render_to_string(
+            "includes/measures/geo_area_script.jinja",
+            {
+                "request": self.request,
+                "initial": react_initial,
+                "groups_with_members": groups_with_members,
+                "exclusions_options": exclusions_options,
+                "groups_options": groups_options,
+                "country_regions_options": country_regions_options,
+                "errors": form.errors,
+            },
+        )
+        return script
+
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
         context["step_metadata"] = self.step_metadata
@@ -1016,6 +1090,8 @@ class MeasureCreateWizard(
             context["form"].is_bound = False
         context["no_form_tags"] = FormHelper()
         context["no_form_tags"].form_tag = False
+        if isinstance(form, forms.MeasureGeographicalAreaForm):
+            context["script"] = self.get_react_script(form)
         return context
 
     def get_form_kwargs(self, step):
