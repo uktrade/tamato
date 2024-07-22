@@ -18,10 +18,13 @@
       <p class="govuk-body">{{ step_metadata[wizard.steps.current].info }}</p>
       {% endif %}
 
-      {% call django_form(action=view.get_step_url(wizard.steps.current)) %}
-        {{ wizard.management_form }}
-        {% block form %}{{ crispy(form) }}{% endblock %}
-      {% endcall %}
+      <div id="measure-wizard-form-container">
+        {% call django_form(action=view.get_step_url(wizard.steps.current)) %}
+          {{ wizard.management_form }}
+          {% block form %}{{ crispy(form) }}{% endblock %}
+        {% endcall %}
+      </div>
+      {% if script %}{{ mark_safe(script) }}{% endif %}
     </div>
   </div>
 {% endblock %}

@@ -1,0 +1,38 @@
+
+<script nonce="{{ request.csp_nonce }}">
+  {# data used by react form component: common/static/common/js/components/GeoAreaField/index.js #}
+  const groupsWithMembers = {{groups_with_members|safe}};
+  const geoAreaErrors = {
+    {% for k, errorlist in errors.as_data().items() %}
+      "{{ k }}": "{% for errors in errorlist %}{% for error in errors %}{{ error|safe }}{% if not loop.last %}\n{% endif %}{% endfor %}{% endfor %}",
+    {% endfor %}
+  };
+  const initial = {{initial|safe}};
+  const exclusionsOptions = [
+    {"label": "", "value": ""},
+    {% for geo_area in exclusions_options %}
+    {
+      "label": "{{ geo_area.area_id  ~ " - " ~ geo_area.description }}",
+      "value": {{ geo_area.pk }},
+    },
+    {% endfor %}
+  ];
+  const groupsOptions = [
+    {"label": "", "value": ""},
+    {% for geo_area in groups_options %}
+    {
+      "label": "{{ geo_area.area_id  ~ " - " ~ geo_area.description }}",
+      "value": {{ geo_area.pk }},
+    },
+    {% endfor %}
+  ];
+  const countryRegionsOptions = [
+    {"label": "", "value": ""},
+    {% for geo_area in country_regions_options %}
+    {
+      "label": "{{ geo_area.area_id  ~ " - " ~ geo_area.description }}",
+      "value": {{ geo_area.pk }},
+    },
+    {% endfor %}
+  ];
+</script>
