@@ -2562,10 +2562,10 @@ def test_clean_tasks():
     )
 
 
-def test_current_rule_checks_is_called(valid_user_client):
-    """Test that current_rule_checks function gets called when a user goes to
-    the rule check page and the page correctly displays the returned list of
-    rule check tasks."""
+def test_current_tasks_is_called(valid_user_client):
+    """Test that current_tasks function gets called when a user goes to the rule
+    check page and the page correctly displays the returned list of rule check
+    tasks."""
 
     return_value = [
         CeleryTask(
@@ -2581,13 +2581,13 @@ def test_current_rule_checks_is_called(valid_user_client):
 
     with patch.object(
         TAPTasks,
-        "current_rule_checks",
+        "current_tasks",
         return_value=return_value,
-    ) as mock_current_rule_checks:
+    ) as mock_current_tasks:
         response = valid_user_client.get(reverse("workbaskets:rule-check-queue"))
         assert response.status_code == 200
-        # Assert current_rule_checks gets called
-        mock_current_rule_checks.assert_called_once()
+        # Assert current_tasks gets called
+        mock_current_tasks.assert_called_once()
         # Assert the mocked response is formatted correctly on the page
         soup = BeautifulSoup(str(response.content), "html.parser")
         table_rows = [element for element in soup.select(".govuk-table__row")]

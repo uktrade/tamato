@@ -1119,13 +1119,13 @@ def hmrc_storage(s3):
 
 @pytest.fixture
 def sqlite_storage(s3, s3_bucket_names):
-    """Patch SQLiteStorage with moto so that nothing is really uploaded to
+    """Patch SQLiteS3VFSStorage with moto so that nothing is really uploaded to
     s3."""
-    from exporter.storages import SQLiteStorage
+    from exporter.storages import SQLiteS3VFSStorage
 
     storage = make_storage_mock(
         s3,
-        SQLiteStorage,
+        SQLiteS3VFSStorage,
         bucket_name=settings.SQLITE_STORAGE_BUCKET_NAME,
     )
     assert storage.endpoint_url is settings.SQLITE_S3_ENDPOINT_URL
