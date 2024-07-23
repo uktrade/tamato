@@ -148,46 +148,13 @@ class TestChecks:
         assert quota_suspension_exists_check_patch.called
         assert quota_definition_exists_patch.called
 
-    @patch(
-        'reference_documents.check.ref_rates.RateExists.run_check',
-    )
-    @patch(
-        'reference_documents.check.ref_order_numbers.OrderNumberChecks.run_check',
-    )
-    @patch(
-        'reference_documents.check.ref_quota_suspensions.QuotaSuspensionExists.run_check',
-    )
-    @patch(
-        'reference_documents.check.ref_quota_definitions.QuotaDefinitionExists.run_check',
-    )
-    def test_run_does_not_call_if_parent_check_failed(
-            self,
-            rate_exists_check_patch,
-            order_number_checks_patch,
-            quota_suspension_exists_check_patch,
-            quota_definition_exists_patch
-    ):
-        def mock_run_check_pass(*args, **kwargs):
-            return AlignmentReportCheckStatus.PASS, ''
-
-        def mock_run_check_fail(*args, **kwargs):
-            return AlignmentReportCheckStatus.FAIL, ''
-
-        rate_exists_check_patch.side_effect = mock_run_check_pass
-        # order_number_checks_patch.side_effect = mock_run_check_fail
-        # quota_suspension_exists_check_patch.side_effect = mock_run_check_pass
-        # quota_definition_exists_patch.side_effect = mock_run_check_pass
-
-        ref_doc_ver = self.data_setup_for_test_run()
-
-        target = self.target_class(ref_doc_ver)
-        target.run()
-
-        assert rate_exists_check_patch.called
-        assert order_number_checks_patch.called
-        assert not quota_definition_exists_patch.called
-        assert not quota_suspension_exists_check_patch.called
-
-    @pytest.mark.skip(reason="test not implemented yet")
     def test_capture_check_result(self):
-        pass
+        ref_doc_ver = self.data_setup_for_test_run()
+        target = self.target_class(ref_doc_ver)
+        ref_rate = ref_doc_ver.ref_rates.first()
+
+        result = target.capture_check_result(RateExists(ref_rate), ref_rate=ref_rate, parent_check_status=AlignmentReportCheckStatus.FAIL)
+        assert result == AlignmentReportCheckStatus.SKIPPED
+
+        result = target.capture_check_result(RateExists(ref_rate), ref_rate=ref_rate, parent_check_status=AlignmentReportCheckStatus.SKIPPED)
+        assert result == AlignmentReportCheckStatus.SKIPPED
