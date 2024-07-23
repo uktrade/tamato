@@ -135,11 +135,15 @@ def test_download(
     s3_resource,
     s3_object_names,
     settings,
+    s3,
 ):
     client.force_login(valid_user)
     bucket = "hmrc"
     settings.HMRC_STORAGE_BUCKET_NAME = bucket
-    s3_resource.create_bucket(Bucket="hmrc")
+    try:
+        s3_resource.create_bucket(Bucket="hmrc")
+    except s3.exceptions.BucketAlreadyOwnedByYou:
+        pass
     with patch(
         "exporter.storages.HMRCStorage.save",
         wraps=MagicMock(side_effect=hmrc_storage.save),

@@ -52,21 +52,9 @@ from psycopg.types.range import TimestampRange
 
 major, minor, patch = python_version_tuple()
 
-# The preferred style of combining @classmethod and @property is only in 3.9.
-# When we stop support for 3.8, we should remove both of these branches.
-if int(major) == 3 and int(minor) < 9:
-    # https://stackoverflow.com/a/13624858
-    class classproperty(object):
-        def __init__(self, fget):
-            self.fget = fget
 
-        def __get__(self, owner_self, owner_cls):
-            return self.fget(owner_cls)
-
-else:
-
-    def classproperty(fn):
-        return classmethod(property(fn))
+def classproperty(fn):
+    return classmethod(property(fn))
 
 
 def is_truthy(value: Union[str, bool]) -> bool:
