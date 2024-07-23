@@ -2,6 +2,7 @@ import tempfile
 from io import BytesIO
 from os import path
 from pathlib import Path
+from typing import Iterator
 from unittest import mock
 
 import apsw
@@ -18,7 +19,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(scope="module")
-def sqlite_template() -> Runner:
+def sqlite_template() -> Iterator[Runner]:
     """
     Provides a template SQLite file with the correct TaMaTo schema but without
     any data.
@@ -33,7 +34,7 @@ def sqlite_template() -> Runner:
 
 
 @pytest.fixture(scope="function")
-def sqlite_database(sqlite_template: Runner) -> Runner:
+def sqlite_database(sqlite_template: Runner) -> Iterator[Runner]:
     """Copies the template file to a new location that will be cleaned up at the
     end of one test."""
     in_memory_database = apsw.Connection(":memory:")
@@ -130,10 +131,10 @@ def test_valid_between_export(
         assert validity_end is None
 
 
-def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings):
+def test_s3_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings):
     """
-    If a file has already been generated for this database state, we don't need
-    to upload it again.
+    If a file has already been generated and uploaded to S3 for this database
+    state, we don't need to upload it again.
 
     This idempotency allows us to regularly run an export check without
     constantly uploading files and wasting bandwidth/money.
@@ -149,7 +150,10 @@ def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings
     sqlite_storage.save(expected_key, BytesIO(b""))
 
     names_before = s3_object_names(sqlite_storage.bucket_name)
-    with mock.patch("exporter.sqlite.tasks.SQLiteStorage", new=lambda: sqlite_storage):
+    with mock.patch(
+        "exporter.sqlite.tasks.storages.SQLiteS3Storage",
+        new=lambda: sqlite_storage,
+    ):
         returned = tasks.export_and_upload_sqlite()
         assert returned is False
 
@@ -157,7 +161,22 @@ def test_export_task_does_not_reupload(sqlite_storage, s3_object_names, settings
     assert names_before == names_after
 
 
-def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
+def test_local_export_task_does_not_replace(tmp_path):
+    """Test that if an SQLite file has already been generated on the local file
+    system at a specific directory location for this database state, then no
+    attempt is made to create it again."""
+    factories.SeedFileTransactionFactory.create(order="999")
+    transaction = factories.PublishedTransactionFactory.create()
+
+    sqlite_file_path = tmp_path / f"{tasks.normalised_order(transaction.order)}.db"
+    sqlite_file_path.write_bytes(b"")
+    files_before = set(tmp_path.iterdir())
+
+    assert not tasks.export_and_upload_sqlite(tmp_path)
+    assert files_before == set(tmp_path.iterdir())
+
+
+def test_s3_export_task_uploads(sqlite_storage, s3_object_names, settings):
     """The export system should actually upload a file to S3."""
     factories.SeedFileTransactionFactory.create(order="999")
     transaction = factories.PublishedTransactionFactory.create()
@@ -167,7 +186,10 @@ def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
         f"{tasks.normalised_order(transaction.order)}.db",
     )
 
-    with mock.patch("exporter.sqlite.tasks.SQLiteStorage", new=lambda: sqlite_storage):
+    with mock.patch(
+        "exporter.sqlite.tasks.storages.SQLiteS3Storage",
+        new=lambda: sqlite_storage,
+    ):
         returned = tasks.export_and_upload_sqlite()
         assert returned is True
 
@@ -176,14 +198,26 @@ def test_export_task_uploads(sqlite_storage, s3_object_names, settings):
     )
 
 
-def test_export_task_ignores_unpublished_and_unapproved_transactions(
+def test_local_export_task_saves(tmp_path):
+    """Test that export correctly saves a file to the local file system."""
+    factories.SeedFileTransactionFactory.create(order="999")
+    transaction = factories.PublishedTransactionFactory.create()
+
+    sqlite_file_path = tmp_path / f"{tasks.normalised_order(transaction.order)}.db"
+    files_before = set(tmp_path.iterdir())
+
+    assert tasks.export_and_upload_sqlite(tmp_path)
+    assert files_before | {sqlite_file_path} == set(tmp_path.iterdir())
+
+
+def test_s3_export_task_ignores_unpublished_and_unapproved_transactions(
     sqlite_storage,
     s3_object_names,
     settings,
 ):
-    """Only transactions that have been approved should be included in the
-    upload as draft data may be sensitive and unpublished, and shouldn't be
-    included."""
+    """Only transactions that have been published should be included in the
+    upload as draft and queued data may be sensitive and unpublished, and should
+    therefore not be included."""
     factories.SeedFileTransactionFactory.create(order="999")
     transaction = factories.PublishedTransactionFactory.create(order="123")
     factories.ApprovedTransactionFactory.create(order="124")
@@ -198,7 +232,7 @@ def test_export_task_ignores_unpublished_and_unapproved_transactions(
 
     names_before = s3_object_names(sqlite_storage.bucket_name)
     with mock.patch(
-        "exporter.sqlite.tasks.SQLiteStorage",
+        "exporter.sqlite.tasks.storages.SQLiteS3Storage",
         new=lambda: sqlite_storage,
     ):
         returned = tasks.export_and_upload_sqlite()
@@ -206,3 +240,19 @@ def test_export_task_ignores_unpublished_and_unapproved_transactions(
 
     names_after = s3_object_names(sqlite_storage.bucket_name)
     assert names_before == names_after
+
+
+def test_local_export_task_ignores_unpublished_and_unapproved_transactions(tmp_path):
+    """Only transactions that have been published should be included in the
+    upload as draft and queued data may be sensitive and unpublished, and should
+    therefore not be included."""
+    factories.SeedFileTransactionFactory.create(order="999")
+    transaction = factories.PublishedTransactionFactory.create(order="123")
+    factories.ApprovedTransactionFactory.create(order="124")
+    factories.UnapprovedTransactionFactory.create(order="125")
+
+    sqlite_file_path = tmp_path / f"{tasks.normalised_order(transaction.order)}.db"
+    files_before = set(tmp_path.iterdir())
+
+    assert tasks.export_and_upload_sqlite(tmp_path)
+    assert files_before | {sqlite_file_path} == set(tmp_path.iterdir())

@@ -41,32 +41,41 @@ SKIPPED_MODELS = {
 }
 
 
-def make_export_plan(sqlite: runner.Runner) -> plan.Plan:
-    names = (
+def make_export_plan(sqlite_runner: runner.Runner) -> plan.Plan:
+    app_names = (
         name.split(".")[0]
         for name in settings.DOMAIN_APPS
         if name not in settings.SQLITE_EXCLUDED_APPS
     )
-    all_models = chain(*[apps.get_app_config(name).get_models() for name in names])
+    all_models = chain(*[apps.get_app_config(name).get_models() for name in app_names])
     models_by_table = {model._meta.db_table: model for model in all_models}
 
     import_script = plan.Plan()
-    for table, sql in sqlite.tables:
+    for table, create_table_statement in sqlite_runner.tables:
         model = models_by_table.get(table)
         if model is None or model.__name__ in SKIPPED_MODELS:
             continue
 
-        columns = list(sqlite.read_column_order(model._meta.db_table))
-        import_script.add_schema(sql)
+        columns = list(sqlite_runner.read_column_order(model._meta.db_table))
+        import_script.add_schema(create_table_statement)
         import_script.add_data(model, columns)
 
     return import_script
 
 
 def make_export(connection: apsw.Connection):
-    with NamedTemporaryFile() as db_name:
-        sqlite = runner.Runner.make_tamato_database(Path(db_name.name))
-        plan = make_export_plan(sqlite)
+    with NamedTemporaryFile() as temp_sqlite_db:
+        # Create Runner instance with its SQLite file name pointing at a path on
+        # the local file system. This is only required temporarily in order to
+        # create an in-memory plan that can be run against a target database
+        # object.
+        plan_runner = runner.Runner.make_tamato_database(
+            Path(temp_sqlite_db.name),
+        )
+        plan = make_export_plan(plan_runner)
+        # make_tamato_database() creates a Connection instance that needs
+        # closing once an in-memory plan has been created from it.
+        plan_runner.database.close()
 
-    export = runner.Runner(connection)
-    export.run_operations(plan.operations)
+    export_runner = runner.Runner(connection)
+    export_runner.run_operations(plan.operations)

@@ -1,10 +1,10 @@
 import logging
+import os
 
 from common.celery import app
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
-from exporter import sqlite
-from exporter.storages import SQLiteStorage
+from exporter import storages
 
 logger = logging.getLogger(__name__)
 
@@ -30,33 +30,40 @@ def get_output_filename():
 
 
 @app.task
-def export_and_upload_sqlite() -> bool:
+def export_and_upload_sqlite(local_path: str = None) -> bool:
     """
-    Generates an export of the currently attached database to a portable SQLite
-    file and uploads it to the configured S3 bucket.
+    Generates an export of latest published data from the primary database to a
+    portable SQLite database file. The most recently published Transaction's
+    `order` value is used to define latest published data, and its value is used
+    to name the generated SQLite database file.
 
-    If an SQLite export of the current state of the database (as given by the
-    most recently approved transaction ID) already exists, no action is taken.
-    Returns a boolean that is ``True`` if a file was uploaded and ``False`` if
-    not.
+    If `local_path` is provided, then the SQLite database file will be saved in
+    that directory location (note that in this case `local_path` must be an
+    existing directory path on the local file system).
+
+    If `local_path` is not provided, then the SQLite database file will be saved
+    to the configured S3 bucket.
     """
-    storage = SQLiteStorage()
     db_name = get_output_filename()
+
+    if local_path:
+        logger.info("SQLite export process targetting local file system.")
+        storage = storages.SQLiteLocalStorage(location=local_path)
+    else:
+        logger.info("SQLite export process targetting S3 file system.")
+        storage = storages.SQLiteS3Storage()
 
     export_filename = storage.generate_filename(db_name)
 
-    logger.debug("Checking for need to upload tariff database %s", export_filename)
+    logger.info(f"Checking for existing database {export_filename}.")
     if storage.exists(export_filename):
-        logger.debug("Database %s already present", export_filename)
+        logger.info(
+            f"Database {export_filename} already exists. Exiting process, "
+            f"pid={os.getpid()}.",
+        )
         return False
 
-    logger.info("Generating database %s", export_filename)
-    sqlite.make_export(storage.get_connection(export_filename))
-    logger.info("Generation complete")
-
-    logger.info("Serializing %s", export_filename)
-    storage.serialize(export_filename)
-    logger.info("Serializing complete")
-
-    logger.info("Upload complete")
+    logger.info(f"Generating SQLite database export {export_filename}.")
+    storage.export_database(export_filename)
+    logger.info(f"SQLite database export {export_filename} complete.")
     return True
