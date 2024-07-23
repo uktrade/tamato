@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Tuple
 
 from celery.result import AsyncResult
@@ -17,7 +18,13 @@ from django_fsm import transition
 from common.celery import app
 from common.models.mixins import TimestampedMixin
 from common.models.utils import override_current_transaction
+from common.util import TaricDateRange
+from common.validators import UpdateType
+from geo_areas.models import GeographicalArea
+from geo_areas.utils import get_all_members_of_geo_groups
+from measures.models.tracked_models import FootnoteAssociationMeasure
 from measures.models.tracked_models import Measure
+from measures.models.tracked_models import MeasureExcludedGeographicalArea
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +82,7 @@ class ProcessingState(models.TextChoices):
 
 class BulkProcessor(TimestampedMixin):
     """(Abstract) Model mixin defining common attributes and functions for
-    inheritace by Model classes responsible for asynchronously bulk processing
+    inheritance by Model classes responsible for asynchronously bulk processing
     tasks."""
 
     class Meta:
@@ -414,3 +421,322 @@ class MeasuresBulkCreator(BulkProcessor):
         for form_errors in errors:
             for error_key, error_values in form_errors.items():
                 logger.error(f"{error_key}: {error_values}")
+
+
+class MeasuresBulkEditor(BulkProcessor):
+    """
+    Model class used to bulk edit Measures instances from serialized form data.
+
+    The stored form data is serialized and deserialized by Forms that subclass
+    SerializableFormMixin.
+    """
+
+    form_data = models.JSONField()
+    """
+    Dictionary of all Form.data, used to reconstruct bound Form instances as if
+    the form data had been sumbitted by the user within the measure wizard
+    process.
+
+    Also including a list of ids of the measures in to be edited.
+    """
+
+    form_kwargs = models.JSONField()
+    """Dictionary of all form init data, excluding a form's `data` param (which
+    is preserved via this class's `form_data` attribute)."""
+
+    workbasket = models.ForeignKey(
+        "workbaskets.WorkBasket",
+        on_delete=REVOKE_TASKS_AND_SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The workbasket with which created measures are associated."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The user who submitted the task to create measures."""
+
+    def schedule_task(self) -> AsyncResult:
+        """Implementation of base class method."""
+
+        from measures.tasks import bulk_edit_measures
+
+        async_result = bulk_edit_measures.apply_async(
+            kwargs={
+                "measures_bulk_editor_pk": self.pk,
+            },
+            countdown=1,
+        )
+        self.task_id = async_result.id
+        self.save()
+
+        logger.info(
+            f"Measure bulk edit scheduled on task with ID {async_result.id}"
+            f"using MeasuresBulkEditor.pk={self.pk}.",
+        )
+
+        return async_result
+
+    @atomic
+    def edit_measures(self) -> Iterable[Measure]:
+        """
+        Edit measures using the instance's `cleaned_data`, returning the results
+        as an iterable.
+
+        ValidationError exceptions, which may be raised when constructing
+        cleaned data, are not caught by this function, so should be caught or
+        somehow dealt with by its callers.
+        """
+
+        logger.info(
+            f"MeasuresBulkEditor.edit_measures() - form_data:\n"
+            f"{json.dumps(self.form_data, indent=4, default=str)}",
+        )
+        logger.info(
+            f"MeasuresBulkEditor.edit_measures() - form_kwargs:\n"
+            f"{json.dumps(self.form_kwargs, indent=4, default=str)}",
+        )
+
+        # Add logic here than actually edits the measures
+        selected_measures = self.selected_measures()
+        try:
+            cleaned_data = self.get_forms_cleaned_data(
+                selected_measures=selected_measures,
+            )
+        except ValidationError:
+            return None
+
+        new_start_date = cleaned_data.get("start_date", None)
+        new_end_date = cleaned_data.get("end_date", False)
+        new_quota_order_number = cleaned_data.get("order_number", None)
+        new_generating_regulation = cleaned_data.get("generating_regulation", None)
+        new_duties = cleaned_data.get("duties", None)
+        new_exclusions = [
+            e["excluded_area"]
+            for e in cleaned_data.get("formset-geographical_area_exclusions", [])
+        ]
+
+        if selected_measures:
+            for measure in selected_measures:
+                new_measure = measure.new_version(
+                    workbasket=self.workbasket,
+                    update_type=UpdateType.UPDATE,
+                    valid_between=TaricDateRange(
+                        lower=(
+                            new_start_date
+                            if new_start_date
+                            else measure.valid_between.lower
+                        ),
+                        upper=(
+                            new_end_date
+                            if new_end_date is not False
+                            else measure.valid_between.upper
+                        ),
+                    ),
+                    order_number=(
+                        new_quota_order_number
+                        if new_quota_order_number
+                        else measure.order_number
+                    ),
+                    generating_regulation=(
+                        new_generating_regulation
+                        if new_generating_regulation
+                        else measure.generating_regulation
+                    ),
+                )
+                self.update_measure_components(
+                    measure=new_measure,
+                    duties=new_duties,
+                    workbasket=self.workbasket,
+                )
+                self.update_measure_condition_components(
+                    measure=new_measure,
+                    workbasket=self.workbasket,
+                )
+                self.update_measure_excluded_geographical_areas(
+                    edited="geographical_area_exclusions"
+                    in cleaned_data.get("fields_to_edit", []),
+                    measure=new_measure,
+                    exclusions=new_exclusions,
+                    workbasket=self.workbasket,
+                )
+                self.update_measure_footnote_associations(
+                    measure=new_measure,
+                    workbasket=self.workbasket,
+                )
+
+    def selected_measures(self):
+        selected_measure_ids = self.form_data.get("selected_measures", None)
+        if selected_measure_ids:
+            return Measure.objects.filter(pk__in=selected_measure_ids)
+        return None
+
+    def get_forms_cleaned_data(self, selected_measures) -> Dict:
+        """
+        Returns a merged dictionary of all Form cleaned_data.
+
+        If a Form's data contains a `FormSet`, the key will be prefixed with
+        "formset-" and contain a list of the formset cleaned_data dictionaries.
+
+        If form validation errors are encountered when constructing cleaned
+        data, then this function raises Django's `ValidationError` exception.
+        """
+
+        all_cleaned_data = {}
+
+        from measures.views import MeasureEditWizard
+
+        for form_key, form_class in MeasureEditWizard.data_form_list:
+            if form_key not in self.form_data:
+                # Forms are conditionally included depending what attributes the user is editing.
+                continue
+
+            data = self.form_data[form_key]
+            kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
+            form = form_class(data=data, selected_measures=selected_measures, **kwargs)
+            form = MeasureEditWizard.fixup_form(
+                form,
+                self.workbasket.current_transaction,
+            )
+
+            if not form.is_valid():
+                self._log_form_errors(form_class=form_class, form_or_formset=form)
+                raise ValidationError(
+                    f"{form_class.__name__} has {len(form.errors)} errors.",
+                )
+
+            if isinstance(form.cleaned_data, (tuple, list)):
+                all_cleaned_data[f"formset-{form_key}"] = form.cleaned_data
+            else:
+                all_cleaned_data.update(form.cleaned_data)
+
+        return all_cleaned_data
+
+    def _log_form_errors(self, form_class, form_or_formset) -> None:
+        """Output errors associated with a Form or Formset instance, handling
+        output for each instance type in a uniform manner."""
+
+        logger.error(
+            f"MeasuresBulkEditor.edit_measures() - "
+            f"{form_class.__name__} has {len(form_or_formset.errors)} errors.",
+        )
+
+        # Form.errors is a dictionary of errors, but FormSet.errors is a
+        # list of dictionaries of Form.errors. Access their errors in
+        # a uniform manner.
+        errors = []
+
+        if isinstance(form_or_formset, BaseFormSet):
+            errors = [
+                {"formset_errors": form_or_formset.non_form_errors()},
+            ] + form_or_formset.errors
+        else:
+            errors = [form_or_formset.errors]
+
+        for form_errors in errors:
+            for error_key, error_values in form_errors.items():
+                logger.error(f"{error_key}: {error_values}")
+
+    def update_measure_components(
+        self,
+        measure: Measure,
+        duties: str,
+        workbasket,
+    ):
+        """Updates the measure components associated to the measure."""
+
+        from measures.util import diff_components
+
+        diff_components(
+            instance=measure,
+            duty_sentence=duties if duties else measure.duty_sentence,
+            start_date=measure.valid_between.lower,
+            workbasket=workbasket,
+            transaction=workbasket.current_transaction,
+        )
+
+    def update_measure_condition_components(
+        self,
+        measure: Measure,
+        workbasket,
+    ):
+        """Updates the measure condition components associated to the
+        measure."""
+        conditions = measure.conditions.current()
+        for condition in conditions:
+            condition.new_version(
+                dependent_measure=measure,
+                workbasket=workbasket,
+            )
+
+    def update_measure_excluded_geographical_areas(
+        self,
+        edited: bool,
+        measure: Measure,
+        exclusions: List[GeographicalArea],
+        workbasket,
+    ):
+        """Updates the excluded geographical areas associated to the measure."""
+        existing_exclusions = measure.exclusions.current()
+
+        # Update any exclusions to new measure version
+        if not edited:
+            for exclusion in existing_exclusions:
+                exclusion.new_version(
+                    modified_measure=measure,
+                    workbasket=workbasket,
+                )
+            return
+
+        new_excluded_areas = get_all_members_of_geo_groups(
+            validity=measure.valid_between,
+            geo_areas=exclusions,
+        )
+
+        for geo_area in new_excluded_areas:
+            existing_exclusion = existing_exclusions.filter(
+                excluded_geographical_area=geo_area,
+            ).first()
+            if existing_exclusion:
+                existing_exclusion.new_version(
+                    modified_measure=measure,
+                    workbasket=workbasket,
+                )
+            else:
+                MeasureExcludedGeographicalArea.objects.create(
+                    modified_measure=measure,
+                    excluded_geographical_area=geo_area,
+                    update_type=UpdateType.CREATE,
+                    transaction=workbasket.new_transaction(),
+                )
+
+        removed_excluded_areas = {
+            e.excluded_geographical_area for e in existing_exclusions
+        }.difference(set(exclusions))
+
+        exclusions_to_remove = [
+            existing_exclusions.get(excluded_geographical_area__id=geo_area.id)
+            for geo_area in removed_excluded_areas
+        ]
+
+        for exclusion in exclusions_to_remove:
+            exclusion.new_version(
+                update_type=UpdateType.DELETE,
+                modified_measure=measure,
+                workbasket=workbasket,
+            )
+
+    def update_measure_footnote_associations(self, measure, workbasket):
+        """Updates the footnotes associated to the measure."""
+        footnote_associations = FootnoteAssociationMeasure.objects.current().filter(
+            footnoted_measure__sid=measure.sid,
+        )
+        for fa in footnote_associations:
+            fa.new_version(
+                footnoted_measure=measure,
+                workbasket=workbasket,
+            )
