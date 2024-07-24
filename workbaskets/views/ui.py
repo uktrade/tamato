@@ -972,8 +972,9 @@ class WorkBasketTransactionOrderView(PermissionRequiredMixin, FormView):
         return self.workbasket_transactions().last()
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketViolations(SortingMixin, WithPaginationListView):
-    """UI endpoint for viewing a specified workbasket's business rule
+    """UI endpoint for viewing the current workbasket's business rule
     violations."""
 
     model = TrackedModelCheck
@@ -1182,6 +1183,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
         )
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketChecksView(FormView):
     template_name = "workbaskets/checks.jinja"
     form_class = forms.SelectableObjectsForm
@@ -1741,10 +1743,9 @@ class RuleCheckQueueView(
         tap_tasks = TAPTasks()
         try:
             context["celery_healthy"] = True
-            current_rule_checks = tap_tasks.current_rule_checks(
+            context["current_rule_checks"] = tap_tasks.current_tasks(
                 "workbaskets.tasks.call_check_workbasket_sync",
             )
-            context["current_rule_checks"] = current_rule_checks
             context["status_tag_generator"] = self.status_tag_generator
         except kombu.exceptions.OperationalError as oe:
             context["celery_healthy"] = False

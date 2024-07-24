@@ -1,0 +1,4 @@
+repository: tariff-application/tamato
+builder:
+  name: paketobuildpacks/builder-jammy-full
+  version: 0.3.339

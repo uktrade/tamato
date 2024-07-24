@@ -30,6 +30,7 @@ from common.forms import DateInputFieldFixed
 from common.forms import FormSet
 from common.forms import FormSetSubmitMixin
 from common.forms import RadioNested
+from common.forms import RadioNestedWidget
 from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
@@ -1244,6 +1245,7 @@ class MeasureGeographicalAreaForm(
             constants.GeoAreaType.COUNTRY.value: [CountryRegionFormSet],
         },
         error_messages={"required": "A Geographical area must be selected"},
+        widget=RadioNestedWidget(attrs={"id": "geo-area-form-field"}),
     )
 
     @property
@@ -1309,6 +1311,7 @@ class MeasureGeographicalAreaForm(
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
+
         self.helper.layout = Layout(
             "geo_area",
             Submit(
@@ -1357,6 +1360,7 @@ class MeasureGeographicalAreaForm(
                         for geo_area in cleaned_data[data_key]
                     ]
 
+                # format exclusions for all options
                 geo_area_exclusions = cleaned_data.get(
                     constants.EXCLUSIONS_FORMSET_PREFIX_MAPPING[geo_area_choice],
                 )

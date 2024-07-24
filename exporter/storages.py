@@ -1,9 +1,18 @@
+import logging
 from functools import cached_property
 from os import path
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import apsw
+from django.core.files.storage import Storage
 from sqlite_s3vfs import S3VFS
 from storages.backends.s3boto3 import S3Boto3Storage
+
+from common.util import log_timing
+from exporter import sqlite
+
+logger = logging.getLogger(__name__)
 
 
 class HMRCStorage(S3Boto3Storage):
@@ -24,7 +33,20 @@ class HMRCStorage(S3Boto3Storage):
         return super().get_object_parameters(name)
 
 
-class SQLiteStorage(S3Boto3Storage):
+class SQLiteExportMixin:
+    """Mixin class used to define a common export API among SQLite Storage
+    subclasses."""
+
+    def export_database(self, filename: str):
+        """Export Tamato's primary database to an SQLite file format, saving to
+        Storage's backing store (S3, local file system, etc)."""
+        raise NotImplementedError
+
+
+class SQLiteS3StorageBase(S3Boto3Storage):
+    """Storage base class used for remotely storing SQLite database files to an
+    AWS S3-like backing store (AWS S3, Minio, etc)."""
+
     def get_default_settings(self):
         from django.conf import settings
 
@@ -46,17 +68,73 @@ class SQLiteStorage(S3Boto3Storage):
         )
         return super().generate_filename(filename)
 
+
+class SQLiteS3VFSStorage(SQLiteExportMixin, SQLiteS3StorageBase):
+    """
+    Storage class used for remotely storing SQLite database files to an AWS
+    S3-like backing store.
+
+    This class uses the s3sqlite package (
+    https://pypi.org/project/s3sqlite/)
+    to apply an S3 virtual file system strategy when saving the SQLite file to
+    S3.
+    """
+
     def exists(self, filename: str) -> bool:
         return any(self.listdir(filename))
-
-    def serialize(self, filename):
-        vfs_fileobj = self.vfs.serialize_fileobj(key_prefix=filename)
-        self.bucket.Object(filename).upload_fileobj(vfs_fileobj)
 
     @cached_property
     def vfs(self) -> apsw.VFS:
         return S3VFS(bucket=self.bucket, block_size=65536)
 
-    def get_connection(self, filename: str) -> apsw.Connection:
-        """Creates a new empty SQLite database."""
-        return apsw.Connection(filename, vfs=self.vfs.name)
+    @log_timing(logger_function=logger.info)
+    def export_database(self, filename: str):
+        connection = apsw.Connection(filename, vfs=self.vfs.name)
+        sqlite.make_export(connection)
+        connection.close()
+        logger.info(f"Serializing {filename} to S3 storage.")
+        vfs_fileobj = self.vfs.serialize_fileobj(key_prefix=filename)
+        self.bucket.Object(filename).upload_fileobj(vfs_fileobj)
+
+
+class SQLiteS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
+    """
+    Storage class used for remotely storing SQLite database files to an AWS
+    S3-like backing store.
+
+    This class applies a strategy that first creates a temporary instance of the
+    SQLite file on the local file system before transfering its contents to S3.
+    """
+
+    @log_timing(logger_function=logger.info)
+    def export_database(self, filename: str):
+        with NamedTemporaryFile() as temp_sqlite_db:
+            connection = apsw.Connection(temp_sqlite_db.name)
+            sqlite.make_export(connection)
+            connection.close()
+            logger.info(f"Saving {filename} to S3 storage.")
+            self.save(filename, temp_sqlite_db.file)
+
+
+class SQLiteLocalStorage(SQLiteExportMixin, Storage):
+    """Storage class used for storing SQLite database files to the local file
+    system."""
+
+    def __init__(self, location) -> None:
+        self._location = Path(location).expanduser().resolve()
+        logger.info(f"Normalised path `{location}` to `{self._location}`.")
+        if not self._location.is_dir():
+            raise Exception(f"Directory does not exist: {location}.")
+
+    def path(self, name: str) -> str:
+        return str(self._location.joinpath(name))
+
+    def exists(self, name: str) -> bool:
+        return Path(self.path(name)).exists()
+
+    @log_timing(logger_function=logger.info)
+    def export_database(self, filename: str):
+        connection = apsw.Connection(self.path(filename))
+        logger.info(f"Saving {filename} to local file system storage.")
+        sqlite.make_export(connection)
+        connection.close()

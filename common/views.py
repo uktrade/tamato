@@ -14,6 +14,7 @@ import django.contrib.auth.views
 import kombu.exceptions
 from botocore.exceptions import ClientError
 from botocore.exceptions import EndpointConnectionError
+from dbt_copilot_python.utility import is_copilot
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -46,7 +47,7 @@ from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
-from common.celery import app
+from common.celery import app as celery_app
 from common.forms import HomeSearchForm
 from common.models import TrackedModel
 from common.models import Transaction
@@ -63,8 +64,6 @@ from tasks.models import UserAssignment
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
 from workbaskets.views.mixins import WithCurrentWorkBasket
-
-from .celery import app as celery_app
 
 
 class HomeView(LoginRequiredMixin, FormView):
@@ -302,13 +301,20 @@ class HealthCheckView(View):
 
     def check_s3(self) -> Tuple[str, int]:
         try:
-            client = boto3.client(
-                "s3",
-                aws_access_key_id=settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY,
-                endpoint_url=settings.S3_ENDPOINT_URL,
-                region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
-            )
+            if is_copilot():
+                client = boto3.client(
+                    "s3",
+                    endpoint_url=settings.S3_ENDPOINT_URL,
+                    region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
+                )
+            else:
+                client = boto3.client(
+                    "s3",
+                    aws_access_key_id=settings.HMRC_PACKAGING_S3_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.HMRC_PACKAGING_S3_SECRET_ACCESS_KEY,
+                    endpoint_url=settings.S3_ENDPOINT_URL,
+                    region_name=settings.HMRC_PACKAGING_S3_REGION_NAME,
+                )
             client.head_bucket(Bucket=settings.HMRC_PACKAGING_STORAGE_BUCKET_NAME)
             return "OK", 200
         except (ClientError, EndpointConnectionError):
@@ -342,7 +348,7 @@ class AppInfoView(
     DATETIME_FORMAT = "%d %b %Y, %H:%M"
 
     def active_tasks(self) -> Dict:
-        inspect = app.control.inspect()
+        inspect = celery_app.control.inspect()
         if not inspect:
             return {}
 

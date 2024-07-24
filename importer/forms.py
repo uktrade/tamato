@@ -15,9 +15,12 @@ from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 from sentry_sdk import capture_exception
+from werkzeug.utils import secure_filename
 
 from common.util import get_mime_type
 from common.util import parse_xml
+from common.validators import validate_filename
+from common.validators import validate_filepath
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.models import ImportBatch
@@ -72,6 +75,9 @@ class ImporterV2FormMixin:
         mime_type = get_mime_type(uploaded_taric_file)
         if mime_type not in ["text/xml", "application/xml"]:
             raise ValidationError("The selected file must be XML")
+
+        validate_filename(uploaded_taric_file.name)
+        validate_filepath(uploaded_taric_file)
 
         try:
             xml_file = parse_xml(uploaded_taric_file)
@@ -144,6 +150,9 @@ class ImportFormMixin:
         mime_type = get_mime_type(uploaded_taric_file)
         if mime_type not in ["text/xml", "application/xml"]:
             raise ValidationError("The selected file must be XML")
+
+        validate_filename(uploaded_taric_file.name)
+        validate_filepath(uploaded_taric_file)
 
         try:
             xml_file = parse_xml(uploaded_taric_file)
@@ -335,19 +344,20 @@ class CommodityImportForm(ImporterV2FormMixin, forms.Form):
         make sense to use commit=False. process_file() should be moved into the
         view if this (common) behaviour becomes required.
         """
-        file_name = os.path.splitext(self.cleaned_data["name"])[0]
-        description = f"TARIC {file_name} commodity code changes"
+        taric_filename = secure_filename(self.cleaned_data["name"])
+        file_id = os.path.splitext(taric_filename)[0]
+        description = f"TARIC {file_id} commodity code changes"
 
         import_batch = ImportBatch(
             author=self.request.user,
-            name=self.cleaned_data["name"],
+            name=taric_filename,
             goods_import=True,
         )
 
         self.files["taric_file"].seek(0, os.SEEK_SET)
         import_batch.taric_file.save(
-            self.files["taric_file"].name,
-            ContentFile(self.files["taric_file"].read()),
+            name=taric_filename,
+            content=ContentFile(self.files["taric_file"].read()),
         )
 
         import_batch.save()

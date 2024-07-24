@@ -100,9 +100,11 @@ class Plan:
         ]
 
     def add_schema(self, sql: str):
+        """Add sql schema (table) creation statements to this Plan instance."""
         self._operations.append((sql, [[]]))
 
     def add_data(self, model: Type[Model], columns: Iterable[str]):
+        """Add data insert statements to this Plan instance."""
         queryset = model.objects
         output_columns = []
         for column in columns:

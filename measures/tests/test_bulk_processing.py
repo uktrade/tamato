@@ -1,10 +1,18 @@
+import datetime
 from unittest.mock import ANY
 from unittest.mock import patch
 
 import pytest
+from django.core.exceptions import ValidationError
 
+from common.models.utils import override_current_transaction
+from common.tests import factories
+from common.util import TaricDateRange
+from common.validators import ApplicabilityCode
 from measures.models import MeasuresBulkCreator
 from measures.models import ProcessingState
+from measures.tests.factories import MeasuresBulkCreatorFactory
+from measures.validators import MeasureExplosionLevel
 
 pytestmark = pytest.mark.django_db
 
@@ -69,3 +77,151 @@ def test_cancel_task(
     )
 
     assert updated_2_measures_bulk_creator.processing_state == ProcessingState.CANCELLED
+
+
+@patch("measures.parsers.DutySentenceParser")
+@patch("measures.forms.LarkDutySentenceParser")
+def test_bulk_creator_get_forms_cleaned_data(
+    mock_lark_duty_sentence_parser,
+    mock_duty_sentence_parser,
+    user_empty_workbasket,
+    regulation,
+    lark_duty_sentence_parser,
+    duty_sentence_parser,
+    erga_omnes,
+):
+    measure_type = factories.MeasureTypeFactory.create(
+        measure_explosion_level=MeasureExplosionLevel.TARIC,
+        measure_component_applicability_code=ApplicabilityCode.PERMITTED,
+        valid_between=TaricDateRange(datetime.date(2020, 1, 1), None, "[)"),
+    )
+    commodity1, commodity2 = factories.GoodsNomenclatureFactory.create_batch(2)
+
+    mock_lark_duty_sentence_parser.return_value = lark_duty_sentence_parser
+    mock_duty_sentence_parser.return_value = duty_sentence_parser
+
+    form_data = {
+        "measure_details": {
+            "measure_type": measure_type.pk,
+            "start_date_0": 2,
+            "start_date_1": 4,
+            "start_date_2": 2021,
+            "min_commodity_count": 2,
+        },
+        "regulation_id": {"generating_regulation": regulation.pk},
+        "quota_order_number": {
+            "order_number": "",
+        },
+        "geographical_area": {
+            "geographical_area-geo_area": "ERGA_OMNES",
+        },
+        "commodities": {
+            "measure_commodities_duties_formset-0-commodity": commodity1.pk,
+            "measure_commodities_duties_formset-0-duties": "33 GBP/100kg",
+            "measure_commodities_duties_formset-1-commodity": commodity2.pk,
+            "measure_commodities_duties_formset-1-duties": "40 GBP/100kg",
+        },
+        "additional_code": {},
+        "conditions": {},
+        "footnotes": {},
+    }
+    form_kwargs = {
+        "measure_details": {},
+        "regulation_id": {},
+        "quota_order_number": {},
+        "quota_origins": {},
+        "geographical_area": {},
+        "commodities": {
+            "min_commodity_count": 2,
+        },
+        "additional_code": {},
+        "conditions": {},
+        "footnotes": {},
+    }
+
+    mock_bulk_creator = MeasuresBulkCreatorFactory.create(
+        form_data=form_data,
+        form_kwargs=form_kwargs,
+        workbasket=user_empty_workbasket,
+        user=None,
+    )
+    with override_current_transaction(user_empty_workbasket.current_transaction):
+        data = mock_bulk_creator.get_forms_cleaned_data()
+        assert data == {
+            "measure_type": measure_type,
+            "valid_between": TaricDateRange(datetime.date(2021, 4, 2), None, "[)"),
+            "min_commodity_count": 2,
+            "generating_regulation": regulation,
+            "order_number": None,
+            "geo_area": "ERGA_OMNES",
+            "erga_omnes_exclusions_formset": [],
+            "geo_group_exclusions_formset": [],
+            "geo_areas_and_exclusions": [{"geo_area": erga_omnes}],
+            "formset-commodities": [
+                {"commodity": commodity1, "duties": "33 GBP/100kg", "form_prefix": 0},
+                {"commodity": commodity2, "duties": "40 GBP/100kg", "form_prefix": 1},
+            ],
+            "additional_code": None,
+            "formset-conditions": [],
+            "formset-footnotes": [],
+        }
+
+
+@patch("measures.parsers.DutySentenceParser")
+@patch("measures.forms.LarkDutySentenceParser")
+def test_bulk_creator_get_forms_cleaned_data_errors(
+    mock_lark_duty_sentence_parser,
+    mock_duty_sentence_parser,
+    user_empty_workbasket,
+    lark_duty_sentence_parser,
+    duty_sentence_parser,
+):
+    mock_lark_duty_sentence_parser.return_value = lark_duty_sentence_parser
+    mock_duty_sentence_parser.return_value = duty_sentence_parser
+
+    form_data = {
+        "measure_details": {
+            "measure_type": "",
+            "start_date_0": "",
+            "start_date_1": "",
+            "start_date_2": "",
+            "min_commodity_count": "",
+        },
+        "regulation_id": {"generating_regulation": ""},
+        "quota_order_number": {
+            "order_number": "",
+        },
+        "geographical_area": {
+            "geo_area": "",
+        },
+        "commodities": {
+            "measure_commodities_duties_formset-0-commodity": "",
+            "measure_commodities_duties_formset-0-duties": "",
+        },
+        "additional_code": {},
+        "conditions": {},
+        "footnotes": {},
+    }
+    form_kwargs = {
+        "measure_details": {},
+        "regulation_id": {},
+        "quota_order_number": {},
+        "quota_origins": {},
+        "geographical_area": {},
+        "commodities": {
+            "min_commodity_count": 2,
+        },
+        "additional_code": {},
+        "conditions": {},
+        "footnotes": {},
+    }
+
+    mock_bulk_creator = MeasuresBulkCreatorFactory.create(
+        form_data=form_data,
+        form_kwargs=form_kwargs,
+        workbasket=user_empty_workbasket,
+        user=None,
+    )
+    with override_current_transaction(user_empty_workbasket.current_transaction):
+        with pytest.raises(ValidationError):
+            mock_bulk_creator.get_forms_cleaned_data()

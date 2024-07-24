@@ -20,6 +20,7 @@ from common.views import TrackedModelDetailMixin
 from geo_areas.validators import AreaCode
 from quotas import models
 from quotas import validators
+from quotas.forms import QuotaSuspensionType
 from quotas.views import QuotaList
 
 pytestmark = pytest.mark.django_db
@@ -1615,3 +1616,75 @@ def test_quota_update_existing_origin_exclusion_remove(
             for item in updated_origin.transaction.workbasket.tracked_models.all()
         ],
     ) == ["Delete", "Delete", "Update", "Update"]
+
+
+@pytest.mark.parametrize(
+    "data, expected_model",
+    [
+        (
+            {"suspension_type": QuotaSuspensionType.SUSPENSION},
+            models.QuotaSuspension,
+        ),
+        (
+            {
+                "suspension_type": QuotaSuspensionType.BLOCKING,
+                "blocking_period_type": validators.BlockingPeriodType.END_USER_DECISION,
+            },
+            models.QuotaBlocking,
+        ),
+    ],
+)
+def test_quota_suspension_or_blocking_create_view(
+    data,
+    expected_model,
+    client_with_current_workbasket,
+):
+    """Tests that `QuotaSuspensionOrBlockingCreate` view creates a suspension or
+    blocking period after POSTing valid form data."""
+    quota_definition = factories.QuotaDefinitionFactory.create()
+    quota_order_number = quota_definition.order_number
+    data.update(
+        {
+            "quota_definition": quota_definition.pk,
+            "description": "Test description",
+            "start_date_0": quota_definition.valid_between.lower.day,
+            "start_date_1": quota_definition.valid_between.lower.month,
+            "start_date_2": quota_definition.valid_between.lower.year,
+        },
+    )
+    url = reverse(
+        "quota_suspension_or_blocking-ui-create",
+        kwargs={"sid": quota_order_number.sid},
+    )
+
+    response = client_with_current_workbasket.get(url)
+    assert response.status_code == 200
+    assert not expected_model.objects.exists()
+
+    response = client_with_current_workbasket.post(url, data)
+    assert response.status_code == 302
+    assert expected_model.objects.count() == 1
+
+
+def test_quota_suspension_confirm_create_view(valid_user_client):
+    """Tests that `QuotaSuspensionConfirmCreate` view returns HTTP 200
+    response."""
+    suspension = factories.QuotaSuspensionFactory.create()
+    url = reverse("quota_suspension-ui-confirm-create", kwargs={"sid": suspension.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    assert f"Suspension period SID {suspension.sid} has been created" in str(
+        response.content,
+    )
+
+
+def test_quota_blocking_confirm_create_view(valid_user_client):
+    """Tests that `QuotaBlockingConfirmCreate` view returns HTTP 200
+    response."""
+    blocking = factories.QuotaBlockingFactory.create()
+    url = reverse("quota_blocking-ui-confirm-create", kwargs={"sid": blocking.sid})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    assert f"Blocking period SID {blocking.sid} has been created" in str(
+        response.content,
+    )
