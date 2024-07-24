@@ -95,12 +95,9 @@ class PackagedWorkbasketQueueView(
         OperationalStatus.unpause_queue(user=request.user)
         return self.view_url
 
-    @atomic
     def _promote_position(self, pk):
         try:
-            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
-                nowait=True,
-            ).get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             packaged_work_basket.promote_position()
         except (
             PackagedWorkBasket.DoesNotExist,
@@ -111,12 +108,9 @@ class PackagedWorkbasketQueueView(
             pass
         return self.view_url
 
-    @atomic
     def _demote_position(self, pk):
         try:
-            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
-                nowait=True,
-            ).get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             packaged_work_basket.demote_position()
         except (
             PackagedWorkBasket.DoesNotExist,
@@ -127,12 +121,9 @@ class PackagedWorkbasketQueueView(
             pass
         return self.view_url
 
-    @atomic
     def _promote_to_top_position(self, pk):
         try:
-            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
-                nowait=True,
-            ).get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             packaged_work_basket.promote_to_top_position()
         except (
             PackagedWorkBasket.DoesNotExist,
@@ -143,12 +134,9 @@ class PackagedWorkbasketQueueView(
             pass
         return self.view_url
 
-    @atomic
     def _remove_from_queue(self, pk):
         try:
-            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
-                nowait=True,
-            ).get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             packaged_work_basket.abandon()
             return reverse(
                 "workbaskets:workbasket-ui-changes",
@@ -201,12 +189,9 @@ class EnvelopeQueueView(
 
         return redirect(reverse("publishing:envelope-queue-ui-list"))
 
-    @atomic
     def _process_envelope(self, pk):
         if not OperationalStatus.is_queue_paused():
-            packaged_work_basket = PackagedWorkBasket.objects.select_for_update(
-                nowait=True,
-            ).get(pk=pk)
+            packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             try:
                 packaged_work_basket.begin_processing()
             except (TransitionNotAllowed, OperationalError):

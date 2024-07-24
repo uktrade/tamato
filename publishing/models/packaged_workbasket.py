@@ -439,6 +439,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
         return not PackagedWorkBasket.objects.currently_processing()
 
+    @atomic
     @pop_top_after
     @save_after
     @transition(
@@ -468,6 +469,7 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
         self.processing_started_at = datetime.now()
         self.save()
 
@@ -642,6 +644,10 @@ class PackagedWorkBasket(TimestampedMixin):
         Management of the queued instance's `processing_state` is not altered by
         this function and should be managed separately by the caller.
         """
+
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
+        self.refresh_from_db()
+
         if self.position == 0:
             raise PackagedWorkBasketInvalidQueueOperation(
                 "Unable to remove instance with a position value of 0 from "
@@ -667,6 +673,9 @@ class PackagedWorkBasket(TimestampedMixin):
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
 
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
+        self.refresh_from_db()
+
         if self.position <= 1:
             return self
 
@@ -687,6 +696,9 @@ class PackagedWorkBasket(TimestampedMixin):
     def promote_position(self) -> "PackagedWorkBasket":
         """Promote the instance by one position up the package processing
         queue."""
+
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
+        self.refresh_from_db()
 
         if self.position <= 1:
             return self
@@ -709,6 +721,9 @@ class PackagedWorkBasket(TimestampedMixin):
     def demote_position(self) -> "PackagedWorkBasket":
         """Demote the instance by one position down the package processing
         queue."""
+
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
+        self.refresh_from_db()
 
         if self.position in {0, PackagedWorkBasket.objects.max_position()}:
             return self
