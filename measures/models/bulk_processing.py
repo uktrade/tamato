@@ -481,8 +481,24 @@ class MeasuresBulkEditor(BulkProcessor):
 
     def schedule_task(self) -> AsyncResult:
         """Implementation of base class method."""
-        logger.info("Task was Scheduled!!")
-        
+
+        from measures.tasks import bulk_edit_measures
+
+        async_result = bulk_edit_measures.apply_async(
+            kwargs={
+                "measures_bulk_editor_pk": self.pk,
+            },
+            countdown=1,
+        )
+        self.task_id = async_result.id
+        self.save()
+
+        logger.info(
+            f"Measure bulk edit scheduled on task with ID {async_result.id}"
+            f"using MeasuresBulkEditor.pk={self.pk}.",
+        )
+
+        return async_result   
 
     @atomic
     def edit_measures(self) -> Iterable[Measure]:

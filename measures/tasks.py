@@ -2,6 +2,7 @@ import logging
 
 from common.celery import app
 from measures.models import MeasuresBulkCreator
+from measures.models import MeasuresBulkEditor
 
 logger = logging.getLogger(__name__)
 
@@ -43,3 +44,15 @@ def bulk_create_measures(measures_bulk_creator_pk: int) -> None:
             f"succeeded but created no measures in "
             f"WorkBasket({measures_bulk_creator.workbasket.pk}).",
         )
+
+
+@app.task
+def bulk_edit_measures(measures_bulk_editor_pk: int) -> None:
+    """Bulk edit measures from serialized measures form data saved within an
+    instance of MeasuresBulkEditor."""
+
+    measures_bulk_editor = MeasuresBulkEditor.objects.get(pk=measures_bulk_editor_pk)
+    
+    logger.info("TASK HAS BEEN CALLED!!")
+
+    
