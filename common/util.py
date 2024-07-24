@@ -23,6 +23,7 @@ from typing import Union
 import magic
 import wrapt
 from defusedxml.common import DTDForbidden
+from django.apps import apps
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F
@@ -444,7 +445,11 @@ class TableLock:
             with atomic():
                 with transaction.get_connection().cursor() as cursor:
                     for model in models:
-                        cursor.execute(f"LOCK TABLE {model._meta.db_table}")
+                        if isinstance(model, str):
+                            model = apps.get_model(model)
+                        cursor.execute(
+                            f"LOCK TABLE {model._meta.db_table} in {lock} MODE",
+                        )
 
                     return wrapped(*args, **kwargs)
 
