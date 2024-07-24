@@ -47,7 +47,7 @@ from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
-from common.celery import app
+from common.celery import app as celery_app
 from common.forms import HomeSearchForm
 from common.models import TrackedModel
 from common.models import Transaction
@@ -64,8 +64,6 @@ from tasks.models import UserAssignment
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
 from workbaskets.views.mixins import WithCurrentWorkBasket
-
-from .celery import app as celery_app
 
 
 class HomeView(LoginRequiredMixin, FormView):
@@ -350,7 +348,7 @@ class AppInfoView(
     DATETIME_FORMAT = "%d %b %Y, %H:%M"
 
     def active_tasks(self) -> Dict:
-        inspect = app.control.inspect()
+        inspect = celery_app.control.inspect()
         if not inspect:
             return {}
 
