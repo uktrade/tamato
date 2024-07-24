@@ -24,6 +24,7 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
+from common.util import TableLock
 from notifications.models import EnvelopeAcceptedNotification
 from notifications.models import EnvelopeReadyForProcessingNotification
 from notifications.models import EnvelopeRejectedNotification
@@ -124,6 +125,7 @@ class PackagedWorkBasketInvalidQueueOperation(Exception):
 
 class PackagedWorkBasketManager(Manager):
     @atomic
+    @TableLock.acquire_lock("publishing.PackagedWorkBasket", lock="EXCLUSIVE")
     def create(self, workbasket: WorkBasket, **kwargs):
         """Create a new instance, associating with workbasket."""
         if workbasket.status in WorkflowStatus.unchecked_statuses():
@@ -142,19 +144,15 @@ class PackagedWorkBasketManager(Manager):
                 f"{packaged_work_baskets}.",
             )
 
-        packaged_workbaskets = PackagedWorkBasket.objects.select_for_update().all()
-        if packaged_workbaskets:
-            position = (
-                packaged_workbaskets.aggregate(
-                    out=Coalesce(
-                        Max("position"),
-                        Value(0),
-                    ),
-                )["out"]
-                + 1
-            )
-        else:
-            position = 1
+        position = (
+            PackagedWorkBasket.objects.aggregate(
+                out=Coalesce(
+                    Max("position"),
+                    Value(0),
+                ),
+            )["out"]
+            + 1
+        )
 
         new_obj = super().create(workbasket=workbasket, position=position, **kwargs)
 
