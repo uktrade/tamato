@@ -6,17 +6,17 @@ class QuotaDefinitionExists(BaseQuotaDefinitionCheck):
     name = 'Preferential Quota Exists'
 
     def run_check(self):
-        if not self.tap_order_number():
-            message = f"FAIL - order number  not found"
-            print(message)
-            return AlignmentReportCheckStatus.FAIL, message
+        # if not self.tap_order_number():
+        #     message = f"FAIL - order number  not found"
+        #     print(message)
+        #     return AlignmentReportCheckStatus.FAIL, message
+        #
+        # elif not self.geo_area():
+        #     message = f"FAIL - geo area not found"
+        #     print(message)
+        #     return AlignmentReportCheckStatus.FAIL, message
 
-        elif not self.geo_area():
-            message = f"FAIL - geo area not found"
-            print(message)
-            return AlignmentReportCheckStatus.FAIL, message
-
-        elif not self.commodity_code():
+        if not self.commodity_code():
             message = f"FAIL - commodity code not found"
             print(message)
             return AlignmentReportCheckStatus.FAIL, message
