@@ -125,7 +125,7 @@ class PackagedWorkBasketInvalidQueueOperation(Exception):
 
 class PackagedWorkBasketManager(Manager):
     @atomic
-    @TableLock.acquire_lock("publishing.PackagedWorkBasket", lock="EXCLUSIVE")
+    @TableLock.acquire_lock("publishing.PackagedWorkBasket", lock=TableLock.EXCLUSIVE)
     def create(self, workbasket: WorkBasket, **kwargs):
         """Create a new instance, associating with workbasket."""
         if workbasket.status in WorkflowStatus.unchecked_statuses():

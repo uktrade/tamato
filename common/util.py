@@ -439,7 +439,7 @@ class TableLock:
                         if isinstance(model, str):
                             model = apps.get_model(model)
                         cursor.execute(
-                            f"LOCK TABLE {model._meta.db_table} in {lock} MODE",
+                            f"LOCK TABLE {model._meta.db_table} IN {lock} MODE",
                         )
 
                     return wrapped(*args, **kwargs)
