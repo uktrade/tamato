@@ -333,6 +333,37 @@ def test_demote_position():
     assert initially_second.position == 1
 
 
+def test_cannot_promote_or_demote_removed_packaged_workbasket():
+    """Tests that packaged workbasket positions remain unchanged after
+    attempting to reposition a packaged workbasket that has since been removed
+    from the queue."""
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
+
+    with patch(
+        "publishing.tasks.create_xml_envelope_file.apply_async",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        factories.PackagedWorkBasketFactory()
+
+    queued_pwb = PackagedWorkBasket.objects.get(position=1)
+    removed_pwb = PackagedWorkBasket.objects.get(position=2)
+    removed_pwb.abandon()
+
+    removed_pwb = removed_pwb.promote_to_top_position()
+    assert removed_pwb.position == 0
+    queued_pwb.refresh_from_db()
+    assert queued_pwb.position == 1
+
+    removed_pwb = removed_pwb.demote_position()
+    assert removed_pwb.position == 0
+    queued_pwb.refresh_from_db()
+    assert queued_pwb.position == 1
+
+
 def test_pause_and_unpause_queue(unpause_queue):
     assert not OperationalStatus.is_queue_paused()
     OperationalStatus.pause_queue(user=None)
