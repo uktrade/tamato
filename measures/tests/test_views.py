@@ -216,13 +216,13 @@ def test_multiple_measure_delete_template(client, valid_user, user_workbasket):
     )
 
     # Get the measure ids that are being shown in the table in the template.
-    measure_ids_in_table = [e.text for e in soup.select("table tr td:first-child")]
+    measure_ids_in_table = {e.text for e in soup.select("table tr td:first-child")}
 
     # Get the sids for the measures we selected, as these are what are shown in the template.
-    selected_measures_ids = [str(measure.sid) for measure in selected_measures]
+    selected_measures_ids = {str(measure.sid) for measure in selected_measures}
 
     assert measure_ids_in_table == selected_measures_ids
-    assert set(measure_ids_in_table).difference([measure_4.sid, measure_5.sid])
+    assert measure_ids_in_table.difference([measure_4.sid, measure_5.sid])
 
     # 4th column is start date
     start_dates_in_table = {e.text for e in soup.select("table tr td:nth-child(4)")}
