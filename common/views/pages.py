@@ -33,7 +33,6 @@ from redis.exceptions import TimeoutError as RedisTimeoutError
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from commodities.models import GoodsNomenclature
-from common.celery import app
 from common.celery import app as celery_app
 from common.forms import HomeSearchForm
 from common.models import Transaction
@@ -331,7 +330,7 @@ class AppInfoView(
     DATETIME_FORMAT = "%d %b %Y, %H:%M"
 
     def active_tasks(self) -> Dict:
-        inspect = app.control.inspect()
+        inspect = celery_app.control.inspect()
         if not inspect:
             return {}
 

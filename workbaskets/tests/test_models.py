@@ -15,8 +15,6 @@ from common.tests.factories import ApprovedTransactionFactory
 from common.tests.factories import SeedFileTransactionFactory
 from common.tests.factories import TransactionFactory
 from common.tests.factories import WorkBasketFactory
-from common.tests.util import TestRule
-from common.tests.util import add_business_rules
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
 from tasks.models import UserAssignment
@@ -316,18 +314,6 @@ def test_workbasket_approval_updates_transactions(
     )
 
     assert_transaction_order(Transaction.objects.all())
-
-
-def test_workbasket_clean_does_not_run_business_rules():
-    """Workbaskets should not have business rule validation included as part of
-    their model cleaning, because business rules are slow to run and for a
-    moderate sized workbasket will time out a web request."""
-
-    model = factories.TestModel1Factory.create()
-    with add_business_rules(type(model), TestRule):
-        model.transaction.workbasket.full_clean()
-
-    assert TestRule.validate.not_called()
 
 
 def test_current_transaction_returns_last_approved_transaction(

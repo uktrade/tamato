@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import re
+import typing
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
@@ -23,6 +25,7 @@ from typing import Union
 import magic
 import wrapt
 from defusedxml.common import DTDForbidden
+from django.apps import apps
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F
@@ -43,27 +46,16 @@ from django.db.models.functions.text import Lower
 from django.db.models.functions.text import Upper
 from django.db.transaction import atomic
 from django.template import loader
+from django.utils import timezone
 from lxml import etree
 from psycopg.types.range import DateRange
 from psycopg.types.range import TimestampRange
 
 major, minor, patch = python_version_tuple()
 
-# The preferred style of combining @classmethod and @property is only in 3.9.
-# When we stop support for 3.8, we should remove both of these branches.
-if int(major) == 3 and int(minor) < 9:
-    # https://stackoverflow.com/a/13624858
-    class classproperty(object):
-        def __init__(self, fget):
-            self.fget = fget
 
-        def __get__(self, owner_self, owner_cls):
-            return self.fget(owner_cls)
-
-else:
-
-    def classproperty(fn):
-        return classmethod(property(fn))
+def classproperty(fn):
+    return classmethod(property(fn))
 
 
 def is_truthy(value: Union[str, bool]) -> bool:
@@ -444,7 +436,11 @@ class TableLock:
             with atomic():
                 with transaction.get_connection().cursor() as cursor:
                     for model in models:
-                        cursor.execute(f"LOCK TABLE {model._meta.db_table}")
+                        if isinstance(model, str):
+                            model = apps.get_model(model)
+                        cursor.execute(
+                            f"LOCK TABLE {model._meta.db_table} IN {lock} MODE",
+                        )
 
                     return wrapped(*args, **kwargs)
 
@@ -611,3 +607,46 @@ def format_date_string(date_string: str, short_format=False) -> str:
             return date_parser.parse(date_string).strftime(settings.DATE_FORMAT)
     except:
         return ""
+
+
+def log_timing(logger_function: typing.Callable):
+    """
+    Decorator function to log start and end times of a decorated function.
+
+    When decorating a function, `logger_function` must be passed in to the
+    decorator to ensure the correct logger instance and function are applied.
+    `logger_function` may be any one of the logging output functions, but is
+    likely to be either `debug` or `info`.
+    Example:
+        ```
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        @log_timing(logger_function=logger.info)
+        def my_function():
+            ...
+        ```
+    """
+
+    @wrapt.decorator
+    def wrapper(wrapped, instance, args, kwargs):
+        start_time = timezone.localtime()
+        logger_function(
+            f"Entering the function {wrapped.__name__}() on process "
+            f"pid={os.getpid()} at {start_time.isoformat()}",
+        )
+
+        result = wrapped(*args, **kwargs)
+
+        end_time = timezone.localtime()
+        elapsed_time = end_time - start_time
+        logger_function(
+            f"Exited the function {wrapped.__name__}() on "
+            f"process pid={os.getpid()} at {end_time.isoformat()} after "
+            f"an elapsed time of {elapsed_time}.",
+        )
+
+        return result
+
+    return wrapper
