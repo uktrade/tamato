@@ -20,7 +20,7 @@ class TestBaseCheck:
     def test_init(self):
         with pytest.raises(TypeError) as e:
             BaseCheck()
-        assert "Can't instantiate abstract class BaseCheck with abstract method run_check" in str(e)
+        assert "Can't instantiate abstract class BaseCheck without an implementation for abstract method 'run_check'" in str(e.value)
 
     def test_run_check(self):
         class Target(BaseCheck):
@@ -688,7 +688,7 @@ class TestBaseOrderNumberCheck:
             if not ref_order_number:
                 ref_order_number = factories.RefOrderNumberFactory.create()
             self.target_class(ref_order_number)
-        assert "Can't instantiate abstract class BaseOrderNumberCheck with abstract method run_check" in str(e)
+        assert "Can't instantiate abstract class BaseOrderNumberCheck without an implementation for abstract method 'run_check'" in str(e.value)
 
     def test_run_check(self):
         ref_order_number = factories.RefOrderNumberFactory.create()

@@ -153,8 +153,30 @@ class TestChecks:
         target = self.target_class(ref_doc_ver)
         ref_rate = ref_doc_ver.ref_rates.first()
 
-        result = target.capture_check_result(RateExists(ref_rate), ref_rate=ref_rate, parent_check_status=AlignmentReportCheckStatus.FAIL)
+        result = target.capture_check_result(RateExists(ref_rate), ref_rate=ref_rate, parent_has_failed_or_skipped_result=True)
         assert result == AlignmentReportCheckStatus.SKIPPED
 
-        result = target.capture_check_result(RateExists(ref_rate), ref_rate=ref_rate, parent_check_status=AlignmentReportCheckStatus.SKIPPED)
-        assert result == AlignmentReportCheckStatus.SKIPPED
+    def test_status_contains_failed_or_skipped(self):
+        ref_doc_ver = self.data_setup_for_test_run()
+        target = self.target_class(ref_doc_ver)
+
+        statuses_with_skipped = [
+            AlignmentReportCheckStatus.PASS,
+            AlignmentReportCheckStatus.PASS,
+            AlignmentReportCheckStatus.SKIPPED
+        ]
+
+        statuses_with_failed = [
+            AlignmentReportCheckStatus.PASS,
+            AlignmentReportCheckStatus.PASS,
+            AlignmentReportCheckStatus.FAIL
+        ]
+
+        statuses_all_pass = [
+            AlignmentReportCheckStatus.PASS,
+            AlignmentReportCheckStatus.PASS
+        ]
+
+        assert target.status_contains_failed_or_skipped(statuses_with_skipped) is True
+        assert target.status_contains_failed_or_skipped(statuses_with_failed) is True
+        assert target.status_contains_failed_or_skipped(statuses_all_pass) is False

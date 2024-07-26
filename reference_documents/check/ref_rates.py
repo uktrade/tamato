@@ -28,23 +28,21 @@ class RateExists(BaseRateCheck):
                 80,
             )
 
-            message = f"{self.tap_comm_code()}, {self.tap_geo_area_description()}"
+            message = f"{self.tap_comm_code()} : "
 
             if match:
-                message += f"\nmatched with children"
+                message += f"matched with children"
                 print("PASS", message)
 
                 return AlignmentReportCheckStatus.PASS, message
             else:
-                message += f"\nno expected measures found on good code or children"
+                message += f"no expected measures found on good code or children"
                 print("FAIL", message)
 
                 return AlignmentReportCheckStatus.FAIL, message
 
-        elif len(measures) > 1:
-            message = f"multiple measures match {self.tap_comm_code()}, {self.tap_geo_area_description()}"
+        else:
+            message = f"{self.tap_comm_code()} : multiple measures match"
             print("WARNING", message)
             return AlignmentReportCheckStatus.WARNING, message
 
-        else:
-            return AlignmentReportCheckStatus.PASS, ''
