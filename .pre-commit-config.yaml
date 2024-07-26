@@ -11,6 +11,7 @@ repos:
             "--in-place",
             "--remove-all-unused-imports",
             "--remove-unused-variable",
+            "--ignore-init-module-imports",
           ]
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2

@@ -1,6 +1,8 @@
 import re
 from collections import defaultdict
 from datetime import date
+from typing import Dict
+from typing import List
 from typing import Type
 
 from crispy_forms_gds.fields import DateInputField
@@ -792,3 +794,101 @@ class HomeSearchForm(forms.Form):
                 css_id="homepage-search-form",
             ),
         )
+
+
+class SerializableFormMixin:
+    """Provides a default implementation of `serializable_data()` that can be
+    used to obtain form data that can be serialized, or more specifically,
+    stored to a `JSONField` field."""
+
+    ignored_data_key_regexs = [
+        "^csrfmiddlewaretoken$",
+        "^measure_create_wizard-current_step$",
+        "^submit$",
+        "-ADD$",
+        "-DELETE$",
+        "_autocomplete$",
+        "INITIAL_FORMS$",
+        "MAX_NUM_FORMS$",
+        "MIN_NUM_FORMS$",
+        "TOTAL_FORMS$",
+    ]
+    """
+    Regexs of keys that may appear in a Form's `data` dictionary attribute and
+    which should be ignored when creating a serializable version of `data`.
+
+    Override this on a per form basis if there are other, redundant keys that
+    should be ignored. See the default implementation of
+    `SerializableFormMixin.get_serializable_data_keys()` to see how this class
+    attribute is used.
+    """
+
+    def get_serializable_data_keys(self) -> List[str]:
+        """
+        Default implementation returning a list of the `Form.data` attribute's
+        keys used when serializing `data`.
+
+        Override this function if neither `ignored_data_key_regexs` or this
+        default implementation is sufficient for identifying which of
+        `Form.data`'s keys should be used during a call to this mixin's
+        `serializable_data()` method.
+        """
+        combined_regexs = "(" + ")|(".join(self.ignored_data_key_regexs) + ")"
+        return [k for k in self.data.keys() if not re.search(combined_regexs, k)]
+
+    def serializable_data(self, remove_key_prefix: str = "") -> Dict:
+        """
+        Return serializable form data that can be serialized / stored as, say,
+        `django.db.models.JSONField` which can be used to recreate a valid form.
+
+        If `remove_key_prefix` is a non-empty string, then the keys in the
+        returned dictionary will be stripped of that string where it appears as
+        a key prefix in the origin `data` dictionary.
+
+        Note that this method should only be used immediately after a successful
+        call to the Form's is_valid() if the data that it returns is to be used
+        to recreate a valid form.
+        """
+        serialized_data = {}
+        data_keys = self.get_serializable_data_keys()
+
+        for data_key in data_keys:
+            serialized_key = data_key
+
+            if (
+                remove_key_prefix
+                and len(remove_key_prefix) < len(data_key)
+                and data_key.startswith(remove_key_prefix)
+            ):
+                prefix = f"{remove_key_prefix}-"
+                serialized_key = data_key.replace(prefix, "")
+
+            serialized_data[serialized_key] = self.data[data_key]
+
+        return serialized_data
+
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        """
+        Get a serializable dictionary of arguments that can be used to
+        initialise the form. The `kwargs` parameter is the Python version of
+        kwargs that are used to initialise the form and is normally provided by
+        the same caller as would init the form (i.e. the view).
+
+        For instance, a SelectableObjectsForm subclass
+        requires a valid `objects` parameter to correctly construct and
+        validate the form, so we'd expect `kwargs` dictionary containing
+        an `objects` element.
+        """
+        return {}
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        """
+        Get a dictionary of arguments for use in initialising the form.
+
+        The 'form_kwargs` parameter is the serialized (actually, serializable)
+        version of the form's kwargs that require deserializing to their Python
+        representation.
+        """
+        return {}

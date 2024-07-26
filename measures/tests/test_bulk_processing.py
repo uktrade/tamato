@@ -80,7 +80,7 @@ def test_cancel_task(
 
 
 @patch("measures.parsers.DutySentenceParser")
-@patch("measures.forms.LarkDutySentenceParser")
+@patch("measures.forms.wizard.LarkDutySentenceParser")
 def test_bulk_creator_get_forms_cleaned_data(
     mock_lark_duty_sentence_parser,
     mock_duty_sentence_parser,
@@ -113,7 +113,7 @@ def test_bulk_creator_get_forms_cleaned_data(
             "order_number": "",
         },
         "geographical_area": {
-            "geographical_area-geo_area": "ERGA_OMNES",
+            "geo_area": "ERGA_OMNES",
         },
         "commodities": {
             "measure_commodities_duties_formset-0-commodity": commodity1.pk,
@@ -168,7 +168,7 @@ def test_bulk_creator_get_forms_cleaned_data(
 
 
 @patch("measures.parsers.DutySentenceParser")
-@patch("measures.forms.LarkDutySentenceParser")
+@patch("measures.forms.wizard.LarkDutySentenceParser")
 def test_bulk_creator_get_forms_cleaned_data_errors(
     mock_lark_duty_sentence_parser,
     mock_duty_sentence_parser,
