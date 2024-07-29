@@ -52,7 +52,28 @@ def bulk_edit_measures(measures_bulk_editor_pk: int) -> None:
     instance of MeasuresBulkEditor."""
 
     measures_bulk_editor = MeasuresBulkEditor.objects.get(pk=measures_bulk_editor_pk)
-    
-    logger.info("TASK HAS BEEN CALLED!!")
+    measures_bulk_editor.begin_processing()
+    measures_bulk_editor.save()
 
-    
+    try:
+        measures = measures_bulk_editor.edit_measures()
+    except Exception as e:
+        measures_bulk_editor.processing_failed()
+        measures_bulk_editor.save()
+        logger.error(
+            f"MeasuresBulkCreator({measures_bulk_editor.pk}) task failed "
+            f"attempting to edit measures in "
+            f"WorkBasket({measures_bulk_editor.workbasket.pk}).",
+        )
+        raise e
+
+    measures_bulk_editor.processing_succeeded()
+    measures_bulk_editor.successfully_processed_count = len(measures)
+    measures_bulk_editor.save()
+
+    if measures:
+        logger.info(
+            f"MeasuresBulkEditoror({measures_bulk_editor.pk}) task "
+            f"succeeded in editing {len(measures)} Measures in "
+            f"WorkBasket({measures_bulk_editor.workbasket.pk}).",
+        ) 

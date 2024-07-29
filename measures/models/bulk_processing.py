@@ -19,6 +19,12 @@ from common.models.mixins import TimestampedMixin
 from common.models.utils import override_current_transaction
 from measures.models.tracked_models import Measure
 
+from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
+from geo_areas.models import GeographicalArea
+import datetime
+from common.util import TaricDateRange
+
 logger = logging.getLogger(__name__)
 
 
@@ -502,5 +508,103 @@ class MeasuresBulkEditor(BulkProcessor):
 
     @atomic
     def edit_measures(self) -> Iterable[Measure]:
-        """TBC"""
-        pass
+        logger.info("Bulk editing measures commencing")
+        logger.info(f"Form Data: {self.form_data}")
+        logger.info(f"Duties: {self.form_data['duties']['duties']}")
+
+        form_data_keys = list(self.form_data.keys())
+        new_data = {}
+        for key in form_data_keys:
+            match key:
+                case "start_date":
+                    new_data.append(
+                        {"new_start_date": TaricDateRange(datetime.date(
+                            self.form_data["start_date"]["start_date_0"],
+                            self.form_data["start_date"]["start_date_1"],
+                            self.form_data["start_date"]["start_date_2"]
+                            )
+                        }
+                    )
+
+        # assign the simple values from the form data
+        # new_start_date = TaricDateRange(datetime.date(2020, 1, 6)) if self.form_data["start_date"]["start_date"] else None
+        # new_end_date = self.form_data["end_date"]["end_date"] if self.form_data["end_date"]["end_date"] else None
+        # new_duties = self.form_data["duties"]["duties"] if self.form_data["duties"]["duties"] else None
+
+        # Assign the foreign keys from the form data
+
+
+        if self.form_data["quota_order_number"]["order_number"]:
+            new_quota_order_number = QuotaOrderNumber.objects.get(pk=self.form_data["quota_order_number"]["order_number"])
+        else:
+            new_quota_order_number = None
+
+        if self.form_data["regulation"]["generating_regulation"]:
+            new_generating_regulation = Regulation.objects.get(regulation_id=self.form_data["regulation"]["generating_regulation"])
+        else: 
+            new_generating_regulation = None
+
+        if self.form_data["geographical_area_exclusions"]["geographical_area_exclusions"]:
+            new_exclusions = []
+            for exclusion in self.form_data["geographical_area_exclusions"]["geographical_area_exclusions"]:
+                new_exclusions.append(GeographicalArea.objects.get(pk=exclusion))
+        else: 
+           new_exclusions = None
+
+
+        logger.info(f"new start date: {new_start_date}")
+        logger.info(f"new end date: {new_end_date}")
+        logger.info(f"new duties: {new_duties}")
+        logger.info(f"new order number: {new_quota_order_number}")
+        logger.info(f"new generating regulation: {new_generating_regulation}")
+        logger.info(f"new geo exclusions: {new_exclusions}")
+    #     if selected_measures:
+    #         for measure in selected_measures:
+    #             new_measure = measure.new_version(
+    #                 workbasket=self.workbasket,
+    #                 update_type=UpdateType.UPDATE,
+    #                 valid_between=TaricDateRange(
+    #                     lower=(
+    #                         new_start_date
+    #                         if new_start_date
+    #                         else measure.valid_between.lower
+    #                     ),
+    #                     upper=(
+    #                         new_end_date
+    #                         if new_end_date is not False
+    #                         else measure.valid_between.upper
+    #                     ),
+    #                 ),
+    #                 order_number=(
+    #                     new_quota_order_number
+    #                     if new_quota_order_number
+    #                     else measure.order_number
+    #                 ),
+    #                 generating_regulation=(
+    #                     new_generating_regulation
+    #                     if new_generating_regulation
+    #                     else measure.generating_regulation
+    #                 ),
+    #             )
+    #             self.update_measure_components(
+    #                 measure=new_measure,
+    #                 duties=new_duties,
+    #                 workbasket=self.workbasket,
+    #             )
+    #             self.update_measure_condition_components(
+    #                 measure=new_measure,
+    #                 workbasket=self.workbasket,
+    #             )
+    #             self.update_measure_excluded_geographical_areas(
+    #                 edited="geographical_area_exclusions"
+    #                 in cleaned_data.get("fields_to_edit", []),
+    #                 measure=new_measure,
+    #                 exclusions=new_exclusions,
+    #                 workbasket=self.workbasket,
+    #             )
+    #             self.update_measure_footnote_associations(
+    #                 measure=new_measure,
+    #                 workbasket=self.workbasket,
+    #             )
+
+   
