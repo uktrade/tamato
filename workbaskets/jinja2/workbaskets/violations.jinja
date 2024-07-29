@@ -15,6 +15,7 @@
     <strong class="govuk-warning-text__text">
       <span class="govuk-warning-text__assistive">Warning</span>
       Number of business rule violations: {{ workbasket.tracked_model_check_errors.count() }}
+      {% if rule_check_in_progress %}<p>This workbasket has a rule check in progress, so there may be more violations than shown. </p>{% endif %}
     </strong>
   </div>
 {% set table_rows = [] %}

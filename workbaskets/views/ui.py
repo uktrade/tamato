@@ -991,7 +991,15 @@ class WorkBasketViolations(SortingMixin, WithPaginationListView):
         return WorkBasket.current(self.request)
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(workbasket=self.workbasket, **kwargs)
+        context = super().get_context_data(workbasket=self.workbasket, **kwargs)
+        if self.workbasket.rule_check_task_id:
+            result = AsyncResult(self.workbasket.rule_check_task_id)
+            if result.status != "SUCCESS":
+                context["rule_check_in_progress"] = True
+            else:
+                context["rule_check_in_progress"] = False
+
+        return context
 
     def get_queryset(self):
         self.queryset = TrackedModelCheck.objects.filter(
