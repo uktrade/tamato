@@ -9,18 +9,15 @@ class CommodityImporterStorage(S3Boto3Storage):
         # Importing settings here makes it possible for tests to override_settings
         from django.conf import settings
 
-        settings = dict(
+        return dict(
             super().get_default_settings(),
             bucket_name=settings.IMPORTER_STORAGE_BUCKET_NAME,
+            access_key=settings.IMPORTER_S3_ACCESS_KEY_ID,
+            secret_key=settings.IMPORTER_S3_SECRET_ACCESS_KEY,
             endpoint_url=settings.S3_ENDPOINT_URL,
             region_name=settings.IMPORTER_S3_REGION_NAME,
             default_acl="private",
         )
-
-        print("debug xx")
-        print(settings)
-
-        return settings
 
     def generate_filename(self, filename: str) -> str:
         from django.conf import settings
