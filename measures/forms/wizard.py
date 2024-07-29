@@ -781,7 +781,7 @@ class MeasuresEditFieldsForm(forms.Form):
         )
 
 
-class MeasureStartDateForm(forms.Form):
+class MeasureStartDateForm(forms.Form, SerializableFormMixin):
     start_date = DateInputFieldFixed(
         label="Start date",
         help_text="For example, 27 3 2008",
@@ -820,7 +820,7 @@ class MeasureStartDateForm(forms.Form):
         return cleaned_data
 
 
-class MeasureEndDateForm(forms.Form):
+class MeasureEndDateForm(forms.Form, SerializableFormMixin):
     end_date = DateInputFieldFixed(
         label="End date",
         help_text="For example, 27 3 2008",
@@ -862,7 +862,7 @@ class MeasureEndDateForm(forms.Form):
         return cleaned_data
 
 
-class MeasureRegulationForm(forms.Form):
+class MeasureRegulationForm(forms.Form, SerializableFormMixin):
     generating_regulation = AutoCompleteField(
         label="Regulation ID",
         help_text="Select the regulation which provides the legal basis for the measures.",
@@ -889,7 +889,7 @@ class MeasureRegulationForm(forms.Form):
         )
 
 
-class MeasureDutiesForm(forms.Form):
+class MeasureDutiesForm(forms.Form, SerializableFormMixin):
     duties = forms.CharField(
         label="Duties",
         help_text="Enter the duty that applies to the measures.",
@@ -965,7 +965,7 @@ class MeasureGeographicalAreaExclusionsForm(forms.Form):
         )
 
 
-class MeasureGeographicalAreaExclusionsFormSet(FormSet):
+class MeasureGeographicalAreaExclusionsFormSet(FormSet, SerializableFormMixin):
     """Allows editing the geographical area exclusions of multiple measures in
     `MeasureEditWizard`."""
 
