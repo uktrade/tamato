@@ -113,7 +113,7 @@ def test_bulk_creator_get_forms_cleaned_data(
             "order_number": "",
         },
         "geographical_area": {
-            "geo_area": "ERGA_OMNES",
+            "geographical_area-geo_area": "ERGA_OMNES",
         },
         "commodities": {
             "measure_commodities_duties_formset-0-commodity": commodity1.pk,
