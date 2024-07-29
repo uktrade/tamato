@@ -508,7 +508,7 @@ class MeasureGeographicalAreaForm(
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         # Perculiarly, this Form requires a prefix of "geographical_area".
         return {
-            "prefix": cls.prefix,
+            "prefix": "geographical_area",
         }
 
 
