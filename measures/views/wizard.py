@@ -2,6 +2,7 @@ import logging
 from typing import Dict
 from typing import List
 
+from common.forms import SerializableFormMixin
 from crispy_forms_gds.helper import FormHelper
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -41,6 +42,7 @@ class MeasureEditWizard(
     PermissionRequiredMixin,
     MeasureSelectionQuerysetMixin,
     NamedUrlSessionWizardView,
+    SerializableFormMixin,
 ):
     """
     Multipart form wizard for editing multiple measures.
@@ -51,7 +53,7 @@ class MeasureEditWizard(
     storage_name = "measures.wizard.MeasureEditSessionStorage"
     permission_required = ["common.change_trackedmodel"]
 
-    form_list = [
+    data_form_list = [
         (START, forms.MeasuresEditFieldsForm),
         (MeasureEditSteps.START_DATE, forms.MeasureStartDateForm),
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
@@ -63,6 +65,14 @@ class MeasureEditWizard(
             forms.MeasureGeographicalAreaExclusionsFormSet,
         ),
     ]
+    """Forms in this wizard's steps that collect user data."""
+
+    form_list = [
+        (START, forms.MeasuresEditFieldsForm),
+        *data_form_list,
+    ]
+    """All Forms in this wizard's steps, including both those that collect user
+    data and those that don't."""
 
     templates = {
         START: "measures/edit-multiple-start.jinja",
@@ -93,6 +103,10 @@ class MeasureEditWizard(
             "title": "Edit the geographical area exclusions",
         },
     }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     def get_template_names(self):
         return self.templates.get(
@@ -231,6 +245,32 @@ class MeasureEditWizard(
             )
 
     def done(self, form_list, **kwargs):
+        if settings.MEASURES_ASYNC_EDIT:
+            return self.async_done(form_list, **kwargs)
+        else:
+            return self.sync_done(form_list, **kwargs)
+
+    def async_done(self, form_list, **kwargs):
+        logger.info("Editing measures asynchronously.")
+
+        serializable_data = self.all_serializable_form_data()
+        serializable_form_kwargs = self.all_serializable_form_kwargs()
+
+        selected_measures = []
+        for measure in self.get_queryset():
+            selected_measures.append(measure.id)
+
+        measures_bulk_editor = models.MeasuresBulkEditor.objects.create(
+            form_data=serializable_data,
+            form_kwargs=serializable_form_kwargs,
+            workbasket=self.workbasket,
+            user=self.request.user,
+            selected_measures=selected_measures,
+        )
+        # self.session_store.clear()  # TODO: Is this the best point to clear the session store?
+        measures_bulk_editor.schedule_task()
+
+    def sync_done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
         selected_measures = self.get_queryset()
         workbasket = WorkBasket.current(self.request)
