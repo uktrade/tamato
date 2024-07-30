@@ -8,9 +8,9 @@
     {% endfor %}
   };
   const initial = {{initial|safe}};
-  const exclusionsOptions = [
+  const ergaOmnesExclusions = [
     {"label": "", "value": ""},
-    {% for geo_area in exclusions_options %}
+    {% for geo_area in erga_omnes_exclusions %}
     {
       "label": "{{ geo_area.area_id  ~ " - " ~ geo_area.description }}",
       "value": {{ geo_area.pk }},

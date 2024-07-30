@@ -624,7 +624,14 @@ class MeasureCreateWizard(
             .as_at_today_and_beyond()
             .order_by("description")
         )
-        exclusions_options = all_geo_areas
+        erga_omnes = GeographicalArea.objects.erga_omnes().first()
+        erga_omnes_exclusions_pks = [
+            membership.member.pk
+            for membership in GeographicalMembership.objects.filter(
+                geo_group__pk=erga_omnes.pk,
+            ).prefetch_related("geo_group", "member")
+        ]
+        erga_omnes_exclusions = all_geo_areas.filter(pk__in=erga_omnes_exclusions_pks)
         groups_options = all_geo_areas.filter(area_code=AreaCode.GROUP)
         country_regions_options = all_geo_areas.exclude(
             area_code=AreaCode.GROUP,
@@ -678,7 +685,7 @@ class MeasureCreateWizard(
                 "request": self.request,
                 "initial": react_initial,
                 "groups_with_members": groups_with_members,
-                "exclusions_options": exclusions_options,
+                "erga_omnes_exclusions": erga_omnes_exclusions,
                 "groups_options": groups_options,
                 "country_regions_options": country_regions_options,
                 "errors": form.errors,
