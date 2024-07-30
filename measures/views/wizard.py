@@ -54,7 +54,6 @@ class MeasureEditWizard(
     permission_required = ["common.change_trackedmodel"]
 
     data_form_list = [
-        (START, forms.MeasuresEditFieldsForm),
         (MeasureEditSteps.START_DATE, forms.MeasureStartDateForm),
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
         (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),

@@ -663,6 +663,9 @@ CELERY_ROUTES = {
     "measures.tasks.bulk_create_measures": {
         "queue": "bulk-create",
     },
+    "measures.tasks.bulk_edit_measures": {
+        "queue": "bulk-create",
+    },
 }
 
 SQLITE_EXCLUDED_APPS = [
