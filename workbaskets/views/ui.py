@@ -1779,3 +1779,17 @@ class RuleCheckQueueView(
                 "text": task_status,
                 "tag_class": "",
             }
+
+    def post(self, request):
+        workbasket_pk = request.POST.get("workbasket")
+
+        workbasket = WorkBasket.objects.get(pk=workbasket_pk) if workbasket_pk else None
+
+        if workbasket:
+            if workbasket.status == WorkflowStatus.ERRORED:
+                workbasket.restore()
+                workbasket.save()
+
+            workbasket.set_as_current(request.user)
+            return redirect(reverse("workbaskets:workbasket-ui-violations"))
+        return redirect(reverse("workbaskets:workbasket-ui-list"))

@@ -11,7 +11,14 @@
 {% endmacro %}
 
 {% macro workbasket_link(workbasket_id) %}
-    <a href="{{ url("workbaskets:workbasket-ui-detail", args=[workbasket_id]) }}"> {{ workbasket_id }} </a>
+    <form action="{{ request.path }}" method="post">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input
+      type="submit"
+      class="button-link"
+      name="workbasket"
+      value="{{ workbasket_id }}">
+  </form>
 {% endmacro %}
 {% set list_include = "includes/measures/create-task-list.jinja"%}
 
