@@ -2600,3 +2600,16 @@ def test_current_tasks_is_called(valid_user_client):
         assert len(queued_checks) == 2
         assert "QUEUED" in queued_checks[0].get_text()
         assert "QUEUED" in queued_checks[1].get_text()
+
+
+def test_rule_check_queue_workbasket_link(valid_user, client, workbasket):
+    """Test that clicking on a workbasket id on the rule check queue assigns the
+    workbasket and links to the rule violations page."""
+    client.force_login(valid_user)
+    assert not valid_user.current_workbasket
+    rule_check_queue_url = reverse("workbaskets:rule-check-queue")
+    response = client.post(rule_check_queue_url, {"workbasket": workbasket.pk})
+    assert response.status_code == 302
+    assert response.url == reverse("workbaskets:workbasket-ui-violations")
+    valid_user.refresh_from_db()
+    assert valid_user.current_workbasket == workbasket
