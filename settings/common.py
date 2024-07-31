@@ -264,7 +264,7 @@ AUTHBROKER_CLIENT_SECRET = os.environ.get("AUTHBROKER_CLIENT_SECRET")
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
 if SSO_ENABLED:
     AUTHENTICATION_BACKENDS += [
-        "authbroker_client.backends.AuthbrokerBackend",
+        "common.auth_backend.CustomAuthbrokerBackend",
     ]
 
 AUTH_USER_MODEL = "common.User"

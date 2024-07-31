@@ -12,6 +12,8 @@ class User(AbstractUser):
         blank=True,
     )
 
+    sso_uuid = models.UUIDField(unique=True, null=True, blank=True)
+
     class Meta:
         db_table = "auth_user"
 
