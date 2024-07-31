@@ -629,7 +629,7 @@ class MeasureCreateWizard(
             membership.member.pk
             for membership in GeographicalMembership.objects.filter(
                 geo_group__pk=erga_omnes.pk,
-            ).prefetch_related("geo_group", "member")
+            ).prefetch_related("member")
         ]
         erga_omnes_exclusions = all_geo_areas.filter(pk__in=erga_omnes_exclusions_pks)
         groups_options = all_geo_areas.filter(area_code=AreaCode.GROUP)
