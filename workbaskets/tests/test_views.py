@@ -2603,12 +2603,15 @@ def test_current_tasks_is_called(valid_user_client):
 
 
 def test_rule_check_queue_workbasket_link(valid_user, client, workbasket):
-    """Test that clicking on a workbasket id on the rule check queue assigns the
-    workbasket and links to the rule violations page."""
+    """Test that posting to the select workbasket view with rule violations tab
+    parameter assigns the workbasket and redirects to the violations page."""
     client.force_login(valid_user)
     assert not valid_user.current_workbasket
-    rule_check_queue_url = reverse("workbaskets:rule-check-queue")
-    response = client.post(rule_check_queue_url, {"workbasket": workbasket.pk})
+    select_workbasket_url = reverse("workbaskets:workbasket-ui-list")
+    response = client.post(
+        select_workbasket_url,
+        {"workbasket": workbasket.pk, "workbasket-tab": "view-violations"},
+    )
     assert response.status_code == 302
     assert response.url == reverse("workbaskets:workbasket-ui-violations")
     valid_user.refresh_from_db()
