@@ -393,15 +393,18 @@ def test_select_workbasket_with_errored_status(valid_user_client):
     ],
 )
 def test_select_workbasket_redirects_to_tab(
-    valid_user_client,
+    valid_user,
+    client,
     workbasket_tab,
     expected_url,
     url_kwargs_required,
 ):
     """Test that SelectWorkbasketView redirects to a specific tab on the
     selected workbasket if a tab has been provided."""
+    client.force_login(valid_user)
+    assert not valid_user.current_workbasket
     workbasket = factories.WorkBasketFactory.create()
-    response = valid_user_client.post(
+    response = client.post(
         reverse("workbaskets:workbasket-ui-list"),
         {
             "workbasket": workbasket.id,
@@ -413,6 +416,8 @@ def test_select_workbasket_redirects_to_tab(
         assert response.url == reverse(expected_url, kwargs={"pk": workbasket.pk})
     else:
         assert response.url == reverse(expected_url)
+    valid_user.refresh_from_db()
+    assert valid_user.current_workbasket == workbasket
 
 
 @pytest.mark.parametrize(
@@ -2600,19 +2605,3 @@ def test_current_tasks_is_called(valid_user_client):
         assert len(queued_checks) == 2
         assert "QUEUED" in queued_checks[0].get_text()
         assert "QUEUED" in queued_checks[1].get_text()
-
-
-def test_rule_check_queue_workbasket_link(valid_user, client, workbasket):
-    """Test that posting to the select workbasket view with rule violations tab
-    parameter assigns the workbasket and redirects to the violations page."""
-    client.force_login(valid_user)
-    assert not valid_user.current_workbasket
-    select_workbasket_url = reverse("workbaskets:workbasket-ui-list")
-    response = client.post(
-        select_workbasket_url,
-        {"workbasket": workbasket.pk, "workbasket-tab": "view-violations"},
-    )
-    assert response.status_code == 302
-    assert response.url == reverse("workbaskets:workbasket-ui-violations")
-    valid_user.refresh_from_db()
-    assert valid_user.current_workbasket == workbasket
