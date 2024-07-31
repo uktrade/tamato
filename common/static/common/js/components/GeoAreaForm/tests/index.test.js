@@ -28,10 +28,6 @@ const mockCountryRegionsOptions = [
     value: 3,
   },
   {
-    label: "Jersey",
-    value: 4,
-  },
-  {
     label: "Germany",
     value: 5,
   },
@@ -44,25 +40,26 @@ const mockCountryRegionsOptions = [
     value: 7,
   },
   {
-    label: "Guernsey",
-    value: 8,
-  },
-  {
     label: "Sweden",
     value: 9,
   },
+  {
+    label: "Jersey",
+    value: 4,
+  },
+  {
+    label: "Guernsey",
+    value: 8,
+  },
 ];
+
+const mockErgaOmnesExclusions = mockCountryRegionsOptions.slice(0, 6);
 
 const mockGroupsWithMembers = {
   11: [5, 6, 9],
   12: [3, 7],
   13: [4, 8],
 };
-
-const mockExclusionsOptions = [
-  ...mockGroupsOptions,
-  ...mockCountryRegionsOptions,
-];
 
 const mockCsrfToken = "123456789";
 const mockErrors = {};
@@ -84,7 +81,8 @@ describe("GeoAreaField", () => {
         errors={mockErrors}
         csrfToken={mockCsrfToken}
         helpText={helpText}
-        exclusionsOptions={mockExclusionsOptions}
+        ergaOmnesExclusions={mockErgaOmnesExclusions}
+        exclusionsOptions={mockCountryRegionsOptions}
         groupsOptions={mockGroupsOptions}
         countryRegionsOptions={mockCountryRegionsOptions}
         groupsWithMembers={mockGroupsWithMembers}
@@ -110,7 +108,8 @@ describe("GeoAreaField", () => {
         errors={mockErrors}
         csrfToken={mockCsrfToken}
         helpText={helpText}
-        exclusionsOptions={mockExclusionsOptions}
+        ergaOmnesExclusions={mockErgaOmnesExclusions}
+        exclusionsOptions={mockCountryRegionsOptions}
         groupsOptions={mockGroupsOptions}
         countryRegionsOptions={mockCountryRegionsOptions}
         groupsWithMembers={mockGroupsWithMembers}
@@ -137,7 +136,8 @@ describe("GeoAreaField", () => {
         errors={mockErrors}
         csrfToken={mockCsrfToken}
         helpText={helpText}
-        exclusionsOptions={mockExclusionsOptions}
+        ergaOmnesExclusions={mockErgaOmnesExclusions}
+        exclusionsOptions={mockCountryRegionsOptions}
         groupsOptions={mockGroupsOptions}
         countryRegionsOptions={mockCountryRegionsOptions}
         groupsWithMembers={mockGroupsWithMembers}
@@ -188,7 +188,8 @@ describe("GeoAreaField", () => {
         errors={mockErrors}
         csrfToken={mockCsrfToken}
         helpText={helpText}
-        exclusionsOptions={mockExclusionsOptions}
+        ergaOmnesExclusions={mockErgaOmnesExclusions}
+        exclusionsOptions={mockCountryRegionsOptions}
         groupsOptions={mockGroupsOptions}
         countryRegionsOptions={mockCountryRegionsOptions}
         groupsWithMembers={mockGroupsWithMembers}
