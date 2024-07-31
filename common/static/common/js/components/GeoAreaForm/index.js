@@ -11,7 +11,7 @@ function GeoAreaForm({
   errors,
   csrfToken,
   helpText,
-  exclusionsOptions,
+  ergaOmnesExclusions,
   groupsOptions,
   countryRegionsOptions,
   groupsWithMembers,
@@ -51,7 +51,8 @@ function GeoAreaForm({
             errors={errors}
             data={data}
             updateForm={updateForm}
-            exclusionsOptions={exclusionsOptions}
+            ergaOmnesExclusions={ergaOmnesExclusions}
+            exclusionsOptions={countryRegionsOptions}
             groupsOptions={groupsOptions}
             countryRegionsOptions={countryRegionsOptions}
             groupsWithMembers={groupsWithMembers}
@@ -118,14 +119,14 @@ function init() {
   if (!container) return;
   const root = createRoot(container);
   /* eslint-disable */
-  // initial, geoAreaErrors, exclusionsOptions, groupsOptions, countryRegionsOptions, groupsWithMembers come from template measures/jinja2/includes/measures/geo_area_script.jinja and MeasureGeographicalAreaForm.init_layout
+  // initial, geoAreaErrors, ergaOmnesExclusions, groupsOptions, countryRegionsOptions, groupsWithMembers come from template measures/jinja2/includes/measures/geo_area_script.jinja and MeasureGeographicalAreaForm.init_layout
   root.render(
     <GeoAreaForm
       initial={initial}
       errors={geoAreaErrors}
       csrfToken={csrfToken}
       helpText={helpText}
-      exclusionsOptions={exclusionsOptions}
+      ergaOmnesExclusions={ergaOmnesExclusions}
       groupsOptions={groupsOptions}
       countryRegionsOptions={countryRegionsOptions}
       groupsWithMembers={groupsWithMembers}
@@ -152,6 +153,12 @@ GeoAreaForm.propTypes = {
   errors: PropTypes.objectOf(PropTypes.string).isRequired,
   csrfToken: PropTypes.string.isRequired,
   helpText: PropTypes.string.isRequired,
+  ergaOmnesExclusions: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      value: PropTypes.number.isRequired,
+    }),
+  ).isRequired,
   exclusionsOptions: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,
