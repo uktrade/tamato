@@ -500,3 +500,30 @@ class QuotaEvent(TrackedModel):
     identifying_fields = ("subrecord_code", "quota_definition__sid")
 
     business_rules = (UpdateValidity,)
+
+
+class QuotaDefinitionDuplicator(models.Model):
+    """
+    Model class to store the data to be duplicated from a main quota definition, to a sub quota child definition
+
+    The initial data is copied from the parent definition
+    The edited data is serialised for saving to this Model, then deserialized to create the definition.
+    """
+    # When querying this table, we want to return the definitions based on the main definition
+    # If the parent definition is deleted, we'll no longer be able to duplicate it and we'll want to remove any legacy data from this model.
+    # This field should not be nullable
+    parent_definition = models.ForeignKey(QuotaDefinition, on_delete=models.CASCADE)
+
+    definition_data = models.JSONField()
+    """Dictionary of all Definition data that is to be duplicated from main to sub quota definition."""
+
+    current_transaction = models.ForeignKey(
+        "common.Transaction",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="definition_duplication",
+        editable=False,
+    )
+    """
+    The current Transaction at the time the definition was duplicated.
+    """

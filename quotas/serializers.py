@@ -91,6 +91,22 @@ class SimpleQuotaDefinitionSerializer(
         ]
 
 
+class QuotaDefinitionDuplicatorSerializer(
+    TrackedModelSerializerMixin,
+    ValiditySerializerMixin,
+):
+    class Meta:
+        model = models.QuotaDefinitionDuplicator
+        fields = [
+            "measurement_unit",
+            "volume",
+            "sub_quota_relation_type",
+            "coefficient",
+        ]
+
+    measurement_unit = MeasurementUnitSerializer(read_only=True)
+
+
 class QuotaDefinitionImporterSerializer(
     TrackedModelSerializerMixin,
     ValiditySerializerMixin,

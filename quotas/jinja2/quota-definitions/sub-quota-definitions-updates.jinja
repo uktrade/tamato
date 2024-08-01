@@ -1,45 +1,44 @@
-{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{% extends "layouts/form.jinja" %}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/details/macro.njk" import govukDetails %}
 
-{% set page_title = step_metadata[wizard.steps.current].title %}
-{% block form %}
+{% block content %}
+    <h2 class="govuk-heading">Main quota association details</h2>
+    {% set main_definition = view.main_definition %}
     {% set table_rows = [] %}
-    <p>Each form to be an 'update' form per definition period.</p>
-    <p>Each field in table below to populate individual definition period details.</p>
-    {# {% for field in form %} #}
     {{ table_rows.append([
-        {"html": "Definition period info/identifier"},
-        {"html": "Relationship - select" },
-        {"html": "Coefficient - input"},
-        {"html": "Status - status badge"},
-        {"html": "Link to update form"},
+        {"html": main_definition.sid },
+        {"html": "{:%d %b %Y}".format(main_definition.valid_between.lower) },
+        {"html": "{:%d %b %Y}".format(main_definition.valid_between.upper) },
+        {"html": intcomma(main_definition.volume) },
+        {"html": main_definition.measurement_unit.abbreviation},
     ]) or ""}}
-    {# {% endfor %} #}
     {{ govukTable({
         "head": [
-            {"text": "Definition period"},
-            {"text": "Relationship type"},
-            {"text": "Coefficient"},
-            {"text": "Status"},
-            {"text": "Update"},
+            {"text": "SID"},
+            {"text": "Start date"},
+            {"text": "End date"},
+            {"text": "Volume"},
+            {"text": "Unit"},
         ],
         "rows": table_rows
     })
     }}
-
-    {{super()}}
+    {% call django_form() %}
+    {{ crispy(form) }}
+    {% endcall %}
 {% endblock %}
-{# 
-Updates for the selected definition periods go here 
-This will need to include
-- start/end dates, 
-- relationship type, 
-- coefficient value, 
-- unit of measurement, 
-- volume
+{# <form method="post">
+    {# <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"> #}
+    {{ crispy(form, no_form_tags) }}
+</form> #}
 
-Plan:
-1. each definition display and input is a table row.
-2.  first row: original definition information
-    second row: input boxes
-#}
+{# {% block form %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% call django_form(action=object.get_url("edit")) %}
+        {{ crispy(form) }}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %} #}

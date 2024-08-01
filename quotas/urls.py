@@ -70,7 +70,7 @@ urlpatterns = [
             url_name="sub_quota_definitions-ui-create",
             done_step_name="complete",
         ),
-        name="sub_quota_definitions-ui-create"
+        name="sub_quota_definitions-ui-create",
     ),
     path(
         f"quotas/duplicate_quota_definitions/<step>",
@@ -78,7 +78,12 @@ urlpatterns = [
             url_name="sub_quota_definitions-ui-create",
             done_step_name="complete",
         ),
-        name="sub_quota_definitions-ui-create"
+        name="sub_quota_definitions-ui-create",
+    ),
+    path(
+        f"quotas/sub_quota_definition_updates/<sid>",
+        views.QuotaDefinitionDuplicateUpdates.as_view(),
+        name="sub_quota_definitions-ui-updates",
     ),
     path(
         f"quota_definitions/<sid>/confirm-create/",

@@ -1,3 +1,4 @@
+import datetime
 from typing import Dict
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
@@ -19,6 +20,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic import ListView
 
+from common.serializers import deserialize_date, serialize_date
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import FormSet
@@ -1081,19 +1083,25 @@ class SelectSubQuotaDefinitionsForm(
 
 class SelectedDefinitionsForm(forms.Form):
     def __init__(self, *args, **kwargs):
-        self.objects = kwargs.pop("objects", None)
-        for definition in self.objects:
-            print(f"{definition=}")
-
+        self.objects = kwargs.pop("objects", [])
+        print('*'*30, f"SelectedDefinitionsForm {self.objects}")
         super().__init__(*args, **kwargs)
-        print('*'*30, 'SelectedDefinitionsForm', f'{self.objects}')
 
     def clean(self):
+        print('*'*30,'SelectedDefinitionsForm, clean')
+        cleaned_data = super().clean()
+        # TODO: check that each definition has a coefficient and association
+        cleaned_data['duplicated_definitions'] = self.objects
+        print('*'*30, f'{cleaned_data=}')
+        return cleaned_data
+
+    def save(self):
+        # Save the new data
+        # create the association
         pass
 
 
 class SubQuotaDefinitionsUpdatesForm(
-    forms.Form,
     ValidityPeriodForm,
 ):
     class Meta:
@@ -1102,7 +1110,7 @@ class SubQuotaDefinitionsUpdatesForm(
             "coefficient",
             "relationship_type",
             "volume",
-            "measurement_unit"
+            "measurement_unit",
         ]
 
     relationship_type = forms.ChoiceField(
@@ -1140,17 +1148,23 @@ class SubQuotaDefinitionsUpdatesForm(
         error_messages={"required": "Select the measurement unit"},
     )
 
-    def set_initial_data(self):
-        # for testing/build checks, using quota definition with SID 5203
-        # in build, we'll need to pull this from args.
-        # quota_definition_sid = 5203
-        original_definition = models.QuotaDefinition.objects.get(sid='5203')
+    def get_duplicate_data(self, main_def_id):
+        original_definition = models.QuotaDefinition.objects.get(trackedmodel_ptr_id=main_def_id)
+        # models.QuotaDefinition.objects.current()
+        #     .as_at_today_and_beyond()
+        #     .filter(order_number=self.quota_order_number)
+            # .order_by("-sid")
+        duplicate_data = models.QuotaDefinitionDuplicator.objects.get(parent_definition_id=original_definition).definition_data
+        self.set_initial_data(duplicate_data)
+        return duplicate_data
+
+    def set_initial_data(self, duplicate_data):
+        print('*'*30, 'set_initial_data' f'{duplicate_data=}')
         fields = self.fields
-        fields['start_date'].initial = original_definition.valid_between.lower
-        fields['end_date'].initial = original_definition.valid_between.upper
-        fields['measurement_unit'].initial = original_definition.measurement_unit
-        fields['volume'].initial = original_definition.volume
-        print('*'*30, f'set_data {fields=}')
+        fields['measurement_unit'].initial = MeasurementUnit.objects.get(code=duplicate_data['measurement_unit'])
+        fields['volume'].initial = duplicate_data['volume']
+        fields['start_date'].initial = deserialize_date(duplicate_data['start_date'])
+        fields['end_date'].initial = deserialize_date(duplicate_data['end_date'])
 
     def init_fields(self):
         self.fields["measurement_unit"].queryset = self.fields[
@@ -1162,9 +1176,10 @@ class SubQuotaDefinitionsUpdatesForm(
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
+        main_def_id = kwargs.pop("sid")
         super().__init__(*args, **kwargs)
         self.init_fields()
-        self.set_initial_data()
+        self.get_duplicate_data(main_def_id)
         self.init_layout(self.request)
 
     def init_layout(self, request):
@@ -1172,14 +1187,12 @@ class SubQuotaDefinitionsUpdatesForm(
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
 
+        # TODO: add padding to headers to bring them inline with the main body
         self.helper.layout = Layout(
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
             Div(
                 Div(
                     HTML(
-                        '<h3 class="govuk-body">Quota association details</h3>',
+                        '<h3 class="govuk-heading">Quota association details</h3>',
                     ),
                     Div("relationship_type", css_class="govuk-grid-column-one-half"),
                     Div("coefficient", css_class="govuk-grid-column-one-half"),
@@ -1192,7 +1205,7 @@ class SubQuotaDefinitionsUpdatesForm(
             Div(
                 Div(
                     HTML(
-                        '<h3 class="govuk-body">Quota definition details</h3>',
+                        '<h3 class="govuk-heading">Sub quota definition details</h3>',
                     ),
                     Div(
                         "start_date",
@@ -1238,20 +1251,5 @@ class SubQuotaDefinitionsUpdatesForm(
             raise ValidationError(
                 "Where the relationship type is Equivalent, the coefficient value must be something other than 1",
             )
-        cleaned_data['measurment_unit'] = cleaned_data['measurement_unit'].code
+
         return cleaned_data
-
-    # TODO:
-    # for each definition from the previous step,
-    # display basic information:
-    # start & end date, volume, unit of measurement (?coefficient)
-    # provide options to update:
-    # Required fields:
-    # Coefficient
-    # Relationship type
-
-    # Optional fields:
-    # Start date
-    # End date
-    # Unit of measurement
-    # Volume

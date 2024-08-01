@@ -1,15 +1,41 @@
 {% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{% from "components/create-status-tag.jinja" import create_status_tag %}
 {% from "components/table/macro.njk" import govukTable %}
 
+{# TODO: format sub-quota dates. #}
 {% block form %}
     {% set table_rows = [] %}
-   
-    {#TODO:
-      1. get selected definition objects
-      2. populate rows below
-        a) create link
-        b) check status of cloned definition
-    #}
+    {% set data = view.duplicated_definitions %}
+    {% for definition in data %}
+      {% set edit_link -%}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("sub_quota_definitions-ui-updates", kwargs={"sid": definition.parent_definition.trackedmodel_ptr_id}) }}">Edit</a>
+      {%- endset %}
+      {% set definition_status_cell %}
+        <span class="{{view.status_tag_generator(definition.definition_data).tag_class}}">
+          {{ view.status_tag_generator(definition.definition_data).text}}
+        </span>
+      {% endset %}
+      
+      {{ table_rows.append([
+        {"text": definition.parent_definition.sid},
+        {"text": "{:%d %b %Y}".format(definition.parent_definition.valid_between.lower) },
+        {"text": "{:%d %b %Y}".format(definition.parent_definition.valid_between.upper) },
+        {"text": intcomma(definition.parent_definition.volume) },
+        {"text": definition.parent_definition.measurement_unit.abbreviation },
+        {"text": "" },
+        {"text": "" },
+      ]) or "" }}
+      {{ table_rows.append([
+        {"text": ""},
+        {"text": definition.definition_data.start_date },
+        {"text": definition.definition_data.end_date },
+        {"text": intcomma(definition.definition_data.volume) },
+        {"text": definition.definition_data.measurement_unit },
+        {"text": definition_status_cell },
+        {"text": edit_link },
+      ]) or "" }}
+      
+    {% endfor %}
 
     {{ govukTable({
       "head": [
@@ -23,8 +49,8 @@
       ],
       "rows": table_rows,
     }) }}
-
+    <p>Selecting 'Submit' will create the new definitions and create a relationship in QuotaAssociations. Further edits to the definitions can be made via the Quota view</p>
     {{ govukButton({
-    "text": "Continue",
+    "text": "Submit",
   }) }}
 {% endblock %}
