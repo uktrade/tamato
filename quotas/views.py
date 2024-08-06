@@ -18,7 +18,7 @@ from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import permissions
 from rest_framework import viewsets
 
-from common.business_rules import UniqueIdentifyingFields
+from common.business_rules import BusinessRuleViolation, UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.forms import delete_form_for
 from common.serializers import AutoCompleteSerializer, deserialize_date, serialize_date
@@ -27,7 +27,7 @@ from common.tariffs_api import get_quota_data
 from common.tariffs_api import get_quota_definitions_data
 from common.util import TaricDateRange
 from common.validators import UpdateType
-from common.views import SortingMixin
+from common.views import BusinessRulesMixin, SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -838,6 +838,7 @@ class DuplicateDefinitionsWizard(
         }
         return duplicate_data
 
+    # TODO: move the deserialization in here, move this to serializers.py
     def deserialize_duplicate_data(self, definition):
         # explode the definition data
         deserialized_data = {
@@ -862,9 +863,7 @@ class DuplicateDefinitionsWizard(
 
     @property
     def selected_definitions(self):
-        selected_definitions = self.get_cleaned_data_for_step(self.SELECT_DEFINITION_PERIODS)['selected_definitions']
-        # TODO: Move this call so it's only called once.
-        return selected_definitions
+        return self.get_cleaned_data_for_step(self.SELECT_DEFINITION_PERIODS)['selected_definitions']
 
     @property
     def duplicated_definitions(self):
@@ -879,6 +878,7 @@ class DuplicateDefinitionsWizard(
             kwargs["objects"] = self.parent_quota_definitions
 
         if step == self.SELECTED_DEFINITIONS:
+            # if we're using this line, we need to clear the QuotaAssociation table on complete
             if len(self.duplicated_definitions) == 0:
                 self.set_duplicate_definitions(self.selected_definitions)
             kwargs["objects"] = self.duplicated_definitions
@@ -906,11 +906,18 @@ class DuplicateDefinitionsWizard(
         staged_definitions = cleaned_data['duplicated_definitions']
         for definition in staged_definitions:
             self.create_definition(definition)
-
+        sub_quota_view_url = reverse(
+            "quota_definition-ui-list",
+            kwargs={'sid': self.parent_quota_order_number.sid}
+        )
+        sub_quota_view_query_string = "quota_type=sub_quotas&submit="
         context = self.get_context_data(
             form=None,
             main_quota=self.parent_quota_order_number,
-            sub_quota=cleaned_data['child_quota_order_number']
+            sub_quota=cleaned_data['child_quota_order_number'],
+            definition_view_url=(
+                f'{sub_quota_view_url}?{sub_quota_view_query_string}'
+            )
         )
         return render(self.request, "quota-definitions/sub-quota-definitions-done.jinja", context)
 
@@ -942,16 +949,28 @@ class DuplicateDefinitionsWizard(
             "sub_quota_relation_type": definition.definition_data['relationship_type'],
             "update_type": UpdateType.CREATE,
         }
-        self.create_definition_association(association_data)
+        self.create_definition_association(definition, association_data)
 
-    def create_definition_association(self, association_data):
+    def create_definition_association(self, definition, association_data):
         models.QuotaAssociation.objects.create(
             **association_data,
             transaction=WorkBasket.get_current_transaction(self.request)
         )
+        self.clear_quota_association_table(definition)
+
+    def clear_quota_association_table(self, definition):
+        """
+        Remove the data for this association from the
+        QuotaDefinitionDuplicator table
+        """
+        # TODO: Remove the data from the QuotaDefinitionDuplicator table on complete
+        pass
 
 
-class QuotaDefinitionDuplicateUpdates(FormView):
+class QuotaDefinitionDuplicateUpdates(
+    FormView,
+    BusinessRulesMixin
+):
     """UI endpoint for any updates to duplicated definitions"""
     template_name = "quota-definitions/sub-quota-definitions-updates.jinja"
     form_class = forms.SubQuotaDefinitionsUpdatesForm
