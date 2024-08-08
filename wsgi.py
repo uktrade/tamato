@@ -11,16 +11,10 @@ import os
 
 import dotenv
 
-# Needed for AWS X-Ray
-from dbt_copilot_python.utility import is_copilot
 from django.core.wsgi import get_wsgi_application
-from opentelemetry.instrumentation.wsgi import OpenTelemetryMiddleware
 
 dotenv.read_dotenv()
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
 application = get_wsgi_application()
-
-if is_copilot():
-    application = OpenTelemetryMiddleware(application)
