@@ -328,7 +328,6 @@ class QuotaUpdateForm(
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
 
-        # CHARLIE REMOVE THIS COMMENT! Edie's hack to provide context for jinja template
         origins_html = render_to_string(
             "includes/quotas/quota-edit-origins.jinja",
             {
@@ -1022,16 +1021,16 @@ class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):
 class QuotaOrderNumersSelectForm(forms.Form):
     class Meta:
         fields = [
-            "parent_quota_order_number",
-            "child_quota_order_number",
+            "main_quota_order_number",
+            "sub_quota_order_number",
         ]
-    parent_quota_order_number = AutoCompleteField(
-            label="Parent quota order number",
+    main_quota_order_number = AutoCompleteField(
+            label="Main quota order number",
             queryset=models.QuotaOrderNumber.objects.all(),
             required=True,
         )
-    child_quota_order_number = AutoCompleteField(
-            label="Child quota order number",
+    sub_quota_order_number = AutoCompleteField(
+            label="Sub-quota order number",
             queryset=models.QuotaOrderNumber.objects.all(),
             required=True,
         )
@@ -1048,8 +1047,11 @@ class QuotaOrderNumersSelectForm(forms.Form):
 
         self.helper.layout = Layout(
             Div(
-                "parent_quota_order_number",
-                "child_quota_order_number",
+                "main_quota_order_number",
+                Div(
+                    "sub_quota_order_number",
+                    css_class="govuk-inset-text",
+                ),
             ),
             Submit(
                 "submit",
@@ -1061,10 +1063,12 @@ class QuotaOrderNumersSelectForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        # returns the child and parent OrderNumber objects
-        # if we're going to create asynchronously (arguably, even if we're not), we should just return the OrderNumber SIDs
-        cleaned_data["parent_quota_order_number"] = self.cleaned_data.get('parent_quota_order_number')
-        cleaned_data["child_quota_order_number"] = self.cleaned_data.get('child_quota_order_number')
+        cleaned_data["main_quota_order_number"] = self.cleaned_data.get(
+            'main_quota_order_number'
+            )
+        cleaned_data["sub_quota_order_number"] = self.cleaned_data.get(
+            'sub_quota_order_number'
+            )
         return cleaned_data
 
 
@@ -1073,10 +1077,16 @@ class SelectSubQuotaDefinitionsForm(
 ):
     def clean(self):
         cleaned_data = super().clean()
-        selected_definitions = {key: value for key, value in cleaned_data.items() if value}
-        definitions_pks = [self.object_id_from_field_name(key) for key in selected_definitions]
+        selected_definitions = {
+            key: value for key, value in cleaned_data.items() if value
+        }
+        definitions_pks = [
+            self.object_id_from_field_name(key) for key in selected_definitions
+        ]
 
-        selected_definitions = models.QuotaDefinition.objects.filter(pk__in=definitions_pks).current()
+        selected_definitions = models.QuotaDefinition.objects.filter(
+            pk__in=definitions_pks
+        ).current()
         cleaned_data["selected_definitions"] = selected_definitions
         return cleaned_data
 
@@ -1084,21 +1094,12 @@ class SelectSubQuotaDefinitionsForm(
 class SelectedDefinitionsForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.objects = kwargs.pop("objects", [])
-        print('*'*30, f"SelectedDefinitionsForm {self.objects}")
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        print('*'*30,'SelectedDefinitionsForm, clean')
         cleaned_data = super().clean()
-        # TODO: check that each definition has a coefficient and association
         cleaned_data['duplicated_definitions'] = self.objects
-        print('*'*30, f'{cleaned_data=}')
         return cleaned_data
-
-    def save(self):
-        # Save the new data
-        # create the association
-        pass
 
 
 class SubQuotaDefinitionsUpdatesForm(
@@ -1157,7 +1158,11 @@ class SubQuotaDefinitionsUpdatesForm(
 
     def set_initial_data(self, duplicate_data):
         fields = self.fields
-        fields['measurement_unit'].initial = MeasurementUnit.objects.get(code=duplicate_data['measurement_unit'])
+        fields['relationship_type'].initial = "NM"
+        fields['coefficient'].initial = 1
+        fields['measurement_unit'].initial = MeasurementUnit.objects.get(
+            code=duplicate_data['measurement_unit_code']
+        )
         fields['volume'].initial = duplicate_data['volume']
         fields['start_date'].initial = deserialize_date(duplicate_data['start_date'])
         fields['end_date'].initial = deserialize_date(duplicate_data['end_date'])

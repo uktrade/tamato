@@ -33,7 +33,6 @@ from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
-import measures
 from measures.models import Measure
 from quotas import business_rules
 from quotas import forms
@@ -45,6 +44,7 @@ from quotas.filters import QuotaFilter
 from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
+from quotas.serializers import serialize_duplicate_data, deserialize_definition_data
 from workbaskets.forms import SelectableObjectsForm
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
@@ -731,15 +731,8 @@ class DuplicateDefinitionsWizard(
     permission_required = ["common.add_trackedmodel"]
 
     START = "start"
-    # prompt user to pick the child quota order number
-    # from a list of existing quota order numbers
     QUOTA_ORDER_NUMBERS = "quota_order_numbers"
-    # populate a table with the definition periods associated to the parent quota order number
-    # provide a check box for the user to select which definition periods are duplicated
     SELECT_DEFINITION_PERIODS = "select_definition_periods"
-    # populate a table with
-    # - selected definition periods from the previous page
-    # - draft definition (to be duplicated) with link to definition_period_updates
     SELECTED_DEFINITIONS = "selected_definition_periods"
     COMPLETE = "complete"
 
@@ -809,57 +802,31 @@ class DuplicateDefinitionsWizard(
         return self.cleaned_data[step]
 
     @property
-    def parent_quota_order_number(self):
+    def main_quota_order_number(self):
         cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)
-        return cleaned_data['parent_quota_order_number']
+        return cleaned_data['main_quota_order_number']
 
     # TODO: look at refactoring this, probably doesn't need to be a property class
     @property
-    def parent_quota_definitions(self):
+    def main_quota_definitions(self):
         cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)
-        parent_quota_definitions = (
+        main_quota_definitions = (
             models.QuotaDefinition.objects.filter(
-                order_number__sid=cleaned_data['parent_quota_order_number'].sid,
+                order_number__sid=cleaned_data['main_quota_order_number'].sid,
             )
             .current()
             .order_by("pk")
         )
-        return parent_quota_definitions
+        return main_quota_definitions
 
-    # TODO: move serializer to serializers.py
-    def serialize_duplicate_data(self, selected_definition):
-        # returns a JSON dictionary of serialized definition data
-        duplicate_data = {
-            'volume': str(selected_definition.volume),
-            'measurement_unit': selected_definition.measurement_unit.code,
-            'start_date': serialize_date(selected_definition.valid_between.lower),
-            'end_date': serialize_date(selected_definition.valid_between.upper),
-            'status': False,
-        }
-        return duplicate_data
-
-    # TODO: move the deserialization in here, move this to serializers.py
-    def deserialize_duplicate_data(self, definition):
-        # explode the definition data
-        deserialized_data = {
-            'volume': float(definition.volume)
-        }
-        return deserialized_data
-
-    # TODO: call this on submitting/next for SelectSubQuotaDefinitionsForm
     def set_duplicate_definitions(self, selected_definitions):
-        # using serializers.QuotaDefinitionSerializer wont work as it serializes a created Definition
         for selected_definition in selected_definitions:
             duplicated_definition_data = models.QuotaDefinitionDuplicator(
                 parent_definition=selected_definition,
-                definition_data=self.serialize_duplicate_data(selected_definition),
+                definition_data=serialize_duplicate_data(selected_definition),
                 current_transaction=WorkBasket.get_current_transaction(self.request)
             )
-            # TODO: uncomment this line when finished to stop it from creating multiple
             duplicated_definition_data.save()
-            print(f'{duplicated_definition_data}')
-
-            # Confirm that it won't stage a new set of duplicates each time the page is reloaded
 
     @property
     def selected_definitions(self):
@@ -875,10 +842,9 @@ class DuplicateDefinitionsWizard(
     def get_form_kwargs(self, step):
         kwargs = {}
         if step == self.SELECT_DEFINITION_PERIODS:
-            kwargs["objects"] = self.parent_quota_definitions
+            kwargs["objects"] = self.main_quota_definitions
 
         if step == self.SELECTED_DEFINITIONS:
-            # if we're using this line, we need to clear the QuotaAssociation table on complete
             if len(self.duplicated_definitions) == 0:
                 self.set_duplicate_definitions(self.selected_definitions)
             kwargs["objects"] = self.duplicated_definitions
@@ -897,7 +863,7 @@ class DuplicateDefinitionsWizard(
             }
         else:
             return {
-                "text": "Requires edits",
+                "text": "Unedited",
                 "tag_class": "tamato-badge-light-blue",
             }
 
@@ -908,13 +874,13 @@ class DuplicateDefinitionsWizard(
             self.create_definition(definition)
         sub_quota_view_url = reverse(
             "quota_definition-ui-list",
-            kwargs={'sid': self.parent_quota_order_number.sid}
+            kwargs={'sid': self.main_quota_order_number.sid}
         )
         sub_quota_view_query_string = "quota_type=sub_quotas&submit="
         context = self.get_context_data(
             form=None,
-            main_quota=self.parent_quota_order_number,
-            sub_quota=cleaned_data['child_quota_order_number'],
+            main_quota=self.main_quota_order_number,
+            sub_quota=cleaned_data['sub_quota_order_number'],
             definition_view_url=(
                 f'{sub_quota_view_url}?{sub_quota_view_query_string}'
             )
@@ -922,22 +888,7 @@ class DuplicateDefinitionsWizard(
         return render(self.request, "quota-definitions/sub-quota-definitions-done.jinja", context)
 
     def create_definition(self, definition):
-        start_date = deserialize_date(definition.definition_data['start_date'])
-        end_date = deserialize_date(definition.definition_data['end_date'])
-        vol = Decimal(definition.definition_data['volume'])
-        measurement_unit = measures.models.tracked_models.MeasurementUnit.objects.get(code=definition.definition_data['measurement_unit'])
-        sub_order_number = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)['child_quota_order_number']
-        valid_between = TaricDateRange(start_date, end_date)
-        staged_data = {
-            'volume': vol,
-            'initial_volume': vol,
-            'measurement_unit': measurement_unit,
-            'order_number': sub_order_number,
-            'valid_between': valid_between,
-            'update_type': UpdateType.CREATE,
-            'maximum_precision': 3,
-            'quota_critical_threshold': 90
-        }
+        staged_data = deserialize_definition_data(self, definition)
         instance = models.QuotaDefinition.objects.create(
             **staged_data,
             transaction=WorkBasket.get_current_transaction(self.request)
@@ -956,15 +907,7 @@ class DuplicateDefinitionsWizard(
             **association_data,
             transaction=WorkBasket.get_current_transaction(self.request)
         )
-        self.clear_quota_association_table(definition)
-
-    def clear_quota_association_table(self, definition):
-        """
-        Remove the data for this association from the
-        QuotaDefinitionDuplicator table
-        """
-        # TODO: Remove the data from the QuotaDefinitionDuplicator table on complete
-        pass
+        definition.delete()
 
 
 class QuotaDefinitionDuplicateUpdates(
@@ -996,7 +939,7 @@ class QuotaDefinitionDuplicateUpdates(
         cleaned_data = form.cleaned_data
         serialized_data = {
             'volume': str(cleaned_data['volume']),
-            'measurement_unit': cleaned_data['measurement_unit'].code,
+            'measurement_unit_code': cleaned_data['measurement_unit'].code,
             'start_date': serialize_date(cleaned_data['valid_between'].lower),
             'end_date': serialize_date(cleaned_data['valid_between'].upper),
             'status': True,
