@@ -757,11 +757,11 @@ class DuplicateDefinitionsWizard(
             "link_text": "Start",
         },
         QUOTA_ORDER_NUMBERS: {
-            "title": "Select parent and child Quota order numbers",
+            "title": "Create associations",
             "link_text": "Order numbers",
         },
         SELECT_DEFINITION_PERIODS: {
-            "title": "Select definition periods to duplicate",
+            "title": "Select definition periods",
             "link_text": "Definition periods",
         },
         SELECTED_DEFINITIONS: {
@@ -805,8 +805,12 @@ class DuplicateDefinitionsWizard(
     def main_quota_order_number(self):
         cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)
         return cleaned_data['main_quota_order_number']
+    
+    @property
+    def sub_quota_order_number(self):
+        cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)
+        return cleaned_data['sub_quota_order_number']
 
-    # TODO: look at refactoring this, probably doesn't need to be a property class
     @property
     def main_quota_definitions(self):
         cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)

@@ -35,7 +35,6 @@ from common.forms import unprefix_formset_data
 from common.util import validity_range_contains_range
 from common.validators import SymbolValidator
 from common.validators import UpdateType
-from common.views import WithPaginationListMixin
 from geo_areas.models import GeographicalArea
 from measures.models import MeasurementUnit
 from quotas import models
@@ -1047,6 +1046,9 @@ class QuotaOrderNumersSelectForm(forms.Form):
 
         self.helper.layout = Layout(
             Div(
+                HTML('<h3 class="govuk-heading">Enter main and sub-quota order numbers</h3>'),
+            ),
+            Div(
                 "main_quota_order_number",
                 Div(
                     "sub_quota_order_number",
@@ -1055,7 +1057,7 @@ class QuotaOrderNumersSelectForm(forms.Form):
             ),
             Submit(
                 "submit",
-                "Save and continue",
+                "Continue",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
@@ -1251,13 +1253,12 @@ class SubQuotaDefinitionsUpdatesForm(
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
 
-        # TODO: add padding to headers to bring them inline with the main body
         self.helper.layout = Layout(
             Div(
+                HTML(
+                    '<h3 class="govuk-heading">Quota association details</h3>',
+                ),
                 Div(
-                    HTML(
-                        '<h3 class="govuk-heading">Quota association details</h3>',
-                    ),
                     Div("relationship_type", css_class="govuk-grid-column-one-half"),
                     Div("coefficient", css_class="govuk-grid-column-one-half"),
                     css_class="govuk-grid-row",
@@ -1267,10 +1268,10 @@ class SubQuotaDefinitionsUpdatesForm(
                     '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
             ),
             Div(
+                HTML(
+                    '<h3 class="govuk-heading">Sub quota definition details</h3>',
+                ),
                 Div(
-                    HTML(
-                        '<h3 class="govuk-heading">Sub quota definition details</h3>',
-                    ),
                     Div(
                         "start_date",
                         css_class="govuk-grid-column-one-half",

@@ -1,10 +1,7 @@
 {% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
-{# page to take the select definitions #}
-<h1>select quota definitions</h1>
 {% from "macros/checkbox_item.jinja" import checkbox_item %}
-<h2 class="govuk-heading-l">Parent quota definitions</h2>
 {% block form %}
 <script nonce="{{ request.csp_nonce }}" id="definitions-select-checkboxes-script">
   const CSRF_TOKEN = "{{ csrf_token }}";
@@ -26,7 +23,9 @@
     {% set start_date %}
       {{ create_sortable_anchor(request, "valid_between", "Start date", base_url) }}
     {% endset %}
-
+    
+    <h3>Select definition periods from main quota ID {{view.main_quota_order_number}}</h3>
+    <p>These definition periods are required for sub-quota ID {{view.sub_quota_order_number}} and must be edited on the next pages</p>
     {{ govukTable({
       "head": [
         {"text": "Checkbox", "classes": "govuk-visually-hidden"},
