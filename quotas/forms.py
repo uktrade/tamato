@@ -1,3 +1,5 @@
+import datetime
+from typing import Dict
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Accordion
@@ -5,6 +7,7 @@ from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
+from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -14,7 +17,11 @@ from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.views.generic import ListView
 
+from common.serializers import deserialize_date, serialize_date
+from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import FormSet
 from common.forms import FormSetField
@@ -35,7 +42,10 @@ from quotas import validators
 from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
+from workbaskets.forms import SelectableObjectsForm
 
+RELATIONSHIP_TYPE_HELP_TEXT = "Select the relationship type for the quota association"
+COEFFICIENT_HELP_TEXT = "Select the coefficient for the quota association."
 CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
 SAFEGUARD_HELP_TEXT = (
     "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
@@ -1000,4 +1010,292 @@ class QuotaSuspensionOrBlockingCreateForm(
             valid_between=self.cleaned_data["valid_between"],
             update_type=UpdateType.CREATE,
             transaction=workbasket.new_transaction(),
+        )
+
+
+class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):
+    pass
+
+
+class QuotaOrderNumersSelectForm(forms.Form):
+    class Meta:
+        fields = [
+            "main_quota_order_number",
+            "sub_quota_order_number",
+        ]
+    main_quota_order_number = AutoCompleteField(
+            label="Main quota order number",
+            queryset=models.QuotaOrderNumber.objects.all(),
+            required=True,
+        )
+    sub_quota_order_number = AutoCompleteField(
+            label="Sub-quota order number",
+            queryset=models.QuotaOrderNumber.objects.all(),
+            required=True,
+        )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+        self.init_layout(self.request)
+
+    def init_layout(self, request):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Div(
+                HTML('<h3 class="govuk-heading">Enter main and sub-quota order numbers</h3>'),
+            ),
+            Div(
+                "main_quota_order_number",
+                Div(
+                    "sub_quota_order_number",
+                    css_class="govuk-inset-text",
+                ),
+            ),
+            Submit(
+                "submit",
+                "Continue",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data["main_quota_order_number"] = self.cleaned_data.get(
+            'main_quota_order_number'
+            )
+        cleaned_data["sub_quota_order_number"] = self.cleaned_data.get(
+            'sub_quota_order_number'
+            )
+        return cleaned_data
+
+
+class SelectSubQuotaDefinitionsForm(
+    SelectableObjectsForm,
+):
+    def clean(self):
+        cleaned_data = super().clean()
+        selected_definitions = {
+            key: value for key, value in cleaned_data.items() if value
+        }
+        definitions_pks = [
+            self.object_id_from_field_name(key) for key in selected_definitions
+        ]
+
+        selected_definitions = models.QuotaDefinition.objects.filter(
+            pk__in=definitions_pks
+        ).current()
+        cleaned_data["selected_definitions"] = selected_definitions
+        return cleaned_data
+
+
+class SelectedDefinitionsForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.objects = kwargs.pop("objects", [])
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data['duplicated_definitions'] = self.objects
+        return cleaned_data
+
+
+class SubQuotaDefinitionsUpdatesForm(
+    ValidityPeriodForm,
+):
+    class Meta:
+        model = models.QuotaDefinition
+        fields = [
+            "coefficient",
+            "relationship_type",
+            "volume",
+            "measurement_unit",
+        ]
+
+    relationship_type = forms.ChoiceField(
+        choices=[
+            ("EQ", "Equivalent"),
+            ("NM", "Normal"),
+        ],
+        help_text=RELATIONSHIP_TYPE_HELP_TEXT,
+        error_messages={
+            "required": "Choose the category",
+        },
+    )
+
+    coefficient = forms.DecimalField(
+        label="Coefficient",
+        widget=forms.TextInput(),
+        help_text=COEFFICIENT_HELP_TEXT,
+        error_messages={
+            "invalid": "Coefficient must be a number",
+            "required": "Enter the volume",
+        },
+    )
+
+    volume = forms.DecimalField(
+        label="Volume",
+        widget=forms.TextInput(),
+        error_messages={
+            "invalid": "Volume must be a number",
+            "required": "Enter the volume",
+        },
+    )
+
+    measurement_unit = forms.ModelChoiceField(
+        queryset=MeasurementUnit.objects.current(),
+        error_messages={"required": "Select the measurement unit"},
+    )
+
+    def get_duplicate_data(self, original_definition):
+        duplicate_data = models.QuotaDefinitionDuplicator.objects.get(
+            parent_definition_id=original_definition
+        ).definition_data
+        self.set_initial_data(duplicate_data)
+        return duplicate_data
+
+    def set_initial_data(self, duplicate_data):
+        fields = self.fields
+        fields['relationship_type'].initial = "NM"
+        fields['coefficient'].initial = 1
+        fields['measurement_unit'].initial = MeasurementUnit.objects.get(
+            code=duplicate_data['measurement_unit_code']
+        )
+        fields['volume'].initial = duplicate_data['volume']
+        fields['start_date'].initial = deserialize_date(duplicate_data['start_date'])
+        fields['end_date'].initial = deserialize_date(duplicate_data['end_date'])
+
+    def init_fields(self):
+        self.fields["measurement_unit"].queryset = self.fields[
+            "measurement_unit"
+        ].queryset.order_by("code")
+        self.fields["measurement_unit"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        main_def_id = kwargs.pop("sid")
+        super().__init__(*args, **kwargs)
+        self.original_definition = models.QuotaDefinition.objects.get(
+            trackedmodel_ptr_id=main_def_id
+        )
+        self.init_fields()
+        self.get_duplicate_data(self.original_definition)
+        self.init_layout(self.request)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        """
+        Carrying out business rule checks here to prevent erroneous associations, see:
+        https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quota-associations.html#validation-rules
+        """
+        original_definition = self.original_definition
+        # QA2 sub-quota validity periods must be within validity of main quota
+        if (
+            cleaned_data['valid_between'].lower < original_definition.valid_between.lower
+            ) or (
+            cleaned_data['valid_between'].upper > original_definition.valid_between.upper
+        ):
+            raise ValidationError(
+                'QA2: Validity period for sub quota must be within the validity period of the main quota'
+            )
+        # QA3 when converted to the same unit, the volume of sub-quota must be
+        # lower than or equal to the volume of the main quota
+        # NOTE: It is highly unlikely the measurement units will change between definitions
+        if (
+            cleaned_data['measurement_unit'] == original_definition.measurement_unit
+        ) and (
+            cleaned_data['volume'] > original_definition.volume
+        ):
+            raise ValidationError(
+                'QA3: When converted to the measurement unit of the main quota, the volume of a sub-quota must always be lower than or equal to the volume of the main quota'
+            )
+        # QA4 coefficients must be positive. Default value is 1
+        if (cleaned_data['coefficient'] <= 0):
+            raise ValidationError(
+                'QA4: A coefficient must be a positive decimal number'
+            )
+        # QA5 Whenever a the relationship_type is equivalent, it must have the same volume as the ones associated with the parent quota.
+        # It must be defined with a coefficient not equal to 1
+        if (
+            cleaned_data['relationship_type'] == 'NM'
+            and cleaned_data['coefficient'] != 1
+        ):
+            raise ValidationError(
+                "QA5: Where the relationship type is Normal, the coefficient value must be 1",
+            )
+        if (
+            cleaned_data['relationship_type'] == 'EQ'
+            and cleaned_data['coefficient'] == 1
+        ):
+            raise ValidationError(
+                "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1",
+            )
+        # QA6 sub quotas association with the same main quota must have the same relation type
+        other_sub_quota_assoc_relation_types = (
+            models.QuotaAssociation.objects.filter(
+                main_quota=original_definition
+                ).values('sub_quota_relation_type')
+                )
+        for sub_quota_association in other_sub_quota_assoc_relation_types:
+            if (cleaned_data['relationship_type'] != sub_quota_association['sub_quota_relation_type']):
+                raise ValidationError("QA6: Sub-quotas associated with the same main quota must have the same relation type.")
+
+        return cleaned_data
+
+    def init_layout(self, request):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Div(
+                HTML(
+                    '<h3 class="govuk-heading">Quota association details</h3>',
+                ),
+                Div(
+                    Div("relationship_type", css_class="govuk-grid-column-one-half"),
+                    Div("coefficient", css_class="govuk-grid-column-one-half"),
+                    css_class="govuk-grid-row",
+                ),
+            ),
+            HTML(
+                    '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+            ),
+            Div(
+                HTML(
+                    '<h3 class="govuk-heading">Sub quota definition details</h3>',
+                ),
+                Div(
+                    Div(
+                        "start_date",
+                        css_class="govuk-grid-column-one-half",
+                    ),
+                    Div(
+                        "end_date",
+                        css_class="govuk-grid-column-one-half",
+                    ),
+                    Div(
+                        "volume", css_class="govuk-grid-column-one-half",
+                    ),
+                    Div(
+                        "measurement_unit", css_class="govuk-grid-column-one-half",
+                    ),
+                    css_class="govuk-grid-row",
+                ),
+                HTML(
+                    '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+                ),
+                Submit(
+                    "submit",
+                    "Save and continue",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+            ),
         )
