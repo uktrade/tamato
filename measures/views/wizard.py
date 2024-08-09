@@ -251,20 +251,20 @@ class MeasureEditWizard(
 
     def async_done(self, form_list, **kwargs):
         logger.info("Editing measures asynchronously.")
-
         serializable_data = self.all_serializable_form_data()
         serializable_form_kwargs = self.all_serializable_form_kwargs()
 
-        selected_measures = []
+
+        db_selected_measures = []
         for measure in self.get_queryset():
-            selected_measures.append(measure.id)
+            db_selected_measures.append(measure.id)
 
         measures_bulk_editor = models.MeasuresBulkEditor.objects.create(
             form_data=serializable_data,
             form_kwargs=serializable_form_kwargs,
             workbasket=self.workbasket,
             user=self.request.user,
-            selected_measures=selected_measures,
+            selected_measures=db_selected_measures,
         )
         # self.session_store.clear()  # TODO: Is this the best point to clear the session store?
         measures_bulk_editor.schedule_task()

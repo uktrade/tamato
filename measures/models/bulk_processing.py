@@ -1,6 +1,5 @@
 import json
 import logging
-import datetime
 from typing import Dict
 from typing import Iterable
 from typing import Tuple
@@ -21,9 +20,6 @@ from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from measures.models.tracked_models import Measure
-from quotas.models import QuotaOrderNumber
-from regulations.models import Regulation
-from geo_areas.models import GeographicalArea
 
 logger = logging.getLogger(__name__)
 
@@ -422,6 +418,7 @@ class MeasuresBulkCreator(BulkProcessor):
                 logger.error(f"{error_key}: {error_values}")
 
 
+
 class MeasuresBulkEditorManager(models.Manager):
     """Model Manager for MeasuresBulkEditor models."""
 
@@ -507,97 +504,56 @@ class MeasuresBulkEditor(BulkProcessor):
     
     @atomic
     def edit_measures(self) -> Iterable[Measure]:
-        logger.info("Bulk editing measures commencing")
-        logger.info(f"Form Data: {self.form_data}")
+        logger.info("INSIDE EDIT MEASURES TASK")
+        # Clean the forms to get the data back out of them
+        cleaned_data = self.get_forms_cleaned_data()
 
-        form_data_keys = list(self.form_data.keys())
-        logger.info(f"Keys: {form_data_keys}")
-
-        new_data = {}
-        for key in form_data_keys:
-            match key:
-                case "start_date":
-                    new_data.append(
-                        {"new_start_date": TaricDateRange(datetime.date(
-                            self.form_data["start_date"]["start_date_0"],
-                            self.form_data["start_date"]["start_date_1"],
-                            self.form_data["start_date"]["start_date_2"]
-                            ))
-                        }
-                    )
-                case "end_date":
-                    new_data.append(
-                        {"new_end_date": TaricDateRange(datetime.date(
-                            self.form_data["end_date"]["end_date_0"],
-                            self.form_data["end_date"]["end_date_1"],
-                            self.form_data["end_date"]["end_date_2"]
-                            ))
-                        }
-                    )
-                case "duties":
-                    new_data.append(
-                        {"new_duties": self.form_data["duties"]["duties"]}
-                    )
-                case "quota_order_number":
-                    new_data.append(
-                        {"new_order_number": QuotaOrderNumber.objects.get(pk=self.form_data["quota_order_number"]["order_number"])}
-                    )
-                case "regulation":
-                    new_data.append(
-                        {"new_generating_regulation": Regulation.objects.get(regulation_id=self.form_data["regulation"]["generating_regulation"])}
-                    )
-                # FIX THIS!!!
-                case "geographical_area_exclusions":
-                    new_exclusions = []
-                    new_data.append(
-                        {"new_geo_area_exclusions": self.form_data["duties"]["duties"]}
-                    )
-                # !!!
-
-        logger.info(f"new start date: {new_data['new_start_date']}")
-        logger.info(f"new end date: {new_data['new_end_date']}")
-        logger.info(f"new duties: {new_data['new_duties']}")
-        logger.info(f"new order number: {new_data['new_quota_order_number']}")
-        logger.info(f"new generating regulation: {new_data['new_generating_regulation']}")
-        logger.info(f"new geo exclusions: {new_data['new_exclusions']}")
+        logger.info(f"TASK - CLEANED DATA: {cleaned_data}")
+        logger.info(f"TASK - SELF.SELECTED MEASURES: {self.selected_measures}")
 
         deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
-        
-        if self.selected_measures:
+
+        new_exclusions = [
+            e["excluded_area"]
+            for e in cleaned_data.get("formset-geographical_area_exclusions", [])
+        ]
+
+        if deserialized_selected_measures:
+            logger.info("MADE IT TO IF SELECTED MEASURES!!!")
             for measure in deserialized_selected_measures:
                 new_measure = measure.new_version(
                     workbasket=self.workbasket,
                     update_type=UpdateType.UPDATE,
                     valid_between=TaricDateRange(
                         lower=(
-                            new_data['new_start_date']
-                            if new_data['new_start_date']
+                            cleaned_data['start_date']
+                            if cleaned_data['start_date']
                             else measure.valid_between.lower
                         ),
                         upper=(
-                            new_data['new_end_date']
-                            if new_data['new_end_date'] is not False
+                            cleaned_data['end_date']
+                            if cleaned_data['end_date'] is not False
                             else measure.valid_between.upper
                         ),
                     ),
                     order_number=(
-                        new_data['new_quota_order_number']
-                        if new_data['new_quota_order_number']
+                        cleaned_data['order_number']
+                        if cleaned_data['order_number']
                         else measure.order_number
                     ),
                     generating_regulation=(
-                        new_data['new_generating_regulation']
-                        if new_data['new_generating_regulation']
+                        cleaned_data['generating_regulation']
+                        if cleaned_data['generating_regulation']
                         else measure.generating_regulation
                     ),
                 )
                 self.update_measure_components(
                     measure=new_measure,
-                    duties=new_data['new_duties'],
+                    duties=cleaned_data['duties'],
                     workbasket=self.workbasket,
                 )
                 self.update_measure_condition_components(
-                    measure=new_data['new_measure'],
+                    measure=new_measure,
                     workbasket=self.workbasket,
                 )
                 self.update_measure_excluded_geographical_areas(
@@ -611,3 +567,67 @@ class MeasuresBulkEditor(BulkProcessor):
                     measure=new_measure,
                     workbasket=self.workbasket,
                 )
+
+    def get_forms_cleaned_data(self) -> Dict:
+        """
+        Returns a merged dictionary of all Form cleaned_data.
+
+        If a Form's data contains a `FormSet`, the key will be prefixed with
+        "formset-" and contain a list of the formset cleaned_data dictionaries.
+
+        If form validation errors are encountered when constructing cleaned
+        data, then this function raises Django's `ValidationError` exception.
+        """
+        all_cleaned_data = {}
+
+        from measures.views import MeasureEditWizard
+        for form_key, form_class in MeasureEditWizard.data_form_list:
+
+            if form_key not in self.form_data:
+                # Forms are conditionally included during step processing - see
+                # `MeasureEditWizard.show_step()` for details.
+                continue
+
+            data = self.form_data[form_key]
+
+            kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
+
+            form = form_class(data=data, **kwargs)
+
+            if not form.is_valid():
+                self._log_form_errors(form_class=form_class, form_or_formset=form)
+                raise ValidationError(
+                    f"{form_class.__name__} has {len(form.errors)} errors.",
+                )
+
+            if isinstance(form.cleaned_data, (tuple, list)):
+                all_cleaned_data[f"formset-{form_key}"] = form.cleaned_data
+            else:
+                all_cleaned_data.update(form.cleaned_data)
+
+        return all_cleaned_data
+    
+    def _log_form_errors(self, form_class, form_or_formset) -> None:
+        """Output errors associated with a Form or Formset instance, handling
+        output for each instance type in a uniform manner."""
+
+        logger.error(
+            f"MeasuresBulkEditor.edit_measures() - "
+            f"{form_class.__name__} has {len(form_or_formset.errors)} errors.",
+        )
+
+        # Form.errors is a dictionary of errors, but FormSet.errors is a
+        # list of dictionaries of Form.errors. Access their errors in
+        # a uniform manner.
+        errors = []
+
+        if isinstance(form_or_formset, BaseFormSet):
+            errors = [
+                {"formset_errors": form_or_formset.non_form_errors()},
+            ] + form_or_formset.errors
+        else:
+            errors = [form_or_formset.errors]
+
+        for form_errors in errors:
+            for error_key, error_values in form_errors.items():
+                logger.error(f"{error_key}: {error_values}")
