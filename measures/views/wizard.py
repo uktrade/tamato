@@ -1,6 +1,5 @@
 import logging
 from typing import Dict
-from typing import List
 
 from common.forms import SerializableFormMixin
 from crispy_forms_gds.helper import FormHelper
@@ -19,7 +18,6 @@ from common.validators import UpdateType
 from geo_areas import constants
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
-from geo_areas.utils import get_all_members_of_geo_groups
 from geo_areas.validators import AreaCode
 from measures import forms
 from measures import models
@@ -28,7 +26,10 @@ from measures.conditions import show_step_quota_origins
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.creators import MeasuresCreator
-from measures.util import diff_components
+from measures.util import update_measure_components
+from measures.util import update_measure_condition_components
+from measures.util import update_measure_excluded_geographical_areas
+from measures.util import update_measure_footnote_associations
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 
@@ -144,105 +145,6 @@ class MeasureEditWizard(
 
         return kwargs
 
-    def update_measure_components(
-        self,
-        measure: models.Measure,
-        duties: str,
-        workbasket: WorkBasket,
-    ):
-        """Updates the measure components associated to the measure."""
-        diff_components(
-            instance=measure,
-            duty_sentence=duties if duties else measure.duty_sentence,
-            start_date=measure.valid_between.lower,
-            workbasket=workbasket,
-            transaction=workbasket.current_transaction,
-        )
-
-    def update_measure_condition_components(
-        self,
-        measure: models.Measure,
-        workbasket: WorkBasket,
-    ):
-        """Updates the measure condition components associated to the
-        measure."""
-        conditions = measure.conditions.current()
-        for condition in conditions:
-            condition.new_version(
-                dependent_measure=measure,
-                workbasket=workbasket,
-            )
-
-    def update_measure_excluded_geographical_areas(
-        self,
-        edited: bool,
-        measure: models.Measure,
-        exclusions: List[GeographicalArea],
-        workbasket: WorkBasket,
-    ):
-        """Updates the excluded geographical areas associated to the measure."""
-        existing_exclusions = measure.exclusions.current()
-
-        # Update any exclusions to new measure version
-        if not edited:
-            for exclusion in existing_exclusions:
-                exclusion.new_version(
-                    modified_measure=measure,
-                    workbasket=workbasket,
-                )
-            return
-
-        new_excluded_areas = get_all_members_of_geo_groups(
-            validity=measure.valid_between,
-            geo_areas=exclusions,
-        )
-
-        for geo_area in new_excluded_areas:
-            existing_exclusion = existing_exclusions.filter(
-                excluded_geographical_area=geo_area,
-            ).first()
-            if existing_exclusion:
-                existing_exclusion.new_version(
-                    modified_measure=measure,
-                    workbasket=workbasket,
-                )
-            else:
-                models.MeasureExcludedGeographicalArea.objects.create(
-                    modified_measure=measure,
-                    excluded_geographical_area=geo_area,
-                    update_type=UpdateType.CREATE,
-                    transaction=workbasket.new_transaction(),
-                )
-
-        removed_excluded_areas = {
-            e.excluded_geographical_area for e in existing_exclusions
-        }.difference(set(exclusions))
-
-        exclusions_to_remove = [
-            existing_exclusions.get(excluded_geographical_area__id=geo_area.id)
-            for geo_area in removed_excluded_areas
-        ]
-
-        for exclusion in exclusions_to_remove:
-            exclusion.new_version(
-                update_type=UpdateType.DELETE,
-                modified_measure=measure,
-                workbasket=workbasket,
-            )
-
-    def update_measure_footnote_associations(self, measure, workbasket):
-        """Updates the footnotes associated to the measure."""
-        footnote_associations = (
-            models.FootnoteAssociationMeasure.objects.current().filter(
-                footnoted_measure__sid=measure.sid,
-            )
-        )
-        for fa in footnote_associations:
-            fa.new_version(
-                footnoted_measure=measure,
-                workbasket=workbasket,
-            )
-
     def done(self, form_list, **kwargs):
         if settings.MEASURES_ASYNC_EDIT:
             return self.async_done(form_list, **kwargs)
@@ -253,7 +155,6 @@ class MeasureEditWizard(
         logger.info("Editing measures asynchronously.")
         serializable_data = self.all_serializable_form_data()
         serializable_form_kwargs = self.all_serializable_form_kwargs()
-
 
         db_selected_measures = []
         for measure in self.get_queryset():
@@ -266,8 +167,15 @@ class MeasureEditWizard(
             user=self.request.user,
             selected_measures=db_selected_measures,
         )
-        # self.session_store.clear()  # TODO: Is this the best point to clear the session store?
+        self.session_store.clear()
         measures_bulk_editor.schedule_task()
+
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-review-measures",
+                kwargs={"pk": self.workbasket.pk},
+            ),
+        )
 
     def sync_done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
@@ -309,23 +217,23 @@ class MeasureEditWizard(
                     else measure.generating_regulation
                 ),
             )
-            self.update_measure_components(
+            update_measure_components(
                 measure=new_measure,
                 duties=new_duties,
                 workbasket=workbasket,
             )
-            self.update_measure_condition_components(
+            update_measure_condition_components(
                 measure=new_measure,
                 workbasket=workbasket,
             )
-            self.update_measure_excluded_geographical_areas(
+            update_measure_excluded_geographical_areas(
                 edited="geographical_area_exclusions"
                 in cleaned_data.get("fields_to_edit", []),
                 measure=new_measure,
                 exclusions=new_exclusions,
                 workbasket=workbasket,
             )
-            self.update_measure_footnote_associations(
+            update_measure_footnote_associations(
                 measure=new_measure,
                 workbasket=workbasket,
             )

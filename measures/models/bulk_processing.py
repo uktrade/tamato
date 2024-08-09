@@ -20,6 +20,10 @@ from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from measures.models.tracked_models import Measure
+from measures.util import update_measure_components
+from measures.util import update_measure_condition_components
+from measures.util import update_measure_excluded_geographical_areas
+from measures.util import update_measure_footnote_associations
 
 logger = logging.getLogger(__name__)
 
@@ -547,23 +551,23 @@ class MeasuresBulkEditor(BulkProcessor):
                         else measure.generating_regulation
                     ),
                 )
-                self.update_measure_components(
+                update_measure_components(
                     measure=new_measure,
                     duties=cleaned_data['duties'],
                     workbasket=self.workbasket,
                 )
-                self.update_measure_condition_components(
+                update_measure_condition_components(
                     measure=new_measure,
                     workbasket=self.workbasket,
                 )
-                self.update_measure_excluded_geographical_areas(
+                update_measure_excluded_geographical_areas(
                     edited="geographical_area_exclusions"
                     in cleaned_data.get("fields_to_edit", []),
                     measure=new_measure,
                     exclusions=new_exclusions,
                     workbasket=self.workbasket,
                 )
-                self.update_measure_footnote_associations(
+                update_measure_footnote_associations(
                     measure=new_measure,
                     workbasket=self.workbasket,
                 )
@@ -606,7 +610,7 @@ class MeasuresBulkEditor(BulkProcessor):
                 all_cleaned_data.update(form.cleaned_data)
 
         return all_cleaned_data
-    
+
     def _log_form_errors(self, form_class, form_or_formset) -> None:
         """Output errors associated with a Form or Formset instance, handling
         output for each instance type in a uniform manner."""
