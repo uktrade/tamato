@@ -40,7 +40,7 @@
       ]) or "" }}
       
     {% endfor %}
-
+    <h3>You must enter a co-efficient value and specify the relationship type for each definition period.</h3>
     {{ govukTable({
       "head": [
         {"text": "Sid"},
@@ -58,5 +58,10 @@
     <p>Selecting 'Submit' will create the new definitions and create a relationship in QuotaAssociations. Further edits to the definitions can be made via the Quota view</p>
     {{ govukButton({
     "text": "Submit",
+  }) }}
+  {{ govukButton({
+    "text": "Start again",
+    "classes": "govuk-button--secondary",
+    "href": url('sub_quota_definitions-ui-create', args={'step': 'start'}),
   }) }}
 {% endblock %}

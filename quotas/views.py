@@ -805,7 +805,7 @@ class DuplicateDefinitionsWizard(
     def main_quota_order_number(self):
         cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)
         return cleaned_data['main_quota_order_number']
-    
+
     @property
     def sub_quota_order_number(self):
         cleaned_data = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)
@@ -824,23 +824,34 @@ class DuplicateDefinitionsWizard(
         return main_quota_definitions
 
     def set_duplicate_definitions(self, selected_definitions):
+        """
+        We store the main definition data in the QuotaDefinitionDuplicator
+        table before creating the new QuotaDefinitions and QuotaAssociation
+        entry at the end of the journey.
+        """
         for selected_definition in selected_definitions:
             duplicated_definition_data = models.QuotaDefinitionDuplicator(
                 parent_definition=selected_definition,
                 definition_data=serialize_duplicate_data(selected_definition),
-                current_transaction=WorkBasket.get_current_transaction(self.request)
+                current_transaction=WorkBasket.get_current_transaction(
+                    self.request
+                )
             )
             duplicated_definition_data.save()
 
     @property
     def selected_definitions(self):
-        return self.get_cleaned_data_for_step(self.SELECT_DEFINITION_PERIODS)['selected_definitions']
+        return self.get_cleaned_data_for_step(self.SELECT_DEFINITION_PERIODS)[
+            'selected_definitions'
+        ]
 
     @property
     def duplicated_definitions(self):
         return models.QuotaDefinitionDuplicator.objects.filter(
                 parent_definition__in=self.selected_definitions,
-                current_transaction=WorkBasket.get_current_transaction(self.request)
+                current_transaction=WorkBasket.get_current_transaction(
+                    self.request
+                )
         )
 
     def get_form_kwargs(self, step):
@@ -857,8 +868,10 @@ class DuplicateDefinitionsWizard(
 
     def status_tag_generator(self, definition) -> dict:
         """
-        Based on the status_tag_generator() for the Measure create Process queue.
-        Returns a dict with text and a CSS class for a label for a duplicated definition.
+        Based on the status_tag_generator() for the Measure create Process
+        queue.
+        Returns a dict with text and a CSS class for a label for a duplicated
+        definition.
         """
         if definition['status']:
             return {
@@ -889,7 +902,10 @@ class DuplicateDefinitionsWizard(
                 f'{sub_quota_view_url}?{sub_quota_view_query_string}'
             )
         )
-        return render(self.request, "quota-definitions/sub-quota-definitions-done.jinja", context)
+        return render(self.request,
+                      "quota-definitions/sub-quota-definitions-done.jinja",
+                      context
+                      )
 
     def create_definition(self, definition):
         staged_data = deserialize_definition_data(self, definition)
@@ -901,7 +917,9 @@ class DuplicateDefinitionsWizard(
             "main_quota": definition.parent_definition,
             "sub_quota": instance,
             "coefficient": Decimal(definition.definition_data['coefficient']),
-            "sub_quota_relation_type": definition.definition_data['relationship_type'],
+            "sub_quota_relation_type": definition.definition_data[
+                'relationship_type'
+            ],
             "update_type": UpdateType.CREATE,
         }
         self.create_definition_association(definition, association_data)

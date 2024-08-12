@@ -1,5 +1,3 @@
-import datetime
-from typing import Dict
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Accordion
@@ -7,7 +5,6 @@ from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
-from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
@@ -17,10 +14,8 @@ from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.views.generic import ListView
 
-from common.serializers import deserialize_date, serialize_date
+from common.serializers import deserialize_date
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import FormSet
@@ -1077,6 +1072,11 @@ class QuotaOrderNumersSelectForm(forms.Form):
 class SelectSubQuotaDefinitionsForm(
     SelectableObjectsForm,
 ):
+    """
+    Form to select the main quota definitions that are to be duplicated.
+    Before selecting, we ensure the QuotaDefinitionDuplicator table is empty.
+    """
+
     def clean(self):
         cleaned_data = super().clean()
         selected_definitions = {

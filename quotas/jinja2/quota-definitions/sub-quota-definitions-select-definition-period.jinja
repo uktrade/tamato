@@ -19,7 +19,11 @@
       {"text": field.field.obj.measurement_unit.abbreviation},
     ]) or "" }}
     {% endfor %}
-  
+
+    {% set checkbox_check_all -%}
+      <div id="check-all-checkbox"></div>
+    {%- endset %}
+
     {% set start_date %}
       {{ create_sortable_anchor(request, "valid_between", "Start date", base_url) }}
     {% endset %}
@@ -28,7 +32,7 @@
     <p>These definition periods are required for sub-quota ID {{view.sub_quota_order_number}} and must be edited on the next pages</p>
     {{ govukTable({
       "head": [
-        {"text": "Checkbox", "classes": "govuk-visually-hidden"},
+        {"html": checkbox_check_all},
         {"text": "Sid"},
         {"text": start_date},
         {"text": "End date"},
