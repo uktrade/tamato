@@ -9,7 +9,7 @@ from factory.fuzzy import FuzzyDecimal
 from factory.fuzzy import FuzzyText
 
 from common.util import TaricDateRange
-from reference_documents.models import ReferenceDocumentVersionStatus
+from reference_documents.models import ReferenceDocumentVersionStatus, AlignmentReportStatus, AlignmentReportCheckStatus
 
 
 def get_random_date(start_date, end_date):
@@ -202,7 +202,6 @@ class RefQuotaDefinitionFactory(factory.django.DjangoModelFactory):
         )
 
 
-
 class RefQuotaSuspensionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "reference_documents.RefQuotaSuspension"
@@ -263,3 +262,27 @@ class RefQuotaSuspensionRangeFactory(factory.django.DjangoModelFactory):
     end_day = 28
     end_month = 9
     end_year = 2024
+
+
+class AlignmentReportFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.AlignmentReport"
+
+    reference_document_version = factory.SubFactory(
+        ReferenceDocumentVersionFactory,
+    )
+
+    status = AlignmentReportStatus.PENDING
+
+
+class AlignmentReportCheckFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.AlignmentReportCheck"
+
+    alignment_report = factory.SubFactory(
+        AlignmentReportFactory,
+    )
+    check_name = FuzzyText(length=5)
+    status = AlignmentReportCheckStatus.PASS
+    message = FuzzyText(length=10, )
+

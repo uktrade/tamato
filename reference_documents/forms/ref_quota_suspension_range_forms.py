@@ -108,7 +108,7 @@ class RefQuotaSuspensionRangeCreateUpdateForm(
         return data
 
     def clean_end_year(self):
-        error_message = f"End year is not valid."
+        error_message = f"End year is not valid"
 
         if "end_year" in self.cleaned_data.keys():
             data = self.cleaned_data["end_year"]
@@ -189,23 +189,29 @@ class RefQuotaSuspensionRangeCreateUpdateForm(
         return data
 
     def clean(self):
+        cleaned_data = super().clean()
         error_messages = []
 
-        # check end year >= start year
-        if 'start_year' in self.cleaned_data.keys() and 'end_year' in self.cleaned_data.keys():
-            start_year = self.cleaned_data["start_year"]
+        start_day = cleaned_data.get("start_day")
+        start_month = cleaned_data.get("start_month")
+        start_year = cleaned_data.get("start_year")
 
-            end_year = self.cleaned_data["end_year"]
+        end_day = cleaned_data.get("end_day")
+        end_month = cleaned_data.get("end_month")
+        end_year = cleaned_data.get("end_year")
 
-            if end_year is not None:
-                if end_year < start_year:
-                    error_messages.append('Invalid year range, start_year is greater than end_year')
-                    self.add_error("end_year", 'Please enter an end year greater than or equal to the start year')
+        ref_quota_definition_range = cleaned_data.get("ref_quota_definition_range")
 
-        if all(i in self.cleaned_data.keys() for i in ['start_day', 'start_month', 'end_day', 'end_month']):
+        if start_year and end_year:
+            if end_year < start_year:
+                error_messages.append('Invalid year range, start_year is greater than end_year')
+                self.add_error("end_year", 'Please enter an end year greater than or equal to the start year')
+
+        if start_day and start_month and end_day and end_month:
             # validate that the start day and start month are less than the end day and end month
-            start_day_month_value = self.cleaned_data["start_day"] + (100 * self.cleaned_data["start_month"])
-            end_day_month_value = self.cleaned_data["end_day"] + (100 * self.cleaned_data["end_month"])
+            start_day_month_value = start_day + (100 * start_month)
+            end_day_month_value = end_day + (100 * end_month)
+
             if start_day_month_value > end_day_month_value:
                 error_messages.append('Invalid start and end day and month')
                 self.add_error("end_day", 'The calculated end date is later than start date in a calendar year')
@@ -214,38 +220,40 @@ class RefQuotaSuspensionRangeCreateUpdateForm(
                 self.add_error("start_month", 'The calculated end date is later than start date in a calendar year')
 
             # verify that dates work for whole range
-            if not self.cleaned_data["end_year"]:
+            if not end_year:
                 end_year = date.today().year + 3
-            else:
-                end_year = self.cleaned_data["end_year"]
 
-            quota_date_ranges = self.cleaned_data["ref_quota_definition_range"].date_ranges()
+            quota_date_ranges = ref_quota_definition_range.date_ranges()
 
-            for index, year in enumerate(range(self.cleaned_data["start_year"], end_year)):
+            for index, year in enumerate(range(start_year, end_year + 1)):
+                start_date = None
+                end_date = None
                 try:
-                    start_date = date(year, self.cleaned_data["start_month"], self.cleaned_data["start_day"])
+                    start_date = date(year, start_month, start_day)
                 except ValueError:
                     error_messages.append('Invalid start day and month')
                     self.add_error("start_day", 'The calculated start date is not valid for the year range')
                     self.add_error("start_month", 'The calculated start date is not valid for the year range')
 
                 try:
-                    if all(i in self.cleaned_data.keys() for i in ['end_day', 'end_month']):
-                        end_date = date(year, self.cleaned_data["end_month"], self.cleaned_data["end_day"])
+                    if end_day and end_month and end_year:
+                        end_date = date(year, end_month, end_day)
                 except ValueError:
                     error_messages.append('Invalid end day and month')
-                    self.add_error("end_day", 'The calculated date using the day or month is not valid for the year range')
-                    self.add_error("end_month", 'The calculated date using the day or month is not valid for the year range')
+                    self.add_error("end_day", 'The calculated end date is not valid for the year range')
+                    self.add_error("end_month", 'The calculated end date is not valid for the year range')
 
                 # check that the date exists in a date range from the quota def template
                 try:
-                    quota_suspension_date_range = TaricDateRange(start_date, end_date)
                     contained = False
-                    for quota_date_range in quota_date_ranges:
-                        if quota_date_range.contains(quota_suspension_date_range):
-                            contained = True
-                    if not contained:
-                        error_messages.append(f'the suspension date range {quota_suspension_date_range} does not fall within any definition defined by the selected quota definition template')
+                    if start_date and end_date:
+                        quota_suspension_date_range = TaricDateRange(start_date, end_date)
+                        for quota_date_range in quota_date_ranges:
+                            if quota_date_range.contains(quota_suspension_date_range):
+                                contained = True
+                        if not contained:
+                            error_messages.append(f'the suspension date range {quota_suspension_date_range} does not fall within any definition defined by the selected quota definition template')
+
                 except NameError:
                     pass
 

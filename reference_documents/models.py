@@ -195,13 +195,13 @@ class ReferenceDocumentVersion(TimestampedMixin):
 
     def ref_quota_suspension_count(self):
         suspension_count = RefQuotaSuspension.objects.all().filter(
-            ref_quota_suspension__ref_order_number__reference_document_version=self
+            ref_quota_definition__ref_order_number__reference_document_version=self
         ).count()
 
         for quota_suspension_range in RefQuotaSuspensionRange.objects.all().filter(
-                ref_quota_suspension_range__ref_order_number__reference_document_version=self
+                ref_quota_definition_range__ref_order_number__reference_document_version=self
         ):
-            suspension_count += len(quota_suspension_range.dynamic_preferential_quota_suspensions())
+            suspension_count += len(quota_suspension_range.dynamic_quota_suspensions())
 
         return suspension_count
 
@@ -366,7 +366,7 @@ class RefQuotaDefinitionRange(models.Model):
             else:
                 end_year = self.end_year
 
-        for index, year in enumerate(range(self.start_year, end_year)):
+        for index, year in enumerate(range(self.start_year, end_year + 1)):
             start_date = date(year, self.start_month, self.start_day)
             end_date = date(year, self.end_month, self.end_day)
             valid_between = TaricDateRange(start_date, end_date)
@@ -434,7 +434,7 @@ class RefQuotaSuspensionRange(models.Model):
             else:
                 end_year = self.end_year
 
-        for index, year in enumerate(range(self.start_year, end_year)):
+        for index, year in enumerate(range(self.start_year, end_year + 1)):
             start_date = date(year, self.start_month, self.start_day)
             end_date = date(year, self.end_month, self.end_day)
             valid_between = TaricDateRange(start_date, end_date)
