@@ -823,12 +823,18 @@ class DuplicateDefinitionsWizard(
         )
         return main_quota_definitions
 
+    def clear_duplicator_table(self):
+        models.QuotaDefinitionDuplicator.objects.all().delete()
+
     def set_duplicate_definitions(self, selected_definitions):
         """
         We store the main definition data in the QuotaDefinitionDuplicator
         table before creating the new QuotaDefinitions and QuotaAssociation
         entry at the end of the journey.
+        Before staging the data, we ensure the QuotaDefinitionDuplicator table
+        is empty.
         """
+        self.clear_duplicator_table()
         for selected_definition in selected_definitions:
             duplicated_definition_data = models.QuotaDefinitionDuplicator(
                 parent_definition=selected_definition,

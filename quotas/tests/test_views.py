@@ -1688,3 +1688,18 @@ def test_quota_blocking_confirm_create_view(valid_user_client):
     assert f"Blocking period SID {blocking.sid} has been created" in str(
         response.content,
     )
+
+def test_duplicate_definition_wizard_duplicates_definitions():
+    # create main quota order number
+    # create sub-quota order number
+    # assign definitions to main order number
+    # create form data dictionary
+
+    assert 0
+    # assert that selected definitions are duplicated
+    # assert that the values match
+
+def test_duplicate_definition_wizard_creates_associations():    
+    # assert the quota association is created
+
+    assert 0

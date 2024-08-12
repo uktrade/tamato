@@ -1076,8 +1076,12 @@ class SelectSubQuotaDefinitionsForm(
     Form to select the main quota definitions that are to be duplicated.
     Before selecting, we ensure the QuotaDefinitionDuplicator table is empty.
     """
+    # def clear_duplicator_table(self):
+    #     print('*'*30,'clear duplicator in select definitions form')
+    #     models.QuotaDefinitionDuplicator.objects.all().delete()
 
     def clean(self):
+        # self.clear_duplicator_table()
         cleaned_data = super().clean()
         selected_definitions = {
             key: value for key, value in cleaned_data.items() if value
