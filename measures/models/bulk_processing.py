@@ -508,12 +508,7 @@ class MeasuresBulkEditor(BulkProcessor):
     
     @atomic
     def edit_measures(self) -> Iterable[Measure]:
-        logger.info("INSIDE EDIT MEASURES TASK")
-        # Clean the forms to get the data back out of them
         cleaned_data = self.get_forms_cleaned_data()
-
-        logger.info(f"TASK - CLEANED DATA: {cleaned_data}")
-        logger.info(f"TASK - SELF.SELECTED MEASURES: {self.selected_measures}")
 
         deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
 
@@ -523,7 +518,7 @@ class MeasuresBulkEditor(BulkProcessor):
         ]
 
         if deserialized_selected_measures:
-            logger.info("MADE IT TO IF SELECTED MEASURES!!!")
+            edited_measures = []
             for measure in deserialized_selected_measures:
                 new_measure = measure.new_version(
                     workbasket=self.workbasket,
@@ -571,6 +566,9 @@ class MeasuresBulkEditor(BulkProcessor):
                     measure=new_measure,
                     workbasket=self.workbasket,
                 )
+
+            edited_measures.append(new_measure.id)
+        return edited_measures
 
     def get_forms_cleaned_data(self) -> Dict:
         """

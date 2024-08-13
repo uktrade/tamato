@@ -65,6 +65,8 @@ def bulk_edit_measures(measures_bulk_editor_pk: int) -> None:
             f"WorkBasket({measures_bulk_editor.workbasket.pk}).",
         )
         raise e
+    
+    logger.info(f"MEASURES: {measures}")
 
     measures_bulk_editor.processing_succeeded()
     measures_bulk_editor.successfully_processed_count = len(measures)

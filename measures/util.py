@@ -1,4 +1,6 @@
 import decimal
+from workbaskets import models as workbasket_models
+from measures import models as measure_models
 from datetime import date
 from math import floor
 from typing import Type
@@ -9,8 +11,8 @@ from common.models.transactions import Transaction
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
-from measures import models
-from workbaskets.models import WorkBasket
+
+
 
 
 def convert_eur_to_gbp(amount: str, eur_gbp_conversion_rate: float) -> str:
@@ -32,9 +34,9 @@ def diff_components(
     instance,
     duty_sentence: str,
     start_date: date,
-    workbasket: WorkBasket,
+    workbasket: workbasket_models.WorkBasket,
     transaction: Type[Transaction],
-    component_output: Type[TrackedModel] = models.MeasureComponent,
+    component_output: Type[TrackedModel] = measure_models.MeasureComponent,
     reverse_attribute: str = "component_measure",
 ):
     """
@@ -98,9 +100,9 @@ def diff_components(
 
 def update_measure_components(
         self,
-        measure: models.Measure,
+        measure: measure_models.Measure,
         duties: str,
-        workbasket: WorkBasket,
+        workbasket: workbasket_models.WorkBasket,
     ):
         """Updates the measure components associated to the measure."""
         diff_components(
@@ -114,8 +116,8 @@ def update_measure_components(
 
 def update_measure_condition_components(
     self,
-    measure: models.Measure,
-    workbasket: WorkBasket,
+    measure: measure_models.Measure,
+    workbasket: workbasket_models.WorkBasket,
 ):
     """Updates the measure condition components associated to the
     measure."""
@@ -130,9 +132,9 @@ def update_measure_condition_components(
 def update_measure_excluded_geographical_areas(
     self,
     edited: bool,
-    measure: models.Measure,
+    measure: measure_models.Measure,
     exclusions: List[GeographicalArea],
-    workbasket: WorkBasket,
+    workbasket: workbasket_models.WorkBasket,
 ):
     """Updates the excluded geographical areas associated to the measure."""
     existing_exclusions = measure.exclusions.current()
@@ -161,7 +163,7 @@ def update_measure_excluded_geographical_areas(
                 workbasket=workbasket,
             )
         else:
-            models.MeasureExcludedGeographicalArea.objects.create(
+            measure_models.MeasureExcludedGeographicalArea.objects.create(
                 modified_measure=measure,
                 excluded_geographical_area=geo_area,
                 update_type=UpdateType.CREATE,
@@ -188,7 +190,7 @@ def update_measure_excluded_geographical_areas(
 def update_measure_footnote_associations(self, measure, workbasket):
     """Updates the footnotes associated to the measure."""
     footnote_associations = (
-        models.FootnoteAssociationMeasure.objects.current().filter(
+        measure_models.FootnoteAssociationMeasure.objects.current().filter(
             footnoted_measure__sid=measure.sid,
         )
     )
