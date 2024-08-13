@@ -17,7 +17,7 @@ def get_measures_on_declarable_commodities(transaction, item_id, date=None):
         moment=moment,
     )
     this_commodity = list(
-        filter(lambda c: c.item_id == item_id, tree.commodities),
+        filter(lambda c: c.item_id == item_id and c.suffix == '80', tree.commodities),
     )[0]
     measure_snapshot = MeasureSnapshot(moment, tree)
     return measure_snapshot.get_applicable_measures(this_commodity)

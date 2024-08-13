@@ -27,6 +27,12 @@ api_router.register(
     basename="goodsnomenclature",
 )
 
+api_router.register(
+    r"goods_nomenclature_plus",
+    views.GoodsNomenclaturePlusViewset,
+    basename="goodsnomenclature-plus",
+)
+
 urlpatterns = [
     path("api/", include(api_router.urls)),
     path(

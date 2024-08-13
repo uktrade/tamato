@@ -1,12 +1,18 @@
 from datetime import date
 from urllib.parse import urlencode
 
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib import messages
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.generic import ListView
+from django.views.generic.base import TemplateView
+from django.views.generic.edit import FormView
 from rest_framework import permissions
 from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.reverse import reverse_lazy
 
 from commodities import business_rules
 from commodities import forms
@@ -19,6 +25,8 @@ from commodities.models.dc import CommodityTreeSnapshot
 from commodities.models.dc import SnapshotMoment
 from commodities.models.dc import get_chapter_collection
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
+from commodities.serializers import GoodsNomenclatureSerializer, \
+    GoodsNomenclaturePlusSerializer
 from common.serializers import AutoCompleteSerializer
 from common.tariffs_api import URLs
 from common.tariffs_api import get_commodity_data
@@ -27,11 +35,14 @@ from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
+from importer.forms import CommodityImportForm
 from measures.models import Measure
 from workbaskets.models import WorkBasket
+from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
+from workbaskets.views.mixins import WithCurrentWorkBasket
 
 
 class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
@@ -56,6 +67,51 @@ class GoodsNomenclatureViewset(viewsets.ReadOnlyModelViewSet):
             .as_at_and_beyond(date.today())
             .filter(suffix=80)
         )
+
+
+class GoodsNomenclaturePlusViewset(viewsets.ReadOnlyModelViewSet):
+    serializer_class = GoodsNomenclaturePlusSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'sid'
+
+    def get_queryset(self):
+        sid = self.request.query_params.get('sid', None)
+        tx = WorkBasket.get_current_transaction(self.request)
+        return(
+            GoodsNomenclature.objects.filter(sid=sid).approved_up_to_transaction(tx)
+            # .prefetch_related("goodsnomenclatureindent_set")
+        )
+
+    def list(self, requests, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        if queryset:
+            instance = queryset.first()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        else:
+            return Response({'detail': 'No matching record found'}, status=404)
+
+
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class CommodityImportView(PermissionRequiredMixin, FormView,
+                          WithCurrentWorkBasket):
+    template_name = "commodities/import.jinja"
+    form_class = CommodityImportForm
+    success_url = reverse_lazy("commodity-ui-import-success")
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
+
+    def form_valid(self, form):
+        form.save(user=self.request.user, workbasket_id=self.workbasket.id)
+        return super().form_valid(form)
+
+
+class CommodityImportSuccessView(TemplateView):
+    template_name = "commodities/import-success.jinja"
 
 
 class CommodityMixin:
