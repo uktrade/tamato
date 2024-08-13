@@ -393,15 +393,18 @@ def test_select_workbasket_with_errored_status(valid_user_client):
     ],
 )
 def test_select_workbasket_redirects_to_tab(
-    valid_user_client,
+    valid_user,
+    client,
     workbasket_tab,
     expected_url,
     url_kwargs_required,
 ):
     """Test that SelectWorkbasketView redirects to a specific tab on the
     selected workbasket if a tab has been provided."""
+    client.force_login(valid_user)
+    assert not valid_user.current_workbasket
     workbasket = factories.WorkBasketFactory.create()
-    response = valid_user_client.post(
+    response = client.post(
         reverse("workbaskets:workbasket-ui-list"),
         {
             "workbasket": workbasket.id,
@@ -413,6 +416,8 @@ def test_select_workbasket_redirects_to_tab(
         assert response.url == reverse(expected_url, kwargs={"pk": workbasket.pk})
     else:
         assert response.url == reverse(expected_url)
+    valid_user.refresh_from_db()
+    assert valid_user.current_workbasket == workbasket
 
 
 @pytest.mark.parametrize(
