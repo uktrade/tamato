@@ -8,6 +8,7 @@ class CustomAuthbrokerBackend(AuthbrokerBackend):
     def user_create_mapping(self, profile):
         return {
             "is_active": True,
+            "email": profile.get("email"),
             "first_name": profile.get("first_name"),
             "last_name": profile.get("last_name"),
             "sso_uuid": profile.get("user_id"),
