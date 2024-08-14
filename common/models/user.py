@@ -12,7 +12,12 @@ class User(AbstractUser):
         blank=True,
     )
 
-    sso_uuid = models.UUIDField(unique=True, null=True, blank=True)
+    sso_uuid = models.UUIDField(
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="This field is populated by via our Staff SSO authentication backend override.",
+    )
 
     class Meta:
         db_table = "auth_user"
