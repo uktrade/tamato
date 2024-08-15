@@ -362,36 +362,40 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
         </div>
       </div>
     </div>
-    <input
-      name="origins-0-exclusions-0-pk"
-      type="hidden"
-      value={1}
-    />
-    <input
-      name="origins-0-exclusions-0-geographical_area"
-      type="hidden"
-      value={
-        {
-          "id": 3,
-          "pk": 1,
+    <div>
+      <input
+        name="origins-0-exclusions-0-pk"
+        type="hidden"
+        value={1}
+      />
+      <input
+        name="origins-0-exclusions-0-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 3,
+            "pk": 1,
+          }
         }
-      }
-    />
-    <input
-      name="origins-0-exclusions-1-pk"
-      type="hidden"
-      value={2}
-    />
-    <input
-      name="origins-0-exclusions-1-geographical_area"
-      type="hidden"
-      value={
-        {
-          "id": 4,
-          "pk": 2,
+      />
+    </div>
+    <div>
+      <input
+        name="origins-0-exclusions-1-pk"
+        type="hidden"
+        value={2}
+      />
+      <input
+        name="origins-0-exclusions-1-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 4,
+            "pk": 2,
+          }
         }
-      }
-    />
+      />
+    </div>
     <hr
       className="govuk-!-margin-top-3"
     />
@@ -748,21 +752,23 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
       Delete this 
       origin
     </button>
-    <input
-      name="origins-1-exclusions-0-pk"
-      type="hidden"
-      value={3}
-    />
-    <input
-      name="origins-1-exclusions-0-geographical_area"
-      type="hidden"
-      value={
-        {
-          "id": 5,
-          "pk": 3,
+    <div>
+      <input
+        name="origins-1-exclusions-0-pk"
+        type="hidden"
+        value={3}
+      />
+      <input
+        name="origins-1-exclusions-0-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 5,
+            "pk": 3,
+          }
         }
-      }
-    />
+      />
+    </div>
     <hr
       className="govuk-!-margin-top-3"
     />
@@ -1131,36 +1137,40 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
         </div>
       </div>
     </div>
-    <input
-      name="origins-0-exclusions-0-pk"
-      type="hidden"
-      value={1}
-    />
-    <input
-      name="origins-0-exclusions-0-geographical_area"
-      type="hidden"
-      value={
-        {
-          "id": 3,
-          "pk": 1,
+    <div>
+      <input
+        name="origins-0-exclusions-0-pk"
+        type="hidden"
+        value={1}
+      />
+      <input
+        name="origins-0-exclusions-0-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 3,
+            "pk": 1,
+          }
         }
-      }
-    />
-    <input
-      name="origins-0-exclusions-1-pk"
-      type="hidden"
-      value={2}
-    />
-    <input
-      name="origins-0-exclusions-1-geographical_area"
-      type="hidden"
-      value={
-        {
-          "id": 4,
-          "pk": 2,
+      />
+    </div>
+    <div>
+      <input
+        name="origins-0-exclusions-1-pk"
+        type="hidden"
+        value={2}
+      />
+      <input
+        name="origins-0-exclusions-1-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 4,
+            "pk": 2,
+          }
         }
-      }
-    />
+      />
+    </div>
     <hr
       className="govuk-!-margin-top-3"
     />
@@ -1517,21 +1527,23 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
       Delete this 
       origin
     </button>
-    <input
-      name="origins-1-exclusions-0-pk"
-      type="hidden"
-      value={3}
-    />
-    <input
-      name="origins-1-exclusions-0-geographical_area"
-      type="hidden"
-      value={
-        {
-          "id": 5,
-          "pk": 3,
+    <div>
+      <input
+        name="origins-1-exclusions-0-pk"
+        type="hidden"
+        value={3}
+      />
+      <input
+        name="origins-1-exclusions-0-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 5,
+            "pk": 3,
+          }
         }
-      }
-    />
+      />
+    </div>
     <hr
       className="govuk-!-margin-top-3"
     />
