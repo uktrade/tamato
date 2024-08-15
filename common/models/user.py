@@ -16,7 +16,7 @@ class User(AbstractUser):
         unique=True,
         null=True,
         blank=True,
-        help_text="This field is populated by via our Staff SSO authentication backend override.",
+        help_text="This field is populated by the Staff SSO authentication backend override.",
     )
 
     class Meta:
