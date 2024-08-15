@@ -6,7 +6,7 @@ from common.auth_backend import CustomAuthbrokerBackend
 
 
 @pytest.fixture
-def mock_staff_sso_profile():
+def staff_sso_profile():
     return {
         "user_id": "6fa3b542-9a6f-4fc3-a248-168596572999",
         "email_user_id": "john.smith-6fa3b542@id.trade.gov.uk",  # /PS-IGNORE
@@ -21,7 +21,7 @@ def mock_staff_sso_profile():
     }
 
 
-def test_user_create_mapping(mock_staff_sso_profile):
+def test_user_create_mapping(staff_sso_profile):
     """Test that the user_create_mapping method correctly returns user data to
     be used when creating a user."""
     custom_authbroker_backend = CustomAuthbrokerBackend()
@@ -32,7 +32,7 @@ def test_user_create_mapping(mock_staff_sso_profile):
         "last_name": "Smith",
         "sso_uuid": "6fa3b542-9a6f-4fc3-a248-168596572999",
     }
-    user_mapping = custom_authbroker_backend.user_create_mapping(mock_staff_sso_profile)
+    user_mapping = custom_authbroker_backend.user_create_mapping(staff_sso_profile)
     assert user_mapping == expected_user_mapping
 
 
@@ -40,7 +40,7 @@ def test_user_create_mapping(mock_staff_sso_profile):
 def test_get_or_create_user(
     mock_get_or_create_user,
     valid_user,
-    mock_staff_sso_profile,
+    staff_sso_profile,
 ):
     """Test that the overridden get_or_create_user method correctly calls super
     and then sets the valid_user's sso_uuid if they don't have one."""
@@ -48,5 +48,5 @@ def test_get_or_create_user(
     mock_get_or_create_user.return_value = valid_user
 
     custom_authbroker_backend = CustomAuthbrokerBackend()
-    custom_authbroker_backend.get_or_create_user(mock_staff_sso_profile)
+    custom_authbroker_backend.get_or_create_user(staff_sso_profile)
     assert valid_user.sso_uuid == "6fa3b542-9a6f-4fc3-a248-168596572999"
