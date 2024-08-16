@@ -127,34 +127,19 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
             ),
         )
 
-    def clean_duty_rate(self):
-        error_message = "Quota duty Rate is not valid - it must have a value"
-
-        if "duty_rate" in self.cleaned_data.keys():
-            data = self.cleaned_data["duty_rate"]
-            if len(data) < 1:
-                raise ValidationError(error_message)
-        else:
-            raise ValidationError(error_message)
-
-        return data
-
     def clean_start_year(self):
         error_message = f"Start year is not valid, it must be a 4 digit year greater than 2010 and less than {date.today().year + 100}"
 
-        if "start_year" in self.cleaned_data.keys():
-            data = self.cleaned_data["start_year"]
-            if int(data) < 2010:
-                raise ValidationError(error_message)
-            elif data > date.today().year + 100:
-                raise ValidationError(error_message)
-        else:
+        data = self.cleaned_data["start_year"]
+        if int(data) < 2010:
+            raise ValidationError(error_message)
+        elif data > date.today().year + 100:
             raise ValidationError(error_message)
 
         return data
 
     def clean_end_year(self):
-        error_message = f"End year is not valid, it must be a 4 digit year and less than {date.today().year + 100} or blank"
+        error_message = f"End year is not valid, it must be a 4 digit year, greater than 2010, less than {date.today().year + 100} or blank"
 
         data = None
 
@@ -163,33 +148,29 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
             if data is not None:
                 if data > date.today().year + 100:
                     raise ValidationError(error_message)
-
+                elif data < 2010:
+                    raise ValidationError(error_message)
         return data
 
     def clean_start_day(self):
         error_message = "Start day is not valid, it must be between 1 and 31"
 
-        if "start_day" in self.cleaned_data.keys():
-            data = self.cleaned_data["start_day"]
-            if not data:
-                raise ValidationError(error_message)
-            if data < 1 or data > 31:
-                raise ValidationError(error_message)
-        else:
+        data = self.cleaned_data["start_day"]
+        if not data:
             raise ValidationError(error_message)
+        if data < 1 or data > 31:
+            raise ValidationError(error_message)
+
 
         return data
 
     def clean_end_day(self):
         error_message = "End day is not valid, it must be between 1 and 31"
 
-        if "end_day" in self.cleaned_data.keys():
-            data = self.cleaned_data["end_day"]
-            if not data:
-                raise ValidationError(error_message)
-            if data < 1 or data > 31:
-                raise ValidationError(error_message)
-        else:
+        data = self.cleaned_data["end_day"]
+        if not data:
+            raise ValidationError(error_message)
+        if data < 1 or data > 31:
             raise ValidationError(error_message)
 
         return data
@@ -197,13 +178,10 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
     def clean_end_month(self):
         error_message = "End month is not valid, it must be between 1 and 12"
 
-        if "end_month" in self.cleaned_data.keys():
-            data = self.cleaned_data["end_month"]
-            if not data:
-                raise ValidationError(error_message)
-            if data < 1 or data > 12:
-                raise ValidationError(error_message)
-        else:
+        data = self.cleaned_data["end_month"]
+        if not data:
+            raise ValidationError(error_message)
+        if data < 1 or data > 12:
             raise ValidationError(error_message)
 
         return data
@@ -211,13 +189,10 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
     def clean_start_month(self):
         error_message = "Start month is not valid, it must be between 1 and 12"
 
-        if "start_month" in self.cleaned_data.keys():
-            data = self.cleaned_data["start_month"]
-            if not data:
-                raise ValidationError(error_message)
-            if data < 1 or data > 12:
-                raise ValidationError(error_message)
-        else:
+        data = self.cleaned_data["start_month"]
+        if not data:
+            raise ValidationError(error_message)
+        if data < 1 or data > 12:
             raise ValidationError(error_message)
 
         return data
@@ -225,11 +200,8 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
     def clean_ref_order_number(self):
         error_message = "Quota order number is required"
 
-        if "ref_order_number" in self.cleaned_data.keys():
-            data = self.cleaned_data["ref_order_number"]
-            if not data:
-                raise ValidationError(error_message)
-        else:
+        data = self.cleaned_data["ref_order_number"]
+        if not data:
             raise ValidationError(error_message)
 
         return data
@@ -249,9 +221,17 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
                     self.add_error("end_year", 'Please enter an end year greater than or equal to the start year')
 
         if all(i in self.cleaned_data.keys() for i in ['start_day', 'start_month', 'end_day', 'end_month']):
+            start_month = self.cleaned_data["start_month"]
+            start_day = self.cleaned_data["start_day"]
+            end_month = self.cleaned_data["end_month"]
+            end_day = self.cleaned_data["end_day"]
+            start_year = self.cleaned_data["start_year"]
+            end_year = self.cleaned_data.get("end_year")
+
             # validate that the start day and start month are less than the end day and end month
-            start_day_month_value = self.cleaned_data["start_day"] + (100 * self.cleaned_data["start_month"])
-            end_day_month_value = self.cleaned_data["end_day"] + (100 * self.cleaned_data["end_month"])
+            start_day_month_value = start_day + (100 * start_month)
+            end_day_month_value = end_day + (100 * end_month)
+
             if start_day_month_value > end_day_month_value:
                 error_messages.append('Invalid start and end day and month')
                 self.add_error("end_day", 'The calculated end date is later than start date in a calendar year')
@@ -260,22 +240,19 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
                 self.add_error("start_month", 'The calculated end date is later than start date in a calendar year')
 
             # verify that dates work for whole range
-            if not self.cleaned_data["end_year"]:
+            if not end_year:
                 end_year = date.today().year + 3
-            else:
-                end_year = self.cleaned_data["end_year"]
 
-            for index, year in enumerate(range(self.cleaned_data["start_year"], end_year)):
+            for index, year in enumerate(range(start_year, end_year)):
                 try:
-                    start_date = date(year, self.cleaned_data["start_month"], self.cleaned_data["start_day"])
+                    date(year, start_month, start_day)
                 except ValueError:
                     error_messages.append('Invalid start day and month')
                     self.add_error("start_day", 'The calculated start date is not valid for the year range')
                     self.add_error("start_month", 'The calculated start date is not valid for the year range')
 
                 try:
-                    if all(i in self.cleaned_data.keys() for i in ['end_day', 'end_month']):
-                        end_date = date(year, self.cleaned_data["end_month"], self.cleaned_data["end_day"])
+                    date(year, end_month, end_day)
                 except ValueError:
                     error_messages.append('Invalid end day and month')
                     self.add_error("end_day", 'The calculated date using the day or month is not valid for the year range')
