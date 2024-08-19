@@ -14,7 +14,6 @@ setup(
     install_requires=[
         "dj-database-url",
         "django",
-        "django-dotenv",
         "django-extra-fields",
         "django-filter",
         "django-fsm",
@@ -26,6 +25,7 @@ setup(
         "gunicorn",
         "jinja2",
         "psycopg[binary]",
+        "python-dotenv",
         "sentry-sdk",
         "werkzeug",
         "whitenoise",
