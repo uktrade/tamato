@@ -122,6 +122,11 @@ ui_patterns = [
         name="workbasket-ui-violations",
     ),
     path(
+        f"current/comm-code-checks/",
+        ui_views.WorkBasketCommCodeChecks.as_view(),
+        name="workbasket-ui-comm-code-checks",
+    ),
+    path(
         f"<pk>/confirm-create/",
         ui_views.WorkBasketConfirmCreate.as_view(),
         name="workbasket-ui-confirm-create",
