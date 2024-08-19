@@ -133,7 +133,7 @@ govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--seco
   {% set rule_check_block %}{% endset %}
 {% endif %}
 {{rule_check_block}}
-  <dl class="govuk-summary-list">
+<dl class="govuk-summary-list govuk-!-margin-bottom-0">
   <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">
         Live rule check status
@@ -145,4 +145,4 @@ govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--seco
         {{ rule_check_button }}
       </dd>
   </div>
-  </dl>
+</dl>

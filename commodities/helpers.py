@@ -1,6 +1,8 @@
 from commodities.models.dc import CommodityCollectionLoader
 from commodities.models.dc import CommodityTreeSnapshot
 from commodities.models.dc import SnapshotMoment
+from geo_areas.models import GeographicalArea
+from measures.models import MeasureType
 from measures.snapshots import MeasureSnapshot
 
 
@@ -21,3 +23,29 @@ def get_measures_on_declarable_commodities(transaction, item_id, date=None):
     )[0]
     measure_snapshot = MeasureSnapshot(moment, tree)
     return measure_snapshot.get_applicable_measures(this_commodity)
+
+
+def get_comm_code_measure_type_103(comm_codes, date=None):
+    output = []
+    third_country_duty = MeasureType.objects.get(sid=103)
+
+    for code in comm_codes:
+        if code.item_id.startswith("99") or code.item_id.startswith("98"):
+            continue
+        measures = get_measures_on_declarable_commodities(
+            code.transaction,
+            code.item_id,
+            date,
+        )
+        if not measures:
+            item = (code, None)
+        else:
+            item = (
+                code,
+                measures.filter(
+                    measure_type=third_country_duty,
+                    geographical_area=GeographicalArea.objects.erga_omnes().first(),
+                ),
+            )
+        output.append(item)
+    return output
