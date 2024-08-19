@@ -1,0 +1,34 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
+
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Commodity code check results {% endset %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+  {{ navigation(request, "violations") }}
+
+  {% for comm_code, measures in measures_check %}
+    {% if measures == None %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-warning-text__assistive">Warning</span>
+        Commodity code <a class="govuk-link" href="{{ url('commodity-ui-detail', args=[comm_code.sid]) }}">{{comm_code.item_id}}</a> is not covered by any MFN
+      </strong>
+    </div>
+    {% else %}
+    <p>Commodity code <a class="govuk-link" href="{{ url('commodity-ui-detail', args=[comm_code.sid]) }}">{{comm_code.item_id}}</a> is covered by the following MFN:</p>
+    <ul>
+    {% for measure in measures %}
+      <li><a class="govuk-link" href="{{ url('measure-ui-detail', args=[measure.sid]) }}">Measure {{measure.sid}}</a></li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+  {% endfor %}
+
+{% endblock %}

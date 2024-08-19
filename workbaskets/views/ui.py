@@ -39,6 +39,9 @@ from markdownify import markdownify
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
+from commodities.helpers import get_comm_code_measure_type_103
+from commodities.models.orm import GoodsNomenclature
+from commodities.models.orm import GoodsNomenclatureIndent
 from common.filters import TamatoFilter
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
@@ -1058,6 +1061,52 @@ class WorkBasketViolationDetail(DetailView):
         return redirect("workbaskets:workbasket-ui-violations")
 
 
+class WorkBasketCommCodeChecks(TemplateView):
+    """UI endpoint for viewing a specified workbasket's business rule
+    violations."""
+
+    template_name = "workbaskets/comm_code_checks.jinja"
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(workbasket=self.workbasket, **kwargs)
+
+        comm_codes = None
+        if any(
+            [
+                isinstance(item, GoodsNomenclature)
+                for item in self.workbasket.tracked_models.all()
+            ],
+        ):
+            comm_codes = {
+                item
+                for item in self.workbasket.tracked_models.all()
+                if isinstance(item, GoodsNomenclature)
+            }
+        elif any(
+            [
+                isinstance(item, GoodsNomenclatureIndent)
+                for item in self.workbasket.tracked_models.all()
+            ],
+        ):
+            comm_codes = {
+                item.indented_goods_nomenclature
+                for item in self.workbasket.tracked_models.all()
+                if isinstance(item, GoodsNomenclatureIndent)
+            }
+
+        if comm_codes:
+            context["measures_check"] = get_comm_code_measure_type_103(
+                comm_codes,
+                date=date.today(),
+            )
+
+        return context
+
+
 class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
     """
     UI to confirm (or cancel) workbasket deletion.
@@ -1235,6 +1284,16 @@ class WorkBasketChecksView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["comm_code_check"] = False
+        if any(
+            [
+                isinstance(item, GoodsNomenclature)
+                or isinstance(item, GoodsNomenclatureIndent)
+                for item in self.workbasket.tracked_models.all()
+            ],
+        ):
+            context["comm_code_check"] = True
+
         # set to true if there is an associated goods import batch with an unsent notification
         try:
             import_batch = self.workbasket.importbatch

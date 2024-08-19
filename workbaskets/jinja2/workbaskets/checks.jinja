@@ -11,27 +11,45 @@
     {{ navigation(request, "check") }}
     
     {% include "includes/workbaskets/workbasket-business-rules.jinja" %}
-    <div>
-    <dl class="govuk-summary-list">
+
+<div class="govuk-summary-list__row">
+  <dl class="govuk-summary-list">
+    <dt class="govuk-summary-list__key">
+      Type 103 measures check
+    </dt>
+    <dd class="govuk-summary-list__value">
+      Check for type 103 measure coverage of commodity code changes in this workbasket
+    </dd>
+    <dt class="govuk-summary-list__actions">
+      {% if comm_code_check %}
+        {{
+          govukButton({
+            "text": "Check commodity codes",
+            "href": url("workbaskets:workbasket-ui-comm-code-checks"),
+        })}}
+      {% else %}
+        Not applicable
+      {% endif %}
+    </dt>
+
     <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">
-          Worksheet check
-        </dt>
-        <dd class="govuk-summary-list__value">
-          Compare worksheet data with workbasket data
-        </dd>
-        <dt class="govuk-summary-list__actions">
-        {% if workbasket.tracked_models.exists() %}
-          {{
-            govukButton({
-              "text": "Compare data",
-              "href": url("workbaskets:workbasket-check-ui-compare"),
-              "classes": "govuk-button--secondary govuk-!-margin-0"
-          })}}
-          {% endif %}
-        </dt>
+      <dt class="govuk-summary-list__key">
+        Worksheet check
+      </dt>
+      <dd class="govuk-summary-list__value">
+        Compare worksheet data with workbasket data
+      </dd>
+      <dt class="govuk-summary-list__actions">
+      {% if workbasket.tracked_models.exists() %}
+        {{
+          govukButton({
+            "text": "Compare data",
+            "href": url("workbaskets:workbasket-check-ui-compare"),
+            "classes": "govuk-button--secondary govuk-!-margin-0"
+        })}}
+        {% endif %}
+      </dt>
     </div>
-    </dl>
+  </dl>
 </div>
-    
 {% endblock %}
