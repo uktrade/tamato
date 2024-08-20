@@ -40,7 +40,7 @@ class Runner:
             return loglevel
 
     @classmethod
-    def manage(cls, db: Path, *args: str):
+    def manage(cls, sqlite_file: Path, *args: str):
         """
         Runs a Django management command on the SQLite database.
 
@@ -56,7 +56,7 @@ class Runner:
                 sqlite_env["CELERY_LOG_LEVEL"],
             )
 
-        sqlite_env["DATABASE_URL"] = f"sqlite:///{str(db)}"
+        sqlite_env["DATABASE_URL"] = f"sqlite:///{str(sqlite_file)}"
         # Required to make sure the postgres default isn't set as the DB_URL
         if sqlite_env.get("VCAP_SERVICES"):
             vcap_env = json.loads(sqlite_env["VCAP_SERVICES"])
@@ -71,21 +71,20 @@ class Runner:
         )
 
     @classmethod
-    def make_tamato_database(cls, db: Path) -> "Runner":
-        """
-        Generate a new and empty SQLite database with the TaMaTo schema.
-
-        Because SQLite uses different fields to PostgreSQL, first missing
-        migrations are generated to bring in the different style of validity
-        fields. However, these should not generally stick around and be applied
-        to Postgres so they are removed after being applied.
-        """
+    def make_tamato_database(cls, sqlite_file: Path) -> "Runner":
+        """Generate a new and empty SQLite database with the TaMaTo schema
+        derived from Tamato's models - by performing 'makemigrations' followed
+        by 'migrate' on the Sqlite file located at `sqlite_file`."""
         try:
-            cls.manage(db, "makemigrations", "--name", "sqlite_export")
-            cls.manage(db, "migrate")
-            assert db.exists()
-            return cls(apsw.Connection(str(db)))
-
+            # Because SQLite uses different fields to PostgreSQL, missing
+            # migrations are first generated to bring in the different style of
+            # validity fields. However, these should not be applied to Postgres
+            # and so should be removed (in the `finally` block) after they have
+            # been applied (when running `migrate`).
+            cls.manage(sqlite_file, "makemigrations", "--name", "sqlite_export")
+            cls.manage(sqlite_file, "migrate")
+            assert sqlite_file.exists()
+            return cls(apsw.Connection(str(sqlite_file)))
         finally:
             for file in Path(settings.BASE_DIR).rglob(
                 "**/migrations/*sqlite_export.py",
@@ -93,6 +92,15 @@ class Runner:
                 file.unlink()
 
     def read_schema(self, type: str) -> Iterator[Tuple[str, str]]:
+        """
+        Generator yielding a tuple of 'name' and 'sql' column values from
+        Sqlite's "schema table", 'sqlite_schema'.
+
+        The `type` param filters rows that have a matching 'type' column value,
+        which may be any one of: 'table', 'index', 'view', or 'trigger'.
+
+        See https://www.sqlite.org/schematab.html for further details.
+        """
         cursor = self.database.cursor()
         cursor.execute(
             f"""
@@ -110,16 +118,21 @@ class Runner:
 
     @property
     def tables(self) -> Iterator[Tuple[str, str]]:
+        """Generator yielding a tuple of each Sqlite table object's 'name' and
+        the SQL `CREATE_TABLE` statement that can be used to create the
+        table."""
         yield from self.read_schema("table")
 
     @property
     def indexes(self) -> Iterator[Tuple[str, str]]:
+        """Generator yielding a tuple of each SQLite table index object name and
+        the SQL `CREATE_INDEX` statement that can be used to create it."""
         yield from self.read_schema("index")
 
     def read_column_order(self, table: str) -> Iterator[str]:
         """
-        Returns the name of the columns in the order they are defined in an
-        SQLite database.
+        Returns the name of `table`'s columns in the order they are defined in
+        an SQLite database.
 
         This is necessary because the Django migrations do not generate the
         columns in the order they are defined on the model, and there's no other
@@ -131,8 +144,8 @@ class Runner:
             yield column[1]
 
     def run_operations(self, operations: Iterable[Operation]):
-        """Runs the supplied sequence of operations against the SQLite
-        database."""
+        """Runs each operation in `operations` against `database` member
+        attribute (a connection object to an SQLite database file)."""
         cursor = self.database.cursor()
         for operation in operations:
             logger.debug("%s: %s", self.database, operation[0])

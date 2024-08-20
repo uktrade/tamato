@@ -167,7 +167,9 @@ class QuotaUpdateForm(
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request")
+        self.exclusions_options = kwargs.pop("exclusions_options")
         self.geo_area_options = kwargs.pop("geo_area_options")
+        self.groups_with_members = kwargs.pop("groups_with_members")
         self.existing_origins = kwargs.pop("existing_origins")
         super().__init__(*args, **kwargs)
         self.init_fields()
@@ -202,7 +204,7 @@ class QuotaUpdateForm(
                 "id": o.pk,  # unique identifier used by react
                 "pk": o.pk,
                 "exclusions": [
-                    {"pk": e.pk, "id": e.excluded_geographical_area.pk}
+                    e.excluded_geographical_area.pk
                     for e in o.quotaordernumberoriginexclusion_set.current()
                 ],
                 "geographical_area": o.geographical_area.pk,
@@ -328,6 +330,8 @@ class QuotaUpdateForm(
                 "object": self.instance,
                 "request": request,
                 "geo_area_options": self.geo_area_options,
+                "groups_with_members": self.groups_with_members,
+                "exclusions_options": self.exclusions_options,
                 "origins_initial": self.get_origins_initial(),
                 "errors": self.errors,
             },

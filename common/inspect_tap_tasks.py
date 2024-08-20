@@ -59,9 +59,10 @@ class TAPTasks:
 
         return tasks_cleaned
 
-    def current_rule_checks(self, task_name="") -> List[CeleryTask]:
+    def current_tasks(self, task_name="") -> List[CeleryTask]:
         """Return the list of tasks queued or started, ready to display in the
         view."""
+
         inspect = app.control.inspect()
         if not inspect:
             return []

@@ -264,7 +264,7 @@ AUTHBROKER_CLIENT_SECRET = os.environ.get("AUTHBROKER_CLIENT_SECRET")
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
 if SSO_ENABLED:
     AUTHENTICATION_BACKENDS += [
-        "authbroker_client.backends.AuthbrokerBackend",
+        "common.auth_backend.CustomAuthbrokerBackend",
     ]
 
 AUTH_USER_MODEL = "common.User"
@@ -324,10 +324,8 @@ if MAINTENANCE_MODE:
 
 # DBT PaaS
 elif is_copilot():
-    DB_URL = dj_database_url.config(
-        default=database_url_from_env("DATABASE_CREDENTIALS"),
-    )
-    DATABASES = {"default": DB_URL}
+    DB_URL = database_url_from_env("DATABASE_CREDENTIALS")
+    DATABASES = {"default": dj_database_url.parse(DB_URL)}
 # Govuk PaaS
 elif VCAP_SERVICES.get("postgres"):
     DB_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
@@ -608,27 +606,32 @@ CELERY_WORKER_POOL_RESTARTS = True  # Restart worker if it dies
 # Lock expires in 10 minutes
 CROWN_DEPENDENCIES_API_TASK_LOCK = 60 * 10
 
-CROWN_DEPENDENCIES_API_CRON = (
-    crontab(os.environ.get("CROWN_DEPENDENCIES_API_CRON"))
-    if os.environ.get("CROWN_DEPENDENCIES_API_CRON")
-    else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
-)
+CELERY_BEAT_SCHEDULE = {}
 
-# `SQLITE_EXPORT_CRONTAB` sets the time, in crontab format, that an Sqlite
-# snapshot task is scheduled by Celery Beat for execution by a Celery task.
-# (See https://en.wikipedia.org/wiki/Cron for format description.)
-SQLITE_EXPORT_CRONTAB = os.environ.get("SQLITE_EXPORT_CRONTAB", "05 19 * * *")
-CELERY_BEAT_SCHEDULE = {
-    "sqlite_export": {
+ENABLE_SQLITE_EXPORT_SCHEDULE = is_truthy(
+    os.environ.get("ENABLE_SQLITE_EXPORT_SCHEDULE", "True"),
+)
+if ENABLE_SQLITE_EXPORT_SCHEDULE:
+    # `SQLITE_EXPORT_CRONTAB` sets the time, in crontab format, that an Sqlite
+    # snapshot task is scheduled by Celery Beat for execution by a Celery task.
+    # (See https://en.wikipedia.org/wiki/Cron for format description.)
+    SQLITE_EXPORT_CRONTAB = os.environ.get(
+        "SQLITE_EXPORT_CRONTAB",
+        "05 19 * * *",
+    )
+    CELERY_BEAT_SCHEDULE["sqlite_export"] = {
         "task": "exporter.sqlite.tasks.export_and_upload_sqlite",
         "schedule": crontab(*SQLITE_EXPORT_CRONTAB.split()),
-    },
-}
+    }
 
 if ENABLE_CROWN_DEPENDENCIES_PUBLISHING:
+    CROWN_DEPENDENCIES_API_CRON = (
+        crontab(os.environ.get("CROWN_DEPENDENCIES_API_CRON"))
+        if os.environ.get("CROWN_DEPENDENCIES_API_CRON")
+        else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
+    )
     CELERY_BEAT_SCHEDULE["crown_dependencies_api_publish"] = {
         "task": "publishing.tasks.publish_to_api",
-        # every 2 hours between 8am and 6pm on weekdays
         "schedule": CROWN_DEPENDENCIES_API_CRON,
     }
 
@@ -783,6 +786,8 @@ if SENTRY_ENABLED:
         "dsn": os.environ["SENTRY_DSN"],
         "environment": ENV,
         "integrations": [DjangoIntegration(), RedisIntegration()],
+        "enable_tracing": is_truthy(os.getenv("SENTRY_ENABLE_TRACING", False)),
+        "traces_sample_rate": float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", 0.0)),
     }
     if "shell" in sys.argv or "shell_plus" in sys.argv:
         sentry_kwargs["before_send"] = lambda event, hint: None

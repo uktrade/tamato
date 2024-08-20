@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
+from django.db import OperationalError
 from django.db.transaction import atomic
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -101,6 +102,7 @@ class PackagedWorkbasketQueueView(
         except (
             PackagedWorkBasket.DoesNotExist,
             PackagedWorkBasketInvalidQueueOperation,
+            OperationalError,
         ):
             # Nothing to do in the case of these exceptions.
             pass
@@ -113,6 +115,7 @@ class PackagedWorkbasketQueueView(
         except (
             PackagedWorkBasket.DoesNotExist,
             PackagedWorkBasketInvalidQueueOperation,
+            OperationalError,
         ):
             # Nothing to do in the case of these exceptions.
             pass
@@ -125,6 +128,7 @@ class PackagedWorkbasketQueueView(
         except (
             PackagedWorkBasket.DoesNotExist,
             PackagedWorkBasketInvalidQueueOperation,
+            OperationalError,
         ):
             # Nothing to do in the case of these exceptions.
             pass
@@ -142,6 +146,7 @@ class PackagedWorkbasketQueueView(
             PackagedWorkBasket.DoesNotExist,
             PackagedWorkBasketInvalidQueueOperation,
             TransitionNotAllowed,
+            OperationalError,
         ):
             # Nothing to do in the case of these exceptions.
             return self.view_url
@@ -189,7 +194,7 @@ class EnvelopeQueueView(
             packaged_work_basket = PackagedWorkBasket.objects.get(pk=pk)
             try:
                 packaged_work_basket.begin_processing()
-            except TransitionNotAllowed:
+            except (TransitionNotAllowed, OperationalError):
                 # No error page right now, just reshow the list view.
                 pass
 

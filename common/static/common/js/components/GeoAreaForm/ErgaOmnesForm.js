@@ -9,7 +9,7 @@ function ErgaOmnesForm({
   data,
   errors,
   ergaOmnesExclusionsInitial,
-  exclusionsOptions,
+  ergaOmnesExclusions,
 }) {
   if (renderCondition) {
     return (
@@ -24,7 +24,7 @@ function ErgaOmnesForm({
           <Select
             className="react-select-container"
             classNamePrefix="react-select"
-            options={exclusionsOptions}
+            options={ergaOmnesExclusions}
             defaultValue={ergaOmnesExclusionsInitial}
             value={data.ergaOmnesExclusions}
             onChange={(value) => updateForm("ergaOmnesExclusions", value)}
@@ -58,7 +58,7 @@ ErgaOmnesForm.propTypes = {
   }).isRequired,
   errors: PropTypes.objectOf(PropTypes.string).isRequired,
   ergaOmnesExclusionsInitial: PropTypes.arrayOf(PropTypes.number),
-  exclusionsOptions: PropTypes.arrayOf(
+  ergaOmnesExclusions: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,
       value: PropTypes.oneOfType([PropTypes.oneOf([""]), PropTypes.number]),

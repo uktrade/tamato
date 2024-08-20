@@ -10,6 +10,7 @@ function GeoAreaField({
   errors,
   updateForm,
   data,
+  ergaOmnesExclusions,
   exclusionsOptions,
   groupsOptions,
   countryRegionsOptions,
@@ -73,7 +74,7 @@ function GeoAreaField({
           data={data}
           errors={errors}
           ergaOmnesExclusionsInitial={ergaOmnesExclusionsInitial}
-          exclusionsOptions={exclusionsOptions}
+          ergaOmnesExclusions={ergaOmnesExclusions}
         />
         <div className="govuk-radios__item">
           <input
@@ -157,6 +158,12 @@ GeoAreaField.propTypes = {
     geoGroupExclusions: PropTypes.arrayOf(PropTypes.number),
     countryRegions: PropTypes.arrayOf(PropTypes.number),
   }).isRequired,
+  ergaOmnesExclusions: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      value: PropTypes.oneOfType([PropTypes.oneOf([""]), PropTypes.number]),
+    }),
+  ).isRequired,
   exclusionsOptions: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,

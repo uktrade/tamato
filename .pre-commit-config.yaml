@@ -4,16 +4,17 @@ repos:
     hooks:
       - id: add-trailing-comma
   - repo: https://github.com/myint/autoflake.git
-    rev: v2.2.1
+    rev: v2.3.1
     hooks:
       - id: autoflake
         args: [
             "--in-place",
             "--remove-all-unused-imports",
             "--remove-unused-variable",
+            "--ignore-init-module-imports",
           ]
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
         args: [--force-single-line-imports]
@@ -28,7 +29,7 @@ repos:
             "--pre-summary-newline",
           ]
   - repo: https://github.com/psf/black
-    rev: 24.3.0
+    rev: 24.4.2
     hooks:
       - id: black
   - repo: https://github.com/ikamensh/flynt/
@@ -36,18 +37,18 @@ repos:
     hooks:
       - id: flynt
   - repo: https://github.com/uktrade/pii-secret-check-hooks
-    rev: 0.0.0.35
+    rev: 0.0.0.36
     hooks:
     -   id: pii_secret_filename
         files: ''
         language: python
-        language_version: python3.9
+        language_version: python3.12
         pass_filenames: true
         require_serial: true
     -   id: pii_secret_file_content
         files: ''
         language: python
-        language_version: python3.9
+        language_version: python3.12
         pass_filenames: true
         require_serial: true
     -   id: hooks_version_check

@@ -62,7 +62,10 @@ def test_index_displays_login_buttons_correctly_SSO_on(valid_user_client):
         ("common.views.HealthCheckView.check_s3", ("Not OK", 503)),
     ],
 )
-@patch("common.views.HealthCheckView.check_celery_broker", return_value=("OK", 200))
+@patch(
+    "common.views.HealthCheckView.check_celery_broker",
+    return_value=("OK", 200),
+)
 @patch("common.views.HealthCheckView.check_s3", return_value=("OK", 200))
 def test_health_check_view_response(
     check_celery_broker_mock,
@@ -116,7 +119,7 @@ def test_app_info_superuser(superuser_client, new_workbasket):
         },
     ]
 
-    with patch("common.views.sqlite_dumps", return_value=sqlite_dumps):
+    with patch("common.views.pages.sqlite_dumps", return_value=sqlite_dumps):
         response = superuser_client.get(reverse("app-info"))
 
     assert response.status_code == 200

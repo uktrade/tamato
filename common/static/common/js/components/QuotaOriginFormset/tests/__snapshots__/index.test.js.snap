@@ -207,6 +207,12 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
     <div
       className="govuk-form-group"
     >
+      <legend
+        className="legend__StyledLegend-sc-12rap65-0 deblVS"
+        size="S"
+      >
+        Geographical area
+      </legend>
       <label
         className="src__Label-sc-iqzvxn-0 eTSPOL"
         defaultValue={1}
@@ -214,9 +220,7 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
       >
         <span
           className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-        >
-          Geographical area
-        </span>
+        />
         <select
           className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
           defaultValue={1}
@@ -226,195 +230,171 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
         >
           <option
             value={1}
-          >
-            All countries
-          </option>
+          />
           <option
             value={2}
-          >
-            EU
-          </option>
+          />
           <option
             value={3}
-          >
-            China
-          </option>
+          />
           <option
             value={4}
-          >
-            South Korea
-          </option>
+          />
           <option
             value={5}
-          >
-            Switzerland
-          </option>
+          />
         </select>
       </label>
     </div>
     <div
       className="govuk-form-group"
     >
-      <h4
-        className="govuk-heading-m"
-      >
-        Geographical exclusions
-      </h4>
       <div
-        aria-live="polite"
-        className="govuk-inset-text"
+        className="govuk-hint"
       >
-        <div>
-          <h5
-            className="govuk-heading-s"
-          >
-            Exclusion 
-            1
-          </h5>
-          <div
-            className="govuk-form-group"
-          >
-            <input
-              name="origins-0-exclusions-0-pk"
-              type="hidden"
-              value={1}
-            />
-            <label
-              className="src__Label-sc-iqzvxn-0 eTSPOL"
-              defaultValue={3}
-              error={false}
-            >
-              <span
-                className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-              >
-                Geographical area
-              </span>
-              <select
-                className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
-                defaultValue={3}
-                error={false}
-                name="origins-0-exclusions-0-geographical_area"
-                onChange={[Function]}
-              >
-                <option
-                  value={1}
-                >
-                  All countries
-                </option>
-                <option
-                  value={2}
-                >
-                  EU
-                </option>
-                <option
-                  value={3}
-                >
-                  China
-                </option>
-                <option
-                  value={4}
-                >
-                  South Korea
-                </option>
-                <option
-                  value={5}
-                >
-                  Switzerland
-                </option>
-              </select>
-            </label>
-          </div>
-          <div
-            className="govuk-form-group"
-          >
-            <button
-              className="govuk-button govuk-button--secondary"
-              onClick={[Function]}
-            >
-              Delete this 
-              exclusion
-            </button>
-          </div>
-        </div>
-        <div>
-          <h5
-            className="govuk-heading-s"
-          >
-            Exclusion 
-            2
-          </h5>
-          <div
-            className="govuk-form-group"
-          >
-            <input
-              name="origins-0-exclusions-1-pk"
-              type="hidden"
-              value={2}
-            />
-            <label
-              className="src__Label-sc-iqzvxn-0 eTSPOL"
-              defaultValue={4}
-              error={false}
-            >
-              <span
-                className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-              >
-                Geographical area
-              </span>
-              <select
-                className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
-                defaultValue={4}
-                error={false}
-                name="origins-0-exclusions-1-geographical_area"
-                onChange={[Function]}
-              >
-                <option
-                  value={1}
-                >
-                  All countries
-                </option>
-                <option
-                  value={2}
-                >
-                  EU
-                </option>
-                <option
-                  value={3}
-                >
-                  China
-                </option>
-                <option
-                  value={4}
-                >
-                  South Korea
-                </option>
-                <option
-                  value={5}
-                >
-                  Switzerland
-                </option>
-              </select>
-            </label>
-          </div>
-          <div
-            className="govuk-form-group"
-          >
-            <button
-              className="govuk-button govuk-button--secondary"
-              onClick={[Function]}
-            >
-              Delete this 
-              exclusion
-            </button>
-          </div>
-        </div>
-        <button
-          className="govuk-button govuk-button--secondary"
-          onClick={[Function]}
-        >
-          Add an exclusion
-        </button>
+        Select one or more countries to be excluded:
       </div>
+      <div
+        className="react-select-container css-b62m3t-container"
+        onKeyDown={[Function]}
+      >
+        <span
+          className="css-1f43avz-a11yText-A11yText"
+          id="react-select-2-live-region"
+        />
+        <span
+          aria-atomic="false"
+          aria-live="polite"
+          aria-relevant="additions text"
+          className="css-1f43avz-a11yText-A11yText"
+          role="log"
+        />
+        <div
+          className="react-select__control css-13cymwt-control"
+          onMouseDown={[Function]}
+          onTouchEnd={[Function]}
+        >
+          <div
+            className="react-select__value-container react-select__value-container--is-multi css-1fdsijx-ValueContainer"
+          >
+            <div
+              className="react-select__placeholder css-1jqq78o-placeholder"
+              id="react-select-2-placeholder"
+            >
+              Select...
+            </div>
+            <div
+              className="react-select__input-container css-qbdosj-Input"
+              data-value=""
+            >
+              <input
+                aria-activedescendant=""
+                aria-autocomplete="list"
+                aria-describedby="react-select-2-placeholder"
+                aria-expanded={false}
+                aria-haspopup={true}
+                autoCapitalize="none"
+                autoComplete="off"
+                autoCorrect="off"
+                className="react-select__input"
+                disabled={false}
+                id="react-select-2-input"
+                onBlur={[Function]}
+                onChange={[Function]}
+                onFocus={[Function]}
+                role="combobox"
+                spellCheck="false"
+                style={
+                  {
+                    "background": 0,
+                    "border": 0,
+                    "color": "inherit",
+                    "font": "inherit",
+                    "gridArea": "1 / 2",
+                    "label": "input",
+                    "margin": 0,
+                    "minWidth": "2px",
+                    "opacity": 1,
+                    "outline": 0,
+                    "padding": 0,
+                    "width": "100%",
+                  }
+                }
+                tabIndex={0}
+                type="text"
+                value=""
+              />
+            </div>
+          </div>
+          <div
+            className="react-select__indicators css-1hb7zxy-IndicatorsContainer"
+          >
+            <span
+              className="react-select__indicator-separator css-1u9des2-indicatorSeparator"
+            />
+            <div
+              aria-hidden="true"
+              className="react-select__indicator react-select__dropdown-indicator css-1xc3v61-indicatorContainer"
+              onMouseDown={[Function]}
+              onTouchEnd={[Function]}
+            >
+              <svg
+                aria-hidden="true"
+                className="css-tj5bde-Svg"
+                focusable="false"
+                height={20}
+                viewBox="0 0 20 20"
+                width={20}
+              >
+                <path
+                  d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div>
+          <input
+            name="origin-exclusions"
+            type="hidden"
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div>
+      <input
+        name="origins-0-exclusions-0-pk"
+        type="hidden"
+        value={1}
+      />
+      <input
+        name="origins-0-exclusions-0-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 3,
+            "pk": 1,
+          }
+        }
+      />
+    </div>
+    <div>
+      <input
+        name="origins-0-exclusions-1-pk"
+        type="hidden"
+        value={2}
+      />
+      <input
+        name="origins-0-exclusions-1-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 4,
+            "pk": 2,
+          }
+        }
+      />
     </div>
     <hr
       className="govuk-!-margin-top-3"
@@ -610,6 +590,12 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
     <div
       className="govuk-form-group"
     >
+      <legend
+        className="legend__StyledLegend-sc-12rap65-0 deblVS"
+        size="S"
+      >
+        Geographical area
+      </legend>
       <label
         className="src__Label-sc-iqzvxn-0 eTSPOL"
         defaultValue={2}
@@ -617,9 +603,7 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
       >
         <span
           className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-        >
-          Geographical area
-        </span>
+        />
         <select
           className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
           defaultValue={2}
@@ -629,122 +613,136 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
         >
           <option
             value={1}
-          >
-            All countries
-          </option>
+          />
           <option
             value={2}
-          >
-            EU
-          </option>
+          />
           <option
             value={3}
-          >
-            China
-          </option>
+          />
           <option
             value={4}
-          >
-            South Korea
-          </option>
+          />
           <option
             value={5}
-          >
-            Switzerland
-          </option>
+          />
         </select>
       </label>
     </div>
     <div
       className="govuk-form-group"
     >
-      <h4
-        className="govuk-heading-m"
-      >
-        Geographical exclusions
-      </h4>
       <div
-        aria-live="polite"
-        className="govuk-inset-text"
+        className="govuk-hint"
       >
-        <div>
-          <h5
-            className="govuk-heading-s"
-          >
-            Exclusion 
-            1
-          </h5>
+        Select one or more countries to be excluded:
+      </div>
+      <div
+        className="react-select-container css-b62m3t-container"
+        onKeyDown={[Function]}
+      >
+        <span
+          className="css-1f43avz-a11yText-A11yText"
+          id="react-select-3-live-region"
+        />
+        <span
+          aria-atomic="false"
+          aria-live="polite"
+          aria-relevant="additions text"
+          className="css-1f43avz-a11yText-A11yText"
+          role="log"
+        />
+        <div
+          className="react-select__control css-13cymwt-control"
+          onMouseDown={[Function]}
+          onTouchEnd={[Function]}
+        >
           <div
-            className="govuk-form-group"
+            className="react-select__value-container react-select__value-container--is-multi css-1fdsijx-ValueContainer"
           >
-            <input
-              name="origins-1-exclusions-0-pk"
-              type="hidden"
-              value={3}
-            />
-            <label
-              className="src__Label-sc-iqzvxn-0 eTSPOL"
-              defaultValue={5}
-              error={false}
+            <div
+              className="react-select__placeholder css-1jqq78o-placeholder"
+              id="react-select-3-placeholder"
             >
-              <span
-                className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-              >
-                Geographical area
-              </span>
-              <select
-                className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
-                defaultValue={5}
-                error={false}
-                name="origins-1-exclusions-0-geographical_area"
+              Select...
+            </div>
+            <div
+              className="react-select__input-container css-qbdosj-Input"
+              data-value=""
+            >
+              <input
+                aria-activedescendant=""
+                aria-autocomplete="list"
+                aria-describedby="react-select-3-placeholder"
+                aria-expanded={false}
+                aria-haspopup={true}
+                autoCapitalize="none"
+                autoComplete="off"
+                autoCorrect="off"
+                className="react-select__input"
+                disabled={false}
+                id="react-select-3-input"
+                onBlur={[Function]}
                 onChange={[Function]}
-              >
-                <option
-                  value={1}
-                >
-                  All countries
-                </option>
-                <option
-                  value={2}
-                >
-                  EU
-                </option>
-                <option
-                  value={3}
-                >
-                  China
-                </option>
-                <option
-                  value={4}
-                >
-                  South Korea
-                </option>
-                <option
-                  value={5}
-                >
-                  Switzerland
-                </option>
-              </select>
-            </label>
+                onFocus={[Function]}
+                role="combobox"
+                spellCheck="false"
+                style={
+                  {
+                    "background": 0,
+                    "border": 0,
+                    "color": "inherit",
+                    "font": "inherit",
+                    "gridArea": "1 / 2",
+                    "label": "input",
+                    "margin": 0,
+                    "minWidth": "2px",
+                    "opacity": 1,
+                    "outline": 0,
+                    "padding": 0,
+                    "width": "100%",
+                  }
+                }
+                tabIndex={0}
+                type="text"
+                value=""
+              />
+            </div>
           </div>
           <div
-            className="govuk-form-group"
+            className="react-select__indicators css-1hb7zxy-IndicatorsContainer"
           >
-            <button
-              className="govuk-button govuk-button--secondary"
-              onClick={[Function]}
+            <span
+              className="react-select__indicator-separator css-1u9des2-indicatorSeparator"
+            />
+            <div
+              aria-hidden="true"
+              className="react-select__indicator react-select__dropdown-indicator css-1xc3v61-indicatorContainer"
+              onMouseDown={[Function]}
+              onTouchEnd={[Function]}
             >
-              Delete this 
-              exclusion
-            </button>
+              <svg
+                aria-hidden="true"
+                className="css-tj5bde-Svg"
+                focusable="false"
+                height={20}
+                viewBox="0 0 20 20"
+                width={20}
+              >
+                <path
+                  d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"
+                />
+              </svg>
+            </div>
           </div>
         </div>
-        <button
-          className="govuk-button govuk-button--secondary"
-          onClick={[Function]}
-        >
-          Add an exclusion
-        </button>
+        <div>
+          <input
+            name="origin-exclusions"
+            type="hidden"
+            value=""
+          />
+        </div>
       </div>
     </div>
     <button
@@ -754,6 +752,23 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
       Delete this 
       origin
     </button>
+    <div>
+      <input
+        name="origins-1-exclusions-0-pk"
+        type="hidden"
+        value={3}
+      />
+      <input
+        name="origins-1-exclusions-0-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 5,
+            "pk": 3,
+          }
+        }
+      />
+    </div>
     <hr
       className="govuk-!-margin-top-3"
     />
@@ -967,6 +982,12 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
     <div
       className="govuk-form-group"
     >
+      <legend
+        className="legend__StyledLegend-sc-12rap65-0 deblVS"
+        size="S"
+      >
+        Geographical area
+      </legend>
       <label
         className="src__Label-sc-iqzvxn-0 eTSPOL"
         defaultValue={1}
@@ -974,9 +995,7 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
       >
         <span
           className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-        >
-          Geographical area
-        </span>
+        />
         <select
           className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
           defaultValue={1}
@@ -986,195 +1005,171 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
         >
           <option
             value={1}
-          >
-            All countries
-          </option>
+          />
           <option
             value={2}
-          >
-            EU
-          </option>
+          />
           <option
             value={3}
-          >
-            China
-          </option>
+          />
           <option
             value={4}
-          >
-            South Korea
-          </option>
+          />
           <option
             value={5}
-          >
-            Switzerland
-          </option>
+          />
         </select>
       </label>
     </div>
     <div
       className="govuk-form-group"
     >
-      <h4
-        className="govuk-heading-m"
-      >
-        Geographical exclusions
-      </h4>
       <div
-        aria-live="polite"
-        className="govuk-inset-text"
+        className="govuk-hint"
       >
-        <div>
-          <h5
-            className="govuk-heading-s"
-          >
-            Exclusion 
-            1
-          </h5>
-          <div
-            className="govuk-form-group"
-          >
-            <input
-              name="origins-0-exclusions-0-pk"
-              type="hidden"
-              value={1}
-            />
-            <label
-              className="src__Label-sc-iqzvxn-0 eTSPOL"
-              defaultValue={3}
-              error={false}
-            >
-              <span
-                className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-              >
-                Geographical area
-              </span>
-              <select
-                className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
-                defaultValue={3}
-                error={false}
-                name="origins-0-exclusions-0-geographical_area"
-                onChange={[Function]}
-              >
-                <option
-                  value={1}
-                >
-                  All countries
-                </option>
-                <option
-                  value={2}
-                >
-                  EU
-                </option>
-                <option
-                  value={3}
-                >
-                  China
-                </option>
-                <option
-                  value={4}
-                >
-                  South Korea
-                </option>
-                <option
-                  value={5}
-                >
-                  Switzerland
-                </option>
-              </select>
-            </label>
-          </div>
-          <div
-            className="govuk-form-group"
-          >
-            <button
-              className="govuk-button govuk-button--secondary"
-              onClick={[Function]}
-            >
-              Delete this 
-              exclusion
-            </button>
-          </div>
-        </div>
-        <div>
-          <h5
-            className="govuk-heading-s"
-          >
-            Exclusion 
-            2
-          </h5>
-          <div
-            className="govuk-form-group"
-          >
-            <input
-              name="origins-0-exclusions-1-pk"
-              type="hidden"
-              value={2}
-            />
-            <label
-              className="src__Label-sc-iqzvxn-0 eTSPOL"
-              defaultValue={4}
-              error={false}
-            >
-              <span
-                className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-              >
-                Geographical area
-              </span>
-              <select
-                className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
-                defaultValue={4}
-                error={false}
-                name="origins-0-exclusions-1-geographical_area"
-                onChange={[Function]}
-              >
-                <option
-                  value={1}
-                >
-                  All countries
-                </option>
-                <option
-                  value={2}
-                >
-                  EU
-                </option>
-                <option
-                  value={3}
-                >
-                  China
-                </option>
-                <option
-                  value={4}
-                >
-                  South Korea
-                </option>
-                <option
-                  value={5}
-                >
-                  Switzerland
-                </option>
-              </select>
-            </label>
-          </div>
-          <div
-            className="govuk-form-group"
-          >
-            <button
-              className="govuk-button govuk-button--secondary"
-              onClick={[Function]}
-            >
-              Delete this 
-              exclusion
-            </button>
-          </div>
-        </div>
-        <button
-          className="govuk-button govuk-button--secondary"
-          onClick={[Function]}
-        >
-          Add an exclusion
-        </button>
+        Select one or more countries to be excluded:
       </div>
+      <div
+        className="react-select-container css-b62m3t-container"
+        onKeyDown={[Function]}
+      >
+        <span
+          className="css-1f43avz-a11yText-A11yText"
+          id="react-select-4-live-region"
+        />
+        <span
+          aria-atomic="false"
+          aria-live="polite"
+          aria-relevant="additions text"
+          className="css-1f43avz-a11yText-A11yText"
+          role="log"
+        />
+        <div
+          className="react-select__control css-13cymwt-control"
+          onMouseDown={[Function]}
+          onTouchEnd={[Function]}
+        >
+          <div
+            className="react-select__value-container react-select__value-container--is-multi css-1fdsijx-ValueContainer"
+          >
+            <div
+              className="react-select__placeholder css-1jqq78o-placeholder"
+              id="react-select-4-placeholder"
+            >
+              Select...
+            </div>
+            <div
+              className="react-select__input-container css-qbdosj-Input"
+              data-value=""
+            >
+              <input
+                aria-activedescendant=""
+                aria-autocomplete="list"
+                aria-describedby="react-select-4-placeholder"
+                aria-expanded={false}
+                aria-haspopup={true}
+                autoCapitalize="none"
+                autoComplete="off"
+                autoCorrect="off"
+                className="react-select__input"
+                disabled={false}
+                id="react-select-4-input"
+                onBlur={[Function]}
+                onChange={[Function]}
+                onFocus={[Function]}
+                role="combobox"
+                spellCheck="false"
+                style={
+                  {
+                    "background": 0,
+                    "border": 0,
+                    "color": "inherit",
+                    "font": "inherit",
+                    "gridArea": "1 / 2",
+                    "label": "input",
+                    "margin": 0,
+                    "minWidth": "2px",
+                    "opacity": 1,
+                    "outline": 0,
+                    "padding": 0,
+                    "width": "100%",
+                  }
+                }
+                tabIndex={0}
+                type="text"
+                value=""
+              />
+            </div>
+          </div>
+          <div
+            className="react-select__indicators css-1hb7zxy-IndicatorsContainer"
+          >
+            <span
+              className="react-select__indicator-separator css-1u9des2-indicatorSeparator"
+            />
+            <div
+              aria-hidden="true"
+              className="react-select__indicator react-select__dropdown-indicator css-1xc3v61-indicatorContainer"
+              onMouseDown={[Function]}
+              onTouchEnd={[Function]}
+            >
+              <svg
+                aria-hidden="true"
+                className="css-tj5bde-Svg"
+                focusable="false"
+                height={20}
+                viewBox="0 0 20 20"
+                width={20}
+              >
+                <path
+                  d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div>
+          <input
+            name="origin-exclusions"
+            type="hidden"
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+    <div>
+      <input
+        name="origins-0-exclusions-0-pk"
+        type="hidden"
+        value={1}
+      />
+      <input
+        name="origins-0-exclusions-0-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 3,
+            "pk": 1,
+          }
+        }
+      />
+    </div>
+    <div>
+      <input
+        name="origins-0-exclusions-1-pk"
+        type="hidden"
+        value={2}
+      />
+      <input
+        name="origins-0-exclusions-1-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 4,
+            "pk": 2,
+          }
+        }
+      />
     </div>
     <hr
       className="govuk-!-margin-top-3"
@@ -1370,6 +1365,12 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
     <div
       className="govuk-form-group"
     >
+      <legend
+        className="legend__StyledLegend-sc-12rap65-0 deblVS"
+        size="S"
+      >
+        Geographical area
+      </legend>
       <label
         className="src__Label-sc-iqzvxn-0 eTSPOL"
         defaultValue={2}
@@ -1377,9 +1378,7 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
       >
         <span
           className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-        >
-          Geographical area
-        </span>
+        />
         <select
           className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
           defaultValue={2}
@@ -1389,122 +1388,136 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
         >
           <option
             value={1}
-          >
-            All countries
-          </option>
+          />
           <option
             value={2}
-          >
-            EU
-          </option>
+          />
           <option
             value={3}
-          >
-            China
-          </option>
+          />
           <option
             value={4}
-          >
-            South Korea
-          </option>
+          />
           <option
             value={5}
-          >
-            Switzerland
-          </option>
+          />
         </select>
       </label>
     </div>
     <div
       className="govuk-form-group"
     >
-      <h4
-        className="govuk-heading-m"
-      >
-        Geographical exclusions
-      </h4>
       <div
-        aria-live="polite"
-        className="govuk-inset-text"
+        className="govuk-hint"
       >
-        <div>
-          <h5
-            className="govuk-heading-s"
-          >
-            Exclusion 
-            1
-          </h5>
+        Select one or more countries to be excluded:
+      </div>
+      <div
+        className="react-select-container css-b62m3t-container"
+        onKeyDown={[Function]}
+      >
+        <span
+          className="css-1f43avz-a11yText-A11yText"
+          id="react-select-5-live-region"
+        />
+        <span
+          aria-atomic="false"
+          aria-live="polite"
+          aria-relevant="additions text"
+          className="css-1f43avz-a11yText-A11yText"
+          role="log"
+        />
+        <div
+          className="react-select__control css-13cymwt-control"
+          onMouseDown={[Function]}
+          onTouchEnd={[Function]}
+        >
           <div
-            className="govuk-form-group"
+            className="react-select__value-container react-select__value-container--is-multi css-1fdsijx-ValueContainer"
           >
-            <input
-              name="origins-1-exclusions-0-pk"
-              type="hidden"
-              value={3}
-            />
-            <label
-              className="src__Label-sc-iqzvxn-0 eTSPOL"
-              defaultValue={5}
-              error={false}
+            <div
+              className="react-select__placeholder css-1jqq78o-placeholder"
+              id="react-select-5-placeholder"
             >
-              <span
-                className="src__LabelText-sc-1lbxenh-0 jZJbVy"
-              >
-                Geographical area
-              </span>
-              <select
-                className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
-                defaultValue={5}
-                error={false}
-                name="origins-1-exclusions-0-geographical_area"
+              Select...
+            </div>
+            <div
+              className="react-select__input-container css-qbdosj-Input"
+              data-value=""
+            >
+              <input
+                aria-activedescendant=""
+                aria-autocomplete="list"
+                aria-describedby="react-select-5-placeholder"
+                aria-expanded={false}
+                aria-haspopup={true}
+                autoCapitalize="none"
+                autoComplete="off"
+                autoCorrect="off"
+                className="react-select__input"
+                disabled={false}
+                id="react-select-5-input"
+                onBlur={[Function]}
                 onChange={[Function]}
-              >
-                <option
-                  value={1}
-                >
-                  All countries
-                </option>
-                <option
-                  value={2}
-                >
-                  EU
-                </option>
-                <option
-                  value={3}
-                >
-                  China
-                </option>
-                <option
-                  value={4}
-                >
-                  South Korea
-                </option>
-                <option
-                  value={5}
-                >
-                  Switzerland
-                </option>
-              </select>
-            </label>
+                onFocus={[Function]}
+                role="combobox"
+                spellCheck="false"
+                style={
+                  {
+                    "background": 0,
+                    "border": 0,
+                    "color": "inherit",
+                    "font": "inherit",
+                    "gridArea": "1 / 2",
+                    "label": "input",
+                    "margin": 0,
+                    "minWidth": "2px",
+                    "opacity": 1,
+                    "outline": 0,
+                    "padding": 0,
+                    "width": "100%",
+                  }
+                }
+                tabIndex={0}
+                type="text"
+                value=""
+              />
+            </div>
           </div>
           <div
-            className="govuk-form-group"
+            className="react-select__indicators css-1hb7zxy-IndicatorsContainer"
           >
-            <button
-              className="govuk-button govuk-button--secondary"
-              onClick={[Function]}
+            <span
+              className="react-select__indicator-separator css-1u9des2-indicatorSeparator"
+            />
+            <div
+              aria-hidden="true"
+              className="react-select__indicator react-select__dropdown-indicator css-1xc3v61-indicatorContainer"
+              onMouseDown={[Function]}
+              onTouchEnd={[Function]}
             >
-              Delete this 
-              exclusion
-            </button>
+              <svg
+                aria-hidden="true"
+                className="css-tj5bde-Svg"
+                focusable="false"
+                height={20}
+                viewBox="0 0 20 20"
+                width={20}
+              >
+                <path
+                  d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"
+                />
+              </svg>
+            </div>
           </div>
         </div>
-        <button
-          className="govuk-button govuk-button--secondary"
-          onClick={[Function]}
-        >
-          Add an exclusion
-        </button>
+        <div>
+          <input
+            name="origin-exclusions"
+            type="hidden"
+            value=""
+          />
+        </div>
       </div>
     </div>
     <button
@@ -1514,6 +1527,23 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
       Delete this 
       origin
     </button>
+    <div>
+      <input
+        name="origins-1-exclusions-0-pk"
+        type="hidden"
+        value={3}
+      />
+      <input
+        name="origins-1-exclusions-0-geographical_area"
+        type="hidden"
+        value={
+          {
+            "id": 5,
+            "pk": 3,
+          }
+        }
+      />
+    </div>
     <hr
       className="govuk-!-margin-top-3"
     />

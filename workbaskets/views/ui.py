@@ -991,7 +991,15 @@ class WorkBasketViolations(SortingMixin, WithPaginationListView):
         return WorkBasket.current(self.request)
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(workbasket=self.workbasket, **kwargs)
+        context = super().get_context_data(workbasket=self.workbasket, **kwargs)
+        if self.workbasket.rule_check_task_id:
+            result = AsyncResult(self.workbasket.rule_check_task_id)
+            if result.status != "SUCCESS":
+                context["rule_check_in_progress"] = True
+            else:
+                context["rule_check_in_progress"] = False
+
+        return context
 
     def get_queryset(self):
         self.queryset = TrackedModelCheck.objects.filter(
@@ -1743,10 +1751,9 @@ class RuleCheckQueueView(
         tap_tasks = TAPTasks()
         try:
             context["celery_healthy"] = True
-            current_rule_checks = tap_tasks.current_rule_checks(
+            context["current_rule_checks"] = tap_tasks.current_tasks(
                 "workbaskets.tasks.call_check_workbasket_sync",
             )
-            context["current_rule_checks"] = current_rule_checks
             context["status_tag_generator"] = self.status_tag_generator
         except kombu.exceptions.OperationalError as oe:
             context["celery_healthy"] = False
