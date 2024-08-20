@@ -527,6 +527,7 @@ CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY = int(
 if is_copilot():
     SQLITE_S3_ACCESS_KEY_ID = None
     SQLITE_S3_SECRET_ACCESS_KEY = None
+    SQLITE_MIGRATIONS_IN_TMP_DIR = True
 else:
     SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
         "SQLITE_S3_ACCESS_KEY_ID",
@@ -535,6 +536,9 @@ else:
     SQLITE_S3_SECRET_ACCESS_KEY = os.environ.get(
         "SQLITE_S3_SECRET_ACCESS_KEY",
         "test_sqlite_key",
+    )
+    SQLITE_MIGRATIONS_IN_TMP_DIR = is_truthy(
+        os.environ.get("SQLITE_MIGRATIONS_IN_TMP_DIR", False)
     )
 
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")

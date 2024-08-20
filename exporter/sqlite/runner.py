@@ -1,9 +1,11 @@
 import json
 import logging
 import os
+import shutil
 import sys
 from pathlib import Path
 from subprocess import run
+from tempfile import TemporaryDirectory
 from typing import Iterable
 from typing import Iterator
 from typing import Tuple
@@ -16,6 +18,126 @@ from exporter.sqlite.plan import Operation
 logger = logging.getLogger(__name__)
 
 
+def normalise_loglevel(loglevel):
+    """
+    Attempt conversion of `loglevel` from a string integer value (e.g. "20")
+    to its loglevel name (e.g. "INFO").
+
+    This function can be used after, for instance, copying log levels from
+    environment variables, when the incorrect representation (int as string
+    rather than the log level name) may occur.
+    """
+    try:
+        return logging._levelToName.get(int(loglevel))
+    except:
+        return loglevel
+
+
+class SQLiteMigrationCurrentDirectory:
+    """
+    Context manager class that uses the application's current base directory for
+    managing SQLite migrations.
+    
+    Upon exiting the context manager, SQLite-specific migration files are
+    deleted.
+    """
+
+    def __enter__(self):
+        logger.info(f"Entering context manager {self.__class__.__name__}")
+        return settings.BASE_DIR
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        logger.info(f"Exiting context manager {self.__class__.__name__}")
+        for file in Path(settings.BASE_DIR).rglob(
+            "**/migrations/*sqlite_export.py",
+        ):
+            file.unlink()
+
+
+class SQLiteMigrationTemporaryDirectory(TemporaryDirectory):
+    """
+    Context manager class that provides a newly created temporary directory
+    (under the OS's temporary directory system) for managing SQLite migrations.
+
+    Upon exiting the context manager, the temporary directory is deleted.
+    """
+
+    def __enter__(self):
+        logger.info(f"Entering context manager {self.__class__.__name__}")
+        tmp_dir = super().__enter__()
+        tmp_dir = os.path.join(tmp_dir, "tamato_sqlite_migration")
+        shutil.copytree(settings.BASE_DIR, tmp_dir)
+        return tmp_dir
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        logger.info(f"Exiting context manager {self.__class__.__name__}")
+        super().__exit__(exc_type, exc_value, traceback)
+
+
+class SQLiteMigrator:
+    """
+    Populates a new and empty SQLite database file with the Tamato database
+    schema derived from Tamato's models.
+
+    This is required because SQLite uses different fields to PostgreSQL, missing
+    migrations are first generated to bring in the different style of
+    validity fields.
+
+    This is done by creating additional, auxiliary migrations that are specific
+    to the SQLite and then executing them to populate the database with the
+    schema.
+    """
+
+    sqlite_file: Path
+
+    def __init__(self, sqlite_file: Path, migrations_in_tmp_dir=False):
+        self.sqlite_file = sqlite_file
+        self.migration_directory_class = (
+            SQLiteMigrationTemporaryDirectory if migrations_in_tmp_dir
+            else SQLiteMigrationCurrentDirectory
+        )
+
+    def migrate(self):
+        with self.migration_directory_class() as migration_dir:
+            logger.info(f"Running SQLite migrations in {migration_dir}")
+            self.manage(migration_dir, "makemigrations", "--name", "sqlite_export")
+            self.manage(migration_dir, "migrate")
+
+    def manage(self, exec_dir: str, *manage_args: str):
+        """
+        Runs a Django management command on the SQLite database.
+
+        This management command will be run such that ``settings.SQLITE`` is
+        True, allowing SQLite specific functionality to be switched on and off
+        using the value of this setting.
+
+        `exec_dir` sets the directory in which the management command should be
+        executed.
+        """
+
+        sqlite_env = os.environ.copy()
+
+        # Correct log levels that are incorrectly expressed as string ints.
+        if "CELERY_LOG_LEVEL" in sqlite_env:
+            sqlite_env["CELERY_LOG_LEVEL"] = normalise_loglevel(
+                sqlite_env["CELERY_LOG_LEVEL"],
+            )
+
+        sqlite_env["DATABASE_URL"] = f"sqlite:///{str(self.sqlite_file)}"
+        # Required to make sure the postgres default isn't set as the DB_URL
+        if sqlite_env.get("VCAP_SERVICES"):
+            vcap_env = json.loads(sqlite_env["VCAP_SERVICES"])
+            vcap_env.pop("postgres", None)
+            sqlite_env["VCAP_SERVICES"] = json.dumps(vcap_env)
+
+        run(
+            [sys.executable, "manage.py", *manage_args],
+            cwd=exec_dir,
+            capture_output=False,
+            env=sqlite_env,
+        )
+
+
 class Runner:
     """Runs commands on an SQLite database."""
 
@@ -25,71 +147,19 @@ class Runner:
         self.database = database
 
     @classmethod
-    def normalise_loglevel(cls, loglevel):
-        """
-        Attempt conversion of `loglevel` from a string integer value (e.g. "20")
-        to its loglevel name (e.g. "INFO").
-
-        This function can be used after, for instance, copying log levels from
-        environment variables, when the incorrect representation (int as string
-        rather than the log level name) may occur.
-        """
-        try:
-            return logging._levelToName.get(int(loglevel))
-        except:
-            return loglevel
-
-    @classmethod
-    def manage(cls, sqlite_file: Path, *args: str):
-        """
-        Runs a Django management command on the SQLite database.
-
-        This management command will be run such that ``settings.SQLITE`` is
-        True, allowing SQLite specific functionality to be switched on and off
-        using the value of this setting.
-        """
-        sqlite_env = os.environ.copy()
-
-        # Correct log levels that are incorrectly expressed as string ints.
-        if "CELERY_LOG_LEVEL" in sqlite_env:
-            sqlite_env["CELERY_LOG_LEVEL"] = cls.normalise_loglevel(
-                sqlite_env["CELERY_LOG_LEVEL"],
-            )
-
-        sqlite_env["DATABASE_URL"] = f"sqlite:///{str(sqlite_file)}"
-        # Required to make sure the postgres default isn't set as the DB_URL
-        if sqlite_env.get("VCAP_SERVICES"):
-            vcap_env = json.loads(sqlite_env["VCAP_SERVICES"])
-            vcap_env.pop("postgres", None)
-            sqlite_env["VCAP_SERVICES"] = json.dumps(vcap_env)
-
-        run(
-            [sys.executable, "manage.py", *args],
-            cwd=settings.BASE_DIR,
-            capture_output=False,
-            env=sqlite_env,
-        )
-
-    @classmethod
     def make_tamato_database(cls, sqlite_file: Path) -> "Runner":
         """Generate a new and empty SQLite database with the TaMaTo schema
         derived from Tamato's models - by performing 'makemigrations' followed
         by 'migrate' on the Sqlite file located at `sqlite_file`."""
-        try:
-            # Because SQLite uses different fields to PostgreSQL, missing
-            # migrations are first generated to bring in the different style of
-            # validity fields. However, these should not be applied to Postgres
-            # and so should be removed (in the `finally` block) after they have
-            # been applied (when running `migrate`).
-            cls.manage(sqlite_file, "makemigrations", "--name", "sqlite_export")
-            cls.manage(sqlite_file, "migrate")
-            assert sqlite_file.exists()
-            return cls(apsw.Connection(str(sqlite_file)))
-        finally:
-            for file in Path(settings.BASE_DIR).rglob(
-                "**/migrations/*sqlite_export.py",
-            ):
-                file.unlink()
+
+        sqlite_migrator = SQLiteMigrator(
+            sqlite_file=sqlite_file,
+            migrations_in_tmp_dir=settings.SQLITE_MIGRATIONS_IN_TMP_DIR,
+        )
+        sqlite_migrator.migrate()
+
+        assert sqlite_file.exists()
+        return cls(apsw.Connection(str(sqlite_file)))
 
     def read_schema(self, type: str) -> Iterator[Tuple[str, str]]:
         """
