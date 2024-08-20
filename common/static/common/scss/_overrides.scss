@@ -1,0 +1,15 @@
+// React select
+
+.react-select__control {
+    border: 2px solid black !important;
+    border-radius: 0 !important;
+}
+
+.react-select__control.react-select__control--is-focused,
+select:focus {
+    outline: 3px solid govuk-colour("yellow") !important;
+}
+
+.react-select__indicators .react-select__indicator {
+    color: black !important;
+}

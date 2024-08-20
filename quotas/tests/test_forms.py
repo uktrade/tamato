@@ -11,6 +11,7 @@ from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
+from geo_areas.validators import AreaCode
 from quotas import forms
 from quotas import validators
 from quotas.models import QuotaBlocking
@@ -39,6 +40,8 @@ def test_update_quota_form_safeguard_invalid(session_request_with_workbasket):
             initial={},
             geo_area_options=[],
             existing_origins=[],
+            exclusions_options=[],
+            groups_with_members=[],
         )
         assert not form.is_valid()
         assert forms.SAFEGUARD_HELP_TEXT in form.errors["category"]
@@ -64,6 +67,8 @@ def test_update_quota_form_safeguard_disabled(session_request_with_workbasket):
             initial={},
             geo_area_options=[],
             existing_origins=[],
+            exclusions_options=[],
+            groups_with_members=[],
         )
         assert form.is_valid()
         assert quota.category == validators.QuotaCategory.SAFEGUARD
@@ -214,6 +219,8 @@ def test_quota_update_react_form_cleaned_data(session_request_with_workbasket):
             request=session_request_with_workbasket,
             geo_area_options=geo_area_options,
             existing_origins=existing_origins,
+            exclusions_options=geo_area_options.exclude(area_code=AreaCode.GROUP),
+            groups_with_members=[],
         )
         assert form.is_valid()
 
@@ -273,6 +280,8 @@ def test_quota_update_add_extra_error(
             request=session_request_with_workbasket,
             geo_area_options=geo_area_options,
             existing_origins=existing_origins,
+            exclusions_options=geo_area_options.exclude(area_code=AreaCode.GROUP),
+            groups_with_members=[],
         )
         form.add_extra_error(field_name, error)
 
@@ -306,6 +315,8 @@ def test_quota_update_add_extra_error_type_error(session_request_with_workbasket
             request=session_request_with_workbasket,
             geo_area_options=geo_area_options,
             existing_origins=existing_origins,
+            exclusions_options=geo_area_options.exclude(area_code=AreaCode.GROUP),
+            groups_with_members=[],
         )
         with pytest.raises(TypeError):
             form.add_extra_error(

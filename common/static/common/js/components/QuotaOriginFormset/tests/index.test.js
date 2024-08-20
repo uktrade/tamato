@@ -26,6 +26,26 @@ const mockGeoAreaOptions = [
   },
 ];
 
+const mockGroupsWithMembers = {
+  1: [3, 4, 5],
+  2: [5],
+};
+
+const mockExclusionsOptions = [
+  {
+    name: "China",
+    value: 3,
+  },
+  {
+    name: "South Korea",
+    value: 4,
+  },
+  {
+    name: "Switzerland",
+    value: 5,
+  },
+];
+
 const mockOrigins = [
   {
     id: 1,
@@ -63,9 +83,11 @@ describe("QuotaOriginFormset", () => {
     const component = renderer.create(
       <QuotaOriginFormset
         data={mockOrigins}
-        options={mockGeoAreaOptions}
+        geoAreasOptions={mockGeoAreaOptions}
+        exclusionsOptions={mockExclusionsOptions}
+        groupsWithMembers={mockGroupsWithMembers}
         errors={mockOriginsErrors}
-      />
+      />,
     );
 
     let tree = component.toJSON();
@@ -79,9 +101,11 @@ describe("QuotaOriginFormset", () => {
     const component = renderer.create(
       <QuotaOriginFormset
         data={mockOrigins}
-        options={mockGeoAreaOptions}
+        geoAreasOptions={mockGeoAreaOptions}
+        exclusionsOptions={mockExclusionsOptions}
+        groupsWithMembers={mockGroupsWithMembers}
         errors={mockOriginsErrors}
-      />
+      />,
     );
 
     let tree = component.toJSON();
@@ -97,9 +121,11 @@ describe("QuotaOriginFormset", () => {
     const component = renderer.create(
       <QuotaOriginFormset
         data={mockOrigins}
-        options={mockGeoAreaOptions}
+        geoAreasOptions={mockGeoAreaOptions}
+        exclusionsOptions={mockExclusionsOptions}
+        groupsWithMembers={mockGroupsWithMembers}
         errors={mockOriginsErrors}
-      />
+      />,
     );
 
     let tree = component.toJSON();
@@ -114,9 +140,11 @@ describe("QuotaOriginFormset", () => {
     render(
       <QuotaOriginFormset
         data={mockOrigins}
-        options={mockGeoAreaOptions}
+        geoAreasOptions={mockGeoAreaOptions}
+        exclusionsOptions={mockExclusionsOptions}
+        groupsWithMembers={mockGroupsWithMembers}
         errors={mockOriginsErrors}
-      />
+      />,
     );
 
     // add an empty origin
@@ -132,73 +160,16 @@ describe("QuotaOriginFormset", () => {
     render(
       <QuotaOriginFormset
         data={mockOrigins}
-        options={mockGeoAreaOptions}
+        geoAreasOptions={mockGeoAreaOptions}
+        exclusionsOptions={mockExclusionsOptions}
+        groupsWithMembers={mockGroupsWithMembers}
         errors={mockOriginsErrors}
-      />
+      />,
     );
 
     // delete the last origin
     fireEvent.click(screen.getByText("Delete this origin"));
     expect(screen.getByText("Origin 1")).toBeInTheDocument();
     expect(screen.queryByText("Origin 2")).not.toBeInTheDocument();
-  });
-
-  it("should add empty exclusion form when add button is clicked", () => {
-    const mockOrigins = [
-      {
-        id: 1,
-        pk: 1,
-        exclusions: [],
-        geographical_area: 1,
-        start_date_0: 1,
-        start_date_1: 1,
-        start_date_2: 2000,
-        end_date_0: 1,
-        end_date_1: 1,
-        end_date_2: 2010,
-      },
-    ];
-    const mockOriginsErrors = {};
-
-    // render form with no origins
-    render(
-      <QuotaOriginFormset
-        data={mockOrigins}
-        options={mockGeoAreaOptions}
-        errors={mockOriginsErrors}
-      />
-    );
-    expect(screen.getByText("Origin 1")).toBeInTheDocument();
-    expect(screen.queryByText("Origin 2")).not.toBeInTheDocument();
-    expect(screen.queryByText("Exclusion 1")).not.toBeInTheDocument();
-    expect(screen.queryByText("Delete this exclusion")).not.toBeInTheDocument();
-
-    // add an empty exclusion
-    fireEvent.click(screen.getByText("Add an exclusion"));
-    expect(screen.getByText("Exclusion 1")).toBeInTheDocument();
-    expect(screen.getByText("Delete this exclusion")).toBeInTheDocument();
-    expect(screen.queryByText("Exclusion 2")).not.toBeInTheDocument();
-  });
-
-  it("should remove exclusion form when delete button is clicked", () => {
-    const mockOriginsErrors = {};
-
-    // render form with 2 origins
-    // first has 2 exclusions
-    // second has 1
-    render(
-      <QuotaOriginFormset
-        data={mockOrigins}
-        options={mockGeoAreaOptions}
-        errors={mockOriginsErrors}
-      />
-    );
-    expect(screen.getByText("Origin 1")).toBeInTheDocument();
-    expect(screen.getByText("Origin 2")).toBeInTheDocument();
-    expect(screen.getAllByText(/Exclusion [0-9]+/).length).toBe(3);
-
-    // add an empty exclusion to first origin
-    fireEvent.click(screen.getAllByText("Add an exclusion")[0]);
-    expect(screen.getAllByText(/Exclusion [0-9]+/).length).toBe(4);
   });
 });

@@ -6,24 +6,25 @@ import PropTypes from "prop-types";
 
 import { QuotaOriginForm } from "./QuotaOriginForm";
 
-function QuotaOriginFormset({ data, options, errors }) {
+function QuotaOriginFormset({
+  data,
+  geoAreasOptions,
+  exclusionsOptions,
+  groupsWithMembers,
+  errors,
+}) {
   const [origins, setOrigins] = useState([...data]);
   const emptyOrigin = {
     id: "",
     pk: "",
     exclusions: [],
-    geo_area_name: "",
-    geo_area_pk: "",
+    geographical_area: "",
     start_date_0: "",
     start_date_1: "",
     start_date_2: "",
     end_date_0: "",
     end_date_1: "",
     end_date_2: "",
-  };
-  const emptyExclusion = {
-    id: "",
-    pk: "",
   };
 
   const addEmptyOrigin = (e) => {
@@ -43,36 +44,27 @@ function QuotaOriginFormset({ data, options, errors }) {
     }
   }
 
-  function addEmptyExclusion(origin, e) {
-    e.preventDefault();
-    // find parent origin and update exclusions
-    const updatedOrigin = { ...origin };
-    const newEmptyExclusion = { ...emptyExclusion };
-    newEmptyExclusion.id = Date.now();
-    const newExclusions = [...updatedOrigin.exclusions, newEmptyExclusion];
-    updatedOrigin.exclusions = newExclusions;
-
-    // update origins
-    const updatedOrigins = [...origins];
-    const index = origins.findIndex((o) => o.id === origin.id);
+  function updateExclusions(origin, updatedExclusions) {
+    const newOrigin = { ...origin };
+    let newExclusions = [];
+    updatedExclusions.forEach((exclusion) => {
+      newExclusions.push(exclusion.value);
+    });
+    newOrigin.exclusions = newExclusions;
+    const newOrigins = [...origins];
+    const index = newOrigins.indexOf(origin);
     if (index > -1) {
-      updatedOrigins.splice(index, 1, updatedOrigin);
-      setOrigins(updatedOrigins);
+      newOrigins.splice(index, 1, newOrigin);
+      setOrigins(newOrigins);
     }
   }
 
-  function removeExclusion(exclusion, origin, e) {
-    e.preventDefault();
-    // remove the exclusion from its parent origin
-    const newOrigin = { ...origin };
-    const exclusionIndex = newOrigin.exclusions.indexOf(exclusion);
-    if (exclusionIndex > -1) {
-      newOrigin.exclusions.splice(exclusionIndex, 1);
-    }
-
-    // update the origin
+  function updateOrigin(origin, geoArea) {
     const newOrigins = [...origins];
-    const index = newOrigins.indexOf(origin);
+    const newOrigin = { ...origin };
+    newOrigin.geographical_area = Number(geoArea);
+    newOrigin.exclusions = [];
+    const index = origins.indexOf(origin);
     if (index > -1) {
       newOrigins.splice(index, 1, newOrigin);
       setOrigins(newOrigins);
@@ -85,11 +77,13 @@ function QuotaOriginFormset({ data, options, errors }) {
         <QuotaOriginForm
           origin={origin}
           key={i}
-          options={options}
+          geoAreasOptions={geoAreasOptions}
+          exclusionsOptions={exclusionsOptions}
+          groupsWithMembers={groupsWithMembers}
           index={i}
-          addEmptyExclusion={addEmptyExclusion}
+          updateOrigin={updateOrigin}
           removeOrigin={removeOrigin}
-          removeExclusion={removeExclusion}
+          updateExclusions={updateExclusions}
           errors={errors}
         />
       ))}
@@ -108,26 +102,39 @@ QuotaOriginFormset.propTypes = {
       id: PropTypes.number.isRequired,
       pk: PropTypes.number.isRequired,
       exclusions: PropTypes.arrayOf(
-        PropTypes.shape({
-          id: PropTypes.number.isRequired,
-          pk: PropTypes.number.isRequired,
-        })
+        PropTypes.oneOfType([PropTypes.oneOf([""]), PropTypes.number]),
       ),
       geographical_area: PropTypes.number.isRequired,
       start_date_0: PropTypes.number.isRequired,
       start_date_1: PropTypes.number.isRequired,
       start_date_2: PropTypes.number.isRequired,
-      end_date_0: PropTypes.number,
-      end_date_1: PropTypes.number,
-      end_date_2: PropTypes.number,
-    })
+      end_date_0: PropTypes.oneOfType([
+        PropTypes.oneOf([""]),
+        PropTypes.number,
+      ]),
+      end_date_1: PropTypes.oneOfType([
+        PropTypes.oneOf([""]),
+        PropTypes.number,
+      ]),
+      end_date_2: PropTypes.oneOfType([
+        PropTypes.oneOf([""]),
+        PropTypes.number,
+      ]),
+    }),
   ),
-  options: PropTypes.arrayOf(
+  geoAreasOptions: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       value: PropTypes.number.isRequired,
-    })
-  ),
+    }),
+  ).isRequired,
+  exclusionsOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      value: PropTypes.number.isRequired,
+    }),
+  ).isRequired,
+  groupsWithMembers: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.number)),
   errors: PropTypes.object,
 };
 
@@ -136,15 +143,19 @@ function init() {
   if (!originsContainer) return;
   const root = createRoot(originsContainer);
   const origins = [...originsData];
-  // originsData and geoAreasOptions come from template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
+  /* eslint-disable */
+  // originsData, geoAreasOptions, exclusionsOptions, groupsWithMembers come from template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
   // originsErrors are errors raised by django. see template quotas/jinja2/includes/quotas/quota-edit-origins.jinja
   root.render(
     <QuotaOriginFormset
       data={origins}
-      options={geoAreasOptions}
+      geoAreasOptions={geoAreasOptions}
+      exclusionsOptions={exclusionsOptions}
+      groupsWithMembers={groupsWithMembers}
       errors={originsErrors}
-    />
+    />,
   );
+  /* eslint-enable */
 }
 
 function setupQuotaOriginFormset() {
