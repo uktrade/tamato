@@ -1012,7 +1012,7 @@ class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):
     pass
 
 
-class QuotaOrderNumersSelectForm(forms.Form):
+class QuotaOrderNumbersSelectForm(forms.Form):
     class Meta:
         fields = [
             "main_quota_order_number",

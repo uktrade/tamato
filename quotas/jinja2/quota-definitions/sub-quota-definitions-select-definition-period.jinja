@@ -27,9 +27,11 @@
     {% set start_date %}
       {{ create_sortable_anchor(request, "valid_between", "Start date", base_url) }}
     {% endset %}
-    
-    <h3>Select definition periods from main quota ID {{view.main_quota_order_number}}</h3>
-    <p>These definition periods are required for sub-quota ID {{view.sub_quota_order_number}} and must be edited on the next pages</p>
+
+    {% set main_quota_order_number = view.get_cleaned_data_for_step('quota_order_numbers')['main_quota_order_number']%}
+    {% set sub_quota_order_number = view.get_cleaned_data_for_step('quota_order_numbers')['sub_quota_order_number']%}
+    <h3>Select definition periods from main quota ID {{main_quota_order_number}}</h3>
+    <p>These definition periods are required for sub-quota ID {{sub_quota_order_number}} and must be edited on the next pages</p>
     {{ govukTable({
       "head": [
         {"html": checkbox_check_all},

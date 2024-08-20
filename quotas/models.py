@@ -511,6 +511,7 @@ class QuotaDefinitionDuplicator(models.Model):
     The edited data is serialised for saving to this Model, then deserialized
     to create the definition.
     """
+    # TODO: change this to main_definition
     parent_definition = models.ForeignKey(
         QuotaDefinition, on_delete=models.CASCADE
         )
