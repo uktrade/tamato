@@ -37,7 +37,7 @@ class SQLiteMigrationCurrentDirectory:
     """
     Context manager class that uses the application's current base directory for
     managing SQLite migrations.
-    
+
     Upon exiting the context manager, SQLite-specific migration files are
     deleted.
     """
@@ -93,7 +93,8 @@ class SQLiteMigrator:
     def __init__(self, sqlite_file: Path, migrations_in_tmp_dir=False):
         self.sqlite_file = sqlite_file
         self.migration_directory_class = (
-            SQLiteMigrationTemporaryDirectory if migrations_in_tmp_dir
+            SQLiteMigrationTemporaryDirectory
+            if migrations_in_tmp_dir
             else SQLiteMigrationCurrentDirectory
         )
 
