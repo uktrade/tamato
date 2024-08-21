@@ -59,8 +59,8 @@ def test_sqlite_migrator(migrations_in_tmp_dir):
 
         connection = sqlite3.connect(sqlite_file.name)
         cursor = connection.cursor()
-        # Executing PRAGMA quick_check raises a DatabaseError if the generated
-        # database is invalid - and fail this test.
+        # Executing "PRAGMA quick_check" raises DatabaseError if the generated
+        # database file is invalid, failing this test.
         cursor.execute("PRAGMA quick_check")
 
 
