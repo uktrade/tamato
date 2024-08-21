@@ -1,3 +1,4 @@
+import sqlite3
 import tempfile
 from io import BytesIO
 from os import path
@@ -13,6 +14,7 @@ from common.tests import factories
 from exporter.sqlite import plan
 from exporter.sqlite import tasks
 from exporter.sqlite.runner import Runner
+from exporter.sqlite.runner import SQLiteMigrator
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -40,6 +42,26 @@ def sqlite_database(sqlite_template: Runner) -> Iterator[Runner]:
     in_memory_database = apsw.Connection(":memory:")
     in_memory_database.deserialize("main", sqlite_template.database.serialize("main"))
     yield Runner(in_memory_database)
+
+
+@pytest.mark.parametrize(
+    ("migrations_in_tmp_file"),
+    (False, True),
+)
+def test_sqlite_migrator(migrations_in_tmp_file):
+    """Test SQLiteMigrator."""
+    with tempfile.NamedTemporaryFile() as sqlite_file:
+        sqlite_migrator = SQLiteMigrator(
+            sqlite_file=Path(sqlite_file.name),
+            migrations_in_tmp_dir=migrations_in_tmp_file,
+        )
+        sqlite_migrator.migrate()
+
+        connection = sqlite3.connect(sqlite_file.name)
+        cursor = connection.cursor()
+        # Executing PRAGMA quick_check raises a DatabaseError if the generated
+        # database is invalid - and fail this test.
+        cursor.execute("PRAGMA quick_check")
 
 
 FACTORIES_EXPORTED = [
