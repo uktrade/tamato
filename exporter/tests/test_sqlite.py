@@ -45,15 +45,15 @@ def sqlite_database(sqlite_template: Runner) -> Iterator[Runner]:
 
 
 @pytest.mark.parametrize(
-    ("migrations_in_tmp_file"),
+    ("migrations_in_tmp_dir"),
     (False, True),
 )
-def test_sqlite_migrator(migrations_in_tmp_file):
+def test_sqlite_migrator(migrations_in_tmp_dir):
     """Test SQLiteMigrator."""
     with tempfile.NamedTemporaryFile() as sqlite_file:
         sqlite_migrator = SQLiteMigrator(
             sqlite_file=Path(sqlite_file.name),
-            migrations_in_tmp_dir=migrations_in_tmp_file,
+            migrations_in_tmp_dir=migrations_in_tmp_dir,
         )
         sqlite_migrator.migrate()
 
