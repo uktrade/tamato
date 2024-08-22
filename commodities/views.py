@@ -176,19 +176,33 @@ class CommodityHierarchy(CommodityDetail):
 
         context["selected_tab"] = "hierarchy"
 
-        prefix = self.object.item_id[0:4]
-        commodities_collection = CommodityCollectionLoader(prefix=prefix).load()
+        end_date = context["commodity"].valid_between.upper
+        current = end_date is None or end_date > date.today()
+        context["current"] = current
 
-        tx = WorkBasket.get_current_transaction(self.request)
-        snapshot = CommodityTreeSnapshot(
-            commodities=commodities_collection.commodities,
-            moment=SnapshotMoment(transaction=tx, date=date.today()),
-        )
+        if current:
+            prefix = self.object.item_id[0:4]
+            commodities_collection = CommodityCollectionLoader(prefix=prefix).load()
+            active_commodities = [
+                commodity
+                for commodity in commodities_collection.commodities
+                if commodity.valid_between.upper is None
+                or commodity.valid_between.upper > date.today()
+            ]
 
-        context["snapshot"] = snapshot
-        context["this_commodity"] = list(
-            filter(lambda c: c.item_id == self.object.item_id, snapshot.commodities),
-        )[0]
+            tx = WorkBasket.get_current_transaction(self.request)
+            snapshot = CommodityTreeSnapshot(
+                commodities=active_commodities,
+                moment=SnapshotMoment(transaction=tx, date=date.today()),
+            )
+
+            context["snapshot"] = snapshot
+            context["this_commodity"] = list(
+                filter(
+                    lambda c: c.item_id == self.object.item_id,
+                    snapshot.commodities,
+                ),
+            )[0]
 
         return context
 

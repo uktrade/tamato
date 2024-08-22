@@ -10,6 +10,9 @@
 
 <h2 class="govuk-heading-l">Commodity hierarchy</h2>
 
+{% if not current %}
+<p>This commodity has been end dated so no longer forms part of the hierarchy.</p>
+{% else %}
 {% if snapshot.commodities|length == 1 %}
   {{ leaf_commodity(snapshot.commodities[0]) }}
 {% else %}
@@ -45,4 +48,5 @@
 
 {% endif %}
 
+{% endif %}
 {% endblock %}
