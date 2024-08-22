@@ -662,3 +662,29 @@ def test_commodity_measures_vat_excise_get_related(
     cells = soup.select(".govuk-table__body > .govuk-table__row:first-child > td")
     # duty sentence
     assert cells[4].text == "—"
+
+
+def test_commodities_hierarchy_inactive_commodity(valid_user_client, date_ranges):
+    """Test that a commodity and related commodity appear in the hierarchy but a
+    related end dated commodity does not."""
+    commodity1 = factories.GoodsNomenclatureFactory.create(item_id="8540111111")
+    commodity2 = factories.GoodsNomenclatureFactory.create(item_id="8540222222")
+    commodity3 = factories.GoodsNomenclatureFactory.create(
+        item_id="8540333333",
+        valid_between=date_ranges.earlier,
+    )
+
+    url = reverse("commodity-ui-detail-hierarchy", kwargs={"sid": commodity1.sid})
+    response = valid_user_client.get(url)
+
+    assert commodity1.item_id in str(response.content)
+    assert commodity2.item_id in str(response.content)
+    assert commodity3.item_id not in str(response.content)
+
+    # Assert the tree does not show for the end dated commodity code
+    url = reverse("commodity-ui-detail-hierarchy", kwargs={"sid": commodity3.sid})
+    response = valid_user_client.get(url)
+    assert (
+        "This commodity has been end dated so no longer forms part of the hierarchy."
+        in str(response.content)
+    )
