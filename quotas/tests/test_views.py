@@ -1722,6 +1722,7 @@ def quota_definition_1(main_quota_order_number, date_ranges) -> models.QuotaDefi
     return factories.QuotaDefinitionFactory.create(
         order_number=main_quota_order_number,
         valid_between=date_ranges.normal,
+        is_physical=True
     )
 
 
@@ -1866,7 +1867,85 @@ def test_definition_duplicator_update_data_view_renders(
     assert response.status_code == 200
 
 
-# def test_definition_duplicator_done()
-# def test_definition_duplicator_create_definitions()
-# def test_definition_duplicator_create_definition_association()
-# def test_definition_duplicator_update_form_valid()
+def test_definition_duplicator_creates_definition_and_associaion(
+        quota_definition_1,
+        main_quota_order_number,
+        sub_quota_order_number,
+        session_request
+        ):
+    """
+    Pass data to the Duplicator Wizard and verify that the created definition
+    contains the expected data.
+    This must include: quota_order_numbers, 
+    """
+    order_number_data = {
+        "duplicate_definitions_wizard-current_step": "quota_order_numbers",
+        "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
+        "quota_order_numbers-sub_quota_order_number": [sub_quota_order_number.pk]
+    }
+    storage = SessionStorage(
+        request=session_request,
+        prefix=""
+        )
+
+    storage.set_step_data(
+        "quota_order_numbers",
+        order_number_data
+        )
+    storage._set_current_step('quota_order_numbers')
+    wizard = DuplicateDefinitionsWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={'quota_order_numbers': {}},
+        instance_dict={'quota_order_numbers': None}
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    # cleaned_data = wizard.get_cleaned_data_for_step('quota_order_numbers')
+
+    from quotas.serializers import serialize_duplicate_data
+    quota_definition_serialized = serialize_duplicate_data(quota_definition_1)
+    tx = Transaction.objects.last()
+    models.QuotaDefinitionDuplicator(
+        parent_definition=quota_definition_1,
+        definition_data=quota_definition_serialized,
+        current_transaction=tx
+    ).save()
+    serialized_data = {
+        'volume': quota_definition_serialized['volume'],
+        'measurement_unit_code': quota_definition_serialized['measurement_unit_code'],
+        'measurement_unit_abbreviation': quota_definition_serialized['measurement_unit_abbreviation'],
+        'start_date': quota_definition_serialized['start_date'],
+        'end_date': quota_definition_serialized['end_date'],
+        'relationship_type': 'NM',
+        'coefficient': 1,
+        'status': True,
+    }
+    models.QuotaDefinitionDuplicator.objects.filter(
+        parent_definition=quota_definition_1
+    ).update(definition_data=serialized_data)
+    duplicated_data = models.QuotaDefinitionDuplicator.objects.filter(
+        parent_definition=quota_definition_1
+    )[0]
+
+    association_table_before = models.QuotaAssociation.objects.all()
+    association_table_before = models.QuotaAssociation.objects.all()
+    assert len(association_table_before) == 0
+    wizard.create_definition(duplicated_data)
+    duplicator_objects = models.QuotaDefinitionDuplicator.objects.all()
+    definition_objects = models.QuotaDefinition.objects.all()
+
+    # assert that the Duplicator table is empty
+    assert len(duplicator_objects) == 0
+    # assert that the values of the definitions match
+    assert definition_objects[0].volume == definition_objects[1].volume
+    assert definition_objects[0].measurement_unit == definition_objects[1].measurement_unit
+    assert definition_objects[0].valid_between == definition_objects[1].valid_between
+
+    assert len(definition_objects) == 2
+    # assert that the association is created
+    association_table_after = models.QuotaAssociation.objects.all()
+    assert association_table_after[0].main_quota == quota_definition_1
+    assert association_table_after[0].sub_quota == definition_objects[1]
+
+
+# TODO: test Update View form_valid

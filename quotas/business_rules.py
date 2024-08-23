@@ -4,6 +4,8 @@ import datetime
 from datetime import date
 from decimal import Decimal
 
+from django.forms import ValidationError
+
 import measures.models as measures_models
 from common.business_rules import BusinessRule
 from common.business_rules import ExclusionMembership
@@ -379,6 +381,18 @@ class QA2(ValidityPeriodContained):
     contained_field_name = "sub_quota"
 
 
+def check_QA2_dict(sub_definition_valid_between, main_definition_valid_between):
+    """confirms data is compliant with QA2"""
+    if (
+        sub_definition_valid_between.lower < main_definition_valid_between.lower
+        ) or (
+        sub_definition_valid_between.upper > main_definition_valid_between.upper
+    ):
+        raise ValidationError(
+            'QA2: Validity period for sub quota must be within the validity period of the main quota'
+        )
+
+
 class QA3(BusinessRule):
     """
     When converted to the measurement unit of the main quota, the volume of a
@@ -403,6 +417,21 @@ class QA3(BusinessRule):
             raise self.violation(association)
 
 
+def check_QA3_dict(main_definition_unit, sub_definition_unit, main_definition_volume, sub_definition_volume):
+    """
+    Confirms data is compliant with QA3
+    See note above about changing the unit types.
+    (This function is used for the quota definition duplicator, which doesn't allow for editing the initial_volume, therefore this check is omitted)
+    """
+    if not (
+        main_definition_unit == sub_definition_unit
+        and sub_definition_volume <= main_definition_volume
+    ):
+        raise ValidationError(
+            'QA3: When converted to the measurement unit of the main quota, the volume of a sub-quota must always be lower than or equal to the volume of the main quota'
+        )
+
+
 class QA4(BusinessRule):
     """
     Whenever a sub-quota receives a coefficient, this has to be a strictly
@@ -415,6 +444,12 @@ class QA4(BusinessRule):
         if not association.coefficient > 0:
             raise self.violation(association)
 
+
+def check_QA4_dict(coefficient):
+    if not coefficient > 0:
+        raise ValidationError(
+                'QA4: A coefficient must be a positive decimal number'
+            )
 
 class QA5(BusinessRule):
     """
@@ -465,6 +500,23 @@ class QA5(BusinessRule):
             )
 
 
+def check_QA5_dict(relationship_type, coefficient):
+    if (
+        relationship_type == 'NM'
+        and coefficient != 1
+    ):
+        raise ValidationError(
+            "QA5: Where the relationship type is Normal, the coefficient value must be 1",
+        )
+    if (
+        relationship_type == 'EQ'
+        and coefficient == 1
+    ):
+        raise ValidationError(
+            "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1",
+        )
+
+
 class QA6(BusinessRule):
     """Sub-quotas associated with the same main quota must have the same
     relation type."""
@@ -483,6 +535,26 @@ class QA6(BusinessRule):
             > 1
         ):
             raise self.violation(association)
+
+
+def check_QA6_dict(main_definition, new_relation_type):
+    """
+    Confirms the provided data is compliant with the above businsess rule.
+    The above test will be re-run so as to separate historic violations, which will require TAP to fix, from a user trying to introduce a new violation.
+    Because the business rule should have been checked and there should only be one type,
+    we can check the new type against any one of the old type
+    """
+    relation_type = (main_definition.sub_quota_associations
+                     .values("sub_quota_relation_type")
+                     .order_by("sub_quota_relation_type")
+                     .distinct())
+    if (relation_type.count() > 1):
+        raise ValidationError("An error has occured: more than one relation type was returned, please contact TAP")
+    elif (
+        relation_type.count() == 1
+        and relation_type != new_relation_type
+    ):
+        raise ValidationError(f"QA6: Sub-quotas associated with the same main quota must have the same relation type.{relation_type} does not match {new_relation_type}")
 
 
 class SameMainAndSubQuota(BusinessRule):

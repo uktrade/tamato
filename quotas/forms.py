@@ -34,6 +34,7 @@ from geo_areas.models import GeographicalArea
 from measures.models import MeasurementUnit
 from quotas import models
 from quotas import validators
+from quotas.business_rules import check_QA2_dict, check_QA3_dict, check_QA4_dict, check_QA5_dict, check_QA6_dict
 from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
@@ -1122,6 +1123,7 @@ class SubQuotaDefinitionsUpdatesForm(
             "relationship_type",
             "volume",
             "measurement_unit",
+            "valid_between"
         ]
 
     relationship_type = forms.ChoiceField(
@@ -1201,58 +1203,40 @@ class SubQuotaDefinitionsUpdatesForm(
         """
         Carrying out business rule checks here to prevent erroneous associations, see:
         https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quota-associations.html#validation-rules
+
+        We cannot use the standard business rules checks as these are not yet
+        QuotaDefinition objects so we check the dict data is compliant with
+        the relevant rule to prevent the creation of objects that violate rules
         """
         original_definition = self.original_definition
+        if cleaned_data['valid_between'].upper is None:
+            raise ValidationError("An end date must be supplied")
+
         # QA2 sub-quota validity periods must be within validity of main quota
-        if (
-            cleaned_data['valid_between'].lower < original_definition.valid_between.lower
-            ) or (
-            cleaned_data['valid_between'].upper > original_definition.valid_between.upper
-        ):
-            raise ValidationError(
-                'QA2: Validity period for sub quota must be within the validity period of the main quota'
-            )
+        check_QA2_dict(
+            sub_definition_valid_between=cleaned_data['valid_between'],
+            main_definition_valid_between=original_definition.valid_between
+        )
+
         # QA3 when converted to the same unit, the volume of sub-quota must be
         # lower than or equal to the volume of the main quota
         # NOTE: It is highly unlikely the measurement units will change between definitions
-        if (
-            cleaned_data['measurement_unit'] == original_definition.measurement_unit
-        ) and (
-            cleaned_data['volume'] > original_definition.volume
-        ):
-            raise ValidationError(
-                'QA3: When converted to the measurement unit of the main quota, the volume of a sub-quota must always be lower than or equal to the volume of the main quota'
-            )
+        check_QA3_dict(
+            main_definition_unit=self.original_definition.measurement_unit,
+            sub_definition_unit=cleaned_data['measurement_unit'],
+            main_definition_volume=original_definition.volume,
+            sub_definition_volume=cleaned_data['volume'],
+        )
+
         # QA4 coefficients must be positive. Default value is 1
-        if (cleaned_data['coefficient'] <= 0):
-            raise ValidationError(
-                'QA4: A coefficient must be a positive decimal number'
-            )
+        check_QA4_dict(cleaned_data['coefficient'])
+
         # QA5 Whenever a the relationship_type is equivalent, it must have the same volume as the ones associated with the parent quota.
         # It must be defined with a coefficient not equal to 1
-        if (
-            cleaned_data['relationship_type'] == 'NM'
-            and cleaned_data['coefficient'] != 1
-        ):
-            raise ValidationError(
-                "QA5: Where the relationship type is Normal, the coefficient value must be 1",
-            )
-        if (
-            cleaned_data['relationship_type'] == 'EQ'
-            and cleaned_data['coefficient'] == 1
-        ):
-            raise ValidationError(
-                "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1",
-            )
+        check_QA5_dict(relationship_type=cleaned_data['relationship_type'], coefficient=cleaned_data['coefficient'])
+
         # QA6 sub quotas association with the same main quota must have the same relation type
-        other_sub_quota_assoc_relation_types = (
-            models.QuotaAssociation.objects.filter(
-                main_quota=original_definition
-                ).values('sub_quota_relation_type')
-                )
-        for sub_quota_association in other_sub_quota_assoc_relation_types:
-            if (cleaned_data['relationship_type'] != sub_quota_association['sub_quota_relation_type']):
-                raise ValidationError("QA6: Sub-quotas associated with the same main quota must have the same relation type.")
+        check_QA6_dict(main_definition=original_definition, new_relation_type=cleaned_data['relationship_type'])
 
         return cleaned_data
 
