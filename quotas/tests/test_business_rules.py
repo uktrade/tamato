@@ -780,18 +780,19 @@ def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
 @pytest.mark.parametrize(
     ("relationship_type, coefficient, error_expected"),
     (
-        ('EQ', "1.200", False),
-        ('EQ', "1.000", True),
-        ('EQ', "1.200", True),
-        ('NM', "1.000", False),
-        ('NM', "1.000", False),
-        ('NM', "1.200", True),
+        ('EQ', 1.2, False),
+        ('EQ', 1, True),
+        ('EQ', 1.2, False),
+        ('NM', 1, False),
+        ('NM', 1, False),
+        ('NM', 1.2, True),
     ),
 )
 def test_QA5_dict(relationship_type, coefficient, error_expected):
     """As above but with a dict"""
     with raises_if(ValidationError, error_expected):
         business_rules.check_QA5_dict(relationship_type, coefficient)
+
 
 @pytest.mark.parametrize(
     ("existing_relation", "new_relation", "error_expected"),
