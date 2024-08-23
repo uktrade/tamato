@@ -1116,9 +1116,11 @@ class SelectedDefinitionsForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         cleaned_data["duplicated_definitions"] = self.objects
-        for definition in cleaned_data['duplicated_definitions']:
-            if not definition.definition_data['status']:
-                raise ValidationError("Each definition period must have a specified relationship and co-efficient value")
+        for definition in cleaned_data["duplicated_definitions"]:
+            if not definition.definition_data["status"]:
+                raise ValidationError(
+                    "Each definition period must have a specified relationship and co-efficient value"
+                )
 
         return cleaned_data
 
