@@ -34,7 +34,13 @@ from geo_areas.models import GeographicalArea
 from measures.models import MeasurementUnit
 from quotas import models
 from quotas import validators
-from quotas.business_rules import check_QA2_dict, check_QA3_dict, check_QA4_dict, check_QA5_dict, check_QA6_dict
+from quotas.business_rules import (
+    check_QA2_dict,
+    check_QA3_dict,
+    check_QA4_dict,
+    check_QA5_dict,
+    check_QA6_dict,
+)
 from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
@@ -1023,16 +1029,17 @@ class QuotaOrderNumbersSelectForm(forms.Form):
             "main_quota_order_number",
             "sub_quota_order_number",
         ]
+
     main_quota_order_number = AutoCompleteField(
-            label="Main quota order number",
-            queryset=models.QuotaOrderNumber.objects.all(),
-            required=True,
-        )
+        label="Main quota order number",
+        queryset=models.QuotaOrderNumber.objects.all(),
+        required=True,
+    )
     sub_quota_order_number = AutoCompleteField(
-            label="Sub-quota order number",
-            queryset=models.QuotaOrderNumber.objects.all(),
-            required=True,
-        )
+        label="Sub-quota order number",
+        queryset=models.QuotaOrderNumber.objects.all(),
+        required=True,
+    )
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -1046,7 +1053,9 @@ class QuotaOrderNumbersSelectForm(forms.Form):
 
         self.helper.layout = Layout(
             Div(
-                HTML('<h3 class="govuk-heading">Enter main and sub-quota order numbers</h3>'),
+                HTML(
+                    '<h3 class="govuk-heading">Enter main and sub-quota order numbers</h3>'
+                ),
             ),
             Div(
                 "main_quota_order_number",
@@ -1066,11 +1075,11 @@ class QuotaOrderNumbersSelectForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         cleaned_data["main_quota_order_number"] = self.cleaned_data.get(
-            'main_quota_order_number'
-            )
+            "main_quota_order_number"
+        )
         cleaned_data["sub_quota_order_number"] = self.cleaned_data.get(
-            'sub_quota_order_number'
-            )
+            "sub_quota_order_number"
+        )
         return cleaned_data
 
 
@@ -1081,6 +1090,7 @@ class SelectSubQuotaDefinitionsForm(
     Form to select the main quota definitions that are to be duplicated.
     Before selecting, we ensure the QuotaDefinitionDuplicator table is empty.
     """
+
     def clean(self):
 
         cleaned_data = super().clean()
@@ -1105,7 +1115,11 @@ class SelectedDefinitionsForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        cleaned_data['duplicated_definitions'] = self.objects
+        cleaned_data["duplicated_definitions"] = self.objects
+        for definition in cleaned_data['duplicated_definitions']:
+            if not definition.definition_data['status']:
+                raise ValidationError("Each definition period must have a specified relationship and co-efficient value")
+
         return cleaned_data
 
 
@@ -1119,7 +1133,7 @@ class SubQuotaDefinitionsUpdatesForm(
             "relationship_type",
             "volume",
             "measurement_unit",
-            "valid_between"
+            "valid_between",
         ]
 
     relationship_type = forms.ChoiceField(
@@ -1166,14 +1180,14 @@ class SubQuotaDefinitionsUpdatesForm(
 
     def set_initial_data(self, duplicate_data):
         fields = self.fields
-        fields['relationship_type'].initial = "NM"
-        fields['coefficient'].initial = 1
-        fields['measurement_unit'].initial = MeasurementUnit.objects.get(
-            code=duplicate_data['measurement_unit_code']
+        fields["relationship_type"].initial = "NM"
+        fields["coefficient"].initial = 1
+        fields["measurement_unit"].initial = MeasurementUnit.objects.get(
+            code=duplicate_data["measurement_unit_code"]
         )
-        fields['volume'].initial = duplicate_data['volume']
-        fields['start_date'].initial = deserialize_date(duplicate_data['start_date'])
-        fields['end_date'].initial = deserialize_date(duplicate_data['end_date'])
+        fields["volume"].initial = duplicate_data["volume"]
+        fields["start_date"].initial = deserialize_date(duplicate_data["start_date"])
+        fields["end_date"].initial = deserialize_date(duplicate_data["end_date"])
 
     def init_fields(self):
         self.fields["measurement_unit"].queryset = self.fields[
@@ -1205,13 +1219,13 @@ class SubQuotaDefinitionsUpdatesForm(
         the relevant rule to prevent the creation of objects that violate rules
         """
         original_definition = self.original_definition
-        if cleaned_data['valid_between'].upper is None:
+        if cleaned_data["valid_between"].upper is None:
             raise ValidationError("An end date must be supplied")
 
         # QA2 sub-quota validity periods must be within validity of main quota
         check_QA2_dict(
-            sub_definition_valid_between=cleaned_data['valid_between'],
-            main_definition_valid_between=original_definition.valid_between
+            sub_definition_valid_between=cleaned_data["valid_between"],
+            main_definition_valid_between=original_definition.valid_between,
         )
 
         # QA3 when converted to the same unit, the volume of sub-quota must be
@@ -1219,20 +1233,26 @@ class SubQuotaDefinitionsUpdatesForm(
         # NOTE: It is highly unlikely the measurement units will change between definitions
         check_QA3_dict(
             main_definition_unit=self.original_definition.measurement_unit,
-            sub_definition_unit=cleaned_data['measurement_unit'],
+            sub_definition_unit=cleaned_data["measurement_unit"],
             main_definition_volume=original_definition.volume,
-            sub_definition_volume=cleaned_data['volume'],
+            sub_definition_volume=cleaned_data["volume"],
         )
 
         # QA4 coefficients must be positive. Default value is 1
-        check_QA4_dict(cleaned_data['coefficient'])
+        check_QA4_dict(cleaned_data["coefficient"])
 
         # QA5 Whenever a the relationship_type is equivalent, it must have the same volume as the ones associated with the parent quota.
         # It must be defined with a coefficient not equal to 1
-        check_QA5_dict(relationship_type=cleaned_data['relationship_type'], coefficient=cleaned_data['coefficient'])
+        check_QA5_dict(
+            relationship_type=cleaned_data["relationship_type"],
+            coefficient=cleaned_data["coefficient"],
+        )
 
         # QA6 sub quotas association with the same main quota must have the same relation type
-        check_QA6_dict(main_definition=original_definition, new_relation_type=cleaned_data['relationship_type'])
+        check_QA6_dict(
+            main_definition=original_definition,
+            new_relation_type=cleaned_data["relationship_type"],
+        )
 
         return cleaned_data
 
@@ -1253,7 +1273,7 @@ class SubQuotaDefinitionsUpdatesForm(
                 ),
             ),
             HTML(
-                    '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
+                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
             ),
             Div(
                 HTML(
@@ -1269,10 +1289,12 @@ class SubQuotaDefinitionsUpdatesForm(
                         css_class="govuk-grid-column-one-half",
                     ),
                     Div(
-                        "volume", css_class="govuk-grid-column-one-half",
+                        "volume",
+                        css_class="govuk-grid-column-one-half",
                     ),
                     Div(
-                        "measurement_unit", css_class="govuk-grid-column-one-half",
+                        "measurement_unit",
+                        css_class="govuk-grid-column-one-half",
                     ),
                     css_class="govuk-grid-row",
                 ),

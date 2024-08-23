@@ -442,29 +442,30 @@ def quota_definition_1(main_quota_order_number, date_ranges) -> QuotaDefinition:
     return factories.QuotaDefinitionFactory.create(
         order_number=main_quota_order_number,
         valid_between=date_ranges.normal,
-        is_physical=True
+        is_physical=True,
     )
 
 
 def test_quota_duplicator_update_definition_form_validation(
-        quota_definition_1,
-        request,
+    quota_definition_1,
+    request,
 ):
     # First we need to create the DuplicatorObject TODO: move this into a fixture?
     from quotas.serializers import serialize_duplicate_data
+
     quota_definition_serialized = serialize_duplicate_data(quota_definition_1)
     tx = Transaction.objects.last()
     models.QuotaDefinitionDuplicator(
         main_definition=quota_definition_1,
         definition_data=quota_definition_serialized,
-        current_transaction=tx
+        current_transaction=tx,
     ).save()
     # then provide the form data
     data = {
-        'coefficient': Decimal('1'),
-        'relationship_type': 'NM',
-        'volume': quota_definition_1.volume,
-        'measurement_unit': quota_definition_1.measurement_unit,
+        "coefficient": Decimal("1"),
+        "relationship_type": "NM",
+        "volume": quota_definition_1.volume,
+        "measurement_unit": quota_definition_1.measurement_unit,
         "start_date_0": quota_definition_1.valid_between.lower.day,
         "start_date_1": quota_definition_1.valid_between.lower.month,
         "start_date_2": quota_definition_1.valid_between.lower.year,
@@ -481,8 +482,10 @@ def test_quota_duplicator_update_definition_form_validation(
             sid=quota_definition_1.pk,
         )
         assert form.is_valid()
+
+
 # assert valid_between dates must be within main definition dates
 # assert sub-definition volume must be equal or less than main definition volume
 # assert coefficient value must be positive
 # assert relationship_type/coefficient values are correct
-# assert sub_quota relationship types are correct across all sub_quota definitions 
+# assert sub_quota relationship types are correct across all sub_quota definitions

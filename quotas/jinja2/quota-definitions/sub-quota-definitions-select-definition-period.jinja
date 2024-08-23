@@ -30,7 +30,7 @@
 
     {% set main_quota_order_number = view.get_cleaned_data_for_step('quota_order_numbers')['main_quota_order_number']%}
     {% set sub_quota_order_number = view.get_cleaned_data_for_step('quota_order_numbers')['sub_quota_order_number']%}
-    <h3>Select definition periods from main quota ID {{main_quota_order_number}}</h3>
+    <h2>Select definition periods from main quota ID {{main_quota_order_number}}</h2>
     <p>These definition periods are required for sub-quota ID {{sub_quota_order_number}} and must be edited on the next pages</p>
     {{ govukTable({
       "head": [
