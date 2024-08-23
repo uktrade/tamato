@@ -455,7 +455,7 @@ def test_quota_duplicator_update_definition_form_validation(
     quota_definition_serialized = serialize_duplicate_data(quota_definition_1)
     tx = Transaction.objects.last()
     models.QuotaDefinitionDuplicator(
-        parent_definition=quota_definition_1,
+        main_definition=quota_definition_1,
         definition_data=quota_definition_serialized,
         current_transaction=tx
     ).save()

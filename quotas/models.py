@@ -512,7 +512,7 @@ class QuotaDefinitionDuplicator(models.Model):
     to create the definition.
     """
     # TODO: change this to main_definition
-    parent_definition = models.ForeignKey(
+    main_definition = models.ForeignKey(
         QuotaDefinition, on_delete=models.CASCADE
         )
 

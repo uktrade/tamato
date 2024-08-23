@@ -1701,9 +1701,6 @@ def test_definition_duplicator_form_wizard_start(
     assert response.status_code == 200
 
 
-# @pytest.fixture
-# def workbasket() -> WorkBasket:
-#     """Provides a workbasket for use across the fixtures and following tests"""
 @pytest.fixture
 def main_quota_order_number() -> models.QuotaOrderNumber:
     """Provides a main quota order number for use across the fixtures and following tests"""
@@ -1845,9 +1842,9 @@ def test_duplicate_definition_wizard_get_form_kwargs(
             selected_definitions = models.QuotaDefinition.objects.filter(
                 sid__in=[quota_definition_1.sid, quota_definition_2.sid]
             ).values('pk')
-            parent_ids = kwargs['objects'].values('parent_definition_id')
-            assert parent_ids[0]['parent_definition_id'] == selected_definitions[0]['pk']
-            assert parent_ids[1]['parent_definition_id'] == selected_definitions[1]['pk']
+            parent_ids = kwargs['objects'].values('main_definition_id')
+            assert parent_ids[0]['main_definition_id'] == selected_definitions[0]['pk']
+            assert parent_ids[1]['main_definition_id'] == selected_definitions[1]['pk']
 
 
 def test_definition_duplicator_update_data_view_renders(
@@ -1900,13 +1897,12 @@ def test_definition_duplicator_creates_definition_and_associaion(
         instance_dict={'quota_order_numbers': None}
     )
     wizard.form_list = OrderedDict(wizard.form_list)
-    # cleaned_data = wizard.get_cleaned_data_for_step('quota_order_numbers')
 
     from quotas.serializers import serialize_duplicate_data
     quota_definition_serialized = serialize_duplicate_data(quota_definition_1)
     tx = Transaction.objects.last()
     models.QuotaDefinitionDuplicator(
-        parent_definition=quota_definition_1,
+        main_definition=quota_definition_1,
         definition_data=quota_definition_serialized,
         current_transaction=tx
     ).save()
@@ -1921,10 +1917,10 @@ def test_definition_duplicator_creates_definition_and_associaion(
         'status': True,
     }
     models.QuotaDefinitionDuplicator.objects.filter(
-        parent_definition=quota_definition_1
+        main_definition=quota_definition_1
     ).update(definition_data=serialized_data)
     duplicated_data = models.QuotaDefinitionDuplicator.objects.filter(
-        parent_definition=quota_definition_1
+        main_definition=quota_definition_1
     )[0]
 
     association_table_before = models.QuotaAssociation.objects.all()

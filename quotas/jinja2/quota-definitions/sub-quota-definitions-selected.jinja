@@ -2,13 +2,12 @@
 {% from "components/create-status-tag.jinja" import create_status_tag %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{# TODO: format sub-quota dates. #}
 {% block form %}
     {% set table_rows = [] %}
     {% set data = view.get_staged_definition_data() %}
     {% for definition in data %}
       {% set edit_link -%}
-        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("sub_quota_definitions-ui-updates", kwargs={"sid": definition.parent_definition.trackedmodel_ptr_id}) }}">Edit</a>
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("sub_quota_definitions-ui-updates", kwargs={"sid": definition.main_definition.trackedmodel_ptr_id}) }}">Edit</a>
       {%- endset %}
       {% set definition_status_cell %}
         <span class="{{view.status_tag_generator(definition.definition_data).tag_class}}">
@@ -17,11 +16,11 @@
       {% endset %}
       
       {{ table_rows.append([
-        {"text": definition.parent_definition.sid},
-        {"text": "{:%d %b %Y}".format(definition.parent_definition.valid_between.lower) },
-        {"text": "{:%d %b %Y}".format(definition.parent_definition.valid_between.upper) },
-        {"text": intcomma(definition.parent_definition.volume) },
-        {"text": definition.parent_definition.measurement_unit.abbreviation },
+        {"text": definition.main_definition.sid},
+        {"text": "{:%d %b %Y}".format(definition.main_definition.valid_between.lower) },
+        {"text": "{:%d %b %Y}".format(definition.main_definition.valid_between.upper) },
+        {"text": intcomma(definition.main_definition.volume) },
+        {"text": definition.main_definition.measurement_unit.abbreviation },
         {"text": "-" },
         {"text": "-" },
         {"text": "-" },
@@ -32,7 +31,7 @@
         {"text": definition.definition_data.start_date },
         {"text": definition.definition_data.end_date },
         {"text": intcomma(definition.definition_data.volume) },
-        {"text": definition.definition_data.measurement_unit_abbreviation or definition.parent_definition.measurement_unit.abbreviation},
+        {"text": definition.definition_data.measurement_unit_abbreviation or definition.main_definition.measurement_unit.abbreviation},
         {"text": definition.definition_data.relationship_type or "-" },
         {"text": definition.definition_data.coefficient or "-"   },
         {"text": definition_status_cell },

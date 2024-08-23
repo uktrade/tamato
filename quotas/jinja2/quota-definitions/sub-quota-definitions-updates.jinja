@@ -28,17 +28,3 @@
     {{ crispy(form) }}
     {% endcall %}
 {% endblock %}
-{# <form method="post">
-    {# <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"> #}
-    {{ crispy(form, no_form_tags) }}
-</form> #}
-
-{# {% block form %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      {% call django_form(action=object.get_url("edit")) %}
-        {{ crispy(form) }}
-      {% endcall %}
-    </div>
-  </div>
-{% endblock %} #}

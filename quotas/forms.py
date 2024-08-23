@@ -1081,12 +1081,8 @@ class SelectSubQuotaDefinitionsForm(
     Form to select the main quota definitions that are to be duplicated.
     Before selecting, we ensure the QuotaDefinitionDuplicator table is empty.
     """
-    # def clear_duplicator_table(self):
-    #     print('*'*30,'clear duplicator in select definitions form')
-    #     models.QuotaDefinitionDuplicator.objects.all().delete()
-
     def clean(self):
-        # self.clear_duplicator_table()
+
         cleaned_data = super().clean()
         selected_definitions = {
             key: value for key, value in cleaned_data.items() if value
@@ -1163,7 +1159,7 @@ class SubQuotaDefinitionsUpdatesForm(
 
     def get_duplicate_data(self, original_definition):
         duplicate_data = models.QuotaDefinitionDuplicator.objects.get(
-            parent_definition_id=original_definition
+            main_definition_id=original_definition
         ).definition_data
         self.set_initial_data(duplicate_data)
         return duplicate_data
@@ -1205,7 +1201,7 @@ class SubQuotaDefinitionsUpdatesForm(
         https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quota-associations.html#validation-rules
 
         We cannot use the standard business rules checks as these are not yet
-        QuotaDefinition objects so we check the dict data is compliant with
+        QuotaDefinition objects, so we check the dict data is compliant with
         the relevant rule to prevent the creation of objects that violate rules
         """
         original_definition = self.original_definition
