@@ -1,6 +1,8 @@
 from collections import defaultdict
+from datetime import date
 from decimal import Decimal
 
+from django.forms import ValidationError
 import pytest
 from django.db import DataError
 
@@ -8,6 +10,7 @@ from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
 from common.tests.util import raises_if
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas import business_rules
@@ -636,6 +639,20 @@ def test_QA2(date_ranges):
 
 
 @pytest.mark.parametrize(
+        "sub_definition_valid_between, main_definition_valid_between, expect_error",
+        [
+            (TaricDateRange(date(2019, 1, 1), date(2020, 2, 2)), TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)), True),
+            (TaricDateRange(date(2020, 1, 1), date(2050, 2, 2)), TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)), True),
+            (TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)), TaricDateRange(date(2020, 1, 1), date(2023, 12, 1)), False),
+        ],
+)
+def test_QA2_dict(sub_definition_valid_between, main_definition_valid_between, expect_error):
+    """As above, but checking between a definition and a dict with date ranges"""
+    with raises_if(ValidationError, expect_error):
+        business_rules.check_QA2_dict(sub_definition_valid_between, main_definition_valid_between)
+
+
+@pytest.mark.parametrize(
     "main_volume, main_unit, sub_volume, sub_unit, expect_error",
     [
         (1.0, "KGM", 1.0, "KGM", False),
@@ -665,6 +682,23 @@ def test_QA3(main_volume, main_unit, sub_volume, sub_unit, expect_error):
 
 
 @pytest.mark.parametrize(
+    "main_volume, main_unit, sub_volume, sub_unit, expect_error",
+    [
+        (1.0, "KGM", 2.0, "KGM", True),
+        (1.0, "KGM", 1.0, "KGM", False),
+        (1.0, "KGM", 0.0, "KGM", False),
+        (2.0, "KGM", 1.0, "KGM", False),
+        (1.0, "KGM", 1.0, "DTN", True),
+        (1.0, "DTN", 1.0, "DTN", False),
+    ],
+)
+def test_QA3_dict(main_volume, main_unit, sub_volume, sub_unit, expect_error):
+    """As above, but checking between a definition and a dict"""
+    with raises_if(ValidationError, expect_error):
+        business_rules.check_QA3_dict(main_definition_volume=main_volume, main_definition_unit=main_unit, sub_definition_volume=sub_volume, sub_definition_unit=sub_unit)
+
+
+@pytest.mark.parametrize(
     "coefficient, expect_error",
     [
         (None, False),
@@ -690,6 +724,21 @@ def test_QA4(coefficient, expect_error):
 
     with raises_if(BusinessRuleViolation, expect_error):
         business_rules.QA4(assoc.transaction).validate(assoc)
+
+
+@pytest.mark.parametrize(
+    "coefficient, expect_error",
+    [
+        (1.0, False),
+        (2.0, False),
+        (0.0, True),
+        (-1.0, True),
+    ],
+)
+def test_QA4_dict(coefficient, expect_error):
+    """As above, but checking between a definition and a dict"""
+    with raises_if(ValidationError, expect_error):
+        business_rules.check_QA4_dict(coefficient)
 
 
 @pytest.mark.parametrize(
@@ -727,6 +776,22 @@ def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
     with raises_if(BusinessRuleViolation, error_expected):
         business_rules.QA5(assoc.transaction).validate(assoc)
 
+
+@pytest.mark.parametrize(
+    ("relationship_type, coefficient, error_expected"),
+    (
+        ('EQ', "1.200", False),
+        ('EQ', "1.000", True),
+        ('EQ', "1.200", True),
+        ('NM', "1.000", False),
+        ('NM', "1.000", False),
+        ('NM', "1.200", True),
+    ),
+)
+def test_QA5_dict(relationship_type, coefficient, error_expected):
+    """As above but with a dict"""
+    with raises_if(ValidationError, error_expected):
+        business_rules.check_QA5_dict(relationship_type, coefficient)
 
 @pytest.mark.parametrize(
     ("existing_relation", "new_relation", "error_expected"),
