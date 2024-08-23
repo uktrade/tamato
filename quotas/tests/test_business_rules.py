@@ -639,17 +639,33 @@ def test_QA2(date_ranges):
 
 
 @pytest.mark.parametrize(
-        "sub_definition_valid_between, main_definition_valid_between, expect_error",
-        [
-            (TaricDateRange(date(2019, 1, 1), date(2020, 2, 2)), TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)), True),
-            (TaricDateRange(date(2020, 1, 1), date(2050, 2, 2)), TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)), True),
-            (TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)), TaricDateRange(date(2020, 1, 1), date(2023, 12, 1)), False),
-        ],
+    "sub_definition_valid_between, main_definition_valid_between, expect_error",
+    [
+        (
+            TaricDateRange(date(2019, 1, 1), date(2020, 2, 2)),
+            TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
+            True,
+        ),
+        (
+            TaricDateRange(date(2020, 1, 1), date(2050, 2, 2)),
+            TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
+            True,
+        ),
+        (
+            TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
+            TaricDateRange(date(2020, 1, 1), date(2023, 12, 1)),
+            False,
+        ),
+    ],
 )
-def test_QA2_dict(sub_definition_valid_between, main_definition_valid_between, expect_error):
+def test_QA2_dict(
+    sub_definition_valid_between, main_definition_valid_between, expect_error
+):
     """As above, but checking between a definition and a dict with date ranges"""
     with raises_if(ValidationError, expect_error):
-        business_rules.check_QA2_dict(sub_definition_valid_between, main_definition_valid_between)
+        business_rules.check_QA2_dict(
+            sub_definition_valid_between, main_definition_valid_between
+        )
 
 
 @pytest.mark.parametrize(
@@ -695,7 +711,12 @@ def test_QA3(main_volume, main_unit, sub_volume, sub_unit, expect_error):
 def test_QA3_dict(main_volume, main_unit, sub_volume, sub_unit, expect_error):
     """As above, but checking between a definition and a dict"""
     with raises_if(ValidationError, expect_error):
-        business_rules.check_QA3_dict(main_definition_volume=main_volume, main_definition_unit=main_unit, sub_definition_volume=sub_volume, sub_definition_unit=sub_unit)
+        business_rules.check_QA3_dict(
+            main_definition_volume=main_volume,
+            main_definition_unit=main_unit,
+            sub_definition_volume=sub_volume,
+            sub_definition_unit=sub_unit,
+        )
 
 
 @pytest.mark.parametrize(
@@ -780,12 +801,12 @@ def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
 @pytest.mark.parametrize(
     ("relationship_type, coefficient, error_expected"),
     (
-        ('EQ', 1.2, False),
-        ('EQ', 1, True),
-        ('EQ', 1.2, False),
-        ('NM', 1, False),
-        ('NM', 1, False),
-        ('NM', 1.2, True),
+        ("EQ", 1.2, False),
+        ("EQ", 1, True),
+        ("EQ", 1.2, False),
+        ("NM", 1, False),
+        ("NM", 1, False),
+        ("NM", 1.2, True),
     ),
 )
 def test_QA5_dict(relationship_type, coefficient, error_expected):
