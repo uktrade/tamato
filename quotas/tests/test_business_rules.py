@@ -779,6 +779,7 @@ def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
     same volume as the other sub-quotas associated with the parent quota.
 
     Moreover it must be defined with a coefficient not equal to 1.
+    When a sub-quota relationship type is defined as 'equivalent' it must have the same volume as the ones associated with the parent quota
 
     A sub-quota defined with the 'normal' type must have a coefficient of 1.
     """
@@ -799,20 +800,38 @@ def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
 
 
 @pytest.mark.parametrize(
-    ("relationship_type, coefficient, error_expected"),
     (
-        ("EQ", 1.2, False),
-        ("EQ", 1, True),
-        ("EQ", 1.2, False),
-        ("NM", 1, False),
-        ("NM", 1, False),
-        ("NM", 1.2, True),
+        "existing_volume",
+        "new_volume",
+        "coefficient",
+        "relationship_type",
+        "error_expected",
+    ),
+    (
+        ("1000.0", "1000.0", "1.200", "EQ", False),
+        ("1000.0", "1000.0", "1.000", "EQ", True),
+        ("1000.0", "2000.0", "1.200", "EQ", True),
+        ("2000.0", "1000.0", "1.000", "NM", False),
+        ("1000.0", "1000.0", "1.000", "NM", False),
+        ("2000.0", "1000.0", "1.200", "NM", True),
     ),
 )
-def test_QA5_dict(relationship_type, coefficient, error_expected):
+def test_QA5_dict(
+    existing_volume, new_volume, relationship_type, coefficient, error_expected
+):
     """As above but with a dict"""
+    existing = factories.QuotaAssociationFactory.create(
+        sub_quota__volume=Decimal(existing_volume),
+        sub_quota_relation_type=relationship_type,
+    )
+
     with raises_if(ValidationError, error_expected):
-        business_rules.check_QA5_dict(relationship_type, coefficient)
+        business_rules.check_QA5_dict(
+            original_definition=existing.main_quota,
+            volume=new_volume,
+            relationship_type=relationship_type,
+            coefficient=coefficient,
+        )
 
 
 @pytest.mark.parametrize(

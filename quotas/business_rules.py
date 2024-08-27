@@ -503,26 +503,20 @@ class QA5(BusinessRule):
 
 
 def check_QA5_dict(original_definition, volume, relationship_type, coefficient):
-    # if relationship type is "Whenever a sub-quota is defined with the 'equivalent' type, it "
-    # "must have the same volume as the ones associated with the "
-    # "parent quota."
-
-    if relationship_type == "NM" and coefficient != 1:
+    if relationship_type == "NM" and Decimal(coefficient) != Decimal("1.000"):
         raise ValidationError(
             "QA5: Where the relationship type is Normal, the coefficient value must be 1",
         )
     elif relationship_type == "EQ":
-        if (coefficient == 1):
+        if Decimal(coefficient) == Decimal("1.000"):
             raise ValidationError(
                 "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1",
             )
-        if (
-            original_definition.sub_quotas.values("volume")
-                .order_by("volume")
-                .distinct("volume")
-                .count()
-                > 1
-                and original_definition.volume != volume
+        if original_definition.sub_quotas.values("volume").order_by("volume").distinct(
+            "volume"
+        ).count() > 1 or (
+            original_definition.sub_quotas.values("volume")[0]["volume"]
+            != Decimal(volume)
         ):
             raise ValidationError(
                 "Whenever a sub-quota is defined with the 'equivalent' type, it must have the same volume as the ones associated with the parent quota"
@@ -565,9 +559,12 @@ def check_QA6_dict(main_definition, new_relation_type):
         raise ValidationError(
             "An error has occured: more than one relation type was returned, please contact TAP"
         )
-    elif relation_type.count() == 1 and relation_type != new_relation_type:
+    elif (
+        relation_type.count() == 1
+        and relation_type[0]["sub_quota_relation_type"] != new_relation_type
+    ):
         raise ValidationError(
-            f"QA6: Sub-quotas associated with the same main quota must have the same relation type.{relation_type} does not match {new_relation_type}"
+            f"QA6: Sub-quotas associated with the same main quota must have the same relation type. {relation_type} does not match {new_relation_type}"
         )
 
 
