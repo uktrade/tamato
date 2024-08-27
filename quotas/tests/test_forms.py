@@ -450,7 +450,7 @@ def test_quota_duplicator_update_definition_form_validation(
     quota_definition_1,
     request,
 ):
-    # First we need to create the DuplicatorObject TODO: move this into a fixture?
+    # First we need to create the DuplicatorObject
     from quotas.serializers import serialize_duplicate_data
 
     quota_definition_serialized = serialize_duplicate_data(quota_definition_1)
@@ -482,10 +482,3 @@ def test_quota_duplicator_update_definition_form_validation(
             sid=quota_definition_1.pk,
         )
         assert form.is_valid()
-
-
-# assert valid_between dates must be within main definition dates
-# assert sub-definition volume must be equal or less than main definition volume
-# assert coefficient value must be positive
-# assert relationship_type/coefficient values are correct
-# assert sub_quota relationship types are correct across all sub_quota definitions
