@@ -502,15 +502,31 @@ class QA5(BusinessRule):
             )
 
 
-def check_QA5_dict(relationship_type, coefficient):
+def check_QA5_dict(original_definition, volume, relationship_type, coefficient):
+    # if relationship type is "Whenever a sub-quota is defined with the 'equivalent' type, it "
+    # "must have the same volume as the ones associated with the "
+    # "parent quota."
+
     if relationship_type == "NM" and coefficient != 1:
         raise ValidationError(
             "QA5: Where the relationship type is Normal, the coefficient value must be 1",
         )
-    if relationship_type == "EQ" and coefficient == 1:
-        raise ValidationError(
-            "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1",
-        )
+    elif relationship_type == "EQ":
+        if (coefficient == 1):
+            raise ValidationError(
+                "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1",
+            )
+        if (
+            original_definition.sub_quotas.values("volume")
+                .order_by("volume")
+                .distinct("volume")
+                .count()
+                > 1
+                and original_definition.volume != volume
+        ):
+            raise ValidationError(
+                "Whenever a sub-quota is defined with the 'equivalent' type, it must have the same volume as the ones associated with the parent quota"
+            )
 
 
 class QA6(BusinessRule):

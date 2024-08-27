@@ -1243,9 +1243,14 @@ class SubQuotaDefinitionsUpdatesForm(
         # QA4 coefficients must be positive. Default value is 1
         check_QA4_dict(cleaned_data["coefficient"])
 
-        # QA5 Whenever a the relationship_type is equivalent, it must have the same volume as the ones associated with the parent quota.
+        # QA5 Whenever a the relationship_type is equivalent, it must have the
+        # same volume as the ones associated with the main quota.
         # It must be defined with a coefficient not equal to 1
+        # If relationship type is 'equivalent', it must have the same volume
+        # as other sub-quotas associated with the main quota
         check_QA5_dict(
+            original_definition=original_definition,
+            volume=cleaned_data['volume'],
             relationship_type=cleaned_data["relationship_type"],
             coefficient=cleaned_data["coefficient"],
         )
