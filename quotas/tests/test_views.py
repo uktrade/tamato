@@ -1923,6 +1923,3 @@ def test_definition_duplicator_creates_definition_and_associaion(
     association_table_after = models.QuotaAssociation.objects.all()
     assert association_table_after[0].main_quota == quota_definition_1
     assert association_table_after[0].sub_quota == definition_objects[1]
-
-
-# TODO: test Update View form_valid
