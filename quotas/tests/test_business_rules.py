@@ -859,6 +859,26 @@ def test_QA6(existing_relation, new_relation, error_expected):
         business_rules.QA6(assoc.transaction).validate(assoc)
 
 
+@pytest.mark.parametrize(
+    ("existing_relation", "new_relation_type", "error_expected"),
+    (
+        (SubQuotaType.NORMAL, SubQuotaType.NORMAL, False),
+        (SubQuotaType.EQUIVALENT, SubQuotaType.EQUIVALENT, False),
+        (SubQuotaType.NORMAL, SubQuotaType.EQUIVALENT, True),
+        (SubQuotaType.EQUIVALENT, SubQuotaType.NORMAL, True),
+    ),
+)
+def test_QA6_dict(existing_relation, new_relation_type, error_expected):
+    """ "
+    As above, but for a dict
+    """
+    associations = factories.QuotaAssociationFactory.create(
+        sub_quota_relation_type=existing_relation,
+    )
+    with raises_if(ValidationError, error_expected):
+        business_rules.check_QA6_dict(associations.main_quota, new_relation_type)
+
+
 # https://uktrade.atlassian.net/browse/TP2000-434
 def test_QA6_new_association_version():
     """Tests that previous versions of an association are not compared when
