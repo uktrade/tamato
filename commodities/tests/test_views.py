@@ -665,7 +665,8 @@ def test_commodity_measures_vat_excise_get_related(
 
 
 def test_commodities_hierarchy_active_commodity(valid_user_client, date_ranges):
-    """Test that a commodity its related commodity appear in the hierarchy."""
+    """Test that a commodity and one of its related commodities appear in the
+    hierarchy."""
     commodity1 = factories.GoodsNomenclatureFactory.create(item_id="8540111111")
     commodity2 = factories.GoodsNomenclatureFactory.create(item_id="8540222222")
 
@@ -674,6 +675,10 @@ def test_commodities_hierarchy_active_commodity(valid_user_client, date_ranges):
 
     assert commodity1.item_id in str(response.content)
     assert commodity2.item_id in str(response.content)
+    assert not (
+        "This commodity has been end dated so no longer forms part of the hierarchy."
+        in str(response.content)
+    )
 
 
 def test_commodities_hierarchy_inactive_commodity(valid_user_client, date_ranges):
