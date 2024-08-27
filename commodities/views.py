@@ -177,10 +177,10 @@ class CommodityHierarchy(CommodityDetail):
         context["selected_tab"] = "hierarchy"
 
         end_date = context["commodity"].valid_between.upper
-        current = end_date is None or end_date > date.today()
-        context["current"] = current
+        is_current = end_date is None or end_date > date.today()
+        context["is_current"] = is_current
 
-        if current:
+        if is_current:
             prefix = self.object.item_id[0:4]
             commodities_collection = CommodityCollectionLoader(prefix=prefix).load()
             active_commodities = [
