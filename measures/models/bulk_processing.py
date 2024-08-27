@@ -20,10 +20,10 @@ from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from measures.models.tracked_models import Measure
-from measures.util import update_measure_components
-from measures.util import update_measure_condition_components
-from measures.util import update_measure_excluded_geographical_areas
-from measures.util import update_measure_footnote_associations
+from measures.utils.edit import update_measure_components
+from measures.utils.edit import update_measure_condition_components
+from measures.utils.edit import update_measure_excluded_geographical_areas
+from measures.utils.edit import update_measure_footnote_associations
 
 logger = logging.getLogger(__name__)
 
@@ -508,67 +508,84 @@ class MeasuresBulkEditor(BulkProcessor):
     
     @atomic
     def edit_measures(self) -> Iterable[Measure]:
-        cleaned_data = self.get_forms_cleaned_data()
+        logger.info("INSIDE EDIT MEASURES - BULK PROCESSING")
 
-        deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
+        with override_current_transaction(
+            transaction=self.workbasket.current_transaction,
+        ):
+            cleaned_data = self.get_forms_cleaned_data()
+            deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
 
-        new_exclusions = [
-            e["excluded_area"]
-            for e in cleaned_data.get("formset-geographical_area_exclusions", [])
-        ]
+            new_exclusions = [
+                e["excluded_area"]
+                for e in cleaned_data.get("formset-geographical_area_exclusions", [])
+            ]
 
-        if deserialized_selected_measures:
-            edited_measures = []
-            for measure in deserialized_selected_measures:
-                new_measure = measure.new_version(
-                    workbasket=self.workbasket,
-                    update_type=UpdateType.UPDATE,
-                    valid_between=TaricDateRange(
-                        lower=(
-                            cleaned_data['start_date']
-                            if cleaned_data['start_date']
-                            else measure.valid_between.lower
+            logger.info(f"CLEANED DATA: {cleaned_data}")
+            logger.info(f"DESERIALISED MEASURES: {deserialized_selected_measures}")
+            logger.info(f"NEW EXCLUSIONS: {new_exclusions}")
+
+            if deserialized_selected_measures:
+                logger.info("INSIDE IF STATEMENT")
+                edited_measures = []
+                logger.info(f" INITIAL EDITED MEASURES ARRAY: {edited_measures}")
+                for measure in deserialized_selected_measures:
+                    logger.info("INSIDE FOR LOOP")
+                    logger.info(f"MEASURE: {measure.__dict__}")
+                    logger.info(f"CLEANED DATA: {cleaned_data}")
+                    new_measure = measure.new_version(
+                        workbasket=self.workbasket,
+                        update_type=UpdateType.UPDATE,
+                        valid_between=TaricDateRange(
+                            lower=(
+                                # Freaking out here even though it's an if?? not sure why
+                                cleaned_data['start_date']
+                                if cleaned_data['start_date']
+                                else measure.valid_between.lower
+                            ),
+                            upper=(
+                                cleaned_data['end_date']
+                                if cleaned_data['end_date'] is not False
+                                else measure.valid_between.upper
+                            ),
                         ),
-                        upper=(
-                            cleaned_data['end_date']
-                            if cleaned_data['end_date'] is not False
-                            else measure.valid_between.upper
+                        order_number=(
+                            cleaned_data['order_number']
+                            if cleaned_data['order_number']
+                            else measure.order_number
                         ),
-                    ),
-                    order_number=(
-                        cleaned_data['order_number']
-                        if cleaned_data['order_number']
-                        else measure.order_number
-                    ),
-                    generating_regulation=(
-                        cleaned_data['generating_regulation']
-                        if cleaned_data['generating_regulation']
-                        else measure.generating_regulation
-                    ),
-                )
-                update_measure_components(
-                    measure=new_measure,
-                    duties=cleaned_data['duties'],
-                    workbasket=self.workbasket,
-                )
-                update_measure_condition_components(
-                    measure=new_measure,
-                    workbasket=self.workbasket,
-                )
-                update_measure_excluded_geographical_areas(
-                    edited="geographical_area_exclusions"
-                    in cleaned_data.get("fields_to_edit", []),
-                    measure=new_measure,
-                    exclusions=new_exclusions,
-                    workbasket=self.workbasket,
-                )
-                update_measure_footnote_associations(
-                    measure=new_measure,
-                    workbasket=self.workbasket,
-                )
+                        generating_regulation=(
+                            cleaned_data['generating_regulation']
+                            if cleaned_data['generating_regulation']
+                            else measure.generating_regulation
+                        ),
+                    )
+                    logger.info(f"NEW MEASURE: {new_measure}")
+                    update_measure_components(
+                        measure=new_measure,
+                        duties=cleaned_data['duties'],
+                        workbasket=self.workbasket,
+                    )
+                    update_measure_condition_components(
+                        measure=new_measure,
+                        workbasket=self.workbasket,
+                    )
+                    update_measure_excluded_geographical_areas(
+                        edited="geographical_area_exclusions"
+                        in cleaned_data.get("fields_to_edit", []),
+                        measure=new_measure,
+                        exclusions=new_exclusions,
+                        workbasket=self.workbasket,
+                    )
+                    update_measure_footnote_associations(
+                        measure=new_measure,
+                        workbasket=self.workbasket,
+                    )
+                    logger.info(f"NEW MEASURE WITH FUNCTIONS RUN: {new_measure}")
 
-            edited_measures.append(new_measure.id)
-        return edited_measures
+                edited_measures.append(new_measure.id)
+                logger.info(f"EDITED MEASURES ARRAY ON CLOSE: {edited_measures}")
+            return edited_measures
 
     def get_forms_cleaned_data(self) -> Dict:
         """
@@ -591,7 +608,6 @@ class MeasuresBulkEditor(BulkProcessor):
                 continue
 
             data = self.form_data[form_key]
-
             kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
 
             form = form_class(data=data, **kwargs)
@@ -606,8 +622,8 @@ class MeasuresBulkEditor(BulkProcessor):
                 all_cleaned_data[f"formset-{form_key}"] = form.cleaned_data
             else:
                 all_cleaned_data.update(form.cleaned_data)
-
-        return all_cleaned_data
+        
+            return all_cleaned_data
 
     def _log_form_errors(self, form_class, form_or_formset) -> None:
         """Output errors associated with a Form or Formset instance, handling

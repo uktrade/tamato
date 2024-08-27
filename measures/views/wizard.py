@@ -26,10 +26,10 @@ from measures.conditions import show_step_quota_origins
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.creators import MeasuresCreator
-from measures.util import update_measure_components
-from measures.util import update_measure_condition_components
-from measures.util import update_measure_excluded_geographical_areas
-from measures.util import update_measure_footnote_associations
+from measures.utils.edit import update_measure_components
+from measures.utils.edit import update_measure_condition_components
+from measures.utils.edit import update_measure_excluded_geographical_areas
+from measures.utils.edit import update_measure_footnote_associations
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 
