@@ -464,6 +464,7 @@ def test_quota_duplicator_update_definition_form_validation(
     data = {
         "coefficient": Decimal("1"),
         "relationship_type": "NM",
+        "initial_volume": quota_definition_1.initial_volume,
         "volume": quota_definition_1.volume,
         "measurement_unit": quota_definition_1.measurement_unit,
         "start_date_0": quota_definition_1.valid_between.lower.day,

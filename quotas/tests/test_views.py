@@ -1884,6 +1884,7 @@ def test_definition_duplicator_creates_definition_and_associaion(
         current_transaction=tx,
     ).save()
     serialized_data = {
+        "initial_volume": quota_definition_serialized["initial_volume"],
         "volume": quota_definition_serialized["volume"],
         "measurement_unit_code": quota_definition_serialized["measurement_unit_code"],
         "measurement_unit_abbreviation": quota_definition_serialized[

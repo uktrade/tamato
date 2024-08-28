@@ -288,6 +288,7 @@ class QuotaEventSerializer(TrackedModelSerializerMixin):
 def serialize_duplicate_data(selected_definition):
     # returns a JSON dictionary of serialized definition data
     duplicate_data = {
+        "initial_volume": str(selected_definition.initial_volume),
         "volume": str(selected_definition.volume),
         "measurement_unit_code": selected_definition.measurement_unit.code,
         "measurement_unit_abbreviation": selected_definition.measurement_unit.abbreviation,
@@ -301,7 +302,7 @@ def serialize_duplicate_data(selected_definition):
 def deserialize_definition_data(self, definition):
     start_date = deserialize_date(definition.definition_data["start_date"])
     end_date = deserialize_date(definition.definition_data["end_date"])
-    # NOTE: volume and initial_volume are set to the same value for duplicated definitions.
+    initial_volume = Decimal(definition.definition_data["initial_volume"])
     vol = Decimal(definition.definition_data["volume"])
     measurement_unit = measures.models.tracked_models.MeasurementUnit.objects.get(
         code=definition.definition_data["measurement_unit_code"]
@@ -311,7 +312,7 @@ def deserialize_definition_data(self, definition):
     ]
     valid_between = TaricDateRange(start_date, end_date)
     staged_data = {
-        "volume": vol,
+        "volume": initial_volume,
         "initial_volume": vol,
         "measurement_unit": measurement_unit,
         "order_number": sub_order_number,

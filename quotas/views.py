@@ -967,6 +967,7 @@ class QuotaDefinitionDuplicateUpdates(FormView, BusinessRulesMixin):
         main_definition = self.get_main_definition()
         cleaned_data = form.cleaned_data
         serialized_data = {
+            "initial_volume": str(cleaned_data["initial_volume"]),
             "volume": str(cleaned_data["volume"]),
             "measurement_unit_code": cleaned_data["measurement_unit"].code,
             "start_date": serialize_date(cleaned_data["valid_between"].lower),

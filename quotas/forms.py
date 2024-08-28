@@ -1134,6 +1134,7 @@ class SubQuotaDefinitionsUpdatesForm(
             "coefficient",
             "relationship_type",
             "volume",
+            "initial_volume",
             "measurement_unit",
             "valid_between",
         ]
@@ -1159,6 +1160,14 @@ class SubQuotaDefinitionsUpdatesForm(
         },
     )
 
+    initial_volume = forms.DecimalField(
+        label="Volume",
+        widget=forms.TextInput(),
+        error_messages={
+            "invalid": "Initial volume must be a number",
+            "required": "Enter the volume",
+        },
+    )
     volume = forms.DecimalField(
         label="Volume",
         widget=forms.TextInput(),
@@ -1187,6 +1196,7 @@ class SubQuotaDefinitionsUpdatesForm(
         fields["measurement_unit"].initial = MeasurementUnit.objects.get(
             code=duplicate_data["measurement_unit_code"]
         )
+        fields["initial_volume"].initial = duplicate_data["initial_volume"]
         fields["volume"].initial = duplicate_data["volume"]
         fields["start_date"].initial = deserialize_date(duplicate_data["start_date"])
         fields["end_date"].initial = deserialize_date(duplicate_data["end_date"])
@@ -1297,10 +1307,11 @@ class SubQuotaDefinitionsUpdatesForm(
                     ),
                     Div(
                         "volume",
+                        "measurement_unit",
                         css_class="govuk-grid-column-one-half",
                     ),
                     Div(
-                        "measurement_unit",
+                        "initial_volume",
                         css_class="govuk-grid-column-one-half",
                     ),
                     css_class="govuk-grid-row",
