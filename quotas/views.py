@@ -822,19 +822,32 @@ class DuplicateDefinitionsWizard(
         We store the main definition data in the QuotaDefinitionDuplicator
         table before creating the new QuotaDefinitions and QuotaAssociation
         entry at the end of the journey.
-        We only want to stage the data if there is no data there already
+        We filter by the current transaction, staging a definition if it is
+        not already added.
+        If there are staged definitions that have not been selected (ie. if a
+        user returns to this page and deselects a definition, it is removed
+        from the table)
         """
         tx = WorkBasket.get_current_transaction(self.request)
-        if len(models.QuotaDefinitionDuplicator.objects.all()) == 0:
-            for selected_definition in selected_definitions:
-                serialized_definition_data = serialize_duplicate_data(
-                    selected_definition
+        for definition in selected_definitions:
+            if (
+                len(
+                    models.QuotaDefinitionDuplicator.objects.filter(
+                        current_transaction=tx, main_definition=definition
+                    )
                 )
+                == 0
+            ):
+                serialized_definition_data = serialize_duplicate_data(definition)
                 models.QuotaDefinitionDuplicator(
-                    main_definition=selected_definition,
+                    main_definition=definition,
                     definition_data=serialized_definition_data,
                     current_transaction=tx,
                 ).save()
+
+        models.QuotaDefinitionDuplicator.objects.filter(
+            current_transaction=tx,
+        ).exclude(main_definition__in=selected_definitions).delete()
 
     def format_date(self, date_str):
         """Parses and converts a date string from that used for storing data
@@ -873,7 +886,10 @@ class DuplicateDefinitionsWizard(
                 "select_definition_periods"
             )["selected_definitions"]
             self.set_duplicate_definitions(selected_definition_periods)
-            staged_data = models.QuotaDefinitionDuplicator.objects.all()
+            tx = WorkBasket.get_current_transaction(self.request)
+            staged_data = models.QuotaDefinitionDuplicator.objects.filter(
+                current_transaction=tx
+            )
 
             kwargs["objects"] = staged_data
 

@@ -37,10 +37,6 @@
       <div id="check-all-checkbox"></div>
     {%- endset %}
 
-    {% set start_date %}
-      {{ create_sortable_anchor(request, "valid_between", "Start date", base_url) }}
-    {% endset %}
-
     {% set main_quota_order_number = view.get_cleaned_data_for_step('quota_order_numbers')['main_quota_order_number']%}
     {% set sub_quota_order_number = view.get_cleaned_data_for_step('quota_order_numbers')['sub_quota_order_number']%}
     <h2>Select definition periods from main quota ID {{main_quota_order_number}}</h2>

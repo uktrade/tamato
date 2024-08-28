@@ -1,5 +1,4 @@
 {% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
-{% from "components/create-status-tag.jinja" import create_status_tag %}
 {% from "components/table/macro.njk" import govukTable %}
 
 {% block form %}
@@ -41,7 +40,7 @@
       ]) or "" }}
       
     {% endfor %}
-    <h2>You must enter a co-efficient value and specify the relationship type for each definition period.</h2>
+    <p>You must enter a co-efficient value and specify the relationship type for each definition period.</p>
     {{ govukTable({
       "head": [
         {"text": "Sid"},
@@ -56,7 +55,7 @@
       ],
       "rows": table_rows,
     }) }}
-    <p>Selecting 'Submit' will create the new definitions and create a relationship in QuotaAssociations. Further edits to the definitions can be made via the Quota view</p>
+    <p>Selecting 'Submit' will create the new definitions and create a quota association. Further edits to the definitions can be made via the Quota view</p>
     {{ govukButton({
     "text": "Submit",
   }) }}

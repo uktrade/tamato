@@ -1024,12 +1024,6 @@ class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):
 
 
 class QuotaOrderNumbersSelectForm(forms.Form):
-    class Meta:
-        fields = [
-            "main_quota_order_number",
-            "sub_quota_order_number",
-        ]
-
     main_quota_order_number = AutoCompleteField(
         label="Main quota order number",
         queryset=models.QuotaOrderNumber.objects.all(),
@@ -1054,7 +1048,7 @@ class QuotaOrderNumbersSelectForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 HTML(
-                    '<h3 class="govuk-heading">Enter main and sub-quota order numbers</h3>'
+                    '<h2 class="govuk-heading">Enter main and sub-quota order numbers</h2>'
                 ),
             ),
             Div(
@@ -1074,12 +1068,6 @@ class QuotaOrderNumbersSelectForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        cleaned_data["main_quota_order_number"] = self.cleaned_data.get(
-            "main_quota_order_number"
-        )
-        cleaned_data["sub_quota_order_number"] = self.cleaned_data.get(
-            "sub_quota_order_number"
-        )
         return cleaned_data
 
 
@@ -1092,7 +1080,6 @@ class SelectSubQuotaDefinitionsForm(
     """
 
     def clean(self):
-
         cleaned_data = super().clean()
         selected_definitions = {
             key: value for key, value in cleaned_data.items() if value
@@ -1156,7 +1143,7 @@ class SubQuotaDefinitionsUpdatesForm(
         help_text=COEFFICIENT_HELP_TEXT,
         error_messages={
             "invalid": "Coefficient must be a number",
-            "required": "Enter the volume",
+            "required": "Enter the coefficient",
         },
     )
 
@@ -1165,7 +1152,7 @@ class SubQuotaDefinitionsUpdatesForm(
         widget=forms.TextInput(),
         error_messages={
             "invalid": "Initial volume must be a number",
-            "required": "Enter the volume",
+            "required": "Enter the initial volume",
         },
     )
     volume = forms.DecimalField(
@@ -1178,7 +1165,7 @@ class SubQuotaDefinitionsUpdatesForm(
     )
 
     measurement_unit = forms.ModelChoiceField(
-        queryset=MeasurementUnit.objects.current(),
+        queryset=MeasurementUnit.objects.current().order_by("code"),
         error_messages={"required": "Select the measurement unit"},
     )
 
@@ -1204,7 +1191,7 @@ class SubQuotaDefinitionsUpdatesForm(
     def init_fields(self):
         self.fields["measurement_unit"].queryset = self.fields[
             "measurement_unit"
-        ].queryset.order_by("code")
+        ].queryset
         self.fields["measurement_unit"].label_from_instance = (
             lambda obj: f"{obj.code} - {obj.description}"
         )
