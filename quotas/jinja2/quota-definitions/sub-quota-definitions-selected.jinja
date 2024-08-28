@@ -5,6 +5,7 @@
 {% block form %}
     {% set table_rows = [] %}
     {% set data = view.get_staged_definition_data() %}
+    
     {% for definition in data %}
       {% set edit_link -%}
         <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("sub_quota_definitions-ui-updates", kwargs={"sid": definition.main_definition.trackedmodel_ptr_id}) }}">Edit</a>
@@ -14,7 +15,6 @@
           {{ view.status_tag_generator(definition.definition_data).text | upper}}
         </span>
       {% endset %}
-      
       {{ table_rows.append([
         {"text": definition.main_definition.sid},
         {"text": "{:%d %b %Y}".format(definition.main_definition.valid_between.lower) },
@@ -26,10 +26,12 @@
         {"text": "-" },
         {"text": "-" },
       ]) or "" }}
+      {% set formatted_start_date = view.format_date(definition.definition_data.start_date) %}
+      {% set formatted_end_date = view.format_date(definition.definition_data.end_date) %}
       {{ table_rows.append([
         {"text": "-"},
-        {"text": definition.definition_data.start_date },
-        {"text": definition.definition_data.end_date },
+        {"text": formatted_start_date },
+        {"text": formatted_end_date },
         {"text": intcomma(definition.definition_data.volume) },
         {"text": definition.definition_data.measurement_unit_abbreviation or definition.main_definition.measurement_unit.abbreviation},
         {"text": definition.definition_data.relationship_type or "-" },

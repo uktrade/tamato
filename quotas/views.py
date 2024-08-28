@@ -1,8 +1,7 @@
+import datetime
 from datetime import date
 from decimal import Decimal
-from typing import Any, Dict
 from urllib.parse import urlencode
-from crispy_forms_gds.helper import FormHelper
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
@@ -18,14 +17,13 @@ from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import permissions
 from rest_framework import viewsets
 
-from common.business_rules import BusinessRuleViolation, UniqueIdentifyingFields
+from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.forms import delete_form_for
-from common.serializers import AutoCompleteSerializer, deserialize_date, serialize_date
+from common.serializers import AutoCompleteSerializer, serialize_date
 from common.tariffs_api import URLs
 from common.tariffs_api import get_quota_data
 from common.tariffs_api import get_quota_definitions_data
-from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import BusinessRulesMixin, SortingMixin
 from common.views import TamatoListView
@@ -838,6 +836,14 @@ class DuplicateDefinitionsWizard(
                     current_transaction=tx,
                 ).save()
 
+    def format_date(self, date_str):
+        """Parses and converts a date string from that used for storing data
+        to the one used in the TAP UI."""
+        if date_str:
+            date_object = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            return date_object.strftime("%d %b %Y")
+        return ""
+
     def get_staged_definition_data(self):
         selected_definitions = self.get_cleaned_data_for_step(
             "select_definition_periods"
@@ -969,7 +975,6 @@ class QuotaDefinitionDuplicateUpdates(FormView, BusinessRulesMixin):
             "coefficient": str(cleaned_data["coefficient"]),
             "relationship_type": cleaned_data["relationship_type"],
         }
-        print("*" * 30, f"{serialized_data=}")
         models.QuotaDefinitionDuplicator.objects.filter(
             main_definition=main_definition
         ).update(definition_data=serialized_data)
