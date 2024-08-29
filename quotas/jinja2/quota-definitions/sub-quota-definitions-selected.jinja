@@ -56,7 +56,8 @@
       "rows": table_rows,
     }) }}
     <p>Selecting 'Submit' will create the new definitions and create a quota association. Further edits to the definitions can be made via the Quota view</p>
-    {{ govukButton({
+  <div class="govuk-button-group">
+  {{ govukButton({
     "text": "Submit",
   }) }}
   {{ govukButton({
@@ -64,4 +65,5 @@
     "classes": "govuk-button--secondary",
     "href": url('sub_quota_definitions-ui-create', args={'step': 'start'}),
   }) }}
+  </div>
 {% endblock %}

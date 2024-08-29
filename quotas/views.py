@@ -830,14 +830,9 @@ class DuplicateDefinitionsWizard(
         """
         tx = WorkBasket.get_current_transaction(self.request)
         for definition in selected_definitions:
-            if (
-                len(
-                    models.QuotaDefinitionDuplicator.objects.filter(
+            if not models.QuotaDefinitionDuplicator.objects.filter(
                         current_transaction=tx, main_definition=definition
-                    )
-                )
-                == 0
-            ):
+                    ).exists():
                 serialized_definition_data = serialize_duplicate_data(definition)
                 models.QuotaDefinitionDuplicator(
                     main_definition=definition,
