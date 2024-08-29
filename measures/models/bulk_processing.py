@@ -516,54 +516,52 @@ class MeasuresBulkEditor(BulkProcessor):
             cleaned_data = self.get_forms_cleaned_data()
             deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
 
+            new_start_date = cleaned_data.get("start_date", None)
+            new_end_date = cleaned_data.get("end_date", False)
+            new_quota_order_number = cleaned_data.get("order_number", None)
+            new_generating_regulation = cleaned_data.get("generating_regulation", None)
+            new_duties = cleaned_data.get("duties", None)
             new_exclusions = [
                 e["excluded_area"]
                 for e in cleaned_data.get("formset-geographical_area_exclusions", [])
             ]
 
-            logger.info(f"CLEANED DATA: {cleaned_data}")
-            logger.info(f"DESERIALISED MEASURES: {deserialized_selected_measures}")
-            logger.info(f"NEW EXCLUSIONS: {new_exclusions}")
-
             if deserialized_selected_measures:
-                logger.info("INSIDE IF STATEMENT")
                 edited_measures = []
-                logger.info(f" INITIAL EDITED MEASURES ARRAY: {edited_measures}")
+                
                 for measure in deserialized_selected_measures:
-                    logger.info("INSIDE FOR LOOP")
-                    logger.info(f"MEASURE: {measure.__dict__}")
-                    logger.info(f"CLEANED DATA: {cleaned_data}")
                     new_measure = measure.new_version(
                         workbasket=self.workbasket,
                         update_type=UpdateType.UPDATE,
                         valid_between=TaricDateRange(
                             lower=(
-                                # Freaking out here even though it's an if?? not sure why
-                                cleaned_data['start_date']
-                                if cleaned_data['start_date']
+                                new_start_date
+                                if new_start_date
                                 else measure.valid_between.lower
                             ),
                             upper=(
-                                cleaned_data['end_date']
-                                if cleaned_data['end_date'] is not False
+                                new_end_date
+                                if new_end_date
                                 else measure.valid_between.upper
                             ),
                         ),
                         order_number=(
-                            cleaned_data['order_number']
-                            if cleaned_data['order_number']
+                            new_quota_order_number
+                            if new_quota_order_number
                             else measure.order_number
                         ),
                         generating_regulation=(
-                            cleaned_data['generating_regulation']
-                            if cleaned_data['generating_regulation']
+                            new_generating_regulation
+                            if new_generating_regulation
                             else measure.generating_regulation
                         ),
                     )
-                    logger.info(f"NEW MEASURE: {new_measure}")
+                    logger.info(f"NEW MEASURE: {new_measure.__dict__}")
+                    logger.info("UPDATE FUNCTIONS STARTING")
+                    logger.info(f"CLEANED DATA: {cleaned_data}")
                     update_measure_components(
                         measure=new_measure,
-                        duties=cleaned_data['duties'],
+                        duties=new_duties,
                         workbasket=self.workbasket,
                     )
                     update_measure_condition_components(
@@ -623,7 +621,8 @@ class MeasuresBulkEditor(BulkProcessor):
             else:
                 all_cleaned_data.update(form.cleaned_data)
         
-            return all_cleaned_data
+        logger.info(f"RESULT OF ALL CLEANED DATA: {all_cleaned_data}")
+        return all_cleaned_data
 
     def _log_form_errors(self, form_class, form_or_formset) -> None:
         """Output errors associated with a Form or Formset instance, handling
