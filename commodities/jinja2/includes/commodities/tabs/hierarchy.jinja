@@ -10,38 +10,41 @@
 
 <h2 class="govuk-heading-l">Commodity hierarchy</h2>
 
-{% if snapshot.commodities|length == 1 %}
+{% if not is_current %}
+  <p>This commodity has been end dated so no longer forms part of the hierarchy.</p>
+
+{% elif snapshot.commodities|length == 1 %}
   {{ leaf_commodity(snapshot.commodities[0]) }}
+
 {% else %}
+  {% for comm in snapshot.commodities %}
 
-{% for comm in snapshot.commodities %}
+    {% if loop.nextitem and loop.nextitem.indent > comm.indent %}
+    <details class="govuk-details" data-code="{{comm.item_id}}-{{comm.suffix}}"{% if comm in snapshot.ancestors[this_commodity] %}open=""{% endif %}>
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
+        {{ comm.code }} - {{ comm.description }} ({{ comm.suffix }})
+      </span>
+    </summary>
 
-  {% if loop.nextitem and loop.nextitem.indent > comm.indent %}
-  <details class="govuk-details" data-code="{{comm.item_id}}-{{comm.suffix}}"{% if comm in snapshot.ancestors[this_commodity] %}open=""{% endif %}>
-  <summary class="govuk-details__summary">
-    <span class="govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
-      {{ comm.code }} - {{ comm.description }} ({{ comm.suffix }})
-    </span>
-  </summary>
+    <a class="govuk-link govuk-!-font-size-16" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">View commodity<span class="govuk-visually-hidden">{{ comm.code }}</span></a>
 
-  <a class="govuk-link govuk-!-font-size-16" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">View commodity<span class="govuk-visually-hidden">{{ comm.code }}</span></a>
+    {% elif not loop.nextitem or loop.nextitem.indent <= comm.indent %}
+      {{ leaf_commodity(comm) }}
 
-  {% elif not loop.nextitem or loop.nextitem.indent <= comm.indent %}
-    {{ leaf_commodity(comm) }}
+      {% if not loop.nextitem %}
+        {% for i in range(comm.indent) %}
+          </details>
+        {% endfor %}
+      {% else %}
+        {% for i in range(comm.indent - loop.nextitem.indent) %}
+          </details>
+        {% endfor %}
+      {% endif %}
 
-    {% if not loop.nextitem %}
-      {% for i in range(comm.indent) %}
-        </details>
-      {% endfor %}
-    {% else %}
-      {% for i in range(comm.indent - loop.nextitem.indent) %}
-        </details>
-      {% endfor %}
     {% endif %}
 
-  {% endif %}
-
-{% endfor %}
+  {% endfor %}
 
 {% endif %}
 
