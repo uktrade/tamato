@@ -1189,9 +1189,6 @@ class SubQuotaDefinitionsUpdatesForm(
         fields["end_date"].initial = deserialize_date(duplicate_data["end_date"])
 
     def init_fields(self):
-        self.fields["measurement_unit"].queryset = self.fields[
-            "measurement_unit"
-        ].queryset
         self.fields["measurement_unit"].label_from_instance = (
             lambda obj: f"{obj.code} - {obj.description}"
         )

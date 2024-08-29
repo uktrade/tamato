@@ -65,7 +65,7 @@ urlpatterns = [
         name="quota_definition-ui-create",
     ),
     path(
-        f"quotas/duplicate_quota_definitions/",
+        f"quotas/duplicate_quota_definitions/<step>",
         views.DuplicateDefinitionsWizard.as_view(
             url_name="sub_quota_definitions-ui-create",
             done_step_name="complete",
@@ -73,7 +73,7 @@ urlpatterns = [
         name="sub_quota_definitions-ui-create",
     ),
     path(
-        f"quotas/duplicate_quota_definitions/<step>",
+        f"quotas/duplicate_quota_definitions/",
         views.DuplicateDefinitionsWizard.as_view(
             url_name="sub_quota_definitions-ui-create",
             done_step_name="complete",

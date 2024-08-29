@@ -11,6 +11,7 @@ from common.serializers import serialize_date, deserialize_date
 from common.validators import UpdateType
 from geo_areas.serializers import GeographicalAreaSerializer
 import measures
+from measures.models.tracked_models import MeasurementUnit
 from measures.unit_serializers import MeasurementUnitQualifierSerializer
 from measures.unit_serializers import MeasurementUnitSerializer
 from measures.unit_serializers import MonetaryUnitSerializer
@@ -304,7 +305,7 @@ def deserialize_definition_data(self, definition):
     end_date = deserialize_date(definition.definition_data["end_date"])
     initial_volume = Decimal(definition.definition_data["initial_volume"])
     vol = Decimal(definition.definition_data["volume"])
-    measurement_unit = measures.models.tracked_models.MeasurementUnit.objects.get(
+    measurement_unit = MeasurementUnit.objects.get(
         code=definition.definition_data["measurement_unit_code"]
     )
     sub_order_number = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)[
