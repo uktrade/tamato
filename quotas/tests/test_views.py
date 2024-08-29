@@ -1849,13 +1849,12 @@ def test_definition_duplicator_update_data_view_renders(
     assert response.status_code == 200
 
 
-def test_definition_duplicator_creates_definition_and_associaion(
+def test_definition_duplicator_creates_definition_and_association(
     quota_definition_1, main_quota_order_number, sub_quota_order_number, session_request
 ):
     """
     Pass data to the Duplicator Wizard and verify that the created definition
     contains the expected data.
-    This must include: quota_order_numbers,
     """
     order_number_data = {
         "duplicate_definitions_wizard-current_step": "quota_order_numbers",
@@ -1903,7 +1902,6 @@ def test_definition_duplicator_creates_definition_and_associaion(
         main_definition=quota_definition_1
     )[0]
 
-    association_table_before = models.QuotaAssociation.objects.all()
     association_table_before = models.QuotaAssociation.objects.all()
     assert len(association_table_before) == 0
     wizard.create_definition(duplicated_data)
