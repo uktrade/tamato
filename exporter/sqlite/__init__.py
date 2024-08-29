@@ -73,8 +73,8 @@ def make_export(connection: apsw.Connection):
             Path(temp_sqlite_db.name),
         )
         plan = make_export_plan(plan_runner)
-        # make_tamato_database() creates a Connection instance that needs
-        # closing once an in-memory plan has been created from it.
+        # Runner.make_tamato_database() (above) creates a Connection instance
+        # that needs closing once an in-memory plan has been created from it.
         plan_runner.database.close()
 
     export_runner = runner.Runner(connection)
