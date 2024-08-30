@@ -1148,7 +1148,7 @@ class SubQuotaDefinitionsUpdatesForm(
     )
 
     initial_volume = forms.DecimalField(
-        label="Volume",
+        label="Initial volume",
         widget=forms.TextInput(),
         error_messages={
             "invalid": "Initial volume must be a number",
@@ -1290,12 +1290,12 @@ class SubQuotaDefinitionsUpdatesForm(
                         css_class="govuk-grid-column-one-half",
                     ),
                     Div(
-                        "volume",
+                        "initial_volume",
                         "measurement_unit",
                         css_class="govuk-grid-column-one-half",
                     ),
                     Div(
-                        "initial_volume",
+                        "volume",
                         css_class="govuk-grid-column-one-half",
                     ),
                     css_class="govuk-grid-row",
