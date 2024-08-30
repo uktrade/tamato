@@ -12,12 +12,12 @@
 
 {% set links = [
     {
-      "text": "Quota definitions",
+      "text": "Quota definition periods",
       "href": url('quota_definition-ui-list', kwargs={"sid": quota.sid}),
       "selected": quota_type == None
     },
     {
-      "text": "Sub-quotas",
+      "text": "Sub-quota definition periods",
       "href": url('quota_definition-ui-list-filter', kwargs={"sid": quota.sid, "quota_type": "sub_quotas"}),
       "selected": quota_type == "sub_quotas",
     },
@@ -61,4 +61,6 @@
   {% endif %}
   </div>
 </div>
+<br>
+<a href="{{ url('quota-ui-detail', kwargs={"sid": quota.sid}) }}" class="govuk-button govuk-button--secondary" >Back to quota ID</a>
 {% endblock %}
