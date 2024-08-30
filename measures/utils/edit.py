@@ -8,6 +8,8 @@ from typing import Type
 from measures.util import diff_components
 from workbaskets import models as workbasket_models
 
+import logging
+logger = logging.getLogger(__name__)
 
 def update_measure_components(
         duties: str,
@@ -15,6 +17,10 @@ def update_measure_components(
         workbasket: Type[TrackedModel] = "workbasket_models.WorkBasket",
     ):
         """Updates the measure components associated to the measure."""
+        
+        logger.info("UPDATE MEASURE COMPONENT CALLED")
+        logger.info(f"MEASURE DUTY SENTENCE: {measure.duty_sentence}")
+        logger.info(f"DUTIES : {duties}")
         diff_components(
             instance=measure,
             duty_sentence=duties if duties else measure.duty_sentence,
@@ -30,6 +36,7 @@ def update_measure_condition_components(
 ):
     """Updates the measure condition components associated to the
     measure."""
+    logger.info("UPDATE MEASURE CONDITION CALLED")
     conditions = measure.conditions.current()
     for condition in conditions:
         condition.new_version(
@@ -45,6 +52,8 @@ def update_measure_excluded_geographical_areas(
     measure: Type[TrackedModel] = "measure_models.Measure",
 ):
     """Updates the excluded geographical areas associated to the measure."""
+
+    logger.info("UPDATE MEASURE EXCLUDED GEO AREAS CALLED")
     existing_exclusions = measure.exclusions.current()
 
     # Update any exclusions to new measure version
@@ -97,6 +106,7 @@ def update_measure_excluded_geographical_areas(
 
 def update_measure_footnote_associations(measure, workbasket):
     """Updates the footnotes associated to the measure."""
+    logger.info("UPDATE MEASURE FOOTNOTE ASSOSH CALLED")
     footnote_associations = (
         measure_models.FootnoteAssociationMeasure.objects.current().filter(
             footnoted_measure__sid=measure.sid,
