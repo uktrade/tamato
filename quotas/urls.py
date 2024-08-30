@@ -60,6 +60,11 @@ urlpatterns = [
         name="quota_definition-ui-list",
     ),
     path(
+        f"quotas/<sid>/quota_definitions/<quota_type>",
+        views.QuotaDefinitionList.as_view(),
+        name="quota_definition-ui-list-filter",
+    ),
+    path(
         f"quotas/<sid>/quota_definitions/create/",
         views.QuotaDefinitionCreate.as_view(),
         name="quota_definition-ui-create",
