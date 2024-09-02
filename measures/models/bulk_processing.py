@@ -556,9 +556,9 @@ class MeasuresBulkEditor(BulkProcessor):
                             else measure.generating_regulation
                         ),
                     )
-                    logger.info(f"NEW MEASURE: {new_measure.__dict__}")
-                    logger.info(f"CLEANED DATA: {cleaned_data}")
                     logger.info("UPDATE FUNCTIONS STARTING")
+                    logger.info(f"BE - NEW MEASURE: {new_measure.__dict__}")
+                    logger.info(f"BE - NEW DUTIES: {new_duties}")
                     update_measure_components(
                         measure=new_measure,
                         duties=new_duties,

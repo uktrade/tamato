@@ -19,8 +19,8 @@ def update_measure_components(
         """Updates the measure components associated to the measure."""
         
         logger.info("UPDATE MEASURE COMPONENT CALLED")
-        logger.info(f"MEASURE DUTY SENTENCE: {measure.duty_sentence}")
-        logger.info(f"DUTIES : {duties}")
+        logger.info(f"UMC - MEASURE DUTY SENTENCE: {measure.duty_sentence}")
+        logger.info(f"UMC - DUTIES: {duties}")
         diff_components(
             instance=measure,
             duty_sentence=duties if duties else measure.duty_sentence,
