@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -40,6 +41,7 @@ from quotas.filters import OrderNumberFilterBackend
 from quotas.filters import QuotaFilter
 from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
+from quotas.models import QuotaDefinition
 from quotas.models import QuotaSuspension
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
@@ -821,4 +823,20 @@ class QuotaBlockingConfirmCreate(TrackedModelDetailView):
                 "list_url": f"{list_url}?{url_param}",
             },
         )
+        return context
+
+
+class QuotaAssociationView(ListView):
+    template_name = "quota-definitions/quota-associations.jinja"
+
+    def get_queryset(self):
+        quota_definition = QuotaDefinition.objects.all().get(sid=self.kwargs["sid"])
+        associations = QuotaAssociation.objects.latest_approved().filter(
+            Q(main_quota=quota_definition) | Q(sub_quota=quota_definition),
+        )
+        return associations
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["sid"] = self.kwargs["sid"]
         return context

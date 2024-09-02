@@ -1,0 +1,48 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "View quota associations" %}
+
+{% block content %}
+
+<h1> {{page_title}} </h1>
+  {% set table_rows = [] %}
+
+
+  
+  {% for association in object_list %}
+
+    {% set edit_link %}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('measure-ui-detail', kwargs={'sid': association.pk}) }}">Edit</a>
+    {% endset %}
+
+    {{ table_rows.append([
+      {"text": association.pk},
+      {"text": "Normal" if association.sub_quota_relation_type == 'NM' else "Equivalent"},
+      {"text": association.coefficient},
+      {"text": association.main_quota.sid},
+      {"text": association.sub_quota.sid},
+      {"html": edit_link},
+    ]) or "" }}
+  {% endfor %}
+
+  {% if object_list %}
+  <p>There are {{ object_list|length }} associations for quota definition {{ sid }}.</p>
+    {{ govukTable({
+      "head": [
+        {"text": "Quota association ID"},
+        {"text": "Sub quota relation type"},
+        {"text": "Coefficient"},
+        {"text": "Main quota definition SID"},
+        {"text": "Sub quota definition SID"},
+        {"text": "Edit association"},
+      ],
+      "rows": table_rows
+    }) }}
+  {% else %}
+    <p class="govuk-body">This quota definition has no associations.</p>
+  {% endif %}
+
+{% endblock %}

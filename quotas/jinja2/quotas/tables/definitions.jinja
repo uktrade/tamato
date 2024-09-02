@@ -50,7 +50,9 @@
       <a href="{{ url('quota_definition-ui-delete', args=[object.sid])}}" class="govuk-link">Delete</a>
     {% endif %}
   {% endset %}
-
+    {% set associations_link %}
+    <a class="govuk-link" href="{{ url("quota_association-ui-view", kwargs={"sid": object.sid}) }}">View associations</a>
+  {%- endset %}
   {{ table_rows.append([
     {"text": object_details },
     {"text": quota_data[object.sid].status if quota_data[object.sid] else "—" },
@@ -61,6 +63,7 @@
     {"text": intcomma(quota_data[object.sid].balance) if quota_data[object.sid] else "—" },
     {"text": object.measurement_unit.abbreviation|title},
     {"text": actions_html },
+    {"text": associations_link },
   ]) or "" }}
 {% endfor %}
 
@@ -83,6 +86,7 @@
     {"text": "Balance"},
     {"text": "Measurement unit"},
     {"text": "Actions"},
+    {"text": "View associations"},
   ],
   "rows": table_rows
 }) }}

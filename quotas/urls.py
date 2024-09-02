@@ -115,6 +115,11 @@ urlpatterns = [
         name="quota_definition-ui-confirm-update",
     ),
     path(
+        f"quota_definitions/<sid>/quota_associations/",
+        views.QuotaAssociationView.as_view(),
+        name="quota_association-ui-view",
+    ),
+    path(
         f"quota_order_number_origins/<sid>/edit/",
         views.QuotaOrderNumberOriginUpdate.as_view(),
         name="quota_order_number_origin-ui-edit-update",
