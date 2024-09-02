@@ -876,7 +876,7 @@ class DuplicateDefinitionsWizard(
             )
             kwargs["objects"] = main_quota_definitions
 
-        if step == self.SELECTED_DEFINITIONS:
+        elif step == self.SELECTED_DEFINITIONS:
             selected_definition_periods = self.get_cleaned_data_for_step(
                 "select_definition_periods"
             )["selected_definitions"]

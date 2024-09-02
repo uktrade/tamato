@@ -1066,10 +1066,6 @@ class QuotaOrderNumbersSelectForm(forms.Form):
             ),
         )
 
-    def clean(self):
-        cleaned_data = super().clean()
-        return cleaned_data
-
 
 class SelectSubQuotaDefinitionsForm(
     SelectableObjectsForm,
