@@ -231,6 +231,15 @@ class MeasureEditWizard(
             )
 
     def done(self, form_list, **kwargs):
+        if settings.MEASURES_ASYNC_EDIT:
+            return self.async_done(form_list, **kwargs)
+        else:
+            return self.sync_done(form_list, **kwargs)
+
+    def async_done(self, form_list, **kwargs):
+        pass
+
+    def sync_done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
         selected_measures = self.get_queryset()
         workbasket = WorkBasket.current(self.request)
