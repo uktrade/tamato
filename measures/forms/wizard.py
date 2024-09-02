@@ -910,7 +910,7 @@ class MeasureEndDateForm(forms.Form, SerializableFormMixin):
         return kwargs
 
 
-class MeasureRegulationForm(forms.Form):
+class MeasureRegulationForm(forms.Form, SerializableFormMixin):
     generating_regulation = AutoCompleteField(
         label="Regulation ID",
         help_text="Select the regulation which provides the legal basis for the measures.",
@@ -935,6 +935,30 @@ class MeasureRegulationForm(forms.Form):
                 data_prevent_double_click="true",
             ),
         )
+        
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        selected_measures = kwargs.get("selected_measures")
+        selected_measures_pks = []
+        for measure in selected_measures:
+            selected_measures_pks.append(measure.id)
+
+        serializable_kwargs = {
+            "selected_measures": selected_measures_pks,
+        }
+
+        return serializable_kwargs
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        serialized_selected_measures_pks = form_kwargs.get("selected_measures")
+        deserialized_selected_measures = models.Measure.objects.filter(pk__in=serialized_selected_measures_pks)
+
+        kwargs = {
+            "selected_measures": deserialized_selected_measures,
+        }
+
+        return kwargs
 
 
 class MeasureDutiesForm(forms.Form):
