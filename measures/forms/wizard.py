@@ -1061,7 +1061,7 @@ class MeasureGeographicalAreaExclusionsForm(forms.Form):
         )
 
 
-class MeasureGeographicalAreaExclusionsFormSet(FormSet):
+class MeasureGeographicalAreaExclusionsFormSet(FormSet, SerializableFormMixin):
     """Allows editing the geographical area exclusions of multiple measures in
     `MeasureEditWizard`."""
 
