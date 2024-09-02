@@ -935,7 +935,7 @@ class MeasureRegulationForm(forms.Form, SerializableFormMixin):
                 data_prevent_double_click="true",
             ),
         )
-        
+
     @classmethod
     def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
         selected_measures = kwargs.get("selected_measures")
@@ -961,7 +961,7 @@ class MeasureRegulationForm(forms.Form, SerializableFormMixin):
         return kwargs
 
 
-class MeasureDutiesForm(forms.Form):
+class MeasureDutiesForm(forms.Form, SerializableFormMixin):
     duties = forms.CharField(
         label="Duties",
         help_text="Enter the duty that applies to the measures.",
@@ -1003,6 +1003,30 @@ class MeasureDutiesForm(forms.Form):
                 validate_duties(duties, measure.valid_between.lower)
 
         return cleaned_data
+    
+    @classmethod
+    def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
+        selected_measures = kwargs.get("selected_measures")
+        selected_measures_pks = []
+        for measure in selected_measures:
+            selected_measures_pks.append(measure.id)
+
+        serializable_kwargs = {
+            "selected_measures": selected_measures_pks,
+        }
+
+        return serializable_kwargs
+
+    @classmethod
+    def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
+        serialized_selected_measures_pks = form_kwargs.get("selected_measures")
+        deserialized_selected_measures = models.Measure.objects.filter(pk__in=serialized_selected_measures_pks)
+
+        kwargs = {
+            "selected_measures": deserialized_selected_measures,
+        }
+
+        return kwargs
 
 
 class MeasureGeographicalAreaExclusionsForm(forms.Form):
