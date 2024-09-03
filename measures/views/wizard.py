@@ -108,6 +108,10 @@ class MeasureEditWizard(
             self.steps.current,
             "measures/edit-wizard-step.jinja",
         )
+    
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
@@ -246,7 +250,30 @@ class MeasureEditWizard(
             return self.sync_done(form_list, **kwargs)
 
     def async_done(self, form_list, **kwargs):
-        pass
+        logger.info("Editing measures asynchronously.")
+        serializable_data = self.all_serializable_form_data()
+        serializable_form_kwargs = self.all_serializable_form_kwargs()
+
+        db_selected_measures = []
+        for measure in self.get_queryset():
+            db_selected_measures.append(measure.id)
+
+        measures_bulk_editor = models.MeasuresBulkEditor.objects.create(
+            form_data=serializable_data,
+            form_kwargs=serializable_form_kwargs,
+            workbasket=self.workbasket,
+            user=self.request.user,
+            selected_measures=db_selected_measures,
+        )
+        self.session_store.clear()
+        measures_bulk_editor.schedule_task()
+
+        return redirect(
+            reverse(
+                "workbaskets:workbasket-ui-review-measures",
+                kwargs={"pk": self.workbasket.pk},
+            ),
+        )
 
     def sync_done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
