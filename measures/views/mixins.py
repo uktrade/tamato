@@ -54,11 +54,27 @@ class MeasureSelectionQuerysetMixin(MeasureSelectionMixin):
 
 
 class MeasureSerializableWizardMixin():
-    # Make this work
+    """ A Mixin for the wizard forms that utilise asynchronous bulk processing. This mixin provides the functionality to go through each form
+    and serialize the data ready for storing in the database."""
+    def get_data_form_list(self) -> dict:
+        """
+        Returns a form list based on form_list, conditionally including only
+        those items as per condition_list and also appearing in data_form_list.
+        The list is generated dynamically because conditions in condition_list
+        may be dynamic.
+        Essentially, version of `WizardView.get_form_list()` filtering in only
+        those list items appearing in `data_form_list`.
+        """
+        data_form_keys = [key for key, form in self.data_form_list]
+        return {
+            form_key: form_class
+            for form_key, form_class in self.get_form_list().items()
+            if form_key in data_form_keys
+        }
+
     def all_serializable_form_data(self) -> Dict:
         """
         Returns serializable data for all wizard steps.
-
         This is a re-implementation of
         MeasureCreateWizard.get_all_cleaned_data(), but using self.data after
         is_valid() has been successfully run.
@@ -74,7 +90,6 @@ class MeasureSerializableWizardMixin():
     def serializable_form_data_for_step(self, step) -> Dict:
         """
         Returns serializable data for a wizard step.
-
         This is a re-implementation of WizardView.get_cleaned_data_for_step(),
         returning the serializable version of data in place of the form's
         regular cleaned_data.
@@ -105,41 +120,3 @@ class MeasureSerializableWizardMixin():
         form_class = self.form_list[step]
 
         return form_class.serializable_init_kwargs(form_kwargs)
-
-    def get_all_cleaned_data(self):
-        """
-        Returns a merged dictionary of all step cleaned_data. If a step contains
-        a `FormSet`, the key will be prefixed with 'formset-' and contain a list
-        of the formset cleaned_data dictionaries, as expected in
-        `create_measures()`.
-
-        Note: This patched version of `super().get_all_cleaned_data()` takes advantage of retrieving previously-saved
-        cleaned_data by summary page to avoid revalidating forms unnecessarily.
-        """
-        all_cleaned_data = {}
-        for form_key in self.get_form_list():
-            cleaned_data = self.get_cleaned_data_for_step(form_key)
-            if isinstance(cleaned_data, (tuple, list)):
-                all_cleaned_data.update(
-                    {
-                        f"formset-{form_key}": cleaned_data,
-                    },
-                )
-            else:
-                all_cleaned_data.update(cleaned_data)
-        return all_cleaned_data
-
-    def get_cleaned_data_for_step(self, step):
-        """
-        Returns cleaned data for a given `step`.
-
-        Note: This patched version of `super().get_cleaned_data_for_step` temporarily saves the cleaned_data
-        to provide quick retrieval should another call for it be made in the same request (as happens in
-        `get_form_kwargs()` and template for summary page) to avoid revalidating forms unnecessarily.
-        """
-        self.cleaned_data = getattr(self, "cleaned_data", {})
-        if step in self.cleaned_data:
-            return self.cleaned_data[step]
-
-        self.cleaned_data[step] = super().get_cleaned_data_for_step(step)
-        return self.cleaned_data[step]
