@@ -42,6 +42,7 @@ class MeasureEditWizard(
     PermissionRequiredMixin,
     MeasureSelectionQuerysetMixin,
     NamedUrlSessionWizardView,
+    MeasureSerializableWizardMixin,
 ):
     """
     Multipart form wizard for editing multiple measures.
@@ -52,8 +53,7 @@ class MeasureEditWizard(
     storage_name = "measures.wizard.MeasureEditSessionStorage"
     permission_required = ["common.change_trackedmodel"]
 
-    form_list = [
-        (START, forms.MeasuresEditFieldsForm),
+    data_form_list = [
         (MeasureEditSteps.START_DATE, forms.MeasureStartDateForm),
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
         (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
@@ -64,6 +64,14 @@ class MeasureEditWizard(
             forms.MeasureGeographicalAreaExclusionsFormSet,
         ),
     ]
+    """Forms in this wizard's steps that collect user data."""
+
+    form_list = [
+        (START, forms.MeasuresEditFieldsForm),
+        *data_form_list,
+    ]
+    """All Forms in this wizard's steps, including both those that collect user
+    data and those that don't."""
 
     templates = {
         START: "measures/edit-multiple-start.jinja",
