@@ -383,12 +383,9 @@ class QA2(ValidityPeriodContained):
 
 def check_QA2_dict(sub_definition_valid_between, main_definition_valid_between):
     """confirms data is compliant with QA2"""
-    if (sub_definition_valid_between.lower < main_definition_valid_between.lower) or (
-        sub_definition_valid_between.upper > main_definition_valid_between.upper
-    ):
-        raise ValidationError(
-            "QA2: Validity period for sub quota must be within the validity period of the main quota"
-        )
+    return (
+        sub_definition_valid_between.lower >= main_definition_valid_between.lower
+    ) and (sub_definition_valid_between.upper <= main_definition_valid_between.upper)
 
 
 class QA3(BusinessRule):
@@ -407,10 +404,13 @@ class QA3(BusinessRule):
     def validate(self, association):
         main = association.main_quota
         sub = association.sub_quota
-        if not (
-            sub.measurement_unit == main.measurement_unit
-            and sub.volume <= main.volume
-            and sub.initial_volume <= main.initial_volume
+        if not check_QA3_dict(
+            main_definition_unit=main.measurement_unit,
+            sub_definition_unit=sub.measurement_unit,
+            main_definition_volume=main.volume,
+            sub_definition_volume=sub.volume,
+            main_initial_volume=main.initial_volume,
+            sub_initial_volume=sub.initial_volume,
         ):
             raise self.violation(association)
 
@@ -420,19 +420,18 @@ def check_QA3_dict(
     sub_definition_unit,
     main_definition_volume,
     sub_definition_volume,
+    sub_initial_volume,
+    main_initial_volume,
 ):
     """
     Confirms data is compliant with QA3
     See note above about changing the unit types.
-    (This function is used for the quota definition duplicator, which doesn't allow for editing the initial_volume, therefore this check is omitted)
     """
-    if not (
+    return (
         main_definition_unit == sub_definition_unit
         and sub_definition_volume <= main_definition_volume
-    ):
-        raise ValidationError(
-            "QA3: When converted to the measurement unit of the main quota, the volume of a sub-quota must always be lower than or equal to the volume of the main quota"
-        )
+        and sub_initial_volume <= main_initial_volume
+    )
 
 
 class QA4(BusinessRule):
@@ -444,13 +443,12 @@ class QA4(BusinessRule):
     """
 
     def validate(self, association):
-        if not association.coefficient > 0:
+        if not check_QA4_dict(association.coefficient):
             raise self.violation(association)
 
 
 def check_QA4_dict(coefficient):
-    if not coefficient > 0:
-        raise ValidationError("QA4: A coefficient must be a positive decimal number")
+    return coefficient > 0
 
 
 class QA5(BusinessRule):
@@ -464,7 +462,7 @@ class QA5(BusinessRule):
 
     def validate(self, association):
         if association.sub_quota_relation_type == SubQuotaType.EQUIVALENT:
-            if association.coefficient == Decimal("1.00000"):
+            if not check_QA5_equivalent_coefficient(association.coefficient):
                 raise self.violation(
                     model=association,
                     message=(
@@ -472,14 +470,7 @@ class QA5(BusinessRule):
                         "coefficient not equal to 1"
                     ),
                 )
-
-            if (
-                association.main_quota.sub_quotas.values("volume")
-                .order_by("volume")
-                .distinct("volume")
-                .count()
-                > 1
-            ):
+            if not check_QA5_equivalent_volumes(association.main_quota):
                 raise self.violation(
                     model=association,
                     message=(
@@ -489,38 +480,33 @@ class QA5(BusinessRule):
                     ),
                 )
 
-        elif (
-            association.sub_quota_relation_type == SubQuotaType.NORMAL
-            and association.coefficient != Decimal("1.00000")
-        ):
-            raise self.violation(
-                model=association,
-                message=(
-                    "A sub-quota defined with the 'normal' type must have a coefficient "
-                    "equal to 1"
-                ),
-            )
+        elif association.sub_quota_relation_type == SubQuotaType.NORMAL:
+            if not check_QA5_normal_coefficient(association.coefficient):
+                raise self.violation(
+                    model=association,
+                    message=(
+                        "A sub-quota defined with the 'normal' type must have a coefficient "
+                        "equal to 1"
+                    ),
+                )
 
 
-def check_QA5_dict(original_definition, volume, relationship_type, coefficient):
-    if relationship_type == "NM" and Decimal(coefficient) != Decimal("1.000"):
-        raise ValidationError(
-            "QA5: Where the relationship type is Normal, the coefficient value must be 1",
-        )
-    elif relationship_type == "EQ":
-        if Decimal(coefficient) == Decimal("1.000"):
-            raise ValidationError(
-                "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1",
-            )
-        if original_definition.sub_quotas.values("volume").order_by("volume").distinct(
-            "volume"
-        ).count() > 1 or (
-            original_definition.sub_quotas.values("volume")[0]["volume"]
-            != Decimal(volume)
-        ):
-            raise ValidationError(
-                "Whenever a sub-quota is defined with the 'equivalent' type, it must have the same volume as the ones associated with the parent quota"
-            )
+def check_QA5_equivalent_coefficient(coefficient):
+    return coefficient != Decimal("1.000")
+
+
+def check_QA5_equivalent_volumes(original_definition, volume=None):
+    return (
+        original_definition.sub_quotas.values("volume")
+        .order_by("volume")
+        .distinct("volume")
+        .count()
+        == 1
+    )
+
+
+def check_QA5_normal_coefficient(coefficient):
+    return Decimal(coefficient) == Decimal("1.000")
 
 
 class QA6(BusinessRule):
@@ -528,22 +514,15 @@ class QA6(BusinessRule):
     relation type."""
 
     def validate(self, association):
-        if (
-            association.main_quota.sub_quota_associations.approved_up_to_transaction(
-                association.transaction,
-            )
-            .values(
-                "sub_quota_relation_type",
-            )
-            .order_by("sub_quota_relation_type")
-            .distinct()
-            .count()
-            > 1
+        if not check_QA6_dict(
+            association.main_quota,
+            association.sub_quota_relation_type,
+            association.transaction,
         ):
             raise self.violation(association)
 
 
-def check_QA6_dict(main_definition, new_relation_type):
+def check_QA6_dict(main_quota, new_relation_type, transaction=None):
     """
     Confirms the provided data is compliant with the above businsess rule.
     The above test will be re-run so as to separate historic violations, which will require TAP to fix, from a user trying to introduce a new violation.
@@ -551,21 +530,17 @@ def check_QA6_dict(main_definition, new_relation_type):
     we can check the new type against any one of the old type
     """
     relation_type = (
-        main_definition.sub_quota_associations.values("sub_quota_relation_type")
+        main_quota.sub_quota_associations.approved_up_to_transaction(
+            transaction,
+        )
+        .values("sub_quota_relation_type")
         .order_by("sub_quota_relation_type")
         .distinct()
     )
     if relation_type.count() > 1:
-        raise ValidationError(
-            "An error has occured: more than one relation type was returned, please contact TAP"
-        )
-    elif (
-        relation_type.count() == 1
-        and relation_type[0]["sub_quota_relation_type"] != new_relation_type
-    ):
-        raise ValidationError(
-            f"QA6: Sub-quotas associated with the same main quota must have the same relation type. {relation_type} does not match {new_relation_type}"
-        )
+        return False
+    else:
+        return relation_type[0]["sub_quota_relation_type"] == new_relation_type
 
 
 class SameMainAndSubQuota(BusinessRule):
