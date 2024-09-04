@@ -1067,7 +1067,6 @@ class SelectSubQuotaDefinitionsForm(
 ):
     """
     Form to select the main quota definitions that are to be duplicated.
-    Before selecting, we ensure the QuotaDefinitionDuplicator table is empty.
     """
 
     def __init__(self, *args, **kwargs):
@@ -1123,7 +1122,6 @@ class SelectedDefinitionsForm(forms.Form):
                 raise ValidationError(
                     "Each definition period must have a specified relationship and co-efficient value"
                 )
-        # Coefficient & relationship_type are here
         return cleaned_data
 
 

@@ -1830,6 +1830,7 @@ def test_duplicate_definition_wizard_get_form_kwargs(
             selected_definitions = models.QuotaDefinition.objects.filter(
                 sid__in=[quota_definition_1.sid, quota_definition_2.sid]
             ).values("pk")
+            session = kwargs['request'].session
             parent_ids = kwargs["objects"].values("main_definition_id")
             assert parent_ids[0]["main_definition_id"] == selected_definitions[0]["pk"]
             assert parent_ids[1]["main_definition_id"] == selected_definitions[1]["pk"]
