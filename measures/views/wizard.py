@@ -27,7 +27,10 @@ from measures.conditions import show_step_quota_origins
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.creators import MeasuresCreator
-from measures.util import diff_components
+from measures.util import update_measure_components
+from measures.util import update_measure_condition_components
+from measures.util import update_measure_excluded_geographical_areas
+from measures.util import update_measure_footnote_associations
 from measures.views.mixins import MeasureSerializableWizardMixin
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
@@ -216,23 +219,23 @@ class MeasureEditWizard(
                     else measure.generating_regulation
                 ),
             )
-            self.update_measure_components(
+            update_measure_components(
                 measure=new_measure,
                 duties=new_duties,
                 workbasket=workbasket,
             )
-            self.update_measure_condition_components(
+            update_measure_condition_components(
                 measure=new_measure,
                 workbasket=workbasket,
             )
-            self.update_measure_excluded_geographical_areas(
+            update_measure_excluded_geographical_areas(
                 edited="geographical_area_exclusions"
                 in cleaned_data.get("fields_to_edit", []),
                 measure=new_measure,
                 exclusions=new_exclusions,
                 workbasket=workbasket,
             )
-            self.update_measure_footnote_associations(
+            update_measure_footnote_associations(
                 measure=new_measure,
                 workbasket=workbasket,
             )
