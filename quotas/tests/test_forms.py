@@ -445,23 +445,24 @@ def quota_definition_1(main_quota_order_number, date_ranges) -> QuotaDefinition:
         is_physical=True,
         initial_volume=1234,
         volume=1234,
-        measurement_unit=factories.MeasurementUnitFactory()
+        measurement_unit=factories.MeasurementUnitFactory(),
     )
 
 
 def test_select_sub_quota_form_set_staged_definition_data(
-    quota_definition_1,
-    session_request
+    quota_definition_1, session_request
 ):
     session_request.path = ""
     form = forms.SelectSubQuotaDefinitionsForm(
-        request=session_request,
-        prefix='select_definition_periods'
-        )
+        request=session_request, prefix="select_definition_periods"
+    )
     quotas = models.QuotaDefinition.objects.all()
     with override_current_transaction(Transaction.objects.last()):
         form.set_staged_definition_data(quotas)
-        assert session_request.session['staged_definition_data'][0]['main_definition'] == quota_definition_1.pk
+        assert (
+            session_request.session["staged_definition_data"][0]["main_definition"]
+            == quota_definition_1.pk
+        )
 
 
 """
@@ -471,13 +472,13 @@ pass the previous rule check. More extensive testing is in test_business_rules.p
 """
 
 
-def test_quota_duplicator_form_clean_QA2(date_ranges, session_request, quota_definition_1):
+def test_quota_duplicator_form_clean_QA2(
+    date_ranges, session_request, quota_definition_1
+):
     staged_definition_data = [
         {
             "main_definition": quota_definition_1.pk,
-            "sub_definition_staged_data": serialize_duplicate_data(
-                quota_definition_1
-            )
+            "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
         }
     ]
     session_request.session["staged_definition_data"] = staged_definition_data
@@ -499,7 +500,7 @@ def test_quota_duplicator_form_clean_QA2(date_ranges, session_request, quota_def
         )
         assert not form.is_valid()
         assert (
-            'QA2: Validity period for sub quota must be within the validity period of the main quota'
+            "QA2: Validity period for sub quota must be within the validity period of the main quota"
             in form.errors["__all__"]
         )
 
@@ -508,9 +509,7 @@ def test_quota_duplicator_form_clean_QA3(session_request, quota_definition_1):
     staged_definition_data = [
         {
             "main_definition": quota_definition_1.pk,
-            "sub_definition_staged_data": serialize_duplicate_data(
-                quota_definition_1
-            )
+            "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
         }
     ]
 
@@ -535,7 +534,7 @@ def test_quota_duplicator_form_clean_QA3(session_request, quota_definition_1):
         )
         assert not form.is_valid()
         assert (
-            'QA3: When converted to the measurement unit of the main quota, the volume of a sub-quota must always be lower than or equal to the volume of the main quota'
+            "QA3: When converted to the measurement unit of the main quota, the volume of a sub-quota must always be lower than or equal to the volume of the main quota"
             in form.errors["__all__"]
         )
 
@@ -544,9 +543,7 @@ def test_quota_duplicator_form_clean_QA4(session_request, quota_definition_1):
     staged_definition_data = [
         {
             "main_definition": quota_definition_1.pk,
-            "sub_definition_staged_data": serialize_duplicate_data(
-                quota_definition_1
-            )
+            "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
         }
     ]
 
@@ -572,7 +569,7 @@ def test_quota_duplicator_form_clean_QA4(session_request, quota_definition_1):
         )
         assert not form.is_valid()
         assert (
-            'QA4: A coefficient must be a positive decimal number'
+            "QA4: A coefficient must be a positive decimal number"
             in form.errors["__all__"]
         )
 
@@ -581,9 +578,7 @@ def test_quota_duplicator_form_clean_QA5_nm(session_request, quota_definition_1)
     staged_definition_data = [
         {
             "main_definition": quota_definition_1.pk,
-            "sub_definition_staged_data": serialize_duplicate_data(
-                quota_definition_1
-            )
+            "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
         }
     ]
 
@@ -598,7 +593,7 @@ def test_quota_duplicator_form_clean_QA5_nm(session_request, quota_definition_1)
         "volume": quota_definition_1.volume,
         "initial_volume": quota_definition_1.initial_volume,
         "coefficient": 1.5,
-        "relationship_type": 'NM',
+        "relationship_type": "NM",
     }
     session_request.session["staged_definition_data"] = staged_definition_data
 
@@ -610,7 +605,7 @@ def test_quota_duplicator_form_clean_QA5_nm(session_request, quota_definition_1)
         )
         assert not form.is_valid()
         assert (
-            'QA5: Where the relationship type is Normal, the coefficient value must be 1'
+            "QA5: Where the relationship type is Normal, the coefficient value must be 1"
             in form.errors["__all__"]
         )
 
@@ -619,9 +614,7 @@ def test_quota_duplicator_form_clean_QA5_eq(session_request, quota_definition_1)
     staged_definition_data = [
         {
             "main_definition": quota_definition_1.pk,
-            "sub_definition_staged_data": serialize_duplicate_data(
-                quota_definition_1
-            )
+            "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
         }
     ]
 
@@ -636,7 +629,7 @@ def test_quota_duplicator_form_clean_QA5_eq(session_request, quota_definition_1)
         "volume": quota_definition_1.volume,
         "initial_volume": quota_definition_1.initial_volume,
         "coefficient": 1,
-        "relationship_type": 'EQ',
+        "relationship_type": "EQ",
     }
     session_request.session["staged_definition_data"] = staged_definition_data
 
@@ -648,6 +641,6 @@ def test_quota_duplicator_form_clean_QA5_eq(session_request, quota_definition_1)
         )
         assert not form.is_valid()
         assert (
-            'QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1'
+            "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1"
             in form.errors["__all__"]
         )
