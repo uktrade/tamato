@@ -6,6 +6,7 @@
     class="govuk-link fake-link"
     name="promote_position"
     value="{{ obj.pk }}"
+    data-prevent-double-click="true"
   >
     <img
       class="icon"
@@ -21,6 +22,7 @@
     class="govuk-link fake-link"
     name="demote_position"
     value="{{ obj.pk }}"
+    data-prevent-double-click="true"
   >
     <img
       class="icon"
@@ -106,6 +108,7 @@
         class="govuk-link fake-link"
         name="demote_position"
         value="{{ obj.pk }}"
+        data-prevent-double-click="true"
       >
         Move down
       </button>
@@ -115,6 +118,7 @@
         class="govuk-link fake-link"
         name="promote_to_top_position"
         value="{{ obj.pk }}"
+        data-prevent-double-click="true"
       >
         Move to top
       </button>
@@ -128,6 +132,7 @@
         class="govuk-link fake-link"
         name="remove_from_queue"
         value="{{ obj.pk }}"
+        data-prevent-double-click="true"
       >
         Remove
       </button>

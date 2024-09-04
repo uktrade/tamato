@@ -264,7 +264,7 @@ AUTHBROKER_CLIENT_SECRET = os.environ.get("AUTHBROKER_CLIENT_SECRET")
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
 if SSO_ENABLED:
     AUTHENTICATION_BACKENDS += [
-        "authbroker_client.backends.AuthbrokerBackend",
+        "common.auth_backend.CustomAuthbrokerBackend",
     ]
 
 AUTH_USER_MODEL = "common.User"
@@ -789,6 +789,8 @@ if SENTRY_ENABLED:
         "dsn": os.environ["SENTRY_DSN"],
         "environment": ENV,
         "integrations": [DjangoIntegration(), RedisIntegration()],
+        "enable_tracing": is_truthy(os.getenv("SENTRY_ENABLE_TRACING", False)),
+        "traces_sample_rate": float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", 0.0)),
     }
     if "shell" in sys.argv or "shell_plus" in sys.argv:
         sentry_kwargs["before_send"] = lambda event, hint: None

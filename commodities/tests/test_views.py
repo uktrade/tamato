@@ -662,3 +662,44 @@ def test_commodity_measures_vat_excise_get_related(
     cells = soup.select(".govuk-table__body > .govuk-table__row:first-child > td")
     # duty sentence
     assert cells[4].text == "—"
+
+
+def test_commodities_hierarchy_active_commodity(valid_user_client, date_ranges):
+    """Test that a commodity and one of its related commodities appear in the
+    hierarchy."""
+    commodity1 = factories.GoodsNomenclatureFactory.create(item_id="8540111111")
+    commodity2 = factories.GoodsNomenclatureFactory.create(item_id="8540222222")
+
+    url = reverse("commodity-ui-detail-hierarchy", kwargs={"sid": commodity1.sid})
+    response = valid_user_client.get(url)
+
+    assert commodity1.item_id in str(response.content)
+    assert commodity2.item_id in str(response.content)
+    assert not (
+        "This commodity has been end dated so no longer forms part of the hierarchy."
+        in str(response.content)
+    )
+
+
+def test_commodities_hierarchy_inactive_commodity(valid_user_client, date_ranges):
+    """Test that an inactive commodity does not have a hierarchy and does not
+    appear in other commodities' hierarchies."""
+    commodity1 = factories.GoodsNomenclatureFactory.create(item_id="8540111111")
+    commodity2 = factories.GoodsNomenclatureFactory.create(
+        item_id="8540222222",
+        valid_between=date_ranges.earlier,
+    )
+
+    url = reverse("commodity-ui-detail-hierarchy", kwargs={"sid": commodity1.sid})
+    response = valid_user_client.get(url)
+
+    assert commodity1.item_id in str(response.content)
+    assert commodity2.item_id not in str(response.content)
+
+    # Assert the end dated commodity does not display a hierarchy
+    url = reverse("commodity-ui-detail-hierarchy", kwargs={"sid": commodity2.sid})
+    response = valid_user_client.get(url)
+    assert (
+        "This commodity has been end dated so no longer forms part of the hierarchy."
+        in str(response.content)
+    )

@@ -24,6 +24,7 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
+from common.util import TableLock
 from notifications.models import EnvelopeAcceptedNotification
 from notifications.models import EnvelopeReadyForProcessingNotification
 from notifications.models import EnvelopeRejectedNotification
@@ -124,6 +125,7 @@ class PackagedWorkBasketInvalidQueueOperation(Exception):
 
 class PackagedWorkBasketManager(Manager):
     @atomic
+    @TableLock.acquire_lock("publishing.PackagedWorkBasket", lock=TableLock.EXCLUSIVE)
     def create(self, workbasket: WorkBasket, **kwargs):
         """Create a new instance, associating with workbasket."""
         if workbasket.status in WorkflowStatus.unchecked_statuses():
@@ -437,6 +439,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
         return not PackagedWorkBasket.objects.currently_processing()
 
+    @atomic
     @pop_top_after
     @save_after
     @transition(
@@ -466,6 +469,7 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
         self.processing_started_at = datetime.now()
         self.save()
 
@@ -621,7 +625,9 @@ class PackagedWorkBasket(TimestampedMixin):
                 "because it is not at position 1.",
             )
 
-        PackagedWorkBasket.objects.filter(position__gt=0).update(
+        PackagedWorkBasket.objects.select_for_update(nowait=True).filter(
+            position__gt=0,
+        ).update(
             position=F("position") - 1,
         )
         self.refresh_from_db()
@@ -638,6 +644,10 @@ class PackagedWorkBasket(TimestampedMixin):
         Management of the queued instance's `processing_state` is not altered by
         this function and should be managed separately by the caller.
         """
+
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
+        self.refresh_from_db()
+
         if self.position == 0:
             raise PackagedWorkBasketInvalidQueueOperation(
                 "Unable to remove instance with a position value of 0 from "
@@ -648,7 +658,9 @@ class PackagedWorkBasket(TimestampedMixin):
         self.position = 0
         self.save()
 
-        PackagedWorkBasket.objects.filter(position__gt=current_position).update(
+        PackagedWorkBasket.objects.select_for_update(nowait=True).filter(
+            position__gt=current_position,
+        ).update(
             position=F("position") - 1,
         )
         self.refresh_from_db()
@@ -661,17 +673,21 @@ class PackagedWorkBasket(TimestampedMixin):
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
 
-        if self.position == 1:
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
+        self.refresh_from_db()
+
+        if self.position <= 1:
             return self
 
         position = self.position
 
-        PackagedWorkBasket.objects.filter(
+        PackagedWorkBasket.objects.select_for_update(nowait=True).filter(
             Q(position__gte=1) & Q(position__lt=position),
         ).update(position=F("position") + 1)
 
         self.position = 1
         self.save()
+        self.refresh_from_db()
 
         return self
 
@@ -681,10 +697,15 @@ class PackagedWorkBasket(TimestampedMixin):
         """Promote the instance by one position up the package processing
         queue."""
 
-        if self.position == 1:
-            return
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
+        self.refresh_from_db()
 
-        obj_to_swap = PackagedWorkBasket.objects.get(position=self.position - 1)
+        if self.position <= 1:
+            return self
+
+        obj_to_swap = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            position=self.position - 1,
+        )
         obj_to_swap.position += 1
         self.position -= 1
         PackagedWorkBasket.objects.bulk_update(
@@ -701,10 +722,15 @@ class PackagedWorkBasket(TimestampedMixin):
         """Demote the instance by one position down the package processing
         queue."""
 
-        if self.position == PackagedWorkBasket.objects.max_position():
-            return
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
+        self.refresh_from_db()
 
-        obj_to_swap = PackagedWorkBasket.objects.get(position=self.position + 1)
+        if self.position in {0, PackagedWorkBasket.objects.max_position()}:
+            return self
+
+        obj_to_swap = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            position=self.position + 1,
+        )
         obj_to_swap.position -= 1
         self.position += 1
         PackagedWorkBasket.objects.bulk_update(

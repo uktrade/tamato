@@ -76,7 +76,7 @@ govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--seco
   {% set live_rule_check_status %}
     Rule check in progress. Checking {{ workbasket.tracked_models.count() }} item{{ workbasket.tracked_models.count()|pluralize }} in basket.
     {{ rule_check_progress }}.
-    Come back later or refresh to see results.
+    <a href="{{ url('workbaskets:workbasket-ui-violations') }}" class="govuk-link">View violations</a> or refresh to see progress.
   {% endset %}
   {% set rule_check_button = terminate_rule_check_form %}
   {% set rule_check_block %}{% endset %}
