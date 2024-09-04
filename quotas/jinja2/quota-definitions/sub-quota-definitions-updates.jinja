@@ -1,0 +1,29 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% block content %}
+    <h2 class="govuk-heading">Main quota association details</h2>
+    {% set main_definition = view.get_main_definition() %}
+    {% set table_rows = [] %}
+    {{ table_rows.append([
+        {"html": main_definition.sid },
+        {"html": "{:%d %b %Y}".format(main_definition.valid_between.lower) },
+        {"html": "{:%d %b %Y}".format(main_definition.valid_between.upper) },
+        {"html": intcomma(main_definition.volume) },
+        {"html": main_definition.measurement_unit.abbreviation},
+    ]) or ""}}
+    {{ govukTable({
+        "head": [
+            {"text": "SID"},
+            {"text": "Start date"},
+            {"text": "End date"},
+            {"text": "Volume"},
+            {"text": "Unit"},
+        ],
+        "rows": table_rows
+    })
+    }}
+    {% call django_form() %}
+    {{ crispy(form) }}
+    {% endcall %}
+{% endblock %}
