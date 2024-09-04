@@ -204,7 +204,7 @@ class QuotaDefinitionParserV2(BaseTaricParser):
     valid_between_lower: date = None
     valid_between_upper: date = None
     order_number__sid: int = None
-    volume: int = None
+    volume: float = None
     initial_volume: float = None
     monetary_unit__code: str = None
     measurement_unit__code: str = None

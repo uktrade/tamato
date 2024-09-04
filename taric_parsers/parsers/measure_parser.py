@@ -669,6 +669,7 @@ class MeasureParserV2(ValidityMixin, Writable, BaseTaricParser):
                 ),
             ],
             "regulation",
+            True
         ),
     ]
 
@@ -813,6 +814,7 @@ class MeasureConditionParserV2(Writable, BaseTaricParser):
                 ModelLinkField("monetary_unit__code", "code"),
             ],
             "monetary.unit",
+            True
         ),
         ModelLink(
             Measurement,
@@ -827,6 +829,7 @@ class MeasureConditionParserV2(Writable, BaseTaricParser):
                 ),
             ],
             "measurement",
+            True
         ),
         ModelLink(
             MeasureAction,
@@ -834,6 +837,7 @@ class MeasureConditionParserV2(Writable, BaseTaricParser):
                 ModelLinkField("action__code", "code"),
             ],
             "measure.action",
+            True
         ),
         ModelLink(
             Certificate,
@@ -845,6 +849,7 @@ class MeasureConditionParserV2(Writable, BaseTaricParser):
                 ),
             ],
             "certificate",
+            True
         ),
     ]
 
