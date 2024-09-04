@@ -539,7 +539,7 @@ def check_QA6_dict(main_quota, new_relation_type, transaction=None):
     )
     if relation_type.count() > 1:
         return False
-    else:
+    elif relation_type.count() == 1:
         return relation_type[0]["sub_quota_relation_type"] == new_relation_type
 
 

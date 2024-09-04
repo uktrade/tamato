@@ -38,6 +38,7 @@ from quotas import business_rules
 from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
+from quotas.serializers import serialize_duplicate_data
 from workbaskets.forms import SelectableObjectsForm
 
 RELATIONSHIP_TYPE_HELP_TEXT = "Select the relationship type for the quota association"
@@ -1069,6 +1070,27 @@ class SelectSubQuotaDefinitionsForm(
     Before selecting, we ensure the QuotaDefinitionDuplicator table is empty.
     """
 
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+    def set_staged_definition_data(self, selected_definitions):
+        if (
+            self.prefix in ["select_definition_periods"]
+            and self.request.path != "/quotas/duplicate_quota_definitions/complete"
+        ):
+            staged_definition_data = []
+            for definition in selected_definitions:
+                staged_definition_data.append(
+                    {
+                        "main_definition": definition.pk,
+                        "sub_definition_staged_data": serialize_duplicate_data(
+                            definition
+                        ),
+                    }
+                )
+            self.request.session["staged_definition_data"] = staged_definition_data
+
     def clean(self):
         cleaned_data = super().clean()
         selected_definitions = {
@@ -1082,23 +1104,26 @@ class SelectSubQuotaDefinitionsForm(
             pk__in=definitions_pks
         ).current()
         cleaned_data["selected_definitions"] = selected_definitions
+        self.set_staged_definition_data(selected_definitions)
         return cleaned_data
 
 
 class SelectedDefinitionsForm(forms.Form):
     def __init__(self, *args, **kwargs):
-        self.objects = kwargs.pop("objects", [])
+        self.request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
 
     def clean(self):
         cleaned_data = super().clean()
-        cleaned_data["duplicated_definitions"] = self.objects
-        for definition in cleaned_data["duplicated_definitions"]:
-            if not definition.definition_data["status"]:
+        cleaned_data["staged_definitions"] = self.request.session[
+            "staged_definition_data"
+        ]
+        for definition in cleaned_data["staged_definitions"]:
+            if not definition["sub_definition_staged_data"]["status"]:
                 raise ValidationError(
                     "Each definition period must have a specified relationship and co-efficient value"
                 )
-
+        # Coefficient & relationship_type are here
         return cleaned_data
 
 
@@ -1160,9 +1185,14 @@ class SubQuotaDefinitionsUpdatesForm(
     )
 
     def get_duplicate_data(self, original_definition):
-        duplicate_data = models.QuotaDefinitionDuplicator.objects.get(
-            main_definition_id=original_definition
-        ).definition_data
+        staged_definition_data = self.request.session["staged_definition_data"]
+        duplicate_data = list(
+            filter(
+                lambda staged_definition_data: staged_definition_data["main_definition"]
+                == original_definition.pk,
+                staged_definition_data,
+            )
+        )[0]["sub_definition_staged_data"]
         self.set_initial_data(duplicate_data)
         return duplicate_data
 
@@ -1259,7 +1289,7 @@ class SubQuotaDefinitionsUpdatesForm(
                 )
 
         if not business_rules.check_QA6_dict(
-            main_definition=original_definition,
+            main_quota=original_definition,
             new_relation_type=cleaned_data["relationship_type"],
         ):
             ValidationError(

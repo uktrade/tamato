@@ -747,6 +747,7 @@ class DuplicateDefinitionsWizard(
     https://django-formtools.readthedocs.io/en/latest/wizard.html
     """
 
+    storage_name = "quotas.wizard.QuotaDefinitionDuplicatorSessionStorage"
     permission_required = ["common.add_trackedmodel"]
 
     START = "start"
@@ -808,7 +809,7 @@ class DuplicateDefinitionsWizard(
 
         Note: This patched version of `super().get_cleaned_data_for_step` temporarily saves the cleaned_data
         to provide quick retrieval should another call for it be made in the same request (as happens in
-        `get_form_kwargs()` and template for summary page) to avoid revalidating forms unnecessarily.
+        `get_form_kwargs()`) to avoid revalidating forms unnecessarily.
         """
         self.cleaned_data = getattr(self, "cleaned_data", {})
         if step in self.cleaned_data:
@@ -816,33 +817,6 @@ class DuplicateDefinitionsWizard(
 
         self.cleaned_data[step] = super().get_cleaned_data_for_step(step)
         return self.cleaned_data[step]
-
-    def set_duplicate_definitions(self, selected_definitions):
-        """
-        We store the main definition data in the QuotaDefinitionDuplicator
-        table before creating the new QuotaDefinitions and QuotaAssociation
-        entry at the end of the journey.
-        We filter by the current transaction, staging a definition if it is
-        not already added.
-        If there are staged definitions that have not been selected (ie. if a
-        user returns to this page and deselects a definition, it is removed
-        from the table)
-        """
-        tx = WorkBasket.get_current_transaction(self.request)
-        for definition in selected_definitions:
-            if not models.QuotaDefinitionDuplicator.objects.filter(
-                current_transaction=tx, main_definition=definition
-            ).exists():
-                serialized_definition_data = serialize_duplicate_data(definition)
-                models.QuotaDefinitionDuplicator(
-                    main_definition=definition,
-                    definition_data=serialized_definition_data,
-                    current_transaction=tx,
-                ).save()
-
-        models.QuotaDefinitionDuplicator.objects.filter(
-            current_transaction=tx,
-        ).exclude(main_definition__in=selected_definitions).delete()
 
     def format_date(self, date_str):
         """Parses and converts a date string from that used for storing data
@@ -853,13 +827,10 @@ class DuplicateDefinitionsWizard(
         return ""
 
     def get_staged_definition_data(self):
-        selected_definitions = self.get_cleaned_data_for_step(
-            "select_definition_periods"
-        )["selected_definitions"]
-        return models.QuotaDefinitionDuplicator.objects.filter(
-            main_definition__in=selected_definitions,
-            current_transaction=WorkBasket.get_current_transaction(self.request),
-        )
+        return self.request.session["staged_definition_data"]
+
+    def get_main_definition(self, main_definition_pk):
+        return models.QuotaDefinition.objects.get(pk=main_definition_pk)
 
     def get_form_kwargs(self, step):
         kwargs = {}
@@ -874,19 +845,11 @@ class DuplicateDefinitionsWizard(
                 .current()
                 .order_by("pk")
             )
+            kwargs["request"] = self.request
             kwargs["objects"] = main_quota_definitions
 
         elif step == self.SELECTED_DEFINITIONS:
-            selected_definition_periods = self.get_cleaned_data_for_step(
-                "select_definition_periods"
-            )["selected_definitions"]
-            self.set_duplicate_definitions(selected_definition_periods)
-            tx = WorkBasket.get_current_transaction(self.request)
-            staged_data = models.QuotaDefinitionDuplicator.objects.filter(
-                current_transaction=tx
-            )
-
-            kwargs["objects"] = staged_data
+            kwargs["request"] = self.request
 
         return kwargs
 
@@ -910,8 +873,7 @@ class DuplicateDefinitionsWizard(
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
-        staged_definitions = cleaned_data["duplicated_definitions"]
-        for definition in staged_definitions:
+        for definition in cleaned_data["staged_definitions"]:
             self.create_definition(definition)
         sub_quota_view_url = reverse(
             "quota_definition-ui-list",
@@ -929,30 +891,41 @@ class DuplicateDefinitionsWizard(
         )
 
     def create_definition(self, definition):
-        staged_data = deserialize_definition_data(self, definition)
+        staged_data = deserialize_definition_data(
+            self, definition["sub_definition_staged_data"]
+        )
         instance = models.QuotaDefinition.objects.create(
             **staged_data, transaction=WorkBasket.get_current_transaction(self.request)
         )
         association_data = {
-            "main_quota": definition.main_definition,
+            "main_quota": models.QuotaDefinition.objects.get(
+                pk=definition["main_definition"]
+            ),
             "sub_quota": instance,
-            "coefficient": Decimal(definition.definition_data["coefficient"]),
-            "sub_quota_relation_type": definition.definition_data["relationship_type"],
+            "coefficient": Decimal(
+                definition["sub_definition_staged_data"]["coefficient"]
+            ),
+            "sub_quota_relation_type": definition["sub_definition_staged_data"][
+                "relationship_type"
+            ],
             "update_type": UpdateType.CREATE,
         }
-        self.create_definition_association(definition, association_data)
+        self.create_definition_association(association_data)
 
-    def create_definition_association(self, definition, association_data):
+    def create_definition_association(self, association_data):
         models.QuotaAssociation.objects.create(
             **association_data,
             transaction=WorkBasket.get_current_transaction(self.request),
         )
-        definition.delete()
 
 
-class QuotaDefinitionDuplicateUpdates(FormView, BusinessRulesMixin):
+class QuotaDefinitionDuplicateUpdates(
+    FormView,
+    BusinessRulesMixin,
+):
     """UI endpoint for any updates to duplicated definitions"""
 
+    storage_name = "quotas.wizard.QuotaDefinitionDuplicatorSessionStorage"
     template_name = "quota-definitions/sub-quota-definitions-updates.jinja"
     form_class = forms.SubQuotaDefinitionsUpdatesForm
     permission_required = "common.add_trackedmodel"
@@ -977,7 +950,7 @@ class QuotaDefinitionDuplicateUpdates(FormView, BusinessRulesMixin):
     def form_valid(self, form):
         main_definition = self.get_main_definition()
         cleaned_data = form.cleaned_data
-        serialized_data = {
+        updated_serialized_data = {
             "initial_volume": str(cleaned_data["initial_volume"]),
             "volume": str(cleaned_data["volume"]),
             "measurement_unit_code": cleaned_data["measurement_unit"].code,
@@ -987,9 +960,14 @@ class QuotaDefinitionDuplicateUpdates(FormView, BusinessRulesMixin):
             "coefficient": str(cleaned_data["coefficient"]),
             "relationship_type": cleaned_data["relationship_type"],
         }
-        models.QuotaDefinitionDuplicator.objects.filter(
-            main_definition=main_definition
-        ).update(definition_data=serialized_data)
+        staged_definition_data = self.request.session["staged_definition_data"]
+        list(
+            filter(
+                lambda staged_definition_data: staged_definition_data["main_definition"]
+                == main_definition.pk,
+                staged_definition_data,
+            )
+        )[0]["sub_definition_staged_data"] = updated_serialized_data
 
         return redirect(reverse("sub_quota_definitions-ui-create"))
 

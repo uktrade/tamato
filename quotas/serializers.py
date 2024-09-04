@@ -97,22 +97,6 @@ class SimpleQuotaDefinitionSerializer(
         ]
 
 
-class QuotaDefinitionDuplicatorSerializer(
-    TrackedModelSerializerMixin,
-    ValiditySerializerMixin,
-):
-    class Meta:
-        model = models.QuotaDefinitionDuplicator
-        fields = [
-            "measurement_unit",
-            "volume",
-            "sub_quota_relation_type",
-            "coefficient",
-        ]
-
-    measurement_unit = MeasurementUnitSerializer(read_only=True)
-
-
 class QuotaDefinitionImporterSerializer(
     TrackedModelSerializerMixin,
     ValiditySerializerMixin,
@@ -301,12 +285,12 @@ def serialize_duplicate_data(selected_definition):
 
 
 def deserialize_definition_data(self, definition):
-    start_date = deserialize_date(definition.definition_data["start_date"])
-    end_date = deserialize_date(definition.definition_data["end_date"])
-    initial_volume = Decimal(definition.definition_data["initial_volume"])
-    vol = Decimal(definition.definition_data["volume"])
+    start_date = deserialize_date(definition["start_date"])
+    end_date = deserialize_date(definition["end_date"])
+    initial_volume = Decimal(definition["initial_volume"])
+    vol = Decimal(definition["volume"])
     measurement_unit = MeasurementUnit.objects.get(
-        code=definition.definition_data["measurement_unit_code"]
+        code=definition["measurement_unit_code"]
     )
     sub_order_number = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)[
         "sub_quota_order_number"
