@@ -1213,7 +1213,7 @@ class SubQuotaDefinitionsUpdatesForm(
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
-        main_def_id = kwargs.pop("sid")
+        main_def_id = kwargs.pop("pk")
         super().__init__(*args, **kwargs)
         self.original_definition = models.QuotaDefinition.objects.get(
             trackedmodel_ptr_id=main_def_id

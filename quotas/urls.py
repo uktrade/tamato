@@ -81,7 +81,7 @@ urlpatterns = [
         name="sub_quota_definitions-ui-create",
     ),
     path(
-        f"quotas/sub_quota_definition_updates/<sid>",
+        f"quotas/sub_quota_definition_updates/<pk>",
         views.QuotaDefinitionDuplicateUpdates.as_view(),
         name="sub_quota_definitions-ui-updates",
     ),
