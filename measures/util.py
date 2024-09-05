@@ -36,9 +36,9 @@ def diff_components(
     instance,
     duty_sentence: str,
     start_date: date,
-    workbasket: workbasket_models.WorkBasket,
     transaction: Type[Transaction],
-    component_output: Type[TrackedModel] = measure_models.MeasureComponent,
+    workbasket: workbasket_models.WorkBasket = None,
+    component_output: measure_models.MeasureComponent = None,
     reverse_attribute: str = "component_measure",
 ):
     """
@@ -56,6 +56,9 @@ def diff_components(
     """
     from measures.parsers import DutySentenceParser
 
+    component_output = measure_models.MeasureComponent if component_output else component_output
+    workbasket = workbasket_models.WorkBasket if workbasket else workbasket
+    
     parser = DutySentenceParser.create(
         start_date,
         component_output=component_output,

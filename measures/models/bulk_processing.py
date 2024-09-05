@@ -20,6 +20,10 @@ from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from measures.models.tracked_models import Measure
+from measures.util import update_measure_components
+from measures.util import update_measure_condition_components
+from measures.util import update_measure_excluded_geographical_areas
+from measures.util import update_measure_footnote_associations
 
 logger = logging.getLogger(__name__)
 
@@ -554,7 +558,7 @@ class MeasuresBulkEditor(BulkProcessor):
                     logger.info("UPDATE FUNCTIONS STARTING")
                     logger.info(f"BE - NEW MEASURE: {new_measure.__dict__}")
                     logger.info(f"BE - NEW DUTIES: {new_duties}")
-                    
+
                     update_measure_components(
                         measure=new_measure,
                         duties=new_duties,
