@@ -30,7 +30,7 @@ from measures.validators import MeasureTypeCombination
 from measures.validators import OrderNumberCaptureCode
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
-from tasks.models import UserAssignment
+from tasks.models import TaskAssignee
 from workbaskets.validators import WorkflowStatus
 
 User = get_user_model()
@@ -1542,31 +1542,31 @@ class TaskFactory(factory.django.DjangoModelFactory):
         model = "tasks.Task"
 
 
-class UserAssignmentFactory(factory.django.DjangoModelFactory):
+class TaskAssigneeFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     assigned_by = factory.SubFactory(UserFactory)
-    assignment_type = FuzzyChoice(UserAssignment.AssignmentType.values)
+    assignment_type = FuzzyChoice(TaskAssignee.AssignmentType.values)
     task = factory.SubFactory(TaskFactory)
 
     class Meta:
-        model = "tasks.UserAssignment"
+        model = "tasks.TaskAssignee"
 
 
 class AssignedWorkBasketFactory(WorkBasketFactory):
     """Creates a workbasket which has an assigned worker and reviewer."""
 
     @factory.post_generation
-    def user_assignments(self, create, extracted, **kwargs):
+    def create_workbasket_assignments(self, create, extracted, **kwargs):
         if not create:
             return
 
         task = TaskFactory.create(workbasket=self)
-        UserAssignmentFactory.create(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        TaskAssigneeFactory.create(
+            assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
             task=task,
         )
-        UserAssignmentFactory.create(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        TaskAssigneeFactory.create(
+            assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
             task=task,
         )
 

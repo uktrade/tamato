@@ -1,8 +1,8 @@
 import pytest
 
+from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
-from common.tests.factories import UserAssignmentFactory
-from tasks.models import UserAssignment
+from tasks.models import TaskAssignee
 
 
 @pytest.fixture()
@@ -11,19 +11,19 @@ def task():
 
 
 @pytest.fixture()
-def user_assignment():
-    return UserAssignmentFactory.create()
+def task_assignee():
+    return TaskAssigneeFactory.create()
 
 
 @pytest.fixture()
-def workbasket_worker_assignment():
-    return UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+def workbasket_worker_assignee():
+    return TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
     )
 
 
 @pytest.fixture()
-def workbasket_reviewer_assignment():
-    return UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+def workbasket_reviewer_assignee():
+    return TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
     )

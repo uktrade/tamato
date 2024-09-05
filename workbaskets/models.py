@@ -646,36 +646,43 @@ class WorkBasket(TimestampedMixin):
 
     @property
     def worker_assignments(self):
-        from tasks.models import UserAssignment
+        """Returns a queryset of associated `TaskAssignee` instances filtered to
+        match `AssignmentType.WORKBASKET_WORKER`."""
+        from tasks.models import TaskAssignee
 
         return (
-            UserAssignment.objects.filter(task__workbasket=self)
+            TaskAssignee.objects.filter(task__workbasket=self)
             .workbasket_workers()
             .assigned()
         )
 
     @property
     def reviewer_assignments(self):
-        from tasks.models import UserAssignment
+        """Returns a queryset of associated `TaskAssignee` instances filtered to
+        match `AssignmentType.WORKBASKET_REVIEWER`."""
+        from tasks.models import TaskAssignee
 
         return (
-            UserAssignment.objects.filter(task__workbasket=self)
+            TaskAssignee.objects.filter(task__workbasket=self)
             .workbasket_reviewers()
             .assigned()
         )
 
     @property
     def user_assignments(self):
+        """Returns a queryset of associated `TaskAssignee` instances."""
         assignments = self.worker_assignments | self.reviewer_assignments
         return assignments
 
     @property
     def assigned_workers(self):
+        """Returns a queryset of `User` instances assigned as workers."""
         user_ids = self.worker_assignments.values_list("user_id", flat=True)
         return User.objects.filter(id__in=user_ids)
 
     @property
     def assigned_reviewers(self):
+        """Returns a queryset of `User` instances assigned as reviewers."""
         user_ids = self.reviewer_assignments.values_list("user_id", flat=True)
         return User.objects.filter(id__in=user_ids)
 

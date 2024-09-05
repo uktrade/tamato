@@ -20,7 +20,7 @@ class Task(TimestampedMixin):
         return self.title
 
 
-class UserAssignmentQueryset(models.QuerySet):
+class TaskAssigneeQueryset(models.QuerySet):
     def assigned(self):
         return self.exclude(unassigned_at__isnull=False)
 
@@ -29,16 +29,16 @@ class UserAssignmentQueryset(models.QuerySet):
 
     def workbasket_workers(self):
         return self.filter(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+            assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
         )
 
     def workbasket_reviewers(self):
         return self.filter(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+            assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
         )
 
 
-class UserAssignment(TimestampedMixin):
+class TaskAssignee(TimestampedMixin):
     class AssignmentType(models.TextChoices):
         WORKBASKET_WORKER = "WORKBASKET_WORKER", "Workbasket worker"
         WORKBASKET_REVIEWER = "WORKBASKET_REVIEWER", "Workbasket reviewer"
@@ -62,7 +62,7 @@ class UserAssignment(TimestampedMixin):
         Task,
         on_delete=models.CASCADE,
         editable=False,
-        related_name="user_assignments",
+        related_name="assignees",
     )
     unassigned_at = models.DateTimeField(
         auto_now=False,
@@ -70,7 +70,7 @@ class UserAssignment(TimestampedMixin):
         null=True,
     )
 
-    objects = UserAssignmentQueryset.as_manager()
+    objects = TaskAssigneeQueryset.as_manager()
 
     def __str__(self):
         return (
