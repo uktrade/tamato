@@ -66,15 +66,13 @@ def bulk_edit_measures(measures_bulk_editor_pk: int) -> None:
         )
         raise e
     
-    logger.info(f"MEASURES: {measures}")
-
     measures_bulk_editor.processing_succeeded()
     measures_bulk_editor.successfully_processed_count = len(measures)
     measures_bulk_editor.save()
 
     if measures:
         logger.info(
-            f"MeasuresBulkEditoror({measures_bulk_editor.pk}) task "
+            f"MeasuresBulkEditor({measures_bulk_editor.pk}) task "
             f"succeeded in editing {len(measures)} Measures in "
             f"WorkBasket({measures_bulk_editor.workbasket.pk}).",
         ) 

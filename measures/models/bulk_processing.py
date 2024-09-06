@@ -555,10 +555,6 @@ class MeasuresBulkEditor(BulkProcessor):
                             else measure.generating_regulation
                         ),
                     )
-                    logger.info("UPDATE FUNCTIONS STARTING")
-                    logger.info(f"BE - NEW MEASURE: {new_measure.__dict__}")
-                    logger.info(f"BE - NEW DUTIES: {new_duties}")
-
                     update_measure_components(
                         measure=new_measure,
                         duties=new_duties,
@@ -579,10 +575,8 @@ class MeasuresBulkEditor(BulkProcessor):
                         measure=new_measure,
                         workbasket=self.workbasket,
                     )
-                    logger.info(f"NEW MEASURE WITH FUNCTIONS RUN: {new_measure}")
+                    edited_measures.append(new_measure.id)
 
-                edited_measures.append(new_measure.id)
-                logger.info(f"EDITED MEASURES ARRAY ON CLOSE: {edited_measures}")
             return edited_measures
 
     def get_forms_cleaned_data(self) -> Dict:
