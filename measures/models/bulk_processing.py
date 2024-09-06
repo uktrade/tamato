@@ -621,7 +621,6 @@ class MeasuresBulkEditor(BulkProcessor):
             else:
                 all_cleaned_data.update(form.cleaned_data)
         
-        logger.info(f"RESULT OF ALL CLEANED DATA: {all_cleaned_data}")
         return all_cleaned_data
 
     def _log_form_errors(self, form_class, form_or_formset) -> None:

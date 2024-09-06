@@ -110,9 +110,6 @@ def update_measure_components(
     measure: "measure_models.Measure",
 ):
     """Updates the measure components associated to the measure."""
-    workbasket = workbasket_models.WorkBasket if workbasket else workbasket
-    measure = measure_models.Measure if measure else measure
-    
     diff_components(
         instance=measure,
         duty_sentence=duties if duties else measure.duty_sentence,
