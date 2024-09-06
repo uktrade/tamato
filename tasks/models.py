@@ -10,6 +10,18 @@ from workbaskets.models import WorkBasket
 class Task(TimestampedMixin):
     title = models.CharField(max_length=255)
     description = models.TextField()
+    category = models.ForeignKey(
+        "TaskCategory",
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+    )
+    progress_state = models.ForeignKey(
+        "TaskProgressState",
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+    )
     workbasket = models.ForeignKey(
         WorkBasket,
         on_delete=models.PROTECT,
@@ -18,6 +30,29 @@ class Task(TimestampedMixin):
 
     def __str__(self):
         return self.title
+
+
+class TaskCategory(models.Model):
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+    )
+
+    class Meta:
+        verbose_name_plural = "task categories"
+
+    def __str__(self):
+        return self.name
+
+
+class TaskProgressState(models.Model):
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+    )
+
+    def __str__(self):
+        return self.name
 
 
 class TaskAssigneeQueryset(models.QuerySet):

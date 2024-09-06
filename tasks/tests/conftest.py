@@ -1,13 +1,25 @@
 import pytest
 
 from common.tests.factories import TaskAssigneeFactory
+from common.tests.factories import TaskCategoryFactory
 from common.tests.factories import TaskFactory
+from common.tests.factories import TaskProgressStateFactory
 from tasks.models import TaskAssignee
 
 
 @pytest.fixture()
 def task():
     return TaskFactory.create()
+
+
+@pytest.fixture()
+def task_category():
+    return TaskCategoryFactory.create()
+
+
+@pytest.fixture()
+def task_progress_state():
+    return TaskProgressStateFactory.create()
 
 
 @pytest.fixture()

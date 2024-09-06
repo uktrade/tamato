@@ -1,8 +1,25 @@
 import pytest
+from django.db.utils import IntegrityError
 
+from common.tests.factories import TaskCategoryFactory
+from common.tests.factories import TaskProgressStateFactory
 from tasks.models import TaskAssignee
 
 pytestmark = pytest.mark.django_db
+
+
+def test_task_category_uniqueness():
+    name = "Most favoured nation"
+    TaskCategoryFactory.create(name=name)
+    with pytest.raises(IntegrityError):
+        TaskCategoryFactory.create(name=name)
+
+
+def test_task_progress_state_uniqueness():
+    name = "Blocked"
+    TaskProgressStateFactory.create(name=name)
+    with pytest.raises(IntegrityError):
+        TaskProgressStateFactory.create(name=name)
 
 
 def test_task_assignee_unassign_user_classmethod(task_assignee):

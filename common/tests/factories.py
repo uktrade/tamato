@@ -1533,9 +1533,25 @@ class CrownDependenciesEnvelopeFailedNotificationFactory(
         model = "notifications.CrownDependenciesEnvelopeFailedNotification"
 
 
+class TaskCategoryFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("word")
+
+    class Meta:
+        model = "tasks.TaskCategory"
+
+
+class TaskProgressStateFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("word")
+
+    class Meta:
+        model = "tasks.TaskProgressState"
+
+
 class TaskFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("sentence")
     description = factory.Faker("sentence")
+    category = factory.SubFactory(TaskCategoryFactory)
+    progress_state = factory.SubFactory(TaskProgressStateFactory)
     workbasket = factory.SubFactory(WorkBasketFactory)
 
     class Meta:
