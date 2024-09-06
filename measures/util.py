@@ -37,8 +37,8 @@ def diff_components(
     duty_sentence: str,
     start_date: date,
     transaction: Type[Transaction],
-    workbasket: workbasket_models.WorkBasket = None,
-    component_output: measure_models.MeasureComponent = None,
+    workbasket: "workbasket_models.WorkBasket",
+    component_output: type = None,
     reverse_attribute: str = "component_measure",
 ):
     """
@@ -56,8 +56,9 @@ def diff_components(
     """
     from measures.parsers import DutySentenceParser
 
-    component_output = measure_models.MeasureComponent if component_output else component_output
-    workbasket = workbasket_models.WorkBasket if workbasket else workbasket
+    # We add in the component output type here as otherwise we run into circular import issues. 
+    component_output = measure_models.MeasureComponent if not component_output else component_output
+
     
     parser = DutySentenceParser.create(
         start_date,
@@ -104,11 +105,14 @@ def diff_components(
 
 
 def update_measure_components(
-    measure: measure_models.Measure,
     duties: str,
-    workbasket: workbasket_models.WorkBasket,
+    workbasket: "workbasket_models.WorkBasket",
+    measure: "measure_models.Measure",
 ):
     """Updates the measure components associated to the measure."""
+    workbasket = workbasket_models.WorkBasket if workbasket else workbasket
+    measure = measure_models.Measure if measure else measure
+    
     diff_components(
         instance=measure,
         duty_sentence=duties if duties else measure.duty_sentence,
@@ -119,8 +123,8 @@ def update_measure_components(
 
 
 def update_measure_condition_components(
-    measure: measure_models.Measure,
-    workbasket: workbasket_models.WorkBasket,
+    measure: "measure_models.Measure",
+    workbasket: "workbasket_models.WorkBasket",
 ):
     """Updates the measure condition components associated to the
     measure."""
@@ -134,9 +138,9 @@ def update_measure_condition_components(
 
 def update_measure_excluded_geographical_areas(
     edited: bool,
-    measure: measure_models.Measure,
+    measure: "measure_models.Measure",
     exclusions: List[GeographicalArea],
-    workbasket: workbasket_models.WorkBasket,
+    workbasket: "workbasket_models.WorkBasket",
 ):
     """Updates the excluded geographical areas associated to the measure."""
     existing_exclusions = measure.exclusions.current()
