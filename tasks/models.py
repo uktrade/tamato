@@ -34,6 +34,12 @@ class Task(TimestampedMixin):
         on_delete=models.PROTECT,
         related_name="tasks",
     )
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="created_tasks",
+    )
 
     def __str__(self):
         return self.title

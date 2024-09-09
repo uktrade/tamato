@@ -1623,6 +1623,7 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
             defaults={
                 "title": self.workbasket.title,
                 "description": self.workbasket.reason,
+                "creator": self.request.user,
             },
         )
         form.assign_users(task=task)

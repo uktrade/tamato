@@ -1553,6 +1553,7 @@ class TaskFactory(factory.django.DjangoModelFactory):
     category = factory.SubFactory(TaskCategoryFactory)
     progress_state = factory.SubFactory(TaskProgressStateFactory)
     workbasket = factory.SubFactory(WorkBasketFactory)
+    creator = factory.SubFactory(UserFactory)
 
     class Meta:
         model = "tasks.Task"
