@@ -1558,6 +1558,10 @@ class TaskFactory(factory.django.DjangoModelFactory):
         model = "tasks.Task"
 
 
+class SubTaskFactory(TaskFactory):
+    parent_task = factory.SubFactory(TaskFactory)
+
+
 class TaskAssigneeFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     assigned_by = factory.SubFactory(UserFactory)

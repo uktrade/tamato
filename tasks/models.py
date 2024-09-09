@@ -22,6 +22,13 @@ class Task(TimestampedMixin):
         null=True,
         on_delete=models.PROTECT,
     )
+    parent_task = models.ForeignKey(
+        "self",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="subtasks",
+    )
     workbasket = models.ForeignKey(
         WorkBasket,
         on_delete=models.PROTECT,

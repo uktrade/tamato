@@ -1,5 +1,6 @@
 import pytest
 
+from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskCategoryFactory
 from common.tests.factories import TaskFactory
@@ -10,6 +11,11 @@ from tasks.models import TaskAssignee
 @pytest.fixture()
 def task():
     return TaskFactory.create()
+
+
+@pytest.fixture()
+def subtask():
+    return SubTaskFactory.create()
 
 
 @pytest.fixture()
