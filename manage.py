@@ -18,13 +18,14 @@ def output_env_info():
     cwd = Path().resolve()
     script_path = Path(__file__).resolve()
     executable_path = Path(sys.executable).resolve()
+    path = os.environ.get("PATH")
 
     print("Environment diagnostics")
     print("----")
     print(f" Current working directory: {cwd}")
     print(f" Current script path: {script_path}")
     print(f" Python executable path: {executable_path}")
-    print(f" PATH: {os.environ.get("PATH")}")
+    print(f" PATH: {path}")
     print("----")
 
     # Remove the flag to avoid Django unknown command errors.
