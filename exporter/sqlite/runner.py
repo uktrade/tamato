@@ -111,10 +111,13 @@ class SQLiteMigrator:
         )
 
     def migrate(self):
+        from manage import ENV_INFO_FLAG
+
         with self.migration_directory_class() as migration_dir:
             logger.info(f"Running `makemigrations` in {migration_dir}")
             self.manage(
                 migration_dir,
+                ENV_INFO_FLAG,
                 "makemigrations",
                 "--name",
                 SQLITE_MIGRATIONS_NAME,
@@ -133,6 +136,7 @@ class SQLiteMigrator:
             logger.info(f"Running `migrate` in {migration_dir}")
             self.manage(
                 migration_dir,
+                ENV_INFO_FLAG,
                 "migrate",
             )
 
