@@ -4,8 +4,6 @@ import datetime
 from datetime import date
 from decimal import Decimal
 
-from django.forms import ValidationError
-
 import measures.models as measures_models
 from common.business_rules import BusinessRule
 from common.business_rules import ExclusionMembership

@@ -920,19 +920,19 @@ class QuotaDefinitionDuplicateUpdates(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["sid"] = self.kwargs["sid"]
+        kwargs["pk"] = self.kwargs["pk"]
         kwargs["request"] = self.request
         return kwargs
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["page_title"] = "Update definition and association details"
-        context["quota_order_number"] = self.kwargs["sid"]
+        context["quota_order_number"] = self.kwargs["pk"]
         return context
 
     def get_main_definition(self):
         return models.QuotaDefinition.objects.current().get(
-            trackedmodel_ptr_id=self.kwargs["sid"],
+            trackedmodel_ptr_id=self.kwargs["pk"],
         )
 
     def form_valid(self, form):

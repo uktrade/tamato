@@ -7,7 +7,7 @@
     
     {% for definition in data %}
       {% set edit_link -%}
-        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("sub_quota_definitions-ui-updates", kwargs={"sid": definition.main_definition}) }}">Edit</a>
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("sub_quota_definitions-ui-updates", kwargs={"pk": definition.main_definition}) }}">Edit</a>
       {%- endset %}
       {% set definition_status_cell %}
         <span class="{{view.status_tag_generator(definition.sub_definition_staged_data).tag_class}}">
@@ -27,7 +27,6 @@
         {"text": "-" },
         {"text": "-" },
       ]) or "" }}
-      {# {{definition.main_definition}} #}
       {% set formatted_start_date = view.format_date(definition.sub_definition_staged_data.start_date) %}
       {% set formatted_end_date = view.format_date(definition.sub_definition_staged_data.end_date) %}
       {{ table_rows.append([

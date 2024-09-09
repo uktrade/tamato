@@ -1033,11 +1033,7 @@ class QuotaOrderNumbersSelectForm(forms.Form):
 class SelectSubQuotaDefinitionsForm(
     SelectableObjectsForm,
 ):
-    """
-    Form to select the main quota definitions that are to be duplicated.
-
-    Before selecting, we ensure the QuotaDefinitionDuplicator table is empty.
-    """
+    """Form to select the main quota definitions that are to be duplicated."""
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -1092,7 +1088,6 @@ class SelectedDefinitionsForm(forms.Form):
                 raise ValidationError(
                     "Each definition period must have a specified relationship and co-efficient value",
                 )
-        # Coefficient & relationship_type are here
         return cleaned_data
 
 
@@ -1184,7 +1179,7 @@ class SubQuotaDefinitionsUpdatesForm(
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
-        main_def_id = kwargs.pop("sid")
+        main_def_id = kwargs.pop("pk")
         super().__init__(*args, **kwargs)
         self.original_definition = models.QuotaDefinition.objects.latest_approved().get(
             sid=main_def_id,
