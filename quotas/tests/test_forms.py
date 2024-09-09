@@ -496,7 +496,7 @@ def test_quota_duplicator_form_clean_QA2(
         form = forms.SubQuotaDefinitionsUpdatesForm(
             request=session_request,
             data=data,
-            sid=quota_definition_1.pk,
+            pk=quota_definition_1.pk,
         )
         assert not form.is_valid()
         assert (
@@ -530,7 +530,7 @@ def test_quota_duplicator_form_clean_QA3(session_request, quota_definition_1):
         form = forms.SubQuotaDefinitionsUpdatesForm(
             request=session_request,
             data=data,
-            sid=quota_definition_1.pk,
+            pk=quota_definition_1.pk,
         )
         assert not form.is_valid()
         assert (
@@ -565,7 +565,7 @@ def test_quota_duplicator_form_clean_QA4(session_request, quota_definition_1):
         form = forms.SubQuotaDefinitionsUpdatesForm(
             request=session_request,
             data=data,
-            sid=quota_definition_1.pk,
+            pk=quota_definition_1.pk,
         )
         assert not form.is_valid()
         assert (
@@ -601,7 +601,7 @@ def test_quota_duplicator_form_clean_QA5_nm(session_request, quota_definition_1)
         form = forms.SubQuotaDefinitionsUpdatesForm(
             request=session_request,
             data=data,
-            sid=quota_definition_1.pk,
+            pk=quota_definition_1.pk,
         )
         assert not form.is_valid()
         assert (
@@ -637,7 +637,7 @@ def test_quota_duplicator_form_clean_QA5_eq(session_request, quota_definition_1)
         form = forms.SubQuotaDefinitionsUpdatesForm(
             request=session_request,
             data=data,
-            sid=quota_definition_1.pk,
+            pk=quota_definition_1.pk,
         )
         assert not form.is_valid()
         assert (
