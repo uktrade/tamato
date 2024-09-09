@@ -404,6 +404,33 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     def slugify_model_name(cls):
         return cls._meta.verbose_name.replace(" ", "_")
 
+    def get_association_edit_url(self, action):
+        """Get the edit url for the sub quota definition and association edit
+        journey."""
+        print(
+            f"for this object {self.sid} {self.pk} its transaction {self.transaction} and workbasket {self.transaction.workbasket.status} with update type {self.update_type}",
+        )
+        try:
+            if (
+                action == "edit"
+                and self.get_versions().last().transaction.workbasket.status
+                == WorkflowStatus.EDITING
+            ):
+                # Edits in WorkBaskets that are in EDITING state get real
+                # changes via DB updates, not newly created UPDATE instances.
+                if self.update_type == UpdateType.CREATE:
+                    action += "-create"
+                elif self.update_type == UpdateType.UPDATE:
+                    action += "-update"
+
+            url = reverse(
+                f"sub_quota_definition-{action}",
+                kwargs={"sid": self.sid},
+            )
+            return url
+        except NoReverseMatch:
+            return None
+
 
 class QuotaAssociation(TrackedModel):
     """The quota association defines the relation between quota and sub-
@@ -504,21 +531,19 @@ class QuotaEvent(TrackedModel):
 
 class QuotaDefinitionDuplicator(models.Model):
     """
-    Model class to store the data to be duplicated from a main quota
-    definition, to a sub quota child definition
+    Model class to store the data to be duplicated from a main quota definition,
+    to a sub quota child definition.
 
-    The initial data is copied from the parent definition
-    The edited data is serialised for saving to this Model, then deserialized
-    to create the definition.
+    The initial data is copied from the parent definition The edited data is
+    serialised for saving to this Model, then deserialized to create the
+    definition.
     """
 
     main_definition = models.ForeignKey(QuotaDefinition, on_delete=models.CASCADE)
 
     definition_data = models.JSONField()
-    """
-    Dictionary of all Definition data that is to be duplicated from main to
-    sub quota definition.
-    """
+    """Dictionary of all Definition data that is to be duplicated from main to
+    sub quota definition."""
 
     current_transaction = models.ForeignKey(
         "common.Transaction",
@@ -527,6 +552,4 @@ class QuotaDefinitionDuplicator(models.Model):
         related_name="definition_duplication",
         editable=False,
     )
-    """
-    The current Transaction at the time the definition was duplicated.
-    """
+    """The current Transaction at the time the definition was duplicated."""

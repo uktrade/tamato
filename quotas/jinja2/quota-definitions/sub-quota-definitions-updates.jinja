@@ -1,9 +1,23 @@
 {% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
 {% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Update sub quota definition and association" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+      {"text": "Quota " ~ view.association.main_quota.order_number, "href": view.association.main_quota.order_number.get_url()},
+      {"text": "Quota " ~ view.association.main_quota.order_number ~ " - Data", "href": url("quota_definition-ui-list", kwargs={"sid":view.association.main_quota.order_number.sid})},
+      {"text": page_title},
+    ])
+  }}
+{% endblock %}
 
 {% block content %}
     <h2 class="govuk-heading">Main quota association details</h2>
-    {% set main_definition = view.get_main_definition() %}
+    {% set main_definition = view.main_quota %}
     {% set table_rows = [] %}
     {{ table_rows.append([
         {"html": main_definition.sid },

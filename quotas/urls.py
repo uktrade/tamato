@@ -86,9 +86,24 @@ urlpatterns = [
         name="sub_quota_definitions-ui-create",
     ),
     path(
-        f"quotas/sub_quota_definition_updates/<sid>",
+        f"quotas/sub_quota_definition_updates/<sid>",  # renamed this temporarily so I can use that name
         views.QuotaDefinitionDuplicateUpdates.as_view(),
         name="sub_quota_definitions-ui-updates",
+    ),
+    path(
+        f"quotas/sub_quotas_definition_update/<sid>",
+        views.SubQuotaDefinitionAssociationEditCreate.as_view(),
+        name="sub_quota_definition-edit",
+    ),
+    path(
+        f"quotas/sub_quotas_definition_update-edit/<sid>",
+        views.SubQuotaDefinitionAssociationEditUpdate.as_view(),
+        name="sub_quota_definition-edit-update",
+    ),
+    path(
+        f"quotas/sub_quotas_definition_confirm-update/<sid>",
+        views.SubQuotaConfirmUpdate.as_view(),
+        name="sub_quota_definition-confirm-update",
     ),
     path(
         f"quota_definitions/<sid>/confirm-create/",

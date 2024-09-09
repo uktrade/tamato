@@ -239,7 +239,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
         return QuotaSuspension.objects.filter(quota_definition__order_number=self.quota)
 
     @property
-    def sub_quotas(self):
+    def associations(self):
         return QuotaAssociation.objects.filter(main_quota__order_number=self.quota)
 
     @cached_property
@@ -259,7 +259,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
             quota_data=self.quota_data,
             blocking_periods=self.blocking_periods,
             suspension_periods=self.suspension_periods,
-            sub_quotas=self.sub_quotas,
+            associations=self.associations,
             *args,
             **kwargs,
         )
@@ -1049,4 +1049,132 @@ class QuotaBlockingConfirmCreate(TrackedModelDetailView):
                 "list_url": f"{list_url}?{url_param}",
             },
         )
+        return context
+
+
+class SubQuotaDefinitionAssociationMixin:
+    template_name = "quota-definitions/sub-quota-definitions-updates.jinja"
+    form_class = forms.SubQuotaDefinitionUpdateForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["sid"] = self.kwargs["sid"]
+        kwargs["request"] = self.request
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(
+            "sub_quota_definition-confirm-update",
+            kwargs={"sid": self.kwargs["sid"]},
+        )
+
+    @property
+    def sub_quota(self):
+        return (
+            models.QuotaDefinition.objects.all()
+            .latest_approved()
+            .get(
+                sid=self.kwargs["sid"],
+            )
+        )
+
+    @property
+    def association(self):
+        "Get the main definition from the sub quota sid passed in"
+        # Getting main quota from the sub quota - assuming that a subquota can't be a subquota of multiple different main quotas
+        return (
+            models.QuotaAssociation.objects.all()
+            .filter(sub_quota_id=self.sub_quota)
+            .last()
+        )
+
+    @property
+    def main_quota(self):
+        return self.association.main_quota
+
+
+class SubQuotaDefinitionAssociationEditCreate(
+    SubQuotaDefinitionAssociationMixin,
+    QuotaDefinitionUpdate,
+):
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        instance = super().get_result_object(form)
+
+        sub_quota_relation_type = form.cleaned_data.get("relationship_type")
+        coefficient = form.cleaned_data.get("coefficient")
+
+        self.update_association(instance, sub_quota_relation_type, coefficient)
+
+        return instance
+
+    def update_association(self, instance, sub_quota_relation_type, coefficient):
+        "Update the association too if there is updated data submitted."  # Is this actually needed? Not sure any other object would prevent an identical update occuring
+        if (
+            self.association.sub_quota_relation_type == sub_quota_relation_type
+            and self.association.coefficient == coefficient
+        ):
+            return
+        self.association.new_version(
+            workbasket=WorkBasket.current(self.request),
+            transaction=instance.transaction,
+            sub_quota=instance,
+            main_quota=self.main_quota,
+            coefficient=coefficient,
+            sub_quota_relation_type=sub_quota_relation_type,
+        )
+
+
+class SubQuotaDefinitionAssociationEditUpdate(
+    SubQuotaDefinitionAssociationMixin,
+    QuotaDefinitionEditUpdate,
+):
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        instance = super().get_result_object(form)
+
+        sub_quota_relation_type = form.cleaned_data.get("relationship_type")
+        coefficient = form.cleaned_data.get("coefficient")
+
+        self.update_association(instance, sub_quota_relation_type, coefficient)
+
+        return instance
+
+    def update_association(self, instance, sub_quota_relation_type, coefficient):
+        "Update the association too if there is updated data submitted."
+        if (
+            self.association.sub_quota_relation_type == sub_quota_relation_type
+            and self.association.coefficient == coefficient
+        ):
+            return
+        # If this association already has an edit in the workbasket - update that one
+        new_association = (
+            self.association.get_versions().last()
+        )  # Must be a better way of doing this
+        if (
+            self.association.get_versions().last().transaction.workbasket
+            == self.workbasket
+        ):
+
+            form_data = {
+                "main_quota": self.main_quota,
+                "sub_quota": self.sub_quota,
+                "coefficient": coefficient,
+                "sub_quota_relation_type": sub_quota_relation_type,
+            }
+
+            form = forms.QuotaAssociationEdit(data=form_data, instance=new_association)
+            form.save()
+
+
+class SubQuotaConfirmUpdate(TrackedModelDetailView):
+    model = models.QuotaDefinition
+    template_name = "quota-definitions/sub-quota-definitions-confirm-update.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        association = QuotaAssociation.objects.all().get(sub_quota__sid=self.object.sid)
+        context["association"] = association
         return context

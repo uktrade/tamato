@@ -1186,12 +1186,16 @@ class SubQuotaDefinitionsUpdatesForm(
         self.request = kwargs.pop("request", None)
         main_def_id = kwargs.pop("sid")
         super().__init__(*args, **kwargs)
-        self.original_definition = models.QuotaDefinition.objects.get(
-            trackedmodel_ptr_id=main_def_id,
+        self.original_definition = models.QuotaDefinition.objects.latest_approved().get(
+            sid=main_def_id,
         )
         self.init_fields()
-        self.get_duplicate_data(self.original_definition)
+        self.abstracted_function(self.original_definition)
         self.init_layout(self.request)
+
+    def abstracted_function(self, original_definition):
+        # Need to update this once Charles is done with his PR and I merge it in
+        self.get_duplicate_data(original_definition)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1324,3 +1328,119 @@ class SubQuotaDefinitionsUpdatesForm(
                 ),
             ),
         )
+
+
+class SubQuotaDefinitionUpdateForm(SubQuotaDefinitionsUpdatesForm):
+    # need to overwrite set initial data and avoid doing get_duplicate_data
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def abstracted_function(self, original_definition):
+        # Not doing anything at the moment
+        # Need to update this once Charles is done with his PR and I merge it in
+        self.set_initial_data()
+
+    def set_initial_data(self):
+        sub_quota = self.original_definition
+        print(f"form sub quota is {sub_quota}")
+        association = (
+            models.QuotaAssociation.objects.all().filter(sub_quota=sub_quota).last()
+        )
+        self.original_definition = association.main_quota
+        fields = self.fields
+        fields["relationship_type"].initial = association.sub_quota_relation_type
+        fields["coefficient"].initial = association.coefficient
+        fields["measurement_unit"].initial = sub_quota.measurement_unit
+        fields["initial_volume"].initial = sub_quota.initial_volume
+        fields["volume"].initial = sub_quota.volume
+        fields["start_date"].initial = sub_quota.valid_between.lower
+        fields["end_date"].initial = sub_quota.valid_between.upper
+
+    def clean(self):
+        cleaned_data = super().clean()
+        """
+        Carrying out business rule checks here to prevent erroneous
+        associations, see:
+
+        https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quota-associations.html#validation-rules
+        """
+        original_definition = self.original_definition
+        if cleaned_data["valid_between"].upper is None:
+            raise ValidationError("An end date must be supplied")
+
+        if not business_rules.check_QA2_dict(
+            sub_definition_valid_between=cleaned_data["valid_between"],
+            main_definition_valid_between=original_definition.valid_between,
+        ):
+            raise ValidationError(
+                "QA2: Validity period for sub quota must be within the "
+                "validity period of the main quota",
+            )
+
+        if not business_rules.check_QA3_dict(
+            main_definition_unit=self.original_definition.measurement_unit,
+            sub_definition_unit=cleaned_data["measurement_unit"],
+            main_definition_volume=original_definition.volume,
+            sub_definition_volume=cleaned_data["volume"],
+            main_initial_volume=original_definition.initial_volume,
+            sub_initial_volume=cleaned_data["initial_volume"],
+        ):
+            raise ValidationError(
+                "QA3: When converted to the measurement unit of the main "
+                "quota, the volume of a sub-quota must always be lower than "
+                "or equal to the volume of the main quota",
+            )
+
+        if not business_rules.check_QA4_dict(cleaned_data["coefficient"]):
+            raise ValidationError(
+                "QA4: A coefficient must be a positive decimal number",
+            )
+
+        if cleaned_data["relationship_type"] == "NM":
+            if not business_rules.check_QA5_normal_coefficient(
+                cleaned_data["coefficient"],
+            ):
+                raise ValidationError(
+                    "QA5: Where the relationship type is Normal, the "
+                    "coefficient value must be 1",
+                )
+        elif cleaned_data["relationship_type"] == "EQ":
+            if not business_rules.check_QA5_equivalent_coefficient(
+                cleaned_data["coefficient"],
+            ):
+                raise ValidationError(
+                    "QA5: Where the relationship type is Equivalent, the "
+                    "coefficient value must be something other than 1",
+                )
+            if not business_rules.check_QA5_equivalent_volumes(
+                self.original_definition,
+                volume=cleaned_data["volume"],
+            ):
+                raise ValidationError(
+                    "Whenever a sub-quota is defined with the 'equivalent' "
+                    "type, it must have the same volume as the ones associated"
+                    " with the parent quota",
+                )
+
+        if not business_rules.check_QA6_dict(
+            main_quota=original_definition,
+            new_relation_type=cleaned_data["relationship_type"],
+        ):
+            ValidationError(
+                "QA6: Sub-quotas associated with the same main quota must "
+                "have the same relation type.",
+            )
+        print(f"this is cleaned data {cleaned_data}")
+        return cleaned_data
+
+
+class QuotaAssociationEdit(forms.ModelForm):
+    class Meta:
+        model = models.QuotaAssociation
+        fields = [
+            "sub_quota_relation_type",
+            "coefficient",
+            "main_quota",
+            "sub_quota",
+        ]

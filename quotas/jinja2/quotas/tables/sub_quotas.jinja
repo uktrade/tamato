@@ -1,15 +1,17 @@
-
 <h2 class="govuk-heading-l">Sub quota definition periods</h2>
 
 {% set table_rows = [] %}
 
-{% if sub_quotas %}
-  {% for object in sub_quotas %}
+{% if associations %}
+  {% for object in associations %}
     {% set definition_link -%}
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}#definition-details">{{ object.sub_quota.sid }}</a>
     {% endset %}
     {% set sub_quota_link -%}
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}">{{ object.sub_quota.order_number.order_number }}</a>
+    {% endset %}
+    {% set edit_link -%}
+      <a class="govuk-link" href="{{ object.sub_quota.get_versions().last().get_association_edit_url('edit') }}">Edit</a>
     {% endset %}
     {{ table_rows.append([
       {"text": definition_link },
@@ -18,6 +20,7 @@
       {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
+      {"text": edit_link },
     ]) or "" }}
   {% endfor %}
 
@@ -29,6 +32,7 @@
       {"text": "End date"},
       {"text": "Relation type"},
       {"text": "Coefficient"},
+      {"text": "Edit"},
     ],
     "rows": table_rows
   }) }}
