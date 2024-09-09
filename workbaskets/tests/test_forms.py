@@ -142,7 +142,7 @@ def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbas
     task = factories.TaskFactory.create(workbasket=user_workbasket)
     form.assign_users(task=task)
     for user in users:
-        assert TaskAssignee.objects.get(user=user, task=task, assigned_by=valid_user)
+        assert TaskAssignee.objects.get(user=user, task=task)
 
 
 def test_workbasket_assign_users_form_required_fields(rf, valid_user, user_workbasket):

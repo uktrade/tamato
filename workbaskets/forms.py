@@ -254,7 +254,6 @@ class WorkBasketAssignUsersForm(forms.Form):
         assignees = [
             TaskAssignee(
                 user=user,
-                assigned_by=self.request.user,
                 assignment_type=assignment_type,
                 task=task,
             )

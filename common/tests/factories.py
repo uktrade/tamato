@@ -1565,7 +1565,6 @@ class SubTaskFactory(TaskFactory):
 
 class TaskAssigneeFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
-    assigned_by = factory.SubFactory(UserFactory)
     assignment_type = FuzzyChoice(TaskAssignee.AssignmentType.values)
     task = factory.SubFactory(TaskFactory)
 
