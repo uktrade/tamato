@@ -62,8 +62,13 @@ class TaskProgressStateAdmin(admin.ModelAdmin):
 
 
 class TaskAssigneeAdmin(TaskAdminMixin, admin.ModelAdmin):
-    list_display = ["id", "user", "assignment_type", "task_id", "unassigned_at"]
-    search_fields = ["user", "assignment_type", "task"]
+    list_display = ["id", "assignee", "assignment_type", "task_id", "unassigned_at"]
+    search_fields = ["user__username", "assignment_type", "task__id"]
+
+    def assignee(self, obj):
+        if not obj.user:
+            return "Missing user!"
+        return obj.user.get_displayname()
 
     def task_id(self, obj):
         if not obj.task:
