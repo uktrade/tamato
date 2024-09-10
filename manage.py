@@ -13,12 +13,14 @@ def output_env_info():
     """Inspect and output environment diagnostics for help with platform /
     environment debugging."""
 
+    import pwd
     from pathlib import Path
 
     cwd = Path().resolve()
     script_path = Path(__file__).resolve()
     executable_path = Path(sys.executable).resolve()
     path = os.environ.get("PATH")
+    username = pwd.getpwuid(os.getuid()).pw_name
 
     print("Environment diagnostics")
     print("----")
@@ -26,6 +28,7 @@ def output_env_info():
     print(f" Current script path: {script_path}")
     print(f" Python executable path: {executable_path}")
     print(f" PATH: {path}")
+    print(f" username: {username}")
     print("----")
 
     # Remove the flag to avoid Django unknown command errors.
