@@ -177,13 +177,18 @@ class SQLiteMigrator:
                 sqlite_env["CELERY_LOG_LEVEL"],
             )
 
-        sqlite_env["DATABASE_URL"] = f"sqlite:///{str(self.sqlite_file)}"
-
         # Required to make sure the postgres default isn't set as the DB_URL
         if sqlite_env.get("VCAP_SERVICES"):
             vcap_env = json.loads(sqlite_env["VCAP_SERVICES"])
             vcap_env.pop("postgres", None)
             sqlite_env["VCAP_SERVICES"] = json.dumps(vcap_env)
+        elif sqlite_env.get("COPILOT_ENVIRONMENT_NAME"):
+            sqlite_env["DATABASE_CREDENTIALS"] = {
+                "engine": "sqlite",
+                "dbname": f"{str(self.sqlite_file)}",
+            }
+        else:
+            sqlite_env["DATABASE_URL"] = f"sqlite:///{str(self.sqlite_file)}"
 
         sqlite_env["PATH"] = exec_dir + ":" + sqlite_env["PATH"]
         manage_cmd = os.path.join(exec_dir, "manage.py")
@@ -194,9 +199,9 @@ class SQLiteMigrator:
             "env": sqlite_env,
         }
         if settings.SQLITE_LOG_MIGRATIONS:
-            # In place of
+            # To redirect stderr into stdout, replace:
             #   run_kwargs["capture_output"] = True
-            # combine stdout and stderr.
+            # with stdout and stderr params.
             run_kwargs["stdout"] = subprocess.PIPE
             run_kwargs["stderr"] = subprocess.STDOUT
             run_kwargs["text"] = True

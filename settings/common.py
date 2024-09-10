@@ -12,12 +12,12 @@ from pathlib import Path
 
 import dj_database_url
 from celery.schedules import crontab
-from dbt_copilot_python.database import database_url_from_env
 from dbt_copilot_python.network import setup_allowed_hosts
 from dbt_copilot_python.utility import is_copilot
 from django.urls import reverse_lazy
 from django_log_formatter_asim import ASIMFormatter
 
+from common.util import database_url_from_env
 from common.util import is_truthy
 
 # Name of the deployment environment (dev/alpha)
@@ -319,9 +319,9 @@ STATIC_URL = "/assets/"
 
 
 # -- Database
+
 if MAINTENANCE_MODE:
     DATABASES = {}
-
 # DBT PaaS
 elif is_copilot():
     DB_URL = database_url_from_env("DATABASE_CREDENTIALS")
