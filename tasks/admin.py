@@ -39,6 +39,8 @@ class TaskAdmin(TaskAdminMixin, admin.ModelAdmin):
         "workbasket_id",
         "creator",
     ]
+    search_fields = ["id", "title", "description"]
+    list_filter = ["category", "progress_state"]
 
     def parent_task_id(self, obj):
         if not obj.parent_task:
