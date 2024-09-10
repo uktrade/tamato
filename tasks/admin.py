@@ -42,7 +42,7 @@ class TaskAdmin(TaskAdminMixin, admin.ModelAdmin):
 
     def parent_task_id(self, obj):
         if not obj.parent_task:
-            return "-"
+            return None
         return self.link_to_task(obj.parent_task)
 
     def workbasket_id(self, obj):
