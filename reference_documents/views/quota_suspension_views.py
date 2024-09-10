@@ -21,7 +21,7 @@ class RefQuotaSuspensionEdit(PermissionRequiredMixin, UpdateView):
             reverse(
                 "reference_documents:version-details",
                 args=[
-                    self.get_object().preferential_quota.ref_order_number.reference_document_version.pk,
+                    self.get_object().ref_quota_definition.ref_order_number.reference_document_version.pk,
                 ],
             )
             + "#tariff-quotas"
@@ -31,7 +31,7 @@ class RefQuotaSuspensionEdit(PermissionRequiredMixin, UpdateView):
         context_data = super().get_context_data(**kwargs)
         context_data["reference_document_version"] = (
             ReferenceDocumentVersion.objects.get(
-                id=self.get_object().preferential_quota.ref_order_number.reference_document_version.pk,
+                id=self.get_object().ref_quota_definition.ref_order_number.reference_document_version.pk,
             )
         )
         return context_data
@@ -40,7 +40,7 @@ class RefQuotaSuspensionEdit(PermissionRequiredMixin, UpdateView):
         kwargs = super(RefQuotaSuspensionEdit, self).get_form_kwargs()
         kwargs["reference_document_version"] = RefQuotaSuspension.objects.get(
             id=self.kwargs["pk"],
-        ).preferential_quota.ref_order_number.reference_document_version
+        ).ref_quota_definition.ref_order_number.reference_document_version
 
         return kwargs
 
@@ -54,7 +54,7 @@ class RefQuotaSuspensionCreate(PermissionRequiredMixin, CreateView):
     def get_form_kwargs(self):
         kwargs = super(RefQuotaSuspensionCreate, self).get_form_kwargs()
         kwargs["reference_document_version"] = ReferenceDocumentVersion.objects.get(
-            id=self.kwargs["version_pk"],
+            id=self.kwargs["pk"],
         )
 
         # if "order_pk" in self.kwargs.keys():
@@ -72,7 +72,7 @@ class RefQuotaSuspensionCreate(PermissionRequiredMixin, CreateView):
         context_data = super().get_context_data(**kwargs)
         context_data["reference_document_version"] = (
             ReferenceDocumentVersion.objects.get(
-                id=self.kwargs["version_pk"],
+                id=self.kwargs["pk"],
             )
         )
         return context_data

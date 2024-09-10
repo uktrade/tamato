@@ -37,9 +37,6 @@ from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionAlignmentCheck,
 )
 from reference_documents.views.reference_document_version_views import (
-    ReferenceDocumentVersionCheckResults,
-)
-from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionConfirmCreate,
 )
 from reference_documents.views.reference_document_version_views import (
@@ -179,11 +176,6 @@ urlpatterns = [
         ReferenceDocumentVersionAlignmentCheckQueued.as_view(),
         name="alignment-check-queued",
     ),
-    path(
-        "reference_document_versions/<pk>/check-results/",
-        ReferenceDocumentVersionCheckResults.as_view(),
-        name="version-check-results",
-    ),
     # Preferential Quotas
     path(
         "preferential_quotas/delete/<pk>/<version_pk>/",
@@ -280,7 +272,7 @@ urlpatterns = [
         name="quota-suspension-edit",
     ),
     path(
-        "order_numbers/<version_pk>/create_quota_suspension/",
+        "reference_documents_versions/<pk>/create_quota_suspension/",
         RefQuotaSuspensionCreate.as_view(),
         name="quota-suspension-create",
     ),

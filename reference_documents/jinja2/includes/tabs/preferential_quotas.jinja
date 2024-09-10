@@ -61,11 +61,11 @@
 
                 {% endif %}
             </div>
-            {% if on_ctx.quota_defs != [] %}
+            {% if on_ctx.quota_definition_ranges != [] %}
                 <h3 class="govuk-heading-m" id="subsection-title">Quota definitions</h3>
                 {{ govukTable({
                 "head": reference_document_version_quotas_headers,
-                "rows": on_ctx.quota_def_data_rows()
+                "rows": on_ctx.quota_definition_data_rows()
                 }) }}
             {% else %}
                 <div class="govuk-body govuk-!-margin-bottom-2">
@@ -73,7 +73,7 @@
                 </div>
             {% endif %}
 
-            {% if on_ctx.quota_suspension_defs != [] %}
+            {% if on_ctx.quota_suspensions != [] %}
                 <h3 class="govuk-heading-m" id="subsection-title">Quota suspensions</h3>
                 {{ govukTable({
                 "head": reference_document_version_suspension_headers,
@@ -85,21 +85,21 @@
                 </div>
             {% endif %}
 
-            {% if on_ctx.quota_def_templates|length %}
+            {% if on_ctx.quota_definition_ranges|length %}
                 <h3 class="govuk-heading-m" id="subsection-title">Quota definition ranges</h3>
-                {% for qdt in on_ctx.quota_def_templates %}
+                {% for qdr in on_ctx.quota_definition_ranges %}
 
                     <div class="govuk-body govuk-!-margin-bottom-2">
-                        Duty Rate: {{ qdt.quota_definition_range.duty_rate }}<br>
-                        First years volume : {{ qdt.quota_definition_range.initial_volume }} <br>
-                        Incremental yearly change there after : {{ qdt.quota_definition_range.yearly_volume_increment }} <br>
-                        Incremental yearly change text : {{ qdt.quota_definition_range.yearly_volume_increment_text }} <br>
+                        Duty Rate: {{ qdr.quota_definition_range.duty_rate }}<br>
+                        First years volume : {{ qdr.quota_definition_range.initial_volume }} <br>
+                        Incremental yearly change there after : {{ qdr.quota_definition_range.yearly_volume_increment }} <br>
+                        Incremental yearly change text : {{ qdr.quota_definition_range.yearly_volume_increment_text }} <br>
                         Yearly period :
-                        from {{ qdt.quota_definition_range.start_day }}-{{ qdt.quota_definition_range.start_month }}-20XX to
-                        {{ qdt.quota_definition_range.end_day }}-{{ qdt.quota_definition_range.end_month }}-20XX<br>
-                        Yearly range : from {{ qdt.quota_definition_range.start_year }}
-                        {% if qdt.quota_definition_range.end_year %}
-                            to {{ qdt.quota_definition_range.end_year }} <br>
+                        from {{ qdr.quota_definition_range.start_day }}-{{ qdr.quota_definition_range.start_month }}-20XX to
+                        {{ qdr.quota_definition_range.end_day }}-{{ qdr.quota_definition_range.end_month }}-20XX<br>
+                        Yearly range : from {{ qdr.quota_definition_range.start_year }}
+                        {% if qdr.quota_definition_range.end_year %}
+                            to {{ qdr.quota_definition_range.end_year }} <br>
                         {% else %}
                             onwards (no end year)<br>
                         {% endif %}
@@ -111,18 +111,18 @@
                     <div class="govuk-body govuk-!-margin-bottom-2">
                         {% if object.editable() %}
                             {% if request.user.has_perm("reference_documents.change_refquotadefinitionrange") %}
-                                <a class="order_number_link" href="{{ url('reference_documents:quota-definition-range-edit', args=[qdt.quota_definition_range.id]) }}">Edit</a>
+                                <a class="order_number_link" href="{{ url('reference_documents:quota-definition-range-edit', args=[qdr.quota_definition_range.id]) }}">Edit</a>
                             {% endif %}
 
                             {% if request.user.has_perm("reference_documents.delete_preferentialquotatemplate") %}
                                 <a class="order_number_link"
-                                   href="{{ url('reference_documents:quota-definition-range-delete', args=[qdt.quota_definition_range.id, on_ctx.order_number.reference_document_version.id]) }}">Delete</a>
+                                   href="{{ url('reference_documents:quota-definition-range-delete', args=[qdr.quota_definition_range.id, on_ctx.order_number.reference_document_version.id]) }}">Delete</a>
                             {% endif %}
                         {% endif %}
                     </div>
                     {{ govukTable({
                         "head": reference_document_version_quotas_headers,
-                        "rows": qdt.quota_def_template_data_rows()
+                        "rows": qdr.quota_definition_range_data_rows()
                     }) }}
                 {% endfor %}
             {% else %}
@@ -131,16 +131,16 @@
                 </div>
             {% endif %}
 
-            {% if on_ctx.quota_suspension_templates|length %}
+            {% if on_ctx.quota_suspension_ranges|length %}
                 <h3 class="govuk-heading-m" id="subsection-title">Quota suspension ranges</h3>
-                {% for qst in on_ctx.quota_suspension_templates %}
+                {% for qsr in on_ctx.quota_suspension_ranges %}
                     <div class="govuk-body govuk-!-margin-bottom-2">
                         Yearly period :
-                        from {{ qst.quota_suspension_template.start_day }}-{{ qst.quota_suspension_template.start_month }}-20XX to
-                        {{ qst.quota_suspension_template.end_day }}-{{ qst.quota_suspension_template.end_month }}-20XX<br>
-                        Yearly range : from {{ qst.quota_suspension_template.start_year }}
-                        {% if qst.quota_suspension_template.end_year %}
-                            to {{ qst.quota_suspension_template.end_year }} <br>
+                        from {{ qsr.quota_suspension_range.start_day }}-{{ qsr.quota_suspension_range.start_month }}-20XX to
+                        {{ qsr.quota_suspension_range.end_day }}-{{ qsr.quota_suspension_range.end_month }}-20XX<br>
+                        Yearly range : from {{ qsr.quota_suspension_range.start_year }}
+                        {% if qsr.quota_suspension_range.end_year %}
+                            to {{ qsr.quota_suspension_range.end_year }} <br>
                         {% else %}
                             onwards (no end year)<br>
                         {% endif %}
@@ -152,18 +152,18 @@
                     <div class="govuk-body govuk-!-margin-bottom-2">
                         {% if object.editable() %}
                             {% if request.user.has_perm("reference_documents.change_refquotadefinitionrange") %}
-                                <a class="order_number_link" href="{{ url('reference_documents:quota-suspension-range-edit', args=[qst.quota_suspension_template.id]) }}">Edit</a>
+                                <a class="order_number_link" href="{{ url('reference_documents:quota-suspension-range-edit', args=[qsr.quota_suspension_range.id]) }}">Edit</a>
                             {% endif %}
 
                             {% if request.user.has_perm("reference_documents.delete_preferentialquotatemplate") %}
                                 <a class="order_number_link"
-                                   href="{{ url('reference_documents:quota-suspension-range-delete', args=[qst.quota_suspension_template.id, on_ctx.order_number.reference_document_version.id]) }}">Delete</a>
+                                   href="{{ url('reference_documents:quota-suspension-range-delete', args=[qsr.quota_suspension_range.id, on_ctx.order_number.reference_document_version.id]) }}">Delete</a>
                             {% endif %}
                         {% endif %}
                     </div>
                     {{ govukTable({
                         "head": reference_document_version_quotas_headers,
-                        "rows": qst.quota_suspensions_template_data_rows()
+                        "rows": qsr.quota_suspensions_range_data_rows()
                     }) }}
 
 
@@ -171,7 +171,7 @@
 
             {% else %}
                 <div class="govuk-body govuk-!-margin-bottom-2">
-                    <i>No templated quota suspensions defined</i>
+                    <i>No quota suspension ranges defined</i>
                 </div>
             {% endif %}
         {% endfor %}
@@ -186,8 +186,13 @@
                         <li><a class="govuk-link" href="{{ url('reference_documents:order-number-create', args=[object.pk]) }}">Add new order number</a></li>
                     {% endif %}
 
+                    {% if request.user.has_perm("reference_documents.add_refquotadefinition") %}
+                        <li><a class="govuk-link" href="{{ url('reference_documents:quota-definition-create', args=[object.pk]) }}">Add new quota definition</a></li>
+                        <li><a class="govuk-link" href="{{ url('reference_documents:quota-definition-bulk-create', args=[object.pk]) }}">Bulk add quota definitions</a></li>
+                    {% endif %}
+
                     {% if request.user.has_perm("reference_documents.add_refquotadefinitionrange") %}
-                        <li><a class="govuk-link" href="{{ url('reference_documents:quota-definition-range-create', args=[object.pk]) }}">Add new quota template</a></li>
+                        <li><a class="govuk-link" href="{{ url('reference_documents:quota-definition-range-create', args=[object.pk]) }}">Add new quota definition range</a></li>
                     {% endif %}
 
                     {% if request.user.has_perm("reference_documents.add_refquotasuspension") %}
@@ -195,13 +200,10 @@
                     {% endif %}
 
                     {% if request.user.has_perm("reference_documents.add_refquotasuspensionrange") %}
-                        <li><a class="govuk-link" href="{{ url('reference_documents:quota-suspension-range-create', args=[object.pk]) }}">Add new quota suspension template</a></li>
+                        <li><a class="govuk-link" href="{{ url('reference_documents:quota-suspension-range-create', args=[object.pk]) }}">Add new quota suspension range</a></li>
                     {% endif %}
 
-                    {% if request.user.has_perm("reference_documents.add_refquotadefinition") %}
-                        <li><a class="govuk-link" href="{{ url('reference_documents:quota-definition-create', args=[object.pk]) }}">Add new quota</a></li>
-                        <li><a class="govuk-link" href="{{ url('reference_documents:quota-definition-bulk-create', args=[object.pk]) }}">Bulk add quotas</a></li>
-                    {% endif %}
+
                 {% endif %}
             </ul>
         </div>

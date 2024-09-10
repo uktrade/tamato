@@ -285,4 +285,6 @@ class AlignmentReportCheckFactory(factory.django.DjangoModelFactory):
     check_name = FuzzyText(length=5)
     status = AlignmentReportCheckStatus.PASS
     message = FuzzyText(length=10, )
+    ref_rate = None
+
 

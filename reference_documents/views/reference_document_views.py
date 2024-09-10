@@ -38,10 +38,6 @@ class ReferenceDocumentContext:
         for ref_doc in self.object_list.order_by("area_id"):
             if ref_doc.reference_document_versions.count() == 0:
 
-                latest_version = None
-                if ref_doc.reference_document_versions.count() > 0:
-                    latest_version = ref_doc.reference_document_versions.latest()
-
                 actions = ''
 
                 if self.user.has_perm("reference_documents.view_referencedocument"):

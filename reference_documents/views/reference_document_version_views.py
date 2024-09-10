@@ -6,7 +6,6 @@ from django.urls import reverse
 from django.views.generic import CreateView
 from django.views.generic import DeleteView
 from django.views.generic import DetailView
-from django.views.generic import ListView
 from django.views.generic import TemplateView
 from django.views.generic import UpdateView
 
@@ -72,26 +71,32 @@ class QuotaDefinitionContext:
         return row_data
 
 
-class QuotaDefinitionTemplateContext:
+class QuotaDefinitionRangeContext:
     def __init__(self, quota_definition_range: RefQuotaDefinitionRange, user):
         self.user = user
         self.quota_definition_range = quota_definition_range
         self.reference_document_version = quota_definition_range.ref_order_number.reference_document_version
         self.quota_defs = []
 
-    def quota_def_template_data_rows(self):
+        for quota_definition in self.quota_definition_range.dynamic_quota_definitions():
+            self.quota_defs.append(QuotaDefinitionContext(quota_definition, self.user))
+
+    def quota_definition_range_data_rows(self):
         for quota_def in self.quota_defs:
             yield quota_def.row()
 
 
-class QuotaSuspensionTemplateContext:
+class QuotaSuspensionRangeContext:
     def __init__(self, quota_suspension_range: RefQuotaSuspensionRange, user):
         self.user = user
-        self.quota_suspension_template = quota_suspension_range
+        self.quota_suspension_range = quota_suspension_range
         self.reference_document_version = quota_suspension_range.ref_quota_definition_range.ref_order_number.reference_document_version
         self.quota_suspensions = []
 
-    def quota_suspensions_template_data_rows(self):
+        for quota_suspension in self.quota_suspension_range.dynamic_quota_suspensions():
+            self.quota_suspensions.append(QuotaSuspensionContext(quota_suspension, self.user))
+
+    def quota_suspensions_range_data_rows(self):
         for quota_suspension in self.quota_suspensions:
             yield quota_suspension.row()
 
@@ -104,14 +109,6 @@ class QuotaSuspensionContext:
         self.reference_document_version = quota_suspension.ref_quota_definition.ref_order_number.reference_document_version
 
     def row(self):
-        # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
-        #     self.reference_document_version,
-        #     self.quota_suspension.preferential_quota.commodity_code,
-        # )
-
-        # if comm_code:
-        #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
-        # else:
         comm_code_link = f"{self.quota_suspension.ref_quota_definition.commodity_code}"
 
         actions = "<span></span>"
@@ -142,21 +139,21 @@ class QuotaSuspensionContext:
 
 
 class OrderNumberContext:
-    def __init__(self, order_number: RefOrderNumber, version: ReferenceDocumentVersion, tap_order_number):
+    def __init__(self, order_number: RefOrderNumber, tap_order_number):
         self.order_number = order_number
         self.tap_order_number = tap_order_number
-        self.version = version
-        self.quota_defs = []
-        self.quota_suspension_defs = []
-        self.quota_def_templates = []
-        self.quota_suspension_templates = []
+        self.version = order_number.reference_document_version
+        self.quota_definitions = []
+        self.quota_suspensions = []
+        self.quota_definition_ranges = []
+        self.quota_suspension_ranges = []
 
-    def quota_def_data_rows(self):
-        for quota_def in self.quota_defs:
+    def quota_definition_data_rows(self):
+        for quota_def in self.quota_definitions:
             yield quota_def.row()
 
     def quota_suspensions_data_rows(self):
-        for quota_suspension in self.quota_suspension_defs:
+        for quota_suspension in self.quota_suspensions:
             yield quota_suspension.row()
 
 
@@ -169,7 +166,7 @@ class ReferenceDocumentVersionContext:
         self._populate_quota_definitions()
         self._populate_quota_suspensions()
         self._populate_quota_definition_ranges()
-        self._populate_quota_suspension_templates()
+        self._populate_quota_suspension_ranges()
 
     def _populate_order_numbers(self):
 
@@ -181,8 +178,7 @@ class ReferenceDocumentVersionContext:
             self.order_numbers.append(
                 OrderNumberContext(
                     ref_doc_order_number,
-                    self.reference_document_version,
-                    tap_order_number=tap_order_number
+                    tap_order_number
                 )
             )
 
@@ -191,30 +187,27 @@ class ReferenceDocumentVersionContext:
             for quota in context_order_number.order_number.ref_quota_definitions.order_by(
                     "commodity_code"
             ):
-                context_order_number.quota_defs.append(QuotaDefinitionContext(quota, self.user))
+                context_order_number.quota_definitions.append(QuotaDefinitionContext(quota, self.user))
 
     def _populate_quota_suspensions(self):
         for context_order_number in self.order_numbers:
-            for context_quota_def in context_order_number.quota_defs:
+            for context_quota_def in context_order_number.quota_definitions:
                 for suspension in context_quota_def.quota_definition.ref_quota_suspensions.all():
-                    context_order_number.quota_suspension_defs.append(QuotaSuspensionContext(suspension, self.user))
+                    context_order_number.quota_suspensions.append(QuotaSuspensionContext(suspension, self.user))
 
     def _populate_quota_definition_ranges(self):
         for context_order_number in self.order_numbers:
             for quota_definition_range in context_order_number.order_number.ref_quota_definition_ranges.all():
-                new_context = QuotaDefinitionTemplateContext(quota_definition_range, self.user)
-                context_order_number.quota_def_templates.append(new_context)
-                for quota_definition in quota_definition_range.dynamic_quota_definitions():
-                    new_context.quota_defs.append(QuotaDefinitionContext(quota_definition, self.user))
+                new_context = QuotaDefinitionRangeContext(quota_definition_range, self.user)
+                context_order_number.quota_definition_ranges.append(new_context)
 
-    def _populate_quota_suspension_templates(self):
+
+    def _populate_quota_suspension_ranges(self):
         for context_order_number in self.order_numbers:
             for quota_definition_range in context_order_number.order_number.ref_quota_definition_ranges.all():
                 for quota_suspension_range in quota_definition_range.ref_quota_suspension_ranges.all():
-                    new_context = QuotaSuspensionTemplateContext(quota_suspension_range, self.user)
-                    context_order_number.quota_suspension_templates.append(new_context)
-                    for quota_suspension in quota_suspension_range.dynamic_quota_suspensions():
-                        new_context.quota_suspensions.append(QuotaSuspensionContext(quota_suspension, self.user))
+                    new_context = QuotaSuspensionRangeContext(quota_suspension_range, self.user)
+                    context_order_number.quota_suspension_ranges.append(new_context)
 
     def alignment_report(self):
         return self.reference_document_version.alignment_reports.last()
@@ -306,14 +299,6 @@ class ReferenceDocumentVersionContext:
         ) in self.reference_document_version.ref_rates.order_by(
             "commodity_code", "valid_between"
         ):
-            # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
-            #     preferential_rate.reference_document_version,
-            #     preferential_rate.commodity_code,
-            # )
-
-            # if comm_code:
-            #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.item_id}</a>'
-            # else:
             comm_code_link = f"{preferential_rate.commodity_code}"
 
             actions = "<span></span>"
@@ -343,14 +328,6 @@ class ReferenceDocumentVersionContext:
         return rows
 
     def get_quota_row(self, commodity_code: str, volume, measurement, duty_rate, valid_between, quota=None):
-
-        # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
-        #     self.reference_document_version,
-        #     commodity_code,
-        # )
-        # if comm_code:
-        #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
-        # else:
         comm_code_link = f"{commodity_code}"
 
         actions = "<span></span>"
@@ -383,14 +360,6 @@ class ReferenceDocumentVersionContext:
         return row_to_add
 
     def get_suspension_row(self, quota_valid_between, suspension, commodity_code, reference_document_version, templated=False):
-
-        # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
-        #     self.reference_document_version,
-        #     commodity_code,
-        # )
-        # if comm_code:
-        #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
-        # else:
         comm_code_link = f"{commodity_code}"
 
         actions = "<span></span>"
@@ -430,7 +399,7 @@ class ReferenceDocumentVersionContext:
                 row_to_add,
             )
 
-    def order_number_suspension_rows(self, data, ref_doc_order_number):
+    def quota_suspension_rows(self, data, ref_doc_order_number):
         for suspension in RefQuotaSuspension.objects.all().filter(
                 preferential_quota__ref_order_number__quota_order_number=ref_doc_order_number
         ).order_by(
@@ -448,20 +417,20 @@ class ReferenceDocumentVersionContext:
                 row_to_add,
             )
 
-    def templated_order_number_suspension_rows(self, data, ref_doc_order_number):
-        for templated_suspension in RefQuotaSuspensionRange.objects.all().filter(
+    def quota_suspension_range_rows(self, data, ref_doc_order_number):
+        for quota_suspension_range in RefQuotaSuspensionRange.objects.all().filter(
                 ref_quota_definition_range__ref_order_number=ref_doc_order_number
         ):
 
             data_to_add = {
                 'data_rows': [],
-                'preferential_quota_suspension_template': templated_suspension
+                'ref_quota_suspension_range': quota_suspension_range
             }
 
-            if templated_suspension.pk not in data[ref_doc_order_number.quota_order_number]["templated_suspension_data"].keys():
-                data[ref_doc_order_number.quota_order_number]["templated_suspension_data"][templated_suspension.pk] = []
+            if quota_suspension_range.pk not in data[ref_doc_order_number.quota_order_number]["templated_suspension_data"].keys():
+                data[ref_doc_order_number.quota_order_number]["templated_suspension_data"][quota_suspension_range.pk] = []
 
-            for suspension in templated_suspension.dynamic_preferential_quota_suspensions():
+            for suspension in quota_suspension_range.dynamic_preferential_quota_suspensions():
                 row_to_add = self.get_suspension_row(
                     suspension.preferential_quota.valid_between,
                     suspension,
@@ -474,11 +443,9 @@ class ReferenceDocumentVersionContext:
                     row_to_add
                 )
 
-            data[ref_doc_order_number.quota_order_number]["templated_data"][templated_suspension.ref_quota_definition_range.commodity_code].append(data_to_add)
+            data[ref_doc_order_number.quota_order_number]["templated_data"][quota_suspension_range.ref_quota_definition_range.commodity_code].append(data_to_add)
 
-    def templated_order_number_rows(self, data, ref_doc_order_number):
-        # Add templated data rows
-
+    def quota_definition_range_rows(self, data, ref_doc_order_number):
         for quota_definition_range in ref_doc_order_number.ref_quota_definition_range.order_by("commodity_code"):
 
             data_to_add = {
@@ -773,36 +740,3 @@ class ReferenceDocumentVersionAlignmentCheckQueued(DetailView):
     template_name = "reference_documents/reference_document_versions/check_queued.jinja"
     model = ReferenceDocumentVersion
 
-
-class ReferenceDocumentVersionCheckResults(ListView):
-    model = AlignmentReportCheck
-    template_name = (
-        "reference_documents/reference_document_versions/check_results.jinja"
-    )
-    context_object_name = "checks"
-
-    @property
-    def reference_document_version(self) -> ReferenceDocumentVersion:
-        return ReferenceDocumentVersion.objects.all().get(pk=self.kwargs["pk"])
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context["reference_document_version"] = self.reference_document_version
-        return context
-
-    def get_queryset(self):
-        alignment_checks = AlignmentReportCheck.objects.all().filter(
-            alignment_report__reference_document_version=self.reference_document_version,
-        )
-        queryset = {
-            "ref_rates": alignment_checks.filter(
-                ref_rate__isnull=False,
-            ),
-            "ref_quota_definitions": alignment_checks.filter(
-                ref_quota_definition__isnull=False,
-            ),
-            "ref_order_numbers": alignment_checks.filter(
-                ref_order_number__isnull=False,
-            ),
-        }
-        return queryset

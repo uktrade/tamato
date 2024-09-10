@@ -105,7 +105,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         pref_quota_order_number = factories.RefOrderNumberFactory()
 
         data = {
-            "quota_order_number": "054333",
+            "order_number": "054333",
         }
 
         target = RefOrderNumberCreateUpdateForm(
@@ -114,7 +114,23 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         )
 
         assert not target.is_valid()
-        assert "quota_order_number" not in target.errors.keys()
+        assert "order_number" not in list[target.errors.keys()]
+
+    def test_clean_order_number_not_numeric(self):
+        pref_quota_order_number = factories.RefOrderNumberFactory()
+
+        data = {
+            "order_number": "aabbcc",
+        }
+
+        target = RefOrderNumberCreateUpdateForm(
+            pref_quota_order_number.reference_document_version,
+            data=data,
+        )
+
+        assert not target.is_valid()
+        assert "order_number" in target.errors.keys()
+        assert 'Quota order number is invalid' in target.errors['order_number']
 
     def test_clean_quota_order_number_invalid_already_exists_adding(self):
         ref_order_number = factories.RefOrderNumberFactory(

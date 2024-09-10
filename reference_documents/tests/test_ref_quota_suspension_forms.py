@@ -4,8 +4,9 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from common.util import TaricDateRange
-from reference_documents.forms.ref_quota_suspension_forms import RefQuotaSuspensionCreateUpdateForm
+from reference_documents.forms.ref_quota_suspension_forms import RefQuotaSuspensionCreateUpdateForm, RefQuotaSuspensionDeleteForm
 from reference_documents.forms.ref_quota_suspension_range_forms import RefQuotaSuspensionRangeCreateUpdateForm
+from reference_documents.models import RefQuotaSuspension
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -57,78 +58,76 @@ class TestRefQuotaSuspensionCreateUpdateForm:
         (
                 "Invalid year range (beyond range of definition start and end)",
                 {
-                    'valid_between': TaricDateRange(date(2021, 1, 1), date(2021, 12, 31)),
+                    'start_date_0': '1',
+                    'start_date_1': '1',
+                    'start_date_2': '2021',
+                    'end_date_0': '31',
+                    'end_date_1': '12',
+                    'end_date_2': '2021',
                 },
                 True,
-                {'end_year': 'Please enter an end year greater than or equal to the start year'}
-        ), (
-                "Invalid year range (beyond range of definition)",
-                {
-                    'valid_between': TaricDateRange(date(2021, 1, 1), date(2021, 12, 31)),
-                },
-                True,
-                {'end_year': 'Please enter an end year greater than or equal to the start year'}
+                {'end_date': ['End date is after the quota definitions end date']}
         ), (
                 "End date < Start date",
                 {
-                    'start_day': '1',
-                    'start_month': '2',
-                    'start_year': '2024',
-                    'end_day': '1',
-                    'end_month': '1',
-                    'end_year': '2023',
+                    'start_date_0': '1',
+                    'start_date_1': '2',
+                    'start_date_2': '2024',
+                    'end_date_0': '1',
+                    'end_date_1': '1',
+                    'end_date_2': '2023',
                 },
                 True,
-                {'end_year': 'Please enter an end year greater than or equal to the start year'}
+                {'end_date': ['End date is before the start date']}
         ), (
                 "End date < Start date #2",
                 {
-                    'start_day': '28',
-                    'start_month': '12',
-                    'end_day': '1',
-                    'end_month': '12',
-                    'start_year': '2024',
-                    'end_year': '2023',
+                    'start_date_0': '28',
+                    'start_date_1': '12',
+                    'start_date_2': '2024',
+                    'end_date_0': '1',
+                    'end_date_1': '12',
+                    'end_date_2': '2023',
 
                 },
                 True,
-                {'end_year': 'Please enter an end year greater than or equal to the start year'}
+                {'end_date': ['End date is before the start date', 'End date is after the quota definitions end date']}
         ), (
                 "Start date is not valid",
                 {
-                    'start_day': '31',
-                    'start_month': '6',
-                    'start_year': '2024',
-                    'end_day': '1',
-                    'end_month': '12',
-                    'end_year': '2024',
+                    'start_date_0': '31',
+                    'start_date_1': '6',
+                    'start_date_2': '2024',
+                    'end_date_0': '1',
+                    'end_date_1': '12',
+                    'end_date_2': '2024',
                 },
                 True,
-                {'start_day': 'The calculated start date is not valid for the year range'}
+                {'start_date': ['Day is out of range for month Start date is not valid']}
         ), (
                 "end date is not valid",
                 {
-                    'start_day': '1',
-                    'start_month': '1',
-                    'start_year': '2024',
-                    'end_day': '31',
-                    'end_month': '6',
-                    'end_year': '2024',
+                    'start_date_0': '1',
+                    'start_date_1': '1',
+                    'start_date_2': '2024',
+                    'end_date_0': '31',
+                    'end_date_1': '6',
+                    'end_date_2': '2024',
                 },
                 True,
-                {'end_day': 'The calculated end date is not valid for the year range'}
+                {'end_date': ['Day is out of range for month End date is not valid']}
         ), (
                 "end date is not valid",
                 {
-                    'start_day': '1',
-                    'start_month': '1',
-                    'start_year': '2022',
-                    'end_day': '28',
-                    'end_month': '6',
-                    'end_year': '2025',
+                    'start_date_0': '1',
+                    'start_date_1': '1',
+                    'start_date_2': '2022',
+                    'end_date_0': '28',
+                    'end_date_1': '6',
+                    'end_date_2': '2025',
                 },
                 True,
-                {'__all__': 'does not fall within any definition defined by the selected quota definition template'}
+                {'end_date': ['End date is after the quota definitions end date']}
         ),
 
     ])
@@ -147,5 +146,21 @@ class TestRefQuotaSuspensionCreateUpdateForm:
         assert target.is_valid() is not has_errors
 
         if has_errors:
-            for key, value in form_errors.items():
-                assert value in ' '.join(target.errors[key])
+            for key, err_msgs in form_errors.items():
+                for err_msg in err_msgs:
+                    assert err_msg in ' '.join(target.errors[key])
+
+
+@pytest.mark.reference_documents
+class TestRefQuotaSuspensionDeleteForm:
+    def test_init(self):
+        ref_quota_suspension = factories.RefQuotaSuspensionFactory()
+
+        target = RefQuotaSuspensionDeleteForm(
+            instance=ref_quota_suspension
+        )
+
+        # it sets initial values
+        assert target.Meta.model == RefQuotaSuspension
+        assert target.Meta.fields == []
+

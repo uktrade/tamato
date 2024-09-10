@@ -71,6 +71,15 @@ class RefQuotaSuspensionCreateUpdateForm(
     def clean(self):
         error_messages = []
 
+        if 'start_date' not in self.cleaned_data.keys():
+            self.add_error("start_date", 'Start date is not valid')
+
+        if 'end_date' not in self.cleaned_data.keys():
+            self.add_error("end_date", 'End date is not valid')
+
+        if len(self.errors) > 0:
+            raise forms.ValidationError(' & '.join(error_messages))
+
         start_date = self.cleaned_data["start_date"]
         end_date = self.cleaned_data["end_date"]
         ref_quota_definition = self.cleaned_data["ref_quota_definition"]
@@ -90,8 +99,8 @@ class RefQuotaSuspensionCreateUpdateForm(
             if ref_quota_definition.valid_between.upper < end_date:
                 self.add_error("end_date", 'End date is after the quota definitions end date')
 
-        if len(error_messages):
-            raise forms.ValidationError(' & '.join(error_messages))
+        if len(self.errors):
+            raise forms.ValidationError(' & '.join(self.errors))
 
             # This uses the custom clean method so this form is open to extension for adding multiple duty rates / validity periods in future
 
