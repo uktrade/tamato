@@ -34,6 +34,8 @@ class Task(TimestampedMixin):
     )
     workbasket = models.ForeignKey(
         WorkBasket,
+        blank=True,
+        null=True,
         on_delete=models.PROTECT,
         related_name="tasks",
     )
