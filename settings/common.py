@@ -538,7 +538,7 @@ else:
         "test_sqlite_key",
     )
     SQLITE_MIGRATIONS_IN_TMP_DIR = is_truthy(
-        os.environ.get("SQLITE_MIGRATIONS_IN_TMP_DIR", False)
+        os.environ.get("SQLITE_MIGRATIONS_IN_TMP_DIR", False),
     )
 
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")
@@ -547,6 +547,8 @@ SQLITE_S3_ENDPOINT_URL = os.environ.get(
     "https://test-sqlite-url.local/",
 )
 SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
+# Capturing migrations logs usually only worthwhile when debugging.
+SQLITE_LOG_MIGRATIONS = is_truthy(os.environ.get("SQLITE_LOG_MIGRATIONS", False))
 
 # Default AWS settings.
 if is_copilot():
