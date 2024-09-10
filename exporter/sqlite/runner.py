@@ -61,6 +61,14 @@ class SQLiteMigrationCurrentDirectory:
             file.unlink()
 
 
+def try_as_octal(decimal: int):
+    """Attempt cohercing `decimal_int` to an octal representation."""
+    try:
+        return oct(decimal)
+    except:
+        return decimal
+
+
 class SQLiteMigrationTemporaryDirectory(TemporaryDirectory):
     """
     Context manager class that provides a newly created temporary directory
@@ -76,7 +84,16 @@ class SQLiteMigrationTemporaryDirectory(TemporaryDirectory):
         tmp_dir = os.path.join(tmp_dir, "tamato_sqlite_migration")
         shutil.copytree(settings.BASE_DIR, tmp_dir)
 
-        copied_files = [f for f in Path(tmp_dir).rglob("**/*") if f.is_file()]
+        # Ensure migrations directories are writable to allow SQLite migrations
+        # to be created - some deployments make source tree directories
+        # non-wriable.
+        for d in [p for p in Path(tmp_dir).rglob("migrations") if p.is_dir()]:
+            d.chmod(0o777)
+            logger.info(
+                f"Permissions on {d} updated to " f"{try_as_octal(d.stat().st_mode)}",
+            )
+
+        copied_files = [f for f in Path(tmp_dir).rglob("*") if f.is_file()]
         logger.info(f"Copied {len(copied_files)} files to {tmp_dir}")
 
         return tmp_dir
