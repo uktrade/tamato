@@ -407,9 +407,6 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     def get_association_edit_url(self, action):
         """Get the edit url for the sub quota definition and association edit
         journey."""
-        print(
-            f"for this object {self.sid} {self.pk} its transaction {self.transaction} and workbasket {self.transaction.workbasket.status} with update type {self.update_type}",
-        )
         try:
             if (
                 action == "edit"

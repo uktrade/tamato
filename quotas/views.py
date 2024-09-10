@@ -1116,7 +1116,16 @@ class SubQuotaDefinitionAssociationEditCreate(
             and self.association.coefficient == coefficient
         ):
             return
-        self.association.new_version(
+        form_data = {
+            "main_quota": self.main_quota,
+            "sub_quota": self.sub_quota,
+            "coefficient": coefficient,
+            "sub_quota_relation_type": sub_quota_relation_type,
+        }
+
+        form = forms.QuotaAssociationEdit(data=form_data, instance=self.association)
+
+        form.instance.new_version(
             workbasket=WorkBasket.current(self.request),
             transaction=instance.transaction,
             sub_quota=instance,
@@ -1150,23 +1159,19 @@ class SubQuotaDefinitionAssociationEditUpdate(
         ):
             return
         # If this association already has an edit in the workbasket - update that one
-        new_association = (
-            self.association.get_versions().last()
-        )  # Must be a better way of doing this
-        if (
-            self.association.get_versions().last().transaction.workbasket
-            == self.workbasket
-        ):
+        current_instance = self.association.latest_version_up_to_workbasket(
+            self.workbasket,
+        )
 
-            form_data = {
-                "main_quota": self.main_quota,
-                "sub_quota": self.sub_quota,
-                "coefficient": coefficient,
-                "sub_quota_relation_type": sub_quota_relation_type,
-            }
+        form_data = {
+            "main_quota": self.main_quota,
+            "sub_quota": instance,
+            "coefficient": coefficient,
+            "sub_quota_relation_type": sub_quota_relation_type,
+        }
 
-            form = forms.QuotaAssociationEdit(data=form_data, instance=new_association)
-            form.save()
+        form = forms.QuotaAssociationEdit(data=form_data, instance=current_instance)
+        form.save()
 
 
 class SubQuotaConfirmUpdate(TrackedModelDetailView):
@@ -1175,6 +1180,10 @@ class SubQuotaConfirmUpdate(TrackedModelDetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        association = QuotaAssociation.objects.all().get(sub_quota__sid=self.object.sid)
+        association = (
+            QuotaAssociation.objects.all()
+            .latest_approved()
+            .get(sub_quota__sid=self.object.sid)
+        )
         context["association"] = association
         return context
