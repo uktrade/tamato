@@ -194,8 +194,9 @@ class SQLiteMigrator:
             "env": sqlite_env,
         }
         if settings.SQLITE_LOG_MIGRATIONS:
-            # run_kwargs["capture_output"] = True
-            # Combine stdout and stderr.
+            # In place of
+            #   run_kwargs["capture_output"] = True
+            # combine stdout and stderr.
             run_kwargs["stdout"] = subprocess.PIPE
             run_kwargs["stderr"] = subprocess.STDOUT
             run_kwargs["text"] = True
