@@ -183,10 +183,12 @@ class SQLiteMigrator:
             vcap_env.pop("postgres", None)
             sqlite_env["VCAP_SERVICES"] = json.dumps(vcap_env)
         elif sqlite_env.get("COPILOT_ENVIRONMENT_NAME"):
-            sqlite_env["DATABASE_CREDENTIALS"] = {
-                "engine": "sqlite",
-                "dbname": f"{str(self.sqlite_file)}",
-            }
+            sqlite_env["DATABASE_CREDENTIALS"] = json.dumps(
+                {
+                    "engine": "sqlite",
+                    "dbname": f"{str(self.sqlite_file)}",
+                },
+            )
         else:
             sqlite_env["DATABASE_URL"] = f"sqlite:///{str(self.sqlite_file)}"
 
