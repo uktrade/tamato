@@ -195,26 +195,12 @@ class SQLiteMigrator:
         sqlite_env["PATH"] = exec_dir + ":" + sqlite_env["PATH"]
         manage_cmd = os.path.join(exec_dir, "manage.py")
 
-        run_kwargs = {
-            "cwd": exec_dir,
-            "check": True,
-            "env": sqlite_env,
-        }
-        if settings.SQLITE_LOG_MIGRATIONS:
-            # To redirect stderr into stdout, replace:
-            #   run_kwargs["capture_output"] = True
-            # with stdout and stderr params.
-            run_kwargs["stdout"] = subprocess.PIPE
-            run_kwargs["stderr"] = subprocess.STDOUT
-            run_kwargs["text"] = True
-
-        completed_process = subprocess.run(
+        subprocess.run(
             [sys.executable, manage_cmd, *manage_args],
-            **run_kwargs,
+            cwd=exec_dir,
+            check=True,
+            env=sqlite_env,
         )
-        if settings.SQLITE_LOG_MIGRATIONS:
-            logger.debug("SQLITE_LOG_MIGRATIONS is set to True")
-            logger.debug(completed_process.stdout)
 
 
 class Runner:
