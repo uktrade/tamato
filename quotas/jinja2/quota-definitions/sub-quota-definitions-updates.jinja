@@ -16,8 +16,8 @@
 {% endblock %}
 
 {% block content %}
-    <h2 class="govuk-heading">Main quota association details</h2>
-    {% set main_definition = view.main_quota %}
+    <h2 class="govuk-heading">Main quota definition details</h2>
+    {% set main_definition = view.get_main_definition() %}
     {% set table_rows = [] %}
     {{ table_rows.append([
         {"html": main_definition.sid },

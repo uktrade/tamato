@@ -42,7 +42,7 @@ from quotas.serializers import serialize_duplicate_data
 from workbaskets.forms import SelectableObjectsForm
 
 RELATIONSHIP_TYPE_HELP_TEXT = "Select the relationship type for the quota association"
-COEFFICIENT_HELP_TEXT = "Select the coefficient for the quota association."
+COEFFICIENT_HELP_TEXT = "Select the coefficient for the quota association"
 CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
 SAFEGUARD_HELP_TEXT = (
     "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
@@ -1064,7 +1064,8 @@ class SelectSubQuotaDefinitionsForm(
         definitions_pks = [
             self.object_id_from_field_name(key) for key in selected_definitions
         ]
-
+        if len(selected_definitions) < 1:
+            raise ValidationError("At least one quota definition must be selected")
         selected_definitions = models.QuotaDefinition.objects.filter(
             pk__in=definitions_pks,
         ).current()
@@ -1273,7 +1274,7 @@ class SubQuotaDefinitionsUpdatesForm(
         self.helper.layout = Layout(
             Div(
                 HTML(
-                    '<h3 class="govuk-heading">Quota association details</h3>',
+                    '<h2 class="govuk-heading">Quota association details</h2>',
                 ),
                 Div(
                     Div("relationship_type", css_class="govuk-grid-column-one-half"),
@@ -1286,7 +1287,7 @@ class SubQuotaDefinitionsUpdatesForm(
             ),
             Div(
                 HTML(
-                    '<h3 class="govuk-heading">Sub quota definition details</h3>',
+                    '<h2 class="govuk-heading">Sub-quota definition details</h2>',
                 ),
                 Div(
                     Div(
