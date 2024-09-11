@@ -31,6 +31,7 @@ from measures.validators import OrderNumberCaptureCode
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
 from tasks.models import TaskAssignee
+from tasks.models import TaskProgressState
 from workbaskets.validators import WorkflowStatus
 
 User = get_user_model()
@@ -1541,10 +1542,11 @@ class TaskCategoryFactory(factory.django.DjangoModelFactory):
 
 
 class TaskProgressStateFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker("word")
+    name = FuzzyChoice(TaskProgressState.State.values)
 
     class Meta:
         model = "tasks.TaskProgressState"
+        django_get_or_create = ("name",)
 
 
 class TaskFactory(factory.django.DjangoModelFactory):

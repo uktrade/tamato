@@ -4,12 +4,43 @@ import django.db.models.deletion
 from django.db import migrations
 from django.db import models
 
+from tasks.models import TaskProgressState as ProgressState
+from workbaskets.validators import WorkflowStatus
 
-def forwards_create_default_progress_states(apps, schema_editor):
+
+def forwards_create_default_task_progress_state_instances(apps, schema_editor):
+    """Creates default `TaskProgressState` instances for `TO_DO`, `IN_PROGRESS`
+    and `DONE`."""
     TaskProgressState = apps.get_model("tasks", "TaskProgressState")
-    defaults = ["To do", "In progress", "Done"]
-    progress_states = [TaskProgressState(name=state) for state in defaults]
+    progress_states = [TaskProgressState(name=state) for state in ProgressState.State]
     TaskProgressState.objects.bulk_create(progress_states)
+
+
+def forwards_update_existing_tasks_progress_state(apps, schema_editor):
+    """
+    Updates `progress_state` on existing `Task` instances that have an
+    associated workbasket.
+
+    Tasks with an unpublished workbasket are set to `TaskProgressState.State.IN_PROGRESS`
+    and tasks with a published workbasket are set to `TaskProgressState.State.DONE`.
+    """
+    TaskProgressState = apps.get_model("tasks", "TaskProgressState")
+    inprogress_state = TaskProgressState.objects.get(
+        name=ProgressState.State.IN_PROGRESS,
+    )
+    done_state = TaskProgressState.objects.get(name=ProgressState.State.DONE)
+    Task = apps.get_model("tasks", "Task")
+
+    Task.objects.filter(
+        models.Q(workbasket__status=WorkflowStatus.EDITING)
+        | models.Q(workbasket__status=WorkflowStatus.QUEUED)
+        | models.Q(workbasket__status=WorkflowStatus.ERRORED),
+    ).update(progress_state=inprogress_state)
+
+    Task.objects.filter(
+        models.Q(workbasket__status=WorkflowStatus.PUBLISHED)
+        | models.Q(workbasket__status=WorkflowStatus.ARCHIVED),
+    ).update(progress_state=done_state)
 
 
 class Migration(migrations.Migration):
@@ -49,8 +80,23 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("name", models.CharField(max_length=255, unique=True)),
+                (
+                    "name",
+                    models.CharField(
+                        choices=[
+                            ("TO_DO", "To do"),
+                            ("IN_PROGRESS", "In progress"),
+                            ("DONE", "Done"),
+                        ],
+                        max_length=255,
+                        unique=True,
+                    ),
+                ),
             ],
+        ),
+        migrations.RunPython(
+            forwards_create_default_task_progress_state_instances,
+            migrations.RunPython.noop,
         ),
         migrations.AddField(
             model_name="task",
@@ -73,7 +119,15 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(
-            forwards_create_default_progress_states,
+            forwards_update_existing_tasks_progress_state,
             migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name="task",
+            name="progress_state",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                to="tasks.taskprogressstate",
+            ),
         ),
     ]
