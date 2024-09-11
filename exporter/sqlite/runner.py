@@ -89,9 +89,6 @@ class SQLiteMigrationTemporaryDirectory(TemporaryDirectory):
         # non-wriable.
         for d in [p for p in Path(tmp_dir).rglob("migrations") if p.is_dir()]:
             d.chmod(0o777)
-            logger.info(
-                f"Permissions on {d} updated to " f"{try_as_octal(d.stat().st_mode)}",
-            )
 
         copied_files = [f for f in Path(tmp_dir).rglob("*") if f.is_file()]
         logger.info(f"Copied {len(copied_files)} files to {tmp_dir}")
