@@ -4,10 +4,11 @@
 {% set page_title = "Definitions created" %}
 
 {% macro panel_title(main_quota, sub_quota) %}
-  Definition periods for quota ID {{sub_quota.order_number}} have been created and associated with related definition periods from quota ID {{main_quota.order_number}}
+  Definition periods for quota ID {{sub_quota }} have been created and associated with related definition periods from quota ID {{main_quota}}
 {% endmacro %}
 
 {% block content %}
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({

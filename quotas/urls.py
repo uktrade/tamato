@@ -86,6 +86,11 @@ urlpatterns = [
         name="sub_quota_definitions-ui-updates",
     ),
     path(
+        f"quotas/sub_quota_definition_success",
+        views.QuotaDefinitionDuplicatorSuccess.as_view(),
+        name="sub_quota_definitions-ui-success",
+    ),
+    path(
         f"quota_definitions/<sid>/confirm-create/",
         views.QuotaDefinitionConfirmCreate.as_view(),
         name="quota_definition-ui-confirm-create",

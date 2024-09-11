@@ -5,7 +5,8 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
+from django.views.generic import TemplateView
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -880,15 +881,15 @@ class DuplicateDefinitionsWizard(
             kwargs={"sid": cleaned_data["main_quota_order_number"].sid},
         )
         sub_quota_view_query_string = "quota_type=sub_quotas&submit="
-        context = self.get_context_data(
-            form=None,
-            main_quota=cleaned_data["main_quota_order_number"],
-            sub_quota=cleaned_data["sub_quota_order_number"],
-            definition_view_url=(f"{sub_quota_view_url}?{sub_quota_view_query_string}"),
-        )
-        return render(
-            self.request, "quota-definitions/sub-quota-definitions-done.jinja", context
-        )
+        self.request.session["success_data"] = {
+            "main_quota": cleaned_data["main_quota_order_number"].order_number,
+            "sub_quota": cleaned_data["sub_quota_order_number"].order_number,
+            "definition_view_url": (
+                f"{sub_quota_view_url}?{sub_quota_view_query_string}"
+            ),
+        }
+
+        return redirect(reverse("sub_quota_definitions-ui-success"))
 
     def create_definition(self, definition):
         staged_data = deserialize_definition_data(
@@ -969,6 +970,18 @@ class QuotaDefinitionDuplicateUpdates(
         )[0]["sub_definition_staged_data"] = updated_serialized_data
 
         return redirect(reverse("sub_quota_definitions-ui-create"))
+
+
+class QuotaDefinitionDuplicatorSuccess(TemplateView):
+    template_name = "quota-definitions/sub-quota-definitions-done.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        success_data = self.request.session["success_data"]
+        context["main_quota"] = success_data["main_quota"]
+        context["sub_quota"] = success_data["sub_quota"]
+        context["definition_view_url"] = success_data["definition_view_url"]
+        return context
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
