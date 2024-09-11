@@ -36,8 +36,8 @@ def diff_components(
     instance,
     duty_sentence: str,
     start_date: date,
-    transaction: Type[Transaction],
     workbasket: "workbasket_models.WorkBasket",
+    transaction: Type[Transaction],
     component_output: type = None,
     reverse_attribute: str = "component_measure",
 ):
