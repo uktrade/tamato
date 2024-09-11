@@ -1098,7 +1098,8 @@ class SelectSubQuotaDefinitionsForm(
         definitions_pks = [
             self.object_id_from_field_name(key) for key in selected_definitions
         ]
-
+        if len(selected_definitions) < 1:
+            raise ValidationError("At least one quota definition must be selected")
         selected_definitions = models.QuotaDefinition.objects.filter(
             pk__in=definitions_pks
         ).current()
