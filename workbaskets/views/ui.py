@@ -66,6 +66,7 @@ from regulations.models import Regulation
 from tasks.models import Comment
 from tasks.models import Task
 from tasks.models import TaskAssignee
+from tasks.models import TaskProgressState
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
@@ -1623,6 +1624,9 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
             defaults={
                 "title": self.workbasket.title,
                 "description": self.workbasket.reason,
+                "progress_state": TaskProgressState.objects.get(
+                    name=TaskProgressState.State.TO_DO,
+                ),
                 "creator": self.request.user,
             },
         )

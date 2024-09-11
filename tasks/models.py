@@ -21,8 +21,6 @@ class Task(TimestampedMixin):
     )
     progress_state = models.ForeignKey(
         "TaskProgressState",
-        blank=True,
-        null=True,
         on_delete=models.PROTECT,
     )
     parent_task = models.ForeignKey(
@@ -64,8 +62,14 @@ class TaskCategory(models.Model):
 
 
 class TaskProgressState(models.Model):
+    class State(models.TextChoices):
+        TO_DO = "TO_DO", "To do"
+        IN_PROGRESS = "IN_PROGRESS", "In progress"
+        DONE = "DONE", "Done"
+
     name = models.CharField(
         max_length=255,
+        choices=State.choices,
         unique=True,
     )
 

@@ -6,6 +6,7 @@ from common.tests.factories import TaskFactory
 from common.tests.factories import TaskProgressStateFactory
 from tasks.models import TaskAssignee
 from tasks.models import TaskLog
+from tasks.models import TaskProgressState
 
 pytestmark = pytest.mark.django_db
 
@@ -19,9 +20,9 @@ def test_task_category_uniqueness():
 
 def test_task_progress_state_uniqueness():
     name = "Blocked"
-    TaskProgressStateFactory.create(name=name)
+    TaskProgressState.objects.create(name=name)
     with pytest.raises(IntegrityError):
-        TaskProgressStateFactory.create(name=name)
+        TaskProgressState.objects.create(name=name)
 
 
 def test_task_assignee_unassign_user_classmethod(task_assignee):
