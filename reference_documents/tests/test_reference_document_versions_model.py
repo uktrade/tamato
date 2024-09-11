@@ -30,6 +30,16 @@ class TestReferenceDocumentVersion:
 
         assert len(target.ref_quota_definitions()) == 1
 
+    def test_checkable(self):
+        target_review  = factories.ReferenceDocumentVersionFactory.create(status=RDVStatus.IN_REVIEW)
+        target_published  = factories.ReferenceDocumentVersionFactory.create(status=RDVStatus.PUBLISHED)
+        target_editing  = factories.ReferenceDocumentVersionFactory.create(status=RDVStatus.EDITING)
+
+        assert target_review.checkable() == False
+        assert target_published.checkable()
+        assert target_editing.checkable() == False
+
+
     # FSM tests
     @pytest.mark.parametrize(
         "initial_state, method, allowed, expected_status",

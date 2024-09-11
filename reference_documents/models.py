@@ -127,6 +127,9 @@ class ReferenceDocumentVersion(TimestampedMixin):
     def editable(self):
         return self.status == ReferenceDocumentVersionStatus.EDITING
 
+    def checkable(self):
+        return self.status == ReferenceDocumentVersionStatus.PUBLISHED
+
     def save(self, force_save=False, *args, **kwargs):
         if not self.editable() and self.pk is not None and force_save is not True:
             return
