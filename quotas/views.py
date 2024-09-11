@@ -925,7 +925,6 @@ class QuotaDefinitionDuplicateUpdates(
 ):
     """UI endpoint for any updates to duplicated definitions"""
 
-    storage_name = "quotas.wizard.QuotaDefinitionDuplicatorSessionStorage"
     template_name = "quota-definitions/sub-quota-definitions-updates.jinja"
     form_class = forms.SubQuotaDefinitionsUpdatesForm
     permission_required = "common.add_trackedmodel"

@@ -2,7 +2,7 @@
 {% from "components/table/macro.njk" import govukTable %}
 
 {% block content %}
-    <h2 class="govuk-heading">Main quota association details</h2>
+    <h2 class="govuk-heading">Main quota definition details</h2>
     {% set main_definition = view.get_main_definition() %}
     {% set table_rows = [] %}
     {{ table_rows.append([
