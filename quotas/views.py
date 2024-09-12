@@ -889,7 +889,7 @@ class DuplicateDefinitionsWizard(
             ),
         }
 
-        return redirect(reverse("sub_quota_definitions-ui-success"))
+        return redirect("sub_quota_definitions-ui-success")
 
     def create_definition(self, definition):
         staged_data = deserialize_definition_data(
