@@ -91,6 +91,11 @@ urlpatterns = [
         name="sub_quota_definitions-ui-updates",
     ),
     path(
+        f"quotas/sub_quota_definition_success",
+        views.QuotaDefinitionDuplicatorSuccess.as_view(),
+        name="sub_quota_definitions-ui-success",
+    ),
+    path(
         f"quotas/sub_quotas_definition_update/<sid>",
         views.SubQuotaDefinitionAssociationEditCreate.as_view(),
         name="sub_quota_definition-edit",

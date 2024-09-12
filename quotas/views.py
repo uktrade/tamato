@@ -7,12 +7,12 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.shortcuts import redirect
-from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.views.generic import FormView
+from django.views.generic import TemplateView
 from django.views.generic.list import ListView
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import permissions
@@ -48,6 +48,7 @@ from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
 from quotas.serializers import deserialize_definition_data
+from settings.common import DATE_FORMAT
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricCreateView
@@ -806,7 +807,7 @@ class DuplicateDefinitionsWizard(
         the one used in the TAP UI."""
         if date_str:
             date_object = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-            return date_object.strftime("%d %b %Y")
+            return date_object.strftime(DATE_FORMAT)
         return ""
 
     def get_staged_definition_data(self):
@@ -857,24 +858,24 @@ class DuplicateDefinitionsWizard(
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
-        for definition in cleaned_data["staged_definitions"]:
-            self.create_definition(definition)
+
+        with transaction.atomic():
+            for definition in cleaned_data["staged_definitions"]:
+                self.create_definition(definition)
         sub_quota_view_url = reverse(
             "quota_definition-ui-list",
             kwargs={"sid": cleaned_data["main_quota_order_number"].sid},
         )
         sub_quota_view_query_string = "quota_type=sub_quotas&submit="
-        context = self.get_context_data(
-            form=None,
-            main_quota=cleaned_data["main_quota_order_number"],
-            sub_quota=cleaned_data["sub_quota_order_number"],
-            definition_view_url=(f"{sub_quota_view_url}?{sub_quota_view_query_string}"),
-        )
-        return render(
-            self.request,
-            "quota-definitions/sub-quota-definitions-done.jinja",
-            context,
-        )
+        self.request.session["success_data"] = {
+            "main_quota": cleaned_data["main_quota_order_number"].order_number,
+            "sub_quota": cleaned_data["sub_quota_order_number"].order_number,
+            "definition_view_url": (
+                f"{sub_quota_view_url}?{sub_quota_view_query_string}"
+            ),
+        }
+
+        return redirect("sub_quota_definitions-ui-success")
 
     def create_definition(self, definition):
         staged_data = deserialize_definition_data(
@@ -957,6 +958,18 @@ class QuotaDefinitionDuplicateUpdates(
         )[0]["sub_definition_staged_data"] = updated_serialized_data
 
         return redirect(reverse("sub_quota_definitions-ui-create"))
+
+
+class QuotaDefinitionDuplicatorSuccess(TemplateView):
+    template_name = "quota-definitions/sub-quota-definitions-done.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        success_data = self.request.session["success_data"]
+        context["main_quota"] = success_data["main_quota"]
+        context["sub_quota"] = success_data["sub_quota"]
+        context["definition_view_url"] = success_data["definition_view_url"]
+        return context
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
