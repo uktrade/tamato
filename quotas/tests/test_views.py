@@ -4,9 +4,11 @@ import pytest
 from bs4 import BeautifulSoup
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.urls import reverse
+from typing import OrderedDict
 
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
+from common.serializers import serialize_date
 from common.tariffs_api import Endpoints
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -21,7 +23,8 @@ from geo_areas.validators import AreaCode
 from quotas import models
 from quotas import validators
 from quotas.forms import QuotaSuspensionType
-from quotas.views import QuotaList
+from quotas.views import DuplicateDefinitionsWizard, QuotaList
+from quotas.wizard import QuotaDefinitionDuplicatorSessionStorage
 
 pytestmark = pytest.mark.django_db
 
@@ -1688,3 +1691,255 @@ def test_quota_blocking_confirm_create_view(valid_user_client):
     assert f"Blocking period SID {blocking.sid} has been created" in str(
         response.content,
     )
+
+
+def test_definition_duplicator_form_wizard_start(client_with_current_workbasket):
+    url = reverse("sub_quota_definitions-ui-create", kwargs={"step": "start"})
+    response = client_with_current_workbasket.get(url)
+    assert response.status_code == 200
+
+
+@pytest.fixture
+def main_quota_order_number() -> models.QuotaOrderNumber:
+    """Provides a main quota order number for use across the fixtures and following tests"""
+    return factories.QuotaOrderNumberFactory()
+
+
+@pytest.fixture
+def sub_quota_order_number() -> models.QuotaOrderNumber:
+    """Provides a sub-quota order number for use across the fixtures and following tests"""
+    return factories.QuotaOrderNumberFactory()
+
+
+@pytest.fixture
+def quota_definition_1(main_quota_order_number, date_ranges) -> models.QuotaDefinition:
+    """Provides a definition, linked to the main_quota_order_number to be used across the following tests"""
+    return factories.QuotaDefinitionFactory.create(
+        order_number=main_quota_order_number,
+        valid_between=date_ranges.normal,
+        is_physical=True,
+        initial_volume=1234,
+        volume=1234,
+        measurement_unit=factories.MeasurementUnitFactory(),
+    )
+
+
+@pytest.fixture
+def quota_definition_2(main_quota_order_number, date_ranges) -> models.QuotaDefinition:
+    """Provides a definition, linked to the main_quota_order_number to be used across the following tests"""
+    return factories.QuotaDefinitionFactory.create(
+        order_number=main_quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+
+
+@pytest.fixture
+def quota_definition_3(main_quota_order_number, date_ranges) -> models.QuotaDefinition:
+    """Provides a definition, linked to the main_quota_order_number to be used across the following tests"""
+    return factories.QuotaDefinitionFactory.create(
+        order_number=main_quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+
+
+@pytest.fixture
+def wizard(requests_mock, session_request):
+    """Provides an instance of the form wizard for use across the following tests"""
+    storage = QuotaDefinitionDuplicatorSessionStorage(
+        request=session_request, prefix=""
+    )
+    return DuplicateDefinitionsWizard(
+        request=requests_mock,
+        storage=storage,
+    )
+
+
+def test_duplicate_definition_wizard_get_cleaned_data_for_step(
+    session_request, main_quota_order_number, sub_quota_order_number
+):
+
+    order_number_data = {
+        "duplicate_definitions_wizard-current_step": "quota_order_numbers",
+        "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
+        "quota_order_numbers-sub_quota_order_number": [sub_quota_order_number.pk],
+    }
+    storage = QuotaDefinitionDuplicatorSessionStorage(
+        request=session_request, prefix=""
+    )
+
+    storage.set_step_data("quota_order_numbers", order_number_data)
+    storage._set_current_step("quota_order_numbers")
+    wizard = DuplicateDefinitionsWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"quota_order_numbers": {}},
+        instance_dict={"quota_order_numbers": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    cleaned_data = wizard.get_cleaned_data_for_step("quota_order_numbers")
+
+    assert cleaned_data["main_quota_order_number"] == main_quota_order_number
+    assert cleaned_data["sub_quota_order_number"] == sub_quota_order_number
+
+
+@pytest.mark.parametrize(
+    "step",
+    ["quota_order_numbers", "select_definition_periods", "selected_definition_periods"],
+)
+def test_duplicate_definition_wizard_get_form_kwargs(
+    quota_definition_1,
+    quota_definition_2,
+    quota_definition_3,
+    session_request,
+    main_quota_order_number,
+    sub_quota_order_number,
+    step,
+):
+
+    quota_order_numbers_data = {
+        "duplicate_definitions_wizard-current_step": "quota_order_numbers",
+        "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
+        "quota_order_numbers-sub_quota_order_number": [sub_quota_order_number.pk],
+    }
+    select_definitions_data = {
+        "duplicate_definitions_wizard-current_step": "select_definition_periods",
+        f"select_definition_periods-selectableobject_{quota_definition_1.pk}": ["on"],
+        f"select_definition_periods-selectableobject_{quota_definition_2.pk}": ["on"],
+        f"select_definition_periods-selectableobject_{quota_definition_3.pk}": [],
+    }
+
+    storage = QuotaDefinitionDuplicatorSessionStorage(
+        request=session_request, prefix=""
+    )
+
+    storage.set_step_data("quota_order_numbers", quota_order_numbers_data)
+    storage.set_step_data("select_definition_periods", select_definitions_data)
+    storage._set_current_step(step)
+
+    wizard = DuplicateDefinitionsWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"selected_definitions": {}},
+        instance_dict={"selected_definitions": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+
+    with override_current_transaction(Transaction.objects.last()):
+        kwargs = wizard.get_form_kwargs(step)
+        if step == "select_definition_periods":
+            definitions = models.QuotaDefinition.objects.filter(
+                sid__in=[
+                    quota_definition_1.sid,
+                    quota_definition_2.sid,
+                    quota_definition_3.sid,
+                ]
+            )
+            assert set(kwargs["objects"]) == set(definitions)
+        if step == "selected_definition_periods":
+            assert kwargs["request"].session
+
+
+def test_definition_duplicator_creates_definition_and_association(
+    quota_definition_1, main_quota_order_number, sub_quota_order_number, session_request
+):
+    """
+    Pass data to the Duplicator Wizard and verify that the created definition
+    contains the expected data.
+    """
+    staged_definition_data = [
+        {
+            "main_definition": quota_definition_1.pk,
+            "sub_definition_staged_data": {
+                "initial_volume": str(quota_definition_1.initial_volume),
+                "volume": str(quota_definition_1.volume),
+                "measurement_unit_code": quota_definition_1.measurement_unit.code,
+                "start_date": serialize_date(quota_definition_1.valid_between.lower),
+                "end_date": serialize_date(quota_definition_1.valid_between.upper),
+                "status": True,
+                "coefficient": 1,
+                "relationship_type": "NM",
+            },
+        }
+    ]
+    session_request.session["staged_definition_data"] = staged_definition_data
+    order_number_data = {
+        "duplicate_definitions_wizard-current_step": "quota_order_numbers",
+        "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
+        "quota_order_numbers-sub_quota_order_number": [sub_quota_order_number.pk],
+    }
+    storage = QuotaDefinitionDuplicatorSessionStorage(
+        request=session_request, prefix=""
+    )
+
+    storage.set_step_data("quota_order_numbers", order_number_data)
+    storage._set_current_step("quota_order_numbers")
+    wizard = DuplicateDefinitionsWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"quota_order_numbers": {}},
+        instance_dict={"quota_order_numbers": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+
+    association_table_before = models.QuotaAssociation.objects.all()
+    assert len(association_table_before) == 0
+    for definition in session_request.session["staged_definition_data"]:
+        wizard.create_definition(definition)
+
+    definition_objects = models.QuotaDefinition.objects.all()
+
+    # assert that the values of the definitions match
+    assert definition_objects[0].volume == definition_objects[1].volume
+    assert (
+        definition_objects[0].measurement_unit == definition_objects[1].measurement_unit
+    )
+    assert definition_objects[0].valid_between == definition_objects[1].valid_between
+
+    assert len(definition_objects) == 2
+    # assert that the association is created
+    association_table_after = models.QuotaAssociation.objects.all()
+    assert association_table_after[0].main_quota == quota_definition_1
+    assert association_table_after[0].sub_quota in definition_objects
+
+
+def test_status_tag_generator(quota_definition_1, quota_definition_2, wizard):
+    staged_definition_data = [
+        {
+            "main_definition": quota_definition_1.pk,
+            "sub_definition_staged_data": {
+                "initial_volume": str(quota_definition_1.initial_volume),
+                "volume": str(quota_definition_1.volume),
+                "measurement_unit_code": quota_definition_1.measurement_unit.code,
+                "start_date": serialize_date(quota_definition_1.valid_between.lower),
+                "end_date": serialize_date(quota_definition_1.valid_between.upper),
+                "status": False,
+                "coefficient": 1,
+                "relationship_type": "NM",
+            },
+        },
+        {
+            "main_definition": quota_definition_2.pk,
+            "sub_definition_staged_data": {
+                "initial_volume": str(quota_definition_2.initial_volume),
+                "volume": str(quota_definition_2.volume),
+                "measurement_unit_code": quota_definition_2.measurement_unit.code,
+                "start_date": serialize_date(quota_definition_2.valid_between.lower),
+                "end_date": serialize_date(quota_definition_2.valid_between.upper),
+                "status": True,
+                "coefficient": 1,
+                "relationship_type": "NM",
+            },
+        },
+    ]
+    for definition in staged_definition_data:
+        status = wizard.status_tag_generator(definition["sub_definition_staged_data"])
+        if definition["main_definition"] == quota_definition_1.pk:
+            assert status["text"] == "Unedited"
+        elif definition["main_definition"] == quota_definition_2.pk:
+            assert status["text"] == "Edited"
+
+
+def test_format_date(wizard):
+    date_str = "2021-01-01"
+    formatted_date = wizard.format_date(date_str)
+    assert formatted_date == "01 Jan 2021"
