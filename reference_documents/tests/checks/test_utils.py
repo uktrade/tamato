@@ -1,26 +1,20 @@
 import pytest
 
+from reference_documents.check import utils
 from reference_documents.check.base import BaseCheck
+from reference_documents.check.ref_order_numbers import OrderNumberChecks
 
 
 @pytest.mark.reference_documents
 class TestUtils:
-    @pytest.mark.skip(reason="test not implemented yet")
-    def test_get_child_checks(self, check_class: BaseCheck.__class__):
-        result = []
+    def test_get_child_checks(self):
 
-        check_classes = self.subclasses_for(check_class)
-        for check_class in check_classes:
-            result.append(check_class)
+        checks = utils.Utils.get_child_checks(BaseCheck)
+        assert len(checks) > 0
+        assert OrderNumberChecks in checks
 
-        return result
+    def test_subclasses_for(self):
 
-    @pytest.mark.skip(reason="test not implemented yet")
-    def subclasses_for(self, cls) -> list:
-        all_subclasses = []
-
-        for subclass in cls.__subclasses__():
-            all_subclasses.append(subclass)
-            all_subclasses.extend(self.subclasses_for(subclass))
-
-        return all_subclasses
+        classes = utils.Utils.subclasses_for(BaseCheck)
+        assert len(classes) > 0
+        assert OrderNumberChecks in classes
