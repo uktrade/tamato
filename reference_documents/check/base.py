@@ -219,17 +219,29 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
 
         if tap_association:
             return True
-        else:
-            return False
+        return False
 
     def check_coefficient(self):
         if self.tap_association_exists():
             association = self.get_tap_association()
 
             return float(association.coefficient) == self.ref_order_number.coefficient
-        else:
+
+        return False
+
+    def duty_rate_matches(self):
+        measure = self.measures()[0]
+
+
+        duty_sentences = [measure.duty_sentence]
+
+        for condition in measure.conditions.latest_approved():
+            duty_sentences.append(condition.duty_sentence)
+
+        if self.ref_quota_definition.duty_rate not in duty_sentences:
             return False
 
+        return True
 
 class BaseOrderNumberCheck(BaseCheck, abc.ABC):
     name = 'Base preferential quota order number check'
