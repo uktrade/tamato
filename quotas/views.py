@@ -1087,8 +1087,7 @@ class SubQuotaDefinitionAssociationMixin:
             .last()
         )
 
-    @property
-    def main_quota(self):
+    def get_main_definition(self):
         return self.association.main_quota
 
 
@@ -1116,7 +1115,7 @@ class SubQuotaDefinitionAssociationEditCreate(
         ):
             return
         form_data = {
-            "main_quota": self.main_quota,
+            "main_quota": self.get_main_definition(),
             "sub_quota": self.sub_quota,
             "coefficient": coefficient,
             "sub_quota_relation_type": sub_quota_relation_type,
@@ -1128,7 +1127,7 @@ class SubQuotaDefinitionAssociationEditCreate(
             workbasket=WorkBasket.current(self.request),
             transaction=instance.transaction,
             sub_quota=instance,
-            main_quota=self.main_quota,
+            main_quota=self.get_main_definition(),
             coefficient=coefficient,
             sub_quota_relation_type=sub_quota_relation_type,
         )
@@ -1163,7 +1162,7 @@ class SubQuotaDefinitionAssociationEditUpdate(
         )
 
         form_data = {
-            "main_quota": self.main_quota,
+            "main_quota": self.get_main_definition(),
             "sub_quota": instance,
             "coefficient": coefficient,
             "sub_quota_relation_type": sub_quota_relation_type,
