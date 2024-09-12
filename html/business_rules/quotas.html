@@ -908,6 +908,28 @@ can have differing vol and initial vol</p>
 
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="quotas.business_rules.check_QA2_dict">
+<span class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></span><span class="sig-name descname"><span class="pre">check_QA2_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub_definition_valid_between</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_definition_valid_between</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#check_QA2_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.check_QA2_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>confirms data is compliant with QA2</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="quotas.business_rules.check_QA3_dict">
+<span class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></span><span class="sig-name descname"><span class="pre">check_QA3_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">main_definition_unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_definition_unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_definition_volume</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_definition_volume</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_initial_volume</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_initial_volume</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#check_QA3_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.check_QA3_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirms data is compliant with QA3
+See note above about changing the unit types.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="quotas.business_rules.check_QA6_dict">
+<span class="sig-prename descclassname"><span class="pre">quotas.business_rules.</span></span><span class="sig-name descname"><span class="pre">check_QA6_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">main_quota</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_relation_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/quotas/business_rules.html#check_QA6_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#quotas.business_rules.check_QA6_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirms the provided data is compliant with the above businsess rule.
+The above test will be re-run so as to separate historic violations, which will require TAP to fix, from a user trying to introduce a new violation.
+Because the business rule should have been checked and there should only be one type,
+we can check the new type against any one of the old type</p>
+</dd></dl>
+
 </section>
 
 
