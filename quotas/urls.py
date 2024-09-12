@@ -70,6 +70,32 @@ urlpatterns = [
         name="quota_definition-ui-create",
     ),
     path(
+        f"quotas/duplicate_quota_definitions/<step>",
+        views.DuplicateDefinitionsWizard.as_view(
+            url_name="sub_quota_definitions-ui-create",
+            done_step_name="complete",
+        ),
+        name="sub_quota_definitions-ui-create",
+    ),
+    path(
+        f"quotas/duplicate_quota_definitions/",
+        views.DuplicateDefinitionsWizard.as_view(
+            url_name="sub_quota_definitions-ui-create",
+            done_step_name="complete",
+        ),
+        name="sub_quota_definitions-ui-create",
+    ),
+    path(
+        f"quotas/sub_quota_definition_updates/<pk>",
+        views.QuotaDefinitionDuplicateUpdates.as_view(),
+        name="sub_quota_definitions-ui-updates",
+    ),
+    path(
+        f"quotas/sub_quota_definition_success",
+        views.QuotaDefinitionDuplicatorSuccess.as_view(),
+        name="sub_quota_definitions-ui-success",
+    ),
+    path(
         f"quota_definitions/<sid>/confirm-create/",
         views.QuotaDefinitionConfirmCreate.as_view(),
         name="quota_definition-ui-confirm-create",

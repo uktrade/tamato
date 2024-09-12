@@ -1,0 +1,59 @@
+{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+{% from "macros/checkbox_item.jinja" import checkbox_item %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+<script nonce="{{ request.csp_nonce }}" id="definitions-select-checkboxes-script">
+  const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+
+{% set main_quota_order_number = view.get_cleaned_data_for_step('quota_order_numbers')['main_quota_order_number']%}
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+        {"text": "Quota "~ main_quota_order_number, "href": url("quota-ui-detail", args=[main_quota_order_number.sid]) },
+        {"text": "Create associations"},
+        {"text": page_title }
+    ])
+  }}
+{% endblock %}
+
+{% block form %}
+
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    {% set table_rows = [] %} 
+    {% for field in form %}
+    {% set checkbox = checkbox_item(field)%}
+    {{ table_rows.append([
+      {"html": checkbox },
+      {"text": field.field.obj },
+      {"text": "{:%d %b %Y}".format(field.field.obj.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(field.field.obj.valid_between.upper) if field.field.obj.valid_between.upper else "-" },
+      {"text": intcomma(field.field.obj.volume) },
+      {"text": field.field.obj.measurement_unit.abbreviation},
+    ]) or "" }}
+    {% endfor %}
+
+    {% set checkbox_check_all -%}
+      <div id="check-all-checkbox"></div>
+    {%- endset %}
+
+    {% set main_quota_order_number = view.get_cleaned_data_for_step('quota_order_numbers')['main_quota_order_number']%}
+    {% set sub_quota_order_number = view.get_cleaned_data_for_step('quota_order_numbers')['sub_quota_order_number']%}
+    <h2>Select definition periods from main quota ID {{main_quota_order_number}}</h2>
+    <p>These definition periods are required for sub-quota ID {{sub_quota_order_number}} and must be edited on the next pages</p>
+    {{ govukTable({
+      "head": [
+        {"html": checkbox_check_all},
+        {"text": "Sid"},
+        {"text": "Start date"},
+        {"text": "End date"},
+        {"text": "Volume"},
+        {"text": "Measurement unit"},
+      ],
+      "rows": table_rows,
+    }) }}
+
+    {{ govukButton({
+    "text": "Continue",
+  }) }}
+{% endblock %}

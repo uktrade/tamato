@@ -1,0 +1,71 @@
+{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% block form %}
+    {% set table_rows = [] %}
+    {% set data = view.get_staged_definition_data() %}
+    
+    {% for definition in data %}
+      {% set edit_link -%}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("sub_quota_definitions-ui-updates", kwargs={"pk": definition.main_definition}) }}">Edit</a>
+      {%- endset %}
+      {% set definition_status_cell %}
+        <span class="{{view.status_tag_generator(definition.sub_definition_staged_data).tag_class}}">
+          {{ view.status_tag_generator(definition.sub_definition_staged_data).text | upper}}
+        </span>
+      {% endset %}
+      {% set main_definition = view.get_main_definition(definition.main_definition)%}
+
+      {{ table_rows.append([
+        {"text": main_definition.sid},
+        {"text": "{:%d %b %Y}".format(main_definition.valid_between.lower) },
+        {"text": "{:%d %b %Y}".format(main_definition.valid_between.upper) },
+        {"text": intcomma(main_definition.volume) },
+        {"text": main_definition.measurement_unit.abbreviation },
+        {"text": "-" },
+        {"text": "-" },
+        {"text": "-" },
+        {"text": "-" },
+      ]) or "" }}
+      {% set formatted_start_date = view.format_date(definition.sub_definition_staged_data.start_date) %}
+      {% set formatted_end_date = view.format_date(definition.sub_definition_staged_data.end_date) %}
+      {{ table_rows.append([
+        {"text": "-"},
+        {"text": formatted_start_date },
+        {"text": formatted_end_date },
+        {"text": intcomma(definition.sub_definition_staged_data.volume) },
+        {"text": definition.sub_definition_staged_data.measurement_unit_abbreviation or main_definition.measurement_unit.abbreviation},
+        {"text": definition.sub_definition_staged_data.relationship_type or "-" },
+        {"text": definition.sub_definition_staged_data.coefficient or "-"   },
+        {"text": definition_status_cell },
+        {"text": edit_link },
+      ]) or "" }}
+      
+    {% endfor %}
+    <p>You must enter a co-efficient value and specify the relationship type for each definition period.</p>
+    {{ govukTable({
+      "head": [
+        {"text": "Sid"},
+        {"text": "Start date"},
+        {"text": "End date"},
+        {"text": "Volume"},
+        {"text": "Unit"},
+        {"text": "Relationship type"},
+        {"text": "Coefficient value"},
+        {"text": "Status"},
+        {"text": "Action"},
+      ],
+      "rows": table_rows,
+    }) }}
+    <p>Selecting 'Submit' will create the new definitions and create a quota association. Further edits to the definitions can be made via the Quota view</p>
+  <div class="govuk-button-group">
+  {{ govukButton({
+    "text": "Submit",
+  }) }}
+  {{ govukButton({
+    "text": "Start again",
+    "classes": "govuk-button--secondary",
+    "href": url('sub_quota_definitions-ui-create', args={'step': 'start'}),
+  }) }}
+  </div>
+{% endblock %}
