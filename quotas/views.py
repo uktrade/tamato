@@ -46,6 +46,7 @@ from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
 from quotas.serializers import deserialize_definition_data
+from settings.common import DATE_FORMAT
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricCreateView
@@ -824,7 +825,7 @@ class DuplicateDefinitionsWizard(
         to the one used in the TAP UI."""
         if date_str:
             date_object = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-            return date_object.strftime("%d %b %Y")
+            return date_object.strftime(DATE_FORMAT)
         return ""
 
     def get_staged_definition_data(self):
@@ -874,8 +875,10 @@ class DuplicateDefinitionsWizard(
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
-        for definition in cleaned_data["staged_definitions"]:
-            self.create_definition(definition)
+
+        with transaction.atomic():
+            for definition in cleaned_data["staged_definitions"]:
+                self.create_definition(definition)
         sub_quota_view_url = reverse(
             "quota_definition-ui-list",
             kwargs={"sid": cleaned_data["main_quota_order_number"].sid},
