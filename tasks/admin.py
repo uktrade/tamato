@@ -34,13 +34,17 @@ class TaskAdmin(TaskAdminMixin, admin.ModelAdmin):
         "title",
         "description",
         "category",
-        "progress_state",
+        "progress_state_name",
         "parent_task_id",
         "workbasket_id",
         "creator",
     ]
     search_fields = ["id", "title", "description"]
     list_filter = ["category", "progress_state"]
+
+    @admin.display(description="Progress state")
+    def progress_state_name(self, obj):
+        return obj.progress_state.get_name_display()
 
     def parent_task_id(self, obj):
         if not obj.parent_task:
@@ -59,14 +63,20 @@ class TaskCategoryAdmin(admin.ModelAdmin):
 
 
 class TaskProgressStateAdmin(admin.ModelAdmin):
+    list_display = ["progress_state_name"]
     ordering = ["name"]
     search_fields = ["name"]
+
+    @admin.display(description="Task progress state")
+    def progress_state_name(self, obj):
+        return obj.get_name_display()
 
 
 class TaskAssigneeAdmin(TaskAdminMixin, admin.ModelAdmin):
     list_display = ["id", "assignee", "assignment_type", "task_id", "unassigned_at"]
     search_fields = ["user__username", "assignment_type", "task__id"]
 
+    @admin.display(description="User")
     def assignee(self, obj):
         if not obj.user:
             return "Missing user!"
