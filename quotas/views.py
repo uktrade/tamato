@@ -2,16 +2,17 @@ import datetime
 from datetime import date
 from decimal import Decimal
 from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.shortcuts import redirect
-from django.views.generic import TemplateView
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.views.generic import FormView
+from django.views.generic import TemplateView
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 from formtools.wizard.views import NamedUrlSessionWizardView
@@ -21,12 +22,14 @@ from rest_framework import viewsets
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
 from common.forms import delete_form_for
-from common.serializers import AutoCompleteSerializer, serialize_date
+from common.serializers import AutoCompleteSerializer
+from common.serializers import serialize_date
 from common.tariffs_api import URLs
 from common.tariffs_api import get_quota_data
 from common.tariffs_api import get_quota_definitions_data
 from common.validators import UpdateType
-from common.views import BusinessRulesMixin, SortingMixin
+from common.views import BusinessRulesMixin
+from common.views import SortingMixin
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
 from common.views import TrackedModelDetailView
@@ -738,13 +741,14 @@ class QuotaDefinitionConfirmDelete(
     template_name = "quota-definitions/confirm-delete.jinja"
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class DuplicateDefinitionsWizard(
     PermissionRequiredMixin,
     NamedUrlSessionWizardView,
 ):
     """
-    Multipart form wizard for duplicating QuotaDefinitionPeriods from a parent QuotaOrderNumber
-    to a child QuotaOrderNumber.
+    Multipart form wizard for duplicating QuotaDefinitionPeriods from a parent
+    QuotaOrderNumber to a child QuotaOrderNumber.
 
     https://django-formtools.readthedocs.io/en/latest/wizard.html
     """
@@ -793,6 +797,10 @@ class DuplicateDefinitionsWizard(
         COMPLETE: {"title": "Finished", "link_text": "Success"},
     }
 
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
         context["step_metadata"] = self.step_metadata
@@ -821,8 +829,8 @@ class DuplicateDefinitionsWizard(
         return self.cleaned_data[step]
 
     def format_date(self, date_str):
-        """Parses and converts a date string from that used for storing data
-        to the one used in the TAP UI."""
+        """Parses and converts a date string from that used for storing data to
+        the one used in the TAP UI."""
         if date_str:
             date_object = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
             return date_object.strftime(DATE_FORMAT)
@@ -838,7 +846,7 @@ class DuplicateDefinitionsWizard(
         kwargs = {}
         if step == self.SELECT_DEFINITION_PERIODS:
             main_quota_order_number_sid = self.get_cleaned_data_for_step(
-                self.QUOTA_ORDER_NUMBERS
+                self.QUOTA_ORDER_NUMBERS,
             )["main_quota_order_number"].sid
             main_quota_definitions = (
                 models.QuotaDefinition.objects.filter(
@@ -859,6 +867,7 @@ class DuplicateDefinitionsWizard(
         """
         Based on the status_tag_generator() for the Measure create Process
         queue.
+
         Returns a dict with text and a CSS class for a label for a duplicated
         definition.
         """
@@ -896,30 +905,27 @@ class DuplicateDefinitionsWizard(
 
     def create_definition(self, definition):
         staged_data = deserialize_definition_data(
-            self, definition["sub_definition_staged_data"]
+            self,
+            definition["sub_definition_staged_data"],
         )
+        transaction = self.workbasket.new_transaction()
         instance = models.QuotaDefinition.objects.create(
-            **staged_data, transaction=WorkBasket.get_current_transaction(self.request)
+            **staged_data,
+            transaction=transaction,
         )
-        association_data = {
-            "main_quota": models.QuotaDefinition.objects.get(
-                pk=definition["main_definition"]
+        models.QuotaAssociation.objects.create(
+            main_quota=models.QuotaDefinition.objects.get(
+                pk=definition["main_definition"],
             ),
-            "sub_quota": instance,
-            "coefficient": Decimal(
-                definition["sub_definition_staged_data"]["coefficient"]
+            sub_quota=instance,
+            coefficient=Decimal(
+                definition["sub_definition_staged_data"]["coefficient"],
             ),
-            "sub_quota_relation_type": definition["sub_definition_staged_data"][
+            sub_quota_relation_type=definition["sub_definition_staged_data"][
                 "relationship_type"
             ],
-            "update_type": UpdateType.CREATE,
-        }
-        self.create_definition_association(association_data)
-
-    def create_definition_association(self, association_data):
-        models.QuotaAssociation.objects.create(
-            **association_data,
-            transaction=WorkBasket.get_current_transaction(self.request),
+            update_type=UpdateType.CREATE,
+            transaction=transaction,
         )
 
 
@@ -927,7 +933,7 @@ class QuotaDefinitionDuplicateUpdates(
     FormView,
     BusinessRulesMixin,
 ):
-    """UI endpoint for any updates to duplicated definitions"""
+    """UI endpoint for any updates to duplicated definitions."""
 
     template_name = "quota-definitions/sub-quota-definitions-updates.jinja"
     form_class = forms.SubQuotaDefinitionsUpdatesForm
@@ -947,7 +953,7 @@ class QuotaDefinitionDuplicateUpdates(
 
     def get_main_definition(self):
         return models.QuotaDefinition.objects.current().get(
-            trackedmodel_ptr_id=self.kwargs["pk"]
+            trackedmodel_ptr_id=self.kwargs["pk"],
         )
 
     def form_valid(self, form):
@@ -969,7 +975,7 @@ class QuotaDefinitionDuplicateUpdates(
                 lambda staged_definition_data: staged_definition_data["main_definition"]
                 == main_definition.pk,
                 staged_definition_data,
-            )
+            ),
         )[0]["sub_definition_staged_data"] = updated_serialized_data
 
         return redirect(reverse("sub_quota_definitions-ui-create"))
