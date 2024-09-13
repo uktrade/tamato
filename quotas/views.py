@@ -914,25 +914,19 @@ class DuplicateDefinitionsWizard(
             **staged_data,
             transaction=self.workbasket.new_transaction(),
         )
-        association_data = {
-            "main_quota": models.QuotaDefinition.objects.get(
+        models.QuotaAssociation.objects.create(
+            main_quota=models.QuotaDefinition.objects.get(
                 pk=definition["main_definition"],
             ),
-            "sub_quota": instance,
-            "coefficient": Decimal(
+            sub_quota=instance,
+            coefficient=Decimal(
                 definition["sub_definition_staged_data"]["coefficient"],
             ),
-            "sub_quota_relation_type": definition["sub_definition_staged_data"][
+            sub_quota_relation_type=definition["sub_definition_staged_data"][
                 "relationship_type"
             ],
-            "update_type": UpdateType.CREATE,
-        }
-        self.create_definition_association(association_data)
-
-    def create_definition_association(self, association_data):
-        models.QuotaAssociation.objects.create(
-            **association_data,
-            transaction=self.workbasket.new_transaction(),
+            update_type=UpdateType.CREATE,
+            transaction=instance.transaction,
         )
 
 
