@@ -3,9 +3,19 @@ from reference_documents.models import AlignmentReportCheckStatus
 
 
 class OrderNumberChecks(BaseOrderNumberCheck):
-    name = 'Order Number Exists'
+    """
+    Class defining the check process for a reference document order number (RefOrderNumber)
+    """
+    name = 'Order number checks'
 
     def run_check(self):
+        """
+        Runs order number checks between a reference document defined order number and TAP data
+
+        Returns:
+            AlignmentReportCheckStatus: status based on the result of the check (pass, warning, fail, skip)
+            string: corresponding message for the status.
+        """
         # handle incomplete order number dates (from import)
         if self.ref_order_number.valid_between is None:
             message = f"order number {self.ref_order_number.order_number} cant be checked, no validity date range"

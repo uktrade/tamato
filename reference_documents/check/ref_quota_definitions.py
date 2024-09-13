@@ -2,10 +2,20 @@ from reference_documents.check.base import BaseQuotaDefinitionCheck
 from reference_documents.models import AlignmentReportCheckStatus
 
 
-class QuotaDefinitionExists(BaseQuotaDefinitionCheck):
-    name = 'Preferential Quota Exists'
+class QuotaDefinitionChecks(BaseQuotaDefinitionCheck):
+    """
+    Class defining the check process for a reference document quota definition (RefQuotaDefinition)
+    """
+    name = 'Quota definition checks'
 
     def run_check(self):
+        """
+        Runs quota definition checks between a reference document defined quota definition and TAP data
+
+        Returns:
+            AlignmentReportCheckStatus: status based on the result of the check (pass, warning, fail, skip)
+            string: corresponding message for the status.
+        """
         if not self.commodity_code():
             message = f"FAIL - commodity code not found"
             return AlignmentReportCheckStatus.FAIL, message

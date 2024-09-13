@@ -5,10 +5,10 @@ from reference_documents.check.base import BaseQuotaDefinitionCheck
 from reference_documents.check.base import BaseOrderNumberCheck, BaseQuotaSuspensionCheck
 
 # import additional checks
-from reference_documents.check.ref_rates import RateExists  # noqa
-from reference_documents.check.ref_quota_definitions import QuotaDefinitionExists  # noqa
+from reference_documents.check.ref_rates import RateChecks  # noqa
+from reference_documents.check.ref_quota_definitions import QuotaDefinitionChecks  # noqa
 from reference_documents.check.ref_order_numbers import OrderNumberChecks  # noqa
-from reference_documents.check.ref_quota_suspensions import QuotaSuspensionExists  # noqa
+from reference_documents.check.ref_quota_suspensions import QuotaSuspensionChecks  # noqa
 
 from reference_documents.check.utils import Utils
 from reference_documents.models import AlignmentReport, AlignmentReportStatus, RefQuotaSuspension, AlignmentReportCheckStatus
@@ -19,6 +19,21 @@ logger = logging.getLogger(__name__)
 
 
 class Checks:
+    """
+    Class for running a sequence of checks against a reference document version.
+
+    this class will run checks against all data in a reference document version, duty rate,
+    order numbers, quota definitions, quota suspensions.
+
+    The process is designed to only check child objects if the parent passes a check.
+    If there is a failure or a skip from the parent check there is no point checking
+    children - it will fail - so is marked as skipped.
+
+    for example: if an order number is not on TAP subsequent quota definition checks are all marked as skipped
+    and quota suspension checks are all marked as skipped.
+
+    results are stored against the database and available via the UI under alignment checks.
+    """
     def __init__(self, reference_document_version: ReferenceDocumentVersion):
         self.logger = logger
         self.reference_document_version = reference_document_version
@@ -29,15 +44,43 @@ class Checks:
 
     @staticmethod
     def get_checks_for(check_class):
+        """
+        collects a list of classes that are subclasses of the provided check_class. Typically,
+        this will be a base class for checks that other check classes inherit from.
+
+        Args:
+            check_class: a class that other classes inherit from - typically a base check class like BaseCheck
+
+        Returns:
+            list(check_classes): a list of classes that are subclasses if the provided check class
+        """
         return Utils().get_child_checks(check_class)
 
     @staticmethod
     def status_contains_failed_or_skipped(statuses):
+        """
+        Used for determining if the child checks need to run or not, if statuses contains
+        failed opr skipped statuses we don't want to run child checks, just skip them
+
+        Args:
+            statuses: list(AlignmentReportCheckStatus): A list of statuses we want to check
+
+        Returns:
+            boolean: True if the child checks pass or warn, False otherwise
+        """
         if AlignmentReportCheckStatus.FAIL in statuses or AlignmentReportCheckStatus.SKIPPED in statuses:
             return True
         return False
 
     def run(self):
+        """
+        Sequentially runs checks for parent element progressing to child, grand child etc. and records the output
+        of each check to the database.
+
+        Returns:
+            None
+
+        """
         # try:
         logger.info('starting alignment check run')
         self.alignment_report.in_processing()
@@ -112,11 +155,6 @@ class Checks:
         self.alignment_report.complete()
         self.alignment_report.save()
         logger.info('finished alignment check run')
-        # except Exception as e:
-        #     logger.error(e)
-        #     logger.error('alignment check run errored')
-        #     self.alignment_report.errored()
-        #     self.alignment_report.save()
 
     def capture_check_result(
             self,
@@ -129,6 +167,22 @@ class Checks:
             ref_quota_suspension_range=None,
             parent_has_failed_or_skipped_result=None,
     ) -> AlignmentReportCheckStatus:
+        """
+        Captures the result if a single check and stores it in the database as a AlignmentReportCheck
+
+        Args:
+            check: Instance if check class BaseCheck or subclass
+            ref_rate: RefRate if available or None
+            ref_quota_definition: RefQuotaDefinition if available or None
+            ref_quota_definition_range: RefQuotaDefinitionRange if available or None
+            ref_order_number: RefOrderNumber if available or None
+            ref_quota_suspension: RefQuotaSuspension if available or None
+            ref_quota_suspension_range: RefQuotaSuspensionRange if available or None
+            parent_has_failed_or_skipped_result: boolean
+
+        Returns:
+            AlignmentReportCheckStatus: the status of the check
+        """
         if parent_has_failed_or_skipped_result:
             status = AlignmentReportCheckStatus.SKIPPED
             message = 'Check skipped due to parent check failure'

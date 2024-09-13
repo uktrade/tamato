@@ -2,10 +2,20 @@ from reference_documents.check.base import BaseRateCheck
 from reference_documents.models import AlignmentReportCheckStatus
 
 
-class RateExists(BaseRateCheck):
-    name = 'rate exists'
+class RateChecks(BaseRateCheck):
+    """
+    Class defining the check process for a reference document rate (RefRate)
+    """
+    name = 'Rate checks'
 
     def run_check(self):
+        """
+        Runs rate checks between a reference document defined rate and TAP data
+
+        Returns:
+            AlignmentReportCheckStatus: status based on the result of the check (pass, warning, fail, skip)
+            string: corresponding message for the status.
+        """
         # comm code live on EIF date
         if not self.tap_comm_code():
             message = f"{self.ref_rate.commodity_code} {self.tap_geo_area_description()} comm code not live"

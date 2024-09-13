@@ -41,7 +41,6 @@ class TestBaseQuotaDefinitionCheck:
     def test_init(self):
         ref_quota_definition = factories.RefQuotaDefinitionFactory.create()
         target = self.Target(ref_quota_definition)
-        assert target.dependent_on_passing_check is None
         assert target.ref_quota_definition == ref_quota_definition
         assert target.ref_order_number == ref_quota_definition.ref_order_number
         assert target.reference_document_version == ref_quota_definition.ref_order_number.reference_document_version
@@ -735,7 +734,6 @@ class TestBaseQuotaSuspensionCheck:
     def test_init(self):
         ref_quota_suspension = factories.RefQuotaSuspensionFactory.create()
         target = self.Target(ref_quota_suspension)
-        assert target.dependent_on_passing_check is None
         assert target.ref_quota_suspension == ref_quota_suspension
 
     def test_tap_quota_definition_matches(self):

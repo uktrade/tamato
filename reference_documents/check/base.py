@@ -22,13 +22,24 @@ from reference_documents.models import RefRate
 
 
 class BaseCheck(abc.ABC):
+    """
+    abstract Base class, only used to provide a common parent and behaviour to child classes
+    that will be used as checks for all reference document objects
+
+    This class contains shared functionality that is used by child classes throughout.
+    """
     name = 'Base check'
 
-    def __init__(self):
-        self.dependent_on_passing_check = None
-
     def tap_order_number(self, order_number: str):
-        """Finds order number in TAP for a given preferential quota."""
+        """
+        Finds a TAP order number matching the provided order number string.
+
+        args:
+            order_number (str): The order number used to search for
+
+        returns:
+            QuotaOrderNumber or None
+        """
 
         kwargs = {
             'order_number': order_number,
@@ -44,13 +55,32 @@ class BaseCheck(abc.ABC):
 
     @abc.abstractmethod
     def run_check(self) -> (AlignmentReportCheckStatus, str):
+        """
+        Abstract method, required to be implemented on inheriting classes
+
+        This method on inheriting classes will be called to execute the check that the
+        class represents.
+        """
         pass
 
 
 class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
+    """
+    abstract Base class, only used to provide a common parent and behaviour to child classes
+    that will be used as checks for quota definitions.
+
+    This class contains shared functionality that is used by child classes throughout.
+    """
     name = 'Base quota definition check'
 
     def __init__(self, ref_quota_definition: RefQuotaDefinition):
+        """
+        Initialises the check class
+
+        args:
+            ref_quota_definition (RefQuotaDefinition): The reference document quota definition
+            object we are checking against
+        """
         super().__init__()
         self.ref_quota_definition = ref_quota_definition
         self.ref_order_number = (
@@ -62,14 +92,28 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         self.reference_document = self.reference_document_version.reference_document
 
     def tap_order_number(self, order_number: str = None):
-        """Finds order number in TAP for a given preferential quota."""
+        """
+        Finds order number in TAP for a given preferential quota.
+
+        args:
+            order_number (str): The order number used to search for
+
+        returns:
+            QuotaOrderNumber or None
+        """
         if order_number is None:
             order_number = self.ref_order_number.order_number
 
         return super().tap_order_number(order_number)
 
     def geo_area(self):
-        """Finds the geo area in TAP for a given preferential quota."""
+        """
+        Finds the geo area in TAP for a given preferential quota using data
+        from the associated reference document.
+
+        returns:
+            GeographicalArea
+        """
         geo_area = (
             GeographicalArea.objects.latest_approved()
             .filter(
@@ -80,7 +124,12 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         return geo_area
 
     def geo_area_description(self):
-        """Gets the geo area description for a given preferential quota."""
+        """
+        Gets the geo area description for a given preferential quota.
+
+        returns:
+            str: string associated with the GeographicalArea
+        """
         geo_area_desc = (
             GeographicalAreaDescription.objects.latest_approved()
             .filter(described_geographicalarea=self.geo_area())
@@ -89,8 +138,13 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         return geo_area_desc.description
 
     def commodity_code(self):
-        """Finds the latest approved version of a commodity code in TAP of a
-        given preferential quota."""
+        """
+        Finds the latest approved version of a commodity code in TAP of a
+        given preferential quota.
+
+        returns:
+            GoodsNomenclature or None
+        """
         goods = GoodsNomenclature.objects.latest_approved().filter(
             Q(
                 valid_between__contains=TaricDateRange(self.ref_quota_definition.valid_between.lower, self.ref_quota_definition.valid_between.upper)
@@ -107,8 +161,13 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         return goods.first()
 
     def quota_definition(self):
-        """Searches for the quota definition period in TAP of a given
-        preferential quota."""
+        """
+        Searches for the quota definition period in TAP of a given
+        preferential quota.
+
+        returns:
+            QuotaDefinition or None
+        """
         order_number = self.tap_order_number()
         try:
             quota_definition = QuotaDefinition.objects.latest_approved().get(
@@ -125,6 +184,9 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
 
         It may find more than one if the original measure was end dated and a
         new one was created.
+
+        returns:
+            MeasuresQuerySet
         """
         measures = (
             Measure.objects.latest_approved()
@@ -147,6 +209,11 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         If there is more than one measure it checks that they are contiguous. It
         then checks that the validity period of the quota order number spans the
         validity period of the measure (ON9).
+
+        returns:
+            boolean:
+                True: when complete coverage over quota definition period (1 or more measures)
+                False: when not covered completely or not at all
         """
         measures = self.measures()
 
@@ -180,9 +247,25 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         return False
 
     def is_sub_quota(self):
+        """
+        Is the reference document quota being checked a sub quota
+
+        Returns:
+            boolean: True if reference document quota is a sub-quota of another
+                quota in the reference data, else False
+
+        """
         return self.ref_order_number.is_sub_quota()
 
     def get_tap_association(self) -> Optional[QuotaAssociation]:
+        """
+        Queries and returns the TAP association for a given preferential quota if available.
+
+        Returns:
+            QuotaAssociation (nullable):
+                QuotaAssociation if matched in TAP data, else None
+
+        """
         tap_sub_quota_definition = self.quota_definition()
 
         if not self.ref_order_number.main_order_number:
@@ -215,6 +298,13 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
             return None
 
     def tap_association_exists(self):
+        """
+        Queries the TAP association for a given preferential quota and returns boolean
+        representing the presence of that association.
+
+        Returns:
+            boolean: True if TAP association exists, else False
+        """
         tap_association = self.get_tap_association()
 
         if tap_association:
@@ -222,6 +312,13 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         return False
 
     def check_coefficient(self):
+        """
+        Checks the TAP coefficient against the reference document expected coefficient and compares
+
+        Returns:
+            boolean:
+                True of coefficient matches, else False
+        """
         if self.tap_association_exists():
             association = self.get_tap_association()
 
@@ -230,8 +327,21 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         return False
 
     def duty_rate_matches(self):
-        measure = self.measures()[0]
+        """
+        Checks the TAP duty rate against the reference document expected duty rate and compares
 
+        Note: it's possible to have multiple duty rates on a measure, per condition, so if any
+        match this check will pass.
+
+        Note: this method is a simple string match but may need to be further improved to match
+        numbers with different decimal formatting e.g. 10.000% will not match 10% currently but
+        may need updating
+
+        Returns:
+            boolean:
+                True of duty rate matches, else False
+        """
+        measure = self.measures()[0]
 
         duty_sentences = [measure.duty_sentence]
 
@@ -243,14 +353,37 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
 
         return True
 
+
 class BaseOrderNumberCheck(BaseCheck, abc.ABC):
+    """
+    abstract Base class, only used to provide a common parent and behaviour to child classes
+    that will be used as checks for order numbers.
+
+    This class contains shared functionality that is used by child classes throughout.
+    """
     name = 'Base preferential quota order number check'
 
     def __init__(self, ref_order_number: RefOrderNumber):
+        """
+        Initialises the check class
+
+        args:
+            ref_order_number (RefOrderNumber): The reference document order number
+            object we are checking against
+        """
         super().__init__()
         self.ref_order_number = ref_order_number
 
     def tap_order_number(self, order_number: str = None):
+        """
+        Finds a TAP order number matching the provided order number string.
+
+        args:
+            order_number (str): The order number used to search for
+
+        returns:
+            QuotaOrderNumber or None
+        """
         if order_number is None:
             order_number = self.ref_order_number.order_number
 
@@ -258,14 +391,33 @@ class BaseOrderNumberCheck(BaseCheck, abc.ABC):
 
 
 class BaseQuotaSuspensionCheck(BaseCheck, abc.ABC):
+    """
+    abstract Base class, only used to provide a common parent and behaviour to child classes
+    that will be used as checks for quota suspensions.
+
+    This class contains shared functionality that is used by child classes throughout.
+    """
 
     def __init__(self, ref_quota_suspension: RefQuotaSuspension):
+        """
+        Initialises the check class
+
+        args:
+            ref_quota_suspension (RefQuotaSuspension): The reference document quota suspension
+            object we are checking against
+        """
         super().__init__()
         self.ref_quota_suspension = ref_quota_suspension
 
     def tap_quota_definition(self):
-        """Searches for the quota definition period in TAP of a given
-        preferential quota."""
+        """
+        Searches for the quota definition period in TAP of a given
+        preferential quota.
+
+        returns:
+            Quota definition or None: matching TAP quota definition if there
+                is a match, else None if no match.
+        """
         order_number = self.ref_quota_suspension.ref_quota_definition.ref_order_number.order_number
 
         try:
@@ -279,14 +431,25 @@ class BaseQuotaSuspensionCheck(BaseCheck, abc.ABC):
         return quota_definition
 
     def tap_order_number(self, order_number: str = None):
-        """Finds order number in TAP for a given preferential quota."""
+        """
+        Finds order number in TAP for a given preferential quota.
+
+        returns:
+            QuotaOrderNumber or None: matching TAP order number or None if no match.
+
+        """
         if order_number is None:
             order_number = self.ref_quota_suspension.ref_quota_definition.ref_order_number.order_number
 
         return super().tap_order_number(order_number)
 
     def tap_suspension(self):
+        """
+        Finds the TAP suspension if available
 
+        Returns:
+            QuotaSuspension or None: matching TAP suspension if available, or None if no match.
+        """
         quota_definition = self.tap_quota_definition()
 
         try:
@@ -301,13 +464,39 @@ class BaseQuotaSuspensionCheck(BaseCheck, abc.ABC):
 
 
 class BaseRateCheck(BaseCheck, abc.ABC):
+    """
+    abstract Base class, only used to provide a common parent and behaviour to child classes
+    that will be used as checks for preferential rates.
+
+    This class contains shared functionality that is used by child classes throughout.
+    """
     name = 'Base preferential rate check'
 
     def __init__(self, ref_rate: RefRate):
+        """
+        Initialises the check class
+
+        args:
+            ref_rate (RefRate): The reference document preferential rate
+            object we are checking against
+        """
         super().__init__()
         self.ref_rate = ref_rate
 
     def get_snapshot(self, comm_code=None) -> Optional[CommodityTreeSnapshot]:
+        """
+        Gets a commodity tree snapshot from the provided comm code item id, if an item_id is available
+
+        Note: This query looks at the current live comm code structure, not historical. This seems
+        logically correct but may need review in the future for certain edge cases.
+
+        Args:
+            comm_code: The string of a comm code (10 digits) to be used top load the snapshot.
+
+        Returns:
+            CommodityTreeSnapshot or None: CommodityTreeSnapshot if comm code is available,
+            else None is returned
+        """
         if comm_code:
             item_id = comm_code
         elif self.tap_comm_code():
@@ -332,6 +521,13 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         return snapshot
 
     def tap_comm_code(self):
+        """
+        Finds the latest approved version of a commodity code in TAP of a
+        given a preferential rate.
+
+        returns:
+            GoodsNomenclature or None
+        """
         goods = GoodsNomenclature.objects.latest_approved().filter(
             (
                     Q(valid_between__contains=self.ref_rate.valid_between.lower) &
@@ -347,6 +543,13 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         return goods.first()
 
     def tap_geo_area(self):
+        """
+        Finds the latest approved version of a geographical area in TAP for a
+        given a preferential rate.
+
+        returns:
+            GeographicalArea or None
+        """
         try:
             return GeographicalArea.objects.latest_approved().get(
                 area_id=self.ref_rate.reference_document_version.reference_document.area_id,
@@ -356,7 +559,13 @@ class BaseRateCheck(BaseCheck, abc.ABC):
             return None
 
     def tap_geo_area_description(self) -> Optional[str]:
+        """
+        Finds the latest approved version of a geographical area description in TAP for the
+        related geographical area.
 
+        returns:
+            string (the description of a geographical area) or None
+        """
         geo_area = (
             GeographicalAreaDescription.objects
             .latest_approved()
@@ -370,6 +579,12 @@ class BaseRateCheck(BaseCheck, abc.ABC):
             return None
 
     def ref_doc_version_eif_date(self):
+        """
+        Returns the EIF (Entry into force) date for a reference document version
+
+        Returns:
+            date or None: if available, the EIF date else none
+        """
         eif_date = (
             self.ref_rate.reference_document_version.entry_into_force_date
         )
@@ -379,7 +594,19 @@ class BaseRateCheck(BaseCheck, abc.ABC):
 
         return eif_date
 
-    def tap_related_measures(self, comm_code_item_id=None):
+    def tap_related_measures(self, comm_code_item_id: str =None):
+        """
+        queries and returns measures related to a given comm code item id limited to
+        measures that have a valid between that overlaps the required period defined
+        by the reference document rate
+
+        Args:
+            comm_code_item_id: string or None, 10 digit item id for a comm code
+
+        Returns:
+            TrackedModelQuerySet or [], matching results to the query or an empty list
+            depending on query results
+        """
         if comm_code_item_id:
             good = GoodsNomenclature.objects.latest_approved().filter(
                 (

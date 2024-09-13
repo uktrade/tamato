@@ -11,6 +11,9 @@ from quotas import validators
 
 
 class ReferenceDocumentVersionStatus(models.TextChoices):
+    """
+    Choices for reference document state
+    """
     # Reference document version can be edited
     EDITING = "EDITING", "Editing"
     # Reference document version ius locked and in review
@@ -20,6 +23,9 @@ class ReferenceDocumentVersionStatus(models.TextChoices):
 
 
 class AlignmentReportCheckStatus(models.TextChoices):
+    """
+    Choices for alignment report check state
+    """
     # Check passed
     PASS = "PASS", "Passing"
     # Check failed
@@ -31,6 +37,9 @@ class AlignmentReportCheckStatus(models.TextChoices):
 
 
 class AlignmentReportStatus(models.TextChoices):
+    """
+    Choices for alignment report state
+    """
     # The check has not started and is queued
     PENDING = "PENDING", "PENDING"
     # the check is in progress, and currently running
@@ -42,6 +51,12 @@ class AlignmentReportStatus(models.TextChoices):
 
 
 class ReferenceDocument(TimestampedMixin):
+    """
+    This model represents a reference document, a container / parent for versions
+
+    this model holds generic information that will be used across all versions.
+    This includes the geographical area, title and associated regulations.
+    """
     title = models.CharField(
         max_length=255,
         help_text="Short name for this reference document",
@@ -63,6 +78,13 @@ class ReferenceDocument(TimestampedMixin):
     )
 
     def editable(self):
+        """
+        Indicates if this reference document is editable. It should only be editable when
+        no reference document versions are published or in review.
+
+        Returns:
+            boolean: True if editable, else False
+        """
         if self.pk is None:
             return True
         return not self.reference_document_versions.filter(
@@ -73,6 +95,12 @@ class ReferenceDocument(TimestampedMixin):
         ).count() > 0
 
     def get_area_name_by_area_id(self):
+        """
+        Looks up using data from TAP and returns a Geographical Area description (string)
+
+        Returns:
+            string: geographical area description or unknown (if no match)
+        """
         from geo_areas.models import GeographicalAreaDescription
 
         description = (
@@ -87,12 +115,24 @@ class ReferenceDocument(TimestampedMixin):
             return f"{self.area_id} (unknown description)"
 
     def save(self, *args, **kwargs):
-        if not self.editable():
-            return
-        super(ReferenceDocument, self).save(*args, **kwargs)
+        """
+        saves changes to the reference document if in an editable state
+
+        Args:
+            *args: arguments passed to super
+            **kwargs: keyword arguments passed to super
+
+        Returns:
+            None
+        """
+        if self.editable():
+            super(ReferenceDocument, self).save(*args, **kwargs)
 
 
 class ReferenceDocumentVersion(TimestampedMixin):
+    """
+    This models represents a reference document version
+    """
     version = models.FloatField()
     published_date = models.DateField(blank=True, null=True)
     entry_into_force_date = models.DateField(blank=True, null=True)
@@ -119,21 +159,50 @@ class ReferenceDocumentVersion(TimestampedMixin):
         ]
 
     def ref_quota_definitions(self):
+        """
+        Collects all RefQuotaDefinitions associated with an instance of a reference document version
+
+        Returns:
+            QuerySet: query result of quota definitions
+        """
         order_numbers = self.ref_order_numbers.all()
         return RefQuotaDefinition.objects.all().filter(
             ref_order_number__in=order_numbers,
         )
 
     def editable(self):
+        """
+        Indicates if this reference document version is editable
+
+        Returns:
+            boolean: True if editable, else False
+        """
         return self.status == ReferenceDocumentVersionStatus.EDITING
 
     def checkable(self):
+        """
+        Indicates if this reference document version is check-able, as in able
+        have alignment checks ran against it
+
+        Returns:
+            boolean: True if check-able, else False
+        """
         return self.status == ReferenceDocumentVersionStatus.PUBLISHED
 
     def save(self, force_save=False, *args, **kwargs):
-        if not self.editable() and self.pk is not None and force_save is not True:
-            return
-        super(ReferenceDocumentVersion, self).save(*args, **kwargs)
+        """
+        saves changes to the reference document version if in an editable state
+
+        Args:
+            *args: arguments passed to super
+            **kwargs: keyword arguments passed to super
+
+        Returns:
+            None
+        """
+        if (self.editable() or force_save is True) and self.pk is not None:
+            super(ReferenceDocumentVersion, self).save(*args, **kwargs)
+
 
     @transition(
         field=status,
@@ -142,7 +211,9 @@ class ReferenceDocumentVersion(TimestampedMixin):
         custom={"label": "Mark the reference document version for review."},
     )
     def in_review(self):
-        """Reference document version ready to be reviewed."""
+        """
+        Reference document version ready to be reviewed.
+        """
         return
 
     @transition(
@@ -152,7 +223,9 @@ class ReferenceDocumentVersion(TimestampedMixin):
         custom={"label": "Mark the reference document as published."},
     )
     def published(self):
-        """Reference document version has passed review and is published."""
+        """
+        Reference document version has passed review and is published.
+        """
         super(ReferenceDocumentVersion, self).save()
         return
 
@@ -163,7 +236,9 @@ class ReferenceDocumentVersion(TimestampedMixin):
         custom={"label": "Mark the reference document version for review."},
     )
     def editing_from_published(self):
-        """Reference document version has passed review and is published."""
+        """
+        Reference document version has passed review and is published.
+        """
         super(ReferenceDocumentVersion, self).save()
         return
 
@@ -174,17 +249,37 @@ class ReferenceDocumentVersion(TimestampedMixin):
         custom={"label": "Mark the reference document version for review."},
     )
     def editing_from_in_review(self):
-        """Reference document version has passed review and is published."""
+        """
+        Reference document version has passed review and is published.
+        """
         super(ReferenceDocumentVersion, self).save()
         return
 
     def ref_rate_count(self):
+        """
+        Counts the number of RefRates
+
+        Returns:
+            int: count of RefRate entries for this reference document version
+        """
         return self.ref_rates.count()
 
     def ref_order_number_count(self):
+        """
+        Counts the number of RefOrderNumbers
+
+        Returns:
+            int: count of RefOrderNumber entries for this reference document version
+        """
         return self.ref_order_numbers.count()
 
     def ref_quota_count(self):
+        """
+        Counts the number of RefQuotaDefinitions
+
+        Returns:
+            int: count of RefQuotaDefinitions entries for this reference document version
+        """
         quota_count = RefQuotaDefinition.objects.all().filter(
             ref_order_number__reference_document_version=self
         ).count()
@@ -197,6 +292,12 @@ class ReferenceDocumentVersion(TimestampedMixin):
         return quota_count
 
     def ref_quota_suspension_count(self):
+        """
+        Counts the number of RefQuotaSuspensions
+
+        Returns:
+            int: count of RefQuotaSuspensions entries for this reference document version
+        """
         suspension_count = RefQuotaSuspension.objects.all().filter(
             ref_quota_definition__ref_order_number__reference_document_version=self
         ).count()
@@ -210,6 +311,9 @@ class ReferenceDocumentVersion(TimestampedMixin):
 
 
 class RefOrderNumber(models.Model):
+    """
+    This model represents an order number as defined in a reference document
+    """
     reference_document_version = models.ForeignKey(
         "reference_documents.ReferenceDocumentVersion",
         on_delete=models.PROTECT,
@@ -246,19 +350,45 @@ class RefOrderNumber(models.Model):
     )
 
     def __str__(self):
+        """
+        String representation if the order number
+
+        Returns:
+            string: string representing the RefOrderNumber
+        """
         return f"{self.order_number}"
 
     def is_sub_quota(self):
+        """
+        Returns a boolean representing its sub_quota status
+
+        Returns:
+            boolean: True if it is a sub-quota of a main quota definition, else False
+        """
         return self.main_order_number is not None
 
     def save(self, *args, **kwargs):
-        if not self.reference_document_version.editable():
-            return
-        super(RefOrderNumber, self).save(*args, **kwargs)
+        """
+        saves changes to the RefOrderNumber if in an editable state
+
+        Args:
+            *args: arguments passed to super
+            **kwargs: keyword arguments passed to super
+
+        Returns:
+            None
+        """
+        if self.reference_document_version.editable():
+            super(RefOrderNumber, self).save(*args, **kwargs)
 
 
 class RefQuotaDefinition(models.Model):
+    """
+    This model represents a quota definition based on the definition from a reference document
 
+    Note: this model unlike the TAP equivalent holds the commodity_code directly. Since this is defined
+    in the same way in a reference document. When querying TAP for the same data it will involve looking up the associated measures from the order number.
+    """
     def __str__(self):
         return f"{self.ref_order_number.order_number} ({self.commodity_code}) {self.valid_between} {self.volume} {self.measurement}"
 
@@ -292,12 +422,25 @@ class RefQuotaDefinition(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        """
+        saves changes to the RefQuotaDefinition if in an editable state
+
+        Args:
+            *args: arguments passed to super
+            **kwargs: keyword arguments passed to super
+
+        Returns:
+            None
+        """
         if not self.ref_order_number.reference_document_version.editable():
             return
         super(RefQuotaDefinition, self).save(*args, **kwargs)
 
 
 class RefQuotaSuspension(models.Model):
+    """
+    This model represents a quota suspension as defined in a reference document.
+    """
     ref_quota_definition = models.ForeignKey(
         "reference_documents.RefQuotaDefinition",
         on_delete=models.PROTECT,
@@ -312,12 +455,24 @@ class RefQuotaSuspension(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if not self.ref_quota_definition.ref_order_number.reference_document_version.editable():
-            return
-        super(RefQuotaSuspension, self).save(*args, **kwargs)
+        """
+        saves changes to the RefQuotaSuspension if in an editable state
+
+        Args:
+            *args: arguments passed to super
+            **kwargs: keyword arguments passed to super
+
+        Returns:
+            None
+        """
+        if self.ref_quota_definition.ref_order_number.reference_document_version.editable():
+            super(RefQuotaSuspension, self).save(*args, **kwargs)
 
 
 class RefQuotaDefinitionRange(models.Model):
+    """
+    This model represents a related range of quota definitions over multiple years
+    """
     def __str__(self):
         from_str = f'{self.start_day}/{self.start_month}'
         to_str = f'{self.end_day}/{self.end_month}'
@@ -359,6 +514,13 @@ class RefQuotaDefinitionRange(models.Model):
     )
 
     def date_ranges(self):
+        """
+        collects the date ranges that are covered by the RefQuotaDefinitionRange based
+        on its attributes
+
+        Returns:
+            list(TaricDateRange): A list of TaricDateRange objects
+        """
         date_ranges = []
 
         if not self.end_year:
@@ -378,11 +540,21 @@ class RefQuotaDefinitionRange(models.Model):
         return date_ranges
 
     def dynamic_quota_definitions(self):
-        # This method will create in memory objects representing PreferentialQuotas
-        # note: PreferentialQuotas will be generated up to 3 years in the future.
-        # the dynamic nature of this class negates the need to create / modify records
-        # once the reference document has been signed off and published (preventing further changes)
+        """
+        A list of RefQuotaDefinitions for the range
 
+        note: PreferentialQuotas will be generated up to 3 years in the future.
+
+        note: The dynamic nature of this class negates the need to create / modify records
+            once the reference document has been signed off and published (preventing
+            further changes)
+
+        Returns:
+            list(RefQuotaDefinition): A list of RefQuotaDefinition objects, not committed
+            to the database but held in memory
+        """
+        # This method will create in memory objects representing PreferentialQuotas
+        #
         result = []
 
         for index, valid_between in enumerate(self.date_ranges()):
@@ -403,12 +575,25 @@ class RefQuotaDefinitionRange(models.Model):
         return result
 
     def save(self, *args, **kwargs):
+        """
+        saves changes to the RefQuotaDefinitionRange if in an editable state
+
+        Args:
+            *args: arguments passed to super
+            **kwargs: keyword arguments passed to super
+
+        Returns:
+            None
+        """
         if not self.ref_order_number.reference_document_version.editable():
             return
         super(RefQuotaDefinitionRange, self).save(*args, **kwargs)
 
 
 class RefQuotaSuspensionRange(models.Model):
+    """
+    This model represents a related range of quota suspensions over multiple years
+    """
     ref_quota_definition_range = models.ForeignKey(
         "reference_documents.RefQuotaDefinitionRange",
         on_delete=models.PROTECT,
@@ -427,6 +612,13 @@ class RefQuotaSuspensionRange(models.Model):
     )
 
     def date_ranges(self):
+        """
+        collects the date ranges that are covered by the RefQuotaSuspensionRange based
+        on its attributes
+
+        Returns:
+            list(TaricDateRange): A list of TaricDateRange objects
+        """
         date_ranges = []
 
         if not self.end_year:
@@ -446,11 +638,19 @@ class RefQuotaSuspensionRange(models.Model):
         return date_ranges
 
     def dynamic_quota_suspensions(self):
-        # This method will create in memory objects representing PreferentialQuotaSuspensions
-        # note: PreferentialQuotaSuspensions will be generated up to 3 years in the future.
-        # the dynamic nature of this class negates the need to create / modify records
-        # once the reference document has been signed off and published (preventing further changes)
+        """
+        A list of RefQuotaSuspensions for the range
 
+        note: RefQuotaSuspensions will be generated up to 3 years in the future.
+
+        note: The dynamic nature of this class negates the need to create / modify records
+            once the reference document has been signed off and published (preventing
+            further changes)
+
+        Returns:
+            list(RefQuotaSuspension): A list of RefQuotaSuspension objects, not committed
+            to the database but held in memory
+        """
         result = []
 
         preferential_quotas = self.ref_quota_definition_range.dynamic_quota_definitions()
@@ -474,12 +674,25 @@ class RefQuotaSuspensionRange(models.Model):
         return result
 
     def save(self, *args, **kwargs):
+        """
+        saves changes to the RefQuotaSuspensionRange if in an editable state
+
+        Args:
+            *args: arguments passed to super
+            **kwargs: keyword arguments passed to super
+
+        Returns:
+            None
+        """
         if not self.ref_quota_definition_range.ref_order_number.reference_document_version.editable():
             return
         super(RefQuotaSuspensionRange, self).save(*args, **kwargs)
 
 
 class RefRate(models.Model):
+    """
+    This model represents a preferential rate
+    """
     reference_document_version = models.ForeignKey(
         "reference_documents.ReferenceDocumentVersion",
         on_delete=models.PROTECT,
@@ -503,12 +716,26 @@ class RefRate(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        """
+        saves changes to the RefRate if in an editable state
+
+        Args:
+            *args: arguments passed to super
+            **kwargs: keyword arguments passed to super
+
+        Returns:
+            None
+        """
         if not self.reference_document_version.editable():
             return
         super(RefRate, self).save(*args, **kwargs)
 
 
 class AlignmentReport(TimestampedMixin):
+    """
+    This model represents an alignment report, a container for checks ran against
+    TAP data for a reference document
+    """
     reference_document_version = models.ForeignKey(
         "reference_documents.ReferenceDocumentVersion",
         on_delete=models.PROTECT,
@@ -554,9 +781,21 @@ class AlignmentReport(TimestampedMixin):
         return
 
     def unique_check_names(self):
+        """
+        collect all unique check names associated with the AlignmentReport
+
+        Returns:
+            list(str): a list of unique check names
+        """
         return self.alignment_report_checks.distinct('check_name').values_list('check_name', flat=True)
 
     def check_stats(self):
+        """
+        returns statistical data for the unique checks performed
+
+        Returns:
+            dict: dictionary of statistics for check status grouped by check name
+        """
         stats = {}
 
         for check_name in self.unique_check_names():
@@ -571,13 +810,29 @@ class AlignmentReport(TimestampedMixin):
         return stats
 
     def error_count(self):
+        """
+        returns a count of errors for the AlignmentReport
+
+        Returns:
+            int: number of errors
+        """
         return self.alignment_report_checks.filter(status=AlignmentReportCheckStatus.FAIL).count()
 
     def warning_count(self):
+        """
+        returns a count of warnings for the AlignmentReport
+
+        Returns:
+           int: number of warnings
+        """
         return self.alignment_report_checks.filter(status=AlignmentReportCheckStatus.WARNING).count()
 
 
 class AlignmentReportCheck(TimestampedMixin):
+    """
+    This model represents an alignment report check, ran against TAP data
+    for a single record of the reference document
+    """
     alignment_report = models.ForeignKey(
         "reference_documents.AlignmentReport",
         on_delete=models.PROTECT,
