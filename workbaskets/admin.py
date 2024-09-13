@@ -1,6 +1,6 @@
 from django import forms
 from django.conf import settings
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.admin.widgets import AdminTextInputWidget
 from django.http import HttpResponseRedirect
@@ -118,7 +118,27 @@ class WorkBasketAdmin(admin.ModelAdmin):
                 f"Deleted {tracked_model_count} TrackedModel(s) in "
                 f"{transaction_count} from WorkBasket.",
             )
-            return HttpResponseRedirect(".")
+        if "_self-publish" in request.POST:
+            # check if user is super user
+            if not request.user.is_superuser:
+                self.message_user(request, "You do not have permission to perform this action.", level=messages.ERROR)
+                return HttpResponseRedirect(request.get_full_path())
+
+            # check if workbasket status is 'editing'
+            if obj.status != 'EDITING':
+                messages.error(request, "The workbasket is not in EDITING status.")
+                return HttpResponseRedirect(request.get_full_path())
+
+            # check if rule checks have passed
+            if obj.unchecked_or_errored_transactions.exists():
+                    messages.error(request, "Rule checks have not passed on the current contents of this workbasket.")
+                    return HttpResponseRedirect(request.get_full_path())
+
+            obj.full_clean()
+            obj.approve(user=request.user.id, scheme_name=settings.TRANSACTION_SCHEMA)
+            obj.status = "PUBLISHED"
+            obj.save()
+            return HttpResponseRedirect(request.get_full_path())
 
         return super().response_change(request, obj)
 

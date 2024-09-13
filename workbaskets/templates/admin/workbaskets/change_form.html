@@ -6,8 +6,38 @@
 {% block submit_buttons_bottom %}
     {{ block.super }}
 
-    {% if original.status == 'EDITING' or original.status == 'ARCHIVED' %}
+    {% if request.user.is_superuser %}
     <div class="submit-row">
+        <input
+                type="submit"
+                value="Self Publish"
+                name="_self-publish"
+                class="default"
+                title="""
+                {% if original.status != 'EDITING' %} This button is disabled because the workbasket is not in EDITING status.
+{#                {% elif workbasket.unchecked_or_errored_transactions.exists() %}This button is disabled because the workbasket rule check task status is not SUCCESS.#}
+                {% elif original.rule_check_task_status != 'SUCCESS' %}This button is disabled because the workbasket rule check task status is not SUCCESS.
+                {% else %}Click to self publish this workbasket.
+                {%  endif %}
+                    """
+                    {% if original.status != 'EDITING' or original.rule_check_task_status != 'SUCCESS' %}
+                disabled{% endif %}
+                    >
+                    <span class="button-description">
+                        Warning: This will publish the workbasket <Strong>only</Strong> for TAP. It will <Strong>not</Strong> be sent to other parties e.g. Channel Islands, HMRC etc.
+                        {% if original.status != 'EDITING' %}
+                            This button is disabled because the workbasket is not in EDITING status.
+                        {% elif original.rule_check_task_status != 'SUCCESS' %}
+                            This button is disabled because the workbasket rule check task status is not SUCCESS.
+                        {% else %}
+                            Click to self publish workbasket.
+                        {% endif %}
+                    </span>
+                    </div>
+                {% endif %}
+
+    {% if original.status == 'EDITING' or original.status == 'ARCHIVED' %}
+        <div class="submit-row">
         <span>
             {{ original.tracked_models.count }}
             tracked model{{ original.tracked_models.count|pluralize }}
@@ -15,13 +45,13 @@
             {{ original.transactions.count }}
             transaction{{ original.transactions.count|pluralize }}
         </span>
-        <input
-            type="submit"
-            style="background-color:#a41515"
-            value="Delete WorkBasket Contents"
-            name="_clear-workbasket"
-            {% if not original.tracked_models.count and not original.transactions.count %}disabled{% endif %}
-        >
-    </div>
+            <input
+                    type="submit"
+                    style="background-color:#a41515"
+                    value="Delete WorkBasket Contents"
+                    name="_clear-workbasket"
+                    {% if not original.tracked_models.count and not original.transactions.count %}disabled{% endif %}
+            >
+        </div>
     {% endif %}
 {% endblock %}
