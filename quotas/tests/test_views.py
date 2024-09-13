@@ -1,5 +1,4 @@
 from typing import OrderedDict
-from unittest import mock
 
 import pytest
 from bs4 import BeautifulSoup
@@ -1851,17 +1850,15 @@ def test_duplicate_definition_wizard_get_form_kwargs(
             assert kwargs["request"].session
 
 
-# @unittest.mock.patch("workbaskets.models.WorkBasket.current")
 def test_definition_duplicator_creates_definition_and_association(
     quota_definition_1,
     main_quota_order_number,
     sub_quota_order_number,
     session_request,
-    # mock_request,
-    # client_with_current_workbasket
 ):
     """Pass data to the Duplicator Wizard and verify that the created definition
     contains the expected data."""
+
     staged_definition_data = [
         {
             "main_definition": quota_definition_1.pk,
@@ -1878,6 +1875,7 @@ def test_definition_duplicator_creates_definition_and_association(
         },
     ]
     session_request.session["staged_definition_data"] = staged_definition_data
+    session_request.workbasket = factories.WorkBasketFactory.create()
     order_number_data = {
         "duplicate_definitions_wizard-current_step": "quota_order_numbers",
         "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
@@ -1890,9 +1888,7 @@ def test_definition_duplicator_creates_definition_and_association(
 
     storage.set_step_data("quota_order_numbers", order_number_data)
     storage._set_current_step("quota_order_numbers")
-    # assert 0
     wizard = DuplicateDefinitionsWizard(
-        # workbasket=sessio,
         request=session_request,
         storage=storage,
         initial_dict={"quota_order_numbers": {}},
@@ -1901,6 +1897,7 @@ def test_definition_duplicator_creates_definition_and_association(
     wizard.form_list = OrderedDict(wizard.form_list)
 
     association_table_before = models.QuotaAssociation.objects.all()
+    # assert 0
     assert len(association_table_before) == 0
     for definition in session_request.session["staged_definition_data"]:
         wizard.create_definition(definition)
@@ -1962,66 +1959,3 @@ def test_format_date(wizard):
     date_str = "2021-01-01"
     formatted_date = wizard.format_date(date_str)
     assert formatted_date == "01 Jan 2021"
-
-
-# def test_definition_duplicator_creates_with_new_workbasket(
-#     quota_definition_1, main_quota_order_number, sub_quota_order_number, session_request
-# ):
-#     """
-#     Pass data to the Duplicator Wizard and verify that the created definition
-#     contains the expected data.
-#     """
-#     staged_definition_data = [
-#         {
-#             "main_definition": quota_definition_1.pk,
-#             "sub_definition_staged_data": {
-#                 "initial_volume": str(quota_definition_1.initial_volume),
-#                 "volume": str(quota_definition_1.volume),
-#                 "measurement_unit_code": quota_definition_1.measurement_unit.code,
-#                 "start_date": serialize_date(quota_definition_1.valid_between.lower),
-#                 "end_date": serialize_date(quota_definition_1.valid_between.upper),
-#                 "status": True,
-#                 "coefficient": 1,
-#                 "relationship_type": "NM",
-#             },
-#         }
-#     ]
-#     session_request.session["staged_definition_data"] = staged_definition_data
-#     order_number_data = {
-#         "duplicate_definitions_wizard-current_step": "quota_order_numbers",
-#         "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
-#         "quota_order_numbers-sub_quota_order_number": [sub_quota_order_number.pk],
-#     }
-#     storage = QuotaDefinitionDuplicatorSessionStorage(
-#         request=session_request, prefix=""
-#     )
-
-#     storage.set_step_data("quota_order_numbers", order_number_data)
-#     storage._set_current_step("quota_order_numbers")
-#     wizard = DuplicateDefinitionsWizard(
-#         request=session_request,
-#         storage=storage,
-#         initial_dict={"quota_order_numbers": {}},
-#         instance_dict={"quota_order_numbers": None},
-#     )
-#     wizard.form_list = OrderedDict(wizard.form_list)
-
-#     association_table_before = models.QuotaAssociation.objects.all()
-#     assert len(association_table_before) == 0
-#     for definition in session_request.session["staged_definition_data"]:
-#         wizard.create_definition(definition)
-
-#     definition_objects = models.QuotaDefinition.objects.all()
-
-#     # assert that the values of the definitions match
-#     assert definition_objects[0].volume == definition_objects[1].volume
-#     assert (
-#         definition_objects[0].measurement_unit == definition_objects[1].measurement_unit
-#     )
-#     assert definition_objects[0].valid_between == definition_objects[1].valid_between
-
-#     assert len(definition_objects) == 2
-#     # assert that the association is created
-#     association_table_after = models.QuotaAssociation.objects.all()
-#     assert association_table_after[0].main_quota == quota_definition_1
-#     assert association_table_after[0].sub_quota in definition_objects
