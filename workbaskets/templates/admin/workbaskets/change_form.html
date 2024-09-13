@@ -7,34 +7,37 @@
     {{ block.super }}
 
     {% if request.user.is_superuser %}
-    <div class="submit-row">
-        <input
-                type="submit"
-                value="Self Publish"
-                name="_self-publish"
-                class="default"
-                title="""
-                {% if original.status != 'EDITING' %} This button is disabled because the workbasket is not in EDITING status.
-{#                {% elif workbasket.unchecked_or_errored_transactions.exists() %}This button is disabled because the workbasket rule check task status is not SUCCESS.#}
-                {% elif original.rule_check_task_status != 'SUCCESS' %}This button is disabled because the workbasket rule check task status is not SUCCESS.
-                {% else %}Click to self publish this workbasket.
-                {%  endif %}
-                    """
-                    {% if original.status != 'EDITING' or original.rule_check_task_status != 'SUCCESS' %}
+        <div class="submit-row">
+            <input
+                    type="submit"
+                    value="Self Publish"
+                    name="_self-publish"
+                    class="default"
+                    title="""
+            {% if original.status != 'EDITING' %} This button is disabled because the workbasket is not in EDITING
+                status.
+                {#                {% elif workbasket.unchecked_or_errored_transactions.exists() %}This button is disabled because the workbasket rule check task status is not SUCCESS.#}
+            {% elif original.rule_check_task_status != 'SUCCESS' %}This button is disabled because the workbasket rule
+                check task status is not SUCCESS.
+            {% else %}Click to self publish this workbasket.
+            {% endif %}
+            """
+            {% if original.status != 'EDITING' or original.rule_check_task_status != 'SUCCESS' %}
                 disabled{% endif %}
-                    >
-                    <span class="button-description">
-                        Warning: This will publish the workbasket <Strong>only</Strong> for TAP. It will <Strong>not</Strong> be sent to other parties e.g. Channel Islands, HMRC etc.
-                        {% if original.status != 'EDITING' %}
-                            This button is disabled because the workbasket is not in EDITING status.
-                        {% elif original.rule_check_task_status != 'SUCCESS' %}
-                            This button is disabled because the workbasket rule check task status is not SUCCESS.
-                        {% else %}
-                            Click to self publish workbasket.
-                        {% endif %}
-                    </span>
-                    </div>
+            >
+            <span class="button-description">
+                {% if original.status != 'EDITING' %}
+                    <i>This button is disabled because the workbasket is not in EDITING status.</i>
+                {% elif original.rule_check_task_status != 'SUCCESS' %}
+                    <i>This button is disabled because it contains transactions that have not passed rule checks.</i>
+                {% else %}
+                    <i>Click to Self Publish workbasket.</i>
                 {% endif %}
+                <br>
+                Warning: This will publish the workbasket <Strong>only</Strong> for TAP. It will <Strong>not</Strong> be sent to other parties e.g. Channel Islands, HMRC etc.
+            </span>
+        </div>
+    {% endif %}
 
     {% if original.status == 'EDITING' or original.status == 'ARCHIVED' %}
         <div class="submit-row">
