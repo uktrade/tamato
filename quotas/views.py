@@ -741,6 +741,7 @@ class QuotaDefinitionConfirmDelete(
     template_name = "quota-definitions/confirm-delete.jinja"
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class DuplicateDefinitionsWizard(
     PermissionRequiredMixin,
     NamedUrlSessionWizardView,
@@ -797,7 +798,7 @@ class DuplicateDefinitionsWizard(
     }
 
     @property
-    def workbasket(self):
+    def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
     def get_context_data(self, form, **kwargs):
@@ -907,12 +908,10 @@ class DuplicateDefinitionsWizard(
             self,
             definition["sub_definition_staged_data"],
         )
-        # instance = models.QuotaDefinition.objects.create(
-        #     **staged_data, transaction=WorkBasket.get_current_transaction(self.request)
-        # )
+        transaction = self.workbasket.new_transaction()
         instance = models.QuotaDefinition.objects.create(
             **staged_data,
-            transaction=self.workbasket.new_transaction(),
+            transaction=transaction,
         )
         models.QuotaAssociation.objects.create(
             main_quota=models.QuotaDefinition.objects.get(
@@ -926,7 +925,7 @@ class DuplicateDefinitionsWizard(
                 "relationship_type"
             ],
             update_type=UpdateType.CREATE,
-            transaction=instance.transaction,
+            transaction=transaction,
         )
 
 
