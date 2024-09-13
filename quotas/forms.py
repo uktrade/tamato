@@ -1182,8 +1182,8 @@ class SubQuotaDefinitionsUpdatesForm(
         self.request = kwargs.pop("request", None)
         main_def_id = kwargs.pop("pk")
         super().__init__(*args, **kwargs)
-        self.original_definition = models.QuotaDefinition.objects.latest_approved().get(
-            sid=main_def_id,
+        self.original_definition = models.QuotaDefinition.objects.get(
+            trackedmodel_ptr_id=main_def_id,
         )
         self.init_fields()
         self.get_duplicate_data(self.original_definition)
