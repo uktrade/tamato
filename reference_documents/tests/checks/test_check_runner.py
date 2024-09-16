@@ -11,9 +11,9 @@ from reference_documents.tests import factories
 from unittest import mock
 from unittest.mock import patch
 from reference_documents.check.ref_order_numbers import OrderNumberChecks  # noqa
-from reference_documents.check.ref_quota_definitions import QuotaDefinitionExists  # noqa
-from reference_documents.check.ref_quota_suspensions import QuotaSuspensionExists  # noqa
-from reference_documents.check.ref_rates import RateExists  # noqa
+from reference_documents.check.ref_quota_definitions import QuotaDefinitionChecks  # noqa
+from reference_documents.check.ref_quota_suspensions import QuotaSuspensionChecks # noqa
+from reference_documents.check.ref_rates import RateChecks  # noqa
 
 pytestmark = pytest.mark.django_db
 
@@ -118,16 +118,16 @@ class TestChecks:
         return ref_doc_ver
 
     @patch(
-        'reference_documents.check.ref_rates.RateExists.run_check',
+        'reference_documents.check.ref_rates.RateChecks.run_check',
     )
     @patch(
         'reference_documents.check.ref_order_numbers.OrderNumberChecks.run_check',
     )
     @patch(
-        'reference_documents.check.ref_quota_suspensions.QuotaSuspensionExists.run_check',
+        'reference_documents.check.ref_quota_suspensions.QuotaSuspensionChecks.run_check',
     )
     @patch(
-        'reference_documents.check.ref_quota_definitions.QuotaDefinitionExists.run_check',
+        'reference_documents.check.ref_quota_definitions.QuotaDefinitionChecks.run_check',
     )
     def test_run(self, rate_exists_check_patch, order_number_checks_patch, quota_suspension_exists_check_patch, quota_definition_exists_patch):
         def side_effect(*args, **kwargs):
@@ -153,7 +153,7 @@ class TestChecks:
         target = self.target_class(ref_doc_ver)
         ref_rate = ref_doc_ver.ref_rates.first()
 
-        result = target.capture_check_result(RateExists(ref_rate), ref_rate=ref_rate, parent_has_failed_or_skipped_result=True)
+        result = target.capture_check_result(RateChecks(ref_rate), ref_rate=ref_rate, parent_has_failed_or_skipped_result=True)
         assert result == AlignmentReportCheckStatus.SKIPPED
 
     def test_status_contains_failed_or_skipped(self):

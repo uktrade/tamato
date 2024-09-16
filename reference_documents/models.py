@@ -200,7 +200,8 @@ class ReferenceDocumentVersion(TimestampedMixin):
         Returns:
             None
         """
-        if (self.editable() or force_save is True) and self.pk is not None:
+        # if (self.editable() or force_save is True) and self.pk is not None:
+        if (self.editable() or force_save is True) or self.pk is None:
             super(ReferenceDocumentVersion, self).save(*args, **kwargs)
 
 

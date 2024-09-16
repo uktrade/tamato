@@ -17,10 +17,10 @@ class TestReferenceDocumentDetails:
 
     def test_get_with_valid_user(self, superuser_client):
         # seed database
-        reference_document=ReferenceDocumentFactory.create()
-        ReferenceDocumentVersionFactory.create(reference_document=reference_document, status=ReferenceDocumentVersionStatus.EDITING, version=2.0)
-        ReferenceDocumentVersionFactory.create(reference_document=reference_document, status=ReferenceDocumentVersionStatus.IN_REVIEW, version=1.5)
-        ReferenceDocumentVersionFactory.create(reference_document=reference_document, status=ReferenceDocumentVersionStatus.PUBLISHED, version=1.0)
+        reference_document=ReferenceDocumentFactory()
+        ReferenceDocumentVersionFactory(reference_document=reference_document, status=ReferenceDocumentVersionStatus.EDITING, version=2.0)
+        ReferenceDocumentVersionFactory(reference_document=reference_document, status=ReferenceDocumentVersionStatus.IN_REVIEW, version=1.5)
+        ReferenceDocumentVersionFactory(reference_document=reference_document, status=ReferenceDocumentVersionStatus.PUBLISHED, version=1.0)
 
         resp = superuser_client.get(
             reverse(

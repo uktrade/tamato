@@ -6,7 +6,7 @@ from common.tests.factories import QuotaDefinitionFactory, QuotaSuspensionFactor
     GeographicalAreaFactory
 from common.util import TaricDateRange
 from reference_documents.check.base import BaseRateCheck
-from reference_documents.check.ref_rates import RateExists
+from reference_documents.check.ref_rates import RateChecks
 from reference_documents.models import AlignmentReportCheckStatus
 from reference_documents.tests import factories
 from reference_documents.tests.factories import RefRateFactory
@@ -58,7 +58,7 @@ class TestRateExists:
             duty_expression=tap_duty_expression,
         )
 
-        target = RateExists(ref_rate=ref_rate)
+        target = RateChecks(ref_rate=ref_rate)
         assert target.run_check() == (AlignmentReportCheckStatus.PASS, '')
 
     def test_run_check_fail_no_comm_code(self):
@@ -76,7 +76,7 @@ class TestRateExists:
             valid_between=valid_between
         )
 
-        target = RateExists(ref_rate=ref_rate)
+        target = RateChecks(ref_rate=ref_rate)
         assert target.run_check() == (AlignmentReportCheckStatus.FAIL, f'{ref_rate.commodity_code} None comm code not live')
 
 
@@ -167,7 +167,7 @@ class TestRateExists:
             duty_expression=tap_duty_expression,
         )
 
-        target = RateExists(ref_rate=ref_rate)
+        target = RateChecks(ref_rate=ref_rate)
         assert target.run_check() == (AlignmentReportCheckStatus.PASS, f'{comm_code} : matched with children')
 
     def test_run_check_fai_partially_defined_on_child_com_code(self):
@@ -234,7 +234,7 @@ class TestRateExists:
             duty_expression=tap_duty_expression,
         )
 
-        target = RateExists(ref_rate=ref_rate)
+        target = RateChecks(ref_rate=ref_rate)
         assert target.run_check() == (AlignmentReportCheckStatus.FAIL, f'{comm_code} : no expected measures found on good code or children')
 
     def test_run_check_warning_multiple_matches(self):
@@ -296,5 +296,5 @@ class TestRateExists:
             duty_expression=tap_duty_expression,
         )
 
-        target = RateExists(ref_rate=ref_rate)
+        target = RateChecks(ref_rate=ref_rate)
         assert target.run_check() == (AlignmentReportCheckStatus.WARNING, f'{ref_rate.commodity_code} : multiple measures match')

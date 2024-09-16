@@ -401,7 +401,7 @@ class TestReferenceDocumentVersionViews:
     )
     def test_ref_doc_version_detail_view_hides_edit_when_state_in_review(self, state, superuser_client):
         """Test that the reference document version detail view shows edit links correctly."""
-        ref_doc = factories.ReferenceDocumentFactory.create(
+        ref_doc = factories.ReferenceDocumentFactory(
             area_id="XY",
             title="Reference document for XY",
         )
@@ -421,8 +421,8 @@ class TestReferenceDocumentVersionViews:
             reference_document_version=ref_doc_version,
         )
         first_quota_order_number = order_number_batch[0].order_number
-        tap_quota = QuotaOrderNumberFactory.create(order_number=first_quota_order_number)
-        tap_commodity_code = SimpleGoodsNomenclatureFactory.create(
+        tap_quota = QuotaOrderNumberFactory(order_number=first_quota_order_number)
+        tap_commodity_code = SimpleGoodsNomenclatureFactory(
             item_id=first_preferential_rate.commodity_code,
             valid_between=date_ranges("big"),
             suffix=80,
@@ -517,7 +517,7 @@ class TestReferenceDocumentVersionChangeStatePublished:
             Permission.objects.get(codename="change_referencedocumentversion"),
         )
         client.force_login(valid_user)
-        ref_doc_ver = factories.ReferenceDocumentVersionFactory.create(status=ReferenceDocumentVersionStatus.IN_REVIEW)
+        ref_doc_ver = factories.ReferenceDocumentVersionFactory(status=ReferenceDocumentVersionStatus.IN_REVIEW)
 
         url = reverse(
             "reference_documents:version-status-change-to-published",

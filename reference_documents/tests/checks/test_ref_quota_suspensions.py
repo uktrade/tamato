@@ -5,8 +5,8 @@ import pytest
 from common.tests.factories import MeasureFactory, GoodsNomenclatureFactory, QuotaDefinitionFactory, QuotaSuspensionFactory
 from common.util import TaricDateRange
 from reference_documents.check.base import BaseQuotaDefinitionCheck
-from reference_documents.check.ref_quota_definitions import QuotaDefinitionExists
-from reference_documents.check.ref_quota_suspensions import QuotaSuspensionExists
+from reference_documents.check.ref_quota_definitions import QuotaDefinitionChecks
+from reference_documents.check.ref_quota_suspensions import QuotaSuspensionChecks
 from reference_documents.models import AlignmentReportCheckStatus
 from reference_documents.tests import factories
 
@@ -62,7 +62,7 @@ class TestQuotaSuspensionExists:
          geographical_area__area_id=area_id,
       )
 
-      target = QuotaSuspensionExists(ref_quota_suspension=ref_quota_suspension)
+      target = QuotaSuspensionChecks(ref_quota_suspension=ref_quota_suspension)
       assert target.run_check() == (AlignmentReportCheckStatus.PASS, '')
 
    def test_run_check_failed_no_suspension(self):
@@ -107,7 +107,7 @@ class TestQuotaSuspensionExists:
          geographical_area__area_id=area_id,
       )
 
-      target = QuotaSuspensionExists(ref_quota_suspension=ref_quota_suspension)
+      target = QuotaSuspensionChecks(ref_quota_suspension=ref_quota_suspension)
       assert target.run_check() == (AlignmentReportCheckStatus.FAIL, 'FAIL - quota suspension not found')
 
    def test_run_check_failed_suspension_valid_between_different(self):
@@ -158,5 +158,5 @@ class TestQuotaSuspensionExists:
          geographical_area__area_id=area_id,
       )
 
-      target = QuotaSuspensionExists(ref_quota_suspension=ref_quota_suspension)
+      target = QuotaSuspensionChecks(ref_quota_suspension=ref_quota_suspension)
       assert target.run_check() == (AlignmentReportCheckStatus.FAIL, 'FAIL - quota suspension not found')

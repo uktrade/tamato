@@ -20,7 +20,6 @@ class Command(BaseCommand):
         parser.add_argument(
             "duties_csv_path",
             type=str,
-            required=True,
             help="The absolute path to the duties csv file to import",
         )
         parser.add_argument(
@@ -79,7 +78,7 @@ class Command(BaseCommand):
 
         comm_code = df_row["Standardised Commodity Code"]
         comm_code = comm_code + ("0" * (len(comm_code) - 10))
-        duty_rate = df_row["Duty Rate"]
+        duty_rate = df_row["Quota Duty Rate"]
         volume = df_row["Quota Volume"].replace(",", "")
         units = df_row["Units"]
 
@@ -95,7 +94,7 @@ class Command(BaseCommand):
 
         # add a new one
         order_number_record, created =RefOrderNumber.objects.get_or_create(
-            quota_order_number=order_number,
+            order_number=order_number,
             reference_document_version_id=reference_document_version.id,
             valid_between=order_number_valid_between,
             coefficient=None,

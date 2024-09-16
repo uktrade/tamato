@@ -8,7 +8,7 @@ from common.tests.factories import QuotaOrderNumberFactory, QuotaDefinitionFacto
 from common.util import TaricDateRange
 from reference_documents.check.base import BaseQuotaDefinitionCheck
 from reference_documents.check.ref_order_numbers import OrderNumberChecks
-from reference_documents.check.ref_quota_definitions import QuotaDefinitionExists
+from reference_documents.check.ref_quota_definitions import QuotaDefinitionChecks
 from reference_documents.models import AlignmentReportCheckStatus
 from reference_documents.tests import factories
 
@@ -103,7 +103,7 @@ class TestQuotaDefinitionExists:
             .get(pk=cond.pk)
         )
 
-        target = QuotaDefinitionExists(ref_quota_definition=ref_quota_definition)
+        target = QuotaDefinitionChecks(ref_quota_definition=ref_quota_definition)
         assert cond.duty_sentence == "2.500% + 37.800 EUR / 100 kg"
         assert target.run_check() == (AlignmentReportCheckStatus.PASS, '')
 
@@ -135,7 +135,7 @@ class TestQuotaDefinitionExists:
             valid_between=valid_between,
         )
 
-        target = QuotaDefinitionExists(ref_quota_definition=ref_quota_definition)
+        target = QuotaDefinitionChecks(ref_quota_definition=ref_quota_definition)
         assert target.run_check() == (AlignmentReportCheckStatus.FAIL, 'FAIL - measure(s) spanning whole quota definition period not found')
 
     def test_run_check_fails_no_quota_definition(self):
@@ -159,7 +159,7 @@ class TestQuotaDefinitionExists:
             valid_between=valid_between,
         )
 
-        target = QuotaDefinitionExists(ref_quota_definition=ref_quota_definition)
+        target = QuotaDefinitionChecks(ref_quota_definition=ref_quota_definition)
         assert target.run_check() == (AlignmentReportCheckStatus.FAIL, 'FAIL - quota definition not found')
 
     def test_run_check_fails_no_goods_nomenclature(self):
@@ -178,7 +178,7 @@ class TestQuotaDefinitionExists:
             valid_between=valid_between
         )
 
-        target = QuotaDefinitionExists(ref_quota_definition=ref_quota_definition)
+        target = QuotaDefinitionChecks(ref_quota_definition=ref_quota_definition)
         assert target.run_check() == (AlignmentReportCheckStatus.FAIL, 'FAIL - commodity code not found')
 
     def test_run_check_fail_duty_sentence(self):
@@ -221,5 +221,5 @@ class TestQuotaDefinitionExists:
             transaction=tap_approved_transaction
         )
 
-        target = QuotaDefinitionExists(ref_quota_definition=ref_quota_definition)
+        target = QuotaDefinitionChecks(ref_quota_definition=ref_quota_definition)
         assert target.run_check() == (AlignmentReportCheckStatus.FAIL, 'FAIL - duty rate does not match, expected wonky duty rate to be in ()')
