@@ -32,13 +32,7 @@ class QuotaDefinitionContext:
         self.reference_document_version = quota_definition.ref_order_number.reference_document_version
 
     def row(self):
-        # comm_code = ReferenceDocumentVersionContext.get_tap_comm_code(
-        #     self.reference_document_version,
-        #     self.quota_definition.commodity_code,
-        # )
-        # if comm_code:
-        #     comm_code_link = f'<a class="govuk-link" href="{comm_code.get_url()}">{comm_code.structure_code}</a>'
-        # else:
+
         comm_code_link = f"{self.quota_definition.commodity_code}"
 
         actions = "<span></span>"
@@ -608,11 +602,6 @@ class ReferenceDocumentVersionChangeStateToInReview(
     model = ReferenceDocumentVersion
     permission_required = "reference_documents.change_referencedocumentversion"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Update state
-        # self.object.in_review()
-
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data["ref_doc_pk"] = self.kwargs["ref_doc_pk"]
@@ -632,11 +621,6 @@ class ReferenceDocumentVersionChangeStateToPublished(
     template_name = "reference_documents/reference_document_versions/confirm_state_to_published.jinja"
     model = ReferenceDocumentVersion
     permission_required = "reference_documents.change_referencedocumentversion"
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Update state
-        # self.object.in_review()
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -660,8 +644,6 @@ class ReferenceDocumentVersionChangeStateToEditable(
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Update state
-        # self.object.in_review()
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)

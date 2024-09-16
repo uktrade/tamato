@@ -57,15 +57,6 @@ class RefQuotaSuspensionCreate(PermissionRequiredMixin, CreateView):
             id=self.kwargs["pk"],
         )
 
-        # if "order_pk" in self.kwargs.keys():
-        #     kwargs["ref_order_number"] = kwargs[
-        #         "reference_document_version"
-        #     ].preferential_quota_order_numbers.get(
-        #         id=self.kwargs["order_pk"],
-        #     )
-        # else:
-        #     kwargs["preferential_quota_order_number"] = None
-
         return kwargs
 
     def get_context_data(self, **kwargs):
