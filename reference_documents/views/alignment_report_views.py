@@ -13,8 +13,6 @@ class AlignmentReportContext:
             {"text": "Type"},
             {"text": "Message"},
             {"text": "Status"},
-            {"text": "links"},
-            {"text": "Actions"},
         ]
 
     def get_links(self, alignment_report_check: AlignmentReportCheck):
@@ -59,13 +57,7 @@ class AlignmentReportContext:
                 },
                 {
                     "text": alignment_report_check.status,
-                },
-                {
-                    "html": self.get_links(alignment_report_check),
-                },
-                {
-                    "html": self.get_actions(alignment_report_check),
-                },
+                }
             ]
             rows.append(row_data)
 

@@ -528,6 +528,9 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         returns:
             GoodsNomenclature or None
         """
+        if self.ref_rate.valid_between is None:
+            return None
+
         goods = GoodsNomenclature.objects.latest_approved().filter(
             (
                     Q(valid_between__contains=self.ref_rate.valid_between.lower) &
