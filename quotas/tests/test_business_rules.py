@@ -1,6 +1,8 @@
 from collections import defaultdict
+from datetime import date
 from decimal import Decimal
 
+from django.forms import ValidationError
 import pytest
 from django.db import DataError
 
@@ -8,6 +10,7 @@ from common.business_rules import BusinessRuleViolation
 from common.tests import factories
 from common.tests.util import only_applicable_after
 from common.tests.util import raises_if
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.validators import AreaCode
 from quotas import business_rules
@@ -636,17 +639,59 @@ def test_QA2(date_ranges):
 
 
 @pytest.mark.parametrize(
-    "main_volume, main_unit, sub_volume, sub_unit, expect_error",
+    "sub_definition_valid_between, main_definition_valid_between, expected_response",
     [
-        (1.0, "KGM", 1.0, "KGM", False),
-        (1.0, "KGM", 0.0, "KGM", False),
-        (2.0, "KGM", 1.0, "KGM", False),
-        (1.0, "KGM", 2.0, "KGM", True),
-        (1.0, "KGM", 1.0, "DTN", True),
-        (1.0, "DTN", 1.0, "DTN", False),
+        (
+            TaricDateRange(date(2019, 1, 1), date(2020, 2, 2)),
+            TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
+            False,
+        ),
+        (
+            TaricDateRange(date(2021, 1, 1), date(2050, 2, 2)),
+            TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
+            False,
+        ),
+        (
+            TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
+            TaricDateRange(date(2020, 1, 1), date(2023, 12, 1)),
+            True,
+        ),
     ],
 )
-def test_QA3(main_volume, main_unit, sub_volume, sub_unit, expect_error):
+def test_QA2_dict(
+    sub_definition_valid_between, main_definition_valid_between, expected_response
+):
+    """As above, but checking between a definition and a dict with date ranges"""
+    assert (
+        business_rules.check_QA2_dict(
+            sub_definition_valid_between, main_definition_valid_between
+        )
+        == expected_response
+    )
+
+
+@pytest.mark.parametrize(
+    "main_volume, main_unit, sub_volume, sub_unit, main_init_volume, sub_init_volume, expect_error",
+    [
+        (1.0, "KGM", 1.0, "KGM", 1.0, 1.0, False),
+        (1.0, "KGM", 0.0, "KGM", 1.0, 1.0, False),
+        (2.0, "KGM", 1.0, "KGM", 1.0, 1.0, False),
+        (1.0, "KGM", 2.0, "KGM", 1.0, 1.0, True),
+        (1.0, "KGM", 1.0, "DTN", 1.0, 1.0, True),
+        (1.0, "DTN", 1.0, "DTN", 1.0, 1.0, False),
+        (1.0, "DTN", 1.0, "DTN", 1.0, 2.0, True),
+        (1.0, "DTN", 1.0, "DTN", 1.0, 1.0, False),
+    ],
+)
+def test_QA3(
+    main_volume,
+    main_unit,
+    sub_volume,
+    sub_unit,
+    main_init_volume,
+    sub_init_volume,
+    expect_error,
+):
     """When converted to the measurement unit of the main quota, the volume of a
     sub-quota must always be lower than or equal to the volume of the main
     quota."""
@@ -655,13 +700,52 @@ def test_QA3(main_volume, main_unit, sub_volume, sub_unit, expect_error):
 
     assoc = factories.QuotaAssociationFactory(
         main_quota__volume=main_volume,
+        main_quota__initial_volume=main_init_volume,
         main_quota__measurement_unit=units[main_unit],
         sub_quota__volume=sub_volume,
         sub_quota__measurement_unit=units[sub_unit],
+        sub_quota__initial_volume=sub_init_volume,
     )
 
     with raises_if(BusinessRuleViolation, expect_error):
         business_rules.QA3(assoc.transaction).validate(assoc)
+
+
+@pytest.mark.parametrize(
+    "main_volume, main_unit, sub_volume, sub_unit, main_init_volume, sub_init_volume, expected_response",
+    [
+        (1.0, "KGM", 1.0, "KGM", 1.0, 1.0, True),
+        (1.0, "KGM", 0.0, "KGM", 1.0, 1.0, True),
+        (2.0, "KGM", 1.0, "KGM", 1.0, 1.0, True),
+        (1.0, "KGM", 2.0, "KGM", 1.0, 1.0, False),
+        (1.0, "KGM", 1.0, "DTN", 1.0, 1.0, False),
+        (1.0, "DTN", 1.0, "DTN", 1.0, 1.0, True),
+        (1.0, "DTN", 1.0, "DTN", 1.0, 2.0, False),
+        (1.0, "DTN", 1.0, "DTN", 1.0, 1.0, True),
+    ],
+)
+def test_QA3_dict(
+    main_volume,
+    main_unit,
+    sub_volume,
+    sub_unit,
+    main_init_volume,
+    sub_init_volume,
+    expected_response,
+):
+    """As above, but checking between a definition and a dict"""
+
+    assert (
+        business_rules.check_QA3_dict(
+            main_definition_volume=main_volume,
+            main_definition_unit=main_unit,
+            sub_definition_volume=sub_volume,
+            sub_definition_unit=sub_unit,
+            sub_initial_volume=sub_init_volume,
+            main_initial_volume=main_init_volume,
+        )
+        == expected_response
+    )
 
 
 @pytest.mark.parametrize(
@@ -693,6 +777,20 @@ def test_QA4(coefficient, expect_error):
 
 
 @pytest.mark.parametrize(
+    "coefficient, expected_response",
+    [
+        (1.0, True),
+        (2.0, True),
+        (0.0, False),
+        (-1.0, False),
+    ],
+)
+def test_QA4_dict(coefficient, expected_response):
+    """As above, but checking between a definition and a dict"""
+    assert business_rules.check_QA4_dict(coefficient) == expected_response
+
+
+@pytest.mark.parametrize(
     ("existing_volume", "new_volume", "coeff", "type", "error_expected"),
     (
         ("1000.0", "1000.0", "1.200", SubQuotaType.EQUIVALENT, False),
@@ -709,6 +807,7 @@ def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
     same volume as the other sub-quotas associated with the parent quota.
 
     Moreover it must be defined with a coefficient not equal to 1.
+    When a sub-quota relationship type is defined as 'equivalent' it must have the same volume as the ones associated with the parent quota
 
     A sub-quota defined with the 'normal' type must have a coefficient of 1.
     """
