@@ -240,7 +240,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
         return QuotaSuspension.objects.filter(quota_definition__order_number=self.quota)
 
     @property
-    def associations(self):
+    def sub_quotas(self):
         return QuotaAssociation.objects.filter(main_quota__order_number=self.quota)
 
     @cached_property
@@ -260,7 +260,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
             quota_data=self.quota_data,
             blocking_periods=self.blocking_periods,
             suspension_periods=self.suspension_periods,
-            associations=self.associations,
+            sub_quotas=self.sub_quotas,
             *args,
             **kwargs,
         )

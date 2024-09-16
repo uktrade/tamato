@@ -3,8 +3,8 @@
 
 {% set table_rows = [] %}
 
-{% if associations %}
-  {% for object in associations %}
+{% if sub_quotas %}
+  {% for object in sub_quotas %}
     {% set definition_link -%}
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}#definition-details">{{ object.sub_quota.sid }}</a>
     {% endset %}
