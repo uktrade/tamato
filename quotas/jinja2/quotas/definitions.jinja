@@ -5,9 +5,34 @@
 {% from "components/details/macro.njk" import govukDetails %}
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+{% from "macros/fake_tabs.jinja" import fake_tabs %}
 
 {% set page_title = "Quota ID: " ~ quota.order_number ~ " - Data" %}
 {% set find_edit_url = url("quota-ui-list") %}
+
+{% set links = [
+    {
+      "text": "Quota definition periods",
+      "href": url('quota_definition-ui-list', kwargs={"sid": quota.sid}),
+      "selected": quota_type == None
+    },
+    {
+      "text": "Sub-quotas",
+      "href": url('quota_definition-ui-list-filter', kwargs={"sid": quota.sid, "quota_type": "sub_quotas"}),
+      "selected": quota_type == "sub_quotas",
+    },
+    {
+      "text": "Blocking periods",
+      "href": url('quota_definition-ui-list-filter', kwargs={"sid": quota.sid, "quota_type": "blocking_periods"}),
+      "selected": quota_type == "blocking_periods"
+    },
+    {
+      "text": "Suspension periods",
+      "href": url('quota_definition-ui-list-filter', kwargs={"sid": quota.sid, "quota_type": "suspension_periods"}),
+      "selected": quota_type == "suspension_periods"
+    }
+  ]
+%}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
@@ -21,20 +46,10 @@
 
 <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
-  {% set filters_html -%}
-    <form action="">
-      {{ crispy(form) }}
-    </form>
-  {% endset %}
-
-  {{ govukDetails({
-      "summaryText": "Customise table",
-      "html": filters_html
-  }) }}
-
+{{ fake_tabs(links) }}
 <div class="quota-definitions">
   {% set base_url = url('quota_definition-ui-list', args=[quota.sid] ) %}
-
+  <div class="govuk-tabs__panel">
   {% if quota_type == "blocking_periods" %}
     {% include "quotas/tables/blocking_periods.jinja" %}
   {% elif quota_type == "suspension_periods" %}
@@ -44,6 +59,8 @@
   {% else %}
     {% include "quotas/tables/definitions.jinja" %}
   {% endif %}
-
+  </div>
 </div>
+<br>
+<a href="{{ url('quota-ui-detail', kwargs={"sid": quota.sid}) }}" class="govuk-button govuk-button--secondary" >Back to quota ID</a>
 {% endblock %}

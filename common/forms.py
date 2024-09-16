@@ -425,7 +425,7 @@ class ValidityPeriodForm(ValidityPeriodBaseForm, forms.ModelForm):
 
         self.fields["end_date"].help_text = (
             f"Leave empty if {get_model_indefinite_article(self.instance)} "
-            f"{self.instance._meta.verbose_name} is needed for an unlimited time."
+            f"{self.instance._meta.verbose_name} is needed for an unlimited time"
         )
 
         if self.instance.valid_between:
