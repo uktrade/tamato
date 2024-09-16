@@ -1922,10 +1922,11 @@ def test_definition_duplicator_creates_definition_and_association(
     quota_definition_1,
     main_quota_order_number,
     sub_quota_order_number,
-    session_request,
+    session_request_with_workbasket,
 ):
     """Pass data to the Duplicator Wizard and verify that the created definition
     contains the expected data."""
+
     staged_definition_data = [
         {
             "main_definition": quota_definition_1.pk,
@@ -1941,21 +1942,23 @@ def test_definition_duplicator_creates_definition_and_association(
             },
         },
     ]
-    session_request.session["staged_definition_data"] = staged_definition_data
+    session_request_with_workbasket.session["staged_definition_data"] = (
+        staged_definition_data
+    )
     order_number_data = {
         "duplicate_definitions_wizard-current_step": "quota_order_numbers",
         "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
         "quota_order_numbers-sub_quota_order_number": [sub_quota_order_number.pk],
     }
     storage = QuotaDefinitionDuplicatorSessionStorage(
-        request=session_request,
+        request=session_request_with_workbasket,
         prefix="",
     )
 
     storage.set_step_data("quota_order_numbers", order_number_data)
     storage._set_current_step("quota_order_numbers")
     wizard = DuplicateDefinitionsWizard(
-        request=session_request,
+        request=session_request_with_workbasket,
         storage=storage,
         initial_dict={"quota_order_numbers": {}},
         instance_dict={"quota_order_numbers": None},
@@ -1963,8 +1966,9 @@ def test_definition_duplicator_creates_definition_and_association(
     wizard.form_list = OrderedDict(wizard.form_list)
 
     association_table_before = models.QuotaAssociation.objects.all()
+    # assert 0
     assert len(association_table_before) == 0
-    for definition in session_request.session["staged_definition_data"]:
+    for definition in session_request_with_workbasket.session["staged_definition_data"]:
         wizard.create_definition(definition)
 
     definition_objects = models.QuotaDefinition.objects.all()
