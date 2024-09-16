@@ -61,10 +61,10 @@
 
                 {% endif %}
             </div>
-            {% if on_ctx.quota_definition_ranges != [] %}
+            {% if on_ctx.quota_definitions != [] %}
                 <h3 class="govuk-heading-m" id="subsection-title">Quota definitions</h3>
                 {{ govukTable({
-                "head": reference_document_version_quotas_headers,
+                "head": quota_definition_headers,
                 "rows": on_ctx.quota_definition_data_rows()
                 }) }}
             {% else %}
@@ -76,7 +76,7 @@
             {% if on_ctx.quota_suspensions != [] %}
                 <h3 class="govuk-heading-m" id="subsection-title">Quota suspensions</h3>
                 {{ govukTable({
-                "head": reference_document_version_suspension_headers,
+                "head": suspension_headers,
                 "rows": on_ctx.quota_suspensions_data_rows()
                 }) }}
             {% else %}
@@ -121,7 +121,7 @@
                         {% endif %}
                     </div>
                     {{ govukTable({
-                        "head": reference_document_version_quotas_headers,
+                        "head": quota_definition_headers,
                         "rows": qdr.quota_definition_range_data_rows()
                     }) }}
                 {% endfor %}
@@ -162,7 +162,7 @@
                         {% endif %}
                     </div>
                     {{ govukTable({
-                        "head": reference_document_version_quotas_headers,
+                        "head": suspension_headers,
                         "rows": qsr.quota_suspensions_range_data_rows()
                     }) }}
 

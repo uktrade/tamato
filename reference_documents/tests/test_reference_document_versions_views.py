@@ -373,7 +373,7 @@ class TestReferenceDocumentVersionViews:
         assert page.find("td", text=f"{first_preferential_rate.commodity_code}")
         table_rows = page.select("tr")
         # Assert there is a row for each preferential rate
-        assert len(table_rows) == 24
+        assert len(table_rows) == 28
         tariff_quotas_tab = (
                 reverse(
                     "reference_documents:version-details",
