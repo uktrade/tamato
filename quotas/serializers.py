@@ -1,11 +1,17 @@
+from common.util import TaricDateRange
 from datetime import datetime
+from decimal import Decimal
 
 from rest_framework import serializers
 
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
+from common.serializers import serialize_date, deserialize_date
+from common.validators import UpdateType
 from geo_areas.serializers import GeographicalAreaSerializer
+import measures
+from measures.models.tracked_models import MeasurementUnit
 from measures.unit_serializers import MeasurementUnitQualifierSerializer
 from measures.unit_serializers import MeasurementUnitSerializer
 from measures.unit_serializers import MonetaryUnitSerializer
@@ -262,3 +268,42 @@ class QuotaEventSerializer(TrackedModelSerializerMixin):
             "subrecord_code",
             "taric_template",
         ]
+
+
+def serialize_duplicate_data(selected_definition):
+    # returns a JSON dictionary of serialized definition data
+    duplicate_data = {
+        "initial_volume": str(selected_definition.initial_volume),
+        "volume": str(selected_definition.volume),
+        "measurement_unit_code": selected_definition.measurement_unit.code,
+        "measurement_unit_abbreviation": selected_definition.measurement_unit.abbreviation,
+        "start_date": serialize_date(selected_definition.valid_between.lower),
+        "end_date": serialize_date(selected_definition.valid_between.upper),
+        "status": False,
+    }
+    return duplicate_data
+
+
+def deserialize_definition_data(self, definition):
+    start_date = deserialize_date(definition["start_date"])
+    end_date = deserialize_date(definition["end_date"])
+    initial_volume = Decimal(definition["initial_volume"])
+    vol = Decimal(definition["volume"])
+    measurement_unit = MeasurementUnit.objects.get(
+        code=definition["measurement_unit_code"]
+    )
+    sub_order_number = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)[
+        "sub_quota_order_number"
+    ]
+    valid_between = TaricDateRange(start_date, end_date)
+    staged_data = {
+        "volume": initial_volume,
+        "initial_volume": vol,
+        "measurement_unit": measurement_unit,
+        "order_number": sub_order_number,
+        "valid_between": valid_between,
+        "update_type": UpdateType.CREATE,
+        "maximum_precision": 3,
+        "quota_critical_threshold": 90,
+    }
+    return staged_data
