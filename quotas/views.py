@@ -13,6 +13,7 @@ from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.views.generic import FormView
 from django.views.generic import TemplateView
+from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import permissions
@@ -260,7 +261,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
             quota_data=self.quota_data,
             blocking_periods=self.blocking_periods,
             suspension_periods=self.suspension_periods,
-            associations=self.associations,
+            sub_quotas=self.sub_quotas,
             *args,
             **kwargs,
         )
@@ -720,6 +721,7 @@ class QuotaDefinitionConfirmDelete(
     template_name = "quota-definitions/confirm-delete.jinja"
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class DuplicateDefinitionsWizard(
     PermissionRequiredMixin,
     NamedUrlSessionWizardView,
@@ -774,6 +776,10 @@ class DuplicateDefinitionsWizard(
         },
         COMPLETE: {"title": "Finished", "link_text": "Success"},
     }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
@@ -882,29 +888,24 @@ class DuplicateDefinitionsWizard(
             self,
             definition["sub_definition_staged_data"],
         )
+        transaction = self.workbasket.new_transaction()
         instance = models.QuotaDefinition.objects.create(
             **staged_data,
-            transaction=WorkBasket.get_current_transaction(self.request),
+            transaction=transaction,
         )
-        association_data = {
-            "main_quota": models.QuotaDefinition.objects.get(
+        models.QuotaAssociation.objects.create(
+            main_quota=models.QuotaDefinition.objects.get(
                 pk=definition["main_definition"],
             ),
-            "sub_quota": instance,
-            "coefficient": Decimal(
+            sub_quota=instance,
+            coefficient=Decimal(
                 definition["sub_definition_staged_data"]["coefficient"],
             ),
-            "sub_quota_relation_type": definition["sub_definition_staged_data"][
+            sub_quota_relation_type=definition["sub_definition_staged_data"][
                 "relationship_type"
             ],
-            "update_type": UpdateType.CREATE,
-        }
-        self.create_definition_association(association_data)
-
-    def create_definition_association(self, association_data):
-        models.QuotaAssociation.objects.create(
-            **association_data,
-            transaction=WorkBasket.get_current_transaction(self.request),
+            update_type=UpdateType.CREATE,
+            transaction=transaction,
         )
 
 
