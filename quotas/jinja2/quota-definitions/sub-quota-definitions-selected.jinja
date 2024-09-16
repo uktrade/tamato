@@ -19,7 +19,7 @@
       {{ table_rows.append([
         {"text": main_definition.sid},
         {"text": "{:%d %b %Y}".format(main_definition.valid_between.lower) },
-        {"text": "{:%d %b %Y}".format(main_definition.valid_between.upper) },
+        {"text": "{:%d %b %Y}".format(main_definition.valid_between.upper) if main_definition.valid_between.upper else "-" },
         {"text": intcomma(main_definition.volume) },
         {"text": main_definition.measurement_unit.abbreviation },
         {"text": "-" },
