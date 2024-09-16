@@ -509,10 +509,15 @@
 
 
 <div class="viewcode-block" id="check_QA2_dict"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.check_QA2_dict">[docs]</a><span class="k">def</span> <span class="nf">check_QA2_dict</span><span class="p">(</span><span class="n">sub_definition_valid_between</span><span class="p">,</span> <span class="n">main_definition_valid_between</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;confirms data is compliant with QA2&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="n">sub_definition_valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;=</span> <span class="n">main_definition_valid_between</span><span class="o">.</span><span class="n">lower</span>
-    <span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">sub_definition_valid_between</span><span class="o">.</span><span class="n">upper</span> <span class="o">&lt;=</span> <span class="n">main_definition_valid_between</span><span class="o">.</span><span class="n">upper</span><span class="p">)</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Confirms data is compliant with QA2.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">main_definition_valid_between</span><span class="o">.</span><span class="n">upper</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">sub_definition_valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;=</span> <span class="n">main_definition_valid_between</span><span class="o">.</span><span class="n">lower</span>
+        <span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">sub_definition_valid_between</span><span class="o">.</span><span class="n">upper</span> <span class="o">&lt;=</span> <span class="n">main_definition_valid_between</span><span class="o">.</span><span class="n">upper</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sub_definition_valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;=</span> <span class="n">main_definition_valid_between</span><span class="o">.</span><span class="n">lower</span></div>
 
 
 <div class="viewcode-block" id="QA3"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.QA3">[docs]</a><span class="k">class</span> <span class="nc">QA3</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
@@ -550,10 +555,8 @@
     <span class="n">sub_initial_volume</span><span class="p">,</span>
     <span class="n">main_initial_volume</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Confirms data is compliant with QA3</span>
-<span class="sd">    See note above about changing the unit types.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Confirms data is compliant with QA3 See note above about changing the</span>
+<span class="sd">    unit types.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">main_definition_unit</span> <span class="o">==</span> <span class="n">sub_definition_unit</span>
         <span class="ow">and</span> <span class="n">sub_definition_volume</span> <span class="o">&lt;=</span> <span class="n">main_definition_volume</span>
@@ -628,7 +631,7 @@
         <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
         <span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
         <span class="o">.</span><span class="n">count</span><span class="p">()</span>
-        <span class="o">==</span> <span class="mi">1</span>
+        <span class="o">&lt;=</span> <span class="mi">1</span>
     <span class="p">)</span>
 
 
@@ -652,9 +655,11 @@
 <div class="viewcode-block" id="check_QA6_dict"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.check_QA6_dict">[docs]</a><span class="k">def</span> <span class="nf">check_QA6_dict</span><span class="p">(</span><span class="n">main_quota</span><span class="p">,</span> <span class="n">new_relation_type</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Confirms the provided data is compliant with the above businsess rule.</span>
-<span class="sd">    The above test will be re-run so as to separate historic violations, which will require TAP to fix, from a user trying to introduce a new violation.</span>
-<span class="sd">    Because the business rule should have been checked and there should only be one type,</span>
-<span class="sd">    we can check the new type against any one of the old type</span>
+
+<span class="sd">    The above test will be re-run so as to separate historic violations, which</span>
+<span class="sd">    will require TAP to fix, from a user trying to introduce a new violation.</span>
+<span class="sd">    Because the business rule should have been checked and there should only be</span>
+<span class="sd">    one type, we can check the new type against any one of the old type</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">relation_type</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">main_quota</span><span class="o">.</span><span class="n">sub_quota_associations</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
