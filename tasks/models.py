@@ -55,6 +55,7 @@ class TaskCategory(models.Model):
     )
 
     class Meta:
+        ordering = ["name"]
         verbose_name_plural = "task categories"
 
     def __str__(self):
@@ -74,7 +75,7 @@ class TaskProgressState(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return self.get_name_display()
 
 
 class TaskAssigneeQueryset(models.QuerySet):
