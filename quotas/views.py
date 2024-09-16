@@ -1097,8 +1097,9 @@ class SubQuotaDefinitionAssociationMixin:
         # Getting main quota from the sub quota - assuming that a subquota can't be a subquota of multiple different main quotas
         return (
             models.QuotaAssociation.objects.all()
-            .filter(sub_quota_id=self.sub_quota)
+            .filter(sub_quota__sid=self.sub_quota.sid)
             .last()
+            .latest_version_up_to_workbasket(self.workbasket)
         )
 
     def get_main_definition(self):
@@ -1197,9 +1198,9 @@ class SubQuotaConfirmUpdate(TrackedModelDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         association = (
-            QuotaAssociation.objects.all()
-            .latest_approved()
-            .get(sub_quota__sid=self.object.sid)
+            (QuotaAssociation.objects.all().filter(sub_quota__sid=self.object.sid))
+            .last()
+            .latest_version_up_to_workbasket(self.workbasket)
         )
         context["association"] = association
         return context
