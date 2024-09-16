@@ -1,6 +1,7 @@
 import pytest
 
-from reference_documents.models import RefOrderNumber, ReferenceDocumentVersionStatus
+from reference_documents.models import ReferenceDocumentVersionStatus
+from reference_documents.models import RefOrderNumber
 from reference_documents.tests import factories
 from reference_documents.tests.factories import RefOrderNumberFactory
 
@@ -33,7 +34,7 @@ class TestPreferentialQuotaOrderNumber:
         rdv.in_review()
         rdv.save(force_save=True)
 
-        target.order_number = '123123'
+        target.order_number = "123123"
         target.save()
 
         target.refresh_from_db()
@@ -43,7 +44,7 @@ class TestPreferentialQuotaOrderNumber:
         rdv.published()
         rdv.save(force_save=True)
 
-        target.order_number = '123123'
+        target.order_number = "123123"
         target.save()
 
         target.refresh_from_db()
@@ -51,4 +52,3 @@ class TestPreferentialQuotaOrderNumber:
         assert rdv.status == ReferenceDocumentVersionStatus.PUBLISHED
         assert not rdv.editable()
         assert target.order_number == target_original_order_number
-

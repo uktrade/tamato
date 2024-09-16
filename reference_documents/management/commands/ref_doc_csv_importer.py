@@ -5,12 +5,12 @@ import pandas as pd
 from django.core.management import BaseCommand
 
 from common.util import TaricDateRange
-from reference_documents.models import RefQuotaDefinition
-from reference_documents.models import RefOrderNumber
-from reference_documents.models import RefRate
 from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
 from reference_documents.models import ReferenceDocumentVersionStatus
+from reference_documents.models import RefOrderNumber
+from reference_documents.models import RefQuotaDefinition
+from reference_documents.models import RefRate
 
 
 class Command(BaseCommand):
@@ -67,10 +67,10 @@ class Command(BaseCommand):
         return df
 
     def add_pt_quota_if_no_exists(
-            self,
-            df_row,
-            order_number,
-            reference_document_version,
+        self,
+        df_row,
+        order_number,
+        reference_document_version,
     ):
         if len(order_number) != 6:
             print(f"skipping wonky order number : -{order_number}-")
@@ -93,7 +93,7 @@ class Command(BaseCommand):
             order_number_valid_between = None
 
         # add a new one
-        order_number_record, created =RefOrderNumber.objects.get_or_create(
+        order_number_record, created = RefOrderNumber.objects.get_or_create(
             order_number=order_number,
             reference_document_version_id=reference_document_version.id,
             valid_between=order_number_valid_between,
@@ -156,10 +156,10 @@ class Command(BaseCommand):
 
             for version in versions:
                 if (
-                        self.duties_df[self.duties_df["area_id"] == area][
-                            "Document Date"
-                        ].values[0]
-                        == "empty_cell"
+                    self.duties_df[self.duties_df["area_id"] == area][
+                        "Document Date"
+                    ].values[0]
+                    == "empty_cell"
                 ):
                     document_publish_date = None
                 else:
@@ -202,9 +202,8 @@ class Command(BaseCommand):
                 quotas_df = self.quotas_df[self.quotas_df["area_id"] == area]
                 quotas_df = self.quotas_df[
                     self.quotas_df["Document Version"] == version
-                    ]
+                ]
 
-                add_to_index = 1
                 for index, row in quotas_df.iterrows():
                     # split order numbers
                     order_number = row["Quota Number"]

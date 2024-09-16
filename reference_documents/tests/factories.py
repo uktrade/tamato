@@ -9,7 +9,9 @@ from factory.fuzzy import FuzzyDecimal
 from factory.fuzzy import FuzzyText
 
 from common.util import TaricDateRange
-from reference_documents.models import ReferenceDocumentVersionStatus, AlignmentReportStatus, AlignmentReportCheckStatus
+from reference_documents.models import AlignmentReportCheckStatus
+from reference_documents.models import AlignmentReportStatus
+from reference_documents.models import ReferenceDocumentVersionStatus
 
 
 def get_random_date(start_date, end_date):
@@ -149,7 +151,7 @@ class RefQuotaDefinitionRangeFactory(factory.django.DjangoModelFactory):
 
     initial_volume = FuzzyDecimal(100.0, 10000.0, 1)
     yearly_volume_increment = FuzzyDecimal(10.0, 30.0, 1)
-    yearly_volume_increment_text = ''
+    yearly_volume_increment_text = ""
     measurement = "Tonne"
 
 
@@ -284,7 +286,5 @@ class AlignmentReportCheckFactory(factory.django.DjangoModelFactory):
     )
     check_name = FuzzyText(length=5)
     status = AlignmentReportCheckStatus.PASS
-    message = FuzzyText(length=10, )
+    message = FuzzyText(length=10)
     ref_rate = None
-
-

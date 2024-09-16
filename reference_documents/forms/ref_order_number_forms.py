@@ -12,7 +12,8 @@ from django.core.exceptions import ValidationError
 from common.forms import ValidityPeriodForm
 from quotas import validators
 from quotas.validators import quota_order_number_validator
-from reference_documents.models import RefOrderNumber, RefQuotaDefinition
+from reference_documents.models import RefOrderNumber
+from reference_documents.models import RefQuotaDefinition
 
 
 class RefOrderNumberCreateUpdateForm(
@@ -24,7 +25,7 @@ class RefOrderNumberCreateUpdateForm(
         fields = [
             "order_number",
             "coefficient",
-            'relation_type',
+            "relation_type",
             "main_order_number",
             "valid_between",
         ]
@@ -37,7 +38,7 @@ class RefOrderNumberCreateUpdateForm(
 
         # Add a blank default
         self.fields["relation_type"].choices = validators.SubQuotaType.choices
-        self.fields["relation_type"].choices.insert(0, ('', '----'))
+        self.fields["relation_type"].choices.insert(0, ("", "----"))
 
         self.reference_document_version = reference_document_version
         self.helper = FormHelper(self)
@@ -48,7 +49,7 @@ class RefOrderNumberCreateUpdateForm(
                 "order_number",
             ),
             "coefficient",
-            'relation_type',
+            "relation_type",
             "main_order_number",
             "start_date",
             "end_date",
@@ -78,7 +79,7 @@ class RefOrderNumberCreateUpdateForm(
         data = self.cleaned_data["order_number"]
         if self.instance._state.adding:
             if self.reference_document_version.ref_order_numbers.filter(
-                    order_number=data,
+                order_number=data,
             ).exists():
                 raise ValidationError("Order number already exists")
 
@@ -111,7 +112,7 @@ class RefOrderNumberCreateUpdateForm(
 
             elif relation_type:
                 raise ValidationError(
-                     "You can only specify relation type if a main quota is selected",
+                    "You can only specify relation type if a main quota is selected",
                 )
 
     order_number = forms.CharField(

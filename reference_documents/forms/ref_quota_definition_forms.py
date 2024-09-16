@@ -17,8 +17,8 @@ from common.forms import DateInputFieldTakesParameters
 from common.forms import GovukDateRangeField
 from common.forms import ValidityPeriodForm
 from common.util import TaricDateRange
-from reference_documents.models import RefQuotaDefinition
 from reference_documents.models import RefOrderNumber
+from reference_documents.models import RefQuotaDefinition
 from reference_documents.validators import commodity_code_validator
 
 
@@ -38,11 +38,11 @@ class RefQuotaDefinitionCreateUpdateForm(
         ]
 
     def __init__(
-            self,
-            reference_document_version,
-            ref_order_number,
-            *args,
-            **kwargs,
+        self,
+        reference_document_version,
+        ref_order_number,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.fields["end_date"].help_text = ""
@@ -53,7 +53,9 @@ class RefQuotaDefinitionCreateUpdateForm(
         if ref_order_number:
             self.initial["ref_order_number"] = ref_order_number
 
-        self.fields["ref_order_number"].queryset = reference_document_version.ref_order_numbers.all()
+        self.fields["ref_order_number"].queryset = (
+            reference_document_version.ref_order_numbers.all()
+        )
 
         self.reference_document_version = reference_document_version
         self.ref_order_number = ref_order_number
@@ -218,19 +220,17 @@ class RefQuotaDefinitionBulkCreateForm(forms.Form):
         return result
 
     def __init__(
-            self,
-            reference_document_version,
-            ref_order_number=None,
-            *args,
-            **kwargs,
+        self,
+        reference_document_version,
+        ref_order_number=None,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.variant_indices = self.get_variant_index(kwargs)
         # Populate order number box if already specified by the URL
         if ref_order_number:
-            self.initial["ref_order_number"] = (
-                ref_order_number
-            )
+            self.initial["ref_order_number"] = ref_order_number
         # Add fields for the first mandatory date and volume fieldset
         self.fields["start_date_0"] = DateInputFieldFixed(
             label="Start date",
@@ -381,11 +381,11 @@ class RefQuotaDefinitionBulkCreateForm(forms.Form):
             )
 
     def custom_clean_validity_period(
-            self,
-            cleaned_data,
-            valid_between_field_name,
-            start_date_field_name,
-            end_date_field_name,
+        self,
+        cleaned_data,
+        valid_between_field_name,
+        start_date_field_name,
+        end_date_field_name,
     ):
         start_date = cleaned_data.pop(start_date_field_name, None)
         end_date = cleaned_data.pop(end_date_field_name, None)

@@ -18,6 +18,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.reference_document_version_id = options["reference_document_version_id"]
-        self.reference_document_version = ReferenceDocumentVersion.objects.get(id=self.reference_document_version_id)
+        self.reference_document_version = ReferenceDocumentVersion.objects.get(
+            id=self.reference_document_version_id,
+        )
 
         Checks.run(self.reference_document_version)

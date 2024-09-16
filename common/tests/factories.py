@@ -486,6 +486,7 @@ class GeographicalAreaFactory(TrackedModelMixin, ValidityFactoryMixin):
         validity_start=factory.SelfAttribute("..valid_between.lower"),
     )
 
+
 class CountryFactory(GeographicalAreaFactory):
     area_code = 0
 

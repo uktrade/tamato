@@ -3,9 +3,7 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
 from django.urls import reverse
 
-from reference_documents.forms.ref_rate_forms import (
-    RefRateCreateUpdateForm,
-)
+from reference_documents.forms.ref_rate_forms import RefRateCreateUpdateForm
 from reference_documents.models import RefRate
 from reference_documents.tests import factories
 from reference_documents.views.rate_views import RefRateCreate

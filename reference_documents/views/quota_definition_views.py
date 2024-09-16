@@ -8,12 +8,15 @@ from django.views.generic.edit import DeleteView
 
 from reference_documents.forms.ref_quota_definition_forms import (
     RefQuotaDefinitionBulkCreateForm,
-    RefQuotaDefinitionCreateUpdateForm,
-    RefQuotaDefinitionDeleteForm
 )
-
-from reference_documents.models import RefQuotaDefinition
+from reference_documents.forms.ref_quota_definition_forms import (
+    RefQuotaDefinitionCreateUpdateForm,
+)
+from reference_documents.forms.ref_quota_definition_forms import (
+    RefQuotaDefinitionDeleteForm,
+)
 from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import RefQuotaDefinition
 
 
 class RefQuotaDefinitionEdit(PermissionRequiredMixin, UpdateView):
@@ -24,13 +27,13 @@ class RefQuotaDefinitionEdit(PermissionRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return (
-                reverse(
-                    "reference_documents:version-details",
-                    args=[
-                        self.get_object().ref_order_number.reference_document_version.pk,
-                    ],
-                )
-                + "#tariff-quotas"
+            reverse(
+                "reference_documents:version-details",
+                args=[
+                    self.get_object().ref_order_number.reference_document_version.pk,
+                ],
+            )
+            + "#tariff-quotas"
         )
 
     def get_form_kwargs(self):
@@ -57,7 +60,9 @@ class RefQuotaDefinitionCreate(PermissionRequiredMixin, CreateView):
         )
 
         if "order_pk" in self.kwargs.keys():
-            kwargs["ref_order_number"] = kwargs["reference_document_version"].ref_order_numbers.get(
+            kwargs["ref_order_number"] = kwargs[
+                "reference_document_version"
+            ].ref_order_numbers.get(
                 id=self.kwargs["order_pk"],
             )
         else:
@@ -79,13 +84,13 @@ class RefQuotaDefinitionCreate(PermissionRequiredMixin, CreateView):
 
     def get_success_url(self):
         return (
-                reverse(
-                    "reference_documents:version-details",
-                    args=[
-                        self.object.ref_order_number.reference_document_version.pk,
-                    ],
-                )
-                + "#tariff-quotas"
+            reverse(
+                "reference_documents:version-details",
+                args=[
+                    self.object.ref_order_number.reference_document_version.pk,
+                ],
+            )
+            + "#tariff-quotas"
         )
 
 
@@ -131,19 +136,17 @@ class RefQuotaDefinitionBulkCreate(PermissionRequiredMixin, FormView):
                     volume=cleaned_data[f"volume_{index}"],
                     valid_between=cleaned_data[f"valid_between_{index}"],
                     measurement=cleaned_data["measurement"],
-                    ref_order_number=cleaned_data[
-                        "ref_order_number"
-                    ],
+                    ref_order_number=cleaned_data["ref_order_number"],
                 )
         return redirect(self.get_success_url())
 
     def get_success_url(self):
         return (
-                reverse(
-                    "reference_documents:version-details",
-                    args=[self.get_reference_document_version().pk],
-                )
-                + "#tariff-quotas"
+            reverse(
+                "reference_documents:version-details",
+                args=[self.get_reference_document_version().pk],
+            )
+            + "#tariff-quotas"
         )
 
 

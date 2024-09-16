@@ -3,14 +3,14 @@ from reference_documents.models import AlignmentReportCheckStatus
 
 
 class RateChecks(BaseRateCheck):
-    """
-    Class defining the check process for a reference document rate (RefRate)
-    """
-    name = 'Rate checks'
+    """Class defining the check process for a reference document rate
+    (RefRate)"""
+
+    name = "Rate checks"
 
     def run_check(self):
         """
-        Runs rate checks between a reference document defined rate and TAP data
+        Runs rate checks between a reference document defined rate and TAP data.
 
         Returns:
             AlignmentReportCheckStatus: status based on the result of the check (pass, warning, fail, skip)
@@ -55,4 +55,3 @@ class RateChecks(BaseRateCheck):
             message = f"{self.tap_comm_code()} : multiple measures match"
             print("WARNING", message)
             return AlignmentReportCheckStatus.WARNING, message
-

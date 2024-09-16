@@ -3,11 +3,11 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
 from django.urls import reverse
 
-from reference_documents.models import ReferenceDocument, ReferenceDocumentVersionStatus
+from reference_documents.models import ReferenceDocument
+from reference_documents.models import ReferenceDocumentVersionStatus
 from reference_documents.tests import factories
-from reference_documents.tests.factories import ReferenceDocumentFactory, ReferenceDocumentVersionFactory
-from reference_documents.views.reference_document_version_views import ReferenceDocumentVersionContext
-from reference_documents.views.reference_document_views import ReferenceDocumentDetails
+from reference_documents.tests.factories import ReferenceDocumentFactory
+from reference_documents.tests.factories import ReferenceDocumentVersionFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -17,10 +17,22 @@ class TestReferenceDocumentDetails:
 
     def test_get_with_valid_user(self, superuser_client):
         # seed database
-        reference_document=ReferenceDocumentFactory()
-        ReferenceDocumentVersionFactory(reference_document=reference_document, status=ReferenceDocumentVersionStatus.EDITING, version=2.0)
-        ReferenceDocumentVersionFactory(reference_document=reference_document, status=ReferenceDocumentVersionStatus.IN_REVIEW, version=1.5)
-        ReferenceDocumentVersionFactory(reference_document=reference_document, status=ReferenceDocumentVersionStatus.PUBLISHED, version=1.0)
+        reference_document = ReferenceDocumentFactory()
+        ReferenceDocumentVersionFactory(
+            reference_document=reference_document,
+            status=ReferenceDocumentVersionStatus.EDITING,
+            version=2.0,
+        )
+        ReferenceDocumentVersionFactory(
+            reference_document=reference_document,
+            status=ReferenceDocumentVersionStatus.IN_REVIEW,
+            version=1.5,
+        )
+        ReferenceDocumentVersionFactory(
+            reference_document=reference_document,
+            status=ReferenceDocumentVersionStatus.PUBLISHED,
+            version=1.0,
+        )
 
         resp = superuser_client.get(
             reverse(
@@ -32,8 +44,7 @@ class TestReferenceDocumentDetails:
         )
 
         assert resp.status_code == 200
-        assert len(resp.context_data['reference_document_versions']) == 3
-
+        assert len(resp.context_data["reference_document_versions"]) == 3
 
     def test_details(self, superuser_client):
         """Test that the reference document detail view shows a row for each
@@ -239,5 +250,3 @@ def test_ref_doc_list_view(superuser_client):
     andorra_row = page.select("tr")[1]
     latest_version_cell = andorra_row.select("td")[0]
     assert str(ref_doc_version.version) in latest_version_cell
-
-

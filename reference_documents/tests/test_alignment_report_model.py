@@ -1,9 +1,11 @@
 import django_fsm
 import pytest
 
-from reference_documents.models import RefOrderNumber, ReferenceDocumentVersionStatus, AlignmentReport, AlignmentReportStatus, AlignmentReportCheckStatus
+from reference_documents.models import AlignmentReport
+from reference_documents.models import AlignmentReportCheckStatus
+from reference_documents.models import AlignmentReportStatus
 from reference_documents.tests import factories
-from reference_documents.tests.factories import RefOrderNumberFactory, AlignmentReportCheckFactory
+from reference_documents.tests.factories import AlignmentReportCheckFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -25,7 +27,9 @@ class TestAlignmentReport:
         # not allowed
         with pytest.raises(django_fsm.TransitionNotAllowed) as e:
             target.complete()
-            assert "Can't switch from state 'PENDING' using method 'complete'" in e.value
+            assert (
+                "Can't switch from state 'PENDING' using method 'complete'" in e.value
+            )
 
         # not allowed
         with pytest.raises(django_fsm.TransitionNotAllowed) as e:
@@ -43,12 +47,17 @@ class TestAlignmentReport:
         # not allowed
         with pytest.raises(django_fsm.TransitionNotAllowed) as e:
             target.in_processing()
-            assert "Can't switch from state 'ERRORED' using method 'in_processing'" in e.value
+            assert (
+                "Can't switch from state 'ERRORED' using method 'in_processing'"
+                in e.value
+            )
 
         # not allowed
         with pytest.raises(django_fsm.TransitionNotAllowed) as e:
             target.complete()
-            assert "Can't switch from state 'ERRORED' using method 'complete'" in e.value
+            assert (
+                "Can't switch from state 'ERRORED' using method 'complete'" in e.value
+            )
 
     def test_state_transition_from_complete(self):
         target = AlignmentReport(status=AlignmentReportStatus.COMPLETE)
@@ -57,12 +66,17 @@ class TestAlignmentReport:
         # not allowed
         with pytest.raises(django_fsm.TransitionNotAllowed) as e:
             target.in_processing()
-            assert "Can't switch from state 'COMPLETE' using method 'in_processing'" in e.value
+            assert (
+                "Can't switch from state 'COMPLETE' using method 'in_processing'"
+                in e.value
+            )
 
         # not allowed
         with pytest.raises(django_fsm.TransitionNotAllowed) as e:
             target.errored()
-            assert "Can't switch from state 'COMPLETE' using method 'errored'" in e.value
+            assert (
+                "Can't switch from state 'COMPLETE' using method 'errored'" in e.value
+            )
 
     def test_state_transition_from_processing(self):
         # allowed
@@ -81,10 +95,14 @@ class TestAlignmentReport:
 
     def test_unique_check_names_populated(self):
         target = factories.AlignmentReportFactory()
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.PASS)
-        AlignmentReportCheckFactory(check_name='test2', alignment_report=target)
-        AlignmentReportCheckFactory(check_name='test3', alignment_report=target)
-        assert list(target.unique_check_names()) == ['test1', 'test2', 'test3']
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.PASS,
+        )
+        AlignmentReportCheckFactory(check_name="test2", alignment_report=target)
+        AlignmentReportCheckFactory(check_name="test3", alignment_report=target)
+        assert list(target.unique_check_names()) == ["test1", "test2", "test3"]
 
     def test_check_stats_default(self):
         target = factories.AlignmentReportFactory()
@@ -92,40 +110,85 @@ class TestAlignmentReport:
 
     def test_check_stats_populated(self):
         target = factories.AlignmentReportFactory()
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.PASS)
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.FAIL)
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.WARNING)
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.SKIPPED)
-        AlignmentReportCheckFactory(check_name='test2', alignment_report=target)
-        AlignmentReportCheckFactory(check_name='test3', alignment_report=target)
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.PASS,
+        )
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.FAIL,
+        )
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.WARNING,
+        )
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.SKIPPED,
+        )
+        AlignmentReportCheckFactory(check_name="test2", alignment_report=target)
+        AlignmentReportCheckFactory(check_name="test3", alignment_report=target)
         stats = target.check_stats()
-        assert stats['test1']['total'] == 4
-        assert stats['test1']['failed'] == 1
-        assert stats['test1']['passed'] == 1
-        assert stats['test1']['warning'] == 1
-        assert stats['test1']['skipped'] == 1
-        assert stats['test2']['total'] == 1
-        assert stats['test3']['total'] == 1
+        assert stats["test1"]["total"] == 4
+        assert stats["test1"]["failed"] == 1
+        assert stats["test1"]["passed"] == 1
+        assert stats["test1"]["warning"] == 1
+        assert stats["test1"]["skipped"] == 1
+        assert stats["test2"]["total"] == 1
+        assert stats["test3"]["total"] == 1
 
     def test_error_count(self):
         target = factories.AlignmentReportFactory()
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.PASS)
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.FAIL)
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.WARNING)
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.SKIPPED)
-        AlignmentReportCheckFactory(check_name='test2', alignment_report=target)
-        AlignmentReportCheckFactory(check_name='test3', alignment_report=target)
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.PASS,
+        )
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.FAIL,
+        )
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.WARNING,
+        )
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.SKIPPED,
+        )
+        AlignmentReportCheckFactory(check_name="test2", alignment_report=target)
+        AlignmentReportCheckFactory(check_name="test3", alignment_report=target)
         assert target.error_count() == 1
 
     def test_warning_count(self):
         target = factories.AlignmentReportFactory()
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.PASS)
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.FAIL)
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.WARNING)
-        AlignmentReportCheckFactory(check_name='test1', alignment_report=target, status=AlignmentReportCheckStatus.SKIPPED)
-        AlignmentReportCheckFactory(check_name='test2', alignment_report=target)
-        AlignmentReportCheckFactory(check_name='test3', alignment_report=target)
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.PASS,
+        )
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.FAIL,
+        )
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.WARNING,
+        )
+        AlignmentReportCheckFactory(
+            check_name="test1",
+            alignment_report=target,
+            status=AlignmentReportCheckStatus.SKIPPED,
+        )
+        AlignmentReportCheckFactory(check_name="test2", alignment_report=target)
+        AlignmentReportCheckFactory(check_name="test3", alignment_report=target)
         assert target.warning_count() == 1
-
-
-

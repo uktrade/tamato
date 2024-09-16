@@ -4,9 +4,15 @@ from django.urls import reverse
 from django.views.generic import CreateView
 from django.views.generic import UpdateView
 from django.views.generic.edit import DeleteView
-from reference_documents.forms.ref_quota_definition_range_forms import RefQuotaDefinitionRangeCreateUpdateForm, RefQuotaDefinitionRangeDeleteForm
-from reference_documents.models import RefQuotaDefinitionRange
+
+from reference_documents.forms.ref_quota_definition_range_forms import (
+    RefQuotaDefinitionRangeCreateUpdateForm,
+)
+from reference_documents.forms.ref_quota_definition_range_forms import (
+    RefQuotaDefinitionRangeDeleteForm,
+)
 from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import RefQuotaDefinitionRange
 
 
 class RefQuotaDefinitionRangeEdit(PermissionRequiredMixin, UpdateView):

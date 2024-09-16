@@ -10,7 +10,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from common.util import TaricDateRange
-from reference_documents.models import RefQuotaDefinitionRange, RefQuotaSuspensionRange
+from reference_documents.models import RefQuotaDefinitionRange
+from reference_documents.models import RefQuotaSuspensionRange
 
 
 class RefQuotaSuspensionRangeCreateUpdateForm(
@@ -29,28 +30,32 @@ class RefQuotaSuspensionRangeCreateUpdateForm(
         ]
 
     def __init__(
-            self,
-            reference_document_version,
-            ref_order_number,
-            ref_quota_definition_range,
-            *args,
-            **kwargs,
+        self,
+        reference_document_version,
+        ref_order_number,
+        ref_quota_definition_range,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.fields["start_day"].help_text = "The first day of each yearly suspension"
-        self.fields["start_month"].help_text = "The first month for each yearly suspension"
+        self.fields["start_month"].help_text = (
+            "The first month for each yearly suspension"
+        )
         self.fields["end_day"].help_text = "The last day of each yearly suspension"
         self.fields["end_month"].help_text = "The last day of each yearly suspension"
         self.fields["start_year"].help_text = "The first year of the suspension"
-        self.fields["end_year"].help_text = "The last year if the suspension, leave blank if there is no end date."
+        self.fields["end_year"].help_text = (
+            "The last year if the suspension, leave blank if there is no end date."
+        )
         self.fields["ref_quota_definition_range"].help_text = (
             "The quota template this suspension relates to"
         )
 
-        self.fields["ref_quota_definition_range"].queryset = (
-            RefQuotaDefinitionRange.objects.all().filter(
-                ref_order_number__reference_document_version=reference_document_version
-            )
+        self.fields[
+            "ref_quota_definition_range"
+        ].queryset = RefQuotaDefinitionRange.objects.all().filter(
+            ref_order_number__reference_document_version=reference_document_version,
         )
 
         self.reference_document_version = reference_document_version
@@ -204,8 +209,13 @@ class RefQuotaSuspensionRangeCreateUpdateForm(
 
         if start_year and end_year:
             if end_year < start_year:
-                error_messages.append('Invalid year range, start_year is greater than end_year')
-                self.add_error("end_year", 'Please enter an end year greater than or equal to the start year')
+                error_messages.append(
+                    "Invalid year range, start_year is greater than end_year",
+                )
+                self.add_error(
+                    "end_year",
+                    "Please enter an end year greater than or equal to the start year",
+                )
 
         if start_day and start_month and end_day and end_month:
             # validate that the start day and start month are less than the end day and end month
@@ -213,11 +223,23 @@ class RefQuotaSuspensionRangeCreateUpdateForm(
             end_day_month_value = end_day + (100 * end_month)
 
             if start_day_month_value > end_day_month_value:
-                error_messages.append('Invalid start and end day and month')
-                self.add_error("end_day", 'The calculated end date is later than start date in a calendar year')
-                self.add_error("end_month", 'The calculated end date is later than start date in a calendar year')
-                self.add_error("start_day", 'The calculated end date is later than start date in a calendar year')
-                self.add_error("start_month", 'The calculated end date is later than start date in a calendar year')
+                error_messages.append("Invalid start and end day and month")
+                self.add_error(
+                    "end_day",
+                    "The calculated end date is later than start date in a calendar year",
+                )
+                self.add_error(
+                    "end_month",
+                    "The calculated end date is later than start date in a calendar year",
+                )
+                self.add_error(
+                    "start_day",
+                    "The calculated end date is later than start date in a calendar year",
+                )
+                self.add_error(
+                    "start_month",
+                    "The calculated end date is later than start date in a calendar year",
+                )
 
             # verify that dates work for whole range
             if not end_year:
@@ -231,34 +253,51 @@ class RefQuotaSuspensionRangeCreateUpdateForm(
                 try:
                     start_date = date(year, start_month, start_day)
                 except ValueError:
-                    error_messages.append('Invalid start day and month')
-                    self.add_error("start_day", 'The calculated start date is not valid for the year range')
-                    self.add_error("start_month", 'The calculated start date is not valid for the year range')
+                    error_messages.append("Invalid start day and month")
+                    self.add_error(
+                        "start_day",
+                        "The calculated start date is not valid for the year range",
+                    )
+                    self.add_error(
+                        "start_month",
+                        "The calculated start date is not valid for the year range",
+                    )
 
                 try:
                     if end_day and end_month and end_year:
                         end_date = date(year, end_month, end_day)
                 except ValueError:
-                    error_messages.append('Invalid end day and month')
-                    self.add_error("end_day", 'The calculated end date is not valid for the year range')
-                    self.add_error("end_month", 'The calculated end date is not valid for the year range')
+                    error_messages.append("Invalid end day and month")
+                    self.add_error(
+                        "end_day",
+                        "The calculated end date is not valid for the year range",
+                    )
+                    self.add_error(
+                        "end_month",
+                        "The calculated end date is not valid for the year range",
+                    )
 
                 # check that the date exists in a date range from the quota def template
                 try:
                     contained = False
                     if start_date and end_date:
-                        quota_suspension_date_range = TaricDateRange(start_date, end_date)
+                        quota_suspension_date_range = TaricDateRange(
+                            start_date,
+                            end_date,
+                        )
                         for quota_date_range in quota_date_ranges:
                             if quota_date_range.contains(quota_suspension_date_range):
                                 contained = True
                         if not contained:
-                            error_messages.append(f'the suspension date range {quota_suspension_date_range} does not fall within any definition defined by the selected quota definition template')
+                            error_messages.append(
+                                f"the suspension date range {quota_suspension_date_range} does not fall within any definition defined by the selected quota definition template",
+                            )
 
                 except NameError:
                     pass
 
         if len(error_messages):
-            raise forms.ValidationError(' & '.join(error_messages))
+            raise forms.ValidationError(" & ".join(error_messages))
 
     ref_quota_definition_range = forms.ModelChoiceField(
         label="Quota definition range",

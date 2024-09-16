@@ -6,9 +6,11 @@ from django.views.generic import DeleteView
 from django.views.generic import UpdateView
 
 from reference_documents.forms.ref_order_number_forms import (
-    RefOrderNumberCreateUpdateForm, RefOrderNumberDeleteForm,
+    RefOrderNumberCreateUpdateForm,
 )
-from reference_documents.models import ReferenceDocumentVersion, RefOrderNumber
+from reference_documents.forms.ref_order_number_forms import RefOrderNumberDeleteForm
+from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import RefOrderNumber
 
 
 class RefOrderNumberEdit(PermissionRequiredMixin, UpdateView):

@@ -1,6 +1,7 @@
 import pytest
 
-from reference_documents.models import RefQuotaDefinition, ReferenceDocumentVersionStatus
+from reference_documents.models import ReferenceDocumentVersionStatus
+from reference_documents.models import RefQuotaDefinition
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -29,7 +30,7 @@ class TestRefQuotaDefinition:
         rdv.in_review()
         rdv.save(force_save=True)
 
-        target.volume = '999999999'
+        target.volume = "999999999"
         target.save()
 
         target.refresh_from_db()
@@ -39,7 +40,7 @@ class TestRefQuotaDefinition:
         rdv.published()
         rdv.save(force_save=True)
 
-        target.volume = '999999999'
+        target.volume = "999999999"
         target.save()
 
         target.refresh_from_db()

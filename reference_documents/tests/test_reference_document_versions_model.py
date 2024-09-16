@@ -1,8 +1,8 @@
 import pytest
 from django_fsm import TransitionNotAllowed
 
-from common.tests.factories import UserFactory
-from reference_documents.models import ReferenceDocumentVersionStatus as RDVStatus, ReferenceDocumentVersionStatus
+from reference_documents.models import ReferenceDocumentVersionStatus
+from reference_documents.models import ReferenceDocumentVersionStatus as RDVStatus
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -31,33 +31,38 @@ class TestReferenceDocumentVersion:
         assert len(target.ref_quota_definitions()) == 1
 
     def test_checkable(self):
-        target_review  = factories.ReferenceDocumentVersionFactory.create(status=RDVStatus.IN_REVIEW)
-        target_published  = factories.ReferenceDocumentVersionFactory.create(status=RDVStatus.PUBLISHED)
-        target_editing  = factories.ReferenceDocumentVersionFactory.create(status=RDVStatus.EDITING)
+        target_review = factories.ReferenceDocumentVersionFactory.create(
+            status=RDVStatus.IN_REVIEW,
+        )
+        target_published = factories.ReferenceDocumentVersionFactory.create(
+            status=RDVStatus.PUBLISHED,
+        )
+        target_editing = factories.ReferenceDocumentVersionFactory.create(
+            status=RDVStatus.EDITING,
+        )
 
         assert target_review.checkable() == False
         assert target_published.checkable()
         assert target_editing.checkable() == False
-
 
     # FSM tests
     @pytest.mark.parametrize(
         "initial_state, method, allowed, expected_status",
         [
             # valid
-            (RDVStatus.EDITING, 'in_review', True, RDVStatus.IN_REVIEW),
-            (RDVStatus.IN_REVIEW, 'published', True, RDVStatus.PUBLISHED),
-            (RDVStatus.PUBLISHED, 'editing_from_published', True, RDVStatus.EDITING),
-            (RDVStatus.IN_REVIEW, 'editing_from_in_review', True, RDVStatus.EDITING),
+            (RDVStatus.EDITING, "in_review", True, RDVStatus.IN_REVIEW),
+            (RDVStatus.IN_REVIEW, "published", True, RDVStatus.PUBLISHED),
+            (RDVStatus.PUBLISHED, "editing_from_published", True, RDVStatus.EDITING),
+            (RDVStatus.IN_REVIEW, "editing_from_in_review", True, RDVStatus.EDITING),
             # invalid
-            (RDVStatus.IN_REVIEW, 'in_review', False, RDVStatus.IN_REVIEW),
-            (RDVStatus.PUBLISHED, 'in_review', False, RDVStatus.PUBLISHED),
-            (RDVStatus.PUBLISHED, 'published', False, RDVStatus.PUBLISHED),
-            (RDVStatus.EDITING, 'published', False, RDVStatus.EDITING),
-            (RDVStatus.EDITING, 'editing_from_published', False, RDVStatus.EDITING),
-            (RDVStatus.IN_REVIEW, 'editing_from_published', False, RDVStatus.IN_REVIEW),
-            (RDVStatus.EDITING, 'editing_from_in_review', False, RDVStatus.EDITING),
-            (RDVStatus.PUBLISHED, 'editing_from_in_review', False, RDVStatus.PUBLISHED),
+            (RDVStatus.IN_REVIEW, "in_review", False, RDVStatus.IN_REVIEW),
+            (RDVStatus.PUBLISHED, "in_review", False, RDVStatus.PUBLISHED),
+            (RDVStatus.PUBLISHED, "published", False, RDVStatus.PUBLISHED),
+            (RDVStatus.EDITING, "published", False, RDVStatus.EDITING),
+            (RDVStatus.EDITING, "editing_from_published", False, RDVStatus.EDITING),
+            (RDVStatus.IN_REVIEW, "editing_from_published", False, RDVStatus.IN_REVIEW),
+            (RDVStatus.EDITING, "editing_from_in_review", False, RDVStatus.EDITING),
+            (RDVStatus.PUBLISHED, "editing_from_in_review", False, RDVStatus.PUBLISHED),
         ],
     )
     def test_transitions(self, initial_state, method, allowed, expected_status):
@@ -80,7 +85,7 @@ class TestReferenceDocumentVersion:
         target.in_review()
         target.save(force_save=True)
 
-        target.version = '33.33'
+        target.version = "33.33"
         target.save()
 
         target.refresh_from_db()
@@ -92,7 +97,7 @@ class TestReferenceDocumentVersion:
         target.published()
         target.save(force_save=True)
 
-        target.version = '33.33'
+        target.version = "33.33"
         target.save()
 
         target.refresh_from_db()
@@ -126,7 +131,9 @@ class TestReferenceDocumentVersion:
         assert target.ref_quota_count() == 0
 
         for index in range(1, 11):
-            factories.RefQuotaDefinitionFactory.create(ref_order_number__reference_document_version=target)
+            factories.RefQuotaDefinitionFactory.create(
+                ref_order_number__reference_document_version=target,
+            )
 
         assert target.ref_quota_count() == 10
 
@@ -148,7 +155,9 @@ class TestReferenceDocumentVersion:
         assert target.ref_quota_suspension_count() == 0
 
         for index in range(1, 11):
-            factories.RefQuotaSuspensionFactory.create(ref_quota_definition__ref_order_number__reference_document_version=target)
+            factories.RefQuotaSuspensionFactory.create(
+                ref_quota_definition__ref_order_number__reference_document_version=target,
+            )
 
         assert target.ref_quota_suspension_count() == 10
 

@@ -7,7 +7,9 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 
 from common.forms import DateInputFieldFixed
-from reference_documents.models import ReferenceDocumentVersion, RefRate, RefOrderNumber
+from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import RefOrderNumber
+from reference_documents.models import RefRate
 
 
 class ReferenceDocumentVersionsCreateUpdateForm(forms.ModelForm):

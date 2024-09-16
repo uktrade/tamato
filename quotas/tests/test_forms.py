@@ -12,10 +12,11 @@ from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from geo_areas.validators import AreaCode
-from quotas import models
 from quotas import forms
+from quotas import models
 from quotas import validators
-from quotas.models import QuotaBlocking, QuotaDefinition
+from quotas.models import QuotaBlocking
+from quotas.models import QuotaDefinition
 from quotas.models import QuotaSuspension
 from quotas.serializers import serialize_duplicate_data
 
@@ -432,13 +433,15 @@ def test_quota_suspension_or_blockling_create_form_save(
 
 @pytest.fixture
 def main_quota_order_number() -> models.QuotaOrderNumber:
-    """Provides a main quota order number for use across the fixtures and following tests"""
+    """Provides a main quota order number for use across the fixtures and
+    following tests."""
     return factories.QuotaOrderNumberFactory()
 
 
 @pytest.fixture
 def quota_definition_1(main_quota_order_number, date_ranges) -> QuotaDefinition:
-    """Provides a definition, linked to the main_quota_order_number to be used across the following tests"""
+    """Provides a definition, linked to the main_quota_order_number to be used
+    across the following tests."""
     return factories.QuotaDefinitionFactory.create(
         order_number=main_quota_order_number,
         valid_between=date_ranges.normal,
@@ -450,11 +453,13 @@ def quota_definition_1(main_quota_order_number, date_ranges) -> QuotaDefinition:
 
 
 def test_select_sub_quota_form_set_staged_definition_data(
-    quota_definition_1, session_request
+    quota_definition_1,
+    session_request,
 ):
     session_request.path = ""
     form = forms.SelectSubQuotaDefinitionsForm(
-        request=session_request, prefix="select_definition_periods"
+        request=session_request,
+        prefix="select_definition_periods",
     )
     quotas = models.QuotaDefinition.objects.all()
     with override_current_transaction(Transaction.objects.last()):
@@ -473,13 +478,15 @@ pass the previous rule check. More extensive testing is in test_business_rules.p
 
 
 def test_quota_duplicator_form_clean_QA2(
-    date_ranges, session_request, quota_definition_1
+    date_ranges,
+    session_request,
+    quota_definition_1,
 ):
     staged_definition_data = [
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
     session_request.session["staged_definition_data"] = staged_definition_data
 
@@ -510,7 +517,7 @@ def test_quota_duplicator_form_clean_QA3(session_request, quota_definition_1):
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
 
     data = {
@@ -544,7 +551,7 @@ def test_quota_duplicator_form_clean_QA4(session_request, quota_definition_1):
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
 
     data = {
@@ -579,7 +586,7 @@ def test_quota_duplicator_form_clean_QA5_nm(session_request, quota_definition_1)
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
 
     data = {
@@ -615,7 +622,7 @@ def test_quota_duplicator_form_clean_QA5_eq(session_request, quota_definition_1)
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
 
     data = {

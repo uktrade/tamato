@@ -9,7 +9,8 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 
-from reference_documents.models import RefQuotaDefinitionRange, RefOrderNumber
+from reference_documents.models import RefOrderNumber
+from reference_documents.models import RefQuotaDefinitionRange
 from reference_documents.validators import commodity_code_validator
 
 
@@ -35,30 +36,36 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
         ]
 
     def __init__(
-            self,
-            reference_document_version,
-            ref_order_number,
-            *args,
-            **kwargs,
+        self,
+        reference_document_version,
+        ref_order_number,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.fields["initial_volume"].help_text = "The initial volume value for the first quota"
-        self.fields["yearly_volume_increment"].help_text = "The amount to increase the volume by for subsequent years"
-        self.fields["yearly_volume_increment"].help_text = "Text describing the the incrementation if a simple value is not possible"
+        self.fields["initial_volume"].help_text = (
+            "The initial volume value for the first quota"
+        )
+        self.fields["yearly_volume_increment"].help_text = (
+            "The amount to increase the volume by for subsequent years"
+        )
+        self.fields["yearly_volume_increment"].help_text = (
+            "Text describing the the incrementation if a simple value is not possible"
+        )
         self.fields["start_day"].help_text = "The first day of each yearly quota"
         self.fields["start_month"].help_text = "The first month for each yearly quota"
         self.fields["end_day"].help_text = "The last day of each yearly quota"
         self.fields["end_month"].help_text = "The last day of each yearly quota"
         self.fields["start_year"].help_text = "The first year of the quota"
-        self.fields["end_year"].help_text = "The last year if the quota, leave blank if there is no end date."
+        self.fields["end_year"].help_text = (
+            "The last year if the quota, leave blank if there is no end date."
+        )
         self.fields["ref_order_number"].help_text = (
             "If the quota order number does not appear, you must first create it for this reference document version."
         )
 
         if ref_order_number:
-            self.initial["ref_order_number"] = (
-                ref_order_number
-            )
+            self.initial["ref_order_number"] = ref_order_number
 
         self.fields["ref_order_number"].queryset = (
             reference_document_version.ref_order_numbers.all()
@@ -161,7 +168,6 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
         if data < 1 or data > 31:
             raise ValidationError(error_message)
 
-
         return data
 
     def clean_end_day(self):
@@ -210,17 +216,28 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
         error_messages = []
 
         # check end year >= start year
-        if 'start_year' in self.cleaned_data.keys() and 'end_year' in self.cleaned_data.keys():
+        if (
+            "start_year" in self.cleaned_data.keys()
+            and "end_year" in self.cleaned_data.keys()
+        ):
             start_year = self.cleaned_data["start_year"]
 
             end_year = self.cleaned_data["end_year"]
 
             if end_year is not None:
                 if end_year < start_year:
-                    error_messages.append('Invalid year range, start_year is greater than end_year')
-                    self.add_error("end_year", 'Please enter an end year greater than or equal to the start year')
+                    error_messages.append(
+                        "Invalid year range, start_year is greater than end_year",
+                    )
+                    self.add_error(
+                        "end_year",
+                        "Please enter an end year greater than or equal to the start year",
+                    )
 
-        if all(i in self.cleaned_data.keys() for i in ['start_day', 'start_month', 'end_day', 'end_month']):
+        if all(
+            i in self.cleaned_data.keys()
+            for i in ["start_day", "start_month", "end_day", "end_month"]
+        ):
             start_month = self.cleaned_data["start_month"]
             start_day = self.cleaned_data["start_day"]
             end_month = self.cleaned_data["end_month"]
@@ -233,11 +250,23 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
             end_day_month_value = end_day + (100 * end_month)
 
             if start_day_month_value > end_day_month_value:
-                error_messages.append('Invalid start and end day and month')
-                self.add_error("end_day", 'The calculated end date is later than start date in a calendar year')
-                self.add_error("end_month", 'The calculated end date is later than start date in a calendar year')
-                self.add_error("start_day", 'The calculated end date is later than start date in a calendar year')
-                self.add_error("start_month", 'The calculated end date is later than start date in a calendar year')
+                error_messages.append("Invalid start and end day and month")
+                self.add_error(
+                    "end_day",
+                    "The calculated end date is later than start date in a calendar year",
+                )
+                self.add_error(
+                    "end_month",
+                    "The calculated end date is later than start date in a calendar year",
+                )
+                self.add_error(
+                    "start_day",
+                    "The calculated end date is later than start date in a calendar year",
+                )
+                self.add_error(
+                    "start_month",
+                    "The calculated end date is later than start date in a calendar year",
+                )
 
             # verify that dates work for whole range
             if not end_year:
@@ -247,19 +276,31 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
                 try:
                     date(year, start_month, start_day)
                 except ValueError:
-                    error_messages.append('Invalid start day and month')
-                    self.add_error("start_day", 'The calculated start date is not valid for the year range')
-                    self.add_error("start_month", 'The calculated start date is not valid for the year range')
+                    error_messages.append("Invalid start day and month")
+                    self.add_error(
+                        "start_day",
+                        "The calculated start date is not valid for the year range",
+                    )
+                    self.add_error(
+                        "start_month",
+                        "The calculated start date is not valid for the year range",
+                    )
 
                 try:
                     date(year, end_month, end_day)
                 except ValueError:
-                    error_messages.append('Invalid end day and month')
-                    self.add_error("end_day", 'The calculated date using the day or month is not valid for the year range')
-                    self.add_error("end_month", 'The calculated date using the day or month is not valid for the year range')
+                    error_messages.append("Invalid end day and month")
+                    self.add_error(
+                        "end_day",
+                        "The calculated date using the day or month is not valid for the year range",
+                    )
+                    self.add_error(
+                        "end_month",
+                        "The calculated date using the day or month is not valid for the year range",
+                    )
 
         if len(error_messages):
-            raise forms.ValidationError(' & '.join(error_messages))
+            raise forms.ValidationError(" & ".join(error_messages))
 
     commodity_code = forms.CharField(
         max_length=10,

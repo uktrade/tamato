@@ -278,10 +278,8 @@ class TestPreferentialQuotaBulkCreate:
         client.force_login(valid_user)
 
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        ref_order_number = (
-            factories.RefOrderNumberFactory.create(
-                reference_document_version=ref_doc_version,
-            )
+        ref_order_number = factories.RefOrderNumberFactory.create(
+            reference_document_version=ref_doc_version,
         )
         assert not ref_doc_version.ref_quota_definitions()
 
@@ -345,10 +343,8 @@ class TestPreferentialQuotaBulkCreate:
         client.force_login(valid_user)
 
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        ref_order_number = (
-            factories.RefOrderNumberFactory.create(
-                reference_document_version=ref_doc_version,
-            )
+        ref_order_number = factories.RefOrderNumberFactory.create(
+            reference_document_version=ref_doc_version,
         )
         assert not ref_doc_version.ref_quota_definitions()
 
@@ -409,10 +405,8 @@ class TestPreferentialQuotaBulkCreate:
         """Test that posting the bulk create form without relevant user
         permissions does not work."""
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        ref_order_number = (
-            factories.RefOrderNumberFactory.create(
-                reference_document_version=ref_doc_version,
-            )
+        ref_order_number = factories.RefOrderNumberFactory.create(
+            reference_document_version=ref_doc_version,
         )
         assert not ref_doc_version.ref_quota_definitions()
 
@@ -458,9 +452,7 @@ class TestPreferentialQuotaBulkCreate:
 class TestPreferentialQuotaDelete:
     def test_get_without_permissions(self, valid_user_client):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
-        ref_doc_version = (
-            pref_quota.ref_order_number.reference_document_version
-        )
+        ref_doc_version = pref_quota.ref_order_number.reference_document_version
 
         resp = valid_user_client.get(
             reverse(
@@ -475,9 +467,7 @@ class TestPreferentialQuotaDelete:
 
     def test_get_with_permissions(self, superuser_client):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
-        ref_doc_version = (
-            pref_quota.ref_order_number.reference_document_version
-        )
+        ref_doc_version = pref_quota.ref_order_number.reference_document_version
 
         resp = superuser_client.get(
             reverse(
@@ -494,9 +484,7 @@ class TestPreferentialQuotaDelete:
     def test_post_with_permission(self, superuser_client):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
         pref_quota_id = pref_quota.pk
-        ref_doc_version = (
-            pref_quota.ref_order_number.reference_document_version
-        )
+        ref_doc_version = pref_quota.ref_order_number.reference_document_version
 
         resp = superuser_client.post(
             reverse(
@@ -518,9 +506,7 @@ class TestPreferentialQuotaDelete:
     def test_post_without_permission(self, valid_user_client):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
         pref_quota_id = pref_quota.pk
-        ref_doc_version = (
-            pref_quota.ref_order_number.reference_document_version
-        )
+        ref_doc_version = pref_quota.ref_order_number.reference_document_version
 
         resp = valid_user_client.post(
             reverse(

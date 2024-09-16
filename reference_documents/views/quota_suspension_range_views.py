@@ -5,9 +5,14 @@ from django.views.generic import CreateView
 from django.views.generic import UpdateView
 from django.views.generic.edit import DeleteView
 
-from reference_documents.forms.ref_quota_suspension_range_forms import RefQuotaSuspensionRangeCreateUpdateForm, RefQuotaSuspensionRangeDeleteForm
-from reference_documents.models import RefQuotaSuspensionRange
+from reference_documents.forms.ref_quota_suspension_range_forms import (
+    RefQuotaSuspensionRangeCreateUpdateForm,
+)
+from reference_documents.forms.ref_quota_suspension_range_forms import (
+    RefQuotaSuspensionRangeDeleteForm,
+)
 from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import RefQuotaSuspensionRange
 
 
 class RefQuotaSuspensionRangeEdit(PermissionRequiredMixin, UpdateView):

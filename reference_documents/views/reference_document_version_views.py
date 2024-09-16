@@ -17,11 +17,16 @@ from reference_documents.forms.reference_document_version_forms import (
 from reference_documents.forms.reference_document_version_forms import (
     ReferenceDocumentVersionsCreateUpdateForm,
 )
-from reference_documents.models import AlignmentReportCheck, AlignmentReport, RefQuotaSuspension, RefQuotaSuspensionRange, RefQuotaDefinition, RefQuotaDefinitionRange, AlignmentReportStatus
-from reference_documents.models import RefOrderNumber
+from reference_documents.models import AlignmentReport
+from reference_documents.models import AlignmentReportStatus
 from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersion
 from reference_documents.models import ReferenceDocumentVersionStatus
+from reference_documents.models import RefOrderNumber
+from reference_documents.models import RefQuotaDefinition
+from reference_documents.models import RefQuotaDefinitionRange
+from reference_documents.models import RefQuotaSuspension
+from reference_documents.models import RefQuotaSuspensionRange
 from reference_documents.tasks import run_alignment_check
 
 
@@ -29,7 +34,9 @@ class QuotaDefinitionContext:
     def __init__(self, quota_definition: RefQuotaDefinition, user):
         self.user = user
         self.quota_definition = quota_definition
-        self.reference_document_version = quota_definition.ref_order_number.reference_document_version
+        self.reference_document_version = (
+            quota_definition.ref_order_number.reference_document_version
+        )
 
     def row(self):
 
@@ -69,7 +76,9 @@ class QuotaDefinitionRangeContext:
     def __init__(self, quota_definition_range: RefQuotaDefinitionRange, user):
         self.user = user
         self.quota_definition_range = quota_definition_range
-        self.reference_document_version = quota_definition_range.ref_order_number.reference_document_version
+        self.reference_document_version = (
+            quota_definition_range.ref_order_number.reference_document_version
+        )
         self.quota_defs = []
 
         for quota_definition in self.quota_definition_range.dynamic_quota_definitions():
@@ -84,11 +93,15 @@ class QuotaSuspensionRangeContext:
     def __init__(self, quota_suspension_range: RefQuotaSuspensionRange, user):
         self.user = user
         self.quota_suspension_range = quota_suspension_range
-        self.reference_document_version = quota_suspension_range.ref_quota_definition_range.ref_order_number.reference_document_version
+        self.reference_document_version = (
+            quota_suspension_range.ref_quota_definition_range.ref_order_number.reference_document_version
+        )
         self.quota_suspensions = []
 
         for quota_suspension in self.quota_suspension_range.dynamic_quota_suspensions():
-            self.quota_suspensions.append(QuotaSuspensionContext(quota_suspension, self.user))
+            self.quota_suspensions.append(
+                QuotaSuspensionContext(quota_suspension, self.user),
+            )
 
     def quota_suspensions_range_data_rows(self):
         for quota_suspension in self.quota_suspensions:
@@ -100,7 +113,9 @@ class QuotaSuspensionContext:
     def __init__(self, quota_suspension: RefQuotaSuspension, user):
         self.user = user
         self.quota_suspension = quota_suspension
-        self.reference_document_version = quota_suspension.ref_quota_definition.ref_order_number.reference_document_version
+        self.reference_document_version = (
+            quota_suspension.ref_quota_definition.ref_order_number.reference_document_version
+        )
 
     def row(self):
         comm_code_link = f"{self.quota_suspension.ref_quota_definition.commodity_code}"
@@ -164,43 +179,64 @@ class ReferenceDocumentVersionContext:
 
     def _populate_order_numbers(self):
 
-        for ref_doc_order_number in self.reference_document_version.ref_order_numbers.order_by(
-                "order_number",
+        for (
+            ref_doc_order_number
+        ) in self.reference_document_version.ref_order_numbers.order_by(
+            "order_number",
         ):
             tap_order_number = self.get_tap_order_number(ref_doc_order_number)
 
             self.order_numbers.append(
                 OrderNumberContext(
                     ref_doc_order_number,
-                    tap_order_number
-                )
+                    tap_order_number,
+                ),
             )
 
     def _populate_quota_definitions(self):
         for context_order_number in self.order_numbers:
-            for quota in context_order_number.order_number.ref_quota_definitions.order_by(
-                    "commodity_code"
+            for (
+                quota
+            ) in context_order_number.order_number.ref_quota_definitions.order_by(
+                "commodity_code",
             ):
-                context_order_number.quota_definitions.append(QuotaDefinitionContext(quota, self.user))
+                context_order_number.quota_definitions.append(
+                    QuotaDefinitionContext(quota, self.user),
+                )
 
     def _populate_quota_suspensions(self):
         for context_order_number in self.order_numbers:
             for context_quota_def in context_order_number.quota_definitions:
-                for suspension in context_quota_def.quota_definition.ref_quota_suspensions.all():
-                    context_order_number.quota_suspensions.append(QuotaSuspensionContext(suspension, self.user))
+                for (
+                    suspension
+                ) in context_quota_def.quota_definition.ref_quota_suspensions.all():
+                    context_order_number.quota_suspensions.append(
+                        QuotaSuspensionContext(suspension, self.user),
+                    )
 
     def _populate_quota_definition_ranges(self):
         for context_order_number in self.order_numbers:
-            for quota_definition_range in context_order_number.order_number.ref_quota_definition_ranges.all():
-                new_context = QuotaDefinitionRangeContext(quota_definition_range, self.user)
+            for (
+                quota_definition_range
+            ) in context_order_number.order_number.ref_quota_definition_ranges.all():
+                new_context = QuotaDefinitionRangeContext(
+                    quota_definition_range,
+                    self.user,
+                )
                 context_order_number.quota_definition_ranges.append(new_context)
-
 
     def _populate_quota_suspension_ranges(self):
         for context_order_number in self.order_numbers:
-            for quota_definition_range in context_order_number.order_number.ref_quota_definition_ranges.all():
-                for quota_suspension_range in quota_definition_range.ref_quota_suspension_ranges.all():
-                    new_context = QuotaSuspensionRangeContext(quota_suspension_range, self.user)
+            for (
+                quota_definition_range
+            ) in context_order_number.order_number.ref_quota_definition_ranges.all():
+                for (
+                    quota_suspension_range
+                ) in quota_definition_range.ref_quota_suspension_ranges.all():
+                    new_context = QuotaSuspensionRangeContext(
+                        quota_suspension_range,
+                        self.user,
+                    )
                     context_order_number.quota_suspension_ranges.append(new_context)
 
     def alignment_report(self):
@@ -208,11 +244,11 @@ class ReferenceDocumentVersionContext:
 
     @staticmethod
     def get_tap_order_number(
-            ref_doc_quota_order_number: RefOrderNumber,
+        ref_doc_quota_order_number: RefOrderNumber,
     ):
         if (
-                ref_doc_quota_order_number.reference_document_version.entry_into_force_date
-                is not None
+            ref_doc_quota_order_number.reference_document_version.entry_into_force_date
+            is not None
         ):
             contains_date = (
                 ref_doc_quota_order_number.reference_document_version.entry_into_force_date
@@ -234,8 +270,8 @@ class ReferenceDocumentVersionContext:
 
     @staticmethod
     def get_tap_comm_code(
-            ref_doc_version: ReferenceDocumentVersion,
-            comm_code: str,
+        ref_doc_version: ReferenceDocumentVersion,
+        comm_code: str,
     ):
         if ref_doc_version.entry_into_force_date is not None:
             contains_date = ref_doc_version.entry_into_force_date
@@ -288,10 +324,9 @@ class ReferenceDocumentVersionContext:
 
     def duties_row_data(self):
         rows = []
-        for (
-                preferential_rate
-        ) in self.reference_document_version.ref_rates.order_by(
-            "commodity_code", "valid_between"
+        for preferential_rate in self.reference_document_version.ref_rates.order_by(
+            "commodity_code",
+            "valid_between",
         ):
             comm_code_link = f"{preferential_rate.commodity_code}"
 
@@ -321,7 +356,15 @@ class ReferenceDocumentVersionContext:
             )
         return rows
 
-    def get_quota_row(self, commodity_code: str, volume, measurement, duty_rate, valid_between, quota=None):
+    def get_quota_row(
+        self,
+        commodity_code: str,
+        volume,
+        measurement,
+        duty_rate,
+        valid_between,
+        quota=None,
+    ):
         comm_code_link = f"{commodity_code}"
 
         actions = "<span></span>"
@@ -353,7 +396,14 @@ class ReferenceDocumentVersionContext:
 
         return row_to_add
 
-    def get_suspension_row(self, quota_valid_between, suspension, commodity_code, reference_document_version, templated=False):
+    def get_suspension_row(
+        self,
+        quota_valid_between,
+        suspension,
+        commodity_code,
+        reference_document_version,
+        templated=False,
+    ):
         comm_code_link = f"{commodity_code}"
 
         actions = "<span></span>"
@@ -385,79 +435,120 @@ class ReferenceDocumentVersionContext:
     def order_number_rows(self, data, ref_doc_order_number):
         # Add Data Rows
         for quota in ref_doc_order_number.preferential_quotas.order_by(
-                "commodity_code",
+            "commodity_code",
         ):
-            row_to_add = self.get_quota_row(quota.commodity_code, quota.volume, quota.measurement, quota.duty_rate, quota.valid_between, quota)
+            row_to_add = self.get_quota_row(
+                quota.commodity_code,
+                quota.volume,
+                quota.measurement,
+                quota.duty_rate,
+                quota.valid_between,
+                quota,
+            )
 
             data[ref_doc_order_number.quota_order_number]["data_rows"].append(
                 row_to_add,
             )
 
     def quota_suspension_rows(self, data, ref_doc_order_number):
-        for suspension in RefQuotaSuspension.objects.all().filter(
-                preferential_quota__ref_order_number__quota_order_number=ref_doc_order_number
-        ).order_by(
-            "preferential_quota__commodity_code",
+        for suspension in (
+            RefQuotaSuspension.objects.all()
+            .filter(
+                preferential_quota__ref_order_number__quota_order_number=ref_doc_order_number,
+            )
+            .order_by(
+                "preferential_quota__commodity_code",
+            )
         ):
             row_to_add = self.get_suspension_row(
                 suspension.preferential_quota.vaid_between,
                 suspension.preferential_quota,
                 suspension.preferential_quota.commodity_code,
                 suspension.preferential_quota.ref_order_number.reference_document_version,
-                False
+                False,
             )
 
-            data[ref_doc_order_number.quota_order_number]["suspension_data_rows"].append(
+            data[ref_doc_order_number.quota_order_number][
+                "suspension_data_rows"
+            ].append(
                 row_to_add,
             )
 
     def quota_suspension_range_rows(self, data, ref_doc_order_number):
         for quota_suspension_range in RefQuotaSuspensionRange.objects.all().filter(
-                ref_quota_definition_range__ref_order_number=ref_doc_order_number
+            ref_quota_definition_range__ref_order_number=ref_doc_order_number,
         ):
 
             data_to_add = {
-                'data_rows': [],
-                'ref_quota_suspension_range': quota_suspension_range
+                "data_rows": [],
+                "ref_quota_suspension_range": quota_suspension_range,
             }
 
-            if quota_suspension_range.pk not in data[ref_doc_order_number.quota_order_number]["templated_suspension_data"].keys():
-                data[ref_doc_order_number.quota_order_number]["templated_suspension_data"][quota_suspension_range.pk] = []
+            if (
+                quota_suspension_range.pk
+                not in data[ref_doc_order_number.quota_order_number][
+                    "templated_suspension_data"
+                ].keys()
+            ):
+                data[ref_doc_order_number.quota_order_number][
+                    "templated_suspension_data"
+                ][quota_suspension_range.pk] = []
 
-            for suspension in quota_suspension_range.dynamic_preferential_quota_suspensions():
+            for (
+                suspension
+            ) in quota_suspension_range.dynamic_preferential_quota_suspensions():
                 row_to_add = self.get_suspension_row(
                     suspension.preferential_quota.valid_between,
                     suspension,
                     suspension.preferential_quota.commodity_code,
                     suspension.preferential_quota.ref_order_number.reference_document_version,
-                    templated=True
+                    templated=True,
                 )
 
-                data_to_add['data_rows'].append(
-                    row_to_add
+                data_to_add["data_rows"].append(
+                    row_to_add,
                 )
 
-            data[ref_doc_order_number.quota_order_number]["templated_data"][quota_suspension_range.ref_quota_definition_range.commodity_code].append(data_to_add)
+            data[ref_doc_order_number.quota_order_number]["templated_data"][
+                quota_suspension_range.ref_quota_definition_range.commodity_code
+            ].append(data_to_add)
 
     def quota_definition_range_rows(self, data, ref_doc_order_number):
-        for quota_definition_range in ref_doc_order_number.ref_quota_definition_range.order_by("commodity_code"):
+        for (
+            quota_definition_range
+        ) in ref_doc_order_number.ref_quota_definition_range.order_by("commodity_code"):
 
             data_to_add = {
-                'data_rows': [],
-                'ref_quota_definition_range': quota_definition_range
+                "data_rows": [],
+                "ref_quota_definition_range": quota_definition_range,
             }
 
-            if quota_definition_range.commodity_code not in data[ref_doc_order_number.quota_order_number]["templated_data"].keys():
-                data[ref_doc_order_number.quota_order_number]["templated_data"][quota_definition_range.commodity_code] = []
+            if (
+                quota_definition_range.commodity_code
+                not in data[ref_doc_order_number.quota_order_number][
+                    "templated_data"
+                ].keys()
+            ):
+                data[ref_doc_order_number.quota_order_number]["templated_data"][
+                    quota_definition_range.commodity_code
+                ] = []
 
             for quota in quota_definition_range.dynamic_quota_definitions():
-                row_to_add = self.get_quota_row(quota.commodity_code, quota.volume, quota.measurement, quota.duty_rate, quota.valid_between)
-
-                data_to_add['data_rows'].append(
-                    row_to_add
+                row_to_add = self.get_quota_row(
+                    quota.commodity_code,
+                    quota.volume,
+                    quota.measurement,
+                    quota.duty_rate,
+                    quota.valid_between,
                 )
 
-            data[ref_doc_order_number.quota_order_number]["templated_data"][quota_definition_range.commodity_code].append(data_to_add)
+                data_to_add["data_rows"].append(
+                    row_to_add,
+                )
+
+            data[ref_doc_order_number.quota_order_number]["templated_data"][
+                quota_definition_range.commodity_code
+            ].append(data_to_add)
 
 
 class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
@@ -476,22 +567,21 @@ class ReferenceDocumentVersionDetails(PermissionRequiredMixin, DetailView):
             f"Reference document for {context['object'].reference_document.get_area_name_by_area_id()}"
         )
 
-        context_data = ReferenceDocumentVersionContext(context["object"], self.request.user)
+        context_data = ReferenceDocumentVersionContext(
+            context["object"],
+            self.request.user,
+        )
 
         # rates
         context["rate_data"] = context_data.duties_row_data()
         context["rate_headers"] = context_data.duties_headers()
 
         # Order numbers
-        context['order_numbers'] = context_data.order_numbers
+        context["order_numbers"] = context_data.order_numbers
 
         # headers
-        context["quota_definition_headers"] = (
-            context_data.quotas_headers()
-        )
-        context["suspension_headers"] = (
-            context_data.suspension_headers()
-        )
+        context["quota_definition_headers"] = context_data.quotas_headers()
+        context["suspension_headers"] = context_data.suspension_headers()
         return context
 
 
@@ -672,17 +762,25 @@ class ReferenceDocumentVersionAlignmentCheck(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        last_alignment_report = self.object.alignment_reports.all().filter(
-            status=AlignmentReportStatus.COMPLETE
-        ).last()
+        last_alignment_report = (
+            self.object.alignment_reports.all()
+            .filter(
+                status=AlignmentReportStatus.COMPLETE,
+            )
+            .last()
+        )
 
         if last_alignment_report:
             context["last_alignment_report"] = last_alignment_report
-            context['alignment_report_stats'] = self.alignment_report_stats_context(last_alignment_report)
-            context["last_run"] = last_alignment_report.created_at.strftime('%Y-%m-%d %H:%M')
+            context["alignment_report_stats"] = self.alignment_report_stats_context(
+                last_alignment_report,
+            )
+            context["last_run"] = last_alignment_report.created_at.strftime(
+                "%Y-%m-%d %H:%M",
+            )
         else:
             context["last_alignment_report"] = None
-            context['alignment_report_stats'] = None
+            context["alignment_report_stats"] = None
             context["last_run"] = None
         return context
 
@@ -690,18 +788,18 @@ class ReferenceDocumentVersionAlignmentCheck(DetailView):
         stats = []
 
         for key, value in alignment_report.check_stats().items():
-            percentage_calc = '-'
+            percentage_calc = "-"
 
-            if value['total'] > 0 and value['failed'] > 0:
-                percentage_calc = round((value['failed'] / value['total']) * 100, 1)
+            if value["total"] > 0 and value["failed"] > 0:
+                percentage_calc = round((value["failed"] / value["total"]) * 100, 1)
 
             row = [
                 {"text": key},
-                {"text": value['total']},
-                {"text": value['passed']},
-                {"text": value['warning']},
-                {"text": value['failed']},
-                {"text": value['skipped']},
+                {"text": value["total"]},
+                {"text": value["passed"]},
+                {"text": value["warning"]},
+                {"text": value["failed"]},
+                {"text": value["skipped"]},
                 {"text": percentage_calc},
             ]
             stats.append(row)
@@ -711,9 +809,12 @@ class ReferenceDocumentVersionAlignmentCheck(DetailView):
     def post(self, request, *args, **kwargs):
         if request.user.has_perm("reference_documents.add_alignmentreportcheck"):
             # Queue alignment check to background worker
-            run_alignment_check.delay(self.kwargs['pk'])
+            run_alignment_check.delay(self.kwargs["pk"])
 
-            return redirect('reference_documents:alignment-check-queued', pk=self.kwargs['pk'])
+            return redirect(
+                "reference_documents:alignment-check-queued",
+                pk=self.kwargs["pk"],
+            )
         else:
             return HttpResponseForbidden()
 
@@ -721,4 +822,3 @@ class ReferenceDocumentVersionAlignmentCheck(DetailView):
 class ReferenceDocumentVersionAlignmentCheckQueued(DetailView):
     template_name = "reference_documents/reference_document_versions/check_queued.jinja"
     model = ReferenceDocumentVersion
-

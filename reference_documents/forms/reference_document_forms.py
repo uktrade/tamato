@@ -34,7 +34,7 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
         widget=forms.Textarea,
         help_text="Enter one or more regulation ids with each one on a new line.",
         error_messages={
-            "invalid": "Regulation ids invalid"
+            "invalid": "Regulation ids invalid",
         },
         required=False,
     )
@@ -71,7 +71,7 @@ class ReferenceDocumentCreateUpdateForm(forms.ModelForm):
 
     class Meta:
         model = ReferenceDocument
-        fields = ["title", "area_id", 'regulations']
+        fields = ["title", "area_id", "regulations"]
 
 
 class ReferenceDocumentDeleteForm(forms.Form):

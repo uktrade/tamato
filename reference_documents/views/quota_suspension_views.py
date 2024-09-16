@@ -5,9 +5,14 @@ from django.views.generic import CreateView
 from django.views.generic import UpdateView
 from django.views.generic.edit import DeleteView
 
-from reference_documents.forms.ref_quota_suspension_forms import RefQuotaSuspensionCreateUpdateForm, RefQuotaSuspensionDeleteForm
-from reference_documents.models import RefQuotaSuspension
+from reference_documents.forms.ref_quota_suspension_forms import (
+    RefQuotaSuspensionCreateUpdateForm,
+)
+from reference_documents.forms.ref_quota_suspension_forms import (
+    RefQuotaSuspensionDeleteForm,
+)
 from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import RefQuotaSuspension
 
 
 class RefQuotaSuspensionEdit(PermissionRequiredMixin, UpdateView):

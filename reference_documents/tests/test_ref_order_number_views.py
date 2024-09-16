@@ -71,10 +71,8 @@ class TestPreferentialQuotaOrderNumberEditView:
 
     def test_post_with_permission_pass_with_sub_quota(self, superuser_client):
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        pref_quota_order_number_main = (
-            factories.RefOrderNumberFactory.create(
-                reference_document_version=ref_doc_version,
-            )
+        pref_quota_order_number_main = factories.RefOrderNumberFactory.create(
+            reference_document_version=ref_doc_version,
         )
         pref_quota_order_number = factories.RefOrderNumberFactory.create(
             reference_document_version=ref_doc_version,
@@ -89,7 +87,7 @@ class TestPreferentialQuotaOrderNumberEditView:
             "end_date_1": 1,
             "end_date_2": 2023,
             "coefficient": "1.2",
-            'relation_type': 'EQ',
+            "relation_type": "EQ",
             "main_order_number": pref_quota_order_number_main.pk,
             "reference_document_version_id": pref_quota_order_number_main.reference_document_version.pk,
         }
@@ -166,9 +164,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
 
         assert resp.status_code == 302
 
-        pref_quota_order_number = (
-            ref_doc_version.ref_order_numbers.all().last()
-        )
+        pref_quota_order_number = ref_doc_version.ref_order_numbers.all().last()
 
         # check the update was applied
         assert pref_quota_order_number.valid_between.lower == date(2022, 1, 1)
@@ -176,14 +172,12 @@ class TestPreferentialQuotaOrderNumberCreateView:
         assert pref_quota_order_number.coefficient is None
         assert pref_quota_order_number.order_number == "054321"
         assert pref_quota_order_number.main_order_number is None
-        assert pref_quota_order_number.relation_type == ''
+        assert pref_quota_order_number.relation_type == ""
 
     def test_post_with_permission_pass_with_sub_quota(self, superuser_client):
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        pref_quota_order_number_main = (
-            factories.RefOrderNumberFactory.create(
-                reference_document_version=ref_doc_version,
-            )
+        pref_quota_order_number_main = factories.RefOrderNumberFactory.create(
+            reference_document_version=ref_doc_version,
         )
 
         post_data = {
@@ -210,9 +204,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
 
         assert resp.status_code == 302
 
-        pref_quota_order_number = (
-            ref_doc_version.ref_order_numbers.all().last()
-        )
+        pref_quota_order_number = ref_doc_version.ref_order_numbers.all().last()
 
         # check the update was applied
         assert pref_quota_order_number.valid_between.lower == date(2022, 1, 1)
@@ -220,7 +212,7 @@ class TestPreferentialQuotaOrderNumberCreateView:
         assert pref_quota_order_number.coefficient == Decimal("1.2")
         assert pref_quota_order_number.order_number == "054321"
         assert pref_quota_order_number.main_order_number == pref_quota_order_number_main
-        assert pref_quota_order_number.relation_type == 'EQ'
+        assert pref_quota_order_number.relation_type == "EQ"
 
 
 @pytest.mark.reference_documents

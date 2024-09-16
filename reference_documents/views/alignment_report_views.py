@@ -1,7 +1,8 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic import DetailView
 
-from reference_documents.models import AlignmentReportCheck, AlignmentReport
+from reference_documents.models import AlignmentReport
+from reference_documents.models import AlignmentReportCheck
 
 
 class AlignmentReportContext:
@@ -19,22 +20,22 @@ class AlignmentReportContext:
         html = ""
 
         if alignment_report_check.ref_rate:
-            html += ' Pref Rate'
+            html += " Pref Rate"
 
         if alignment_report_check.ref_order_number:
-            html += ' Order Number'
+            html += " Order Number"
 
         if alignment_report_check.ref_quota_definition:
-            html += ' Pref Quota'
+            html += " Pref Quota"
 
         if alignment_report_check.ref_quota_definition_range:
-            html += ' Pref Quota Template'
+            html += " Pref Quota Template"
 
         if alignment_report_check.ref_quota_suspension:
-            html += ' Order Number...'
+            html += " Order Number..."
 
         if alignment_report_check.ref_quota_suspension_range:
-            html += ' Pref Suspension'
+            html += " Pref Suspension"
 
         return html
 
@@ -46,7 +47,9 @@ class AlignmentReportContext:
 
     def rows(self):
         rows = []
-        for alignment_report_check in self.alignment_report.alignment_report_checks.all():
+        for (
+            alignment_report_check
+        ) in self.alignment_report.alignment_report_checks.all():
 
             row_data = [
                 {
@@ -57,7 +60,7 @@ class AlignmentReportContext:
                 },
                 {
                     "text": alignment_report_check.status,
-                }
+                },
             ]
             rows.append(row_data)
 
@@ -76,10 +79,11 @@ class AlignmentReportDetails(PermissionRequiredMixin, DetailView):
         )
 
         # row data
-        context["reference_document_version"] = kwargs['object'].reference_document_version
+        context["reference_document_version"] = kwargs[
+            "object"
+        ].reference_document_version
 
         alignment_report_ctx = AlignmentReportContext(self.object)
         context["alignment_check_table_headers"] = alignment_report_ctx.headers()
         context["alignment_check_table_rows"] = alignment_report_ctx.rows()
         return context
-

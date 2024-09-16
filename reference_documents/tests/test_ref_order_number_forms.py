@@ -6,9 +6,7 @@ from django.core.exceptions import ValidationError
 from reference_documents.forms.ref_order_number_forms import (
     RefOrderNumberCreateUpdateForm,
 )
-from reference_documents.forms.ref_order_number_forms import (
-    RefOrderNumberDeleteForm,
-)
+from reference_documents.forms.ref_order_number_forms import RefOrderNumberDeleteForm
 from reference_documents.models import RefOrderNumber
 from reference_documents.tests import factories
 
@@ -130,7 +128,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
 
         assert not target.is_valid()
         assert "order_number" in target.errors.keys()
-        assert 'Quota order number is invalid' in target.errors['order_number']
+        assert "Quota order number is invalid" in target.errors["order_number"]
 
     def test_clean_quota_order_number_invalid_already_exists_adding(self):
         ref_order_number = factories.RefOrderNumberFactory(
@@ -183,9 +181,8 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
 
         with pytest.raises(ValidationError) as ve:
             target.clean()
-        assert (
-            "You can only specify coefficient if a main quota is selected"
-            in str(ve.value)
+        assert "You can only specify coefficient if a main quota is selected" in str(
+            ve.value,
         )
 
     def test_clean_main_order_no_coefficient(self):
@@ -213,10 +210,7 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         with pytest.raises(ValidationError) as ve:
             target.clean()
 
-        assert (
-            "Sub quotas must have a coefficient"
-            in str(ve.value)
-        )
+        assert "Sub quotas must have a coefficient" in str(ve.value)
 
 
 @pytest.mark.reference_documents

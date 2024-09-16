@@ -15,7 +15,6 @@ from django.db.models import TextChoices
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 
-from common.serializers import deserialize_date
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import FormSet
@@ -27,14 +26,15 @@ from common.forms import ValidityPeriodForm
 from common.forms import delete_form_for
 from common.forms import formset_factory
 from common.forms import unprefix_formset_data
+from common.serializers import deserialize_date
 from common.util import validity_range_contains_range
 from common.validators import SymbolValidator
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from measures.models import MeasurementUnit
+from quotas import business_rules
 from quotas import models
 from quotas import validators
-from quotas import business_rules
 from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
@@ -1011,7 +1011,7 @@ class QuotaOrderNumbersSelectForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 HTML(
-                    '<h2 class="govuk-heading">Enter main and sub-quota order numbers</h2>'
+                    '<h2 class="govuk-heading">Enter main and sub-quota order numbers</h2>',
                 ),
             ),
             Div(
@@ -1033,9 +1033,7 @@ class QuotaOrderNumbersSelectForm(forms.Form):
 class SelectSubQuotaDefinitionsForm(
     SelectableObjectsForm,
 ):
-    """
-    Form to select the main quota definitions that are to be duplicated.
-    """
+    """Form to select the main quota definitions that are to be duplicated."""
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -1052,9 +1050,9 @@ class SelectSubQuotaDefinitionsForm(
                     {
                         "main_definition": definition.pk,
                         "sub_definition_staged_data": serialize_duplicate_data(
-                            definition
+                            definition,
                         ),
-                    }
+                    },
                 )
             self.request.session["staged_definition_data"] = staged_definition_data
 
@@ -1069,7 +1067,7 @@ class SelectSubQuotaDefinitionsForm(
         if len(selected_definitions) < 1:
             raise ValidationError("At least one quota definition must be selected")
         selected_definitions = models.QuotaDefinition.objects.filter(
-            pk__in=definitions_pks
+            pk__in=definitions_pks,
         ).current()
         cleaned_data["selected_definitions"] = selected_definitions
         self.set_staged_definition_data(selected_definitions)
@@ -1089,7 +1087,7 @@ class SelectedDefinitionsForm(forms.Form):
         for definition in cleaned_data["staged_definitions"]:
             if not definition["sub_definition_staged_data"]["status"]:
                 raise ValidationError(
-                    "Each definition period must have a specified relationship and co-efficient value"
+                    "Each definition period must have a specified relationship and co-efficient value",
                 )
         return cleaned_data
 
@@ -1158,7 +1156,7 @@ class SubQuotaDefinitionsUpdatesForm(
                 lambda staged_definition_data: staged_definition_data["main_definition"]
                 == original_definition.pk,
                 staged_definition_data,
-            )
+            ),
         )[0]["sub_definition_staged_data"]
         self.set_initial_data(duplicate_data)
         return duplicate_data
@@ -1168,7 +1166,7 @@ class SubQuotaDefinitionsUpdatesForm(
         fields["relationship_type"].initial = "NM"
         fields["coefficient"].initial = 1
         fields["measurement_unit"].initial = MeasurementUnit.objects.get(
-            code=duplicate_data["measurement_unit_code"]
+            code=duplicate_data["measurement_unit_code"],
         )
         fields["initial_volume"].initial = duplicate_data["initial_volume"]
         fields["volume"].initial = duplicate_data["volume"]
@@ -1185,7 +1183,7 @@ class SubQuotaDefinitionsUpdatesForm(
         main_def_id = kwargs.pop("pk")
         super().__init__(*args, **kwargs)
         self.original_definition = models.QuotaDefinition.objects.get(
-            trackedmodel_ptr_id=main_def_id
+            trackedmodel_ptr_id=main_def_id,
         )
         self.init_fields()
         self.get_duplicate_data(self.original_definition)
@@ -1196,6 +1194,7 @@ class SubQuotaDefinitionsUpdatesForm(
         """
         Carrying out business rule checks here to prevent erroneous
         associations, see:
+
         https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quota-associations.html#validation-rules
         """
         original_definition = self.original_definition
@@ -1208,7 +1207,7 @@ class SubQuotaDefinitionsUpdatesForm(
         ):
             raise ValidationError(
                 "QA2: Validity period for sub quota must be within the "
-                "validity period of the main quota"
+                "validity period of the main quota",
             )
 
         if not business_rules.check_QA3_dict(
@@ -1222,17 +1221,17 @@ class SubQuotaDefinitionsUpdatesForm(
             raise ValidationError(
                 "QA3: When converted to the measurement unit of the main "
                 "quota, the volume of a sub-quota must always be lower than "
-                "or equal to the volume of the main quota"
+                "or equal to the volume of the main quota",
             )
 
         if not business_rules.check_QA4_dict(cleaned_data["coefficient"]):
             raise ValidationError(
-                "QA4: A coefficient must be a positive decimal number"
+                "QA4: A coefficient must be a positive decimal number",
             )
 
         if cleaned_data["relationship_type"] == "NM":
             if not business_rules.check_QA5_normal_coefficient(
-                cleaned_data["coefficient"]
+                cleaned_data["coefficient"],
             ):
                 raise ValidationError(
                     "QA5: Where the relationship type is Normal, the "
@@ -1240,19 +1239,20 @@ class SubQuotaDefinitionsUpdatesForm(
                 )
         elif cleaned_data["relationship_type"] == "EQ":
             if not business_rules.check_QA5_equivalent_coefficient(
-                cleaned_data["coefficient"]
+                cleaned_data["coefficient"],
             ):
                 raise ValidationError(
                     "QA5: Where the relationship type is Equivalent, the "
-                    "coefficient value must be something other than 1"
+                    "coefficient value must be something other than 1",
                 )
             if not business_rules.check_QA5_equivalent_volumes(
-                self.original_definition, volume=cleaned_data["volume"]
+                self.original_definition,
+                volume=cleaned_data["volume"],
             ):
                 raise ValidationError(
                     "Whenever a sub-quota is defined with the 'equivalent' "
                     "type, it must have the same volume as the ones associated"
-                    " with the parent quota"
+                    " with the parent quota",
                 )
 
         if not business_rules.check_QA6_dict(
@@ -1261,7 +1261,7 @@ class SubQuotaDefinitionsUpdatesForm(
         ):
             ValidationError(
                 "QA6: Sub-quotas associated with the same main quota must "
-                "have the same relation type."
+                "have the same relation type.",
             )
 
         return cleaned_data

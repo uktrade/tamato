@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from common.util import TaricDateRange
-from reference_documents.forms.ref_quota_definition_forms import  (
+from reference_documents.forms.ref_quota_definition_forms import (
     RefQuotaDefinitionBulkCreateForm,
 )
 from reference_documents.forms.ref_quota_definition_forms import (
@@ -32,8 +32,7 @@ class TestPreferentialQuotaCreateUpdateForm:
 
         # it sets initial values
         assert (
-            target.initial["ref_order_number"]
-            == ref_quota_definition.ref_order_number
+            target.initial["ref_order_number"] == ref_quota_definition.ref_order_number
         )
         assert (
             target.reference_document_version
@@ -147,10 +146,8 @@ class TestRefQuotaDefinitionBulkCreateForm:
         """Test that preferential quota bulk create is valid when completed
         correctly."""
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        ref_order_number = (
-            factories.RefOrderNumberFactory.create(
-                reference_document_version=ref_doc_version,
-            )
+        ref_order_number = factories.RefOrderNumberFactory.create(
+            reference_document_version=ref_doc_version,
         )
         data = {
             "ref_order_number": ref_order_number.pk,
@@ -182,20 +179,16 @@ class TestRefQuotaDefinitionBulkCreateForm:
 
         form = RefQuotaDefinitionBulkCreateForm(
             data=data,
-            reference_document_version=ref_doc_version
+            reference_document_version=ref_doc_version,
         )
         assert form.is_valid()
-
-
 
     def test_preferential_quota_bulk_create_invalid_data(self):
         """Test that preferential quota bulk create is invalid when completed
         incorrectly."""
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        ref_order_number = (
-            factories.RefOrderNumberFactory.create(
-                reference_document_version=ref_doc_version,
-            )
+        ref_order_number = factories.RefOrderNumberFactory.create(
+            reference_document_version=ref_doc_version,
         )
         data = {
             "ref_order_number": ref_order_number,
@@ -242,15 +235,12 @@ class TestRefQuotaDefinitionBulkCreateForm:
         )
         assert "Enter the day, month and year" in form.errors["start_date_2"]
 
-
     def test_preferential_quota_bulk_create_invalid_start_end_date(self):
         """Test that preferential quota bulk create is invalid when completed
         incorrectly."""
         ref_doc_version = factories.ReferenceDocumentVersionFactory.create()
-        ref_order_number = (
-            factories.RefOrderNumberFactory.create(
-                reference_document_version=ref_doc_version,
-            )
+        ref_order_number = factories.RefOrderNumberFactory.create(
+            reference_document_version=ref_doc_version,
         )
         data = {
             "ref_order_number": ref_order_number,
@@ -284,18 +274,18 @@ class TestRefQuotaDefinitionBulkCreateForm:
             data=data,
             reference_document_version=ref_doc_version,
             initial={
-                'valid_between_0': TaricDateRange(date(1999, 1, 1),date(1999, 2, 1))
-            }
+                "valid_between_0": TaricDateRange(date(1999, 1, 1), date(1999, 2, 1)),
+            },
         )
         assert not form.is_valid()
         assert (
-                "Ensure all commodity codes are 10 digits and each on a new line"
-                in form.errors["commodity_codes"]
+            "Ensure all commodity codes are 10 digits and each on a new line"
+            in form.errors["commodity_codes"]
         )
         assert "Duty rate is required" in form.errors["duty_rate"]
         assert "Measurement is required" in form.errors["measurement"]
         assert (
-                "The end date must be the same as or after the start date."
-                in form.errors["end_date_1"]
+            "The end date must be the same as or after the start date."
+            in form.errors["end_date_1"]
         )
         assert "Enter the day, month and year" in form.errors["start_date_2"]

@@ -1,11 +1,7 @@
 import pytest
 
-from reference_documents.forms.ref_rate_forms import (
-    RefRateBulkCreateForm,
-)
-from reference_documents.forms.ref_rate_forms import (
-    RefRateCreateUpdateForm,
-)
+from reference_documents.forms.ref_rate_forms import RefRateBulkCreateForm
+from reference_documents.forms.ref_rate_forms import RefRateCreateUpdateForm
 from reference_documents.forms.ref_rate_forms import RefRateDeleteForm
 from reference_documents.models import RefRate
 from reference_documents.tests import factories

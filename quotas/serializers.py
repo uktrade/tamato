@@ -1,4 +1,3 @@
-from common.util import TaricDateRange
 from datetime import datetime
 from decimal import Decimal
 
@@ -7,10 +6,11 @@ from rest_framework import serializers
 from common.serializers import TrackedModelSerializer
 from common.serializers import TrackedModelSerializerMixin
 from common.serializers import ValiditySerializerMixin
-from common.serializers import serialize_date, deserialize_date
+from common.serializers import deserialize_date
+from common.serializers import serialize_date
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.serializers import GeographicalAreaSerializer
-import measures
 from measures.models.tracked_models import MeasurementUnit
 from measures.unit_serializers import MeasurementUnitQualifierSerializer
 from measures.unit_serializers import MeasurementUnitSerializer
@@ -290,7 +290,7 @@ def deserialize_definition_data(self, definition):
     initial_volume = Decimal(definition["initial_volume"])
     vol = Decimal(definition["volume"])
     measurement_unit = MeasurementUnit.objects.get(
-        code=definition["measurement_unit_code"]
+        code=definition["measurement_unit_code"],
     )
     sub_order_number = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)[
         "sub_quota_order_number"

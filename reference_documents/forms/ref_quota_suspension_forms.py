@@ -8,7 +8,8 @@ from django.core.exceptions import ValidationError
 from common.forms import DateInputFieldFixed
 from common.forms import ValidityPeriodForm
 from common.util import TaricDateRange
-from reference_documents.models import RefQuotaSuspension, RefQuotaDefinition
+from reference_documents.models import RefQuotaDefinition
+from reference_documents.models import RefQuotaSuspension
 
 
 class RefQuotaSuspensionCreateUpdateForm(
@@ -23,21 +24,25 @@ class RefQuotaSuspensionCreateUpdateForm(
         ]
 
     def __init__(
-            self,
-            reference_document_version,
-            *args,
-            **kwargs,
+        self,
+        reference_document_version,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.fields["ref_quota_definition"].help_text = "The selected quota definition to be suspended"
-        self.fields["end_date"].help_text = ''
+        self.fields["ref_quota_definition"].help_text = (
+            "The selected quota definition to be suspended"
+        )
+        self.fields["end_date"].help_text = ""
 
         self.reference_document_version = reference_document_version
 
         self.fields["ref_quota_definition"].queryset = (
-            RefQuotaDefinition.objects.all().filter(
-                ref_order_number__reference_document_version=self.reference_document_version
-            ).order_by('ref_order_number__order_number', 'commodity_code')
+            RefQuotaDefinition.objects.all()
+            .filter(
+                ref_order_number__reference_document_version=self.reference_document_version,
+            )
+            .order_by("ref_order_number__order_number", "commodity_code")
         )
 
         # self.preferential_quota = preferential_quota
@@ -71,39 +76,47 @@ class RefQuotaSuspensionCreateUpdateForm(
     def clean(self):
         error_messages = []
 
-        if 'start_date' not in self.cleaned_data.keys():
-            self.add_error("start_date", 'Start date is not valid')
+        if "start_date" not in self.cleaned_data.keys():
+            self.add_error("start_date", "Start date is not valid")
 
-        if 'end_date' not in self.cleaned_data.keys():
-            self.add_error("end_date", 'End date is not valid')
+        if "end_date" not in self.cleaned_data.keys():
+            self.add_error("end_date", "End date is not valid")
 
         if len(self.errors) > 0:
-            raise forms.ValidationError(' & '.join(error_messages))
+            raise forms.ValidationError(" & ".join(error_messages))
 
         start_date = self.cleaned_data["start_date"]
         end_date = self.cleaned_data["end_date"]
         ref_quota_definition = self.cleaned_data["ref_quota_definition"]
 
         if start_date > end_date:
-            self.add_error("start_date", 'Start date is after the end date')
-            self.add_error("end_date", 'End date is before the start date')
+            self.add_error("start_date", "Start date is after the end date")
+            self.add_error("end_date", "End date is before the start date")
         else:
-            self.cleaned_data['valid_between'] = TaricDateRange(start_date, end_date)
-            self.instance.valid_between = self.cleaned_data['valid_between']
+            self.cleaned_data["valid_between"] = TaricDateRange(start_date, end_date)
+            self.instance.valid_between = self.cleaned_data["valid_between"]
         if ref_quota_definition.valid_between is None:
-            self.add_error("ref_quota_definition", 'Invalid quota definition selected, it has no validity range')
+            self.add_error(
+                "ref_quota_definition",
+                "Invalid quota definition selected, it has no validity range",
+            )
         else:
             if ref_quota_definition.valid_between.lower > start_date:
-                self.add_error("start_date", 'Start date is before the quota definitions start date')
+                self.add_error(
+                    "start_date",
+                    "Start date is before the quota definitions start date",
+                )
 
             if ref_quota_definition.valid_between.upper < end_date:
-                self.add_error("end_date", 'End date is after the quota definitions end date')
+                self.add_error(
+                    "end_date",
+                    "End date is after the quota definitions end date",
+                )
 
         if len(self.errors):
-            raise forms.ValidationError(' & '.join(self.errors))
+            raise forms.ValidationError(" & ".join(self.errors))
 
             # This uses the custom clean method so this form is open to extension for adding multiple duty rates / validity periods in future
-
 
     ref_quota_definition = forms.ModelChoiceField(
         label="Quota definition",

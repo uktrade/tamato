@@ -2,39 +2,54 @@ from django.urls import path
 from rest_framework import routers
 
 from reference_documents.views.alignment_report_views import AlignmentReportDetails
-from reference_documents.views.order_number_views import (
-    RefOrderNumberCreate,
+from reference_documents.views.order_number_views import RefOrderNumberCreate
+from reference_documents.views.order_number_views import RefOrderNumberDelete
+from reference_documents.views.order_number_views import RefOrderNumberEdit
+from reference_documents.views.quota_definition_range_views import (
+    RefQuotaDefinitionRangeCreate,
 )
-from reference_documents.views.order_number_views import (
-    RefOrderNumberDelete,
+from reference_documents.views.quota_definition_range_views import (
+    RefQuotaDefinitionRangeDelete,
 )
-from reference_documents.views.order_number_views import (
-    RefOrderNumberEdit,
+from reference_documents.views.quota_definition_range_views import (
+    RefQuotaDefinitionRangeEdit,
 )
-from reference_documents.views.quota_suspension_range_views import RefQuotaSuspensionRangeCreate, RefQuotaSuspensionRangeEdit, RefQuotaSuspensionRangeDelete
-from reference_documents.views.quota_suspension_views import RefQuotaSuspensionDelete, RefQuotaSuspensionEdit, RefQuotaSuspensionCreate
-from reference_documents.views.quota_definition_range_views import RefQuotaDefinitionRangeDelete, RefQuotaDefinitionRangeCreate, RefQuotaDefinitionRangeEdit
 from reference_documents.views.quota_definition_views import (
     RefQuotaDefinitionBulkCreate,
 )
 from reference_documents.views.quota_definition_views import RefQuotaDefinitionCreate
 from reference_documents.views.quota_definition_views import RefQuotaDefinitionDelete
 from reference_documents.views.quota_definition_views import RefQuotaDefinitionEdit
+from reference_documents.views.quota_suspension_range_views import (
+    RefQuotaSuspensionRangeCreate,
+)
+from reference_documents.views.quota_suspension_range_views import (
+    RefQuotaSuspensionRangeDelete,
+)
+from reference_documents.views.quota_suspension_range_views import (
+    RefQuotaSuspensionRangeEdit,
+)
+from reference_documents.views.quota_suspension_views import RefQuotaSuspensionCreate
+from reference_documents.views.quota_suspension_views import RefQuotaSuspensionDelete
+from reference_documents.views.quota_suspension_views import RefQuotaSuspensionEdit
 from reference_documents.views.rate_views import RefRateBulkCreate
 from reference_documents.views.rate_views import RefRateCreate
 from reference_documents.views.rate_views import RefRateDelete
 from reference_documents.views.rate_views import RefRateEdit
 from reference_documents.views.reference_document_version_views import (
-    ReferenceDocumentVersionChangeStateToEditable, ReferenceDocumentVersionAlignmentCheckQueued,
+    ReferenceDocumentVersionAlignmentCheck,
+)
+from reference_documents.views.reference_document_version_views import (
+    ReferenceDocumentVersionAlignmentCheckQueued,
+)
+from reference_documents.views.reference_document_version_views import (
+    ReferenceDocumentVersionChangeStateToEditable,
 )
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionChangeStateToInReview,
 )
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionChangeStateToPublished,
-)
-from reference_documents.views.reference_document_version_views import (
-    ReferenceDocumentVersionAlignmentCheck,
 )
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionConfirmCreate,
@@ -170,7 +185,6 @@ urlpatterns = [
         ReferenceDocumentVersionConfirmDelete.as_view(),
         name="version-confirm-delete",
     ),
-
     path(
         "reference_document_versions/<pk>/alignment-check-queued/",
         ReferenceDocumentVersionAlignmentCheckQueued.as_view(),

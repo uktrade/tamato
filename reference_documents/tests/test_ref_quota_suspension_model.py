@@ -1,6 +1,7 @@
 import pytest
 
-from reference_documents.models import RefQuotaDefinition, ReferenceDocumentVersionStatus, RefQuotaSuspension
+from reference_documents.models import ReferenceDocumentVersionStatus
+from reference_documents.models import RefQuotaSuspension
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db

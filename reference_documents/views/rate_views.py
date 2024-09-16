@@ -6,14 +6,11 @@ from django.views.generic import DeleteView
 from django.views.generic import FormView
 from django.views.generic import UpdateView
 
-from reference_documents.forms.ref_rate_forms import (
-    RefRateCreateUpdateForm,
-    RefRateDeleteForm,
-    RefRateBulkCreateForm
-)
-
-from reference_documents.models import RefRate
+from reference_documents.forms.ref_rate_forms import RefRateBulkCreateForm
+from reference_documents.forms.ref_rate_forms import RefRateCreateUpdateForm
+from reference_documents.forms.ref_rate_forms import RefRateDeleteForm
 from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import RefRate
 
 
 class RefRateEdit(PermissionRequiredMixin, UpdateView):

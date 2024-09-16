@@ -1,9 +1,9 @@
 import pytest
 
 from common.tests.factories import GeographicalAreaFactory
+from reference_documents.models import ReferenceDocument
 from reference_documents.models import ReferenceDocumentVersionStatus
 from reference_documents.tests import factories
-from reference_documents.models import ReferenceDocument
 
 pytestmark = pytest.mark.django_db
 
@@ -54,7 +54,7 @@ class TestReferenceDocument:
 
         area_id = target.area_id
 
-        target.area_id = 'zz'
+        target.area_id = "zz"
         target.save()
 
         rd = ReferenceDocument.objects.get(pk=target.pk)

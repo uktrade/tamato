@@ -1,6 +1,7 @@
 import pytest
 
-from reference_documents.models import RefRate, ReferenceDocumentVersionStatus
+from reference_documents.models import ReferenceDocumentVersionStatus
+from reference_documents.models import RefRate
 from reference_documents.tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -26,7 +27,7 @@ class TestPreferentialRate:
         rdv.in_review()
         rdv.save(force_save=True)
 
-        target.duty_rate = '99.77%'
+        target.duty_rate = "99.77%"
         target.save()
 
         target.refresh_from_db()
@@ -36,7 +37,7 @@ class TestPreferentialRate:
         rdv.published()
         rdv.save(force_save=True)
 
-        target.duty_rate = '99.77%'
+        target.duty_rate = "99.77%"
         target.save()
 
         target.refresh_from_db()
@@ -44,4 +45,3 @@ class TestPreferentialRate:
         assert rdv.status == ReferenceDocumentVersionStatus.PUBLISHED
         assert not rdv.editable()
         assert target_original_duty_rate == target.duty_rate
-

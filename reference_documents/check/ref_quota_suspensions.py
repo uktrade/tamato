@@ -3,14 +3,15 @@ from reference_documents.models import AlignmentReportCheckStatus
 
 
 class QuotaSuspensionChecks(BaseQuotaSuspensionCheck):
-    """
-    Class defining the check process for a reference document quota suspension (RefQuotaSuspension)
-    """
-    name = 'Quota suspension checks'
+    """Class defining the check process for a reference document quota
+    suspension (RefQuotaSuspension)"""
+
+    name = "Quota suspension checks"
 
     def run_check(self):
         """
-        Runs quota suspension checks between a reference document defined quota suspension and TAP data
+        Runs quota suspension checks between a reference document defined quota
+        suspension and TAP data.
 
         Returns:
             AlignmentReportCheckStatus: status based on the result of the check (pass, warning, fail, skip)

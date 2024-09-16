@@ -1,19 +1,27 @@
 from datetime import date
+from unittest.mock import patch
 
 import pytest
 
-from common.tests.factories import QuotaDefinitionFactory, MeasurementUnitFactory, MeasureFactory
+from common.tests.factories import MeasureFactory
+from common.tests.factories import MeasurementUnitFactory
+from common.tests.factories import QuotaDefinitionFactory
 from common.util import TaricDateRange
 from reference_documents.check import check_runner
-from reference_documents.check.base import BaseCheck, BaseQuotaDefinitionCheck, BaseOrderNumberCheck, BaseQuotaSuspensionCheck
+from reference_documents.check.base import BaseCheck
+from reference_documents.check.base import BaseOrderNumberCheck
+from reference_documents.check.base import BaseQuotaDefinitionCheck
+from reference_documents.check.base import BaseQuotaSuspensionCheck
+from reference_documents.check.ref_order_numbers import OrderNumberChecks  # noqa
+from reference_documents.check.ref_quota_definitions import (  # noqa
+    QuotaDefinitionChecks,
+)
+from reference_documents.check.ref_quota_suspensions import (  # noqa
+    QuotaSuspensionChecks,
+)
+from reference_documents.check.ref_rates import RateChecks  # noqa
 from reference_documents.models import AlignmentReportCheckStatus
 from reference_documents.tests import factories
-from unittest import mock
-from unittest.mock import patch
-from reference_documents.check.ref_order_numbers import OrderNumberChecks  # noqa
-from reference_documents.check.ref_quota_definitions import QuotaDefinitionChecks  # noqa
-from reference_documents.check.ref_quota_suspensions import QuotaSuspensionChecks # noqa
-from reference_documents.check.ref_rates import RateChecks  # noqa
 
 pytestmark = pytest.mark.django_db
 
@@ -43,7 +51,7 @@ class TestChecks:
 
     def data_setup_for_test_run(self):
         valid_between = TaricDateRange(date(2020, 1, 1), date(2020, 12, 31))
-        area_id = 'ZZ'
+        area_id = "ZZ"
 
         # setup ref doc & version
         ref_doc_ver = factories.ReferenceDocumentVersionFactory.create(
@@ -53,19 +61,19 @@ class TestChecks:
         # setup rates
         factories.RefRateFactory.create(
             reference_document_version=ref_doc_ver,
-            valid_between=valid_between
+            valid_between=valid_between,
         )
 
         # setup order number
         order_number = factories.RefOrderNumberFactory.create(
             reference_document_version=ref_doc_ver,
-            valid_between=valid_between
+            valid_between=valid_between,
         )
 
         # setup quota definition
         quota_def = factories.RefQuotaDefinitionFactory.create(
             ref_order_number=order_number,
-            valid_between=valid_between
+            valid_between=valid_between,
         )
 
         # setup quota definition range
@@ -82,7 +90,7 @@ class TestChecks:
         # setup suspension
         factories.RefQuotaSuspensionFactory.create(
             ref_quota_definition=quota_def,
-            valid_between=valid_between
+            valid_between=valid_between,
         )
 
         # setup suspension range
@@ -101,8 +109,8 @@ class TestChecks:
             order_number__order_number=order_number.order_number,
             valid_between=valid_between,
             measurement_unit=MeasurementUnitFactory.create(
-                description='Tonne'
-            )
+                description="Tonne",
+            ),
         )
 
         # tap measure
@@ -112,26 +120,32 @@ class TestChecks:
             goods_nomenclature__suffix=80,
             goods_nomenclature__valid_between=TaricDateRange(date(2000, 1, 1)),
             measure_type__sid=143,
-            order_number=tap_quota_definition.order_number
+            order_number=tap_quota_definition.order_number,
         )
 
         return ref_doc_ver
 
     @patch(
-        'reference_documents.check.ref_rates.RateChecks.run_check',
+        "reference_documents.check.ref_rates.RateChecks.run_check",
     )
     @patch(
-        'reference_documents.check.ref_order_numbers.OrderNumberChecks.run_check',
+        "reference_documents.check.ref_order_numbers.OrderNumberChecks.run_check",
     )
     @patch(
-        'reference_documents.check.ref_quota_suspensions.QuotaSuspensionChecks.run_check',
+        "reference_documents.check.ref_quota_suspensions.QuotaSuspensionChecks.run_check",
     )
     @patch(
-        'reference_documents.check.ref_quota_definitions.QuotaDefinitionChecks.run_check',
+        "reference_documents.check.ref_quota_definitions.QuotaDefinitionChecks.run_check",
     )
-    def test_run(self, rate_exists_check_patch, order_number_checks_patch, quota_suspension_exists_check_patch, quota_definition_exists_patch):
+    def test_run(
+        self,
+        rate_exists_check_patch,
+        order_number_checks_patch,
+        quota_suspension_exists_check_patch,
+        quota_definition_exists_patch,
+    ):
         def side_effect(*args, **kwargs):
-            return AlignmentReportCheckStatus.PASS, ''
+            return AlignmentReportCheckStatus.PASS, ""
 
         rate_exists_check_patch.side_effect = side_effect
         order_number_checks_patch.side_effect = side_effect
@@ -153,7 +167,11 @@ class TestChecks:
         target = self.target_class(ref_doc_ver)
         ref_rate = ref_doc_ver.ref_rates.first()
 
-        result = target.capture_check_result(RateChecks(ref_rate), ref_rate=ref_rate, parent_has_failed_or_skipped_result=True)
+        result = target.capture_check_result(
+            RateChecks(ref_rate),
+            ref_rate=ref_rate,
+            parent_has_failed_or_skipped_result=True,
+        )
         assert result == AlignmentReportCheckStatus.SKIPPED
 
     def test_status_contains_failed_or_skipped(self):
@@ -163,18 +181,18 @@ class TestChecks:
         statuses_with_skipped = [
             AlignmentReportCheckStatus.PASS,
             AlignmentReportCheckStatus.PASS,
-            AlignmentReportCheckStatus.SKIPPED
+            AlignmentReportCheckStatus.SKIPPED,
         ]
 
         statuses_with_failed = [
             AlignmentReportCheckStatus.PASS,
             AlignmentReportCheckStatus.PASS,
-            AlignmentReportCheckStatus.FAIL
+            AlignmentReportCheckStatus.FAIL,
         ]
 
         statuses_all_pass = [
             AlignmentReportCheckStatus.PASS,
-            AlignmentReportCheckStatus.PASS
+            AlignmentReportCheckStatus.PASS,
         ]
 
         assert target.status_contains_failed_or_skipped(statuses_with_skipped) is True

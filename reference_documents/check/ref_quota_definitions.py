@@ -3,14 +3,15 @@ from reference_documents.models import AlignmentReportCheckStatus
 
 
 class QuotaDefinitionChecks(BaseQuotaDefinitionCheck):
-    """
-    Class defining the check process for a reference document quota definition (RefQuotaDefinition)
-    """
-    name = 'Quota definition checks'
+    """Class defining the check process for a reference document quota
+    definition (RefQuotaDefinition)"""
+
+    name = "Quota definition checks"
 
     def run_check(self):
         """
-        Runs quota definition checks between a reference document defined quota definition and TAP data
+        Runs quota definition checks between a reference document defined quota
+        definition and TAP data.
 
         Returns:
             AlignmentReportCheckStatus: status based on the result of the check (pass, warning, fail, skip)
@@ -34,19 +35,16 @@ class QuotaDefinitionChecks(BaseQuotaDefinitionCheck):
             measure = self.measures().first()
 
             # get all duty sentences
-            if measure.duty_sentence != '':
+            if measure.duty_sentence != "":
                 duty_sentences = [measure.duty_sentence]
             else:
                 duty_sentences = []
 
             for condition in measure.conditions.latest_approved():
-                if condition.duty_sentence != '':
+                if condition.duty_sentence != "":
                     duty_sentences.append(condition.duty_sentence)
 
             message = f"FAIL - duty rate does not match, expected {self.ref_quota_definition.duty_rate} to be in ({' or '.join(duty_sentences)})"
             return AlignmentReportCheckStatus.FAIL, message
         else:
-            return AlignmentReportCheckStatus.PASS, ''
-
-
-
+            return AlignmentReportCheckStatus.PASS, ""
