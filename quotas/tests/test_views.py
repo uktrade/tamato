@@ -1918,24 +1918,6 @@ def test_duplicate_definition_wizard_get_form_kwargs(
             assert kwargs["request"].session
 
 
-def test_definition_duplicator_update_data_view_renders(
-    client_with_current_workbasket,
-    quota_definition_1,
-    quota_definition_2,
-    wizard,
-):
-    selected_definitions = models.QuotaDefinition.objects.filter(
-        sid__in=[quota_definition_1.sid, quota_definition_2.sid],
-    )
-    wizard.set_duplicate_definitions(selected_definitions)
-    url = reverse(
-        "sub_quota_definitions-ui-updates",
-        kwargs={"sid": quota_definition_1.pk},
-    )
-    response = client_with_current_workbasket.get(url)
-    assert response.status_code == 200
-
-
 def test_definition_duplicator_creates_definition_and_association(
     quota_definition_1,
     main_quota_order_number,

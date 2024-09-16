@@ -1,3 +1,5 @@
+from datetime import date
+
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Accordion
@@ -1327,25 +1329,30 @@ class SubQuotaDefinitionUpdateForm(SubQuotaDefinitionsUpdatesForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
+        self.workbasket = self.request.user.current_workbasket
         sub_quota_definition_id = kwargs.pop("sid")
         ValidityPeriodForm.__init__(self, *args, **kwargs)
-        self.original_definition = models.QuotaDefinition.objects.latest_approved().get(
-            sid=sub_quota_definition_id,
+        self.original_definition = (
+            models.QuotaDefinition.objects.filter(
+                sid=sub_quota_definition_id,
+            )
+            .last()
+            .latest_version_up_to_workbasket(self.workbasket)
+        )
+        self.sub_quota = self.original_definition.latest_version_up_to_workbasket(
+            self.workbasket,
         )
         self.init_fields()
         self.set_initial_data()
         self.init_layout(self.request)
 
     def set_initial_data(self):
-        workbasket = self.request.user.current_workbasket
-        sub_quota = self.original_definition.latest_version_up_to_workbasket(
-            workbasket,
-        )  # TODO: Can original definition be called something clearer once Charles pr merged
+        # TODO: Can original definition be called something clearer once Charles pr merged
         association = (
             models.QuotaAssociation.objects.all()
-            .filter(sub_quota=sub_quota)
+            .filter(sub_quota__sid=self.sub_quota.sid)
             .last()
-            .latest_version_up_to_workbasket(workbasket)
+            .latest_version_up_to_workbasket(self.workbasket)
         )
         self.original_definition = (
             association.main_quota
@@ -1353,11 +1360,21 @@ class SubQuotaDefinitionUpdateForm(SubQuotaDefinitionsUpdatesForm):
         fields = self.fields
         fields["relationship_type"].initial = association.sub_quota_relation_type
         fields["coefficient"].initial = association.coefficient
-        fields["measurement_unit"].initial = sub_quota.measurement_unit
-        fields["initial_volume"].initial = sub_quota.initial_volume
-        fields["volume"].initial = sub_quota.volume
-        fields["start_date"].initial = sub_quota.valid_between.lower
-        fields["end_date"].initial = sub_quota.valid_between.upper
+        fields["measurement_unit"].initial = self.sub_quota.measurement_unit
+        fields["initial_volume"].initial = self.sub_quota.initial_volume
+        fields["volume"].initial = self.sub_quota.volume
+        fields["start_date"].initial = self.sub_quota.valid_between.lower
+        fields["end_date"].initial = self.sub_quota.valid_between.upper
+
+    def init_fields(self):
+        super().init_fields()
+        if self.sub_quota.valid_between.lower <= date.today():
+            self.fields["coefficient"].disabled = True
+            self.fields["relationship_type"].disabled = True
+            self.fields["start_date"].disabled = True
+            self.fields["initial_volume"].disabled = True
+            self.fields["volume"].disabled = True
+            self.fields["measurement_unit"].disabled = True
 
 
 class QuotaAssociationEdit(forms.ModelForm):

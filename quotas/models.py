@@ -413,11 +413,9 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
                 and self.get_versions().last().transaction.workbasket.status
                 == WorkflowStatus.EDITING
             ):
-                # Edits in WorkBaskets that are in EDITING state get real
-                # changes via DB updates, not newly created UPDATE instances.
-                if self.update_type == UpdateType.CREATE:
-                    action += "-create"
-                elif self.update_type == UpdateType.UPDATE:
+                # There is no edit-create journey for quota definitions so edits of a
+                # newly created object will add a new update object to the workbasket
+                if self.update_type == UpdateType.UPDATE:
                     action += "-update"
 
             url = reverse(

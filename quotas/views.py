@@ -1084,10 +1084,11 @@ class SubQuotaDefinitionAssociationMixin:
     def sub_quota(self):
         return (
             models.QuotaDefinition.objects.all()
-            .latest_approved()
-            .get(
+            .filter(
                 sid=self.kwargs["sid"],
             )
+            .last()
+            .latest_version_up_to_workbasket(self.workbasket)
         )
 
     @property
@@ -1111,6 +1112,7 @@ class SubQuotaDefinitionAssociationEditCreate(
 
     @transaction.atomic
     def get_result_object(self, form):
+        self.original_association = self.association
         instance = super().get_result_object(form)
 
         sub_quota_relation_type = form.cleaned_data.get("relationship_type")
@@ -1123,8 +1125,8 @@ class SubQuotaDefinitionAssociationEditCreate(
     def update_association(self, instance, sub_quota_relation_type, coefficient):
         "Update the association too if there is updated data submitted."  # Is this actually needed? Not sure any other object would prevent an identical update occuring
         if (
-            self.association.sub_quota_relation_type == sub_quota_relation_type
-            and self.association.coefficient == coefficient
+            self.original_association.sub_quota_relation_type == sub_quota_relation_type
+            and self.original_association.coefficient == coefficient
         ):
             return
         form_data = {
@@ -1134,7 +1136,10 @@ class SubQuotaDefinitionAssociationEditCreate(
             "sub_quota_relation_type": sub_quota_relation_type,
         }
 
-        form = forms.QuotaAssociationEdit(data=form_data, instance=self.association)
+        form = forms.QuotaAssociationEdit(
+            data=form_data,
+            instance=self.original_association,
+        )
 
         form.instance.new_version(
             workbasket=WorkBasket.current(self.request),
