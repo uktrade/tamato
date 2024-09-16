@@ -1,8 +1,10 @@
 """Common views."""
 
+import logging
 import os
 import time
 from datetime import datetime
+from datetime import timedelta
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -46,6 +48,8 @@ from regulations.models import Regulation
 from tasks.models import UserAssignment
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
+
+logger = logging.getLogger(__name__)
 
 
 class HomeView(LoginRequiredMixin, FormView):
@@ -416,9 +420,16 @@ class AppInfoView(
         if self.request.user.is_superuser:
             data["GIT_BRANCH"] = os.getenv("GIT_BRANCH", "Unavailable")
             data["GIT_COMMIT"] = os.getenv("GIT_COMMIT", "Unavailable")
-            data["APP_UPDATED_TIME"] = AppInfoView.timestamp_to_datetime_string(
-                os.path.getmtime(__file__),
-            )
+            try:
+                uptime = timedelta(seconds=time.monotonic())
+                formatted_uptime = (
+                    f"{uptime.days} days, {uptime.seconds // 3600} hours, "
+                    f"{uptime.seconds // 60 % 60} minutes"
+                )
+            except Exception() as e:
+                logger.error(e)
+                formatted_uptime = "[Error getting uptime]"
+            data["UPTIME"] = formatted_uptime
             last_transaction = Transaction.objects.order_by("updated_at").last()
             data["LAST_TRANSACTION_TIME"] = (
                 format(
