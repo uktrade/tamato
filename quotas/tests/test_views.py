@@ -1694,6 +1694,73 @@ def test_quota_blocking_confirm_create_view(valid_user_client):
     )
 
 
+def test_quota_definition_view(valid_user_client):
+    """Test all 4 of the quota definition tabs load and display the correct
+    objects."""
+    main_quota_definition = factories.QuotaDefinitionFactory.create(sid=123)
+    sub_quota_definition = factories.QuotaDefinitionFactory.create(sid=234)
+    main_quota = main_quota_definition.order_number
+    association = factories.QuotaAssociationFactory.create(
+        main_quota=main_quota_definition,
+        sub_quota=sub_quota_definition,
+    )
+    blocking = factories.QuotaBlockingFactory.create(
+        quota_definition=main_quota_definition,
+        description="Blocking period description",
+    )
+    suspension = factories.QuotaSuspensionFactory.create(
+        quota_definition=main_quota_definition,
+        description="Suspension period description",
+    )
+
+    # Definition period tab
+    response = valid_user_client.get(
+        reverse("quota_definition-ui-list", kwargs={"sid": main_quota.sid}),
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    sid_cell_text = soup.select(
+        "tbody tr:first-child td:first-child details summary span",
+    )[0].text.strip()
+    assert int(sid_cell_text) == main_quota_definition.sid
+
+    # Sub quotas tab
+    response = valid_user_client.get(
+        reverse(
+            "quota_definition-ui-list-filter",
+            kwargs={"sid": main_quota.sid, "quota_type": "sub_quotas"},
+        ),
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    sid_cell_text = soup.select("tbody tr:first-child td:first-child a")[0].text.strip()
+    assert int(sid_cell_text) == sub_quota_definition.sid
+
+    # Blocking periods tab
+    response = valid_user_client.get(
+        reverse(
+            "quota_definition-ui-list-filter",
+            kwargs={"sid": main_quota.sid, "quota_type": "blocking_periods"},
+        ),
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    description_cell_text = soup.select("tbody tr:first-child td:last-child")[0].text
+    assert description_cell_text == blocking.description
+
+    # Suspension period tab
+    response = valid_user_client.get(
+        reverse(
+            "quota_definition-ui-list-filter",
+            kwargs={"sid": main_quota.sid, "quota_type": "suspension_periods"},
+        ),
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    description_cell_text = soup.select("tbody tr:first-child td:last-child")[0].text
+    assert description_cell_text == suspension.description
+
+
 def test_definition_duplicator_form_wizard_start(client_with_current_workbasket):
     url = reverse("sub_quota_definitions-ui-create", kwargs={"step": "start"})
     response = client_with_current_workbasket.get(url)
