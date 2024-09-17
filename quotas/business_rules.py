@@ -381,9 +381,14 @@ class QA2(ValidityPeriodContained):
 
 def check_QA2_dict(sub_definition_valid_between, main_definition_valid_between):
     """Confirms data is compliant with QA2."""
-    return (
-        sub_definition_valid_between.lower >= main_definition_valid_between.lower
-    ) and (sub_definition_valid_between.upper <= main_definition_valid_between.upper)
+    if main_definition_valid_between.upper:
+        return (
+            sub_definition_valid_between.lower >= main_definition_valid_between.lower
+        ) and (
+            sub_definition_valid_between.upper <= main_definition_valid_between.upper
+        )
+    else:
+        return sub_definition_valid_between.lower >= main_definition_valid_between.lower
 
 
 class QA3(BusinessRule):
@@ -497,7 +502,7 @@ def check_QA5_equivalent_volumes(original_definition, volume=None):
         .order_by("volume")
         .distinct("volume")
         .count()
-        == 1
+        <= 1
     )
 
 
