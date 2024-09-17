@@ -241,7 +241,9 @@ class QuotaDefinitionList(SortingMixin, ListView):
 
     @property
     def sub_quotas(self):
-        return QuotaAssociation.objects.filter(main_quota__order_number=self.quota)
+        return QuotaAssociation.objects.approved_up_to_transaction(
+            self.request.user.current_workbasket.transactions.last(),
+        ).filter(main_quota__order_number=self.quota)
 
     @cached_property
     def quota_data(self):
@@ -1081,26 +1083,20 @@ class SubQuotaDefinitionAssociationMixin:
         )
 
     @property
+    def last_transaction(self):
+        return self.workbasket.transactions.last()
+
+    @property
     def sub_quota(self):
-        return (
-            models.QuotaDefinition.objects.all()
-            .filter(
-                sid=self.kwargs["sid"],
-            )
-            .last()
-            .latest_version_up_to_workbasket(self.workbasket)
-        )
+        return models.QuotaDefinition.objects.approved_up_to_transaction(
+            self.last_transaction,
+        ).get(sid=self.kwargs["sid"])
 
     @property
     def association(self):
-        "Get the main definition from the sub quota sid passed in"
-        # Getting main quota from the sub quota - assuming that a subquota can't be a subquota of multiple different main quotas
-        return (
-            models.QuotaAssociation.objects.all()
-            .filter(sub_quota__sid=self.sub_quota.sid)
-            .last()
-            .latest_version_up_to_workbasket(self.workbasket)
-        )
+        return models.QuotaAssociation.objects.approved_up_to_transaction(
+            self.last_transaction,
+        ).get(sub_quota__sid=self.sub_quota.sid)
 
     def get_main_definition(self):
         return self.association.main_quota
@@ -1124,7 +1120,7 @@ class SubQuotaDefinitionAssociationEditCreate(
         return instance
 
     def update_association(self, instance, sub_quota_relation_type, coefficient):
-        "Update the association too if there is updated data submitted."  # Is this actually needed? Not sure any other object would prevent an identical update occuring
+        "Update the association too if there is updated data submitted."
         if (
             self.original_association.sub_quota_relation_type == sub_quota_relation_type
             and self.original_association.coefficient == coefficient
@@ -1197,10 +1193,8 @@ class SubQuotaConfirmUpdate(TrackedModelDetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        association = (
-            (QuotaAssociation.objects.all().filter(sub_quota__sid=self.object.sid))
-            .last()
-            .latest_version_up_to_workbasket(self.workbasket)
-        )
+        association = QuotaAssociation.objects.approved_up_to_transaction(
+            self.workbasket.transactions.last(),
+        ).get(sub_quota__sid=self.object.sid)
         context["association"] = association
         return context

@@ -17,8 +17,8 @@
     {{ table_rows.append([
       {"text": definition_link },
       {"text": sub_quota_link },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
+      {"text": "{:%d %b %Y}".format(object.sub_quota.latest_version_up_to_workbasket(request.user.current_workbasket).valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(object.sub_quota.latest_version_up_to_workbasket(request.user.current_workbasket).valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
       {"text": edit_link },

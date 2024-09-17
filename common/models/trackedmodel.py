@@ -680,7 +680,7 @@ class TrackedModel(PolymorphicModel, TimestampedMixin):
     def latest_version_up_to_workbasket(self, workbasket):
         """Get the latest version of an object including any draft version in
         the specified workbasket."""
-        versions = self.get_versions()
+        versions = self.get_versions().exclude(update_type=UpdateType.DELETE)
         object_in_workbasket = versions.filter(
             transaction__workbasket=workbasket,
         ).last()
