@@ -515,6 +515,8 @@ class MeasuresBulkEditor(BulkProcessor):
             cleaned_data = self.get_forms_cleaned_data()
             deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
 
+            
+
             new_start_date = cleaned_data.get("start_date", None)
             new_end_date = cleaned_data.get("end_date", False)
             new_quota_order_number = cleaned_data.get("order_number", None)

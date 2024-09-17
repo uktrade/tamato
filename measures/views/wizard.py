@@ -27,6 +27,7 @@ from measures.conditions import show_step_quota_origins
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.creators import MeasuresCreator
+from measures.editors import MeasuresEditor
 from measures.util import update_measure_components
 from measures.util import update_measure_condition_components
 from measures.util import update_measure_excluded_geographical_areas
@@ -153,6 +154,14 @@ class MeasureEditWizard(
         else:
             return self.sync_done(form_list, **kwargs)
 
+    def edit_measures(self, selected_measures, cleaned_data):
+        """Synchronously edit measures within the context of the view / web
+        worker using accumulated data, `cleaned_data`, from all the necessary
+        wizard forms."""
+
+        measures_editor = MeasuresEditor(self.workbasket, selected_measures, cleaned_data)
+        return measures_editor.edit_measures()
+
     def async_done(self, form_list, **kwargs):
         logger.info("Editing measures asynchronously.")
         serializable_data = self.all_serializable_form_data()
@@ -180,71 +189,26 @@ class MeasureEditWizard(
         )
 
     def sync_done(self, form_list, **kwargs):
+        """
+        Handles this wizard's done step to edit measures within the context of
+        the web worker process.
+
+        Because bulk editing measures can be computationally expensive, this can
+        take an excessive amount of time within the context of HTTP request
+        processing.
+        """
+        logger.info("Editing measures synchronously.")
+
         cleaned_data = self.get_all_cleaned_data()
         selected_measures = self.get_queryset()
-        workbasket = WorkBasket.current(self.request)
-        new_start_date = cleaned_data.get("start_date", None)
-        new_end_date = cleaned_data.get("end_date", False)
-        new_quota_order_number = cleaned_data.get("order_number", None)
-        new_generating_regulation = cleaned_data.get("generating_regulation", None)
-        new_duties = cleaned_data.get("duties", None)
-        new_exclusions = [
-            e["excluded_area"]
-            for e in cleaned_data.get("formset-geographical_area_exclusions", [])
-        ]
-        for measure in selected_measures:
-            new_measure = measure.new_version(
-                workbasket=workbasket,
-                update_type=UpdateType.UPDATE,
-                valid_between=TaricDateRange(
-                    lower=(
-                        new_start_date
-                        if new_start_date
-                        else measure.valid_between.lower
-                    ),
-                    upper=(
-                        new_end_date
-                        if new_end_date is not False
-                        else measure.valid_between.upper
-                    ),
-                ),
-                order_number=(
-                    new_quota_order_number
-                    if new_quota_order_number
-                    else measure.order_number
-                ),
-                generating_regulation=(
-                    new_generating_regulation
-                    if new_generating_regulation
-                    else measure.generating_regulation
-                ),
-            )
-            update_measure_components(
-                measure=new_measure,
-                duties=new_duties,
-                workbasket=workbasket,
-            )
-            update_measure_condition_components(
-                measure=new_measure,
-                workbasket=workbasket,
-            )
-            update_measure_excluded_geographical_areas(
-                edited="geographical_area_exclusions"
-                in cleaned_data.get("fields_to_edit", []),
-                measure=new_measure,
-                exclusions=new_exclusions,
-                workbasket=workbasket,
-            )
-            update_measure_footnote_associations(
-                measure=new_measure,
-                workbasket=workbasket,
-            )
+
+        self.edit_measures(selected_measures, cleaned_data)
         self.session_store.clear()
 
         return redirect(
             reverse(
                 "workbaskets:workbasket-ui-review-measures",
-                kwargs={"pk": workbasket.pk},
+                kwargs={"pk": self.workbasket.pk},
             ),
         )
 

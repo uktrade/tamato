@@ -62,7 +62,7 @@ def mocked_sync_diff_components():
     `MeasureEditWizard` to prevent parsing errors where test measures lack a
     duty sentence."""
     with patch(
-        "measures.views.wizard.update_measure_components",
+        "measures.editors.update_measure_components",
     ) as update_measure_components:
         yield update_measure_components
 
