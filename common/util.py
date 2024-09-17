@@ -55,6 +55,12 @@ from psycopg.types.range import TimestampRange
 major, minor, patch = python_version_tuple()
 
 
+def is_cloud_foundry():
+    """Return True if the deployment environment contains a `VCAP_SERVICES` env
+    var, indicating a CloudFoundry environment, False otherwise."""
+    return "VCAP_SERVICES" in os.environ
+
+
 def classproperty(fn):
     return classmethod(property(fn))
 
