@@ -62,7 +62,7 @@ class SQLiteMigrationCurrentDirectory:
 
 
 def try_as_octal(decimal: int):
-    """Attempt cohercing `decimal_int` to an octal representation."""
+    """Attempt coercing `decimal_int` to an octal representation."""
     try:
         return oct(decimal)
     except:
