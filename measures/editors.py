@@ -1,10 +1,11 @@
 from typing import Dict
 from typing import List
+from typing import Type
 
 from django.db.transaction import atomic
 
-from measures.models import Measure
-from workbaskets.models import WorkBasket
+from workbaskets import models as workbasket_models
+from measures import models as measure_models
 from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.models.utils import override_current_transaction
@@ -17,7 +18,7 @@ class MeasuresEditor:
     """Utility class used to edit measures from measures wizard accumulated
     data."""
 
-    workbasket: WorkBasket
+    workbasket: Type["workbasket_models.WorkBasket"]
     """The workbasket with which created measures will be associated."""
 
     selected_measures: List
@@ -27,13 +28,13 @@ class MeasuresEditor:
     """Validated, cleaned and accumulated data created by the Form instances of
     `MeasureEditWizard`."""
 
-    def __init__(self, workbasket: WorkBasket, selected_measures: List, data: Dict):
+    def __init__(self, workbasket: Type["workbasket_models.WorkBasket"], selected_measures: List, data: Dict):
         self.workbasket = workbasket
         self.selected_measures = selected_measures
         self.data = data
 
     @atomic
-    def edit_measures(self) -> List[Measure]:
+    def edit_measures(self) -> List["measure_models.Measure"]:
         """
         Returns a list of the edited measures.
 
