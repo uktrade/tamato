@@ -172,7 +172,7 @@ class Command(BaseCommand):
                 else:
                     total_transactions = len(rendered_envelope.transactions)
                     self.stdout.write(
-                        f"{envelope_file.name} \N{{WHITE HEAVY CHECK MARK}}  XML valid. {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
+                        f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML valid. {total_transactions} transactions, serialized in {time_to_render:.2f} seconds using {envelope_file.tell()} bytes.",
                     )
         if errors:
             sys.exit(1)
