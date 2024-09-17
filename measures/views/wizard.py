@@ -13,12 +13,9 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from formtools.wizard.views import NamedUrlSessionWizardView
 
-from common.util import TaricDateRange
-from common.validators import UpdateType
 from geo_areas import constants
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
-from geo_areas.utils import get_all_members_of_geo_groups
 from geo_areas.validators import AreaCode
 from measures import forms
 from measures import models
@@ -28,10 +25,6 @@ from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.creators import MeasuresCreator
 from measures.editors import MeasuresEditor
-from measures.util import update_measure_components
-from measures.util import update_measure_condition_components
-from measures.util import update_measure_excluded_geographical_areas
-from measures.util import update_measure_footnote_associations
 from measures.views.mixins import MeasureSerializableWizardMixin
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
@@ -154,14 +147,6 @@ class MeasureEditWizard(
         else:
             return self.sync_done(form_list, **kwargs)
 
-    def edit_measures(self, selected_measures, cleaned_data):
-        """Synchronously edit measures within the context of the view / web
-        worker using accumulated data, `cleaned_data`, from all the necessary
-        wizard forms."""
-
-        measures_editor = MeasuresEditor(self.workbasket, selected_measures, cleaned_data)
-        return measures_editor.edit_measures()
-
     def async_done(self, form_list, **kwargs):
         logger.info("Editing measures asynchronously.")
         serializable_data = self.all_serializable_form_data()
@@ -187,6 +172,14 @@ class MeasureEditWizard(
                 kwargs={"pk": self.workbasket.pk},
             ),
         )
+    
+    def edit_measures(self, selected_measures, cleaned_data):
+        """Synchronously edit measures within the context of the view / web
+        worker using accumulated data, `cleaned_data`, from all the necessary
+        wizard forms."""
+
+        measures_editor = MeasuresEditor(self.workbasket, selected_measures, cleaned_data)
+        return measures_editor.edit_measures()
 
     def sync_done(self, form_list, **kwargs):
         """

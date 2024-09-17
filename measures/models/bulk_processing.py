@@ -17,13 +17,8 @@ from django_fsm import transition
 from common.celery import app
 from common.models.mixins import TimestampedMixin
 from common.models.utils import override_current_transaction
-from common.util import TaricDateRange
-from common.validators import UpdateType
 from measures.models.tracked_models import Measure
-from measures.util import update_measure_components
-from measures.util import update_measure_condition_components
-from measures.util import update_measure_excluded_geographical_areas
-from measures.util import update_measure_footnote_associations
+from measures.editors import MeasuresEditor
 
 logger = logging.getLogger(__name__)
 
@@ -509,77 +504,13 @@ class MeasuresBulkEditor(BulkProcessor):
     def edit_measures(self) -> Iterable[Measure]:
         logger.info("INSIDE EDIT MEASURES - BULK PROCESSING")
 
-        with override_current_transaction(
-            transaction=self.workbasket.current_transaction,
-        ):
-            cleaned_data = self.get_forms_cleaned_data()
-            deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
+        cleaned_data = self.get_forms_cleaned_data()
+        deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
+        
 
-            
+        measures_editor = MeasuresEditor(self.workbasket, deserialized_selected_measures, cleaned_data)
+        return measures_editor.edit_measures()
 
-            new_start_date = cleaned_data.get("start_date", None)
-            new_end_date = cleaned_data.get("end_date", False)
-            new_quota_order_number = cleaned_data.get("order_number", None)
-            new_generating_regulation = cleaned_data.get("generating_regulation", None)
-            new_duties = cleaned_data.get("duties", None)
-            new_exclusions = [
-                e["excluded_area"]
-                for e in cleaned_data.get("formset-geographical_area_exclusions", [])
-            ]
-
-            if deserialized_selected_measures:
-                edited_measures = []
-                
-                for measure in deserialized_selected_measures:
-                    new_measure = measure.new_version(
-                        workbasket=self.workbasket,
-                        update_type=UpdateType.UPDATE,
-                        valid_between=TaricDateRange(
-                            lower=(
-                                new_start_date
-                                if new_start_date
-                                else measure.valid_between.lower
-                            ),
-                            upper=(
-                                new_end_date
-                                if new_end_date
-                                else measure.valid_between.upper
-                            ),
-                        ),
-                        order_number=(
-                            new_quota_order_number
-                            if new_quota_order_number
-                            else measure.order_number
-                        ),
-                        generating_regulation=(
-                            new_generating_regulation
-                            if new_generating_regulation
-                            else measure.generating_regulation
-                        ),
-                    )
-                    update_measure_components(
-                        measure=new_measure,
-                        duties=new_duties,
-                        workbasket=self.workbasket,
-                    )
-                    update_measure_condition_components(
-                        measure=new_measure,
-                        workbasket=self.workbasket,
-                    )
-                    update_measure_excluded_geographical_areas(
-                        edited="geographical_area_exclusions"
-                        in cleaned_data.get("fields_to_edit", []),
-                        measure=new_measure,
-                        exclusions=new_exclusions,
-                        workbasket=self.workbasket,
-                    )
-                    update_measure_footnote_associations(
-                        measure=new_measure,
-                        workbasket=self.workbasket,
-                    )
-                    edited_measures.append(new_measure.id)
-
-            return edited_measures
 
     def get_forms_cleaned_data(self) -> Dict:
         """
