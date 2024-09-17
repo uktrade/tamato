@@ -57,8 +57,8 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture()
-def mocked_diff_components():
-    """Mocks `diff_components()` inside `update_measure_components()` in
+def mocked_sync_diff_components():
+    """Mocks `diff_components()` inside `update_measure_components()` that is called in
     `MeasureEditWizard` to prevent parsing errors where test measures lack a
     duty sentence."""
     with patch(
@@ -1837,7 +1837,7 @@ def test_measuretype_api_list_view(valid_user_client):
 def test_multiple_measure_start_and_end_date_edit_functionality(
     valid_user_client,
     user_workbasket,
-    mocked_diff_components,
+    mocked_sync_diff_components,
 ):
     """Tests that MeasureEditWizard takes a list of measures, and sets their
     update type to update, updates their end dates and start dates, and clears
@@ -1973,7 +1973,7 @@ def test_multiple_measure_edit_single_form_functionality(
     expected_data,
     valid_user_client,
     user_workbasket,
-    mocked_diff_components,
+    mocked_sync_diff_components,
 ):
     """Tests that MeasureEditWizard takes a list of measures, and sets their
     update type to update, updates their end dates and start dates, and clears
@@ -2042,7 +2042,7 @@ def test_multiple_measure_edit_single_form_functionality(
 def test_multiple_measure_edit_only_regulation(
     valid_user_client,
     user_workbasket,
-    mocked_diff_components,
+    mocked_sync_diff_components,
 ):
     """Tests the regulation step in MeasureEditWizard."""
     measure_1 = factories.MeasureFactory.create()
@@ -2267,7 +2267,7 @@ def test_measure_list_selected_measures_list(valid_user_client):
 def test_multiple_measure_edit_only_quota_order_number(
     valid_user_client,
     user_workbasket,
-    mocked_diff_components,
+    mocked_sync_diff_components,
 ):
     """Tests the regulation step in MeasureEditWizard."""
     measure_1 = factories.MeasureFactory.create()
@@ -2409,7 +2409,7 @@ def test_multiple_measure_edit_only_duties(
 def test_multiple_measure_edit_preserves_footnote_associations(
     valid_user_client,
     user_workbasket,
-    mocked_diff_components,
+    mocked_sync_diff_components,
 ):
     """Tests that footnote associations are preserved in MeasureEditWizard."""
 
@@ -2485,7 +2485,7 @@ def test_multiple_measure_edit_preserves_footnote_associations(
 def test_multiple_measure_edit_geographical_area_exclusions(
     valid_user_client,
     user_workbasket,
-    mocked_diff_components,
+    mocked_sync_diff_components,
 ):
     """Tests that the geographical area exclusions of multiple measures can be
     edited in `MeasureEditWizard`."""
