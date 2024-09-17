@@ -166,11 +166,12 @@ class SQLiteMigrator:
                 sqlite_env["CELERY_LOG_LEVEL"],
             )
 
-        # Required to make sure the postgres default isn't set as the DB_URL
+        # Set up environment-specific env var values.
         if sqlite_env.get("VCAP_SERVICES"):
             vcap_env = json.loads(sqlite_env["VCAP_SERVICES"])
             vcap_env.pop("postgres", None)
             sqlite_env["VCAP_SERVICES"] = json.dumps(vcap_env)
+            sqlite_env["DATABASE_URL"] = f"sqlite:///{str(self.sqlite_file)}"
         elif sqlite_env.get("COPILOT_ENVIRONMENT_NAME"):
             sqlite_env["DATABASE_CREDENTIALS"] = json.dumps(
                 {
