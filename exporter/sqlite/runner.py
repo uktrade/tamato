@@ -61,14 +61,6 @@ class SQLiteMigrationCurrentDirectory:
             file.unlink()
 
 
-def try_as_octal(decimal: int):
-    """Attempt coercing `decimal_int` to an octal representation."""
-    try:
-        return oct(decimal)
-    except:
-        return decimal
-
-
 class SQLiteMigrationTemporaryDirectory(TemporaryDirectory):
     """
     Context manager class that provides a newly created temporary directory
