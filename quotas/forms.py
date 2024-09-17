@@ -1132,14 +1132,16 @@ class SubQuotaDefinitionsUpdatesForm(
     initial_volume = forms.DecimalField(
         label="Initial volume",
         widget=forms.TextInput(),
+        help_text="The initial volume is the legal balance applied to the definition period.",
         error_messages={
             "invalid": "Initial volume must be a number",
             "required": "Enter the initial volume",
         },
     )
     volume = forms.DecimalField(
-        label="Volume",
+        label="Current volume",
         widget=forms.TextInput(),
+        help_text="The current volume is the starting balance for the quota.",
         error_messages={
             "invalid": "Volume must be a number",
             "required": "Enter the volume",
