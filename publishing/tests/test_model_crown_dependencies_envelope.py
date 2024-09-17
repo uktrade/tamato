@@ -1,5 +1,6 @@
 import pytest
 
+from common.tests.factories import CrownDependenciesEnvelopeFactory
 from notifications.models import Notification
 from publishing.models import ApiPublishingState
 from publishing.models import CrownDependenciesEnvelope
@@ -70,3 +71,41 @@ def test_notify_processing_failed(
 
     Notification.objects.last()
     mocked_send_emails_apply_async.assert_called()
+
+
+@pytest.mark.parametrize(
+    "transition_method, source_state, target_state",
+    [
+        (
+            "publishing_succeeded",
+            ApiPublishingState.CURRENTLY_PUBLISHING,
+            ApiPublishingState.SUCCESSFULLY_PUBLISHED,
+        ),
+        (
+            "publishing_failed",
+            ApiPublishingState.CURRENTLY_PUBLISHING,
+            ApiPublishingState.FAILED_PUBLISHING,
+        ),
+        (
+            "publishing_failed",
+            ApiPublishingState.FAILED_PUBLISHING,
+            ApiPublishingState.FAILED_PUBLISHING,
+        ),
+    ],
+)
+def test_crown_dependencies_envelope_transition_methods(
+    transition_method,
+    source_state,
+    target_state,
+    settings,
+):
+    """Tests that `CrownDependenciesEnvelope` transition methods move
+    `publishing_state` from source_state to target_state."""
+
+    settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
+    envelope = CrownDependenciesEnvelopeFactory.create(
+        publishing_state=source_state,
+    )
+    getattr(envelope, transition_method)()
+    assert envelope.publishing_state == target_state
