@@ -380,10 +380,15 @@ class QA2(ValidityPeriodContained):
 
 
 def check_QA2_dict(sub_definition_valid_between, main_definition_valid_between):
-    """confirms data is compliant with QA2"""
-    return (
-        sub_definition_valid_between.lower >= main_definition_valid_between.lower
-    ) and (sub_definition_valid_between.upper <= main_definition_valid_between.upper)
+    """Confirms data is compliant with QA2."""
+    if main_definition_valid_between.upper:
+        return (
+            sub_definition_valid_between.lower >= main_definition_valid_between.lower
+        ) and (
+            sub_definition_valid_between.upper <= main_definition_valid_between.upper
+        )
+    else:
+        return sub_definition_valid_between.lower >= main_definition_valid_between.lower
 
 
 class QA3(BusinessRule):
@@ -421,10 +426,8 @@ def check_QA3_dict(
     sub_initial_volume,
     main_initial_volume,
 ):
-    """
-    Confirms data is compliant with QA3
-    See note above about changing the unit types.
-    """
+    """Confirms data is compliant with QA3 See note above about changing the
+    unit types."""
     return (
         main_definition_unit == sub_definition_unit
         and sub_definition_volume <= main_definition_volume
@@ -499,7 +502,7 @@ def check_QA5_equivalent_volumes(original_definition, volume=None):
         .order_by("volume")
         .distinct("volume")
         .count()
-        == 1
+        <= 1
     )
 
 
@@ -523,9 +526,11 @@ class QA6(BusinessRule):
 def check_QA6_dict(main_quota, new_relation_type, transaction=None):
     """
     Confirms the provided data is compliant with the above businsess rule.
-    The above test will be re-run so as to separate historic violations, which will require TAP to fix, from a user trying to introduce a new violation.
-    Because the business rule should have been checked and there should only be one type,
-    we can check the new type against any one of the old type
+
+    The above test will be re-run so as to separate historic violations, which
+    will require TAP to fix, from a user trying to introduce a new violation.
+    Because the business rule should have been checked and there should only be
+    one type, we can check the new type against any one of the old type
     """
     relation_type = (
         main_quota.sub_quota_associations.approved_up_to_transaction(
