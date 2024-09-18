@@ -503,9 +503,33 @@ def simple_measures_bulk_creator(
 
 
 @pytest.fixture()
-def mocked_schedule_apply_async():
+def mocked_create_schedule_apply_async():
     with patch(
         "measures.tasks.bulk_create_measures.apply_async",
+        return_value=MagicMock(id=faker.Faker().uuid4()),
+    ) as apply_async_mock:
+        yield apply_async_mock
+
+
+@pytest.fixture()
+def simple_measures_bulk_editor(
+    user_empty_workbasket,
+    approved_transaction,
+):
+    from measures.tests.factories import MeasuresBulkEditorFactory
+
+    return MeasuresBulkEditorFactory.create(
+        form_data={},
+        form_kwargs={},
+        workbasket=user_empty_workbasket,
+        selected_measures=[],
+        user=None,
+    )
+
+@pytest.fixture()
+def mocked_edit_schedule_apply_async():
+    with patch(
+        "measures.tasks.bulk_edit_measures.apply_async",
         return_value=MagicMock(id=faker.Faker().uuid4()),
     ) as apply_async_mock:
         yield apply_async_mock

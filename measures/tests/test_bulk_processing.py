@@ -10,8 +10,10 @@ from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from measures.models import MeasuresBulkCreator
+from measures.models import MeasuresBulkEditor
 from measures.models import ProcessingState
 from measures.tests.factories import MeasuresBulkCreatorFactory
+from measures.tests.factories import MeasuresBulkEditorFactory
 from measures.validators import MeasureExplosionLevel
 
 pytestmark = pytest.mark.django_db
@@ -19,14 +21,14 @@ pytestmark = pytest.mark.django_db
 
 def test_schedule_task_bulk_measures_create(
     simple_measures_bulk_creator,
-    mocked_schedule_apply_async,
+    mocked_create_schedule_apply_async,
 ):
-    """Test that calling MeasuresBulkCreator.shedule() correctly schedules a
+    """Test that calling MeasuresBulkCreator.schedule() correctly schedules a
     Celery task."""
 
     simple_measures_bulk_creator.schedule_task()
 
-    mocked_schedule_apply_async.assert_called_once_with(
+    mocked_create_schedule_apply_async.assert_called_once_with(
         kwargs={
             "measures_bulk_creator_pk": simple_measures_bulk_creator.pk,
         },
@@ -34,9 +36,26 @@ def test_schedule_task_bulk_measures_create(
     )
 
 
+def test_schedule_task_bulk_measures_edit(
+    simple_measures_bulk_editor,
+    mocked_edit_schedule_apply_async,
+):
+    """Test that calling MeasuresBulkCreator.schedule() correctly schedules a
+    Celery task."""
+
+    simple_measures_bulk_editor.schedule_task()
+
+    mocked_edit_schedule_apply_async.assert_called_once_with(
+        kwargs={
+            "measures_bulk_editor_pk": simple_measures_bulk_editor.pk,
+        },
+        countdown=ANY,
+    )
+
+
 def test_REVOKE_TASKS_AND_SET_NULL(
     simple_measures_bulk_creator,
-    mocked_schedule_apply_async,
+    mocked_create_schedule_apply_async,
 ):
     """Test that deleting an object, referenced by a ForeignKey field that has
     `on_delete=BulkProcessor.REVOKE_TASKS_AND_SET_NULL`, correctly revokes any
@@ -57,7 +76,7 @@ def test_REVOKE_TASKS_AND_SET_NULL(
 
 def test_cancel_task(
     simple_measures_bulk_creator,
-    mocked_schedule_apply_async,
+    mocked_create_schedule_apply_async,
 ):
     """Test BulkProcessor.cancel_task() behaviours correctly apply."""
 
@@ -167,6 +186,74 @@ def test_bulk_creator_get_forms_cleaned_data(
         }
 
 
+# Run the form and get the form data from the sync done 
+@patch("measures.parsers.DutySentenceParser")
+def test_bulk_editor_get_forms_cleaned_data(
+    mock_duty_sentence_parser,
+    user_empty_workbasket,
+    duty_sentence_parser,
+):
+
+    mock_duty_sentence_parser.return_value = duty_sentence_parser
+
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+    regulation = factories.RegulationFactory()
+    order_number = factories.QuotaOrderNumberFactory.create()
+
+    selected_measures = [measure_1.pk, measure_2.pk, measure_3.pk]
+
+    form_data = {
+        "start_date": {
+            "start_date_0": 1,
+            "start_date_1": 1,
+            "start_date_2": 2023,
+        },
+        "end_date": {
+            "end_date_0": 2,
+            "end_date_1": 2,
+            "end_date_2": 2026,
+        },
+        "quota_order_number": {"order_number": order_number.pk},
+        "regulation": {"generating_regulation": regulation.pk},
+        "duties": {"duties": '4%'},
+        "geographical_area_exclusions": {
+            "form-0-excluded_area": geo_area1.pk,
+            "form-1-excluded_area": geo_area2.pk
+        }
+    }
+
+    form_kwargs = {
+        "start_date": {'selected_measures': selected_measures},
+        "end_date": {'selected_measures': selected_measures},
+        "quota_order_number": {},
+        "regulation": {'selected_measures': selected_measures},
+        "duties": {'selected_measures': selected_measures},
+        "geographical_area_exclusions": {},
+    }
+
+    mock_bulk_editor = MeasuresBulkEditorFactory.create(
+        form_data=form_data,
+        form_kwargs=form_kwargs,
+        workbasket=user_empty_workbasket,
+        selected_measures=selected_measures,
+        user=None,
+    )
+    with override_current_transaction(user_empty_workbasket.current_transaction):
+        data = mock_bulk_editor.get_forms_cleaned_data()
+        assert data == {
+            "start_date": datetime.date(2023, 1, 1),
+            "end_date": datetime.date(2026, 2, 2),
+            "generating_regulation": regulation,
+            "order_number": order_number,
+            "duties": '4%',
+            "formset-geographical_area_exclusions": [{'excluded_area': geo_area1, 'DELETE': False }, {'excluded_area': geo_area2, 'DELETE': False }]
+        }
+
+
 @patch("measures.parsers.DutySentenceParser")
 @patch("measures.forms.wizard.LarkDutySentenceParser")
 def test_bulk_creator_get_forms_cleaned_data_errors(
@@ -225,3 +312,60 @@ def test_bulk_creator_get_forms_cleaned_data_errors(
     with override_current_transaction(user_empty_workbasket.current_transaction):
         with pytest.raises(ValidationError):
             mock_bulk_creator.get_forms_cleaned_data()
+
+
+@patch("measures.parsers.DutySentenceParser")
+def test_bulk_editor_get_forms_cleaned_data_errors(
+    mock_duty_sentence_parser,
+    user_empty_workbasket,
+    duty_sentence_parser,
+):
+    mock_duty_sentence_parser.return_value = duty_sentence_parser
+
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+
+    selected_measures = [measure_1.pk, measure_2.pk, measure_3.pk]
+
+    form_data = {
+        "start_date": {
+            "start_date_0": "",
+            "start_date_1": "",
+            "start_date_2": "",
+        },
+        "end_date": {
+            "end_date_0": "",
+            "end_date_1": "",
+            "end_date_2": "",
+        },
+        "quota_order_number": {"order_number": ""},
+        "regulation": {"generating_regulation": ""},
+        "duties": {"duties": ''},
+        "geographical_area_exclusions": {
+            "form-0-excluded_area": "",
+            "form-1-excluded_area": ""
+        }
+    }
+
+    form_kwargs = {
+        "start_date": {'selected_measures': selected_measures},
+        "end_date": {'selected_measures': selected_measures},
+        "quota_order_number": {},
+        "regulation": {'selected_measures': selected_measures},
+        "duties": {'selected_measures': selected_measures},
+        "geographical_area_exclusions": {},
+    }
+
+    mock_bulk_editor = MeasuresBulkEditorFactory.create(
+        form_data=form_data,
+        form_kwargs=form_kwargs,
+        workbasket=user_empty_workbasket,
+        selected_measures=selected_measures,
+        user=None,
+    )
+
+    with override_current_transaction(user_empty_workbasket.current_transaction):
+        with pytest.raises(ValidationError):
+            mock_bulk_editor.get_forms_cleaned_data()
+

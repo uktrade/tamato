@@ -504,12 +504,15 @@ class MeasuresBulkEditor(BulkProcessor):
     def edit_measures(self) -> Iterable[Measure]:
         logger.info("INSIDE EDIT MEASURES - BULK PROCESSING")
 
-        cleaned_data = self.get_forms_cleaned_data()
-        deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
-        
-
-        measures_editor = MeasuresEditor(self.workbasket, deserialized_selected_measures, cleaned_data)
-        return measures_editor.edit_measures()
+        with override_current_transaction(
+            transaction=self.workbasket.current_transaction,
+        ):
+            cleaned_data = self.get_forms_cleaned_data()
+            deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
+            
+            logger.info(f"GET FORMS CLEANED DATA: {cleaned_data}")
+            measures_editor = MeasuresEditor(self.workbasket, deserialized_selected_measures, cleaned_data)
+            return measures_editor.edit_measures()
 
 
     def get_forms_cleaned_data(self) -> Dict:
