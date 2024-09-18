@@ -510,7 +510,6 @@ class MeasuresBulkEditor(BulkProcessor):
             cleaned_data = self.get_forms_cleaned_data()
             deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
             
-            logger.info(f"GET FORMS CLEANED DATA: {cleaned_data}")
             measures_editor = MeasuresEditor(self.workbasket, deserialized_selected_measures, cleaned_data)
             return measures_editor.edit_measures()
 
