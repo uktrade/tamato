@@ -148,7 +148,6 @@ class TestPreferentialQuotaOrderNumberCreateUpdateForm:
         assert "quota_order_number" in target.errors.keys()
 
     def test_clean_coefficient_no_main_order(self):
-        factories.PreferentialQuotaOrderNumberFactory()
         pref_quota_order_number = factories.PreferentialQuotaOrderNumberFactory()
 
         data = {
