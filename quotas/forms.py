@@ -1097,6 +1097,9 @@ class SelectedDefinitionsForm(forms.Form):
 class SubQuotaDefinitionsUpdatesForm(
     ValidityPeriodForm,
 ):
+    """Form used to edit duplicated sub quota definitions and associations as
+    part of the sub-quota create journey."""
+
     class Meta:
         model = models.QuotaDefinition
         fields = [
@@ -1324,34 +1327,27 @@ class SubQuotaDefinitionsUpdatesForm(
         )
 
 
-class SubQuotaDefinitionUpdateForm(SubQuotaDefinitionsUpdatesForm):
-    # TODO: Need to rename this function and give it a docstring
+class SubQuotaDefinitionAssociationUpdateForm(SubQuotaDefinitionsUpdatesForm):
+    """Form used to update sub-quota definitions and associations as part of the
+    edit sub-quotas journey."""
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
         self.workbasket = self.request.user.current_workbasket
-        sub_quota_definition_id = kwargs.pop("sid")
+        sub_quota_definition_sid = kwargs.pop("sid")
         ValidityPeriodForm.__init__(self, *args, **kwargs)
-        self.original_definition = (
-            models.QuotaDefinition.objects.approved_up_to_transaction(
-                self.workbasket.transactions.last(),
-            ).get(sid=sub_quota_definition_id)
-        )
-        self.sub_quota = self.original_definition.latest_version_up_to_workbasket(
-            self.workbasket,
-        )
+        self.sub_quota = models.QuotaDefinition.objects.approved_up_to_transaction(
+            self.workbasket.transactions.last(),
+        ).get(sid=sub_quota_definition_sid)
         self.init_fields()
         self.set_initial_data()
         self.init_layout(self.request)
 
     def set_initial_data(self):
-        # TODO: Can original definition be called something clearer once Charles pr merged
         association = models.QuotaAssociation.objects.approved_up_to_transaction(
             self.workbasket.transactions.last(),
         ).get(sub_quota__sid=self.sub_quota.sid)
-        self.original_definition = (
-            association.main_quota
-        )  # TODO: This is messy making original definition something now main quota
+        self.original_definition = association.main_quota
         fields = self.fields
         fields["relationship_type"].initial = association.sub_quota_relation_type
         fields["coefficient"].initial = association.coefficient

@@ -116,7 +116,7 @@ def test_quota_delete_form(factory, use_delete_form):
 def test_quota_detail_views(
     view,
     url_pattern,
-    valid_user_client,
+    client_with_current_workbasket,
     mock_quota_api_no_data,
 ):
     """Verify that quota detail views are under the url quotas and don't return
@@ -124,7 +124,7 @@ def test_quota_detail_views(
     assert_model_view_renders(
         view,
         url_pattern,
-        valid_user_client,
+        client_with_current_workbasket,
         override_models={"quotas.views.QuotaDefinitionCreate": models.QuotaOrderNumber},
     )
 
@@ -389,17 +389,20 @@ def test_quota_event_api_list_view(valid_user_client):
     )
 
 
-def test_quota_definitions_list_200(valid_user_client, quota_order_number):
+def test_quota_definitions_list_200(client_with_current_workbasket, quota_order_number):
     factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     assert response.status_code == 200
 
 
-def test_quota_definitions_list_no_quota_data(valid_user_client, quota_order_number):
+def test_quota_definitions_list_no_quota_data(
+    client_with_current_workbasket,
+    quota_order_number,
+):
     factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
 
     url = (
@@ -410,13 +413,16 @@ def test_quota_definitions_list_no_quota_data(valid_user_client, quota_order_num
     with mock.patch(
         "common.tariffs_api.get_quota_definitions_data",
     ) as mock_get_quotas:
-        response = valid_user_client.get(url)
+        response = client_with_current_workbasket.get(url)
         mock_get_quotas.assert_not_called()
 
     assert response.status_code == 200
 
 
-def test_quota_definitions_list_sids(valid_user_client, quota_order_number):
+def test_quota_definitions_list_sids(
+    client_with_current_workbasket,
+    quota_order_number,
+):
     definitions = factories.QuotaDefinitionFactory.create_batch(
         5,
         order_number=quota_order_number,
@@ -424,7 +430,7 @@ def test_quota_definitions_list_sids(valid_user_client, quota_order_number):
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     sids = {
@@ -437,12 +443,15 @@ def test_quota_definitions_list_sids(valid_user_client, quota_order_number):
     assert not sids.difference(object_sids)
 
 
-def test_quota_definitions_list_title(valid_user_client, quota_order_number):
+def test_quota_definitions_list_title(
+    client_with_current_workbasket,
+    quota_order_number,
+):
     factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     title = soup.select("h1")[0].text
@@ -450,7 +459,7 @@ def test_quota_definitions_list_title(valid_user_client, quota_order_number):
 
 
 def test_quota_definitions_list_current_versions(
-    valid_user_client,
+    client_with_current_workbasket,
     approved_transaction,
 ):
     quota_order_number = factories.QuotaOrderNumberFactory()
@@ -477,7 +486,7 @@ def test_quota_definitions_list_current_versions(
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     num_definitions = len(
@@ -515,7 +524,7 @@ def test_quota_definitions_list_current_measures(
 
 
 def test_quota_definitions_list_edit_delete(
-    valid_user_client,
+    client_with_current_workbasket,
     date_ranges,
     mock_quota_api_no_data,
 ):
@@ -537,7 +546,7 @@ def test_quota_definitions_list_edit_delete(
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     actions = [item.text for item in soup.select("table tbody tr td:last-child")]
@@ -557,7 +566,7 @@ def test_quota_definitions_list_edit_delete(
 
 
 def test_quota_definitions_list_sort_by_start_date(
-    valid_user_client,
+    client_with_current_workbasket,
     date_ranges,
 ):
     """Test that quota definitions list can be sorted by start date in ascending
@@ -575,7 +584,9 @@ def test_quota_definitions_list_sort_by_start_date(
     )
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(f"{url}?sort_by=valid_between&ordered=asc")
+    response = client_with_current_workbasket.get(
+        f"{url}?sort_by=valid_between&ordered=asc",
+    )
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     definition_sids = [
@@ -584,7 +595,9 @@ def test_quota_definitions_list_sort_by_start_date(
     ]
     assert definition_sids == [definition1.sid, definition2.sid]
 
-    response = valid_user_client.get(f"{url}?sort_by=valid_between&ordered=desc")
+    response = client_with_current_workbasket.get(
+        f"{url}?sort_by=valid_between&ordered=desc",
+    )
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     definition_sids = [
@@ -697,7 +710,7 @@ def test_quota_detail_sub_quota_tab(
 
 def test_current_quota_order_number_returned(
     workbasket,
-    valid_user_client,
+    client_with_current_workbasket,
     mock_quota_api_no_data,
     date_ranges,
 ):
@@ -713,7 +726,7 @@ def test_current_quota_order_number_returned(
         valid_between=date_ranges.normal,
     )
     url = reverse("quota_definition-ui-list", kwargs={"sid": current_version.sid})
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     assert response.status_code == 200
 
@@ -1694,7 +1707,7 @@ def test_quota_blocking_confirm_create_view(valid_user_client):
     )
 
 
-def test_quota_definition_view(valid_user_client):
+def test_quota_definition_view(client_with_current_workbasket):
     """Test all 4 of the quota definition tabs load and display the correct
     objects."""
     main_quota_definition = factories.QuotaDefinitionFactory.create(sid=123)
@@ -1714,7 +1727,7 @@ def test_quota_definition_view(valid_user_client):
     )
 
     # Definition period tab
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse("quota_definition-ui-list", kwargs={"sid": main_quota.sid}),
     )
     assert response.status_code == 200
@@ -1725,7 +1738,7 @@ def test_quota_definition_view(valid_user_client):
     assert int(sid_cell_text) == main_quota_definition.sid
 
     # Sub quotas tab
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse(
             "quota_definition-ui-list-filter",
             kwargs={"sid": main_quota.sid, "quota_type": "sub_quotas"},
@@ -1737,7 +1750,7 @@ def test_quota_definition_view(valid_user_client):
     assert int(sid_cell_text) == sub_quota_definition.sid
 
     # Blocking periods tab
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse(
             "quota_definition-ui-list-filter",
             kwargs={"sid": main_quota.sid, "quota_type": "blocking_periods"},
@@ -1749,7 +1762,7 @@ def test_quota_definition_view(valid_user_client):
     assert description_cell_text == blocking.description
 
     # Suspension period tab
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse(
             "quota_definition-ui-list-filter",
             kwargs={"sid": main_quota.sid, "quota_type": "suspension_periods"},

@@ -1068,7 +1068,7 @@ class QuotaBlockingConfirmCreate(TrackedModelDetailView):
 
 class SubQuotaDefinitionAssociationMixin:
     template_name = "quota-definitions/sub-quota-definitions-updates.jinja"
-    form_class = forms.SubQuotaDefinitionUpdateForm
+    form_class = forms.SubQuotaDefinitionAssociationUpdateForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
