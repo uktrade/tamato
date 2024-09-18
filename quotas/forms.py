@@ -1150,6 +1150,7 @@ class SubQuotaDefinitionsUpdatesForm(
     )
 
     measurement_unit = forms.ModelChoiceField(
+        label="Measurement unit",
         queryset=MeasurementUnit.objects.current().order_by("code"),
         error_messages={"required": "Select the measurement unit"},
     )

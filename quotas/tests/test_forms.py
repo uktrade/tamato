@@ -12,10 +12,11 @@ from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from geo_areas.validators import AreaCode
-from quotas import models
 from quotas import forms
+from quotas import models
 from quotas import validators
-from quotas.models import QuotaBlocking, QuotaDefinition
+from quotas.models import QuotaBlocking
+from quotas.models import QuotaDefinition
 from quotas.models import QuotaSuspension
 from quotas.serializers import serialize_duplicate_data
 
@@ -432,13 +433,15 @@ def test_quota_suspension_or_blockling_create_form_save(
 
 @pytest.fixture
 def main_quota_order_number() -> models.QuotaOrderNumber:
-    """Provides a main quota order number for use across the fixtures and following tests"""
+    """Provides a main quota order number for use across the fixtures and
+    following tests."""
     return factories.QuotaOrderNumberFactory()
 
 
 @pytest.fixture
 def quota_definition_1(main_quota_order_number, date_ranges) -> QuotaDefinition:
-    """Provides a definition, linked to the main_quota_order_number to be used across the following tests"""
+    """Provides a definition, linked to the main_quota_order_number to be used
+    across the following tests."""
     return factories.QuotaDefinitionFactory.create(
         order_number=main_quota_order_number,
         valid_between=date_ranges.normal,
@@ -450,11 +453,13 @@ def quota_definition_1(main_quota_order_number, date_ranges) -> QuotaDefinition:
 
 
 def test_select_sub_quota_form_set_staged_definition_data(
-    quota_definition_1, session_request
+    quota_definition_1,
+    session_request,
 ):
     session_request.path = ""
     form = forms.SelectSubQuotaDefinitionsForm(
-        request=session_request, prefix="select_definition_periods"
+        request=session_request,
+        prefix="select_definition_periods",
     )
     quotas = models.QuotaDefinition.objects.all()
     with override_current_transaction(Transaction.objects.last()):
@@ -473,13 +478,15 @@ pass the previous rule check. More extensive testing is in test_business_rules.p
 
 
 def test_quota_duplicator_form_clean_QA2(
-    date_ranges, session_request, quota_definition_1
+    date_ranges,
+    session_request,
+    quota_definition_1,
 ):
     staged_definition_data = [
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
     session_request.session["staged_definition_data"] = staged_definition_data
 
@@ -510,7 +517,7 @@ def test_quota_duplicator_form_clean_QA3(session_request, quota_definition_1):
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
 
     data = {
@@ -544,7 +551,7 @@ def test_quota_duplicator_form_clean_QA4(session_request, quota_definition_1):
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
 
     data = {
@@ -579,7 +586,7 @@ def test_quota_duplicator_form_clean_QA5_nm(session_request, quota_definition_1)
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
 
     data = {
@@ -615,7 +622,7 @@ def test_quota_duplicator_form_clean_QA5_eq(session_request, quota_definition_1)
         {
             "main_definition": quota_definition_1.pk,
             "sub_definition_staged_data": serialize_duplicate_data(quota_definition_1),
-        }
+        },
     ]
 
     data = {
@@ -644,3 +651,104 @@ def test_quota_duplicator_form_clean_QA5_eq(session_request, quota_definition_1)
             "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1"
             in form.errors["__all__"]
         )
+
+
+def test_sub_quota_update_form_valid(session_request_with_workbasket, date_ranges):
+    """Test that when the sub-quota update form initialises correctly and is
+    valid when valid data is passed in."""
+    main_quota = factories.QuotaDefinitionFactory.create()
+    sub_quota = factories.QuotaDefinitionFactory.create()
+    association = factories.QuotaAssociationFactory.create(
+        main_quota=main_quota,
+        sub_quota=sub_quota,
+    )
+    form = forms.SubQuotaDefinitionAssociationUpdateForm(
+        instance=sub_quota,
+        request=session_request_with_workbasket,
+        sid=sub_quota.sid,
+    )
+    assert float(form.fields["coefficient"].initial) == association.coefficient
+    assert (
+        form.fields["relationship_type"].initial == association.sub_quota_relation_type
+    )
+    assert form.fields["measurement_unit"].initial == sub_quota.measurement_unit
+    assert form.fields["initial_volume"].initial == sub_quota.initial_volume
+    assert form.fields["volume"].initial == sub_quota.volume
+    assert form.fields["start_date"].initial == sub_quota.valid_between.lower
+    assert form.fields["end_date"].initial == sub_quota.valid_between.upper
+    main_quota = factories.QuotaDefinitionFactory.create()
+    sub_quota = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    association = factories.QuotaAssociationFactory.create(
+        main_quota=main_quota,
+        sub_quota=sub_quota,
+    )
+    data = {
+        "start_date_0": sub_quota.valid_between.lower.day,
+        "start_date_1": sub_quota.valid_between.lower.month,
+        "start_date_2": sub_quota.valid_between.lower.year,
+        "end_date_0": sub_quota.valid_between.upper.day,
+        "end_date_1": sub_quota.valid_between.upper.month,
+        "end_date_2": sub_quota.valid_between.upper.year,
+        "measurement_unit": sub_quota.measurement_unit,
+        "volume": sub_quota.volume / 2,
+        "initial_volume": sub_quota.initial_volume / 2,
+        "coefficient": 1,
+        "relationship_type": "NM",
+    }
+
+    with override_current_transaction(sub_quota.transaction):
+        form = forms.SubQuotaDefinitionAssociationUpdateForm(
+            data=data,
+            instance=sub_quota,
+            request=session_request_with_workbasket,
+            sid=sub_quota.sid,
+        )
+        # assert 0
+        assert form.is_valid()
+
+
+def test_sub_quota_update_form_invalid():
+    """Test that the sub-quota update form is invalid when invalid data is
+    passed in."""
+
+
+def test_quota_association_edit_form_valid():
+    "Test that the quota association edit form is valid when valid data is passed in."
+    association = factories.QuotaAssociationFactory.create(
+        coefficient=1.67,
+        sub_quota_relation_type="EQ",
+    )
+
+    data = {
+        "coefficient": 1.5,
+        "sub_quota_relation_type": "EQ",
+        "main_quota": association.main_quota,
+        "sub_quota": association.sub_quota,
+    }
+    form = forms.QuotaAssociationEdit(data=data, instance=association)
+
+    assert form.is_valid()
+
+
+def test_quota_association_edit_form_invalid():
+    "Test that the quota association edit form is invalid when data is passed in."
+    association = factories.QuotaAssociationFactory.create(
+        coefficient=1.67,
+        sub_quota_relation_type="EQ",
+    )
+
+    data = {
+        "coefficient": "String",
+        "sub_quota_relation_type": "Equivalent",
+        "main_quota": association.main_quota,
+        "sub_quota": association.sub_quota,
+    }
+    form = forms.QuotaAssociationEdit(data=data, instance=association)
+    assert (
+        "Select a valid choice. Equivalent is not one of the available choices."
+        in form.errors["sub_quota_relation_type"]
+    )
+    assert "Enter a number." in form.errors["coefficient"]
+    assert not form.is_valid()
