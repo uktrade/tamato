@@ -26,7 +26,7 @@ from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from measures.models import Measure
 from tasks.models import Comment
-from tasks.models import UserAssignment
+from tasks.models import TaskAssignee
 from workbaskets import models
 from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
@@ -286,13 +286,13 @@ def test_workbasket_assignments_appear(valid_user_client):
     # Fully assign the workbasket
     task = factories.TaskFactory.create(workbasket=workbasket)
 
-    worker_assignment = factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+    worker_assignment = factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
         task=task,
         user=worker,
     )
-    reviewer_assignment = factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+    reviewer_assignment = factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
         user=reviewer,
     )
@@ -329,12 +329,12 @@ def test_select_workbasket_filtering(
 
     task = factories.TaskFactory.create(workbasket=fully_assigned_workbasket)
 
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+    factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+    factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     # Create an unassigned workbasket
@@ -344,15 +344,15 @@ def test_select_workbasket_filtering(
     reviewer_task = factories.TaskFactory.create(
         workbasket=reviewer_assigned_workbasket,
     )
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+    factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
         task=reviewer_task,
     )
     # Create a workbasket with only a worker assigned
     worker_assigned_workbasket = factories.WorkBasketFactory.create(id=4)
     worker_task = factories.TaskFactory.create(workbasket=worker_assigned_workbasket)
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+    factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
         task=worker_task,
     )
 
@@ -2260,12 +2260,12 @@ def test_disabled_packaging_for_unassigned_workbasket(
 
     # Assign the workbasket so it can now be packaged
     task = factories.TaskFactory.create(workbasket=user_empty_workbasket)
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+    factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+    factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
 
@@ -2277,7 +2277,7 @@ def test_disabled_packaging_for_unassigned_workbasket(
 
 def test_workbasket_assign_users_view(valid_user, valid_user_client, user_workbasket):
     valid_user.user_permissions.add(
-        Permission.objects.get(codename="add_userassignment"),
+        Permission.objects.get(codename="add_taskassignee"),
     )
     response = valid_user_client.get(
         reverse(
@@ -2303,7 +2303,7 @@ def test_workbasket_assign_users_view_without_permission(client, user_workbasket
 
 def test_workbasket_unassign_users_view(valid_user, valid_user_client, user_workbasket):
     valid_user.user_permissions.add(
-        Permission.objects.get(codename="change_userassignment"),
+        Permission.objects.get(codename="change_taskassignee"),
     )
     response = valid_user_client.get(
         reverse(

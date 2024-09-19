@@ -141,7 +141,6 @@ TAMATO_APPS = [
     "exporter.apps.ExporterConfig",
     "crispy_forms",
     "crispy_forms_gds",
-    "workflow",
 ]
 
 APPS_THAT_MUST_COME_LAST = ["django.forms"]

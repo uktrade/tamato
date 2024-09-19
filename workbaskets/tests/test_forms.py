@@ -1,7 +1,7 @@
 import pytest
 
 from common.tests import factories
-from tasks.models import UserAssignment
+from tasks.models import TaskAssignee
 from workbaskets import forms
 from workbaskets.validators import tops_jira_number_validator
 
@@ -129,7 +129,7 @@ def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbas
     users = factories.UserFactory.create_batch(2, is_superuser=True)
     data = {
         "users": users,
-        "assignment_type": UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        "assignment_type": TaskAssignee.AssignmentType.WORKBASKET_WORKER,
     }
 
     form = forms.WorkBasketAssignUsersForm(
@@ -142,7 +142,7 @@ def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbas
     task = factories.TaskFactory.create(workbasket=user_workbasket)
     form.assign_users(task=task)
     for user in users:
-        assert UserAssignment.objects.get(user=user, task=task, assigned_by=valid_user)
+        assert TaskAssignee.objects.get(user=user, task=task)
 
 
 def test_workbasket_assign_users_form_required_fields(rf, valid_user, user_workbasket):
@@ -166,13 +166,13 @@ def test_workbasket_unassign_users_form_unassigns_users(
 ):
     request = rf.request()
     request.user = valid_user
-    assignments = factories.UserAssignmentFactory.create_batch(
+    assignees = factories.TaskAssigneeFactory.create_batch(
         2,
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
         task__workbasket=user_workbasket,
     )
     data = {
-        "assignments": assignments,
+        "assignees": assignees,
     }
 
     form = forms.WorkBasketUnassignUsersForm(
@@ -183,9 +183,9 @@ def test_workbasket_unassign_users_form_unassigns_users(
     assert form.is_valid()
 
     form.unassign_users()
-    for assignment in assignments:
-        assignment.refresh_from_db()
-        assert not assignment.is_assigned
+    for assignee in assignees:
+        assignee.refresh_from_db()
+        assert not assignee.is_assigned
 
 
 def test_workbasket_unassign_users_form_required_fields(
@@ -202,7 +202,7 @@ def test_workbasket_unassign_users_form_required_fields(
         data={},
     )
     assert not form.is_valid()
-    assert f"Select one or more users to unassign" in form.errors["assignments"]
+    assert f"Select one or more users to unassign" in form.errors["assignees"]
 
 
 def test_workbasket_comment_create_form(assigned_workbasket):

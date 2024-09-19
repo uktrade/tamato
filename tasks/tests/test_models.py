@@ -1,58 +1,156 @@
 import pytest
+from django.db.utils import IntegrityError
 
-from tasks.models import UserAssignment
+from common.tests.factories import CategoryFactory
+from common.tests.factories import ProgressStateFactory
+from common.tests.factories import TaskFactory
+from tasks.models import ProgressState
+from tasks.models import TaskAssignee
+from tasks.models import TaskLog
 
 pytestmark = pytest.mark.django_db
 
 
-def test_user_assignment_unassign_user_classmethod(user_assignment):
-    user = user_assignment.user
-    task = user_assignment.task
+def test_task_category_uniqueness():
+    name = "Most favoured nation"
+    CategoryFactory.create(name=name)
+    with pytest.raises(IntegrityError):
+        CategoryFactory.create(name=name)
 
-    assert UserAssignment.unassign_user(user=user, task=task)
+
+def test_task_progress_state_uniqueness():
+    name = "Blocked"
+    ProgressState.objects.create(name=name)
+    with pytest.raises(IntegrityError):
+        ProgressState.objects.create(name=name)
+
+
+def test_task_assignee_unassign_user_classmethod(task_assignee):
+    user = task_assignee.user
+    task = task_assignee.task
+
+    assert TaskAssignee.unassign_user(user=user, task=task)
     # User has already been unassigned
-    assert not UserAssignment.unassign_user(user=user, task=task)
+    assert not TaskAssignee.unassign_user(user=user, task=task)
 
 
-def test_user_assignment_assigned_queryset(
-    user_assignment,
+def test_task_assignee_assigned_queryset(
+    task_assignee,
 ):
-    assert UserAssignment.objects.assigned().count() == 1
+    assert TaskAssignee.objects.assigned().count() == 1
 
-    user = user_assignment.user
-    task = user_assignment.task
-    UserAssignment.unassign_user(user=user, task=task)
+    user = task_assignee.user
+    task = task_assignee.task
+    TaskAssignee.unassign_user(user=user, task=task)
 
-    assert not UserAssignment.objects.assigned()
+    assert not TaskAssignee.objects.assigned()
 
 
-def test_user_assignment_unassigned_queryset(
-    user_assignment,
+def test_task_assignee_unassigned_queryset(
+    task_assignee,
 ):
-    assert not UserAssignment.objects.unassigned()
+    assert not TaskAssignee.objects.unassigned()
 
-    user = user_assignment.user
-    task = user_assignment.task
-    UserAssignment.unassign_user(user=user, task=task)
+    user = task_assignee.user
+    task = task_assignee.task
+    TaskAssignee.unassign_user(user=user, task=task)
 
-    assert UserAssignment.objects.unassigned().count() == 1
+    assert TaskAssignee.objects.unassigned().count() == 1
 
 
-def test_user_assignment_workbasket_workers_queryset(
-    workbasket_worker_assignment,
-    workbasket_reviewer_assignment,
+def test_task_assignee_workbasket_workers_queryset(
+    workbasket_worker_assignee,
+    workbasket_reviewer_assignee,
 ):
-    workbasket_workers = UserAssignment.objects.workbasket_workers()
+    workbasket_workers = TaskAssignee.objects.workbasket_workers()
 
     assert workbasket_workers.count() == 1
-    assert workbasket_worker_assignment in workbasket_workers
+    assert workbasket_worker_assignee in workbasket_workers
 
 
-def test_user_assignment_workbasket_reviewers_queryset(
-    workbasket_worker_assignment,
-    workbasket_reviewer_assignment,
+def test_task_assignee_workbasket_reviewers_queryset(
+    workbasket_worker_assignee,
+    workbasket_reviewer_assignee,
 ):
-    workbasket_reviewers = UserAssignment.objects.workbasket_reviewers()
+    workbasket_reviewers = TaskAssignee.objects.workbasket_reviewers()
 
     assert workbasket_reviewers.count() == 1
-    assert workbasket_reviewer_assignment in workbasket_reviewers
+    assert workbasket_reviewer_assignee in workbasket_reviewers
+
+
+def test_create_task_log_task_assigned():
+    task = TaskFactory.create()
+    instigator = task.creator
+    action = TaskLog.AuditActionType.TASK_ASSIGNED
+    task_log = TaskLog.objects.create(
+        task=task,
+        action=action,
+        instigator=instigator,
+        assignee=instigator,
+    )
+
+    assert task_log.task == task
+    assert task_log.instigator == instigator
+    assert task_log.action == action
+    assert task_log.description == f"{instigator} assigned {instigator}"
+
+
+def test_create_task_log_task_unassigned():
+    task = TaskFactory.create()
+    instigator = task.creator
+    action = TaskLog.AuditActionType.TASK_UNASSIGNED
+    task_log = TaskLog.objects.create(
+        task=task,
+        action=action,
+        instigator=instigator,
+        assignee=instigator,
+    )
+
+    assert task_log.task == task
+    assert task_log.instigator == instigator
+    assert task_log.action == action
+    assert task_log.description == f"{instigator} unassigned {instigator}"
+
+
+def test_create_task_log_progress_state_updated():
+    task = TaskFactory.create()
+    instigator = task.creator
+    action = TaskLog.AuditActionType.PROGRESS_STATE_UPDATED
+    progress_state = ProgressStateFactory.create()
+    task_log = TaskLog.objects.create(
+        task=task,
+        action=action,
+        instigator=instigator,
+        progress_state=progress_state,
+    )
+
+    assert task_log.task == task
+    assert task_log.instigator == instigator
+    assert task_log.action == action
+    assert (
+        task_log.description == f"{instigator} changed the status to {progress_state}"
+    )
+
+
+def test_create_task_log_invalid_audit_action():
+    task = TaskFactory.create()
+    instigator = task.creator
+    action = "INVALID_AUDIT_ACTION"
+
+    with pytest.raises(ValueError) as error:
+        TaskLog.objects.create(task=task, action=action, instigator=instigator)
+    assert f"The action '{action}' is an invalid TaskLog.AuditActionType value." in str(
+        error,
+    )
+
+
+def test_create_task_log_missing_kwargs():
+    task = TaskFactory.create()
+    instigator = task.creator
+    action = TaskLog.AuditActionType.TASK_ASSIGNED
+
+    with pytest.raises(ValueError) as error:
+        TaskLog.objects.create(task=task, action=action, instigator=instigator)
+    assert f"Missing 'assignee' in kwargs for action '{action}'." in str(
+        error,
+    )
