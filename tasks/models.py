@@ -14,13 +14,13 @@ class Task(TimestampedMixin):
     title = models.CharField(max_length=255)
     description = models.TextField()
     category = models.ForeignKey(
-        "TaskCategory",
+        "Category",
         blank=True,
         null=True,
         on_delete=models.PROTECT,
     )
     progress_state = models.ForeignKey(
-        "TaskProgressState",
+        "ProgressState",
         on_delete=models.PROTECT,
     )
     parent_task = models.ForeignKey(
@@ -48,7 +48,7 @@ class Task(TimestampedMixin):
         return self.title
 
 
-class TaskCategory(models.Model):
+class Category(models.Model):
     name = models.CharField(
         max_length=255,
         unique=True,
@@ -56,13 +56,13 @@ class TaskCategory(models.Model):
 
     class Meta:
         ordering = ["name"]
-        verbose_name_plural = "task categories"
+        verbose_name_plural = "categories"
 
     def __str__(self):
         return self.name
 
 
-class TaskProgressState(models.Model):
+class ProgressState(models.Model):
     class State(models.TextChoices):
         TO_DO = "TO_DO", "To do"
         IN_PROGRESS = "IN_PROGRESS", "In progress"

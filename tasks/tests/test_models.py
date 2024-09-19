@@ -1,28 +1,28 @@
 import pytest
 from django.db.utils import IntegrityError
 
-from common.tests.factories import TaskCategoryFactory
+from common.tests.factories import CategoryFactory
+from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
-from common.tests.factories import TaskProgressStateFactory
+from tasks.models import ProgressState
 from tasks.models import TaskAssignee
 from tasks.models import TaskLog
-from tasks.models import TaskProgressState
 
 pytestmark = pytest.mark.django_db
 
 
 def test_task_category_uniqueness():
     name = "Most favoured nation"
-    TaskCategoryFactory.create(name=name)
+    CategoryFactory.create(name=name)
     with pytest.raises(IntegrityError):
-        TaskCategoryFactory.create(name=name)
+        CategoryFactory.create(name=name)
 
 
 def test_task_progress_state_uniqueness():
     name = "Blocked"
-    TaskProgressState.objects.create(name=name)
+    ProgressState.objects.create(name=name)
     with pytest.raises(IntegrityError):
-        TaskProgressState.objects.create(name=name)
+        ProgressState.objects.create(name=name)
 
 
 def test_task_assignee_unassign_user_classmethod(task_assignee):
@@ -116,7 +116,7 @@ def test_create_task_log_progress_state_updated():
     task = TaskFactory.create()
     instigator = task.creator
     action = TaskLog.AuditActionType.PROGRESS_STATE_UPDATED
-    progress_state = TaskProgressStateFactory.create()
+    progress_state = ProgressStateFactory.create()
     task_log = TaskLog.objects.create(
         task=task,
         action=action,

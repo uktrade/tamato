@@ -30,8 +30,8 @@ from measures.validators import MeasureTypeCombination
 from measures.validators import OrderNumberCaptureCode
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
+from tasks.models import ProgressState
 from tasks.models import TaskAssignee
-from tasks.models import TaskProgressState
 from workbaskets.validators import WorkflowStatus
 
 User = get_user_model()
@@ -1534,26 +1534,26 @@ class CrownDependenciesEnvelopeFailedNotificationFactory(
         model = "notifications.CrownDependenciesEnvelopeFailedNotification"
 
 
-class TaskCategoryFactory(factory.django.DjangoModelFactory):
+class CategoryFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("word")
 
     class Meta:
-        model = "tasks.TaskCategory"
+        model = "tasks.Category"
 
 
-class TaskProgressStateFactory(factory.django.DjangoModelFactory):
-    name = FuzzyChoice(TaskProgressState.State.values)
+class ProgressStateFactory(factory.django.DjangoModelFactory):
+    name = FuzzyChoice(ProgressState.State.values)
 
     class Meta:
-        model = "tasks.TaskProgressState"
+        model = "tasks.ProgressState"
         django_get_or_create = ("name",)
 
 
 class TaskFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("sentence")
     description = factory.Faker("sentence")
-    category = factory.SubFactory(TaskCategoryFactory)
-    progress_state = factory.SubFactory(TaskProgressStateFactory)
+    category = factory.SubFactory(CategoryFactory)
+    progress_state = factory.SubFactory(ProgressStateFactory)
     workbasket = factory.SubFactory(WorkBasketFactory)
     creator = factory.SubFactory(UserFactory)
 
