@@ -97,7 +97,7 @@ urlpatterns = [
     ),
     path(
         f"quotas/sub_quotas_definition_update/<sid>",
-        views.SubQuotaDefinitionAssociationEditCreate.as_view(),
+        views.SubQuotaDefinitionAssociationUpdate.as_view(),
         name="sub_quota_definition-edit",
     ),
     path(

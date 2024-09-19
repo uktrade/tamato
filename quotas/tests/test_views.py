@@ -2041,3 +2041,135 @@ def test_format_date(wizard):
     date_str = "2021-01-01"
     formatted_date = wizard.format_date(date_str)
     assert formatted_date == "01 Jan 2021"
+
+
+@pytest.fixture
+def sub_quota_association(date_ranges):
+    sub_quota = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.future,
+        is_physical=True,
+        initial_volume=1234,
+        volume=1234,
+        measurement_unit=factories.MeasurementUnitFactory(),
+    )
+    main_quota = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.future,
+        volume=9999,
+        initial_volume=9999,
+        measurement_unit=sub_quota.measurement_unit,
+    )
+    association = factories.QuotaAssociationFactory.create(
+        sub_quota=sub_quota,
+        main_quota=main_quota,
+        sub_quota_relation_type="EQ",
+        coefficient=1.5,
+    )
+    return association
+
+
+def test_sub_quota_update(sub_quota_association, client_with_current_workbasket):
+    """Test that SubQuotaDefinitionAssociationUpdate returns 200 and creates an
+    update object for sub-quota definition and association."""
+    sub_quota = sub_quota_association.sub_quota
+    response = client_with_current_workbasket.get(
+        reverse("sub_quota_definition-edit", kwargs={"sid": sub_quota.sid}),
+    )
+    assert response.status_code == 200
+
+    form_data = {
+        "coefficient": 1.2,
+        "start_date_0": sub_quota.valid_between.lower.day,
+        "start_date_1": sub_quota.valid_between.lower.month,
+        "start_date_2": sub_quota.valid_between.lower.year,
+        "measurement_unit": sub_quota.measurement_unit.pk,
+        "relationship_type": "EQ",
+        "end_date_0": sub_quota.valid_between.lower.day,
+        "end_date_1": sub_quota.valid_between.lower.month,
+        "end_date_2": sub_quota.valid_between.lower.year,
+        "volume": 100,
+        "initial_volume": 100,
+    }
+    response = client_with_current_workbasket.post(
+        reverse("sub_quota_definition-edit", kwargs={"sid": sub_quota.sid}),
+        form_data,
+    )
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "sub_quota_definition-confirm-update",
+        kwargs={"sid": sub_quota.sid},
+    )
+    tx = Transaction.objects.last()
+    sub_quota_association = models.QuotaAssociation.objects.approved_up_to_transaction(
+        tx,
+    ).get(sub_quota__sid=sub_quota.sid)
+    assert str(sub_quota_association.coefficient) == "1.20000"
+    assert sub_quota_association.sub_quota.volume == 100
+    assert sub_quota_association.update_type == UpdateType.UPDATE
+    assert sub_quota_association.sub_quota.update_type == UpdateType.UPDATE
+
+
+def test_sub_quota_edit_update(sub_quota_association, client_with_current_workbasket):
+    """Test that SubQuotaDefinitionAssociationEditUpdate returns 200 and
+    overwrites the update objects for the sub-quota definition and
+    association."""
+    # Call the previous test first to create the objects and some update instances of them
+    test_sub_quota_update(sub_quota_association, client_with_current_workbasket)
+    sub_quota = sub_quota_association.sub_quota
+    response = client_with_current_workbasket.get(
+        reverse("sub_quota_definition-edit-update", kwargs={"sid": sub_quota.sid}),
+    )
+    assert response.status_code == 200
+
+    form_data = {
+        "coefficient": 1,
+        "start_date_0": sub_quota.valid_between.lower.day,
+        "start_date_1": sub_quota.valid_between.lower.month,
+        "start_date_2": sub_quota.valid_between.lower.year,
+        "measurement_unit": sub_quota.measurement_unit.pk,
+        "relationship_type": "NM",
+        "end_date_0": sub_quota.valid_between.lower.day,
+        "end_date_1": sub_quota.valid_between.lower.month,
+        "end_date_2": sub_quota.valid_between.lower.year,
+        "volume": 200,
+        "initial_volume": 200,
+    }
+    response = client_with_current_workbasket.post(
+        reverse("sub_quota_definition-edit-update", kwargs={"sid": sub_quota.sid}),
+        form_data,
+    )
+    assert response.status_code == 302
+    # Assert that the update instances have been edited rather than creating another 2 update instances
+    tx = Transaction.objects.last()
+    sub_quota_association = models.QuotaAssociation.objects.approved_up_to_transaction(
+        tx,
+    ).get(sub_quota__sid=sub_quota.sid)
+    assert str(sub_quota_association.coefficient) == "1.00000"
+    assert sub_quota_association.sub_quota.volume == 200
+    sub_quota_definitions = models.QuotaDefinition.objects.all().filter(
+        sid=sub_quota.sid,
+    )
+    sub_quota_associations = models.QuotaAssociation.objects.all().filter(
+        sub_quota__sid=sub_quota.sid,
+    )
+    assert len(sub_quota_definitions) == 2
+    assert len(sub_quota_associations) == 2
+    assert sub_quota_definitions[1].update_type == UpdateType.UPDATE
+    assert sub_quota_associations[1].update_type == UpdateType.UPDATE
+
+
+def test_sub_quota_confirm_update_page(
+    client_with_current_workbasket,
+    sub_quota_association,
+):
+    sub_quota = sub_quota_association.sub_quota
+    response = client_with_current_workbasket.get(
+        reverse(
+            "sub_quota_definition-confirm-update",
+            kwargs={"sid": sub_quota.sid},
+        ),
+    )
+    workbasket = response.context_data["view"].workbasket
+    assert (
+        f"Sub-quota definition: {sub_quota.sid} and association have been updated in workbasket {workbasket.pk}"
+        in str(response.content)
+    )

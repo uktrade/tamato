@@ -17,7 +17,7 @@
 {% block panel %}
   {{ govukPanel({
     "titleText": "Sub-" ~ object._meta.verbose_name ~ ": " ~ object|string,
-    "text": "Sub-" ~ object._meta.verbose_name ~ ": " ~ object|string ~ " and association has been updated in workbasket " ~ request.user.current_workbasket.pk,
+    "text": "Sub-" ~ object._meta.verbose_name ~ ": " ~ object|string ~ " and association have been updated in workbasket " ~ request.user.current_workbasket.pk,
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}

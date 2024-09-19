@@ -672,8 +672,8 @@ def test_quota_duplicator_form_clean_QA5_eq(session_request, quota_definition_1)
 
 
 def test_sub_quota_update_form_valid(session_request_with_workbasket, sub_quota):
-    """Test that when the sub-quota update form initialises correctly and is
-    valid when valid data is passed in."""
+    """Test that the sub-quota update form initialises correctly and is valid
+    when valid data is passed in."""
     main_quota = factories.QuotaDefinitionFactory.create(
         volume=9999,
         initial_volume=9999,

@@ -1102,7 +1102,7 @@ class SubQuotaDefinitionAssociationMixin:
         return self.association.main_quota
 
 
-class SubQuotaDefinitionAssociationEditCreate(
+class SubQuotaDefinitionAssociationUpdate(
     SubQuotaDefinitionAssociationMixin,
     QuotaDefinitionUpdate,
 ):
