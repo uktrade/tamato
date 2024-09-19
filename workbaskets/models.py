@@ -409,6 +409,12 @@ class WorkBasket(TimestampedMixin):
         reviewer, otherwise False."""
         return self.worker_assignments.exists() and self.reviewer_assignments.exists()
 
+    def contains_only_licensed_quotas(self) -> bool:
+        """Returns True if a workbasket only contains licensed quotas, False
+        otherwise."""
+        # TODO: perform necessary checks to ensure only licensed quotas.
+        return True
+
     @transition(
         field=status,
         source=WorkflowStatus.EDITING,
@@ -450,6 +456,32 @@ class WorkBasket(TimestampedMixin):
     )
     def queue(self, user: int, scheme_name: str):
         """Add workbasket to packaging queue."""
+        self.full_clean()
+
+        if not self.transactions.exists():
+            return
+
+        if self.unchecked_or_errored_transactions.exists():
+            raise ValidationError(
+                "Transactions have not yet been fully checked or contain errors",
+            )
+
+        self.approve(user, scheme_name)
+
+    @transition(
+        field=status,
+        source=WorkflowStatus.EDITING,
+        target=WorkflowStatus.PUBLISHED,
+        conditions=[contains_only_licensed_quotas, is_fully_assigned],
+        custom={"label": "Published licensed quotas."},
+    )
+    def publish_licensed_quotas(self, user: int, scheme_name: str):
+        """
+        Publish workbaskets that contain only licensed quotas.
+
+        This is a special case of workbasket publishing that doesn't generate an
+        envelope for downstream consumption.
+        """
         self.full_clean()
 
         if not self.transactions.exists():
