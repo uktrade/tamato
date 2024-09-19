@@ -324,11 +324,24 @@ def mock_request(rf, valid_user, valid_user_client):
     request.requests_session = requests.Session()
     return request
 
+@pytest.fixture()
+def measure_edit_start_date_form_data():
+    return {"start_date": datetime.date(2023, 1, 1)}
+
+
+@pytest.fixture()
+def measure_edit_end_date_form_data():
+    return {"end_date": datetime.date(2026, 2, 2)}
+
 
 @pytest.fixture()
 def measure_regulation_id_form_data():
     return {"generating_regulation": factories.RegulationFactory.create().pk}
 
+
+@pytest.fixture()
+def measure_edit_regulation_form_data():
+    return {"generating_regulation": factories.RegulationFactory.create()}
 
 @pytest.fixture()
 def measure_details_form_data(date_ranges):
@@ -485,6 +498,11 @@ def measure_geo_area_geo_group_exclusions_form_data(erga_omnes):
         f"{constants.GEO_GROUP_PREFIX}-geographical_area_group": geo_group.pk,
         "geo_group_exclusions_formset-0-geo_group_exclusion": geo_area1.pk,
     }
+
+
+@pytest.fixture()
+def measure_edit_duties_form_data():
+    return {"duties": '4%'}
 
 
 @pytest.fixture()
