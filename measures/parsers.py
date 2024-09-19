@@ -41,6 +41,11 @@ from measures.models import MeasurementUnitQualifier
 from measures.models import MonetaryUnit
 from measures.util import convert_eur_to_gbp
 
+
+import logging
+logger = logging.getLogger(__name__)
+
+
 # Used to represent percentage or currency values.
 Amount = Decimal
 
@@ -135,7 +140,7 @@ class DutySentenceParser:
         duty_expressions: Iterable[DutyExpression],
         monetary_units: Iterable[MonetaryUnit],
         permitted_measurements: Iterable[Measurement],
-        component_output: Type[TrackedModel] = MeasureComponent,
+        component_output_type: Type[TrackedModel] = MeasureComponent,
     ):
         # Decimal numbers are a sequence of digits (without a left-trailing zero)
         # followed optionally by a decimal point and a number of digits (we have seen
@@ -173,6 +178,8 @@ class DutySentenceParser:
             """Matches a string prefix and returns the associated type id, along
             with any parsed amounts and units according to their applicability,
             as a 4-tuple of (id, amount, monetary unit, measurement)."""
+
+            logger.info("INSIDE COMPONENT")
             prefix = duty_exp.prefix
             has_amount = duty_exp.duty_amount_applicability_code
             has_measurement = duty_exp.measurement_unit_applicability_code
@@ -211,7 +218,7 @@ class DutySentenceParser:
                 and has_measurement != ApplicabilityCode.NOT_PERMITTED
                 else component
             ).parsecmap(
-                lambda exp: component_output(
+                lambda exp: component_output_type(
                     duty_expression=exp[0],
                     duty_amount=exp[1],
                     monetary_unit=exp[2],
