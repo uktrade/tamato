@@ -9,7 +9,6 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
-from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.template.loader import render_to_string
@@ -17,6 +16,7 @@ from django.urls import reverse_lazy
 
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
+from common.forms import ExtraErrorFormMixin
 from common.forms import FormSet
 from common.forms import FormSetField
 from common.forms import FormSetSubmitMixin
@@ -49,6 +49,65 @@ SAFEGUARD_HELP_TEXT = (
 )
 START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
 ORDER_NUMBER_HELP_TEXT = "The order number must begin with 05 and be 6 digits long. Licensed quotas must begin 054 and safeguards must begin 058"
+
+
+class QuotaOriginsReactMixin:
+    """Custom cleaning and validation for QuotaUpdateForm and
+    QuotaOrderNumberCreateForm."""
+
+    def clean_quota_origins(self):
+        # unprefix origins formset
+        submitted_data = unprefix_formset_data(
+            QUOTA_ORIGINS_FORMSET_PREFIX,
+            self.data.copy(),
+        )
+        # for each origin, unprefix exclusions formset
+        for i, origin_data in enumerate(submitted_data):
+            exclusions = unprefix_formset_data(
+                QUOTA_EXCLUSIONS_FORMSET_PREFIX,
+                origin_data.copy(),
+            )
+            submitted_data[i]["exclusions"] = exclusions
+
+        self.cleaned_data["origins"] = []
+
+        for i, origin_data in enumerate(submitted_data):
+            # instantiate a form per origin data to do validation
+            origin_form = QuotaOrderNumberOriginUpdateReactForm(
+                data=origin_data,
+                initial=origin_data,
+                instance=(
+                    models.QuotaOrderNumberOrigin.objects.get(pk=origin_data["pk"])
+                    if origin_data.get("pk")
+                    else None
+                ),
+            )
+
+            cleaned_exclusions = []
+
+            for exclusion in origin_data["exclusions"]:
+                exclusion_form = QuotaOriginExclusionsReactForm(
+                    data=exclusion,
+                    initial=exclusion,
+                )
+                if not exclusion_form.is_valid():
+                    for j, item in enumerate(exclusion_form.errors.as_data().items()):
+                        self.add_extra_error(
+                            f"{QUOTA_ORIGINS_FORMSET_PREFIX}-{i}-exclusions-{j}-{item[0]}",
+                            item[1],
+                        )
+                else:
+                    cleaned_exclusions.append(exclusion_form.cleaned_data)
+
+            if not origin_form.is_valid():
+                for field, e in origin_form.errors.as_data().items():
+                    self.add_extra_error(
+                        f"{QUOTA_ORIGINS_FORMSET_PREFIX}-{i}-{field}",
+                        e,
+                    )
+            else:
+                origin_form.cleaned_data["exclusions"] = cleaned_exclusions
+                self.cleaned_data["origins"].append(origin_form.cleaned_data)
 
 
 class QuotaFilterForm(forms.Form):
@@ -107,6 +166,8 @@ QuotaOriginExclusionsFormSet = formset_factory(
 
 
 class QuotaUpdateForm(
+    QuotaOriginsReactMixin,
+    ExtraErrorFormMixin,
     ValidityPeriodForm,
     forms.ModelForm,
 ):
@@ -204,89 +265,8 @@ class QuotaUpdateForm(
 
         return initial
 
-    def add_extra_error(self, field, error):
-        """
-        A modification of Django's add_error method that allows us to add data
-        to self._errors under custom keys that are not field names or
-        NON_FIELD_ERRORS.
-
-        Used to pass errors to the React form.
-        """
-        if not isinstance(error, ValidationError):
-            error = ValidationError(error)
-
-        if hasattr(error, "error_dict"):
-            if field is not None:
-                raise TypeError(
-                    "The argument `field` must be `None` when the `error` "
-                    "argument contains errors for multiple fields.",
-                )
-            else:
-                error = error.error_dict
-        else:
-            error = {field or NON_FIELD_ERRORS: error.error_list}
-
-        for field, error_list in error.items():
-            if field not in self.errors:
-                self._errors[field] = self.error_class()
-            self._errors[field].extend(error_list)
-            if field in self.cleaned_data:
-                del self.cleaned_data[field]
-
     def clean(self):
-        # unprefix origins formset
-        submitted_data = unprefix_formset_data(
-            QUOTA_ORIGINS_FORMSET_PREFIX,
-            self.data.copy(),
-        )
-        # for each origin, unprefix exclusions formset
-        for i, origin_data in enumerate(submitted_data):
-            exclusions = unprefix_formset_data(
-                QUOTA_EXCLUSIONS_FORMSET_PREFIX,
-                origin_data.copy(),
-            )
-            submitted_data[i]["exclusions"] = exclusions
-
-        self.cleaned_data["origins"] = []
-
-        for i, origin_data in enumerate(submitted_data):
-            # instantiate a form per origin data to do validation
-            origin_form = QuotaOrderNumberOriginUpdateReactForm(
-                data=origin_data,
-                initial=origin_data,
-                instance=(
-                    models.QuotaOrderNumberOrigin.objects.get(pk=origin_data["pk"])
-                    if origin_data.get("pk")
-                    else None
-                ),
-            )
-
-            cleaned_exclusions = []
-
-            for exclusion in origin_data["exclusions"]:
-                exclusion_form = QuotaOriginExclusionsReactForm(
-                    data=exclusion,
-                    initial=exclusion,
-                )
-                if not exclusion_form.is_valid():
-                    for field, e in exclusion_form.errors.as_data().items():
-                        self.add_extra_error(
-                            f"{QUOTA_ORIGINS_FORMSET_PREFIX}-{i}-{field}",
-                            e,
-                        )
-                else:
-                    cleaned_exclusions.append(exclusion_form.cleaned_data)
-
-            if not origin_form.is_valid():
-                for field, e in origin_form.errors.as_data().items():
-                    self.add_extra_error(
-                        f"{QUOTA_ORIGINS_FORMSET_PREFIX}-{i}-{field}",
-                        e,
-                    )
-            else:
-                origin_form.cleaned_data["exclusions"] = cleaned_exclusions
-                self.cleaned_data["origins"].append(origin_form.cleaned_data)
-
+        self.clean_quota_origins()
         return super().clean()
 
     def init_layout(self, request):
@@ -326,7 +306,6 @@ class QuotaUpdateForm(
                         ),
                     ),
                 ),
-                css_class="govuk-width-!-two-thirds",
             ),
             Submit(
                 "submit",
@@ -338,6 +317,7 @@ class QuotaUpdateForm(
 
 
 class QuotaOrderNumberCreateForm(
+    QuotaOriginsReactMixin,
     ValidityPeriodForm,
     forms.ModelForm,
 ):
@@ -375,23 +355,39 @@ class QuotaOrderNumberCreateForm(
     )
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
+        self.exclusions_options = kwargs.pop("exclusions_options")
+        self.geo_area_options = kwargs.pop("geo_area_options")
+        self.groups_with_members = kwargs.pop("groups_with_members")
         super().__init__(*args, **kwargs)
         self.init_fields()
-        self.init_layout()
+        self.init_layout(self.request)
 
     def init_fields(self):
         self.fields["start_date"].help_text = START_DATE_HELP_TEXT
 
-    def init_layout(self):
+    def init_layout(self, request):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
+
+        origins_html = render_to_string(
+            "includes/quotas/quota-create-origins.jinja",
+            {
+                "object": self.instance,
+                "request": request,
+                "geo_area_options": self.geo_area_options,
+                "groups_with_members": self.groups_with_members,
+                "exclusions_options": self.exclusions_options,
+                "errors": self.errors,
+            },
+        )
 
         self.helper.layout = Layout(
             Accordion(
                 AccordionSection(
                     "Order number",
-                    "order_number",
+                    Field("order_number", css_class="govuk-input--width-20"),
                 ),
                 AccordionSection(
                     "Validity",
@@ -402,6 +398,12 @@ class QuotaOrderNumberCreateForm(
                     "Category and mechanism",
                     "category",
                     "mechanism",
+                ),
+                AccordionSection(
+                    "Quota origins",
+                    Div(
+                        HTML(origins_html),
+                    ),
                 ),
                 css_class="govuk-width-!-two-thirds",
             ),
@@ -442,6 +444,8 @@ class QuotaOrderNumberCreateForm(
             raise ValidationError(
                 "The order number for safeguard quotas must begin with 058",
             )
+
+        self.clean_quota_origins()
 
         return super().clean()
 
