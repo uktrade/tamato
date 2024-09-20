@@ -404,22 +404,20 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     def slugify_model_name(cls):
         return cls._meta.verbose_name.replace(" ", "_")
 
-    def get_association_edit_url(self, action):
+    def get_association_edit_url(self):
         """Get the edit url for the sub quota definition and association edit
-        journey."""
+        journey by checking if it has been updated in an 'EDITING' status
+        workbasket."""
+        url = "sub_quota_definition-edit"
         try:
-            if (
-                action == "edit"
-                and self.get_versions().last().transaction.workbasket.status
-                == WorkflowStatus.EDITING
-            ):
+            if self.transaction.workbasket.status == WorkflowStatus.EDITING:
                 # There is no edit-create journey for quota definitions so edits of a
                 # newly created object will add a new update object to the workbasket
                 if self.update_type == UpdateType.UPDATE:
-                    action += "-update"
+                    url += "-update"
 
             url = reverse(
-                f"sub_quota_definition-{action}",
+                url,
                 kwargs={"sid": self.sid},
             )
             return url

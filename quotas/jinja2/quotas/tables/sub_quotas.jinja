@@ -12,7 +12,7 @@
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}">{{ object.sub_quota.order_number.order_number }}</a>
     {% endset %}
     {% set edit_link -%}
-      <a class="govuk-link" href="{{ object.sub_quota.get_association_edit_url('edit') }}">Edit</a>
+      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
     {% endset %}
     {{ table_rows.append([
       {"text": definition_link },

@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -1080,6 +1081,25 @@ class SubQuotaDefinitionAssociationMixin:
         kwargs["request"] = self.request
         return kwargs
 
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Should a user land on the form for a definition which is not a sub-
+        quota, perform a redirect.
+
+        This is not possible with current user journeys but this is included for
+        security and test purposes.
+        """
+        try:
+            self.association
+        except models.QuotaAssociation.DoesNotExist:
+            return HttpResponseRedirect(
+                reverse(
+                    "quota-ui-detail",
+                    kwargs={"sid": self.sub_quota.order_number.sid},
+                ),
+            )
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
         return reverse(
             "sub_quota_definition-confirm-update",
@@ -1192,10 +1212,31 @@ class SubQuotaConfirmUpdate(TrackedModelDetailView):
     model = models.QuotaDefinition
     template_name = "quota-definitions/sub-quota-definitions-confirm-update.jinja"
 
+    @property
+    def association(self):
+        return QuotaAssociation.objects.approved_up_to_transaction(
+            self.workbasket.transactions.last(),
+        ).get(sub_quota__sid=self.kwargs["sid"])
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        association = QuotaAssociation.objects.approved_up_to_transaction(
-            self.workbasket.transactions.last(),
-        ).get(sub_quota__sid=self.object.sid)
-        context["association"] = association
+        context["association"] = self.association
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Should a user land on the this page for a definition which is not a sub-
+        quota, perform a redirect.
+
+        This is not possible with current user journeys but this is included for
+        security and test purposes.
+        """
+        try:
+            self.association
+        except models.QuotaAssociation.DoesNotExist:
+            return HttpResponseRedirect(
+                reverse(
+                    "quota-ui-list",
+                ),
+            )
+        return super().dispatch(request, *args, **kwargs)

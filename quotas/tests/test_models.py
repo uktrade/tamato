@@ -179,7 +179,7 @@ def test_get_association_edit_url(workbasket):
         sid=987654321,
     )
     exp_path = reverse("sub_quota_definition-edit", kwargs={"sid": definition.sid})
-    assert definition.get_association_edit_url("edit") == exp_path
+    assert definition.get_association_edit_url() == exp_path
 
     definition.new_version(workbasket=workbasket, update_type=UpdateType.UPDATE)
     updated_definition_instance = definition.version_at(workbasket.transactions.last())
@@ -187,4 +187,4 @@ def test_get_association_edit_url(workbasket):
         "sub_quota_definition-edit-update",
         kwargs={"sid": definition.sid},
     )
-    assert updated_definition_instance.get_association_edit_url("edit") == exp_path
+    assert updated_definition_instance.get_association_edit_url() == exp_path
