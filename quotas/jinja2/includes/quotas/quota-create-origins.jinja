@@ -2,7 +2,7 @@
 
 <script nonce="{{ request.csp_nonce }}">
   {# data used by react form component: common/static/common/js/components/QuotaOriginFormset/index.js #}
-  const originsData = [];
+  const originsData = {{origins_initial|safe}};
   const originsErrors = {
     {% for k, errorlist in errors.as_data().items() %}
       "{{ k }}": "{% for errors in errorlist %}{% for error in errors %}{{ error|safe }}{% if not loop.last %}\n{% endif %}{% endfor %}{% endfor %}",

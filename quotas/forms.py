@@ -365,6 +365,17 @@ class QuotaOrderNumberCreateForm(
     def init_fields(self):
         self.fields["start_date"].help_text = START_DATE_HELP_TEXT
 
+    def get_origins_initial(self):
+        # if we just submitted the form, overwrite initial with submitted data
+        # this prevents newly added origin data being cleared if the form does not pass validation
+        initial = []
+        if self.data.get("submit"):
+            initial = unprefix_formset_data(
+                QUOTA_ORIGINS_FORMSET_PREFIX,
+                self.data.copy(),
+            )
+        return initial
+
     def init_layout(self, request):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -378,6 +389,7 @@ class QuotaOrderNumberCreateForm(
                 "geo_area_options": self.geo_area_options,
                 "groups_with_members": self.groups_with_members,
                 "exclusions_options": self.exclusions_options,
+                "origins_initial": self.get_origins_initial(),
                 "errors": self.errors,
             },
         )
