@@ -23,6 +23,7 @@ if this implementation is high
 and joins as TAP its self does - removing the need to run queries in SQL which has been problematic, and is
 difficult to maintain.
 """
+
 import os
 import shutil
 from itertools import chain
