@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import typing
@@ -54,8 +55,51 @@ from psycopg.types.range import TimestampRange
 major, minor, patch = python_version_tuple()
 
 
+def is_cloud_foundry():
+    """Return True if the deployment environment contains a `VCAP_SERVICES` env
+    var, indicating a CloudFoundry environment, False otherwise."""
+    return "VCAP_SERVICES" in os.environ
+
+
 def classproperty(fn):
     return classmethod(property(fn))
+
+
+def database_url_from_env(environment_key: str) -> str:
+    """
+    Return a database URL string from the environment variable identified by
+    `environment_key`. The environment variable should be parsable as a
+    JSON-like string and may contain the keys:
+
+        "engine" (Required) - database engine id. For instance "postgres" or "sqlite".
+        "username" (Optional if "password" is not present) - database user name.
+        "password" (Optional) - database user's password.
+        "host" (Optional if "port" is not present) - database hostname.
+        "port" (Optional) - database host port.
+        "dbname" (Required) - database name.
+
+    If all keys are present, then the returned result would be a string of the
+    form:
+
+        <engine>://<username>:<password>@<host>:<port>/<dbname>
+
+    This is a plug-in, less naive version of
+    `dbt_copilot_python.database.database_url_from_env()` making `username`,
+    `password`, `host` and `port` an optional as described above.
+    """
+    config = json.loads(os.environ[environment_key])
+
+    username = config.get("username", "")
+    password = config.get("password")
+    host = config.get("host", "")
+    port = config.get("port")
+
+    config["username"] = username
+    config["password"] = f":{password}" if username and password else ""
+    config["host"] = f"@{host}" if (username or password) and host else host
+    config["port"] = f":{port}" if host and port else ""
+
+    return "{engine}://{username}{password}{host}{port}/{dbname}".format(**config)
 
 
 def is_truthy(value: Union[str, bool]) -> bool:

@@ -244,6 +244,69 @@ def test_quota_update_react_form_cleaned_data(session_request_with_workbasket):
         assert len(form.cleaned_data["origins"][0]["exclusions"]) == 2
 
 
+def test_quota_update_exclusions_origins_errors(session_request_with_workbasket):
+    quota = factories.QuotaOrderNumberFactory.create()
+    geo_group = factories.GeoGroupFactory.create()
+    area_1 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    area_2 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    area_3 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    factories.GeographicalAreaFactory.create()
+    # create geo area group with members to be excluded
+    data = {
+        "category": quota.category,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+        "end_date_0": 1,
+        "end_date_1": 1,
+        "end_date_2": 2010,
+        "origins-0-geographical_area": quota.quotaordernumberorigin_set.first().geographical_area.pk,
+        "origins-0-start_date_0": 1,
+        "origins-0-start_date_1": 1,
+        "origins-0-start_date_2": 2000,
+        "origins-0-end_date_0": 1,
+        "origins-0-end_date_1": 1,
+        # invalid end date
+        "origins-0-end_date_2": 1999,
+        "origins-0-exclusions-0-geographical_area": area_1.pk,
+        # invalid exclusion
+        "origins-0-exclusions-1-geographical_area": "foo",
+        "submit": "Save",
+    }
+
+    tx = Transaction.objects.last()
+
+    with override_current_transaction(tx):
+        geo_area_options = (
+            GeographicalArea.objects.all()
+            .prefetch_related("descriptions")
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .order_by("description")
+        )
+        existing_origins = (
+            quota.quotaordernumberorigin_set.current().with_latest_geo_area_description()
+        )
+        form = forms.QuotaUpdateForm(
+            data=data,
+            instance=quota,
+            initial={},
+            request=session_request_with_workbasket,
+            geo_area_options=geo_area_options,
+            existing_origins=existing_origins,
+            exclusions_options=geo_area_options.exclude(area_code=AreaCode.GROUP),
+            groups_with_members=[],
+        )
+        assert not form.is_valid()
+
+        assert form.errors["origins-0-exclusions-0-geographical_area"] == [
+            "Select a valid choice. That choice is not one of the available choices.",
+        ]
+        assert form.errors["origins-0-end_date"] == [
+            "The end date must be the same as or after the start date.",
+        ]
+
+
 @pytest.mark.parametrize(
     "field_name, error",
     [
@@ -289,6 +352,52 @@ def test_quota_update_add_extra_error(
         form.add_extra_error(field_name, error)
 
         assert "There is a problem" in form.errors["some_field"]
+
+
+def test_quota_create_form_extra_errors(session_request_with_workbasket):
+    geo_group = factories.GeoGroupFactory.create()
+    area_1 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    area_2 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    area_3 = factories.GeographicalMembershipFactory.create(geo_group=geo_group).member
+    non_member = factories.GeographicalAreaFactory.create()
+
+    data = {
+        "order_number": "054000",
+        "mechanism": validators.AdministrationMechanism.LICENSED.value,
+        "category": validators.QuotaCategory.WTO.value,
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2000,
+        "origins-0-geographical_area": geo_group.pk,
+        "origins-0-start_date_0": 1,
+        "origins-0-start_date_1": 1,
+        "origins-0-start_date_2": 2000,
+        "origins-0-end_date_0": 1,
+        "origins-0-end_date_1": 1,
+        # invalid end date
+        "origins-0-end_date_2": 1999,
+        "origins-0-exclusions-0-geographical_area": area_1.pk,
+        # invalid exclusion
+        "origins-0-exclusions-1-geographical_area": "foo",
+        "submit": "Save",
+    }
+
+    with override_current_transaction(non_member.transaction):
+        form = forms.QuotaOrderNumberCreateForm(
+            data=data,
+            request=session_request_with_workbasket,
+            initial={},
+            geo_area_options=[],
+            exclusions_options=[],
+            groups_with_members=[],
+        )
+        assert not form.is_valid()
+        assert form.errors["origins-0-exclusions-0-geographical_area"] == [
+            "Select a valid choice. That choice is not one of the available choices.",
+        ]
+        assert form.errors["origins-0-end_date"] == [
+            "The end date must be the same as or after the start date.",
+        ]
 
 
 def test_quota_update_add_extra_error_type_error(session_request_with_workbasket):
