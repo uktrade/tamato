@@ -326,12 +326,20 @@ def mock_request(rf, valid_user, valid_user_client):
 
 @pytest.fixture()
 def measure_edit_start_date_form_data():
-    return {"start_date": datetime.date(2023, 1, 1)}
+    return {
+            "start_date_0": 1,
+            "start_date_1": 1,
+            "start_date_2": 2023,
+            }
 
 
 @pytest.fixture()
 def measure_edit_end_date_form_data():
-    return {"end_date": datetime.date(2026, 2, 2)}
+    return {
+            "end_date_0": 2,
+            "end_date_1": 2,
+            "end_date_2": 2026,
+            }
 
 
 @pytest.fixture()

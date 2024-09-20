@@ -1925,12 +1925,8 @@ def test_measure_forms_geo_area_serialize_deserialize(form_data, request):
         assert deserialized_form.data == form.data
 
 
-
-# Write these tests
-
-
 @pytest.mark.parametrize(
-    "form_class, form_data, form_kwargs",
+    "form_class, form_data_fixture, has_form_kwargs",
     [
         (
             forms.MeasureStartDateForm,
@@ -1966,53 +1962,61 @@ def test_measure_forms_geo_area_serialize_deserialize(form_data, request):
         "measure_edit_duties_form",
     ],
 )
-def test_simple_measure_edit_forms_serialize_deserialize(form_class, form_data, form_kwargs, request):
+def test_simple_measure_edit_forms_serialize_deserialize(
+    form_class,
+    form_data_fixture,
+    has_form_kwargs,
+    date_ranges,
+    request,
+    duty_sentence_parser,
+):
     """Test that the EditMeasure simple forms that use the
     SerializableFormMixin behave correctly and as expected."""
-    
+
     # Create some measures to apply this data to, for the kwargs
-    measure_1 = factories.MeasureFactory.create()
-    measure_2 = factories.MeasureFactory.create()
-    measure_3 = factories.MeasureFactory.create()
-    selected_measures = [measure_1.pk, measure_2.pk, measure_3.pk]
+    quota_order_number = factories.QuotaOrderNumberFactory()
+    regulation = factories.RegulationFactory.create()
+    selected_measures = factories.MeasureFactory.create_batch(
+        4,
+        valid_between=date_ranges.normal,
+        order_number=quota_order_number,
+        generating_regulation=regulation,
+    )
 
     # Check the forms are valid on data submission
-    form_data = request.getfixturevalue(form_data)
-    if form_kwargs:
+    form_data = request.getfixturevalue(form_data_fixture)
+    form_kwarg_data = {}
+
+    if has_form_kwargs:
         form_kwarg_data = {
-            "kwargs": {
-                "selected_measures": selected_measures,
-            },
-        },
-        form = form_class(
-            data=form_data,
-            **form_kwarg_data,
-        )
-    else:
-        form = form_class(form_data)
-    
+            "selected_measures": selected_measures,
+        }
+
+    form = form_class(form_data, **form_kwarg_data)
     assert form.is_valid()
 
     # Create the serialized data
     serialized_data = form.serializable_data()
-    if form_kwargs: 
-         serialized_form_kwargs = form.serializable_init_kwargs(form_kwarg_data)
+    serialized_data_kwargs = {}
 
-    # Make a form from serialized data
-    deserialized_form = form_class(data=serialized_data)
-    
-    if form_kwargs:
-        deserialized_form = form_class(
-            data=serialized_data,
-            **serialized_form_kwargs,
-         )
+    if has_form_kwargs:
+        serialized_data_kwargs = form.serializable_init_kwargs(form_kwarg_data)
 
+    # Deserialize the kwargs
+    deserialized_form_kwargs = form.deserialize_init_kwargs(
+        serialized_data_kwargs,
+    )
+
+    # Make a form from serialized data.Check the form is the right type, valid, and the data that went in is the same that comes out
+    deserialized_form = form_class(
+        data=serialized_data,
+        **deserialized_form_kwargs,
+    )
 
     # Check the form is the right type, valid, and the data that went in is the same that comes out
     assert type(deserialized_form) == form_class
     assert deserialized_form.is_valid()
     assert deserialized_form.data == form_data
-
 
 @pytest.mark.parametrize(
     "form_data",
