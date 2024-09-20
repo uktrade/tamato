@@ -14,6 +14,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.postgres.forms.ranges import DateRangeField
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.exceptions import ValidationError
 from django.forms.renderers import get_default_renderer
 from django.forms.utils import ErrorList
@@ -892,3 +893,34 @@ class SerializableFormMixin:
         representation.
         """
         return {}
+
+
+class ExtraErrorFormMixin:
+    def add_extra_error(self, field, error):
+        """
+        A modification of Django's add_error method that allows us to add data
+        to self._errors under custom keys that are not field names or
+        NON_FIELD_ERRORS.
+
+        Used to pass errors to the React form.
+        """
+        if not isinstance(error, ValidationError):
+            error = ValidationError(error)
+
+        if hasattr(error, "error_dict"):
+            if field is not None:
+                raise TypeError(
+                    "The argument `field` must be `None` when the `error` "
+                    "argument contains errors for multiple fields.",
+                )
+            else:
+                error = error.error_dict
+        else:
+            error = {field or NON_FIELD_ERRORS: error.error_list}
+
+        for field, error_list in error.items():
+            if field not in self.errors:
+                self._errors[field] = self.error_class()
+            self._errors[field].extend(error_list)
+            if field in self.cleaned_data:
+                del self.cleaned_data[field]

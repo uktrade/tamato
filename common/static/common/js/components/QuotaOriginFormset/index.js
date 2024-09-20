@@ -13,7 +13,6 @@ function QuotaOriginFormset({
   groupsWithMembers,
   errors,
 }) {
-  const [origins, setOrigins] = useState([...data]);
   const emptyOrigin = {
     id: "",
     pk: "",
@@ -26,6 +25,10 @@ function QuotaOriginFormset({
     end_date_1: "",
     end_date_2: "",
   };
+  if (data.length == 0) {
+    data.push(emptyOrigin);
+  }
+  const [origins, setOrigins] = useState([...data]);
 
   const addEmptyOrigin = (e) => {
     e.preventDefault();
