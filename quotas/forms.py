@@ -51,7 +51,7 @@ START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as t
 ORDER_NUMBER_HELP_TEXT = "The order number must begin with 05 and be 6 digits long. Licensed quotas must begin 054 and safeguards must begin 058"
 
 
-class QuotaOriginsReactMixin:
+class QuotaOriginsReactMixin(ExtraErrorFormMixin):
     """Custom cleaning and validation for QuotaUpdateForm and
     QuotaOrderNumberCreateForm."""
 
@@ -167,7 +167,6 @@ QuotaOriginExclusionsFormSet = formset_factory(
 
 class QuotaUpdateForm(
     QuotaOriginsReactMixin,
-    ExtraErrorFormMixin,
     ValidityPeriodForm,
     forms.ModelForm,
 ):
