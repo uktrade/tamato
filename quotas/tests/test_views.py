@@ -1,3 +1,4 @@
+from typing import OrderedDict
 from unittest import mock
 
 import pytest
@@ -7,6 +8,7 @@ from django.urls import reverse
 
 from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
+from common.serializers import serialize_date
 from common.tariffs_api import Endpoints
 from common.tests import factories
 from common.tests.util import assert_model_view_renders
@@ -21,7 +23,9 @@ from geo_areas.validators import AreaCode
 from quotas import models
 from quotas import validators
 from quotas.forms import QuotaSuspensionType
+from quotas.views import DuplicateDefinitionsWizard
 from quotas.views import QuotaList
+from quotas.wizard import QuotaDefinitionDuplicatorSessionStorage
 
 pytestmark = pytest.mark.django_db
 
@@ -952,6 +956,76 @@ def test_delete_quota_definition(client_with_current_workbasket, date_ranges):
     )
 
 
+def test_quota_create_with_origins(
+    client_with_current_workbasket,
+    date_ranges,
+):
+    # make a geo group with 3 member countries
+    country1 = factories.CountryFactory.create()
+    country2 = factories.CountryFactory.create()
+    country3 = factories.CountryFactory.create()
+    geo_group = factories.GeoGroupFactory.create()
+    membership1 = factories.GeographicalMembershipFactory.create(
+        member=country1,
+        geo_group=geo_group,
+    )
+    membership2 = factories.GeographicalMembershipFactory.create(
+        member=country2,
+        geo_group=geo_group,
+    )
+    membership3 = factories.GeographicalMembershipFactory.create(
+        member=country3,
+        geo_group=geo_group,
+    )
+
+    data = {
+        "order_number": "054000",
+        "mechanism": validators.AdministrationMechanism.LICENSED.value,
+        "category": validators.QuotaCategory.WTO.value,
+        "start_date_0": date_ranges.big_no_end.lower.day,
+        "start_date_1": date_ranges.big_no_end.lower.month,
+        "start_date_2": date_ranges.big_no_end.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "origins-0-pk": "",
+        "origins-0-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-0-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-0-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-0-end_date_0": "",
+        "origins-0-end_date_1": "",
+        "origins-0-end_date_2": "",
+        "origins-0-geographical_area": geo_group.pk,
+        "origins-0-exclusions-0-pk": "",
+        "origins-0-exclusions-0-geographical_area": membership1.member.pk,
+        "submit": "Save",
+    }
+    url = reverse("quota-ui-create")
+    response = client_with_current_workbasket.post(url, data)
+
+    tx = Transaction.objects.last()
+    new_quota = models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).last()
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "quota-ui-confirm-create",
+        kwargs={"sid": new_quota.sid},
+    )
+
+    assert new_quota.origins.approved_up_to_transaction(tx).count() == 1
+    new_origin = new_quota.quotaordernumberorigin_set.approved_up_to_transaction(
+        tx,
+    ).first()
+    assert {
+        e.excluded_geographical_area.sid
+        for e in new_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+            tx,
+        )
+    } == {
+        membership1.member.sid,
+    }
+
+
 def test_quota_create_origin(
     client_with_current_workbasket,
     approved_transaction,
@@ -1239,17 +1313,39 @@ def test_create_new_quota_definition_business_rule_violation(
 
 
 @pytest.mark.django_db
-def test_quota_order_number_create_200(
+def test_get_200_quota_order_number_create(
     client_with_current_workbasket,
+    geo_group1,
+    geo_group2,
 ):
     response = client_with_current_workbasket.get(reverse("quota-ui-create"))
+    assert response.status_code == 200
 
+
+def test_get_200_quota_edit(client_with_current_workbasket):
+    quota = factories.QuotaOrderNumberFactory.create()
+    response = client_with_current_workbasket.get(
+        reverse("quota-ui-edit", kwargs={"sid": quota.sid}),
+    )
+    assert response.status_code == 200
+
+
+def test_get_200_quota_origins_edit(client_with_current_workbasket):
+    quota = factories.QuotaOrderNumberFactory.create()
+    origin = quota.quotaordernumberorigin_set.approved_up_to_transaction(
+        quota.transaction,
+    ).first()
+    response = client_with_current_workbasket.get(
+        reverse("quota_order_number_origin-ui-edit", kwargs={"sid": origin.sid}),
+    )
     assert response.status_code == 200
 
 
 @pytest.mark.django_db
 def test_quota_order_number_create_errors_required(
     client_with_current_workbasket,
+    geo_group1,
+    geo_group2,
 ):
     form_data = {
         "submit": "Save",
@@ -1304,6 +1400,8 @@ def test_quota_order_number_create_validation(
     exp_error,
     client_with_current_workbasket,
     date_ranges,
+    geo_group1,
+    geo_group2,
 ):
     form_data = {
         "start_date_0": date_ranges.normal.lower.day,
@@ -1332,6 +1430,8 @@ def test_quota_order_number_create_validation(
 def test_quota_order_number_create_success(
     client_with_current_workbasket,
     date_ranges,
+    geo_group1,
+    geo_group2,
 ):
     form_data = {
         "start_date_0": date_ranges.normal.lower.day,
@@ -1358,6 +1458,59 @@ def test_quota_order_number_create_success(
     soup = BeautifulSoup(response2.content.decode(response2.charset), "html.parser")
 
     assert soup.find("h1").text.strip() == f"Quota: {quota.order_number}"
+
+
+def test_quota_update_existing_origins_no_submitted_origins(
+    client_with_current_workbasket,
+    date_ranges,
+):
+    quota = factories.QuotaOrderNumberFactory.create(
+        category=0,
+        valid_between=date_ranges.big_no_end,
+    )
+    factories.QuotaOrderNumberOriginFactory.create(order_number=quota)
+    new_origin = factories.QuotaOrderNumberOriginFactory.create(order_number=quota)
+    tx = new_origin.transaction
+    (
+        origin1,
+        origin2,
+        origin3,
+    ) = quota.quotaordernumberorigin_set.approved_up_to_transaction(tx)
+
+    # sanity check
+    assert quota.quotaordernumberorigin_set.count() == 3
+
+    data = {
+        "start_date_0": quota.valid_between.lower.day,
+        "start_date_1": quota.valid_between.lower.month,
+        "start_date_2": quota.valid_between.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "category": "1",  # update category
+        "submit": "Save",
+    }
+    url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
+    response = client_with_current_workbasket.post(url, data)
+
+    assert response.status_code == 302
+    assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})
+
+    tx = Transaction.objects.last()
+    updated_quota = (
+        models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        .filter(sid=quota.sid)
+        .first()
+    )
+    assert updated_quota.category == 1
+    assert updated_quota.valid_between == quota.valid_between
+
+    assert updated_quota.origins.approved_up_to_transaction(tx).count() == 3
+    assert {o.sid for o in updated_quota.origins.approved_up_to_transaction(tx)} == {
+        origin1.geographical_area.sid,
+        origin2.geographical_area.sid,
+        origin3.geographical_area.sid,
+    }
 
 
 def test_quota_update_existing_origins(client_with_current_workbasket, date_ranges):
@@ -1437,6 +1590,76 @@ def test_quota_update_existing_origins(client_with_current_workbasket, date_rang
         geo_area1.sid,
         geo_area2.sid,
         origin1.geographical_area.sid,
+    }
+
+
+def test_quota_update_existing_origin_exclusion_new_version(
+    client_with_current_workbasket,
+    date_ranges,
+):
+    # make a geo group with a member country
+    country1 = factories.CountryFactory.create()
+    geo_group = factories.GeoGroupFactory.create()
+    membership1 = factories.GeographicalMembershipFactory.create(
+        member=country1,
+        geo_group=geo_group,
+    )
+
+    exclusion = factories.QuotaOrderNumberOriginExclusionFactory.create(
+        excluded_geographical_area=membership1.member,
+    )
+    origin = exclusion.origin
+    quota = origin.order_number
+
+    # sanity check
+    assert quota.quotaordernumberorigin_set.count() == 1
+
+    data = {
+        "start_date_0": date_ranges.big_no_end.lower.day,
+        "start_date_1": date_ranges.big_no_end.lower.month,
+        "start_date_2": date_ranges.big_no_end.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "category": "1",  # update category
+        # leave origin and exclusion data the same
+        "origins-0-pk": origin.pk,
+        "origins-0-start_date_0": date_ranges.big_no_end.lower.day,
+        "origins-0-start_date_1": date_ranges.big_no_end.lower.month,
+        "origins-0-start_date_2": date_ranges.big_no_end.lower.year,
+        "origins-0-end_date_0": "",
+        "origins-0-end_date_1": "",
+        "origins-0-end_date_2": "",
+        "origins-0-geographical_area": geo_group.pk,
+        "origins-0-exclusions-0-pk": exclusion.pk,
+        "origins-0-exclusions-0-geographical_area": membership1.member.pk,
+        "submit": "Save",
+    }
+    url = reverse("quota-ui-edit", kwargs={"sid": quota.sid})
+    response = client_with_current_workbasket.post(url, data)
+
+    assert response.status_code == 302
+    assert response.url == reverse("quota-ui-confirm-update", kwargs={"sid": quota.sid})
+
+    tx = Transaction.objects.last()
+
+    updated_quota = (
+        models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        .filter(sid=quota.sid)
+        .first()
+    )
+
+    assert updated_quota.origins.approved_up_to_transaction(tx).count() == 1
+    updated_origin = (
+        updated_quota.quotaordernumberorigin_set.approved_up_to_transaction(tx).first()
+    )
+    assert {
+        e.excluded_geographical_area.sid
+        for e in updated_origin.quotaordernumberoriginexclusion_set.approved_up_to_transaction(
+            tx,
+        )
+    } == {
+        membership1.member.sid,
     }
 
 
@@ -1688,3 +1911,339 @@ def test_quota_blocking_confirm_create_view(valid_user_client):
     assert f"Blocking period SID {blocking.sid} has been created" in str(
         response.content,
     )
+
+
+def test_quota_definition_view(valid_user_client):
+    """Test all 4 of the quota definition tabs load and display the correct
+    objects."""
+    main_quota_definition = factories.QuotaDefinitionFactory.create(sid=123)
+    sub_quota_definition = factories.QuotaDefinitionFactory.create(sid=234)
+    main_quota = main_quota_definition.order_number
+    association = factories.QuotaAssociationFactory.create(
+        main_quota=main_quota_definition,
+        sub_quota=sub_quota_definition,
+    )
+    blocking = factories.QuotaBlockingFactory.create(
+        quota_definition=main_quota_definition,
+        description="Blocking period description",
+    )
+    suspension = factories.QuotaSuspensionFactory.create(
+        quota_definition=main_quota_definition,
+        description="Suspension period description",
+    )
+
+    # Definition period tab
+    response = valid_user_client.get(
+        reverse("quota_definition-ui-list", kwargs={"sid": main_quota.sid}),
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    sid_cell_text = soup.select(
+        "tbody tr:first-child td:first-child details summary span",
+    )[0].text.strip()
+    assert int(sid_cell_text) == main_quota_definition.sid
+
+    # Sub quotas tab
+    response = valid_user_client.get(
+        reverse(
+            "quota_definition-ui-list-filter",
+            kwargs={"sid": main_quota.sid, "quota_type": "sub_quotas"},
+        ),
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    sid_cell_text = soup.select("tbody tr:first-child td:first-child a")[0].text.strip()
+    assert int(sid_cell_text) == sub_quota_definition.sid
+
+    # Blocking periods tab
+    response = valid_user_client.get(
+        reverse(
+            "quota_definition-ui-list-filter",
+            kwargs={"sid": main_quota.sid, "quota_type": "blocking_periods"},
+        ),
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    description_cell_text = soup.select("tbody tr:first-child td:last-child")[0].text
+    assert description_cell_text == blocking.description
+
+    # Suspension period tab
+    response = valid_user_client.get(
+        reverse(
+            "quota_definition-ui-list-filter",
+            kwargs={"sid": main_quota.sid, "quota_type": "suspension_periods"},
+        ),
+    )
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    description_cell_text = soup.select("tbody tr:first-child td:last-child")[0].text
+    assert description_cell_text == suspension.description
+
+
+def test_definition_duplicator_form_wizard_start(client_with_current_workbasket):
+    url = reverse("sub_quota_definitions-ui-create", kwargs={"step": "start"})
+    response = client_with_current_workbasket.get(url)
+    assert response.status_code == 200
+
+
+@pytest.fixture
+def main_quota_order_number() -> models.QuotaOrderNumber:
+    """Provides a main quota order number for use across the fixtures and
+    following tests."""
+    return factories.QuotaOrderNumberFactory()
+
+
+@pytest.fixture
+def sub_quota_order_number() -> models.QuotaOrderNumber:
+    """Provides a sub-quota order number for use across the fixtures and
+    following tests."""
+    return factories.QuotaOrderNumberFactory()
+
+
+@pytest.fixture
+def quota_definition_1(main_quota_order_number, date_ranges) -> models.QuotaDefinition:
+    """Provides a definition, linked to the main_quota_order_number to be used
+    across the following tests."""
+    return factories.QuotaDefinitionFactory.create(
+        order_number=main_quota_order_number,
+        valid_between=date_ranges.normal,
+        is_physical=True,
+        initial_volume=1234,
+        volume=1234,
+        measurement_unit=factories.MeasurementUnitFactory(),
+    )
+
+
+@pytest.fixture
+def quota_definition_2(main_quota_order_number, date_ranges) -> models.QuotaDefinition:
+    """Provides a definition, linked to the main_quota_order_number to be used
+    across the following tests."""
+    return factories.QuotaDefinitionFactory.create(
+        order_number=main_quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+
+
+@pytest.fixture
+def quota_definition_3(main_quota_order_number, date_ranges) -> models.QuotaDefinition:
+    """Provides a definition, linked to the main_quota_order_number to be used
+    across the following tests."""
+    return factories.QuotaDefinitionFactory.create(
+        order_number=main_quota_order_number,
+        valid_between=date_ranges.normal,
+    )
+
+
+@pytest.fixture
+def wizard(requests_mock, session_request):
+    """Provides an instance of the form wizard for use across the following
+    tests."""
+    storage = QuotaDefinitionDuplicatorSessionStorage(
+        request=session_request,
+        prefix="",
+    )
+    return DuplicateDefinitionsWizard(
+        request=requests_mock,
+        storage=storage,
+    )
+
+
+def test_duplicate_definition_wizard_get_cleaned_data_for_step(
+    session_request,
+    main_quota_order_number,
+    sub_quota_order_number,
+):
+
+    order_number_data = {
+        "duplicate_definitions_wizard-current_step": "quota_order_numbers",
+        "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
+        "quota_order_numbers-sub_quota_order_number": [sub_quota_order_number.pk],
+    }
+    storage = QuotaDefinitionDuplicatorSessionStorage(
+        request=session_request,
+        prefix="",
+    )
+
+    storage.set_step_data("quota_order_numbers", order_number_data)
+    storage._set_current_step("quota_order_numbers")
+    wizard = DuplicateDefinitionsWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"quota_order_numbers": {}},
+        instance_dict={"quota_order_numbers": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    cleaned_data = wizard.get_cleaned_data_for_step("quota_order_numbers")
+
+    assert cleaned_data["main_quota_order_number"] == main_quota_order_number
+    assert cleaned_data["sub_quota_order_number"] == sub_quota_order_number
+
+
+@pytest.mark.parametrize(
+    "step",
+    ["quota_order_numbers", "select_definition_periods", "selected_definition_periods"],
+)
+def test_duplicate_definition_wizard_get_form_kwargs(
+    quota_definition_1,
+    quota_definition_2,
+    quota_definition_3,
+    session_request,
+    main_quota_order_number,
+    sub_quota_order_number,
+    step,
+):
+
+    quota_order_numbers_data = {
+        "duplicate_definitions_wizard-current_step": "quota_order_numbers",
+        "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
+        "quota_order_numbers-sub_quota_order_number": [sub_quota_order_number.pk],
+    }
+    select_definitions_data = {
+        "duplicate_definitions_wizard-current_step": "select_definition_periods",
+        f"select_definition_periods-selectableobject_{quota_definition_1.pk}": ["on"],
+        f"select_definition_periods-selectableobject_{quota_definition_2.pk}": ["on"],
+        f"select_definition_periods-selectableobject_{quota_definition_3.pk}": [],
+    }
+
+    storage = QuotaDefinitionDuplicatorSessionStorage(
+        request=session_request,
+        prefix="",
+    )
+
+    storage.set_step_data("quota_order_numbers", quota_order_numbers_data)
+    storage.set_step_data("select_definition_periods", select_definitions_data)
+    storage._set_current_step(step)
+
+    wizard = DuplicateDefinitionsWizard(
+        request=session_request,
+        storage=storage,
+        initial_dict={"selected_definitions": {}},
+        instance_dict={"selected_definitions": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+
+    with override_current_transaction(Transaction.objects.last()):
+        kwargs = wizard.get_form_kwargs(step)
+        if step == "select_definition_periods":
+            definitions = models.QuotaDefinition.objects.filter(
+                sid__in=[
+                    quota_definition_1.sid,
+                    quota_definition_2.sid,
+                    quota_definition_3.sid,
+                ],
+            )
+            assert set(kwargs["objects"]) == set(definitions)
+        if step == "selected_definition_periods":
+            assert kwargs["request"].session
+
+
+def test_definition_duplicator_creates_definition_and_association(
+    quota_definition_1,
+    main_quota_order_number,
+    sub_quota_order_number,
+    session_request_with_workbasket,
+):
+    """Pass data to the Duplicator Wizard and verify that the created definition
+    contains the expected data."""
+
+    staged_definition_data = [
+        {
+            "main_definition": quota_definition_1.pk,
+            "sub_definition_staged_data": {
+                "initial_volume": str(quota_definition_1.initial_volume),
+                "volume": str(quota_definition_1.volume),
+                "measurement_unit_code": quota_definition_1.measurement_unit.code,
+                "start_date": serialize_date(quota_definition_1.valid_between.lower),
+                "end_date": serialize_date(quota_definition_1.valid_between.upper),
+                "status": True,
+                "coefficient": 1,
+                "relationship_type": "NM",
+            },
+        },
+    ]
+    session_request_with_workbasket.session["staged_definition_data"] = (
+        staged_definition_data
+    )
+    order_number_data = {
+        "duplicate_definitions_wizard-current_step": "quota_order_numbers",
+        "quota_order_numbers-main_quota_order_number": [main_quota_order_number.pk],
+        "quota_order_numbers-sub_quota_order_number": [sub_quota_order_number.pk],
+    }
+    storage = QuotaDefinitionDuplicatorSessionStorage(
+        request=session_request_with_workbasket,
+        prefix="",
+    )
+
+    storage.set_step_data("quota_order_numbers", order_number_data)
+    storage._set_current_step("quota_order_numbers")
+    wizard = DuplicateDefinitionsWizard(
+        request=session_request_with_workbasket,
+        storage=storage,
+        initial_dict={"quota_order_numbers": {}},
+        instance_dict={"quota_order_numbers": None},
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+
+    association_table_before = models.QuotaAssociation.objects.all()
+    # assert 0
+    assert len(association_table_before) == 0
+    for definition in session_request_with_workbasket.session["staged_definition_data"]:
+        wizard.create_definition(definition)
+
+    definition_objects = models.QuotaDefinition.objects.all()
+
+    # assert that the values of the definitions match
+    assert definition_objects[0].volume == definition_objects[1].volume
+    assert (
+        definition_objects[0].measurement_unit == definition_objects[1].measurement_unit
+    )
+    assert definition_objects[0].valid_between == definition_objects[1].valid_between
+
+    assert len(definition_objects) == 2
+    # assert that the association is created
+    association_table_after = models.QuotaAssociation.objects.all()
+    assert association_table_after[0].main_quota == quota_definition_1
+    assert association_table_after[0].sub_quota in definition_objects
+
+
+def test_status_tag_generator(quota_definition_1, quota_definition_2, wizard):
+    staged_definition_data = [
+        {
+            "main_definition": quota_definition_1.pk,
+            "sub_definition_staged_data": {
+                "initial_volume": str(quota_definition_1.initial_volume),
+                "volume": str(quota_definition_1.volume),
+                "measurement_unit_code": quota_definition_1.measurement_unit.code,
+                "start_date": serialize_date(quota_definition_1.valid_between.lower),
+                "end_date": serialize_date(quota_definition_1.valid_between.upper),
+                "status": False,
+                "coefficient": 1,
+                "relationship_type": "NM",
+            },
+        },
+        {
+            "main_definition": quota_definition_2.pk,
+            "sub_definition_staged_data": {
+                "initial_volume": str(quota_definition_2.initial_volume),
+                "volume": str(quota_definition_2.volume),
+                "measurement_unit_code": quota_definition_2.measurement_unit.code,
+                "start_date": serialize_date(quota_definition_2.valid_between.lower),
+                "end_date": serialize_date(quota_definition_2.valid_between.upper),
+                "status": True,
+                "coefficient": 1,
+                "relationship_type": "NM",
+            },
+        },
+    ]
+    for definition in staged_definition_data:
+        status = wizard.status_tag_generator(definition["sub_definition_staged_data"])
+        if definition["main_definition"] == quota_definition_1.pk:
+            assert status["text"] == "Unedited"
+        elif definition["main_definition"] == quota_definition_2.pk:
+            assert status["text"] == "Edited"
+
+
+def test_format_date(wizard):
+    date_str = "2021-01-01"
+    formatted_date = wizard.format_date(date_str)
+    assert formatted_date == "01 Jan 2021"

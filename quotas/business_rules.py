@@ -379,6 +379,18 @@ class QA2(ValidityPeriodContained):
     contained_field_name = "sub_quota"
 
 
+def check_QA2_dict(sub_definition_valid_between, main_definition_valid_between):
+    """Confirms data is compliant with QA2."""
+    if main_definition_valid_between.upper:
+        return (
+            sub_definition_valid_between.lower >= main_definition_valid_between.lower
+        ) and (
+            sub_definition_valid_between.upper <= main_definition_valid_between.upper
+        )
+    else:
+        return sub_definition_valid_between.lower >= main_definition_valid_between.lower
+
+
 class QA3(BusinessRule):
     """
     When converted to the measurement unit of the main quota, the volume of a
@@ -395,12 +407,32 @@ class QA3(BusinessRule):
     def validate(self, association):
         main = association.main_quota
         sub = association.sub_quota
-        if not (
-            sub.measurement_unit == main.measurement_unit
-            and sub.volume <= main.volume
-            and sub.initial_volume <= main.initial_volume
+        if not check_QA3_dict(
+            main_definition_unit=main.measurement_unit,
+            sub_definition_unit=sub.measurement_unit,
+            main_definition_volume=main.volume,
+            sub_definition_volume=sub.volume,
+            main_initial_volume=main.initial_volume,
+            sub_initial_volume=sub.initial_volume,
         ):
             raise self.violation(association)
+
+
+def check_QA3_dict(
+    main_definition_unit,
+    sub_definition_unit,
+    main_definition_volume,
+    sub_definition_volume,
+    sub_initial_volume,
+    main_initial_volume,
+):
+    """Confirms data is compliant with QA3 See note above about changing the
+    unit types."""
+    return (
+        main_definition_unit == sub_definition_unit
+        and sub_definition_volume <= main_definition_volume
+        and sub_initial_volume <= main_initial_volume
+    )
 
 
 class QA4(BusinessRule):
@@ -412,8 +444,12 @@ class QA4(BusinessRule):
     """
 
     def validate(self, association):
-        if not association.coefficient > 0:
+        if not check_QA4_dict(association.coefficient):
             raise self.violation(association)
+
+
+def check_QA4_dict(coefficient):
+    return coefficient > 0
 
 
 class QA5(BusinessRule):
@@ -427,7 +463,7 @@ class QA5(BusinessRule):
 
     def validate(self, association):
         if association.sub_quota_relation_type == SubQuotaType.EQUIVALENT:
-            if association.coefficient == Decimal("1.00000"):
+            if not check_QA5_equivalent_coefficient(association.coefficient):
                 raise self.violation(
                     model=association,
                     message=(
@@ -435,14 +471,7 @@ class QA5(BusinessRule):
                         "coefficient not equal to 1"
                     ),
                 )
-
-            if (
-                association.main_quota.sub_quotas.values("volume")
-                .order_by("volume")
-                .distinct("volume")
-                .count()
-                > 1
-            ):
+            if not check_QA5_equivalent_volumes(association.main_quota):
                 raise self.violation(
                     model=association,
                     message=(
@@ -452,17 +481,33 @@ class QA5(BusinessRule):
                     ),
                 )
 
-        elif (
-            association.sub_quota_relation_type == SubQuotaType.NORMAL
-            and association.coefficient != Decimal("1.00000")
-        ):
-            raise self.violation(
-                model=association,
-                message=(
-                    "A sub-quota defined with the 'normal' type must have a coefficient "
-                    "equal to 1"
-                ),
-            )
+        elif association.sub_quota_relation_type == SubQuotaType.NORMAL:
+            if not check_QA5_normal_coefficient(association.coefficient):
+                raise self.violation(
+                    model=association,
+                    message=(
+                        "A sub-quota defined with the 'normal' type must have a coefficient "
+                        "equal to 1"
+                    ),
+                )
+
+
+def check_QA5_equivalent_coefficient(coefficient):
+    return coefficient != Decimal("1.000")
+
+
+def check_QA5_equivalent_volumes(original_definition, volume=None):
+    return (
+        original_definition.sub_quotas.values("volume")
+        .order_by("volume")
+        .distinct("volume")
+        .count()
+        <= 1
+    )
+
+
+def check_QA5_normal_coefficient(coefficient):
+    return Decimal(coefficient) == Decimal("1.000")
 
 
 class QA6(BusinessRule):
@@ -470,19 +515,35 @@ class QA6(BusinessRule):
     relation type."""
 
     def validate(self, association):
-        if (
-            association.main_quota.sub_quota_associations.approved_up_to_transaction(
-                association.transaction,
-            )
-            .values(
-                "sub_quota_relation_type",
-            )
-            .order_by("sub_quota_relation_type")
-            .distinct()
-            .count()
-            > 1
+        if not check_QA6_dict(
+            association.main_quota,
+            association.sub_quota_relation_type,
+            association.transaction,
         ):
             raise self.violation(association)
+
+
+def check_QA6_dict(main_quota, new_relation_type, transaction=None):
+    """
+    Confirms the provided data is compliant with the above businsess rule.
+
+    The above test will be re-run so as to separate historic violations, which
+    will require TAP to fix, from a user trying to introduce a new violation.
+    Because the business rule should have been checked and there should only be
+    one type, we can check the new type against any one of the old type
+    """
+    relation_type = (
+        main_quota.sub_quota_associations.approved_up_to_transaction(
+            transaction,
+        )
+        .values("sub_quota_relation_type")
+        .order_by("sub_quota_relation_type")
+        .distinct()
+    )
+    if relation_type.count() > 1:
+        return False
+    elif relation_type.count() == 1:
+        return relation_type[0]["sub_quota_relation_type"] == new_relation_type
 
 
 class SameMainAndSubQuota(BusinessRule):

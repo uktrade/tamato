@@ -1,3 +1,4 @@
+import json
 import os
 from unittest import mock
 
@@ -12,6 +13,64 @@ from common.tests.util import Dates
 from common.tests.util import wrap_numbers_over_max_digits
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.mark.parametrize(
+    "environment_key, expected_result",
+    (
+        (
+            {
+                "engine": "engine",
+                "username": "username",
+                "password": "password",
+                "host": "host",
+                "port": 1234,
+                "dbname": "dbname",
+            },
+            "engine://username:password@host:1234/dbname",
+        ),
+        (
+            {
+                "engine": "engine",
+                "username": "username",
+                "host": "host",
+                "dbname": "dbname",
+            },
+            "engine://username@host/dbname",
+        ),
+        (
+            {
+                "engine": "engine",
+                "host": "host",
+                "dbname": "dbname",
+            },
+            "engine://host/dbname",
+        ),
+        (
+            {
+                "engine": "engine",
+                "password": "password",
+                "port": 1234,
+                "dbname": "dbname",
+            },
+            "engine:///dbname",
+        ),
+        (
+            {
+                "engine": "engine",
+                "dbname": "dbname",
+            },
+            "engine:///dbname",
+        ),
+    ),
+)
+def test_database_url_from_env(environment_key, expected_result):
+    with mock.patch.dict(
+        os.environ,
+        {"DATABASE_CREDENTIALS": json.dumps(environment_key)},
+        clear=True,
+    ):
+        assert util.database_url_from_env("DATABASE_CREDENTIALS") == expected_result
 
 
 @pytest.mark.parametrize(
