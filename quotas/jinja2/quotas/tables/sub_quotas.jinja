@@ -12,13 +12,13 @@
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}">{{ object.sub_quota.order_number.order_number }}</a>
     {% endset %}
     {% set edit_link -%}
-      <a class="govuk-link" href="{{ object.sub_quota.get_versions().last().get_association_edit_url('edit') }}">Edit</a>
+      <a class="govuk-link" href="{{ object.sub_quota.get_association_edit_url('edit') }}">Edit</a>
     {% endset %}
     {{ table_rows.append([
       {"text": definition_link },
       {"text": sub_quota_link },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.latest_version_up_to_workbasket(request.user.current_workbasket).valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.latest_version_up_to_workbasket(request.user.current_workbasket).valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
+      {"text": "{:%d %b %Y}".format(object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
       {"text": edit_link },

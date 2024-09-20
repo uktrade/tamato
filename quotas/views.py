@@ -241,9 +241,13 @@ class QuotaDefinitionList(SortingMixin, ListView):
 
     @property
     def sub_quotas(self):
-        return QuotaAssociation.objects.approved_up_to_transaction(
-            self.request.user.current_workbasket.transactions.last(),
-        ).filter(main_quota__order_number=self.quota)
+        return (
+            QuotaAssociation.objects.approved_up_to_transaction(
+                self.request.user.current_workbasket.transactions.last(),
+            )
+            .filter(main_quota__order_number=self.quota)
+            .order_by("sub_quota__sid")
+        )
 
     @cached_property
     def quota_data(self):
@@ -1172,10 +1176,7 @@ class SubQuotaDefinitionAssociationEditUpdate(
         ):
             return
         # If this association already has an edit in the workbasket - update that one
-        current_instance = self.association.latest_version_up_to_workbasket(
-            self.workbasket,
-        )
-
+        current_instance = self.association.version_at(self.last_transaction)
         form_data = {
             "main_quota": self.get_main_definition(),
             "sub_quota": instance,

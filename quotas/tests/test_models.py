@@ -7,6 +7,7 @@ from common.models.utils import override_current_transaction
 from common.serializers import AutoCompleteSerializer
 from common.tests import factories
 from common.tests.util import raises_if
+from common.validators import UpdateType
 
 pytestmark = pytest.mark.django_db
 
@@ -167,3 +168,23 @@ def test_quota_definition_urls(url_name, exp_path):
         sid=987654321,
     )
     assert definition.get_url(url_name) == exp_path
+
+
+def test_get_association_edit_url(workbasket):
+    """Test that the correct edit url is generated for the sub-quota edit and
+    edit-update journeys."""
+    quota = factories.QuotaOrderNumberFactory.create(sid=123456789)
+    definition = factories.QuotaDefinitionFactory.create(
+        order_number=quota,
+        sid=987654321,
+    )
+    exp_path = reverse("sub_quota_definition-edit", kwargs={"sid": definition.sid})
+    assert definition.get_association_edit_url("edit") == exp_path
+
+    definition.new_version(workbasket=workbasket, update_type=UpdateType.UPDATE)
+    updated_definition_instance = definition.version_at(workbasket.transactions.last())
+    exp_path = reverse(
+        "sub_quota_definition-edit-update",
+        kwargs={"sid": definition.sid},
+    )
+    assert updated_definition_instance.get_association_edit_url("edit") == exp_path

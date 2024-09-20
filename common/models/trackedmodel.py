@@ -676,15 +676,3 @@ class TrackedModel(PolymorphicModel, TimestampedMixin):
         if not prefix:
             prefix = cls._meta.verbose_name.replace(" ", "_")
         return prefix
-
-    def latest_version_up_to_workbasket(self, workbasket):
-        """Get the latest version of an object including any draft version in
-        the specified workbasket."""
-        versions = self.get_versions().exclude(update_type=UpdateType.DELETE)
-        object_in_workbasket = versions.filter(
-            transaction__workbasket=workbasket,
-        ).last()
-        if object_in_workbasket:
-            return object_in_workbasket
-        else:
-            return self.current_version
