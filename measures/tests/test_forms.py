@@ -2018,34 +2018,26 @@ def test_simple_measure_edit_forms_serialize_deserialize(
     assert deserialized_form.is_valid()
     assert deserialized_form.data == form_data
 
-@pytest.mark.parametrize(
-    "form_data",
-    [
-        ("measure_geo_area_erga_omnes_form_data"),
-        ("measure_geo_area_erga_omnes_exclusions_form_data"),
-        ("measure_geo_area_geo_group_form_data"),
-        ("measure_geo_area_geo_group_exclusions_form_data"),
-    ],
-    ids=[
-        "erga-omnes",
-        "erga-omnes-exclusions",
-        "geo-group",
-        "geo-group-exclusions",
-    ],
-)
-def test_measure_edit_forms_geo_area_exclusions_serialize_deserialize(form_data, request):
-    form_data = request.getfixturevalue(form_data)
+
+def test_measure_edit_forms_geo_area_exclusions_serialize_deserialize():
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+
+    form_data = {
+            "form-0-excluded_area": geo_area1,
+            "form-1-excluded_area": geo_area2
+        }
     with override_current_transaction(Transaction.objects.last()):
-        form = forms.MeasureGeographicalAreaForm(
+        form = forms.MeasureGeographicalAreaExclusionsFormSet(
             form_data,
         )
         assert form.is_valid()
 
         serializable_form_data = form.serializable_data()
 
-        deserialized_form = forms.MeasureGeographicalAreaForm(
+        deserialized_form = forms.MeasureGeographicalAreaExclusionsFormSet(
             data=serializable_form_data,
         )
         assert deserialized_form.is_valid()
-        assert type(deserialized_form) == forms.MeasureGeographicalAreaForm
+        assert type(deserialized_form) == forms.MeasureGeographicalAreaExclusionsFormSet
         assert deserialized_form.data == form.data
