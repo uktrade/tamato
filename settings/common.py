@@ -12,12 +12,12 @@ from pathlib import Path
 
 import dj_database_url
 from celery.schedules import crontab
-from dbt_copilot_python.database import database_url_from_env
 from dbt_copilot_python.network import setup_allowed_hosts
 from dbt_copilot_python.utility import is_copilot
 from django.urls import reverse_lazy
 from django_log_formatter_asim import ASIMFormatter
 
+from common.util import database_url_from_env
 from common.util import is_truthy
 
 # Name of the deployment environment (dev/alpha)
@@ -319,9 +319,9 @@ STATIC_URL = "/assets/"
 
 
 # -- Database
+
 if MAINTENANCE_MODE:
     DATABASES = {}
-
 # DBT PaaS
 elif is_copilot():
     DB_URL = database_url_from_env("DATABASE_CREDENTIALS")
@@ -527,6 +527,7 @@ CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY = int(
 if is_copilot():
     SQLITE_S3_ACCESS_KEY_ID = None
     SQLITE_S3_SECRET_ACCESS_KEY = None
+    SQLITE_MIGRATIONS_IN_TMP_DIR = True
 else:
     SQLITE_S3_ACCESS_KEY_ID = os.environ.get(
         "SQLITE_S3_ACCESS_KEY_ID",
@@ -535,6 +536,9 @@ else:
     SQLITE_S3_SECRET_ACCESS_KEY = os.environ.get(
         "SQLITE_S3_SECRET_ACCESS_KEY",
         "test_sqlite_key",
+    )
+    SQLITE_MIGRATIONS_IN_TMP_DIR = is_truthy(
+        os.environ.get("SQLITE_MIGRATIONS_IN_TMP_DIR", False),
     )
 
 SQLITE_STORAGE_BUCKET_NAME = os.environ.get("SQLITE_STORAGE_BUCKET_NAME", "sqlite")

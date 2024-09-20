@@ -297,8 +297,8 @@ def deserialize_definition_data(self, definition):
     ]
     valid_between = TaricDateRange(start_date, end_date)
     staged_data = {
-        "volume": initial_volume,
-        "initial_volume": vol,
+        "volume": vol,
+        "initial_volume": initial_volume,
         "measurement_unit": measurement_unit,
         "order_number": sub_order_number,
         "valid_between": valid_between,
