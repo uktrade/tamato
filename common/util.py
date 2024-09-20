@@ -190,6 +190,12 @@ class TaricDateRange(DateRange):
 
         return False
 
+    def contains(self, compared_date_range: TaricDateRange):
+        lower_contained = self.lower <= compared_date_range.lower
+        upper_contained = self.upper_inf or self.upper >= compared_date_range.upper
+
+        return lower_contained and upper_contained
+
     def upper_is_greater(self, compared_date_range: TaricDateRange) -> bool:
         """
         Checks whether this date range ends after the specified date range.

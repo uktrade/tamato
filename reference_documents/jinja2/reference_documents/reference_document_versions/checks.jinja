@@ -1,0 +1,66 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/table/macro.njk" import govukTable %}
+
+
+{% set page_title = "Reference document " ~ object.reference_document.area_id ~ " version " ~ object.version ~ " check" %}
+
+{% block breadcrumb %}
+    {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document.pk})},
+    {"text": "Version " ~ object.version, "href": url("reference_documents:version-details", kwargs={"pk":object.pk})},
+    {"text": page_title},
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+    {% if object.checkable() %}
+        {% if request.user.has_perm("reference_documents.add_alignmentreportcheck") %}
+            <h2 class="govuk-heading-m">Run check against TAP data</h2>
+            <p class=govuk-body>Run a check to see how this reference document's data compares to the data held in TAP. Any discrepancies will be flagged.</p>
+            <form method="post" action="{{ url("reference_documents:alignment-reports", kwargs={"pk":object.pk}) }}">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input class="govuk-button govuk-button--primary" type="submit" value="Run new check"/>
+            </form>
+        {% else %}
+            <h2 class="govuk-heading-m">You do not have permission to run checks against TAP data</h2>
+            <p class=govuk-body>If you believe you should have permission to run this check, please contact someone on the TAP team for support.</p>
+        {% endif %}
+    {% else %}
+        <p class=govuk-body>Reference document version must be in a published state to run checks against TAP dat.</p>
+    {% endif %}
+    <p class="govuk-body govuk-!-font-weight-bold" style="float:right">
+        {% if last_run %}
+            Last Run: ({{ last_run }})
+        {% else %}
+            Never Ran
+        {% endif %}
+    </p>
+    {% if last_alignment_report %}
+        <h2 class="govuk-heading-m">Latest check results</h2>
+        {{ govukTable({
+    "firstCellIsHeader": true,
+    "head": [
+        {"text": "Check name"},
+        {"text": "Total"},
+        {"text": "Passed"},
+        {"text": "Warning"},
+        {"text": "Failed"},
+        {"text": "Skipped"},
+        {"text": "Failed Percentage"},
+    ],
+    "rows": alignment_report_stats
+    }) }}
+    {% endif %}
+    <p class=govuk-body>View results in further detail to see discrepancies.</p>
+    {% if last_alignment_report %}
+        <a href="{{ url('reference_documents:alignment-report-details', kwargs={"version_pk": object.pk, "pk": last_alignment_report.pk}) }}" class="govuk-button govuk-button--secondary">
+            View full report
+        </a>
+    {% endif %}
+
+{% endblock %}

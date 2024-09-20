@@ -7,9 +7,9 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 
 from common.forms import DateInputFieldFixed
-from reference_documents.models import PreferentialQuotaOrderNumber
-from reference_documents.models import PreferentialRate
 from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import RefOrderNumber
+from reference_documents.models import RefRate
 
 
 class ReferenceDocumentVersionsCreateUpdateForm(forms.ModelForm):
@@ -92,10 +92,10 @@ class ReferenceDocumentVersionDeleteForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         reference_document_version = self.instance
-        preferential_duty_rates = PreferentialRate.objects.all().filter(
+        preferential_duty_rates = RefRate.objects.all().filter(
             reference_document_version=reference_document_version,
         )
-        tariff_quotas = PreferentialQuotaOrderNumber.objects.all().filter(
+        tariff_quotas = RefOrderNumber.objects.all().filter(
             reference_document_version=reference_document_version,
         )
         if preferential_duty_rates or tariff_quotas:

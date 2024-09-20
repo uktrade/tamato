@@ -1,0 +1,64 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/tabs/macro.njk" import govukTabs %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+
+{% set page_title = "Reference document " ~ reference_document_version.reference_document.area_id ~ " version " ~ reference_document_version.version ~ " check results" %}
+
+{% set preferential_rate_tab %}{% include "includes/tabs/preferential_rate_checks.jinja" %}{% endset %}
+{% set order_number_tab %}{% include "includes/tabs/quota_order_number_checks.jinja" %}{% endset %}
+{% set preferential_quota_tab %}{% include "includes/tabs/preferential_quota_checks.jinja" %}{% endset %}
+
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ reference_document_version.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":reference_document_version.reference_document.pk})},
+    {"text": "Version " ~ reference_document_version.version, "href": url("reference_documents:version-details", kwargs={"pk":reference_document_version.pk})},
+    {"text": "Run check", "href": url("reference_documents:version-checks", kwargs={"pk":reference_document_version.pk})},
+    {"text": page_title},
+    ]
+  }) }}
+{% endblock %}
+
+{% set tabs = {
+    "items": [
+      {
+        "label": "Preferential rates",
+        "id": "preferential-rates",
+        "panel": {
+          "html": preferential_rate_tab
+        }
+      },
+      {
+        "label": "Quota order numbers",
+        "id": "quota-order-numbers",
+        "panel": {
+          "html": order_number_tab
+        }
+      },
+      {
+        "label": "Preferential quotas",
+        "id": "preferential-quotas",
+        "panel": {
+          "html": preferential_quota_tab
+        }
+      },
+    ]
+  }%}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+
+  <div class="govuk-warning-text">
+  <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+  <strong class="govuk-warning-text__text">
+    <span class="govuk-visually-hidden">Warning</span>
+    This reference document version has failed checks.
+  </strong>
+</div>
+
+  {{ govukTabs(tabs) }}
+
+{% endblock %}

@@ -13,7 +13,6 @@ from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.views.generic import FormView
 from django.views.generic import TemplateView
-from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import permissions
