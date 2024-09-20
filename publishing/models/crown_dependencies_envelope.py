@@ -144,7 +144,10 @@ class CrownDependenciesEnvelope(TimestampedMixin):
     @save_after
     @transition(
         field=publishing_state,
-        source=ApiPublishingState.CURRENTLY_PUBLISHING,
+        source=[
+            ApiPublishingState.CURRENTLY_PUBLISHING,
+            ApiPublishingState.FAILED_PUBLISHING,
+        ],
         target=ApiPublishingState.FAILED_PUBLISHING,
         custom={"label": "Publishing failed"},
     )

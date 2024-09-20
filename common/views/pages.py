@@ -1,8 +1,10 @@
 """Common views."""
 
+import logging
 import os
 import time
 from datetime import datetime
+from datetime import timedelta
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -36,6 +38,7 @@ from commodities.models import GoodsNomenclature
 from common.celery import app as celery_app
 from common.forms import HomeSearchForm
 from common.models import Transaction
+from common.util import is_cloud_foundry
 from exporter.sqlite.util import sqlite_dumps
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -46,6 +49,8 @@ from regulations.models import Regulation
 from tasks.models import TaskAssignee
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
+
+logger = logging.getLogger(__name__)
 
 
 class HomeView(LoginRequiredMixin, FormView):
@@ -322,6 +327,33 @@ class HealthCheckView(View):
         )
 
 
+def get_uptime() -> str:
+    """
+    Return approximate system uptime in a platform-independent way as a string
+    in the following format:
+        "<days> days, <hours> hours, <mins> minutes"
+    """
+    try:
+        if is_cloud_foundry():
+            # CF recycles Garden containers so time.monotonic() returns a
+            # misleading value. However, file modified time is set on deployment.
+            uptime = timedelta(seconds=(time.time() - os.path.getmtime(__file__)))
+        else:
+            # time.monotonic() doesn't count time spent in hibernation, so may
+            # be inaccurate on systems that hibernate.
+            uptime = timedelta(seconds=time.monotonic())
+
+        formatted_uptime = (
+            f"{uptime.days} days, {uptime.seconds // 3600} hours, "
+            f"{uptime.seconds // 60 % 60} minutes"
+        )
+    except Exception as e:
+        logger.error(e)
+        formatted_uptime = "Error getting uptime"
+
+    return formatted_uptime
+
+
 class AppInfoView(
     LoginRequiredMixin,
     TemplateView,
@@ -416,9 +448,7 @@ class AppInfoView(
         if self.request.user.is_superuser:
             data["GIT_BRANCH"] = os.getenv("GIT_BRANCH", "Unavailable")
             data["GIT_COMMIT"] = os.getenv("GIT_COMMIT", "Unavailable")
-            data["APP_UPDATED_TIME"] = AppInfoView.timestamp_to_datetime_string(
-                os.path.getmtime(__file__),
-            )
+            data["UPTIME"] = get_uptime()
             last_transaction = Transaction.objects.order_by("updated_at").last()
             data["LAST_TRANSACTION_TIME"] = (
                 format(

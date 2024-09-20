@@ -1,4 +1,5 @@
 import logging
+import sqlite3
 from functools import cached_property
 from os import path
 from pathlib import Path
@@ -13,6 +14,40 @@ from common.util import log_timing
 from exporter import sqlite
 
 logger = logging.getLogger(__name__)
+
+
+class EmptyFileException(Exception):
+    pass
+
+
+def is_valid_sqlite(file_path: str) -> bool:
+    """
+    `file_path` should be a path to a file on the local file system. Validation.
+
+    includes:
+    - test that a file exists at `file_path`,
+    - test that the file at `file_path` has non-zero size,
+    - perform a SQLite PRAGMA quick_check on file at `file_path`.
+
+    If errors are found during validation, then exceptions that this function
+    may raise include:
+        - sqlite3.DatabaseError if the PRAGMA quick_check fails.
+        - FileNotFoundError if no file was found at `file_path`.
+        - exporter.storage.EmptyFileException if the file at `file_path` has
+          zero size.
+
+    Returns True if validation checks all pass.
+    """
+
+    if path.getsize(file_path) == 0:
+        raise EmptyFileException(f"{file_path} has zero size.")
+
+    with sqlite3.connect(file_path) as connection:
+        cursor = connection.cursor()
+        # Executing "PRAGMA quick_check" raises DatabaseError if the SQLite
+        # database file is invalid.
+        cursor.execute("PRAGMA quick_check")
+    return True
 
 
 class HMRCStorage(S3Boto3Storage):
@@ -113,7 +148,9 @@ class SQLiteS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
             sqlite.make_export(connection)
             connection.close()
             logger.info(f"Saving {filename} to S3 storage.")
-            self.save(filename, temp_sqlite_db.file)
+            if is_valid_sqlite(temp_sqlite_db.name):
+                # Only save to S3 if the SQLite file is valid.
+                self.save(filename, temp_sqlite_db.file)
 
 
 class SQLiteLocalStorage(SQLiteExportMixin, Storage):
