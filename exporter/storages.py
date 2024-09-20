@@ -11,7 +11,7 @@ from sqlite_s3vfs import S3VFS
 from storages.backends.s3boto3 import S3Boto3Storage
 
 from common.util import log_timing
-from exporter import sqlite
+from exporter import sqlite, quotas
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,27 @@ def is_valid_sqlite(file_path: str) -> bool:
         cursor.execute("PRAGMA quick_check")
     return True
 
+def is_valid_quotas_csv(file_path: str) -> bool:
+    """
+    `file_path` should be a path to a file on the local file system. Validation.
+
+    includes:
+    - test that a file exists at `file_path`,
+    - test that the file at `file_path` has non-zero size,
+
+    If errors are found during validation, then exceptions that this function
+    may raise include:
+        - FileNotFoundError if no file was found at `file_path`.
+        - exporter.storage.EmptyFileException if the file at `file_path` has
+          zero size.
+
+    Returns True if validation checks all pass.
+    """
+
+    if path.getsize(file_path) == 0:
+        raise EmptyFileException(f"{file_path} has zero size.")
+
+    return True
 
 class HMRCStorage(S3Boto3Storage):
     def get_default_settings(self):
@@ -175,3 +196,45 @@ class SQLiteLocalStorage(SQLiteExportMixin, Storage):
         logger.info(f"Saving {filename} to local file system storage.")
         sqlite.make_export(connection)
         connection.close()
+
+class QuotaLocalStorage(Storage):
+    """
+    Storage class used for storing quota CSV data to the local file system.
+    """
+
+    def __init__(self, location) -> None:
+        self._location = Path(location).expanduser().resolve()
+        logger.info(f"Normalised path `{location}` to `{self._location}`.")
+        if not self._location.is_dir():
+            raise Exception(f"Directory does not exist: {location}.")
+
+    def path(self, name: str) -> str:
+        return str(self._location.joinpath(name))
+
+    def exists(self, name: str) -> bool:
+        return Path(self.path(name)).exists()
+
+    @log_timing(logger_function=logger.info)
+    def export_csv(self, filename: str):
+        logger.info(f"Saving {filename} to local file system storage.")
+        quotas.make_export()
+
+
+class QuotaS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
+    """
+    Storage class used for remotely storing SQLite database files to an AWS
+    S3-like backing store.
+
+    This class applies a strategy that first creates a temporary instance of the
+    SQLite file on the local file system before transferring its contents to S3.
+    """
+
+    @log_timing(logger_function=logger.info)
+    def export_csv(self, filename: str):
+        with NamedTemporaryFile() as temp_quotas_csv:
+
+            quotas.make_export()
+            logger.info(f"Saving {filename} to S3 storage.")
+            if is_valid_quotas_csv(temp_quotas_csv.name):
+                # Only save to S3 if the SQLite file is valid.
+                self.save(filename, temp_quotas_csv.file)
