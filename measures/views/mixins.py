@@ -53,9 +53,10 @@ class MeasureSelectionQuerysetMixin(MeasureSelectionMixin):
         return models.Measure.objects.filter(pk__in=self.measure_selections)
 
 
-class MeasureSerializableWizardMixin():
-    """ A Mixin for the wizard forms that utilise asynchronous bulk processing. This mixin provides the functionality to go through each form
+class MeasureSerializableWizardMixin:
+    """A Mixin for the wizard forms that utilise asynchronous bulk processing. This mixin provides the functionality to go through each form
     and serialize the data ready for storing in the database."""
+
     def get_data_form_list(self) -> dict:
         """
         Returns a form list based on form_list, conditionally including only

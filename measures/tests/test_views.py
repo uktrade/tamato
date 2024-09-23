@@ -1833,6 +1833,7 @@ def test_measuretype_api_list_view(valid_user_client):
         equals=True,
     )
 
+
 @override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_start_and_end_date_edit_functionality(
     valid_user_client,
@@ -1926,6 +1927,7 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
         assert measure.valid_between.lower == datetime.date(2000, 1, 1)
         assert measure.valid_between.upper == datetime.date(2100, 1, 1)
         assert measure.effective_end_date == datetime.date(2100, 1, 1)
+
 
 @pytest.mark.parametrize(
     "step, form_data, updated_attribute, expected_data",
@@ -2037,6 +2039,7 @@ def test_multiple_measure_edit_single_form_functionality(
     for measure in workbasket_measures:
         assert measure.update_type == UpdateType.UPDATE
         assert reduce(getattr, updated_attribute.split("."), measure) == expected_data
+
 
 @override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_only_regulation(
@@ -2263,6 +2266,7 @@ def test_measure_list_selected_measures_list(valid_user_client):
 
     assert not measure_ids_in_table.difference(selected_measures_ids)
 
+
 @override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_only_quota_order_number(
     valid_user_client,
@@ -2334,6 +2338,7 @@ def test_multiple_measure_edit_only_quota_order_number(
         assert measure.update_type == UpdateType.UPDATE
         assert measure.order_number == quota_order_number
 
+
 @override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_only_duties(
     valid_user_client,
@@ -2404,6 +2409,7 @@ def test_multiple_measure_edit_only_duties(
     for measure in workbasket_measures:
         assert measure.update_type == UpdateType.UPDATE
         assert measure.duty_sentence == duties
+
 
 @override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_preserves_footnote_associations(
@@ -2480,6 +2486,7 @@ def test_multiple_measure_edit_preserves_footnote_associations(
         assert measure.footnotes.count() == expected_footnote_count
         for footnote in measure.footnotes.all():
             assert footnote in expected_footnotes
+
 
 @override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_geographical_area_exclusions(

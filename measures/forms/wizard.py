@@ -818,7 +818,7 @@ class MeasureStartDateForm(forms.Form, SerializableFormMixin):
                     )
 
         return cleaned_data
-   
+
     @classmethod
     def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
         selected_measures = kwargs.get("selected_measures")
@@ -835,7 +835,9 @@ class MeasureStartDateForm(forms.Form, SerializableFormMixin):
     @classmethod
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
-        deserialized_selected_measures = models.Measure.objects.filter(pk__in=serialized_selected_measures_pks)
+        deserialized_selected_measures = models.Measure.objects.filter(
+            pk__in=serialized_selected_measures_pks
+        )
 
         kwargs = {
             "selected_measures": deserialized_selected_measures,
@@ -884,7 +886,7 @@ class MeasureEndDateForm(forms.Form, SerializableFormMixin):
             cleaned_data["end_date"] = None
 
         return cleaned_data
-    
+
     @classmethod
     def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
         selected_measures = kwargs.get("selected_measures")
@@ -901,7 +903,9 @@ class MeasureEndDateForm(forms.Form, SerializableFormMixin):
     @classmethod
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
-        deserialized_selected_measures = models.Measure.objects.filter(pk__in=serialized_selected_measures_pks)
+        deserialized_selected_measures = models.Measure.objects.filter(
+            pk__in=serialized_selected_measures_pks
+        )
 
         kwargs = {
             "selected_measures": deserialized_selected_measures,
@@ -952,7 +956,9 @@ class MeasureRegulationForm(forms.Form, SerializableFormMixin):
     @classmethod
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
-        deserialized_selected_measures = models.Measure.objects.filter(pk__in=serialized_selected_measures_pks)
+        deserialized_selected_measures = models.Measure.objects.filter(
+            pk__in=serialized_selected_measures_pks
+        )
 
         kwargs = {
             "selected_measures": deserialized_selected_measures,
@@ -1003,7 +1009,7 @@ class MeasureDutiesForm(forms.Form, SerializableFormMixin):
                 validate_duties(duties, measure.valid_between.lower)
 
         return cleaned_data
-    
+
     @classmethod
     def serializable_init_kwargs(cls, kwargs: Dict) -> Dict:
         selected_measures = kwargs.get("selected_measures")
@@ -1020,7 +1026,9 @@ class MeasureDutiesForm(forms.Form, SerializableFormMixin):
     @classmethod
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
-        deserialized_selected_measures = models.Measure.objects.filter(pk__in=serialized_selected_measures_pks)
+        deserialized_selected_measures = models.Measure.objects.filter(
+            pk__in=serialized_selected_measures_pks
+        )
 
         kwargs = {
             "selected_measures": deserialized_selected_measures,

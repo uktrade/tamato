@@ -14,6 +14,7 @@ from measures.util import update_measure_condition_components
 from measures.util import update_measure_excluded_geographical_areas
 from measures.util import update_measure_footnote_associations
 
+
 class MeasuresEditor:
     """Utility class used to edit measures from measures wizard accumulated
     data."""
@@ -28,7 +29,12 @@ class MeasuresEditor:
     """Validated, cleaned and accumulated data created by the Form instances of
     `MeasureEditWizard`."""
 
-    def __init__(self, workbasket: Type["workbasket_models.WorkBasket"], selected_measures: List, data: Dict):
+    def __init__(
+        self,
+        workbasket: Type["workbasket_models.WorkBasket"],
+        selected_measures: List,
+        data: Dict,
+    ):
         self.workbasket = workbasket
         self.selected_measures = selected_measures
         self.data = data
@@ -106,7 +112,7 @@ class MeasuresEditor:
                         measure=new_measure,
                         workbasket=self.workbasket,
                     )
-                    
+
                     edited_measures.append(new_measure.id)
 
             return edited_measures

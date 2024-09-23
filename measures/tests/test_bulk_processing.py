@@ -186,7 +186,7 @@ def test_bulk_creator_get_forms_cleaned_data(
         }
 
 
-# Run the form and get the form data from the sync done 
+# Run the form and get the form data from the sync done
 @patch("measures.parsers.DutySentenceParser")
 def test_bulk_editor_get_forms_cleaned_data(
     mock_duty_sentence_parser,
@@ -219,19 +219,19 @@ def test_bulk_editor_get_forms_cleaned_data(
         },
         "quota_order_number": {"order_number": order_number.pk},
         "regulation": {"generating_regulation": regulation.pk},
-        "duties": {"duties": '4%'},
+        "duties": {"duties": "4%"},
         "geographical_area_exclusions": {
             "form-0-excluded_area": geo_area1.pk,
-            "form-1-excluded_area": geo_area2.pk
-        }
+            "form-1-excluded_area": geo_area2.pk,
+        },
     }
 
     form_kwargs = {
-        "start_date": {'selected_measures': selected_measures},
-        "end_date": {'selected_measures': selected_measures},
+        "start_date": {"selected_measures": selected_measures},
+        "end_date": {"selected_measures": selected_measures},
         "quota_order_number": {},
-        "regulation": {'selected_measures': selected_measures},
-        "duties": {'selected_measures': selected_measures},
+        "regulation": {"selected_measures": selected_measures},
+        "duties": {"selected_measures": selected_measures},
         "geographical_area_exclusions": {},
     }
 
@@ -249,8 +249,11 @@ def test_bulk_editor_get_forms_cleaned_data(
             "end_date": datetime.date(2026, 2, 2),
             "generating_regulation": regulation,
             "order_number": order_number,
-            "duties": '4%',
-            "formset-geographical_area_exclusions": [{'excluded_area': geo_area1, 'DELETE': False }, {'excluded_area': geo_area2, 'DELETE': False }]
+            "duties": "4%",
+            "formset-geographical_area_exclusions": [
+                {"excluded_area": geo_area1, "DELETE": False},
+                {"excluded_area": geo_area2, "DELETE": False},
+            ],
         }
 
 
@@ -341,19 +344,19 @@ def test_bulk_editor_get_forms_cleaned_data_errors(
         },
         "quota_order_number": {"order_number": ""},
         "regulation": {"generating_regulation": ""},
-        "duties": {"duties": ''},
+        "duties": {"duties": ""},
         "geographical_area_exclusions": {
             "form-0-excluded_area": "",
-            "form-1-excluded_area": ""
-        }
+            "form-1-excluded_area": "",
+        },
     }
 
     form_kwargs = {
-        "start_date": {'selected_measures': selected_measures},
-        "end_date": {'selected_measures': selected_measures},
+        "start_date": {"selected_measures": selected_measures},
+        "end_date": {"selected_measures": selected_measures},
         "quota_order_number": {},
-        "regulation": {'selected_measures': selected_measures},
-        "duties": {'selected_measures': selected_measures},
+        "regulation": {"selected_measures": selected_measures},
+        "duties": {"selected_measures": selected_measures},
         "geographical_area_exclusions": {},
     }
 
@@ -368,4 +371,3 @@ def test_bulk_editor_get_forms_cleaned_data_errors(
     with override_current_transaction(user_empty_workbasket.current_transaction):
         with pytest.raises(ValidationError):
             mock_bulk_editor.get_forms_cleaned_data()
-

@@ -14,6 +14,7 @@ from typing import Type
 from workbaskets import models as workbasket_models
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -56,10 +57,11 @@ def diff_components(
     """
     from measures.parsers import DutySentenceParser
 
-    # We add in the component output type here as otherwise we run into circular import issues. 
-    component_output = measure_models.MeasureComponent if not component_output else component_output
+    # We add in the component output type here as otherwise we run into circular import issues.
+    component_output = (
+        measure_models.MeasureComponent if not component_output else component_output
+    )
 
-    
     parser = DutySentenceParser.create(
         start_date,
         component_output=component_output,

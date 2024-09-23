@@ -508,11 +508,14 @@ class MeasuresBulkEditor(BulkProcessor):
             transaction=self.workbasket.current_transaction,
         ):
             cleaned_data = self.get_forms_cleaned_data()
-            deserialized_selected_measures = Measure.objects.filter(pk__in=self.selected_measures)
-            
-            measures_editor = MeasuresEditor(self.workbasket, deserialized_selected_measures, cleaned_data)
-            return measures_editor.edit_measures()
+            deserialized_selected_measures = Measure.objects.filter(
+                pk__in=self.selected_measures
+            )
 
+            measures_editor = MeasuresEditor(
+                self.workbasket, deserialized_selected_measures, cleaned_data
+            )
+            return measures_editor.edit_measures()
 
     def get_forms_cleaned_data(self) -> Dict:
         """
@@ -527,6 +530,7 @@ class MeasuresBulkEditor(BulkProcessor):
         all_cleaned_data = {}
 
         from measures.views import MeasureEditWizard
+
         for form_key, form_class in MeasureEditWizard.data_form_list:
 
             if form_key not in self.form_data:
@@ -549,7 +553,7 @@ class MeasuresBulkEditor(BulkProcessor):
                 all_cleaned_data[f"formset-{form_key}"] = form.cleaned_data
             else:
                 all_cleaned_data.update(form.cleaned_data)
-        
+
         return all_cleaned_data
 
     def _log_form_errors(self, form_class, form_or_formset) -> None:
@@ -575,4 +579,4 @@ class MeasuresBulkEditor(BulkProcessor):
 
         for form_errors in errors:
             for error_key, error_values in form_errors.items():
-                logger.error(f"{error_key}: {error_values}") 
+                logger.error(f"{error_key}: {error_values}")

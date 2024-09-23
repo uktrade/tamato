@@ -324,22 +324,23 @@ def mock_request(rf, valid_user, valid_user_client):
     request.requests_session = requests.Session()
     return request
 
+
 @pytest.fixture()
 def measure_edit_start_date_form_data():
     return {
-            "start_date_0": 1,
-            "start_date_1": 1,
-            "start_date_2": 2023,
-            }
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2023,
+    }
 
 
 @pytest.fixture()
 def measure_edit_end_date_form_data():
     return {
-            "end_date_0": 2,
-            "end_date_1": 2,
-            "end_date_2": 2026,
-            }
+        "end_date_0": 2,
+        "end_date_1": 2,
+        "end_date_2": 2026,
+    }
 
 
 @pytest.fixture()
@@ -350,6 +351,7 @@ def measure_regulation_id_form_data():
 @pytest.fixture()
 def measure_edit_regulation_form_data():
     return {"generating_regulation": factories.RegulationFactory.create()}
+
 
 @pytest.fixture()
 def measure_details_form_data(date_ranges):
@@ -510,7 +512,7 @@ def measure_geo_area_geo_group_exclusions_form_data(erga_omnes):
 
 @pytest.fixture()
 def measure_edit_duties_form_data():
-    return {"duties": '4%'}
+    return {"duties": "4%"}
 
 
 @pytest.fixture()
@@ -551,6 +553,7 @@ def simple_measures_bulk_editor(
         selected_measures=[],
         user=None,
     )
+
 
 @pytest.fixture()
 def mocked_edit_schedule_apply_async():

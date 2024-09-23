@@ -2023,10 +2023,7 @@ def test_measure_edit_forms_geo_area_exclusions_serialize_deserialize():
     geo_area1 = factories.GeographicalAreaFactory.create()
     geo_area2 = factories.GeographicalAreaFactory.create()
 
-    form_data = {
-            "form-0-excluded_area": geo_area1,
-            "form-1-excluded_area": geo_area2
-        }
+    form_data = {"form-0-excluded_area": geo_area1, "form-1-excluded_area": geo_area2}
     with override_current_transaction(Transaction.objects.last()):
         form = forms.MeasureGeographicalAreaExclusionsFormSet(
             form_data,

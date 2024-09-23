@@ -105,7 +105,7 @@ class MeasureEditWizard(
             self.steps.current,
             "measures/edit-wizard-step.jinja",
         )
-    
+
     @property
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
@@ -172,13 +172,15 @@ class MeasureEditWizard(
                 kwargs={"pk": self.workbasket.pk},
             ),
         )
-    
+
     def edit_measures(self, selected_measures, cleaned_data):
         """Synchronously edit measures within the context of the view / web
         worker using accumulated data, `cleaned_data`, from all the necessary
         wizard forms."""
 
-        measures_editor = MeasuresEditor(self.workbasket, selected_measures, cleaned_data)
+        measures_editor = MeasuresEditor(
+            self.workbasket, selected_measures, cleaned_data
+        )
         return measures_editor.edit_measures()
 
     def sync_done(self, form_list, **kwargs):
@@ -208,10 +210,7 @@ class MeasureEditWizard(
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class MeasureCreateWizard(
-    PermissionRequiredMixin,
-    NamedUrlSessionWizardView,
-    MeasureSerializableWizardMixin
-
+    PermissionRequiredMixin, NamedUrlSessionWizardView, MeasureSerializableWizardMixin
 ):
     """
     Multipart form wizard for creating a single measure.

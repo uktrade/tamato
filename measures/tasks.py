@@ -45,6 +45,7 @@ def bulk_create_measures(measures_bulk_creator_pk: int) -> None:
             f"WorkBasket({measures_bulk_creator.workbasket.pk}).",
         )
 
+
 @app.task
 def bulk_edit_measures(measures_bulk_editor_pk: int) -> None:
     """Bulk edit measures from serialized measures form data saved within an
@@ -65,7 +66,7 @@ def bulk_edit_measures(measures_bulk_editor_pk: int) -> None:
             f"WorkBasket({measures_bulk_editor.workbasket.pk}).",
         )
         raise e
-    
+
     measures_bulk_editor.processing_succeeded()
     measures_bulk_editor.successfully_processed_count = len(measures)
     measures_bulk_editor.save()
@@ -75,4 +76,4 @@ def bulk_edit_measures(measures_bulk_editor_pk: int) -> None:
             f"MeasuresBulkEditor({measures_bulk_editor.pk}) task "
             f"succeeded in editing {len(measures)} Measures in "
             f"WorkBasket({measures_bulk_editor.workbasket.pk}).",
-        ) 
+        )
