@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic.base import TemplateView
@@ -14,6 +15,7 @@ from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
 from tasks.forms import TaskUpdateForm
 from tasks.models import Task
+from tasks.signals import set_current_instigator
 
 
 class TaskListView(PermissionRequiredMixin, SortingMixin, WithPaginationListView):
@@ -68,6 +70,12 @@ class TaskUpdateView(PermissionRequiredMixin, UpdateView):
     template_name = "tasks/edit.jinja"
     permission_required = "tasks.change_task"
     form_class = TaskUpdateForm
+
+    @transaction.atomic
+    def form_valid(self, form):
+        set_current_instigator(self.request.user)
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
         return reverse("workflow:task-ui-confirm-update", kwargs={"pk": self.object.pk})
