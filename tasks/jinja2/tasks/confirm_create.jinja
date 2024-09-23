@@ -1,0 +1,46 @@
+{% extends "common/confirm_create.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = " Task created" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Create a new task", "href": url("workflow:task-ui-create") },
+      {"text": "Task created"}
+    ]
+  }) }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": "Task: " ~ object.title,
+    "text": "You have created a new task",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block button_group %}
+  {#
+  {{ govukButton({
+    "text": "View task",
+    "href": url('workflow:task-ui-detail', kwargs={"pk": object.pk}),
+    "classes": "govuk-button"
+  }) }}
+  #}
+  {{ govukButton({
+    "text": "Return to homepage",
+    "href": url("home"),
+    "classes": "govuk-button--secondary"
+  }) }}
+{% endblock %}
+
+{% block actions %}
+  {#
+  <li><a href="{{ url("workflow:task-ui-list") }}">Find and edit tasks</a></li>
+  #}
+{% endblock %}

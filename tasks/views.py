@@ -1,0 +1,33 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView
+
+from tasks.forms import TaskCreateForm
+from tasks.models import Task
+
+
+class TaskCreateView(PermissionRequiredMixin, CreateView):
+    model = Task
+    template_name = "layouts/create.jinja"
+    permission_required = "tasks.add_task"
+    form_class = TaskCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "Create a task"
+        return context
+
+    def form_valid(self, form):
+        self.object = form.save(user=self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse("workflow:task-ui-confirm-create", kwargs={"pk": self.object.pk})
+
+
+class TaskConfirmCreateView(PermissionRequiredMixin, DetailView):
+    model = Task
+    template_name = "tasks/confirm_create.jinja"
+    permission_required = "tasks.add_task"
