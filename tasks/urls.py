@@ -19,6 +19,12 @@ ui_patterns = [
         views.TaskConfirmUpdateView.as_view(),
         name="task-ui-confirm-update",
     ),
+    path("<int:pk>/delete/", views.TaskDeleteView.as_view(), name="task-ui-delete"),
+    path(
+        "<int:pk>/confirm-delete",
+        views.TaskConfirmDeleteView.as_view(),
+        name="task-ui-confirm-delete",
+    ),
 ]
 
 urlpatterns = [

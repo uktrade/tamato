@@ -4,6 +4,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django.forms import ModelForm
 
+from common.forms import delete_form_for
 from tasks.models import Task
 from workbaskets.models import WorkBasket
 
@@ -64,3 +65,6 @@ class TaskCreateForm(TaskBaseForm):
 
 class TaskUpdateForm(TaskBaseForm):
     pass
+
+
+TaskDeleteForm = delete_form_for(Task)

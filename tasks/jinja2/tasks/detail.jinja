@@ -100,13 +100,12 @@
 </dl>
 
 <div class="govuk-button-group">
-{#
   {{ govukButton({
     "text": "Delete task",
-    "href": url("tasks:task-ui-delete", kwargs={"pk": object.pk}),
+    "href": url("workflow:task-ui-delete", kwargs={"pk": object.pk}),
     "classes": "govuk-button--warning"
   }) }}
-
+{#
   {{ govukButton({
     "text": "Find and view tasks",
     "href": url("tasks:task-ui-list"),
