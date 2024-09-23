@@ -6,6 +6,7 @@ from tasks import views
 app_name = "workflow"
 
 ui_patterns = [
+    path("", views.TaskListView.as_view(), name="task-ui-list"),
     path("<int:pk>/", views.TaskDetailView.as_view(), name="task-ui-detail"),
     path("create/", views.TaskCreateView.as_view(), name="task-ui-create"),
     path(

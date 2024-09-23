@@ -7,10 +7,29 @@ from django.views.generic.edit import CreateView
 from django.views.generic.edit import DeleteView
 from django.views.generic.edit import UpdateView
 
+from common.views import SortingMixin
+from common.views import WithPaginationListView
+from tasks.filters import TaskFilter
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
 from tasks.forms import TaskUpdateForm
 from tasks.models import Task
+
+
+class TaskListView(PermissionRequiredMixin, SortingMixin, WithPaginationListView):
+    model = Task
+    template_name = "tasks/list.jinja"
+    permission_required = "tasks.view_task"
+    filterset_class = TaskFilter
+    sort_by_fields = ["created_at"]
+
+    def get_queryset(self):
+        queryset = Task.objects.all()
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
 
 
 class TaskDetailView(PermissionRequiredMixin, DetailView):

@@ -9,6 +9,7 @@
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
+      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
       {"text": page_title}
     ]
   }) }}
@@ -23,13 +24,11 @@
 {% endblock %}
 
 {% block button_group %}
-{#
   {{ govukButton({
     "text": "Find and view tasks",
-    "href": url("tasks:task-ui-list"),
+    "href": url("workflow:task-ui-list"),
     "classes": "govuk-button"
   }) }}
-#}
   {{ govukButton({
     "text": "Return to homepage",
     "href": url("home"),

@@ -8,6 +8,7 @@
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
+      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
       {"text": page_title}
     ]
   ) }}
@@ -105,12 +106,10 @@
     "href": url("workflow:task-ui-delete", kwargs={"pk": object.pk}),
     "classes": "govuk-button--warning"
   }) }}
-{#
   {{ govukButton({
     "text": "Find and view tasks",
-    "href": url("tasks:task-ui-list"),
+    "href": url("workflow:task-ui-list"),
     "classes": "govuk-button--secondary"
   }) }}
-#}
 </div>
 {% endblock %}
