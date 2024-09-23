@@ -3,8 +3,10 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
+from django.views.generic.edit import UpdateView
 
 from tasks.forms import TaskCreateForm
+from tasks.forms import TaskUpdateForm
 from tasks.models import Task
 
 
@@ -37,3 +39,19 @@ class TaskConfirmCreateView(PermissionRequiredMixin, DetailView):
     model = Task
     template_name = "tasks/confirm_create.jinja"
     permission_required = "tasks.add_task"
+
+
+class TaskUpdateView(PermissionRequiredMixin, UpdateView):
+    model = Task
+    template_name = "tasks/edit.jinja"
+    permission_required = "tasks.change_task"
+    form_class = TaskUpdateForm
+
+    def get_success_url(self):
+        return reverse("workflow:task-ui-confirm-update", kwargs={"pk": self.object.pk})
+
+
+class TaskConfirmUpdateView(PermissionRequiredMixin, DetailView):
+    model = Task
+    template_name = "tasks/confirm_update.jinja"
+    permission_required = "tasks.change_task"

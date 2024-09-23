@@ -4,7 +4,7 @@
 
 {% set page_title = "Task: " ~ object.title %}
 
-{% set edit_url = "#" %}
+{% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [

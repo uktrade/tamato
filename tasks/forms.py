@@ -60,3 +60,7 @@ class TaskCreateForm(TaskBaseForm):
         if commit:
             instance.save()
         return instance
+
+
+class TaskUpdateForm(TaskBaseForm):
+    pass
