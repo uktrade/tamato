@@ -25,13 +25,11 @@
 {% endblock %}
 
 {% block button_group %}
-  {#
   {{ govukButton({
     "text": "View task",
     "href": url('workflow:task-ui-detail', kwargs={"pk": object.pk}),
     "classes": "govuk-button"
   }) }}
-  #}
   {{ govukButton({
     "text": "Return to homepage",
     "href": url("home"),

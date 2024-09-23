@@ -1,0 +1,117 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Task: " ~ object.title %}
+
+{% set edit_url = "#" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title}
+    ]
+  ) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+    </div>
+  </div>
+
+  <h2 class="govuk-heading-m">Details</h2>
+  
+  <dl class="govuk-summary-list">
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      ID
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{object.pk}}
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Title
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{object.title}}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> title</span></a>
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Description
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{object.description}}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> description</span></a>
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Category
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{object.category}}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> category</span></a>
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Status
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{object.progress_state}}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Created
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ "{:%d %b %Y %H:%M}".format(object.created_at) }}
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Created by
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ object.creator.get_displayname() }}
+    </dd>
+  </div>
+</dl>
+
+<div class="govuk-button-group">
+{#
+  {{ govukButton({
+    "text": "Delete task",
+    "href": url("tasks:task-ui-delete", kwargs={"pk": object.pk}),
+    "classes": "govuk-button--warning"
+  }) }}
+
+  {{ govukButton({
+    "text": "Find and view tasks",
+    "href": url("tasks:task-ui-list"),
+    "classes": "govuk-button--secondary"
+  }) }}
+#}
+</div>
+{% endblock %}

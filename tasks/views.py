@@ -8,6 +8,12 @@ from tasks.forms import TaskCreateForm
 from tasks.models import Task
 
 
+class TaskDetailView(PermissionRequiredMixin, DetailView):
+    model = Task
+    template_name = "tasks/detail.jinja"
+    permission_required = "tasks.view_task"
+
+
 class TaskCreateView(PermissionRequiredMixin, CreateView):
     model = Task
     template_name = "layouts/create.jinja"
