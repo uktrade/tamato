@@ -409,10 +409,68 @@ class WorkBasket(TimestampedMixin):
         reviewer, otherwise False."""
         return self.worker_assignments.exists() and self.reviewer_assignments.exists()
 
-    def contains_only_licensed_quotas(self) -> bool:
-        """Returns True if a workbasket only contains licensed quotas, False
-        otherwise."""
-        # TODO: perform necessary checks to ensure only licensed quotas.
+    def has_only_licensed_quotas_and_related(self) -> bool:
+        """
+        Returns True if a workbasket only contains licensed quotas and their
+        related geo area origins and execlusions, False otherwise.
+
+        If origins are included in the workbasket, then they must be associated
+        with quotas within the same workbasket.
+
+        If exclusions are included in the workbasket, then they must be
+        associated with origins within the same workbasket.
+
+        If geographical areas are included in the workbasket, then they must be
+        associated with either origins or exclusions in the same workbasket.
+
+        If geographical area descriptions are included in the workbasket, then
+        they must be associated with geographical areas in the same workbasket.
+        """
+
+        from geo_areas.models import GeographicalArea
+        from geo_areas.models import GeographicalAreaDescription
+        from quotas.models import QuotaOrderNumber
+        from quotas.models import QuotaOrderNumberOrigin
+        from quotas.models import QuotaOrderNumberOriginExclusion
+
+        if self.tracked_models.not_instance_of(
+            GeographicalArea,
+            GeographicalAreaDescription,
+            QuotaOrderNumber,
+            QuotaOrderNumberOrigin,
+            QuotaOrderNumberOriginExclusion,
+        ).exists():
+            # Rogue types of TrackedModel found.
+            return False
+
+        quotas = QuotaOrderNumber.objects.filter(
+            transaction__workbasket=self,
+        )
+        origins = QuotaOrderNumberOrigin.objects.filter(
+            transaction__workbasket=self,
+        )
+        exclusions = QuotaOrderNumberOriginExclusion.objects.filter(
+            transaction__workbasket=self,
+        )
+
+        quotas_sids = quotas.values_list("sid", flat=True)
+        origin_sids = origins.values_list("sid", flat=True)
+        origin_quota_sids = origins.values_list("order_number__sid", flat=True)
+        exclusion_origin_sids = exclusions.values_list("origin__sid", flat=True)
+
+        if not set(origin_quota_sids).issubset(set(quotas_sids)):
+            # Only origins that are associated with quotas in this workbasket
+            # are permitted.
+            return False
+
+        if not set(exclusion_origin_sids).issubset(set(origin_sids)):
+            # Only exclusions that are associated with origins in this
+            # workbasket are permitted.
+            return False
+
+        # TODO: check geo areas relate to origins or exclusions in wb.
+        # TODO: check geo area descriptions relate to geo areas in wb.
+
         return True
 
     @transition(
@@ -472,7 +530,11 @@ class WorkBasket(TimestampedMixin):
         field=status,
         source=WorkflowStatus.EDITING,
         target=WorkflowStatus.PUBLISHED,
-        conditions=[contains_only_licensed_quotas, is_fully_assigned],
+        conditions=[
+            has_only_licensed_quotas_and_related,
+            # TODO: Does the workbasket need to be fully assigned?
+            # is_fully_assigned,
+        ],
         custom={"label": "Published licensed quotas."},
     )
     def publish_licensed_quotas(self, user: int, scheme_name: str):
@@ -647,7 +709,7 @@ class WorkBasket(TimestampedMixin):
         ).delete()
 
     @property
-    def unchecked_or_errored_transactions(self):
+    def unchecked_or_errored_transactions(self) -> QuerySet:
         """
         Returns unchecked, errored or out of date transactions from the
         workbaskets.
