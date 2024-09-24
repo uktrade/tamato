@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Iterable
+from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
@@ -74,6 +75,29 @@ def test_workbasket_transition(upload, workbasket, transition, valid_user):
         assert transition.name not in {
             t.name for t in workbasket.get_available_status_transitions()
         }
+
+
+@patch(
+    "workbaskets.models.WorkBasket.unchecked_or_errored_transactions",
+)
+def test_publish_licensed_quotas_transition(
+    unchecked_or_errored_transactions,
+    valid_user,
+):
+    # Other tests check for transaction and object checks, so mock it here.
+    unchecked_or_errored_transactions.__get__ = Mock(
+        return_value=WorkBasket.objects.none(),
+    )
+
+    transaction = factories.TransactionFactory(draft=True)
+    factories.QuotaOrderNumberFactory(transaction=transaction)
+
+    workbasket = transaction.workbasket
+    workbasket.publish_licensed_quotas(valid_user.pk, "SEED_FIRST")
+    workbasket.save()
+    workbasket.refresh_from_db()
+
+    assert workbasket.status == WorkflowStatus.PUBLISHED
 
 
 @patch("exporter.tasks.upload_workbaskets")
