@@ -243,9 +243,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
     @property
     def sub_quotas(self):
         return (
-            QuotaAssociation.objects.approved_up_to_transaction(
-                self.request.user.current_workbasket.transactions.last(),
-            )
+            QuotaAssociation.objects.current()
             .filter(main_quota__order_number=self.quota)
             .order_by("sub_quota__sid")
         )

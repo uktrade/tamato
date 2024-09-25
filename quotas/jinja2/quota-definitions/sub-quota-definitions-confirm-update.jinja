@@ -2,13 +2,14 @@
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
 
-{% set page_title = "Sub quota definition and association updated" %}
+{% set page_title = "Sub-quota definition and association updated" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and edit quotas", "href": url("quota-ui-list")},
       {"text": "Quota " ~ association.main_quota.order_number, "href": association.main_quota.order_number.get_url()},
       {"text": "Quota " ~ association.main_quota.order_number ~ " - Data", "href": url("quota_definition-ui-list", kwargs={"sid":association.main_quota.order_number.sid})},
+      {"text": page_title},
     ])
   }}
 {% endblock %}
