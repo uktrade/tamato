@@ -23,7 +23,8 @@ if this implementation is high
 and joins as TAP its self does - removing the need to run queries in SQL which has been problematic, and is
 difficult to maintain.
 """
-
+import os
+import shutil
 from itertools import chain
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -32,23 +33,20 @@ import apsw
 from django.apps import apps
 from django.conf import settings
 
-from exporter.sqlite import plan
-from exporter.sqlite import runner
-from exporter.sqlite import tasks  # noqa
+from exporter.quotas import runner
+from exporter.quotas import tasks
 
-def make_export():
-    with NamedTemporaryFile() as quotas_csv:
-        # Create Runner instance with its SQLite file name pointing at a path on
-        # the local file system. This is only required temporarily in order to
-        # create an in-memory plan that can be run against a target database
-        # object.
-        plan_runner = runner.Runner.make_tamato_database(
-            Path(temp_sqlite_db.name),
-        )
-        plan = make_export_plan(plan_runner)
-        # Runner.make_tamato_database() (above) creates a Connection instance
-        # that needs closing once an in-memory plan has been created from it.
-        plan_runner.database.close()
+def make_export(file_name = None):
+    quotas_csv_named_temp_file = NamedTemporaryFile(mode='wt', suffix='.csv', delete=False)
+    quota_csv_exporter = runner.QuotaExport(quotas_csv_named_temp_file)
+    quota_csv_exporter.run()
+    # do stuff
+    quotas_csv_named_temp_file.close()
+    if file_name:
+        shutil.copy(quotas_csv_named_temp_file.name, file_name)
+    os.unlink(quotas_csv_named_temp_file.name)
+    # done
 
-    export_runner = runner.Runner(connection)
-    export_runner.run_operations(plan.operations)
+
+
+
