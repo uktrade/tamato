@@ -89,19 +89,19 @@ class HMRCStorage(S3Boto3Storage):
         return super().get_object_parameters(name)
 
 
-class SQLiteExportMixin:
+class DataExportMixin:
     """Mixin class used to define a common export API among SQLite Storage
     subclasses."""
 
     def export_database(self, filename: str):
         """Export Tamato's primary database to an SQLite file format, saving to
-        Storage's backing store (S3, local file system, etc)."""
+        Storage's backing store (S3, local file system, etc.)."""
         raise NotImplementedError
 
 
 class SQLiteS3StorageBase(S3Boto3Storage):
     """Storage base class used for remotely storing SQLite database files to an
-    AWS S3-like backing store (AWS S3, Minio, etc)."""
+    AWS S3-like backing store (AWS S3, Minio, etc.)."""
 
     def get_default_settings(self):
         from django.conf import settings
@@ -124,8 +124,36 @@ class SQLiteS3StorageBase(S3Boto3Storage):
         )
         return super().generate_filename(filename)
 
+class QuotasExportS3StorageBase(S3Boto3Storage):
+    """
+    Storage base class used for remotely storing Quotas Export CSV file to an
+    AWS S3-like backing store (AWS S3, Minio, etc.).
+    """
 
-class SQLiteS3VFSStorage(SQLiteExportMixin, SQLiteS3StorageBase):
+    def get_default_settings(self):
+        from django.conf import settings
+
+        return dict(
+            super().get_default_settings(),
+            bucket_name=settings.QUOTAS_EXPORT_STORAGE_BUCKET_NAME,
+            access_key=settings.QUOTAS_EXPORT_S3_ACCESS_KEY_ID,
+            secret_key=settings.QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY,
+            region_name=settings.QUOTAS_EXPORT_S3_REGION_NAME,
+            endpoint_url=settings.S3_ENDPOINT_URL,
+            default_acl="private",
+        )
+
+    def generate_filename(self, filename: str) -> str:
+        from django.conf import settings
+
+        filename = path.join(
+            settings.QUOTAS_EXPORT_DESTINATION_FOLDER,
+            filename,
+        )
+        return super().generate_filename(filename)
+
+
+class SQLiteS3VFSStorage(DataExportMixin, SQLiteS3StorageBase):
     """
     Storage class used for remotely storing SQLite database files to an AWS
     S3-like backing store.
@@ -153,7 +181,7 @@ class SQLiteS3VFSStorage(SQLiteExportMixin, SQLiteS3StorageBase):
         self.bucket.Object(filename).upload_fileobj(vfs_fileobj)
 
 
-class SQLiteS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
+class SQLiteS3Storage(DataExportMixin, SQLiteS3StorageBase):
     """
     Storage class used for remotely storing SQLite database files to an AWS
     S3-like backing store.
@@ -174,7 +202,7 @@ class SQLiteS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
                 self.save(filename, temp_sqlite_db.file)
 
 
-class SQLiteLocalStorage(SQLiteExportMixin, Storage):
+class SQLiteLocalStorage(DataExportMixin, Storage):
     """Storage class used for storing SQLite database files to the local file
     system."""
 
@@ -220,7 +248,7 @@ class QuotaLocalStorage(Storage):
         quotas.make_export()
 
 
-class QuotaS3Storage(SQLiteExportMixin, SQLiteS3StorageBase):
+class QuotaS3Storage(DataExportMixin, QuotasExportS3StorageBase):
     """
     Storage class used for remotely storing SQLite database files to an AWS
     S3-like backing store.
