@@ -483,10 +483,19 @@ else:
         "IMPORTER_STORAGE_BUCKET_NAME",
         "importer",
     )
-    QUOTAS_EXPORT_STORAGE_BUCKET_NAME = os.environ.get("QUOTAS_EXPORT_S3_ACCESS_KEY_ID", 'quotas-export-local')
-    QUOTAS_EXPORT_S3_REGION_NAME = os.environ.get("QUOTAS_EXPORT_S3_REGION_NAME", "eu-west-2")
-    QUOTAS_EXPORT_S3_ACCESS_KEY_ID = os.environ.get("QUOTAS_EXPORT_S3_ACCESS_KEY_ID", 'quotas-export-id')
-    QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = os.environ.get("QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY", 'quotas-export-key')
+    QUOTAS_EXPORT_STORAGE_BUCKET_NAME = os.environ.get(
+        "S3_SECRET_ACCESS_KEY",
+        'quotas-export-local'
+    )
+    QUOTAS_EXPORT_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
+    QUOTAS_EXPORT_S3_ACCESS_KEY_ID = os.environ.get(
+        "S3_SECRET_ACCESS_KEY",
+        'quotas-export-access-key'
+    )
+    QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = os.environ.get(
+        "S3_SECRET_ACCESS_KEY",
+        'quotas-export-access-id'
+    )
 
 S3_ENDPOINT_URL = os.environ.get(
     "S3_ENDPOINT_URL",
@@ -555,6 +564,8 @@ SQLITE_S3_ENDPOINT_URL = os.environ.get(
     "https://test-sqlite-url.local/",
 )
 SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
+
+
 
 # Default AWS settings.
 if is_copilot():

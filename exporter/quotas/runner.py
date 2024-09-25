@@ -30,8 +30,8 @@ def normalise_loglevel(loglevel):
 class QuotaExport:
 
     def __init__(self, target_file: NamedTemporaryFile ):
-        # self.rows = []
-        # self.quotas = None
+        self.rows = []
+        self.quotas = None
         self.target_file = target_file
 
     @staticmethod
@@ -70,6 +70,7 @@ class QuotaExport:
             writer = csv.writer(file)
             writer.writerow(self.csv_headers())
             for quota in quotas:
+
                 item_ids = self.get_goods_nomenclature_item_ids(quota)
                 geographical_areas, geographical_area_exclusions = self.get_geographical_areas_and_exclusions(quota)
                 goods_nomenclature_headings = self.get_goods_nomenclature_headings(item_ids)
@@ -130,6 +131,8 @@ class QuotaExport:
                 measurement_unit_description = measurement_unit_description + f' ({quota.measurement_unit.abbreviation})'
             return measurement_unit_description
         return None
+
+
 
     @staticmethod
     def get_api_query_date(quota):

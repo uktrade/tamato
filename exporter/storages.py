@@ -135,7 +135,7 @@ class QuotasExportS3StorageBase(S3Boto3Storage):
     def get_default_settings(self):
         from django.conf import settings
 
-        quotas_s3_settings = dict(
+        return dict(
             super().get_default_settings(),
             bucket_name=settings.QUOTAS_EXPORT_STORAGE_BUCKET_NAME,
             access_key=settings.QUOTAS_EXPORT_S3_ACCESS_KEY_ID,
@@ -144,9 +144,6 @@ class QuotasExportS3StorageBase(S3Boto3Storage):
             endpoint_url=settings.S3_ENDPOINT_URL,
             default_acl="private",
         )
-        print(quotas_s3_settings)
-
-        return quotas_s3_settings
 
     def generate_filename(self, filename: str) -> str:
         from django.conf import settings
