@@ -9,6 +9,7 @@ from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
+from measures import forms
 from measures.models import MeasuresBulkCreator
 from measures.models import MeasuresBulkEditor
 from measures.models import ProcessingState
@@ -371,3 +372,55 @@ def test_bulk_editor_get_forms_cleaned_data_errors(
     with override_current_transaction(user_empty_workbasket.current_transaction):
         with pytest.raises(ValidationError):
             mock_bulk_editor.get_forms_cleaned_data()
+
+
+
+@pytest.mark.parametrize(
+    "form_class, form_data, expected_error",
+    [
+        (
+            forms.MeasureStartDateForm,
+            {"start_date": {
+                "start_date_0": "",
+                "start_date_1": "",
+                "start_date_2": "",
+            }},
+            "Enter the day, month and year",
+        ),
+        (
+            forms.MeasureRegulationForm,
+            {"regulation": {"generating_regulation": ""}},
+            "This field is required",
+        ),
+    ],
+    ids=[
+        "measure_edit_start_date_form",
+        "measure_edit_regulation_form",
+    ],
+)
+def test_bulk_editor_log_form_errors_displays_detailed_error(
+    form_class,
+    form_data,
+    expected_error,
+    caplog,
+    
+):
+    
+    # Create measures for the form kwargs
+    measure_1 = factories.MeasureFactory.create()
+    measure_2 = factories.MeasureFactory.create()
+    measure_3 = factories.MeasureFactory.create()
+
+    form_kwargs = {"selected_measures": [measure_1, measure_2, measure_3]}
+    form = form_class(data=form_data, **form_kwargs)
+
+    mock_bulk_editor = MeasuresBulkEditorFactory.create()
+
+    import logging
+    # Ensure logging propagation is enabled else log messages won't
+    # reach this module.
+    logger = logging.getLogger("measures")
+    logger.propagate = True
+
+    mock_bulk_editor._log_form_errors(form_class=form_class, form_or_formset=form)      
+    assert expected_error in caplog.text
