@@ -134,11 +134,76 @@ class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
         UpdateValidity,
     )
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        geo_area_options = (
+            GeographicalArea.objects.current()
+            .with_latest_description()
+            .as_at_today_and_beyond()
+            .prefetch_related("descriptions")
+            .order_by("description")
+        )
+        groups_options = geo_area_options.filter(area_code=AreaCode.GROUP)
+        geo_group_pks = [group.pk for group in groups_options]
+        memberships = GeographicalMembership.objects.filter(
+            geo_group__pk__in=geo_group_pks,
+        ).prefetch_related("geo_group", "member")
+
+        groups_with_members = {}
+        for group_pk in geo_group_pks:
+            members = memberships.filter(geo_group__pk=group_pk)
+            groups_with_members[group_pk] = [m.member.pk for m in members]
+
+        kwargs["geo_area_options"] = geo_area_options
+        kwargs["exclusions_options"] = geo_area_options.exclude(
+            area_code=AreaCode.GROUP,
+        )
+        kwargs["groups_with_members"] = groups_with_members
+        return kwargs
+
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             page_title="Create a new quota order number",
             **kwargs,
         )
+
+    def create_origins(self, instance, form_origins):
+        for origin in form_origins:
+            new_origin = models.QuotaOrderNumberOrigin.objects.create(
+                order_number=instance,
+                valid_between=origin["valid_between"],
+                geographical_area=origin["geographical_area"],
+                update_type=UpdateType.CREATE,
+                transaction=instance.transaction,
+            )
+
+            self.create_exclusions(
+                instance,
+                new_origin,
+                origin.get("exclusions"),
+            )
+
+    def create_exclusions(self, quota, created_origin, exclusions):
+        for exclusion in exclusions:
+            geo_area = GeographicalArea.objects.get(pk=exclusion["geographical_area"])
+            models.QuotaOrderNumberOriginExclusion.objects.create(
+                origin=created_origin,
+                excluded_geographical_area=geo_area,
+                update_type=UpdateType.CREATE,
+                transaction=quota.transaction,
+            )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        instance = super().get_result_object(form)
+
+        # if JS is enabled we get data from the React form which includes origins and exclusions
+        form_origins = form.cleaned_data.get("origins")
+
+        self.create_origins(instance, form_origins)
+
+        return instance
 
 
 class QuotaConfirmCreate(QuotaOrderNumberMixin, TrackedModelDetailView):

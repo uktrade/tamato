@@ -63,7 +63,9 @@ def test_api_call(responses, settings):
     responses.add_passthru(settings.HMRC["base_url"])
 
     # reload settings from env, overriding test settings
-    dotenv.read_dotenv(os.path.join(settings.BASE_DIR, ".env"))
+    import dotenv
+
+    dotenv.load_dotenv(dot_envpath=os.path.join(settings.BASE_DIR, ".env"))
     settings.HMRC["client_id"] = os.environ.get("HMRC_API_CLIENT_ID")
     settings.HMRC["client_secret"] = os.environ.get("HMRC_API_CLIENT_SECRET")
     settings.HMRC["service_reference_number"] = os.environ.get(
