@@ -465,6 +465,11 @@ elif VCAP_SERVICES.get("aws-s3-bucket"):
             IMPORTER_S3_REGION_NAME = credentials["aws_region"]
             IMPORTER_S3_ACCESS_KEY_ID = credentials["aws_access_key_id"]
             IMPORTER_S3_SECRET_ACCESS_KEY = credentials["aws_secret_access_key"]
+        if 'quotas-export' in bucket["name"]:
+            QUOTAS_EXPORT_STORAGE_BUCKET_NAME = credentials["bucket_name"]
+            QUOTAS_EXPORT_S3_REGION_NAME = credentials["aws_region"]
+            QUOTAS_EXPORT_S3_ACCESS_KEY_ID = credentials["aws_access_key_id"]
+            QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = credentials["aws_secret_access_key"]
 else:
     IMPORTER_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
     IMPORTER_S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
@@ -483,6 +488,19 @@ else:
     IMPORTER_STORAGE_BUCKET_NAME = os.environ.get(
         "IMPORTER_STORAGE_BUCKET_NAME",
         "importer",
+    )
+    QUOTAS_EXPORT_STORAGE_BUCKET_NAME = os.environ.get(
+        "S3_SECRET_ACCESS_KEY",
+        'quotas-export-local'
+    )
+    QUOTAS_EXPORT_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
+    QUOTAS_EXPORT_S3_ACCESS_KEY_ID = os.environ.get(
+        "S3_SECRET_ACCESS_KEY",
+        'quotas-export-access-key'
+    )
+    QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = os.environ.get(
+        "S3_SECRET_ACCESS_KEY",
+        'quotas-export-access-id'
     )
 
 S3_ENDPOINT_URL = os.environ.get(
@@ -522,6 +540,12 @@ CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY = int(
     os.environ.get("CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY", "8"),
 )
 
+# quota export S3 additional settings
+QUOTAS_EXPORT_DESTINATION_FOLDER = os.environ.get(
+    "QUOTAS_EXPORT_DESTINATION_FOLDER",
+    "quotas_export/",
+)
+
 
 # SQLite AWS settings
 if is_copilot():
@@ -547,6 +571,8 @@ SQLITE_S3_ENDPOINT_URL = os.environ.get(
     "https://test-sqlite-url.local/",
 )
 SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
+
+
 
 # Default AWS settings.
 if is_copilot():
