@@ -135,7 +135,7 @@ class Command(BaseCommand):
         }
 
     def get_measure_type(self) -> int:
-        return MeasureType.objects.get(sid=142).pk
+        return MeasureType.objects.filter(sid=142).last().pk
 
     def get_start_date(self) -> datetime:
         return datetime.today()
