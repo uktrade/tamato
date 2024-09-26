@@ -66,11 +66,14 @@ class QuotaExport:
             valid_between__startswith__lte=date.today() + timedelta(weeks=52*3),
         ))
 
-        with self.target_file.file as file:
+        counter = 0
+
+        with open(self.target_file.name, 'wt') as file:
             writer = csv.writer(file)
             writer.writerow(self.csv_headers())
             for quota in quotas:
-
+                if counter > 20:
+                    continue
                 item_ids = self.get_goods_nomenclature_item_ids(quota)
                 geographical_areas, geographical_area_exclusions = self.get_geographical_areas_and_exclusions(quota)
                 goods_nomenclature_headings = self.get_goods_nomenclature_headings(item_ids)
@@ -92,6 +95,7 @@ class QuotaExport:
                     ]
 
                     writer.writerow(quota_data)
+                counter += 1
 
     @staticmethod
     def get_geographical_areas_and_exclusions(quota):

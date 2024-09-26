@@ -1,4 +1,6 @@
 import logging
+import os
+import shutil
 import sqlite3
 from functools import cached_property
 from os import path
@@ -133,7 +135,7 @@ class QuotasExportS3StorageBase(S3Boto3Storage):
     def get_default_settings(self):
         from django.conf import settings
 
-        return dict(
+        quotas_s3_settings = dict(
             super().get_default_settings(),
             bucket_name=settings.QUOTAS_EXPORT_STORAGE_BUCKET_NAME,
             access_key=settings.QUOTAS_EXPORT_S3_ACCESS_KEY_ID,
@@ -142,6 +144,9 @@ class QuotasExportS3StorageBase(S3Boto3Storage):
             endpoint_url=settings.S3_ENDPOINT_URL,
             default_acl="private",
         )
+        print(quotas_s3_settings)
+
+        return quotas_s3_settings
 
     def generate_filename(self, filename: str) -> str:
         from django.conf import settings
@@ -244,8 +249,18 @@ class QuotaLocalStorage(Storage):
 
     @log_timing(logger_function=logger.info)
     def export_csv(self, filename: str):
-        logger.info(f"Saving {filename} to local file system storage.")
-        quotas.make_export()
+        with NamedTemporaryFile() as quotas_csv_named_temp_file:
+            logger.info(f"Saving {filename} to local file system storage.")
+            quotas.make_export(quotas_csv_named_temp_file)
+            if is_valid_quotas_csv(quotas_csv_named_temp_file.name):
+                # Only save to S3 if the CSV file is valid.
+                destination_file_path = os.path.join(self._location, filename)
+                self.save_local(destination_file_path, quotas_csv_named_temp_file)
+
+    def save_local(self, destination_file_path, file_to_save):
+        shutil.copy(file_to_save.name, destination_file_path)
+
+
 
 
 class QuotaS3Storage(DataExportMixin, QuotasExportS3StorageBase):
@@ -259,10 +274,11 @@ class QuotaS3Storage(DataExportMixin, QuotasExportS3StorageBase):
 
     @log_timing(logger_function=logger.info)
     def export_csv(self, filename: str):
-        with NamedTemporaryFile() as temp_quotas_csv:
-
-            quotas.make_export()
+        with NamedTemporaryFile() as quotas_csv_named_temp_file:
+            quotas.make_export(quotas_csv_named_temp_file)
             logger.info(f"Saving {filename} to S3 storage.")
-            if is_valid_quotas_csv(temp_quotas_csv.name):
-                # Only save to S3 if the SQLite file is valid.
-                self.save(filename, temp_quotas_csv.file)
+            if is_valid_quotas_csv(quotas_csv_named_temp_file.name):
+                # Only save to S3 if the CSV file is valid.
+                self.save(filename, quotas_csv_named_temp_file.file)
+
+            os.unlink(quotas_csv_named_temp_file.name)
