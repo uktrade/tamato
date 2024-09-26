@@ -1,3 +1,5 @@
+from datetime import date
+
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Accordion
@@ -1110,6 +1112,9 @@ class SelectedDefinitionsForm(forms.Form):
 class SubQuotaDefinitionsUpdatesForm(
     ValidityPeriodForm,
 ):
+    """Form used to edit duplicated sub-quota definitions and associations as
+    part of the sub-quota create journey."""
+
     class Meta:
         model = models.QuotaDefinition
         fields = [
@@ -1162,6 +1167,7 @@ class SubQuotaDefinitionsUpdatesForm(
     )
 
     measurement_unit = forms.ModelChoiceField(
+        label="Measurement unit",
         queryset=MeasurementUnit.objects.current().order_by("code"),
         error_messages={"required": "Select the measurement unit"},
     )
@@ -1223,7 +1229,7 @@ class SubQuotaDefinitionsUpdatesForm(
             main_definition_valid_between=original_definition.valid_between,
         ):
             raise ValidationError(
-                "QA2: Validity period for sub quota must be within the "
+                "QA2: Validity period for sub-quota must be within the "
                 "validity period of the main quota",
             )
 
@@ -1337,3 +1343,55 @@ class SubQuotaDefinitionsUpdatesForm(
                 ),
             ),
         )
+
+
+class SubQuotaDefinitionAssociationUpdateForm(SubQuotaDefinitionsUpdatesForm):
+    """Form used to update sub-quota definitions and associations as part of the
+    edit sub-quotas journey."""
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        self.workbasket = self.request.user.current_workbasket
+        sub_quota_definition_sid = kwargs.pop("sid")
+        ValidityPeriodForm.__init__(self, *args, **kwargs)
+        self.sub_quota = models.QuotaDefinition.objects.current().get(
+            sid=sub_quota_definition_sid,
+        )
+        self.init_fields()
+        self.set_initial_data()
+        self.init_layout(self.request)
+
+    def set_initial_data(self):
+        association = models.QuotaAssociation.objects.current().get(
+            sub_quota__sid=self.sub_quota.sid,
+        )
+        self.original_definition = association.main_quota
+        fields = self.fields
+        fields["relationship_type"].initial = association.sub_quota_relation_type
+        fields["coefficient"].initial = association.coefficient
+        fields["measurement_unit"].initial = self.sub_quota.measurement_unit
+        fields["initial_volume"].initial = self.sub_quota.initial_volume
+        fields["volume"].initial = self.sub_quota.volume
+        fields["start_date"].initial = self.sub_quota.valid_between.lower
+        fields["end_date"].initial = self.sub_quota.valid_between.upper
+
+    def init_fields(self):
+        super().init_fields()
+        if self.sub_quota.valid_between.lower <= date.today():
+            self.fields["coefficient"].disabled = True
+            self.fields["relationship_type"].disabled = True
+            self.fields["start_date"].disabled = True
+            self.fields["initial_volume"].disabled = True
+            self.fields["volume"].disabled = True
+            self.fields["measurement_unit"].disabled = True
+
+
+class QuotaAssociationEdit(forms.ModelForm):
+    class Meta:
+        model = models.QuotaAssociation
+        fields = [
+            "sub_quota_relation_type",
+            "coefficient",
+            "main_quota",
+            "sub_quota",
+        ]

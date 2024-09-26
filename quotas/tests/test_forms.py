@@ -561,6 +561,24 @@ def quota_definition_1(main_quota_order_number, date_ranges) -> QuotaDefinition:
     )
 
 
+@pytest.fixture
+def sub_quota(main_quota_order_number, date_ranges) -> QuotaDefinition:
+    """
+    Provides a definition to be used as a sub_quota.
+
+    It has a valid between in the future as otherwise only the end date can be
+    edited.
+    """
+    return factories.QuotaDefinitionFactory.create(
+        order_number=main_quota_order_number,
+        valid_between=date_ranges.future,
+        is_physical=True,
+        initial_volume=1234,
+        volume=1234,
+        measurement_unit=factories.MeasurementUnitFactory(),
+    )
+
+
 def test_select_sub_quota_form_set_staged_definition_data(
     quota_definition_1,
     session_request,
@@ -616,7 +634,7 @@ def test_quota_duplicator_form_clean_QA2(
         )
         assert not form.is_valid()
         assert (
-            "QA2: Validity period for sub quota must be within the validity period of the main quota"
+            "QA2: Validity period for sub-quota must be within the validity period of the main quota"
             in form.errors["__all__"]
         )
 
@@ -760,3 +778,192 @@ def test_quota_duplicator_form_clean_QA5_eq(session_request, quota_definition_1)
             "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1"
             in form.errors["__all__"]
         )
+
+
+def test_sub_quota_update_form_valid(session_request_with_workbasket, sub_quota):
+    """Test that the sub-quota update form initialises correctly and is valid
+    when valid data is passed in."""
+    main_quota = factories.QuotaDefinitionFactory.create(
+        volume=9999,
+        initial_volume=9999,
+        measurement_unit=sub_quota.measurement_unit,
+    )
+    association = factories.QuotaAssociationFactory.create(
+        sub_quota=sub_quota,
+        main_quota=main_quota,
+        sub_quota_relation_type="EQ",
+        coefficient=1.5,
+    )
+
+    form = forms.SubQuotaDefinitionAssociationUpdateForm(
+        instance=sub_quota,
+        request=session_request_with_workbasket,
+        sid=sub_quota.sid,
+    )
+    assert float(form.fields["coefficient"].initial) == association.coefficient
+    assert (
+        form.fields["relationship_type"].initial == association.sub_quota_relation_type
+    )
+    assert form.fields["measurement_unit"].initial == sub_quota.measurement_unit
+    assert form.fields["initial_volume"].initial == sub_quota.initial_volume
+    assert form.fields["volume"].initial == sub_quota.volume
+    assert form.fields["start_date"].initial == sub_quota.valid_between.lower
+    assert form.fields["end_date"].initial == sub_quota.valid_between.upper
+
+    data = {
+        "start_date_0": sub_quota.valid_between.lower.day,
+        "start_date_1": sub_quota.valid_between.lower.month,
+        "start_date_2": sub_quota.valid_between.lower.year,
+        "end_date_0": sub_quota.valid_between.upper.day,
+        "end_date_1": sub_quota.valid_between.upper.month,
+        "end_date_2": sub_quota.valid_between.upper.year,
+        "measurement_unit": sub_quota.measurement_unit,
+        "volume": 100,
+        "initial_volume": 100,
+        "coefficient": 1.5,
+        "relationship_type": "EQ",
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.SubQuotaDefinitionAssociationUpdateForm(
+            request=session_request_with_workbasket,
+            data=data,
+            sid=sub_quota.sid,
+            instance=sub_quota,
+        )
+        assert form.is_valid()
+
+
+def test_sub_quota_update_form_invalid(session_request_with_workbasket, sub_quota):
+    """Test that the sub-quota update form is invalid when invalid data is
+    passed in."""
+    main_quota = factories.QuotaDefinitionFactory.create(
+        volume=9999,
+        initial_volume=9999,
+        measurement_unit=sub_quota.measurement_unit,
+    )
+    factories.QuotaAssociationFactory.create(
+        sub_quota=sub_quota,
+        main_quota=main_quota,
+        sub_quota_relation_type="EQ",
+        coefficient=1.5,
+    )
+
+    data = {
+        "start_date_0": sub_quota.valid_between.lower.day,
+        "start_date_1": sub_quota.valid_between.lower.month,
+        "start_date_2": sub_quota.valid_between.lower.year,
+        "end_date_0": sub_quota.valid_between.upper.day,
+        "end_date_1": sub_quota.valid_between.upper.month,
+        "end_date_2": sub_quota.valid_between.upper.year,
+        "measurement_unit": sub_quota.measurement_unit,
+        "volume": 100,
+        "initial_volume": 100,
+        "coefficient": 1,
+        "relationship_type": "EQ",
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.SubQuotaDefinitionAssociationUpdateForm(
+            request=session_request_with_workbasket,
+            data=data,
+            sid=sub_quota.sid,
+            instance=sub_quota,
+        )
+        assert not form.is_valid()
+        assert (
+            "QA5: Where the relationship type is Equivalent, the coefficient value must be something other than 1"
+            in form.errors["__all__"]
+        )
+
+
+def test_only_end_date_editable_for_active_definitions(
+    date_ranges,
+    session_request_with_workbasket,
+):
+    """Test that it is not possible for a user to edit any field other than the
+    end-date for a sub-quota which has already begun."""
+    active_sub_quota = factories.QuotaDefinitionFactory.create(
+        order_number=factories.QuotaOrderNumberFactory.create(),
+        valid_between=date_ranges.normal,
+        is_physical=True,
+        initial_volume=1234,
+        volume=1234,
+        measurement_unit=factories.MeasurementUnitFactory(),
+    )
+    main_quota = factories.QuotaDefinitionFactory.create(
+        volume=9999,
+        initial_volume=9999,
+        measurement_unit=active_sub_quota.measurement_unit,
+    )
+    factories.QuotaAssociationFactory.create(
+        sub_quota=active_sub_quota,
+        main_quota=main_quota,
+        sub_quota_relation_type="EQ",
+        coefficient=1.5,
+    )
+
+    new_measurement_unit = factories.MeasurementUnitFactory.create()
+
+    data = {
+        "end_date_0": 1,
+        "end_date_1": 1,
+        "end_date_2": 2035,
+        "measurement_unit": new_measurement_unit,
+        "volume": 100,
+        "coefficient": 1,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.SubQuotaDefinitionAssociationUpdateForm(
+            request=session_request_with_workbasket,
+            data=data,
+            sid=active_sub_quota.sid,
+            instance=active_sub_quota,
+        )
+        assert form.is_valid()
+        cleaned_data = form.cleaned_data
+        assert not cleaned_data["coefficient"] == 1
+        assert not cleaned_data["volume"] == 100
+        assert not cleaned_data["measurement_unit"] == new_measurement_unit
+        assert cleaned_data["valid_between"].upper == datetime.date(2035, 1, 1)
+
+
+def test_quota_association_edit_form_valid():
+    "Test that the quota association edit form is valid when valid data is passed in."
+    association = factories.QuotaAssociationFactory.create(
+        coefficient=1.67,
+        sub_quota_relation_type="EQ",
+    )
+
+    data = {
+        "coefficient": 1.5,
+        "sub_quota_relation_type": "EQ",
+        "main_quota": association.main_quota,
+        "sub_quota": association.sub_quota,
+    }
+    form = forms.QuotaAssociationEdit(data=data, instance=association)
+
+    assert form.is_valid()
+
+
+def test_quota_association_edit_form_invalid():
+    "Test that the quota association edit form is invalid when data is passed in."
+    association = factories.QuotaAssociationFactory.create(
+        coefficient=1.67,
+        sub_quota_relation_type="EQ",
+    )
+
+    data = {
+        "coefficient": "String",
+        "sub_quota_relation_type": "Equivalent",
+        "main_quota": association.main_quota,
+        "sub_quota": association.sub_quota,
+    }
+    form = forms.QuotaAssociationEdit(data=data, instance=association)
+    assert (
+        "Select a valid choice. Equivalent is not one of the available choices."
+        in form.errors["sub_quota_relation_type"]
+    )
+    assert "Enter a number." in form.errors["coefficient"]
+    assert not form.is_valid()

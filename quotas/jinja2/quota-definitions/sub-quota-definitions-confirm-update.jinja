@@ -1,0 +1,42 @@
+{% extends "common/confirm_update.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+
+{% set page_title = "Sub-quota definition and association updated" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+      {"text": "Quota " ~ association.main_quota.order_number, "href": association.main_quota.order_number.get_url()},
+      {"text": "Quota " ~ association.main_quota.order_number ~ " - Data", "href": url("quota_definition-ui-list", kwargs={"sid":association.main_quota.order_number.sid})},
+      {"text": page_title},
+    ])
+  }}
+{% endblock %}
+
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": "Sub-" ~ object._meta.verbose_name ~ ": " ~ object|string,
+    "text": "Sub-" ~ object._meta.verbose_name ~ ": " ~ object|string ~ " and association have been updated in workbasket " ~ request.user.current_workbasket.pk,
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+        {% block button_group %}
+          {{ govukButton({
+            "text": "View workbasket summary",
+            "href": url("workbaskets:current-workbasket"),
+            "classes": "govuk-button"
+          }) }}
+          {{ govukButton({
+            "text": "Return to main quota",
+            "href": association.main_quota.order_number.get_url(),
+            "classes": "govuk-button--secondary"
+          }) }}
+        {% endblock %}
+
+{% block actions %}
+<li><a class="govuk-link" href="{{ object.order_number.get_url() }}">View this sub-quota definition's quota order number</a></li>
+<li><a href="{{ object.order_number.get_url('list') }}">Find and edit quotas</a></li>
+{% endblock %}

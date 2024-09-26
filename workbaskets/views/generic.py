@@ -61,8 +61,9 @@ class EditTaricView(
     generic.UpdateView,
 ):
     """
-    View used to change an existing model instance in the current workbasket
-    without creating a new version. The model instance may have an update_type.
+    View used to change an existing model instance that is in the current
+    workbasket without creating a new version. The model instance may have an
+    update_type.
 
     of either Create or Update - Delete is not an editable update type.
     """
