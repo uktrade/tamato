@@ -36,15 +36,14 @@ from django.conf import settings
 from exporter.quotas import runner
 from exporter.quotas import tasks
 
-def make_export(file_name = None):
-    quotas_csv_named_temp_file = NamedTemporaryFile(mode='wt', suffix='.csv', delete=False)
+def make_export(quotas_csv_named_temp_file: NamedTemporaryFile):
+
     quota_csv_exporter = runner.QuotaExport(quotas_csv_named_temp_file)
     quota_csv_exporter.run()
     # do stuff
-    quotas_csv_named_temp_file.close()
-    if file_name:
-        shutil.copy(quotas_csv_named_temp_file.name, file_name)
-    os.unlink(quotas_csv_named_temp_file.name)
+    # quotas_csv_named_temp_file.close()
+
+
     # done
 
 
