@@ -50,23 +50,7 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             raise CommandError(f"User '{username}' does not exist.")
 
-        try:
-            wb_title = (
-                options["wb_title"]
-                if options["wb_title"]
-                else f"Perf test {str(time()).split(".")[0]}"
-            )
-            workbasket = WorkBasket.objects.create(
-                title=wb_title,
-                reason="Created for performance testing purposes.",
-                author=user,
-            )
-            self.stdout.write(
-                self.style.SUCCESS(f"Successfully created worbasket: {workbasket}"),
-            )
-        except Exception as e:
-            raise CommandError(f"Error creating workbasket: {str(e)}")
-
+        workbasket = self.create_workbasket(user, options["wb_title"])
         measure_type = self.get_measure_type()
         start_date = self.get_start_date()
         commodity_count = options["measures_count"]
@@ -78,22 +62,32 @@ class Command(BaseCommand):
             commodity_count,
         )
 
-        try:
-            measures_bulk_creator = MeasuresBulkCreator.objects.create(
-                form_data=form_data,
-                form_kwargs=form_kwargs,
-                workbasket=workbasket,
-                user=user,
-            )
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"Successfully created MeasuresBulkCreator: ID {measures_bulk_creator.id}",
-                ),
-            )
-        except Exception as e:
-            raise CommandError(f"Error creating MeasuresBulkCreator: {str(e)}")
+        measures_bulk_creator = MeasuresBulkCreator.objects.create(
+            form_data=form_data,
+            form_kwargs=form_kwargs,
+            workbasket=workbasket,
+            user=user,
+        )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Successfully created MeasuresBulkCreator: ID {measures_bulk_creator.id}",
+            ),
+        )
 
         measures_bulk_creator.schedule_task()
+
+    def create_workbasket(self, user, title):
+        title = title if title else f"Perf test {str(time()).split(".")[0]}"
+        workbasket = WorkBasket.objects.create(
+            title=title,
+            reason="Created for performance testing purposes.",
+            author=user,
+        )
+        self.stdout.write(
+            self.style.SUCCESS(f"Successfully created worbasket: {workbasket}"),
+        )
+        return workbasket
 
     def generate_form_data(self, measure_type, start_date, commodity_count):
         return {
