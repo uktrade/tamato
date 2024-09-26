@@ -69,10 +69,8 @@ STORAGES = {
     },
 }
 
-
 # Auto field type specification required since Django 3.2.
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
-
 
 # -- Application
 
@@ -272,7 +270,6 @@ AUTH_USER_MODEL = "common.User"
 # -- Security
 SECRET_KEY = os.environ.get("SECRET_KEY", "@@i$w*ct^hfihgh21@^8n+&ba@_l3x")
 
-
 # Whitelist values for the HTTP Host header, to prevent certain attacks
 # App runs inside GOV.UK PaaS, so we can allow all hosts
 ALLOWED_HOSTS = re.split(r"\s|,", os.environ.get("ALLOWED_HOSTS", ""))
@@ -285,7 +282,6 @@ elif "VCAP_APPLICATION" in os.environ:
     # Under PaaS, if ALLOW_PAAS_URIS is set, fetch trusted domains from VCAP_APPLICATION env var
     paas_hosts = json.loads(os.environ["VCAP_APPLICATION"])["uris"]
     ALLOWED_HOSTS.extend(paas_hosts)
-
 
 # Sets the X-Content-Type-Options: nosniff header
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -316,7 +312,6 @@ ROOT_URLCONF = f"urls"
 
 # URL path where static files are served
 STATIC_URL = "/assets/"
-
 
 # -- Database
 
@@ -392,7 +387,6 @@ EXPORTER_UPLOAD_DEFAULT_RETRY_DELAY = int(
     os.environ.get("EXPORTER_UPLOAD_DEFAULT_RETRY_DELAY", "8"),
 )
 
-
 EXPORTER_MAXIMUM_ENVELOPE_SIZE = 39 * 1024 * 1024
 EXPORTER_DISABLE_NOTIFICATION = is_truthy(
     os.environ.get("EXPORTER_DISABLE_NOTIFICATION", "false"),
@@ -428,7 +422,6 @@ TIME_ZONE = "Europe/London"
 # HMRC AWS settings (override the defaults) - DEPRECATED.
 HMRC_STORAGE_BUCKET_NAME = os.environ.get("HMRC_STORAGE_BUCKET_NAME", "hmrc")
 HMRC_STORAGE_DIRECTORY = os.environ.get("HMRC_STORAGE_DIRECTORY", "tohmrc/staging/")
-
 
 # S3 settings for packaging automation.
 
@@ -489,19 +482,10 @@ else:
         "IMPORTER_STORAGE_BUCKET_NAME",
         "importer",
     )
-    QUOTAS_EXPORT_STORAGE_BUCKET_NAME = os.environ.get(
-        "S3_SECRET_ACCESS_KEY",
-        'quotas-export-local'
-    )
-    QUOTAS_EXPORT_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
-    QUOTAS_EXPORT_S3_ACCESS_KEY_ID = os.environ.get(
-        "S3_SECRET_ACCESS_KEY",
-        'quotas-export-access-key'
-    )
-    QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = os.environ.get(
-        "S3_SECRET_ACCESS_KEY",
-        'quotas-export-access-id'
-    )
+    QUOTAS_EXPORT_STORAGE_BUCKET_NAME = os.environ.get("QUOTAS_EXPORT_S3_ACCESS_KEY_ID", 'quotas-export-local')
+    QUOTAS_EXPORT_S3_REGION_NAME = os.environ.get("QUOTAS_EXPORT_S3_REGION_NAME", "eu-west-2")
+    QUOTAS_EXPORT_S3_ACCESS_KEY_ID = os.environ.get("QUOTAS_EXPORT_S3_ACCESS_KEY_ID", 'quotas-export-id')
+    QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = os.environ.get("QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY", 'quotas-export-key')
 
 S3_ENDPOINT_URL = os.environ.get(
     "S3_ENDPOINT_URL",
@@ -546,7 +530,6 @@ QUOTAS_EXPORT_DESTINATION_FOLDER = os.environ.get(
     "quotas_export/",
 )
 
-
 # SQLite AWS settings
 if is_copilot():
     SQLITE_S3_ACCESS_KEY_ID = None
@@ -571,8 +554,6 @@ SQLITE_S3_ENDPOINT_URL = os.environ.get(
     "https://test-sqlite-url.local/",
 )
 SQLITE_STORAGE_DIRECTORY = os.environ.get("SQLITE_STORAGE_DIRECTORY", "sqlite/")
-
-
 
 # Default AWS settings.
 if is_copilot():
@@ -605,10 +586,9 @@ CROWN_DEPENDENCIES_API_URL_PATH = os.environ.get(
 CROWN_DEPENDENCIES_GET_API_KEY = os.environ.get("CROWN_DEPENDENCIES_GET_API_KEY", "")
 CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KEY", "")
 
-
 if is_copilot():
     CELERY_BROKER_URL = (
-        os.getenv("CELERY_BROKER_URL", default=None) + "?ssl_cert_reqs=required"
+            os.getenv("CELERY_BROKER_URL", default=None) + "?ssl_cert_reqs=required"
     )
 
 elif VCAP_SERVICES.get("redis"):
@@ -863,7 +843,6 @@ PATH_XSD_COMMODITIES_ENVELOPE = Path(
 )
 PATH_XSD_COMMODITIES_TARIC = Path(PATH_COMMODITIES_ASSETS, "commodities_taric3.xsd")
 
-
 # Default username for envelope data imports
 DATA_IMPORT_USERNAME = os.environ.get("TAMATO_IMPORT_USERNAME", "test")
 
@@ -932,12 +911,10 @@ if VCAP_APPLICATION.get("application_uris"):
 else:
     BASE_SERVICE_URL = os.environ.get("BASE_SERVICE_URL")
 
-
 # ClamAV
 CLAM_AV_USERNAME = os.environ.get("CLAM_AV_USERNAME", "")
 CLAM_AV_PASSWORD = os.environ.get("CLAM_AV_PASSWORD", "")
 CLAM_AV_DOMAIN = os.environ.get("CLAM_AV_DOMAIN", "")
-
 
 FILE_UPLOAD_HANDLERS = (
     "django_chunk_upload_handlers.clam_av.ClamAVFileUploadHandler",
@@ -945,7 +922,6 @@ FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",  # defaults
 )  # Order is important
 DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "10000"))
-
 
 # Asynchronous / background (bulk) object creation and editing config.
 MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))
