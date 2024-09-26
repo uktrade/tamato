@@ -1175,15 +1175,13 @@ class SubQuotaDefinitionAssociationMixin:
 
     @property
     def sub_quota(self):
-        return models.QuotaDefinition.objects.approved_up_to_transaction(
-            self.last_transaction,
-        ).get(sid=self.kwargs["sid"])
+        return models.QuotaDefinition.objects.current().get(sid=self.kwargs["sid"])
 
     @property
     def association(self):
-        return models.QuotaAssociation.objects.approved_up_to_transaction(
-            self.last_transaction,
-        ).get(sub_quota__sid=self.sub_quota.sid)
+        return models.QuotaAssociation.objects.current().get(
+            sub_quota__sid=self.sub_quota.sid,
+        )
 
     def get_main_definition(self):
         return self.association.main_quota
@@ -1208,11 +1206,6 @@ class SubQuotaDefinitionAssociationUpdate(
 
     def update_association(self, instance, sub_quota_relation_type, coefficient):
         "Update the association too if there is updated data submitted."
-        if (
-            self.original_association.sub_quota_relation_type == sub_quota_relation_type
-            and self.original_association.coefficient == coefficient
-        ):
-            return
         form_data = {
             "main_quota": self.get_main_definition(),
             "sub_quota": self.sub_quota,
@@ -1253,12 +1246,6 @@ class SubQuotaDefinitionAssociationEditUpdate(
 
     def update_association(self, instance, sub_quota_relation_type, coefficient):
         "Update the association too if there is updated data submitted."
-        if (
-            self.association.sub_quota_relation_type == sub_quota_relation_type
-            and self.association.coefficient == coefficient
-        ):
-            return
-        # If this association already has an edit in the workbasket - update that one
         current_instance = self.association.version_at(self.last_transaction)
         form_data = {
             "main_quota": self.get_main_definition(),
@@ -1277,9 +1264,7 @@ class SubQuotaConfirmUpdate(TrackedModelDetailView):
 
     @property
     def association(self):
-        return QuotaAssociation.objects.approved_up_to_transaction(
-            self.workbasket.transactions.last(),
-        ).get(sub_quota__sid=self.kwargs["sid"])
+        return QuotaAssociation.objects.current().get(sub_quota__sid=self.kwargs["sid"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

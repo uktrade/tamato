@@ -1354,17 +1354,17 @@ class SubQuotaDefinitionAssociationUpdateForm(SubQuotaDefinitionsUpdatesForm):
         self.workbasket = self.request.user.current_workbasket
         sub_quota_definition_sid = kwargs.pop("sid")
         ValidityPeriodForm.__init__(self, *args, **kwargs)
-        self.sub_quota = models.QuotaDefinition.objects.approved_up_to_transaction(
-            self.workbasket.transactions.last(),
-        ).get(sid=sub_quota_definition_sid)
+        self.sub_quota = models.QuotaDefinition.objects.current().get(
+            sid=sub_quota_definition_sid,
+        )
         self.init_fields()
         self.set_initial_data()
         self.init_layout(self.request)
 
     def set_initial_data(self):
-        association = models.QuotaAssociation.objects.approved_up_to_transaction(
-            self.workbasket.transactions.last(),
-        ).get(sub_quota__sid=self.sub_quota.sid)
+        association = models.QuotaAssociation.objects.current().get(
+            sub_quota__sid=self.sub_quota.sid,
+        )
         self.original_definition = association.main_quota
         fields = self.fields
         fields["relationship_type"].initial = association.sub_quota_relation_type
