@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import time
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
@@ -18,19 +19,27 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--wb-title",
-            required=True,
-            help="Title given to the workbasket being created for the performance test.",
-        )
-        parser.add_argument(
             "--user_name",
             required=True,
-            help="Username of the person performing the test who will be the author of the workbasket.",
+            help=(
+                "Username of the person performing the test who will be the "
+                "author of the workbasket."
+            ),
+        )
+        parser.add_argument(
+            "--wb-title",
+            required=False,
+            help=(
+                "Title given to the workbasket being created for the "
+                "performance test. If none is provided then a system timestamp "
+                "will be used to form part of a unique title."
+            ),
         )
         parser.add_argument(
             "--measures-count",
-            required=True,
+            required=False,
             type=int,
+            default=2,
             help="Number of measures to create (1-99).",
         )
 
@@ -42,8 +51,13 @@ class Command(BaseCommand):
             raise CommandError(f"User '{username}' does not exist.")
 
         try:
+            wb_title = (
+                options["wb_title"]
+                if options["wb_title"]
+                else f"Perf test {str(time()).split(".")[0]}"
+            )
             workbasket = WorkBasket.objects.create(
-                title=options["wb_title"],
+                title=wb_title,
                 reason="Created for performance testing purposes.",
                 author=user,
             )
