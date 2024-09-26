@@ -1,11 +1,12 @@
 from datetime import datetime
-from time import time
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
 from commodities.models import GoodsNomenclature
+from common.validators import UpdateType
+from geo_areas.models import GeographicalArea
 from measures.models import MeasureType
 from measures.models.bulk_processing import MeasuresBulkCreator
 from regulations.models import Regulation
@@ -15,7 +16,10 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Creates new measures in a newly created workbasket asynchronously for perfomance testing purposes."
+    help = (
+        "Creates new measures in a newly created workbasket asynchronously for "
+        "perfomance testing purposes."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -39,8 +43,11 @@ class Command(BaseCommand):
             "--measures-count",
             required=False,
             type=int,
-            default=2,
-            help="Number of measures to create (1-99).",
+            default=99,
+            help=(
+                "Number of measures to create (1-99). If no measures count is "
+                "specified, then a default count of 99 is used."
+            ),
         )
 
     def handle(self, *args, **options):
@@ -50,16 +57,25 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             raise CommandError(f"User '{username}' does not exist.")
 
-        workbasket = self.create_workbasket(user, options["wb_title"])
+        title = self.get_title(options["wb_title"])
+        workbasket = self.create_workbasket(user, title)
         measure_type = self.get_measure_type()
         start_date = self.get_start_date()
-        commodity_count = options["measures_count"]
+        commodities = self.create_commodities(
+            workbasket,
+            start_date,
+            options["measures_count"],
+        )
 
-        form_data = self.generate_form_data(measure_type, start_date, commodity_count)
+        form_data = self.generate_form_data(
+            measure_type,
+            start_date,
+            commodities,
+        )
         form_kwargs = self.generate_form_kwargs(
             measure_type,
             start_date,
-            commodity_count,
+            len(commodities),
         )
 
         measures_bulk_creator = MeasuresBulkCreator.objects.create(
@@ -77,29 +93,41 @@ class Command(BaseCommand):
 
         measures_bulk_creator.schedule_task()
 
-    def create_workbasket(self, user, title):
-        title = title if title else f"Perf test {str(time()).split(".")[0]}"
+    def create_workbasket(self, user, title: str = None) -> WorkBasket:
         workbasket = WorkBasket.objects.create(
             title=title,
             reason="Created for performance testing purposes.",
             author=user,
         )
         self.stdout.write(
-            self.style.SUCCESS(f"Successfully created worbasket: {workbasket}"),
+            self.style.SUCCESS(
+                f"Successfully created worbasket: {workbasket} - {workbasket.title}",
+            ),
         )
         return workbasket
 
-    def generate_form_data(self, measure_type, start_date, commodity_count):
+    def get_title(self, title: str = None) -> str:
+        if title:
+            return title
+        now = datetime.now().replace(microsecond=0).isoformat(" ")
+        return f"Perf test {now}"
+
+    def generate_form_data(
+        self,
+        measure_type,
+        start_date,
+        commodities: list[GoodsNomenclature],
+    ) -> dict:
         return {
             "footnotes": self.get_footnotes(),
             "conditions": self.get_conditions(),
-            "commodities": self.get_commodities_and_duties(commodity_count),
+            "commodities": self.get_commodities_and_duties(commodities),
             "regulation_id": self.get_regulation(),
             "additional_code": self.get_additional_code(),
             "measure_details": self.get_measure_details(
                 measure_type,
                 start_date,
-                commodity_count,
+                len(commodities),
             ),
             "geographical_area": self.get_geographical_areas(),
             "quota_order_number": self.get_order_number(),
@@ -140,9 +168,56 @@ class Command(BaseCommand):
     def get_conditions(self) -> dict:
         return {}
 
-    def get_commodities_and_duties(self, commodity_count) -> dict:
+    def create_country(workbasket: WorkBasket, start_date) -> GeographicalArea:
+        return None
+
+    def create_commodities(
+        self,
+        workbasket: WorkBasket,
+        start_date,
+        commodities_count: int,
+    ) -> list[GoodsNomenclature]:
+        commodities = []
+
+        for i in range(1, commodities_count + 1):
+            transaction = workbasket.new_transaction()
+            tracked_model_kwargs = {
+                "transaction": transaction,
+                "update_type": UpdateType.CREATE.value,
+                "valid_between": (start_date, None),
+            }
+            eu_headings = str(i).zfill(4)
+            good = GoodsNomenclature.objects.create(
+                sid=900000 + i,
+                item_id=f"999900{eu_headings}",
+                suffix="80",
+                statistical=False,
+                **tracked_model_kwargs,
+            )
+            commodities.append(good)
+            # TODO:
+            # description = GoodsNomenclatureDescription.objects.create(
+            #    sid=1,
+            #    described_goods_nomenclature=good,
+            #    description=LongDescription(),
+            #    **tracked_model_kwargs,
+            # )
+            # indent = GoodsNomenclatureIndent(
+            #    sid=1,
+            #    indent=1,
+            #    indented_goods_nomenclature=good,
+            #    **tracked_model_kwargs,
+            # )
+            # origin = GoodsNomenclatureOrigin.objects.create(
+            #    new_goods_nomenclature=good,
+            #    derived_from_goods_nomenclature=None,
+            #    **tracked_model_kwargs,
+            # )
+
+        return commodities
+
+    def get_commodities_and_duties(self, commodities: list[GoodsNomenclature]) -> dict:
         commodities_and_duties = {}
-        commodities = GoodsNomenclature.objects.filter(suffix=80)[:commodity_count]
         for i, commodity in enumerate(commodities):
             commodities_and_duties[f"measure_commodities_duties_formset-{i}-duties"] = (
                 "0%"
