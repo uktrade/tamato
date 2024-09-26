@@ -667,6 +667,9 @@ CELERY_ROUTES = {
     "measures.tasks.bulk_create_measures": {
         "queue": "bulk-create",
     },
+    "measures.tasks.bulk_edit_measures": {
+        "queue": "bulk-create",
+    },
 }
 
 SQLITE_EXCLUDED_APPS = [
@@ -923,3 +926,4 @@ DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "100
 
 # Asynchronous / background (bulk) object creation and editing config.
 MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))
+MEASURES_ASYNC_EDIT = is_truthy(os.environ.get("MEASURES_ASYNC_EDIT", "true"))
