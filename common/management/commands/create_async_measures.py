@@ -40,12 +40,12 @@ class Command(BaseCommand):
             ),
         )
         parser.add_argument(
-            "--measures-count",
+            "--count",
             required=False,
             type=int,
             default=99,
             help=(
-                "Number of measures to create (1-99). If no measures count is "
+                "Number of measures to create (1-99). If no count is "
                 "specified, then a default count of 99 is used."
             ),
         )
@@ -61,10 +61,11 @@ class Command(BaseCommand):
         workbasket = self.create_workbasket(user, title)
         measure_type = self.get_measure_type()
         start_date = self.get_start_date()
+        count = options["count"]
         commodities = self.create_commodities(
             workbasket,
             start_date,
-            options["measures_count"],
+            count,
         )
 
         form_data = self.generate_form_data(
@@ -87,7 +88,8 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully created MeasuresBulkCreator: ID {measures_bulk_creator.id}",
+                f"Successfully created MeasuresBulkCreator: ID "
+                f"{measures_bulk_creator.id} - generating {count} measure(s).",
             ),
         )
 
