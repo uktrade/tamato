@@ -405,7 +405,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         return cls._meta.verbose_name.replace(" ", "_")
 
     def get_association_edit_url(self):
-        """Get the edit url for the sub quota definition and association edit
+        """Get the edit url for the sub-quota definition and association edit
         journey by checking if it has been updated in an 'EDITING' status
         workbasket."""
         url = "sub_quota_definition-edit"

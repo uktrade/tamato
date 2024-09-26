@@ -1956,7 +1956,7 @@ def test_quota_definition_view(client_with_current_workbasket):
     )[0].text.strip()
     assert int(sid_cell_text) == main_quota_definition.sid
 
-    # Sub quotas tab
+    # Sub-quotas tab
     response = client_with_current_workbasket.get(
         reverse(
             "quota_definition-ui-list-filter",

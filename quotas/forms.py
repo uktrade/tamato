@@ -1112,7 +1112,7 @@ class SelectedDefinitionsForm(forms.Form):
 class SubQuotaDefinitionsUpdatesForm(
     ValidityPeriodForm,
 ):
-    """Form used to edit duplicated sub quota definitions and associations as
+    """Form used to edit duplicated sub-quota definitions and associations as
     part of the sub-quota create journey."""
 
     class Meta:
@@ -1229,7 +1229,7 @@ class SubQuotaDefinitionsUpdatesForm(
             main_definition_valid_between=original_definition.valid_between,
         ):
             raise ValidationError(
-                "QA2: Validity period for sub quota must be within the "
+                "QA2: Validity period for sub-quota must be within the "
                 "validity period of the main quota",
             )
 

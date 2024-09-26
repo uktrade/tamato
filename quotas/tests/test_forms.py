@@ -634,7 +634,7 @@ def test_quota_duplicator_form_clean_QA2(
         )
         assert not form.is_valid()
         assert (
-            "QA2: Validity period for sub quota must be within the validity period of the main quota"
+            "QA2: Validity period for sub-quota must be within the validity period of the main quota"
             in form.errors["__all__"]
         )
 
