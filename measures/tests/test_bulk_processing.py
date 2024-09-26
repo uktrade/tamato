@@ -374,17 +374,18 @@ def test_bulk_editor_get_forms_cleaned_data_errors(
             mock_bulk_editor.get_forms_cleaned_data()
 
 
-
 @pytest.mark.parametrize(
     "form_class, form_data, expected_error",
     [
         (
             forms.MeasureStartDateForm,
-            {"start_date": {
-                "start_date_0": "",
-                "start_date_1": "",
-                "start_date_2": "",
-            }},
+            {
+                "start_date": {
+                    "start_date_0": "",
+                    "start_date_1": "",
+                    "start_date_2": "",
+                }
+            },
             "Enter the day, month and year",
         ),
         (
@@ -403,9 +404,8 @@ def test_bulk_editor_log_form_errors_displays_detailed_error(
     form_data,
     expected_error,
     caplog,
-    
 ):
-    
+
     # Create measures for the form kwargs
     measure_1 = factories.MeasureFactory.create()
     measure_2 = factories.MeasureFactory.create()
@@ -417,10 +417,11 @@ def test_bulk_editor_log_form_errors_displays_detailed_error(
     mock_bulk_editor = MeasuresBulkEditorFactory.create()
 
     import logging
+
     # Ensure logging propagation is enabled else log messages won't
     # reach this module.
     logger = logging.getLogger("measures")
     logger.propagate = True
 
-    mock_bulk_editor._log_form_errors(form_class=form_class, form_or_formset=form)      
+    mock_bulk_editor._log_form_errors(form_class=form_class, form_or_formset=form)
     assert expected_error in caplog.text
