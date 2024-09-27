@@ -197,15 +197,16 @@ class MeasureEditWizard(
         cleaned_data = self.get_all_cleaned_data()
         selected_measures = self.get_queryset()
 
-        self.edit_measures(selected_measures, cleaned_data)
+        edited_measures = self.edit_measures(selected_measures, cleaned_data)
         self.session_store.clear()
 
-        return redirect(
-            reverse(
-                "workbaskets:workbasket-ui-review-measures",
-                kwargs={"pk": self.workbasket.pk},
-            ),
+        context = self.get_context_data(
+            form=None,
+            edited_measures=edited_measures,
+            **kwargs,
         )
+
+        return render(self.request, "measures/confirm-edit-multiple.jinja", context)
 
 
 @method_decorator(require_current_workbasket, name="dispatch")

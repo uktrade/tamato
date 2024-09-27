@@ -1,0 +1,42 @@
+{% extends "layouts/confirm.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Edit measure details" %}
+
+{% macro panel_title(edited_measures) %}
+  {% if edited_measures|length > 1 %}
+    {{ edited_measures.0._meta.verbose_name_plural|title }} {% for m in edited_measures %}{% if not loop.last %}{{ m|string }}, {% else %}{{ m|string }} {% endif %}{% endfor %}have been edited
+  {% else %}
+    {{ edited_measures.0._meta.verbose_name|title }} {{ edited_measures.0|string }} has been edited
+  {% endif %}
+{% endmacro %}
+
+{% macro panel_subtitle(created_measures) %}
+    This change has been added to your workbasket
+{% endmacro %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title },
+    ])
+  }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        "titleText": panel_title(edited_measures),
+        "text": panel_subtitle(edited_measures),
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+      <h2 class="govuk-heading-m">Next steps</h2>
+      <p class="govuk-body">To complete your task you must publish your change. </p>
+      {{ govukButton({
+        "text": "Go to workbasket summary",
+        "href": url("workbaskets:current-workbasket"),
+        "classes": "govuk-button--secondary"
+      }) }}
+    </div>
+  </div>
+{% endblock %}
