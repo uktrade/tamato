@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
@@ -7,6 +8,8 @@ from django.db.transaction import atomic
 
 from commodities.models import GoodsNomenclature
 from commodities.models import GoodsNomenclatureDescription
+from commodities.models import GoodsNomenclatureIndent
+from commodities.models import GoodsNomenclatureOrigin
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from measures.models import MeasureType
@@ -59,11 +62,15 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             raise CommandError(f"User '{username}' does not exist.")
 
+        count = options["count"]
+        if count < 1:
+            raise CommandError("count must be greater than zero.")
+
         title = self.get_title(options["wb_title"])
         workbasket = self.create_workbasket(user, title)
         measure_type = self.get_measure_type()
         start_date = self.get_start_date()
-        count = options["count"]
+
         commodities = self.create_commodities(
             workbasket,
             start_date,
@@ -178,28 +185,73 @@ class Command(BaseCommand):
     def create_commodities(
         self,
         workbasket: WorkBasket,
-        start_date,
+        start_date: datetime,
         commodities_count: int,
     ) -> list[GoodsNomenclature]:
+        """
+        Create and return new goods in workbasket.
+
+        Note that a new chapter-level goods item will be created in addition to
+        the goods returned by this function, adding one to the total created
+        commodity count.
+        """
+
         commodities = []
 
+        # Create a new chapter-level commodity that can be used as the origin
+        # for all new goods (start date must be at least the day before the
+        # start date of the goods that use them).
+        chapter_good = self.create_commodity(
+            workbasket=workbasket,
+            hs_chapter=99,
+            taric_subheading=0,
+            start_date=start_date - timedelta(days=1),
+        )
+
         for i in range(1, commodities_count + 1):
-            good = self.create_commodity(workbasket, i, start_date)
+            good = self.create_commodity(
+                workbasket=workbasket,
+                hs_chapter=99,
+                taric_subheading=i,
+                start_date=start_date,
+                origin_good=chapter_good,
+            )
             commodities.append(good)
 
         return commodities
 
     @atomic
-    def create_commodity(self, workbasket, eu_heading_value, start_date):
+    def create_commodity(
+        self,
+        workbasket: WorkBasket,
+        hs_chapter: int,
+        taric_subheading: int,
+        start_date: datetime,
+        origin_good: GoodsNomenclature = None,
+    ) -> GoodsNomenclature:
+        """
+        Create and return a new commodity.
+
+        If this is a new chapter-level
+        commodity, then `origin_good` should be None, otherwise, `origin_good`
+        should be a commodity higher in the goods hierarchy.
+        """
+
+        if hs_chapter > 99:
+            raise Exception("hs_chapter must be 99 or less.")
+
+        if taric_subheading > 99:
+            raise Exception("hs_chapter must be 99 or less.")
+
         transaction = workbasket.new_transaction()
         common_kwargs = {
             "transaction": transaction,
             "update_type": UpdateType.CREATE.value,
         }
-        eu_headings = str(eu_heading_value).zfill(4)
+
         good = GoodsNomenclature.objects.create(
-            sid=900000 + eu_heading_value,
-            item_id=f"999900{eu_headings}",
+            sid=900000 + taric_subheading,
+            item_id=f"{hs_chapter:<06d}{taric_subheading:>04d}",
             suffix="80",
             statistical=False,
             valid_between=(start_date, None),
@@ -207,25 +259,27 @@ class Command(BaseCommand):
         )
 
         GoodsNomenclatureDescription.objects.create(
-            sid=900000 + eu_heading_value,
+            sid=900000 + taric_subheading,
             described_goods_nomenclature=good,
             description=f"Description for {good.item_id}",
             validity_start=start_date,
             **common_kwargs,
         )
 
-        # TODO:
-        # indent = GoodsNomenclatureIndent(
-        #    sid=1,
-        #    indent=1,
-        #    indented_goods_nomenclature=good,
-        #    **common_kwargs,
-        # )
-        # origin = GoodsNomenclatureOrigin.objects.create(
-        #    new_goods_nomenclature=good,
-        #    derived_from_goods_nomenclature=None,
-        #    **common_kwargs,
-        # )
+        GoodsNomenclatureIndent.objects.create(
+            sid=900000 + taric_subheading,
+            indent=0,
+            indented_goods_nomenclature=good,
+            validity_start=start_date,
+            **common_kwargs,
+        )
+
+        if origin_good:
+            GoodsNomenclatureOrigin.objects.create(
+                new_goods_nomenclature=good,
+                derived_from_goods_nomenclature=origin_good,
+                **common_kwargs,
+            )
 
         return good
 
