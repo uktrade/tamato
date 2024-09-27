@@ -10,8 +10,8 @@ import pytest
 import sqlite_s3vfs
 from django.conf import settings
 
-from exporter.storages import EmptyFileException, is_valid_quotas_csv, SQLiteS3StorageBase, QuotasExportS3StorageBase, HMRCStorage, QuotaLocalStorage, SQLiteS3VFSStorage, SQLiteS3Storage, SQLiteLocalStorage, \
-    QuotaS3Storage
+from exporter.storages import EmptyFileException, is_valid_quotas_csv, SQLiteS3StorageBase, QuotasExportS3StorageBase, HMRCStorage, QuotaLocalStorage, QuotaS3Storage, SQLiteLocalStorage, SQLiteS3Storage, \
+    SQLiteS3VFSStorage
 from exporter.storages import is_valid_sqlite
 
 pytestmark = pytest.mark.django_db
@@ -340,8 +340,6 @@ class TestQuotaS3Storage:
                 target.export_csv('valid.file')
             assert 'has zero size.' in str(e.value)
 
-
-
-
-
+        params = target.get_object_parameters('file.ext')
+        assert params == {'ContentDisposition': 'attachment; filename=file.ext'}
 
