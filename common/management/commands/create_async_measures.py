@@ -7,8 +7,10 @@ from django.db.transaction import atomic
 
 from commodities.models import GoodsNomenclature
 from commodities.models import GoodsNomenclatureDescription
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
+from geo_areas.validators import AreaCode
 from measures.models import MeasureType
 from measures.models.bulk_processing import MeasuresBulkCreator
 from regulations.models import Regulation
@@ -19,7 +21,7 @@ User = get_user_model()
 
 class Command(BaseCommand):
     help = (
-        "Creates new measures in a newly created workbasket asynchronously for "
+        "Creates new measures asynchronously in a newly created workbasket for "
         "perfomance testing purposes."
     )
 
@@ -69,11 +71,13 @@ class Command(BaseCommand):
             start_date,
             count,
         )
+        geo_area = self.create_country(workbasket, start_date)
 
         form_data = self.generate_form_data(
             measure_type,
             start_date,
             commodities,
+            geo_area,
         )
         form_kwargs = self.generate_form_kwargs(
             measure_type,
@@ -118,9 +122,10 @@ class Command(BaseCommand):
 
     def generate_form_data(
         self,
-        measure_type,
-        start_date,
+        measure_type: MeasureType,
+        start_date: datetime,
         commodities: list[GoodsNomenclature],
+        geo_area: GeographicalArea,
     ) -> dict:
         return {
             "footnotes": self.get_footnotes(),
@@ -133,22 +138,27 @@ class Command(BaseCommand):
                 start_date,
                 len(commodities),
             ),
-            "geographical_area": self.get_geographical_areas(),
+            "geographical_area": self.get_geographical_areas(geo_area),
             "quota_order_number": self.get_order_number(),
         }
 
-    def generate_form_kwargs(self, measure_type, start_date, commodity_count):
+    def generate_form_kwargs(
+        self,
+        measure_type: MeasureType,
+        start_date: datetime,
+        commodity_count: int,
+    ):
         return {
             "footnotes": {},
             "conditions": {
                 "form_kwargs": {
-                    "measure_type_pk": measure_type,
+                    "measure_type_pk": measure_type.pk,
                     "measure_start_date": start_date.strftime("%Y-%m-%d"),
                 },
             },
             "commodities": {
                 "form_kwargs": {
-                    "measure_type_pk": measure_type,
+                    "measure_type_pk": measure_type.pk,
                 },
                 "measure_start_date": start_date.strftime("%Y-%m-%d"),
                 "min_commodity_count": commodity_count,
@@ -160,8 +170,8 @@ class Command(BaseCommand):
             "quota_order_number": {},
         }
 
-    def get_measure_type(self) -> int:
-        return MeasureType.objects.filter(sid=142).last().pk
+    def get_measure_type(self) -> MeasureType:
+        return MeasureType.objects.filter(sid=142).last()
 
     def get_start_date(self) -> datetime:
         return datetime.today()
@@ -172,8 +182,19 @@ class Command(BaseCommand):
     def get_conditions(self) -> dict:
         return {}
 
-    def create_country(workbasket: WorkBasket, start_date) -> GeographicalArea:
-        return None
+    def create_country(
+        self,
+        workbasket: WorkBasket,
+        start_date: datetime,
+    ) -> GeographicalArea:
+        return GeographicalArea.create(
+            area_code=AreaCode.COUNTRY,
+            area_id="OO",
+            description="Country created for perfomance testing purposes.",
+            valid_between=TaricDateRange(lower=start_date.date(), upper=None),
+            update_type=UpdateType.CREATE,
+            transaction=workbasket.new_transaction(),
+        )
 
     def create_commodities(
         self,
@@ -254,17 +275,20 @@ class Command(BaseCommand):
             "end_date_0": "",
             "end_date_1": "",
             "end_date_2": "",
-            "measure_type": str(measure_type),
+            "measure_type": str(measure_type.pk),
             "start_date_0": start_date.day,
             "start_date_1": start_date.month,
             "start_date_2": start_date.year,
             "min_commodity_count": str(commodity_count),
         }
 
-    def get_geographical_areas(self) -> dict:
+    def get_geographical_areas(self, geo_area: GeographicalArea) -> dict:
         return {
-            "geographical_area-geo_area": "ERGA_OMNES",
+            "geographical_area-geo_area": "COUNTRY",
             "geographical_area-geographical_area_group": "",
+            "country_region_formset-0-geographical_area_country_or_region": str(
+                geo_area.pk,
+            ),
         }
 
     def get_order_number(self) -> dict:
