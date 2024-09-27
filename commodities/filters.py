@@ -35,7 +35,7 @@ class GoodsNomenclatureFilterBackend(TamatoFilterBackend):
 
 class CommodityFilter(ActiveStateMixin, TamatoFilter, CurrentWorkBasketMixin):
     item_id = CharFilter(
-        label="Code",
+        label="Commodity code",
         widget=forms.TextInput(),
         lookup_expr="startswith",
         validators=[NumericValidator],

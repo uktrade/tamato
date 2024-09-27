@@ -248,7 +248,7 @@ class ActiveStateMixin(FilterSet):
         widget=forms.CheckboxSelectMultiple,
         method="filter_active_state",
         label="Active state",
-        help_text="Select all that apply",
+        help_text="Select one to filter by active or terminated items",
         required=False,
     )
 

@@ -24,15 +24,24 @@ class CommodityFilterForm(forms.Form):
         self.helper.layout = Layout(
             Field.text("item_id", label_size=Size.SMALL),
             Field.text("descriptions__description", label_size=Size.SMALL),
-            Field.text("active_state", label_size=Size.SMALL),
+            Field.checkboxes(
+                "active_state",
+                legend_size=Size.SMALL,
+                help_text="override",
+            ),
             Fieldset(
                 Field.text("with_footnotes", label_size=Size.SMALL),
                 legend="Footnotes",
+                legend_size=Size.SMALL,
             ),
-            Field.text("current_work_basket", label_size=Size.SMALL),
+            Fieldset(
+                Field.text("current_work_basket", label_size=Size.SMALL),
+                legend="Workbasket",
+                legend_size=Size.SMALL,
+            ),
             Button(
                 "submit",
-                "Search and Filter",
+                "Search and filter",
             ),
             HTML(
                 f'<a class="govuk-button govuk-button--secondary" href="{self.clear_url}"> Clear </a>',
