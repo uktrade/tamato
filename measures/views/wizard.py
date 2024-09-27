@@ -167,10 +167,8 @@ class MeasureEditWizard(
         measures_bulk_editor.schedule_task()
 
         return redirect(
-            reverse(
-                "workbaskets:workbasket-ui-review-measures",
-                kwargs={"pk": self.workbasket.pk},
-            ),
+            "measure-ui-edit-confirm",
+            expected_measures_count=len(db_selected_measures),
         )
 
     def edit_measures(self, selected_measures, cleaned_data):

@@ -44,6 +44,11 @@ ui_patterns = [
         name="measure-ui-edit-multiple",
     ),
     path(
+        "edit/done-async/<int:expected_measures_count>/",
+        views.MeasuresWizardCreateConfirm.as_view(),
+        name="measure-ui-edit-confirm",
+    ),
+    path(
         "delete-multiple-measures/",
         views.MeasureMultipleDelete.as_view(),
         name="measure-ui-delete-multiple",
