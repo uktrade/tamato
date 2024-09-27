@@ -24,6 +24,7 @@ pytestmark = pytest.mark.django_db
         (None, "/tmp"),
     ),
 )
+@pytest.mark.exporter
 def test_dump_sqlite_command(asynchronous_flag, save_local_flag_value):
     flags = []
     if asynchronous_flag:
@@ -50,6 +51,7 @@ def test_dump_sqlite_command(asynchronous_flag, save_local_flag_value):
 
 
 @pytest.mark.skip()
+@pytest.mark.exporter
 def test_upload_command_uploads_queued_workbasket_to_s3(
     approved_transaction,
     hmrc_storage,
@@ -97,6 +99,7 @@ def test_upload_command_uploads_queued_workbasket_to_s3(
 
 
 @pytest.mark.skip(reason="broken test - TODO")
+@pytest.mark.exporter
 def test_dump_command_outputs_queued_workbasket(approved_transaction, capsys):
     """Exercise HMRCStorage and verify content is saved to bucket."""
     with capsys.disabled():
@@ -123,7 +126,7 @@ def test_dump_command_outputs_queued_workbasket(approved_transaction, capsys):
 
         assert codes == expected_codes
 
-
+@pytest.mark.exporter
 def test_dump_command_exits_on_unchecked_workbasket():
     workbasket = WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,

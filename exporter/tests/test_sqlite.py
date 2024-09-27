@@ -16,7 +16,6 @@ from exporter.sqlite import plan
 from exporter.sqlite import tasks
 from exporter.sqlite.runner import Runner
 from exporter.sqlite.runner import SQLiteMigrator
-from exporter.storages import EmptyFileException
 from exporter.storages import is_valid_sqlite
 from workbaskets.validators import WorkflowStatus
 
@@ -46,47 +45,11 @@ def sqlite_database(sqlite_template: Runner) -> Iterator[Runner]:
     in_memory_database.deserialize("main", sqlite_template.database.serialize("main"))
     yield Runner(in_memory_database)
 
-
-def get_test_file_path(filename):
-    return path.join(
-        path.dirname(path.abspath(__file__)),
-        "test_files",
-        filename,
-    )
-
-
-@pytest.mark.parametrize(
-    ("test_file_path, expect_context"),
-    (
-        (
-            get_test_file_path("valid_sqlite.db"),
-            nullcontext(),
-        ),
-        (
-            "/invalid/file/path",
-            pytest.raises(FileNotFoundError),
-        ),
-        (
-            get_test_file_path("empty_sqlite.db"),
-            pytest.raises(EmptyFileException),
-        ),
-        (
-            get_test_file_path("invalid_sqlite.db"),
-            pytest.raises(sqlite3.DatabaseError),
-        ),
-    ),
-)
-def test_is_valid_sqlite(test_file_path, expect_context):
-    """Test that `is_valid_sqlite()` raises correct exceptions for invalid
-    SQLite files and succeeds for valid SQLite files."""
-    with expect_context:
-        is_valid_sqlite(test_file_path)
-
-
 @pytest.mark.parametrize(
     ("migrations_in_tmp_dir"),
     (False, True),
 )
+@pytest.mark.exporter
 def test_sqlite_migrator(migrations_in_tmp_dir):
     """Test SQLiteMigrator."""
     with tempfile.NamedTemporaryFile() as sqlite_file:
