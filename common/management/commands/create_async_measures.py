@@ -3,8 +3,10 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
+from django.db.transaction import atomic
 
 from commodities.models import GoodsNomenclature
+from commodities.models import GoodsNomenclatureDescription
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from measures.models import MeasureType
@@ -182,41 +184,50 @@ class Command(BaseCommand):
         commodities = []
 
         for i in range(1, commodities_count + 1):
-            transaction = workbasket.new_transaction()
-            tracked_model_kwargs = {
-                "transaction": transaction,
-                "update_type": UpdateType.CREATE.value,
-                "valid_between": (start_date, None),
-            }
-            eu_headings = str(i).zfill(4)
-            good = GoodsNomenclature.objects.create(
-                sid=900000 + i,
-                item_id=f"999900{eu_headings}",
-                suffix="80",
-                statistical=False,
-                **tracked_model_kwargs,
-            )
+            good = self.create_commodity(workbasket, i, start_date)
             commodities.append(good)
-            # TODO:
-            # description = GoodsNomenclatureDescription.objects.create(
-            #    sid=1,
-            #    described_goods_nomenclature=good,
-            #    description=LongDescription(),
-            #    **tracked_model_kwargs,
-            # )
-            # indent = GoodsNomenclatureIndent(
-            #    sid=1,
-            #    indent=1,
-            #    indented_goods_nomenclature=good,
-            #    **tracked_model_kwargs,
-            # )
-            # origin = GoodsNomenclatureOrigin.objects.create(
-            #    new_goods_nomenclature=good,
-            #    derived_from_goods_nomenclature=None,
-            #    **tracked_model_kwargs,
-            # )
 
         return commodities
+
+    @atomic
+    def create_commodity(self, workbasket, eu_heading_value, start_date):
+        transaction = workbasket.new_transaction()
+        common_kwargs = {
+            "transaction": transaction,
+            "update_type": UpdateType.CREATE.value,
+        }
+        eu_headings = str(eu_heading_value).zfill(4)
+        good = GoodsNomenclature.objects.create(
+            sid=900000 + eu_heading_value,
+            item_id=f"999900{eu_headings}",
+            suffix="80",
+            statistical=False,
+            valid_between=(start_date, None),
+            **common_kwargs,
+        )
+
+        GoodsNomenclatureDescription.objects.create(
+            sid=900000 + eu_heading_value,
+            described_goods_nomenclature=good,
+            description=f"Description for {good.item_id}",
+            validity_start=start_date,
+            **common_kwargs,
+        )
+
+        # TODO:
+        # indent = GoodsNomenclatureIndent(
+        #    sid=1,
+        #    indent=1,
+        #    indented_goods_nomenclature=good,
+        #    **common_kwargs,
+        # )
+        # origin = GoodsNomenclatureOrigin.objects.create(
+        #    new_goods_nomenclature=good,
+        #    derived_from_goods_nomenclature=None,
+        #    **common_kwargs,
+        # )
+
+        return good
 
     def get_commodities_and_duties(self, commodities: list[GoodsNomenclature]) -> dict:
         commodities_and_duties = {}
