@@ -239,6 +239,12 @@ class Command(BaseCommand):
             )
             commodities.append(good)
 
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Successfully created {commodities_count + 1} new good(s).",
+            ),
+        )
+
         return commodities
 
     @atomic
