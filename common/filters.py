@@ -348,3 +348,19 @@ class CurrentWorkBasketMixin(FilterSet):
                 id__in=wanted_objects_id,
             )
         return queryset
+
+
+class EndDateMixin(FilterSet):
+    """A filter to only show objects which have an end date."""
+
+    with_end_date = BooleanFilter(
+        label="Show items with an end date",
+        widget=forms.CheckboxInput(),
+        method="filter_end_date",
+        required=False,
+    )
+
+    def filter_end_date(self, queryset, name, value):
+        if value:
+            queryset = queryset.filter(valid_between__upper_inf=False)
+        return queryset

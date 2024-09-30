@@ -27,11 +27,15 @@ class CommodityFilterForm(forms.Form):
             Field.checkboxes(
                 "active_state",
                 legend_size=Size.SMALL,
-                help_text="override",
             ),
             Fieldset(
                 Field.text("with_footnotes", label_size=Size.SMALL),
                 legend="Footnotes",
+                legend_size=Size.SMALL,
+            ),
+            Fieldset(
+                Field.text("with_end_date", label_size=Size.SMALL),
+                legend="End date",
                 legend_size=Size.SMALL,
             ),
             Fieldset(
