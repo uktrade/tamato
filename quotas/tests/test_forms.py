@@ -794,21 +794,22 @@ def test_sub_quota_update_form_valid(session_request_with_workbasket, sub_quota)
         sub_quota_relation_type="EQ",
         coefficient=1.5,
     )
-
-    form = forms.SubQuotaDefinitionAssociationUpdateForm(
-        instance=sub_quota,
-        request=session_request_with_workbasket,
-        sid=sub_quota.sid,
-    )
-    assert float(form.fields["coefficient"].initial) == association.coefficient
-    assert (
-        form.fields["relationship_type"].initial == association.sub_quota_relation_type
-    )
-    assert form.fields["measurement_unit"].initial == sub_quota.measurement_unit
-    assert form.fields["initial_volume"].initial == sub_quota.initial_volume
-    assert form.fields["volume"].initial == sub_quota.volume
-    assert form.fields["start_date"].initial == sub_quota.valid_between.lower
-    assert form.fields["end_date"].initial == sub_quota.valid_between.upper
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.SubQuotaDefinitionAssociationUpdateForm(
+            instance=sub_quota,
+            request=session_request_with_workbasket,
+            sid=sub_quota.sid,
+        )
+        assert float(form.fields["coefficient"].initial) == association.coefficient
+        assert (
+            form.fields["relationship_type"].initial
+            == association.sub_quota_relation_type
+        )
+        assert form.fields["measurement_unit"].initial == sub_quota.measurement_unit
+        assert form.fields["initial_volume"].initial == sub_quota.initial_volume
+        assert form.fields["volume"].initial == sub_quota.volume
+        assert form.fields["start_date"].initial == sub_quota.valid_between.lower
+        assert form.fields["end_date"].initial == sub_quota.valid_between.upper
 
     data = {
         "start_date_0": sub_quota.valid_between.lower.day,
