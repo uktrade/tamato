@@ -185,5 +185,10 @@ urlpatterns = [
         views.QuotaBlockingConfirmCreate.as_view(),
         name="quota_blocking-ui-confirm-create",
     ),
+    path(
+        f"quotas/quota-association/<sid>/delete/",
+        views.QuotaAssociationDelete.as_view(),
+        name="quota_association-ui-confirm-delete",
+    ),
     path("api/", include(api_router.urls)),
 ]
