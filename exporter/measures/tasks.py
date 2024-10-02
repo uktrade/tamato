@@ -15,7 +15,7 @@ def get_output_filename():
     If no revisions are present the filename is prefixed with seed_.
     """
     date_str = f"{date.today().strftime('%Y%m%d')}"
-    return f"quotas_export_{date_str}.csv"
+    return f"measures_export_{date_str}.csv"
 
 
 @app.task
@@ -35,7 +35,7 @@ def export_and_upload_measures_csv(local_path: str = None) -> bool:
 
     if local_path:
         logger.info("Quota export process targeting local file system.")
-        storage = storages.QuotaLocalStorage(location=local_path)
+        storage = storages.MeasureLocalStorage(location=local_path)
     else:
         logger.info("Quota export process targeting S3 file system.")
         storage = storages.QuotaS3Storage()
@@ -50,7 +50,7 @@ def export_and_upload_measures_csv(local_path: str = None) -> bool:
         )
         return False
 
-    logger.info(f"Generating quotas CSV export {export_filename}.")
+    logger.info(f"Generating measures CSV export {export_filename}.")
     storage.export_csv(export_filename)
-    logger.info(f"Quotas CSV export {export_filename} complete.")
+    logger.info(f"Measures CSV export {export_filename} complete.")
     return True

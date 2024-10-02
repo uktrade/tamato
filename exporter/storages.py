@@ -13,7 +13,9 @@ from sqlite_s3vfs import S3VFS
 from storages.backends.s3boto3 import S3Boto3Storage
 
 from common.util import log_timing
-from exporter import sqlite, quotas
+from exporter import measures
+from exporter import quotas
+from exporter import sqlite
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +53,8 @@ def is_valid_sqlite(file_path: str) -> bool:
         cursor.execute("PRAGMA quick_check")
     return True
 
-def is_valid_quotas_csv(file_path: str) -> bool:
+
+def is_valid_csv(file_path: str) -> bool:
     """
     `file_path` should be a path to a file on the local file system. Validation.
 
@@ -72,6 +75,7 @@ def is_valid_quotas_csv(file_path: str) -> bool:
         raise EmptyFileException(f"{file_path} has zero size.")
 
     return True
+
 
 class HMRCStorage(S3Boto3Storage):
     def get_default_settings(self):
@@ -126,11 +130,10 @@ class SQLiteS3StorageBase(S3Boto3Storage):
         )
         return super().generate_filename(filename)
 
+
 class QuotasExportS3StorageBase(S3Boto3Storage):
-    """
-    Storage base class used for remotely storing Quotas Export CSV file to an
-    AWS S3-like backing store (AWS S3, Minio, etc.).
-    """
+    """Storage base class used for remotely storing Quotas Export CSV file to an
+    AWS S3-like backing store (AWS S3, Minio, etc.)."""
 
     def get_default_settings(self):
         from django.conf import settings
@@ -230,10 +233,10 @@ class SQLiteLocalStorage(DataExportMixin, Storage):
         sqlite.make_export(connection)
         connection.close()
 
-class QuotaLocalStorage(Storage):
-    """
-    Storage class used for storing quota CSV data to the local file system.
-    """
+
+class CSVLocalStorage(Storage):
+    """Storage class used for storing quota CSV data to the local file
+    system."""
 
     def __init__(self, location) -> None:
         self._location = Path(location).expanduser().resolve()
@@ -247,20 +250,40 @@ class QuotaLocalStorage(Storage):
     def exists(self, name: str) -> bool:
         return Path(self.path(name)).exists()
 
+    def run_export(self, filename):
+        pass
+
+    def is_valid_csv(self, filename):
+        # Specific test for validity may be added in the derived classes
+        return is_valid_csv(filename)
+
     @log_timing(logger_function=logger.info)
     def export_csv(self, filename: str):
-        with NamedTemporaryFile() as quotas_csv_named_temp_file:
+        print("Exporting measures")
+        with NamedTemporaryFile() as csv_named_temp_file:
             logger.info(f"Saving {filename} to local file system storage.")
-            quotas.make_export(quotas_csv_named_temp_file)
-            if is_valid_quotas_csv(quotas_csv_named_temp_file.name):
+            self.run_export(csv_named_temp_file)
+            if self.is_valid_csv(csv_named_temp_file.name):
                 # Only save to S3 if the CSV file is valid.
                 destination_file_path = os.path.join(self._location, filename)
-                self.save_local(destination_file_path, quotas_csv_named_temp_file)
+                self.save_local(destination_file_path, csv_named_temp_file)
 
     def save_local(self, destination_file_path, file_to_save):
         shutil.copy(file_to_save.name, destination_file_path)
 
 
+class QuotaLocalStorage(CSVLocalStorage):
+    """Define export function for quota."""
+
+    def run_export(self, filename):
+        quotas.make_export(filename)
+
+
+class MeasureLocalStorage(CSVLocalStorage):
+    """Define export function for quota."""
+
+    def run_export(self, filename):
+        measures.make_export(filename)
 
 
 class QuotaS3Storage(DataExportMixin, QuotasExportS3StorageBase):
@@ -274,11 +297,11 @@ class QuotaS3Storage(DataExportMixin, QuotasExportS3StorageBase):
 
     @log_timing(logger_function=logger.info)
     def export_csv(self, filename: str):
-        with NamedTemporaryFile() as quotas_csv_named_temp_file:
-            quotas.make_export(quotas_csv_named_temp_file)
+        with NamedTemporaryFile() as csv_named_temp_file:
+            quotas.make_export(csv_named_temp_file)
             logger.info(f"Saving {filename} to S3 storage.")
-            if is_valid_quotas_csv(quotas_csv_named_temp_file.name):
+            if is_valid_csv(csv_named_temp_file.name):
                 # Only save to S3 if the CSV file is valid.
-                self.save(filename, quotas_csv_named_temp_file.file)
+                self.save(filename, csv_named_temp_file.file)
 
-            os.unlink(quotas_csv_named_temp_file.name)
+            os.unlink(csv_named_temp_file.name)
