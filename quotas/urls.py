@@ -96,6 +96,21 @@ urlpatterns = [
         name="sub_quota_definitions-ui-success",
     ),
     path(
+        f"quotas/sub_quotas_definition_update/<sid>",
+        views.SubQuotaDefinitionAssociationUpdate.as_view(),
+        name="sub_quota_definition-edit",
+    ),
+    path(
+        f"quotas/sub_quotas_definition_update-edit/<sid>",
+        views.SubQuotaDefinitionAssociationEditUpdate.as_view(),
+        name="sub_quota_definition-edit-update",
+    ),
+    path(
+        f"quotas/sub_quotas_definition_confirm-update/<sid>",
+        views.SubQuotaConfirmUpdate.as_view(),
+        name="sub_quota_definition-confirm-update",
+    ),
+    path(
         f"quota_definitions/<sid>/confirm-create/",
         views.QuotaDefinitionConfirmCreate.as_view(),
         name="quota_definition-ui-confirm-create",

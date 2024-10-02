@@ -18,6 +18,7 @@ from common.celery import app
 from common.models.mixins import TimestampedMixin
 from common.models.utils import override_current_transaction
 from measures.models.tracked_models import Measure
+from measures.editors import MeasuresEditor
 
 logger = logging.getLogger(__name__)
 
@@ -396,6 +397,171 @@ class MeasuresBulkCreator(BulkProcessor):
 
         logger.error(
             f"MeasuresBulkCreator.create_measures() - "
+            f"{form_class.__name__} has {len(form_or_formset.errors)} errors.",
+        )
+
+        # Form.errors is a dictionary of errors, but FormSet.errors is a
+        # list of dictionaries of Form.errors. Access their errors in
+        # a uniform manner.
+        errors = []
+
+        if isinstance(form_or_formset, BaseFormSet):
+            errors = [
+                {"formset_errors": form_or_formset.non_form_errors()},
+            ] + form_or_formset.errors
+        else:
+            errors = [form_or_formset.errors]
+
+        for form_errors in errors:
+            for error_key, error_values in form_errors.items():
+                logger.error(f"{error_key}: {error_values}")
+
+
+class MeasuresBulkEditorManager(models.Manager):
+    """Model Manager for MeasuresBulkEditor models."""
+
+    def create(
+        self,
+        form_data: Dict,
+        form_kwargs: Dict,
+        workbasket,
+        user,
+        selected_measures,
+        **kwargs,
+    ) -> "MeasuresBulkCreator":
+        """Create and save an instance of MeasuresBulkEditor."""
+
+        return super().create(
+            form_data=form_data,
+            form_kwargs=form_kwargs,
+            workbasket=workbasket,
+            user=user,
+            selected_measures=selected_measures,
+            **kwargs,
+        )
+
+
+class MeasuresBulkEditor(BulkProcessor):
+    """
+    Model class used to bulk edit Measures instances from serialized form
+    data.
+    The stored form data is serialized and deserialized by Forms that subclass
+    SerializableFormMixin.
+    """
+
+    objects = MeasuresBulkEditorManager()
+
+    form_data = models.JSONField()
+    """Dictionary of all Form.data, used to reconstruct bound Form instances as
+    if the form data had been sumbitted by the user within the measure wizard
+    process."""
+
+    form_kwargs = models.JSONField()
+    """Dictionary of all form init data, excluding a form's `data` param (which
+    is preserved via this class's `form_data` attribute)."""
+
+    selected_measures = models.JSONField()
+    """List of all measures that have been selected for bulk editing."""
+
+    workbasket = models.ForeignKey(
+        "workbaskets.WorkBasket",
+        on_delete=REVOKE_TASKS_AND_SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The workbasket with which created measures are associated."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=SET_NULL,
+        null=True,
+        editable=False,
+    )
+    """The user who submitted the task to create measures."""
+
+    def schedule_task(self) -> AsyncResult:
+        """Implementation of base class method."""
+
+        from measures.tasks import bulk_edit_measures
+
+        async_result = bulk_edit_measures.apply_async(
+            kwargs={
+                "measures_bulk_editor_pk": self.pk,
+            },
+            countdown=1,
+        )
+        self.task_id = async_result.id
+        self.save()
+
+        logger.info(
+            f"Measure bulk edit scheduled on task with ID {async_result.id}"
+            f"using MeasuresBulkEditor.pk={self.pk}.",
+        )
+
+        return async_result
+
+    @atomic
+    def edit_measures(self) -> Iterable[Measure]:
+        logger.info("INSIDE EDIT MEASURES - BULK PROCESSING")
+
+        with override_current_transaction(
+            transaction=self.workbasket.current_transaction,
+        ):
+            cleaned_data = self.get_forms_cleaned_data()
+            deserialized_selected_measures = Measure.objects.filter(
+                pk__in=self.selected_measures
+            )
+
+            measures_editor = MeasuresEditor(
+                self.workbasket, deserialized_selected_measures, cleaned_data
+            )
+            return measures_editor.edit_measures()
+
+    def get_forms_cleaned_data(self) -> Dict:
+        """
+        Returns a merged dictionary of all Form cleaned_data.
+
+        If a Form's data contains a `FormSet`, the key will be prefixed with
+        "formset-" and contain a list of the formset cleaned_data dictionaries.
+
+        If form validation errors are encountered when constructing cleaned
+        data, then this function raises Django's `ValidationError` exception.
+        """
+        all_cleaned_data = {}
+
+        from measures.views import MeasureEditWizard
+
+        for form_key, form_class in MeasureEditWizard.data_form_list:
+
+            if form_key not in self.form_data:
+                # Forms are conditionally included during step processing - see
+                # `MeasureEditWizard.show_step()` for details.
+                continue
+
+            data = self.form_data[form_key]
+            kwargs = form_class.deserialize_init_kwargs(self.form_kwargs[form_key])
+
+            form = form_class(data=data, **kwargs)
+
+            if not form.is_valid():
+                self._log_form_errors(form_class=form_class, form_or_formset=form)
+                raise ValidationError(
+                    f"{form_class.__name__} has {len(form.errors)} errors.",
+                )
+
+            if isinstance(form.cleaned_data, (tuple, list)):
+                all_cleaned_data[f"formset-{form_key}"] = form.cleaned_data
+            else:
+                all_cleaned_data.update(form.cleaned_data)
+
+        return all_cleaned_data
+
+    def _log_form_errors(self, form_class, form_or_formset) -> None:
+        """Output errors associated with a Form or Formset instance, handling
+        output for each instance type in a uniform manner."""
+
+        logger.error(
+            f"MeasuresBulkEditor.edit_measures() - "
             f"{form_class.__name__} has {len(form_or_formset.errors)} errors.",
         )
 

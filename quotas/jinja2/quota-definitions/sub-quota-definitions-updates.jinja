@@ -1,5 +1,9 @@
 {% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
 {% from "components/table/macro.njk" import govukTable %}
+
+{% set page_title = "Update sub-quota definition and association" %}
 
 {% block content %}
     <h2 class="govuk-heading">Main quota definition details</h2>

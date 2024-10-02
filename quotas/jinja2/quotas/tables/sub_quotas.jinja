@@ -11,27 +11,32 @@
     {% set sub_quota_link -%}
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}">{{ object.sub_quota.order_number.order_number }}</a>
     {% endset %}
+    {% set edit_link -%}
+      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
+    {% endset %}
     {{ table_rows.append([
       {"text": definition_link },
       {"text": sub_quota_link },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
+      {"text": "{:%d %b %Y}".format(object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
+      {"text": edit_link },
     ]) or "" }}
   {% endfor %}
 
   {{ govukTable({
     "head": [
       {"text": "Quota definition sid"},
-      {"text": "Sub quota order number"},
+      {"text": "Sub-quota order number"},
       {"text": "Start date"},
       {"text": "End date"},
       {"text": "Relation type"},
       {"text": "Coefficient"},
+      {"text": "Actions"},
     ],
     "rows": table_rows
   }) }}
 {% else %}
-  <p class="govuk-body">There are no sub quotas for this quota order number.</p>
+  <p class="govuk-body">There are no sub-quotas for this quota order number.</p>
 {% endif %}

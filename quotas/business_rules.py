@@ -293,7 +293,7 @@ class PreventQuotaDefinitionDeletion(BusinessRule):
 class QuotaAssociationMustReferToANonDeletedSubQuota(
     PreventDeletingLinkedQuotaDefinitions,
 ):
-    """A Quota Association must refer to a non-deleted sub quota."""
+    """A Quota Association must refer to a non-deleted sub-quota."""
 
     sid_prefix = "sub_quota__"
 
