@@ -77,6 +77,11 @@ ui_patterns = [
         name="measure-create-process-queue",
     ),
     path(
+        "edit-process-queue/",
+        views.MeasuresEditProcessQueue.as_view(),
+        name="measure-edit-process-queue",
+    ),
+    path(
         "cancel-bulk-processor-task/<int:pk>/",
         views.CancelBulkProcessorTask.as_view(),
         name="cancel-bulk-processor-task",
