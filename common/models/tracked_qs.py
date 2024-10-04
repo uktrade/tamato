@@ -23,7 +23,6 @@ from common.querysets import ValidityQuerySet
 from common.util import resolve_path
 from common.validators import UpdateType
 
-
 class TrackedModelQuerySet(
     PolymorphicQuerySet,
     CTEQuerySet,
