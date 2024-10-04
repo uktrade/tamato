@@ -1,6 +1,8 @@
+import pytest
+
 from exporter.util import exceptions_as_messages
 from exporter.util import item_timer
-import pytest
+
 
 @pytest.mark.exporter
 def test_exceptions_as_messages():
@@ -15,6 +17,7 @@ def test_exceptions_as_messages():
         "first_exception": ["raised an test"],
         "second_exception": ["raised an test2"],
     }
+
 
 @pytest.mark.exporter
 def test_item_timer():

@@ -3,11 +3,10 @@ import os
 from datetime import date
 
 from common.celery import app
-from common.models.transactions import Transaction
-from common.models.transactions import TransactionPartition
 from exporter import storages
 
 logger = logging.getLogger(__name__)
+
 
 def get_output_filename():
     """
@@ -18,11 +17,12 @@ def get_output_filename():
     date_str = f"{date.today().strftime('%Y%m%d')}"
     return f"quotas_export_{date_str}.csv"
 
+
 @app.task
 def export_and_upload_quotas_csv(local_path: str = None) -> bool:
     """
-    Generates an export of latest published quota data from the TAP database to a
-    CSV file.
+    Generates an export of latest published quota data from the TAP database to
+    a CSV file.
 
     If `local_path` is provided, then the quotas CSV file will be saved in
     that directory location (note that in this case `local_path` must be an

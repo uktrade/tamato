@@ -126,6 +126,7 @@ def test_dump_command_outputs_queued_workbasket(approved_transaction, capsys):
 
         assert codes == expected_codes
 
+
 @pytest.mark.exporter
 def test_dump_command_exits_on_unchecked_workbasket():
     workbasket = WorkBasketFactory.create(

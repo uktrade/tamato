@@ -1970,8 +1970,8 @@ def test_simple_measure_edit_forms_serialize_deserialize(
     request,
     duty_sentence_parser,
 ):
-    """Test that the EditMeasure simple forms that use the
-    SerializableFormMixin behave correctly and as expected."""
+    """Test that the EditMeasure simple forms that use the SerializableFormMixin
+    behave correctly and as expected."""
 
     # Create some measures to apply this data to, for the kwargs
     quota_order_number = factories.QuotaOrderNumberFactory()

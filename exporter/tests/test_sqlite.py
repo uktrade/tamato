@@ -1,6 +1,4 @@
-import sqlite3
 import tempfile
-from contextlib import nullcontext
 from io import BytesIO
 from os import path
 from pathlib import Path
@@ -44,6 +42,7 @@ def sqlite_database(sqlite_template: Runner) -> Iterator[Runner]:
     in_memory_database = apsw.Connection(":memory:")
     in_memory_database.deserialize("main", sqlite_template.database.serialize("main"))
     yield Runner(in_memory_database)
+
 
 @pytest.mark.parametrize(
     ("migrations_in_tmp_dir"),

@@ -459,7 +459,7 @@ elif VCAP_SERVICES.get("aws-s3-bucket"):
             IMPORTER_S3_REGION_NAME = credentials["aws_region"]
             IMPORTER_S3_ACCESS_KEY_ID = credentials["aws_access_key_id"]
             IMPORTER_S3_SECRET_ACCESS_KEY = credentials["aws_secret_access_key"]
-        if 'quotas-export' in bucket["name"]:
+        if "quotas-export" in bucket["name"]:
             QUOTAS_EXPORT_STORAGE_BUCKET_NAME = credentials["bucket_name"]
             QUOTAS_EXPORT_S3_REGION_NAME = credentials["aws_region"]
             QUOTAS_EXPORT_S3_ACCESS_KEY_ID = credentials["aws_access_key_id"]
@@ -483,10 +483,22 @@ else:
         "IMPORTER_STORAGE_BUCKET_NAME",
         "importer",
     )
-    QUOTAS_EXPORT_STORAGE_BUCKET_NAME = os.environ.get("QUOTAS_EXPORT_S3_ACCESS_KEY_ID", 'quotas-export-local')
-    QUOTAS_EXPORT_S3_REGION_NAME = os.environ.get("QUOTAS_EXPORT_S3_REGION_NAME", "eu-west-2")
-    QUOTAS_EXPORT_S3_ACCESS_KEY_ID = os.environ.get("QUOTAS_EXPORT_S3_ACCESS_KEY_ID", 'quotas-export-id')
-    QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = os.environ.get("QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY", 'quotas-export-key')
+    QUOTAS_EXPORT_STORAGE_BUCKET_NAME = os.environ.get(
+        "QUOTAS_EXPORT_S3_ACCESS_KEY_ID",
+        "quotas-export-local",
+    )
+    QUOTAS_EXPORT_S3_REGION_NAME = os.environ.get(
+        "QUOTAS_EXPORT_S3_REGION_NAME",
+        "eu-west-2",
+    )
+    QUOTAS_EXPORT_S3_ACCESS_KEY_ID = os.environ.get(
+        "QUOTAS_EXPORT_S3_ACCESS_KEY_ID",
+        "quotas-export-id",
+    )
+    QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = os.environ.get(
+        "QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY",
+        "quotas-export-key",
+    )
 
 S3_ENDPOINT_URL = os.environ.get(
     "S3_ENDPOINT_URL",
@@ -589,7 +601,7 @@ CROWN_DEPENDENCIES_POST_API_KEY = os.environ.get("CROWN_DEPENDENCIES_POST_API_KE
 
 if is_copilot():
     CELERY_BROKER_URL = (
-            os.getenv("CELERY_BROKER_URL", default=None) + "?ssl_cert_reqs=required"
+        os.getenv("CELERY_BROKER_URL", default=None) + "?ssl_cert_reqs=required"
     )
 
 elif VCAP_SERVICES.get("redis"):

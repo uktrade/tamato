@@ -20,6 +20,7 @@ class SentinelError(Exception):
     # Special exception to signify test should exit.
     pass
 
+
 @pytest.mark.exporter
 def test_upload_workbaskets_uploads_queued_workbasket_to_s3(
     approved_transaction,
