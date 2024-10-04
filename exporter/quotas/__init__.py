@@ -23,6 +23,7 @@ if this implementation is high
 and joins as TAP its self does - removing the need to run queries in SQL which has been problematic, and is
 difficult to maintain.
 """
+
 import os
 import shutil
 from itertools import chain
@@ -36,6 +37,7 @@ from django.conf import settings
 from exporter.quotas import runner
 from exporter.quotas import tasks
 
+
 def make_export(quotas_csv_named_temp_file: NamedTemporaryFile):
 
     quota_csv_exporter = runner.QuotaExport(quotas_csv_named_temp_file)
@@ -43,9 +45,4 @@ def make_export(quotas_csv_named_temp_file: NamedTemporaryFile):
     # do stuff
     # quotas_csv_named_temp_file.close()
 
-
     # done
-
-
-
-

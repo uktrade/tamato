@@ -836,7 +836,7 @@ class MeasureStartDateForm(forms.Form, SerializableFormMixin):
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
         deserialized_selected_measures = models.Measure.objects.filter(
-            pk__in=serialized_selected_measures_pks
+            pk__in=serialized_selected_measures_pks,
         )
 
         kwargs = {
@@ -904,7 +904,7 @@ class MeasureEndDateForm(forms.Form, SerializableFormMixin):
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
         deserialized_selected_measures = models.Measure.objects.filter(
-            pk__in=serialized_selected_measures_pks
+            pk__in=serialized_selected_measures_pks,
         )
 
         kwargs = {
@@ -957,7 +957,7 @@ class MeasureRegulationForm(forms.Form, SerializableFormMixin):
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
         deserialized_selected_measures = models.Measure.objects.filter(
-            pk__in=serialized_selected_measures_pks
+            pk__in=serialized_selected_measures_pks,
         )
 
         kwargs = {
@@ -1027,7 +1027,7 @@ class MeasureDutiesForm(forms.Form, SerializableFormMixin):
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
         deserialized_selected_measures = models.Measure.objects.filter(
-            pk__in=serialized_selected_measures_pks
+            pk__in=serialized_selected_measures_pks,
         )
 
         kwargs = {

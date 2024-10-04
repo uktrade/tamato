@@ -13,7 +13,8 @@ from sqlite_s3vfs import S3VFS
 from storages.backends.s3boto3 import S3Boto3Storage
 
 from common.util import log_timing
-from exporter import sqlite, quotas
+from exporter import quotas
+from exporter import sqlite
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ def is_valid_sqlite(file_path: str) -> bool:
         cursor.execute("PRAGMA quick_check")
     return True
 
+
 def is_valid_quotas_csv(file_path: str) -> bool:
     """
     `file_path` should be a path to a file on the local file system. Validation.
@@ -72,6 +74,7 @@ def is_valid_quotas_csv(file_path: str) -> bool:
         raise EmptyFileException(f"{file_path} has zero size.")
 
     return True
+
 
 class HMRCStorage(S3Boto3Storage):
     def get_default_settings(self):
@@ -126,11 +129,10 @@ class SQLiteS3StorageBase(S3Boto3Storage):
         )
         return super().generate_filename(filename)
 
+
 class QuotasExportS3StorageBase(S3Boto3Storage):
-    """
-    Storage base class used for remotely storing Quotas Export CSV file to an
-    AWS S3-like backing store (AWS S3, Minio, etc.).
-    """
+    """Storage base class used for remotely storing Quotas Export CSV file to an
+    AWS S3-like backing store (AWS S3, Minio, etc.)."""
 
     def get_default_settings(self):
         from django.conf import settings
@@ -230,10 +232,10 @@ class SQLiteLocalStorage(DataExportMixin, Storage):
         sqlite.make_export(connection)
         connection.close()
 
+
 class QuotaLocalStorage(Storage):
-    """
-    Storage class used for storing quota CSV data to the local file system.
-    """
+    """Storage class used for storing quota CSV data to the local file
+    system."""
 
     def __init__(self, location) -> None:
         self._location = Path(location).expanduser().resolve()
@@ -259,8 +261,6 @@ class QuotaLocalStorage(Storage):
 
     def save_local(self, destination_file_path, file_to_save):
         shutil.copy(file_to_save.name, destination_file_path)
-
-
 
 
 class QuotaS3Storage(DataExportMixin, QuotasExportS3StorageBase):

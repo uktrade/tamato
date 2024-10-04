@@ -1,5 +1,5 @@
-from typing import Type
 from typing import Dict
+from typing import Type
 
 from common.models import TrackedModel
 from measures import models
@@ -54,13 +54,18 @@ class MeasureSelectionQuerysetMixin(MeasureSelectionMixin):
 
 
 class MeasureSerializableWizardMixin:
-    """A Mixin for the wizard forms that utilise asynchronous bulk processing. This mixin provides the functionality to go through each form
-    and serialize the data ready for storing in the database."""
+    """
+    A Mixin for the wizard forms that utilise asynchronous bulk processing.
+
+    This mixin provides the functionality to go through each form and serialize
+    the data ready for storing in the database.
+    """
 
     def get_data_form_list(self) -> dict:
         """
         Returns a form list based on form_list, conditionally including only
         those items as per condition_list and also appearing in data_form_list.
+
         The list is generated dynamically because conditions in condition_list
         may be dynamic.
         Essentially, version of `WizardView.get_form_list()` filtering in only
@@ -76,6 +81,7 @@ class MeasureSerializableWizardMixin:
     def all_serializable_form_data(self) -> Dict:
         """
         Returns serializable data for all wizard steps.
+
         This is a re-implementation of
         MeasureCreateWizard.get_all_cleaned_data(), but using self.data after
         is_valid() has been successfully run.
@@ -91,6 +97,7 @@ class MeasureSerializableWizardMixin:
     def serializable_form_data_for_step(self, step) -> Dict:
         """
         Returns serializable data for a wizard step.
+
         This is a re-implementation of WizardView.get_cleaned_data_for_step(),
         returning the serializable version of data in place of the form's
         regular cleaned_data.
