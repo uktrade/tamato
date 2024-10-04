@@ -969,6 +969,56 @@ def test_delete_quota_definition(client_with_current_workbasket, date_ranges):
     )
 
 
+def test_delete_quota_definition_deletes_associations(
+    client_with_current_workbasket,
+    date_ranges,
+):
+    """Test that when a quota definition is deleted that all link associations
+    are deleted too."""
+    main_quota = factories.QuotaDefinitionFactory.create(
+        sid=1,
+        valid_between=date_ranges.future,
+        measurement_unit=factories.MeasurementUnitFactory(),
+    )
+    for i in range(2, 6):
+        factories.QuotaAssociationFactory.create(
+            sub_quota=factories.QuotaDefinitionFactory.create(
+                sid=i,
+                valid_between=date_ranges.future,
+            ),
+            main_quota=main_quota,
+        )
+
+    # Delete a sub-quota and verify the related association gets deleted too
+    sub_quota_2 = models.QuotaDefinition.objects.all().get(sid=2)
+    url = reverse("quota_definition-ui-delete", kwargs={"sid": sub_quota_2.sid})
+    client_with_current_workbasket.post(url, {"submit": "Delete"})
+
+    sub_quota_2_new_version = models.QuotaDefinition.objects.all().filter(sid=2).last()
+    association_2_new_version = (
+        models.QuotaAssociation.objects.all().filter(sub_quota__sid=2).last()
+    )
+    assert sub_quota_2_new_version.update_type == UpdateType.DELETE
+    assert association_2_new_version.update_type == UpdateType.DELETE
+
+    # Delete the main_quota and verify that all remaining associations get deleted too
+    url = reverse("quota_definition-ui-delete", kwargs={"sid": main_quota.sid})
+    client_with_current_workbasket.post(url, {"submit": "Delete"})
+
+    main_quota_new_version = models.QuotaDefinition.objects.all().filter(sid=1).last()
+    association_new_versions = [
+        models.QuotaAssociation.objects.all().filter(sub_quota__sid=i).last()
+        for i in range(3, 6)
+    ]
+
+    deleted_associations = models.QuotaAssociation.objects.all().filter(
+        update_type=UpdateType.DELETE,
+    )
+    assert main_quota_new_version.update_type == UpdateType.DELETE
+    for association in association_new_versions:
+        assert association in deleted_associations
+
+
 def test_quota_create_with_origins(
     client_with_current_workbasket,
     date_ranges,
