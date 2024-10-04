@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -755,6 +756,23 @@ class QuotaDefinitionDelete(
     form_class = delete_form_for(models.QuotaDefinition)
     template_name = "quota-definitions/delete.jinja"
 
+    @property
+    def related_associations(self):
+        return models.QuotaAssociation.objects.current().filter(
+            Q(main_quota__sid=self.object.sid) | Q(sub_quota__sid=self.object.sid),
+        )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        """Delete the definition and any linked associations."""
+        definition_instance = super().get_result_object(form)
+        for association in self.related_associations:
+            association_form = forms.QuotaAssociationUpdateForm(
+                instance=association,
+            )
+            super().get_result_object(association_form)
+        return definition_instance
+
     def form_valid(self, form):
         messages.success(
             self.request,
@@ -1213,7 +1231,7 @@ class SubQuotaDefinitionAssociationUpdate(
             "sub_quota_relation_type": sub_quota_relation_type,
         }
 
-        form = forms.QuotaAssociationEdit(
+        form = forms.QuotaAssociationUpdateForm(
             data=form_data,
             instance=self.original_association,
         )
@@ -1254,7 +1272,10 @@ class SubQuotaDefinitionAssociationEditUpdate(
             "sub_quota_relation_type": sub_quota_relation_type,
         }
 
-        form = forms.QuotaAssociationEdit(data=form_data, instance=current_instance)
+        form = forms.QuotaAssociationUpdateForm(
+            data=form_data,
+            instance=current_instance,
+        )
         form.save()
 
 

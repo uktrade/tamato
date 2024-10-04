@@ -1386,7 +1386,7 @@ class SubQuotaDefinitionAssociationUpdateForm(SubQuotaDefinitionsUpdatesForm):
             self.fields["measurement_unit"].disabled = True
 
 
-class QuotaAssociationEdit(forms.ModelForm):
+class QuotaAssociationUpdateForm(forms.ModelForm):
     class Meta:
         model = models.QuotaAssociation
         fields = [
