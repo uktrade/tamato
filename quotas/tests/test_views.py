@@ -973,7 +973,7 @@ def test_delete_quota_definition_deletes_associations(
     client_with_current_workbasket,
     date_ranges,
 ):
-    """Test that when a quota definition is deleted that all link associations
+    """Test that when a quota definition is deleted that all linked associations
     are deleted too."""
     main_quota = factories.QuotaDefinitionFactory.create(
         sid=1,

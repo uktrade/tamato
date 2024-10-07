@@ -770,7 +770,12 @@ class QuotaDefinitionDelete(
             association_form = forms.QuotaAssociationUpdateForm(
                 instance=association,
             )
-            super().get_result_object(association_form)
+            association_form.instance.new_version(
+                workbasket=self.workbasket,
+                update_type=self.update_type,
+                transaction=definition_instance.transaction,
+            )
+
         return definition_instance
 
     def form_valid(self, form):
