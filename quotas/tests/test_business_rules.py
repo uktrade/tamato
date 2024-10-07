@@ -2,7 +2,6 @@ from collections import defaultdict
 from datetime import date
 from decimal import Decimal
 
-from django.forms import ValidationError
 import pytest
 from django.db import DataError
 
@@ -659,12 +658,16 @@ def test_QA2(date_ranges):
     ],
 )
 def test_QA2_dict(
-    sub_definition_valid_between, main_definition_valid_between, expected_response
+    sub_definition_valid_between,
+    main_definition_valid_between,
+    expected_response,
 ):
-    """As above, but checking between a definition and a dict with date ranges"""
+    """As above, but checking between a definition and a dict with date
+    ranges."""
     assert (
         business_rules.check_QA2_dict(
-            sub_definition_valid_between, main_definition_valid_between
+            sub_definition_valid_between,
+            main_definition_valid_between,
         )
         == expected_response
     )
@@ -733,7 +736,7 @@ def test_QA3_dict(
     sub_init_volume,
     expected_response,
 ):
-    """As above, but checking between a definition and a dict"""
+    """As above, but checking between a definition and a dict."""
 
     assert (
         business_rules.check_QA3_dict(
@@ -786,7 +789,7 @@ def test_QA4(coefficient, expect_error):
     ],
 )
 def test_QA4_dict(coefficient, expected_response):
-    """As above, but checking between a definition and a dict"""
+    """As above, but checking between a definition and a dict."""
     assert business_rules.check_QA4_dict(coefficient) == expected_response
 
 
@@ -806,8 +809,9 @@ def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
     Whenever a sub-quota is defined with the ‘equivalent’ type, it must have the
     same volume as the other sub-quotas associated with the parent quota.
 
-    Moreover it must be defined with a coefficient not equal to 1.
-    When a sub-quota relationship type is defined as 'equivalent' it must have the same volume as the ones associated with the parent quota
+    Moreover it must be defined with a coefficient not equal to 1. When a sub-
+    quota relationship type is defined as 'equivalent' it must have the same
+    volume as the ones associated with the parent quota
 
     A sub-quota defined with the 'normal' type must have a coefficient of 1.
     """

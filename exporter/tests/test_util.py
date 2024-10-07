@@ -1,7 +1,10 @@
+import pytest
+
 from exporter.util import exceptions_as_messages
 from exporter.util import item_timer
 
 
+@pytest.mark.exporter
 def test_exceptions_as_messages():
     exception_list = {
         "first_exception": [Exception("test")],
@@ -16,6 +19,7 @@ def test_exceptions_as_messages():
     }
 
 
+@pytest.mark.exporter
 def test_item_timer():
     """Verify that item_timer yields a tuple containing the time to retrieve
     each item and the item itself."""
