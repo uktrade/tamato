@@ -188,6 +188,11 @@ urlpatterns = [
     path(
         f"quotas/quota-association/<sid>/delete/",
         views.QuotaAssociationDelete.as_view(),
+        name="quota_association-ui-delete",
+    ),
+    path(
+        f"quotas/quota-association/<sid>/confirm-delete/",
+        views.QuotaAssociationConfirmDelete.as_view(),
         name="quota_association-ui-confirm-delete",
     ),
     path("api/", include(api_router.urls)),

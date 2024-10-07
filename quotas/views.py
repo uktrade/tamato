@@ -121,6 +121,14 @@ class QuotaOrderNumberMixin:
         return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
 
 
+# class QuotaAssociationMixin:
+#     model = models.QuotaAssociation
+
+# def get_queryset(self):
+#     tx = WorkBasket.get_current_transaction(self.request)
+#     return models.QuotaAssociation.objects.approved_up_to_transaction(tx)
+
+
 class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
     form_class = forms.QuotaOrderNumberCreateForm
     template_name = "layouts/create.jinja"
@@ -1291,28 +1299,50 @@ class SubQuotaConfirmUpdate(TrackedModelDetailView):
 
 
 class QuotaAssociationDelete(
-    QuotaDefinitionUpdateMixin,
+    SubQuotaDefinitionAssociationMixin,
     CreateTaricDeleteView,
 ):
     form_class = delete_form_for(models.QuotaAssociation)
     template_name = "quota-associations/delete.jinja"
+    model = models.QuotaAssociation
 
     def form_valid(self, form):
         messages.success(
             self.request,
-            f"Quota association {self.object.sid} has been deleted",
+            f"Quota association {self.object.pk} has been deleted",
         )
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(
             "quota_association-ui-confirm-delete",
-            kwargs={"sid": self.object.order_number.sid},
+            kwargs={"sid": self.object.pk},
         )
 
 
+# lass QuotaDefinitionDelete(
+#     QuotaDefinitionUpdateMixin,
+#     CreateTaricDeleteView,
+# ):
+#     form_class = delete_form_for(models.QuotaDefinition)
+#     template_name = "quota-definitions/delete.jinja"
+
+#     def form_valid(self, form):
+#         messages.success(
+#             self.request,
+#             f"Quota definition period {self.object.sid} has been deleted",
+#         )
+#         return super().form_valid(form)
+
+#     def get_success_url(self):
+#         return reverse(
+#             "quota_definition-ui-confirm-delete",
+#             kwargs={"sid": self.object.order_number.sid},
+#         )
+
+
 class QuotaAssociationConfirmDelete(
-    QuotaOrderNumberMixin,
     TrackedModelDetailView,
+    SubQuotaDefinitionAssociationMixin,
 ):
     template_name = "quota-associations/confirm-delete.jinja"
