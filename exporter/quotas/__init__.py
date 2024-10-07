@@ -39,10 +39,6 @@ from exporter.quotas import tasks
 
 
 def make_export(quotas_csv_named_temp_file: NamedTemporaryFile):
-
     quota_csv_exporter = runner.QuotaExport(quotas_csv_named_temp_file)
     quota_csv_exporter.run()
-    # do stuff
-    # quotas_csv_named_temp_file.close()
 
-    # done
