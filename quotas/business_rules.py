@@ -540,12 +540,12 @@ def check_QA6_dict(main_quota, new_relation_type, transaction=None):
         .order_by("sub_quota_relation_type")
         .distinct()
     )
-    if relation_type.count() > 1:
-        return False
+    if relation_type.count() == 0:
+        return True
     elif relation_type.count() == 1:
         return relation_type[0]["sub_quota_relation_type"] == new_relation_type
     else:
-        return True
+        return False
 
 
 class SameMainAndSubQuota(BusinessRule):
