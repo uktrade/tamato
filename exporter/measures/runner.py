@@ -6,7 +6,8 @@ from tempfile import NamedTemporaryFile
 from django.db.models import Q
 
 from measures.models import Measure
-from measures.models import MeasureType
+from quotas.models import QuotaOrderNumber
+from regulations.models import Regulation
 
 logger = logging.getLogger(__name__)
 
@@ -75,20 +76,66 @@ class measureExport:
                 filter_query,
                 sid__gte=20000000,
             )
-            .select_related("measure_type", "additional_code")
+            .select_related(
+                "measure_type",
+                "additional_code",
+                "order_number",
+                "generating_regulation",
+            )
         )
+        # possible select related
+        #  geographical_area, goods_nomenclature,
+        #  generating_regulation, terminating_regulation, is_current
 
-        measure_type_now = MeasureType.objects.latest_approved()
+        # measure_type_now = MeasureType.objects.latest_approved()
+        measure_type_now = (
+            Measure.objects.latest_approved()
+            .select_related(
+                "measure_type",
+                "additional_code",
+                "order_number",
+            )
+            .values(
+                "sid",
+                "measure_type",
+                "trackedmodel_ptr_id",
+                "measure_type__sid",
+            )
+        )
+        # additional_code_description_now = AdditionalCodeDescription.objects.latest_approved().select_related("additional_code")
         counter = 1
+        # '20000741'
+        QuotaOrderNumber.objects.latest_approved()
+        Regulation.objects.latest_approved()
 
         with open(self.target_file.name, "wt") as file:
             writer = csv.writer(file)
             writer.writerow(self.csv_headers())
 
             for measure in measures_now:
-                if counter % 10000 == 0:
+                if counter % 1000 == 0:
+                    # return
                     print(counter)
-                type_sid = measure.measure_type.sid
+                if counter > 20000:
+                    return
+                if measure["measure_type"]:
+                    type_sid = measure.measure_type.sid
+                    type_sid = measure["measure_type__sid"]
+                    type_description = (measure_type_now.get(sid=type_sid).description,)
+                else:
+                    type_sid = ""
+                    type_description = ""
+
+                # if measure.order_number:
+                #     order_number = order_now.get(sid=measure.order_number.sid).order_number
+                # else:
+                #     order_number = measure.dead_order_number
+
+                if measure.generating_regulation:
+                    # url = regulation_now.get(sid=type_sid).url,
+                    pass
+                else:
+                    pass
 
                 measure_data = [
                     counter,  # counter
@@ -99,62 +146,62 @@ class measureExport:
                     "commodity__description",  #
                     measure.sid,  # sid
                     type_sid,
-                    measure_type_now.get(sid=type_sid).description,
+                    type_description,
                     "measure__additional_code__code",  # FK measure.additional_code
                     "measure__additional_code__description",  #
                     "measure__duty_expression",  #
                     measure.valid_between.lower,
                     measure.valid_between.upper,
                     measure.reduction,
-                    "measure__footnotes",  # Many to many
-                    "measure__conditions",  #
+                    "measure__footnotes",  # list
+                    "measure__conditions",  # list
                     "measure__geographical_area__sid",  # measure.geographical_area
                     "measure__geographical_area__id",  #
                     "measure__geographical_area__description",  #
                     "measure__excluded_geographical_areas__ids",  #
                     "measure__excluded_geographical_areas__descriptions",  #
-                    "measure__quota__order_number",  # FK
-                    "measure__regulation__id",  # FK
+                    order_number,
+                    "measure__regulation__id",  #
                     "measure__regulation__url",  #
                 ]
 
                 writer.writerow(measure_data)
                 counter += 1
 
-    # @staticmethod
-    # def get_geographical_areas_and_exclusions(measure):
-    #     geographical_areas = []
-    #     geographical_area_exclusions = []
-    #
-    #     # get all geographical areas that are / were / will be enabled on the end date of the measure
-    #     for origin in (
-    #         measureOrderNumberOrigin.objects.latest_approved()
-    #         .filter(
-    #             order_number__order_number=measure.order_number.order_number,
-    #             valid_between__startswith__lte=measure.valid_between.upper,
-    #         )
-    #         .filter(
-    #             Q(valid_between__endswith__gte=measure.valid_between.upper)
-    #             | Q(valid_between__endswith=None),
-    #         )
-    #     ):
-    #         geographical_areas.append(
-    #             origin.geographical_area.descriptions.latest_approved()
-    #             .last()
-    #             .description,
-    #         )
-    #         for (
-    #             exclusion
-    #         ) in origin.measureordernumberoriginexclusion_set.latest_approved():
-    #             geographical_area_exclusions.append(
-    #                 f"{exclusion.excluded_geographical_area.descriptions.latest_approved().last().description} excluded from {origin.geographical_area.descriptions.latest_approved().last().description}",
-    #             )
-    #
-    #     geographical_areas_str = "|".join(geographical_areas)
-    #     geographical_area_exclusions_str = "|".join(geographical_area_exclusions)
-    #
-    #     return geographical_areas_str, geographical_area_exclusions_str
-    #
+    @staticmethod
+    def get_geographical_areas_and_exclusions(measure):
+        geographical_areas = []
+        geographical_area_exclusions = []
+
+        # get all geographical areas that are / were / will be enabled on the end date of the measure
+        for origin in (
+            measureOrderNumberOrigin.objects.latest_approved()
+            .filter(
+                order_number__order_number=measure.order_number.order_number,
+                valid_between__startswith__lte=measure.valid_between.upper,
+            )
+            .filter(
+                Q(valid_between__endswith__gte=measure.valid_between.upper)
+                | Q(valid_between__endswith=None),
+            )
+        ):
+            geographical_areas.append(
+                origin.geographical_area.descriptions.latest_approved()
+                .last()
+                .description,
+            )
+            for (
+                exclusion
+            ) in origin.measureordernumberoriginexclusion_set.latest_approved():
+                geographical_area_exclusions.append(
+                    f"{exclusion.excluded_geographical_area.descriptions.latest_approved().last().description} excluded from {origin.geographical_area.descriptions.latest_approved().last().description}",
+                )
+
+        geographical_areas_str = "|".join(geographical_areas)
+        geographical_area_exclusions_str = "|".join(geographical_area_exclusions)
+
+        return geographical_areas_str, geographical_area_exclusions_str
+
     # @staticmethod
     # def get_monetary_unit(measure):
     #     monetary_unit = None
