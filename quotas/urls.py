@@ -43,6 +43,11 @@ api_router.register(
 ui_patterns = get_ui_paths(views, "<sid:sid>")
 
 urlpatterns = [
+    path(
+        f"quotas/<sid>/quota-associations/confirm-delete/",
+        views.QuotaAssociationConfirmDelete.as_view(),
+        name="quota_association-ui-confirm-delete",
+    ),
     path("quotas/", include(ui_patterns)),
     path(
         f"quotas/create/",
@@ -186,14 +191,9 @@ urlpatterns = [
         name="quota_blocking-ui-confirm-create",
     ),
     path(
-        f"quotas/quota-association/<sid>/delete/",
+        f"quotas/quota-association/<pk>/delete/",
         views.QuotaAssociationDelete.as_view(),
         name="quota_association-ui-delete",
-    ),
-    path(
-        f"quotas/quota-association/<sid>/confirm-delete/",
-        views.QuotaAssociationConfirmDelete.as_view(),
-        name="quota_association-ui-confirm-delete",
     ),
     path("api/", include(api_router.urls)),
 ]

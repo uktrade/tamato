@@ -2,7 +2,7 @@
 <h2 class="govuk-heading-l">Sub-quotas</h2>
 
 {% set table_rows = [] %}
-
+{# <a class="govuk-link" href="{{ url('quota_association-ui-delete', kwargs={'main_quota__sid': object.main_quota.sid, 'sub_quota__sid': object.sub_quota.sid}) }}">Delete</a> #}
 {% if sub_quotas %}
   {% for object in sub_quotas %}
     {% set definition_link -%}
@@ -13,7 +13,7 @@
     {% endset %}
     {% set actions_html %}
       <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
-      <a class="govuk-link" href="{{ url('quota_association-ui-delete', kwargs={'sid':object.sub_quota.sid}) }}">Delete</a>
+      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
     {% endset %}
 
     {{ table_rows.append([

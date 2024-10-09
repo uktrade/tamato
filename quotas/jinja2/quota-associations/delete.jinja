@@ -1,0 +1,29 @@
+{% extends "common/delete.jinja" %}
+
+      {# {"text": object.order_number._meta.verbose_name|capitalize ~ " " ~ object.order_number|string, "href": object.order_number.get_url()},
+      {"text": object.order_number._meta.verbose_name|capitalize ~ " " ~ object.order_number|string ~ ": Data" , "href": url('quota_definition-ui-list', args=[object.order_number.sid])}, #}
+
+{# TODO: Copy form block from template, override action. Pass in delete url for quota-associtiona- delete #}
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+      {"text": object },
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block form %}
+  {{ govukWarningText({
+    "text": "Are you sure you want to delete this " ~ object._meta.verbose_name ~ "?"
+  }) }}
+  {% call django_form(action="") %}
+    {{ crispy(form) }}
+  {% endcall %}
+
+  {{ govukButton({
+    "text": "Cancel",
+    "href": object.get_url(),
+    "classes": "govuk-button--secondary"
+  }) }}
+{% endblock %}
