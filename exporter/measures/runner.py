@@ -1,13 +1,10 @@
 import csv
 import logging
-from datetime import date
 from tempfile import NamedTemporaryFile
 
-from django.db.models import Q
+from django.db import connection
 
-from measures.models import Measure
-from quotas.models import QuotaOrderNumber
-from regulations.models import Regulation
+from exporter.models.report_models import ExportMeasure
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +24,28 @@ def normalise_loglevel(loglevel):
         return loglevel
 
 
+def refresh_materialized_views():
+    with connection.cursor() as cursor:
+        logger.info(f"Refreshing views")
+        cursor.execute(
+            "REFRESH MATERIALIZED VIEW  commodities_goodsnomenclatureindent__now ;",
+        )
+        cursor.execute(
+            "REFRESH MATERIALIZED VIEW  commodities_goodsnomenclaturedescription__now ;",
+        )
+        cursor.execute(
+            "REFRESH MATERIALIZED VIEW  geo_areas_geographicalareadescription__now ;",
+        )
+        cursor.execute("REFRESH MATERIALIZED VIEW  exclusions ;")
+        cursor.execute("REFRESH MATERIALIZED VIEW  footnotes__expanded ;")
+        cursor.execute("REFRESH MATERIALIZED VIEW  additional_codes__expanded ;")
+        cursor.execute("REFRESH MATERIALIZED VIEW  conditions ;")
+        cursor.execute("REFRESH MATERIALIZED VIEW  duty_sentences ;")
+        cursor.execute("REFRESH MATERIALIZED VIEW  measures__now ;")
+        cursor.execute("REFRESH MATERIALIZED VIEW  exporter_active_measures ;")
+        logger.info(f"Completed refreshing views")
+
+
 class measureExport:
 
     def __init__(self, target_file: NamedTemporaryFile):
@@ -38,24 +57,24 @@ class measureExport:
     def csv_headers():
         measure_headers = [
             "id",  # counter
-            "trackedmodel_ptr_id",  # trackedmodel_ptr_id
-            "commodity__sid",  #
-            "commodity__code",  #
-            "commodity__indent",  #
-            "commodity__description",  #
-            "measure__sid",  # sid
-            "measure__type__id",  #
-            "measure__type__description",  #
-            "measure__additional_code__code",  #
-            "measure__additional_code__description",  #
-            "measure__duty_expression",  #
-            "measure__effective_start_date",  # lower(measures__now."valid_between")
-            "measure__effective_end_date",  # upper(measures__now."valid_between")
-            "measure__reduction_indicator",  # measures__now."reduction"
-            "measure__footnotes",  #
-            "measure__conditions",  #
-            "measure__geographical_area__sid",  #
-            "measure__geographical_area__id",  #
+            "trackedmodel_ptr_id",
+            "commodity__sid",
+            "commodity__code",
+            "commodity__indent",
+            "commodity__description",
+            "measure__sid",
+            "measure__type__id",
+            "measure__type__description",
+            "measure__additional_code__code",
+            "measure__additional_code__description",
+            "measure__duty_expression",
+            "measure__effective_start_date",
+            "measure__effective_end_date",
+            "measure__reduction_indicator",
+            "measure__footnotes",
+            "measure__conditions",
+            "measure__geographical_area__sid",
+            "measure__geographical_area__id",
             "measure__geographical_area__description",  #
             "measure__excluded_geographical_areas__ids",  #
             "measure__excluded_geographical_areas__descriptions",  #
@@ -67,257 +86,47 @@ class measureExport:
         return measure_headers
 
     def run(self):
-        filter_query = Q(valid_between__endswith__gte=date.today()) | Q(
-            valid_between__endswith=None,
-        )
-        measures_now = (
-            Measure.objects.latest_approved()
-            .filter(
-                filter_query,
-                sid__gte=20000000,
-            )
-            .select_related(
-                "measure_type",
-                "additional_code",
-                "order_number",
-                "generating_regulation",
-            )
-        )
-        # possible select related
-        #  geographical_area, goods_nomenclature,
-        #  generating_regulation, terminating_regulation, is_current
+        refresh_materialized_views()
 
-        # measure_type_now = MeasureType.objects.latest_approved()
-        measure_type_now = (
-            Measure.objects.latest_approved()
-            .select_related(
-                "measure_type",
-                "additional_code",
-                "order_number",
-            )
-            .values(
-                "sid",
-                "measure_type",
-                "trackedmodel_ptr_id",
-                "measure_type__sid",
-            )
+        measures_now = ExportMeasure.objects.order_by(
+            "commodity_code",
+            "measure_type_id",
+            "measure_geographical_area_id",
         )
-        # additional_code_description_now = AdditionalCodeDescription.objects.latest_approved().select_related("additional_code")
+
         counter = 1
-        # '20000741'
-        QuotaOrderNumber.objects.latest_approved()
-        Regulation.objects.latest_approved()
-
         with open(self.target_file.name, "wt") as file:
             writer = csv.writer(file)
             writer.writerow(self.csv_headers())
 
             for measure in measures_now:
-                if counter % 1000 == 0:
-                    # return
-                    print(counter)
-                if counter > 20000:
-                    return
-                if measure["measure_type"]:
-                    type_sid = measure.measure_type.sid
-                    type_sid = measure["measure_type__sid"]
-                    type_description = (measure_type_now.get(sid=type_sid).description,)
-                else:
-                    type_sid = ""
-                    type_description = ""
-
-                # if measure.order_number:
-                #     order_number = order_now.get(sid=measure.order_number.sid).order_number
-                # else:
-                #     order_number = measure.dead_order_number
-
-                if measure.generating_regulation:
-                    # url = regulation_now.get(sid=type_sid).url,
-                    pass
-                else:
-                    pass
-
                 measure_data = [
-                    counter,  # counter
+                    counter,
                     measure.trackedmodel_ptr_id,
-                    "commodity__sid",  #
-                    "commodity__code",  #
-                    "commodity__indent",  #
-                    "commodity__description",  #
-                    measure.sid,  # sid
-                    type_sid,
-                    type_description,
-                    "measure__additional_code__code",  # FK measure.additional_code
-                    "measure__additional_code__description",  #
-                    "measure__duty_expression",  #
-                    measure.valid_between.lower,
-                    measure.valid_between.upper,
-                    measure.reduction,
-                    "measure__footnotes",  # list
-                    "measure__conditions",  # list
-                    "measure__geographical_area__sid",  # measure.geographical_area
-                    "measure__geographical_area__id",  #
-                    "measure__geographical_area__description",  #
-                    "measure__excluded_geographical_areas__ids",  #
-                    "measure__excluded_geographical_areas__descriptions",  #
-                    order_number,
-                    "measure__regulation__id",  #
-                    "measure__regulation__url",  #
+                    measure.commodity_sid,
+                    measure.commodity_code,
+                    measure.commodity_indent,
+                    measure.commodity_description,
+                    measure.measure_sid,
+                    measure.measure_type_id,
+                    measure.measure_type_description,
+                    measure.measure_additional_code_code,
+                    measure.measure_additional_code_description,
+                    measure.measure_duty_expression,
+                    measure.measure_effective_start_date,
+                    measure.measure_effective_end_date,
+                    measure.measure_reduction_indicator,
+                    measure.measure_footnotes,
+                    measure.measure_conditions,
+                    measure.measure_geographical_area_sid,
+                    measure.measure_geographical_area_id,
+                    measure.measure_geographical_area_description,
+                    measure.measure_excluded_geographical_areas_ids,
+                    measure.measure_excluded_geographical_areas_descriptions,
+                    measure.measure_quota_order_number,
+                    measure.measure_regulation_id,
+                    measure.measure_regulation_url,
                 ]
 
                 writer.writerow(measure_data)
                 counter += 1
-
-    @staticmethod
-    def get_geographical_areas_and_exclusions(measure):
-        geographical_areas = []
-        geographical_area_exclusions = []
-
-        # get all geographical areas that are / were / will be enabled on the end date of the measure
-        for origin in (
-            measureOrderNumberOrigin.objects.latest_approved()
-            .filter(
-                order_number__order_number=measure.order_number.order_number,
-                valid_between__startswith__lte=measure.valid_between.upper,
-            )
-            .filter(
-                Q(valid_between__endswith__gte=measure.valid_between.upper)
-                | Q(valid_between__endswith=None),
-            )
-        ):
-            geographical_areas.append(
-                origin.geographical_area.descriptions.latest_approved()
-                .last()
-                .description,
-            )
-            for (
-                exclusion
-            ) in origin.measureordernumberoriginexclusion_set.latest_approved():
-                geographical_area_exclusions.append(
-                    f"{exclusion.excluded_geographical_area.descriptions.latest_approved().last().description} excluded from {origin.geographical_area.descriptions.latest_approved().last().description}",
-                )
-
-        geographical_areas_str = "|".join(geographical_areas)
-        geographical_area_exclusions_str = "|".join(geographical_area_exclusions)
-
-        return geographical_areas_str, geographical_area_exclusions_str
-
-    # @staticmethod
-    # def get_monetary_unit(measure):
-    #     monetary_unit = None
-    #     if measure.monetary_unit:
-    #         monetary_unit = (
-    #             f"{measure.monetary_unit.description} ({measure.monetary_unit.code})"
-    #         )
-    #     return monetary_unit
-    #
-    # @staticmethod
-    # def get_measurement_unit(measure):
-    #     measurement_unit_description = f"{measure.measurement_unit.description}"
-    #     if measure.measurement_unit.abbreviation != "":
-    #         measurement_unit_description = (
-    #             measurement_unit_description
-    #             + f" ({measure.measurement_unit.abbreviation})"
-    #         )
-    #     return measurement_unit_description
-    #
-    # @staticmethod
-    # def get_api_query_date(measure):
-    #     api_query_dates = []
-    #
-    #     # collect possible query dates, but only for current and historical, not future
-    #     if measure.valid_between.lower <= date.today():
-    #         if measure.valid_between.upper:
-    #             # when not infinity
-    #             api_query_dates.append(measure.valid_between.upper)
-    #         else:
-    #             # when infinity
-    #             api_query_dates.append(date.today())
-    #
-    #         tap_measures = measure.order_number.measure_set.latest_approved().filter(
-    #             # has valid between with end date and today's date is within that range
-    #             Q(
-    #                 valid_between__startswith__lte=date.today(),
-    #                 valid_between__endswith__gte=date.today(),
-    #             )
-    #             |
-    #             # has an open-ended date range but started before today
-    #             Q(
-    #                 valid_between__startswith__lte=date.today(),
-    #                 valid_between__endswith=None,
-    #             ),
-    #         )
-    #
-    #         for tap_measure in tap_measures:
-    #             if tap_measure.valid_between.upper is None:
-    #                 api_query_dates.append(date.today())
-    #             else:
-    #                 api_query_dates.append(tap_measure.valid_between.upper)
-    #
-    #         api_query_dates.sort()
-    #     else:
-    #         # no query dates for future measures
-    #         api_query_dates = [None]
-    #
-    #     return api_query_dates[0]
-    #
-    # @staticmethod
-    # def get_associated_measures(measure):
-    #
-    #     measures = (
-    #         Measure.objects.latest_approved()
-    #         .filter(
-    #             order_number=measure.order_number,
-    #             valid_between__startswith__lte=measure.valid_between.upper,
-    #         )
-    #         .filter(
-    #             Q(
-    #                 valid_between__endswith__gte=measure.valid_between.upper,
-    #             )
-    #             | Q(
-    #                 valid_between__endswith=None,
-    #             ),
-    #         )
-    #     )
-    #
-    #     return measures
-    #
-    # def get_goods_nomenclature_item_ids(self, measure):
-    #     item_ids = []
-    #     for measure in self.get_associated_measures(measure):
-    #         item_ids.append(measure.goods_nomenclature.item_id)
-    #
-    #     return item_ids
-    #
-    # def get_goods_nomenclature_headings(self, item_ids):
-    #
-    #     heading_item_ids = []
-    #     headings = []
-    #
-    #     for item_id in item_ids:
-    #         heading_item_id = item_id[:4]
-    #         if heading_item_id not in heading_item_ids:
-    #             heading_and_desc = (
-    #                 heading_item_id
-    #                 + "-"
-    #                 + self.get_goods_nomenclature_description(
-    #                     heading_item_id + "000000",
-    #                 )
-    #             )
-    #             headings.append(heading_and_desc)
-    #             heading_item_ids.append(heading_item_id)
-    #
-    #     return "|".join(headings)
-    #
-    # @staticmethod
-    # def get_goods_nomenclature_description(item_id):
-    #     description = (
-    #         GoodsNomenclatureDescription.objects.latest_approved()
-    #         .filter(
-    #             described_goods_nomenclature__item_id=item_id,
-    #         )
-    #         .order_by("-validity_start")
-    #         .first()
-    #     )
-    #
-    #     return description.description

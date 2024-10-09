@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                     "file",
                     models.FileField(
                         storage=storages.backends.s3boto3.S3Boto3Storage(),
-                        upload_to=exporter.models.to_hmrc,
+                        upload_to=exporter.models.models.to_hmrc,
                     ),
                 ),
                 (

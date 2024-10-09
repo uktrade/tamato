@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             name="file",
             field=models.FileField(
                 storage=exporter.storages.HMRCStorage,
-                upload_to=exporter.models.to_hmrc,
+                upload_to=exporter.models.models.to_hmrc,
             ),
         ),
     ]
