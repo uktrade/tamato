@@ -654,7 +654,7 @@
 
 <div class="viewcode-block" id="check_QA6_dict"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.check_QA6_dict">[docs]</a><span class="k">def</span> <span class="nf">check_QA6_dict</span><span class="p">(</span><span class="n">main_quota</span><span class="p">,</span> <span class="n">new_relation_type</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Confirms the provided data is compliant with the above businsess rule.</span>
+<span class="sd">    Confirms the provided data is compliant with the above business rule.</span>
 
 <span class="sd">    The above test will be re-run so as to separate historic violations, which</span>
 <span class="sd">    will require TAP to fix, from a user trying to introduce a new violation.</span>
@@ -669,10 +669,12 @@
         <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;sub_quota_relation_type&quot;</span><span class="p">)</span>
         <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
     <span class="p">)</span>
-    <span class="k">if</span> <span class="n">relation_type</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">relation_type</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
     <span class="k">elif</span> <span class="n">relation_type</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">relation_type</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;sub_quota_relation_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">new_relation_type</span></div>
+        <span class="k">return</span> <span class="n">relation_type</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;sub_quota_relation_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">new_relation_type</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
 
 
 <div class="viewcode-block" id="SameMainAndSubQuota"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.SameMainAndSubQuota">[docs]</a><span class="k">class</span> <span class="nc">SameMainAndSubQuota</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
