@@ -943,7 +943,7 @@ def test_quota_association_edit_form_valid():
         "main_quota": association.main_quota,
         "sub_quota": association.sub_quota,
     }
-    form = forms.QuotaAssociationEdit(data=data, instance=association)
+    form = forms.QuotaAssociationUpdateForm(data=data, instance=association)
 
     assert form.is_valid()
 
@@ -961,7 +961,7 @@ def test_quota_association_edit_form_invalid():
         "main_quota": association.main_quota,
         "sub_quota": association.sub_quota,
     }
-    form = forms.QuotaAssociationEdit(data=data, instance=association)
+    form = forms.QuotaAssociationUpdateForm(data=data, instance=association)
     assert (
         "Select a valid choice. Equivalent is not one of the available choices."
         in form.errors["sub_quota_relation_type"]
