@@ -2392,3 +2392,40 @@ def test_sub_quota_confirm_update_page(
         f"Sub-quota definition: {sub_quota.sid} and association have been updated in workbasket {workbasket.pk}"
         in str(response.content)
     )
+
+
+def test_delete_quota_association(client_with_current_workbasket):
+    main_quota = factories.QuotaDefinitionFactory.create()
+    sub_quota = factories.QuotaDefinitionFactory.create()
+    quota_association = factories.QuotaAssociationFactory.create(
+        main_quota=main_quota,
+        sub_quota=sub_quota,
+    )
+
+    url = reverse(
+        "quota_association-ui-delete",
+        kwargs={"pk": quota_association.pk},
+    )
+
+    response = client_with_current_workbasket.post(url, {"submit": "Delete"})
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "quota_association-ui-confirm-delete",
+        kwargs={"sid": sub_quota.sid},
+    )
+
+    tx = Transaction.objects.last()
+
+    assert tx.workbasket.tracked_models.first().update_type == UpdateType.DELETE
+    confirm_response = client_with_current_workbasket.get(response.url)
+
+    soup = BeautifulSoup(
+        confirm_response.content.decode(response.charset),
+        "html.parser",
+    )
+    h1 = soup.select("h1")[0]
+
+    assert (
+        h1.text.strip()
+        == f"Quota association between {main_quota.sid} and {sub_quota.sid} has been deleted"
+    )

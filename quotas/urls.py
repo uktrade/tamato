@@ -186,12 +186,12 @@ urlpatterns = [
         name="quota_blocking-ui-confirm-create",
     ),
     path(
-        f"quotas/quota-association/<pk>/delete/",
+        f"quota_definitions/quota-association/<pk>/delete/",
         views.QuotaAssociationDelete.as_view(),
         name="quota_association-ui-delete",
     ),
     path(
-        f"quotas/<sid>/quota-associations/confirm-delete/",
+        f"quota_definitions/<sid>/quota-associations/confirm-delete/",
         views.QuotaAssociationConfirmDelete.as_view(),
         name="quota_association-ui-confirm-delete",
     ),

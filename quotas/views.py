@@ -1236,21 +1236,6 @@ class SubQuotaDefinitionAssociationUpdate(
         )
 
 
-class QuotaAssociationUpdateMixin(
-    TrackedModelDetailMixin,
-):
-    form_class = forms.QuotaAssociationEdit
-    permission_required = ["common.change_trackedmodel"]
-    template_name = "quota-associations/edit.jinja"
-
-    @transaction.atomic
-    def get_result_object(self, form):
-        print("c" * 30, "get_result_object")
-        object = super().get_result_object(form)
-
-        return object
-
-
 class SubQuotaDefinitionAssociationEditUpdate(
     SubQuotaDefinitionAssociationMixin,
     QuotaDefinitionEditUpdate,
@@ -1314,7 +1299,6 @@ class SubQuotaConfirmUpdate(TrackedModelDetailView):
 
 
 class QuotaAssociationDelete(
-    # QuotaAssociationUpdateMixin,
     CreateTaricDeleteView,
 ):
     form_class = delete_form_for(models.QuotaAssociation)
@@ -1322,38 +1306,21 @@ class QuotaAssociationDelete(
     model = models.QuotaAssociation
 
     def form_valid(self, form):
-        print("a" * 30, "form_valid fires")
         messages.success(
             self.request,
-            f"Quota association {self.object.pk} has been deleted",
-        )
-        return super().form_valid(form)
-
-    # def get_queryset(self):
-    # tx = WorkBasket.get_current_transaction(self.request)
-    # return FootnoteAssociationGoodsNomenclature.objects.approved_up_to_transaction(
-    #     tx,
-    # )
-
-    def form_valid(self, form):
-        messages.success(
-            self.request,
-            f"QuotaAssociation association for has been deleted",
+            f"Quota association between {self.object.main_quota.sid} and {self.object.sub_quota.sid} has been deleted",
         )
         return super().form_valid(form)
 
     def get_queryset(self):
-        print("e" * 30, "delete view get_queryset fires")
         tx = WorkBasket.get_current_transaction(self.request)
-        # super().get_queryset()
         qs = models.QuotaAssociation.objects.approved_up_to_transaction(tx)
         return qs
 
     def get_success_url(self):
-        print("b" * 30, "get_success_url fires")
         return reverse(
             "quota_association-ui-confirm-delete",
-            kwargs={"sid": self.object.main_quota.order_number.sid},
+            kwargs={"sid": self.object.sub_quota.sid},
         )
 
 
@@ -1361,10 +1328,10 @@ class QuotaAssociationConfirmDelete(
     TrackedModelDetailView,
 ):
     template_name = "quota-associations/confirm-delete.jinja"
-    model = models.QuotaOrderNumber
-    print("d" * 30, "confirm_delete fires")
+    model = models.QuotaDefinition
 
     def get_queryset(self):
-        # super().get_queryset()
-        print("e" * 30, "confirm_delete get_queryset fires")
-        return models.QuotaOrderNumber.objects.all()
+
+        return models.QuotaDefinition.objects.filter(
+            sid=self.kwargs["sid"],
+        )

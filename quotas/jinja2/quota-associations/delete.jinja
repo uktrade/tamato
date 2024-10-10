@@ -1,14 +1,15 @@
-{% extends "common/delete.jinja" %}
+{% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
 
-      {# {"text": object.order_number._meta.verbose_name|capitalize ~ " " ~ object.order_number|string, "href": object.order_number.get_url()},
-      {"text": object.order_number._meta.verbose_name|capitalize ~ " " ~ object.order_number|string ~ ": Data" , "href": url('quota_definition-ui-list', args=[object.order_number.sid])}, #}
+{% set page_title = "Delete " ~ object._meta.verbose_name ~ " between main quota " ~ object.main_quota ~ " and sub-quota " ~ object.sub_quota %}
 
-{# TODO: Copy form block from template, override action. Pass in delete url for quota-associtiona- delete #}
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
-      {"text": object },
-      {"text": page_title}
+      {"text": "Find and edit quotas", "href": url("quota-ui-list") },
+      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object.pk, "href": object.get_url()},
+      {"text": page_title }
     ])
   }}
 {% endblock %}

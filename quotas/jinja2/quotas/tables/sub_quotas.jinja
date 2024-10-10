@@ -2,7 +2,6 @@
 <h2 class="govuk-heading-l">Sub-quotas</h2>
 
 {% set table_rows = [] %}
-{# <a class="govuk-link" href="{{ url('quota_association-ui-delete', kwargs={'main_quota__sid': object.main_quota.sid, 'sub_quota__sid': object.sub_quota.sid}) }}">Delete</a> #}
 {% if sub_quotas %}
   {% for object in sub_quotas %}
     {% set definition_link -%}
@@ -29,11 +28,11 @@
 
   {{ govukTable({
     "head": [
-      {"text": "Quota definition sid"},
+      {"text": "Quota definition SID"},
       {"text": "Sub-quota order number"},
       {"text": "Start date"},
       {"text": "End date"},
-      {"text": "Relation type"},
+      {"text": "Relationship type"},
       {"text": "Coefficient"},
       {"text": "Actions"},
     ],
