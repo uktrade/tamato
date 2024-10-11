@@ -724,6 +724,8 @@ def make_real_edit(
     * with CREATE in workbasket: Removes the trackedmodel from the workbasket
     """
 
+    data = data or {}
+
     if update_type == UpdateType.CREATE:
         new_obj = cls(transaction=tx, update_type=update_type, **data)
         new_obj.save()
