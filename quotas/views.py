@@ -121,14 +121,6 @@ class QuotaOrderNumberMixin:
         return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
 
 
-# class QuotaAssociationMixin:
-#     model = models.QuotaAssociation
-
-# def get_queryset(self):
-#     tx = WorkBasket.get_current_transaction(self.request)
-#     return models.QuotaAssociation.objects.approved_up_to_transaction(tx)
-
-
 class QuotaCreate(QuotaOrderNumberMixin, CreateTaricCreateView):
     form_class = forms.QuotaOrderNumberCreateForm
     template_name = "layouts/create.jinja"
@@ -1313,9 +1305,7 @@ class QuotaAssociationDelete(
         return super().form_valid(form)
 
     def get_queryset(self):
-        tx = WorkBasket.get_current_transaction(self.request)
-        qs = models.QuotaAssociation.objects.approved_up_to_transaction(tx)
-        return qs
+        return models.QuotaAssociation.objects.current()
 
     def get_success_url(self):
         return reverse(
@@ -1329,9 +1319,3 @@ class QuotaAssociationConfirmDelete(
 ):
     template_name = "quota-associations/confirm-delete.jinja"
     model = models.QuotaDefinition
-
-    def get_queryset(self):
-
-        return models.QuotaDefinition.objects.filter(
-            sid=self.kwargs["sid"],
-        )
