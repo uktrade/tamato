@@ -206,7 +206,6 @@ class Command(BaseCommand):
                     self.quotas_df["Document Version"] == version
                 ]
 
-                add_to_index = 1
                 for index, row in quotas_df.iterrows():
                     # split order numbers
                     order_number = row["Quota Number"]

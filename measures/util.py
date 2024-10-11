@@ -1,19 +1,16 @@
 import decimal
+import logging
 from datetime import date
 from math import floor
+from typing import List
+from typing import Type
 
-from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.validators import UpdateType
-
 from geo_areas.models import GeographicalArea
 from geo_areas.utils import get_all_members_of_geo_groups
 from measures import models as measure_models
-from typing import List
-from typing import Type
 from workbaskets import models as workbasket_models
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -125,8 +122,7 @@ def update_measure_condition_components(
     measure: "measure_models.Measure",
     workbasket: "workbasket_models.WorkBasket",
 ):
-    """Updates the measure condition components associated to the
-    measure."""
+    """Updates the measure condition components associated to the measure."""
     conditions = measure.conditions.current()
     for condition in conditions:
         condition.new_version(

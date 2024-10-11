@@ -17,8 +17,8 @@ from django_fsm import transition
 from common.celery import app
 from common.models.mixins import TimestampedMixin
 from common.models.utils import override_current_transaction
-from measures.models.tracked_models import Measure
 from measures.editors import MeasuresEditor
+from measures.models.tracked_models import Measure
 
 logger = logging.getLogger(__name__)
 
@@ -443,8 +443,8 @@ class MeasuresBulkEditorManager(models.Manager):
 
 class MeasuresBulkEditor(BulkProcessor):
     """
-    Model class used to bulk edit Measures instances from serialized form
-    data.
+    Model class used to bulk edit Measures instances from serialized form data.
+
     The stored form data is serialized and deserialized by Forms that subclass
     SerializableFormMixin.
     """
@@ -509,11 +509,13 @@ class MeasuresBulkEditor(BulkProcessor):
         ):
             cleaned_data = self.get_forms_cleaned_data()
             deserialized_selected_measures = Measure.objects.filter(
-                pk__in=self.selected_measures
+                pk__in=self.selected_measures,
             )
 
             measures_editor = MeasuresEditor(
-                self.workbasket, deserialized_selected_measures, cleaned_data
+                self.workbasket,
+                deserialized_selected_measures,
+                cleaned_data,
             )
             return measures_editor.edit_measures()
 

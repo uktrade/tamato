@@ -6,7 +6,7 @@ from common.tests import factories
 from exporter import views
 
 
-@pytest.mark.django_db
+@pytest.mark.exporter
 def test_activity_stream(admin_client: Client):
     certificate_type = factories.CertificateTypeFactory.create()
     factories.CertificateFactory.create_batch(

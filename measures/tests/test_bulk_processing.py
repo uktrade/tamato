@@ -11,7 +11,6 @@ from common.util import TaricDateRange
 from common.validators import ApplicabilityCode
 from measures import forms
 from measures.models import MeasuresBulkCreator
-from measures.models import MeasuresBulkEditor
 from measures.models import ProcessingState
 from measures.tests.factories import MeasuresBulkCreatorFactory
 from measures.tests.factories import MeasuresBulkEditorFactory
@@ -384,7 +383,7 @@ def test_bulk_editor_get_forms_cleaned_data_errors(
                     "start_date_0": "",
                     "start_date_1": "",
                     "start_date_2": "",
-                }
+                },
             },
             "Enter the day, month and year",
         ),
