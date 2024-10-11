@@ -70,7 +70,7 @@ from measures.models import MeasurementUnitQualifier
 from measures.models import MonetaryUnit
 from measures.parsers import DutySentenceParser
 from publishing.models import PackagedWorkBasket
-from tasks.models import UserAssignment
+from tasks.models import TaskAssignee
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
@@ -301,8 +301,8 @@ def policy_group(db) -> Group:
         ("publishing", "consume_from_packaging_queue"),
         ("publishing", "manage_packaging_queue"),
         ("publishing", "view_envelope"),
-        ("tasks", "add_userassignment"),
-        ("tasks", "change_userassignment"),
+        ("tasks", "add_taskassignee"),
+        ("tasks", "change_taskassignee"),
         ("tasks", "add_comment"),
         ("tasks", "view_comment"),
         ("tasks", "change_comment"),
@@ -540,12 +540,12 @@ def workbasket():
         workbasket = factories.WorkBasketFactory.create()
 
     task = factories.TaskFactory.create(workbasket=workbasket)
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+    factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
-    factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+    factories.TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     return workbasket
