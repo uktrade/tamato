@@ -304,6 +304,7 @@ class MeasureCreateTaskFilter(TamatoFilter):
         model = MeasuresBulkCreator
         fields = ["processing_state"]
 
+
 class MeasureEditTaskFilter(TamatoFilter):
     """FilterSet for Bulk Measure Edit tasks."""
 
