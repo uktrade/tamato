@@ -143,6 +143,9 @@ class QuotaUpdateMixin(
         else:
             # even if no changes were made we must update the existing
             # origins to link to the updated order number
+            data = {
+                "order_number": instance,
+            }
             existing_origins = (
                 models.QuotaOrderNumberOrigin.objects.approved_up_to_transaction(
                     instance.transaction,
