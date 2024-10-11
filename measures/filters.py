@@ -26,6 +26,7 @@ from measures.models import Measure
 from measures.models import MeasureCondition
 from measures.models import MeasureType
 from measures.models.bulk_processing import MeasuresBulkCreator
+from measures.models.bulk_processing import MeasuresBulkEditor
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from workbaskets.models import WorkBasket
@@ -301,4 +302,14 @@ class MeasureCreateTaskFilter(TamatoFilter):
 
     class Meta:
         model = MeasuresBulkCreator
+        fields = ["processing_state"]
+
+class MeasureEditTaskFilter(TamatoFilter):
+    """FilterSet for Bulk Measure Edit tasks."""
+
+    search_fields = "processing_state"
+    clear_url = reverse_lazy("measure-edit-process-queue")
+
+    class Meta:
+        model = MeasuresBulkEditor
         fields = ["processing_state"]

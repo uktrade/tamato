@@ -14,6 +14,7 @@ from django.views.generic.edit import FormView
 from common.views import WithPaginationListView
 from measures import models
 from measures.filters import MeasureCreateTaskFilter
+from measures.filters import MeasureEditTaskFilter
 from measures.forms import CancelBulkProcessorTaskForm
 from measures.models.bulk_processing import MeasuresBulkCreator
 from measures.models.bulk_processing import ProcessingState
@@ -213,7 +214,7 @@ class MeasuresEditProcessQueue(
     queryset = models.MeasuresBulkEditor.objects.filter(
         workbasket__status=WorkflowStatus.EDITING,
     ).order_by("-created_at")
-    filterset_class = MeasureCreateTaskFilter
+    filterset_class = MeasureEditTaskFilter
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
