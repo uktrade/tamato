@@ -2,6 +2,7 @@ from django.db import transaction
 
 from common.business_rules import UniqueIdentifyingFields
 from common.business_rules import UpdateValidity
+from common.util import make_real_edit
 from common.validators import UpdateType
 from common.views.mixins import TrackedModelDetailMixin
 from geo_areas.models import GeographicalArea
@@ -72,6 +73,9 @@ class QuotaUpdateMixin(
         return kwargs
 
     def update_origins(self, instance, form_origins):
+        workbasket_origins = self.workbasket.tracked_models.instance_of(
+            models.QuotaOrderNumberOrigin,
+        )
         existing_origin_pks = {origin.pk for origin in instance.get_current_origins()}
 
         if form_origins:
@@ -98,35 +102,43 @@ class QuotaUpdateMixin(
                         transaction=instance.transaction,
                     )
 
-            for origin in form_origins:
+            for origin_data in form_origins:
                 # If origin exists
-                if origin.get("pk"):
-                    existing_origin = models.QuotaOrderNumberOrigin.objects.get(
-                        pk=origin.get("pk"),
+                data = {
+                    "order_number": instance,
+                    "valid_between": origin_data["valid_between"],
+                    "geographical_area": origin_data["geographical_area"],
+                }
+                if origin_data.get("pk"):
+                    origin = models.QuotaOrderNumberOrigin.objects.get(
+                        pk=origin_data.get("pk"),
                     )
-                    updated_origin = existing_origin.new_version(
-                        workbasket=WorkBasket.current(self.request),
-                        transaction=instance.transaction,
-                        order_number=instance,
-                        valid_between=origin["valid_between"],
-                        geographical_area=origin["geographical_area"],
+
+                    updated_origin = make_real_edit(
+                        tx=self.workbasket.new_transaction(),
+                        cls=models.QuotaOrderNumberOrigin,
+                        obj=origin,
+                        data=data,
+                        workbasket=self.workbasket,
+                        update_type=UpdateType.UPDATE,
                     )
 
                 # It's a newly created origin
                 else:
-                    updated_origin = models.QuotaOrderNumberOrigin.objects.create(
-                        order_number=instance,
-                        valid_between=origin["valid_between"],
-                        geographical_area=origin["geographical_area"],
+                    updated_origin = make_real_edit(
+                        tx=self.workbasket.new_transaction(),
+                        cls=models.QuotaOrderNumberOrigin,
+                        obj=None,
+                        data=data,
+                        workbasket=self.workbasket,
                         update_type=UpdateType.CREATE,
-                        transaction=instance.transaction,
                     )
 
                 # whether it's edited or new we need to add/update exclusions
                 self.update_exclusions(
                     instance,
                     updated_origin,
-                    origin.get("exclusions"),
+                    origin_data.get("exclusions"),
                 )
         else:
             # even if no changes were made we must update the existing
@@ -139,10 +151,13 @@ class QuotaUpdateMixin(
                 )
             )
             for origin in existing_origins:
-                origin.new_version(
-                    workbasket=WorkBasket.current(self.request),
-                    transaction=instance.transaction,
-                    order_number=instance,
+                updated_origin = make_real_edit(
+                    tx=self.workbasket.new_transaction(),
+                    cls=models.QuotaOrderNumberOrigin,
+                    obj=origin,
+                    data=data,
+                    workbasket=self.workbasket,
+                    update_type=UpdateType.UPDATE,
                 )
 
     def update_exclusions(self, quota, updated_origin, exclusions):
@@ -165,31 +180,42 @@ class QuotaUpdateMixin(
             exclusion = existing_exclusions.get(
                 excluded_geographical_area=geo_area_id,
             )
-            exclusion.new_version(
+            make_real_edit(
+                tx=updated_origin.transaction,
+                cls=models.QuotaOrderNumberOriginExclusion,
+                obj=exclusion,
+                data=None,
+                workbasket=self.workbasket,
                 update_type=UpdateType.DELETE,
-                workbasket=WorkBasket.current(self.request),
-                transaction=quota.transaction,
             )
 
         for exclusion in exclusions:
             geo_area = GeographicalArea.objects.get(pk=exclusion["geographical_area"])
+            data = {
+                "excluded_geographical_area": geo_area,
+                "origin": updated_origin,
+            }
             if geo_area.pk in existing_exclusions_geo_area_ids:
                 existing_exclusion = existing_exclusions.get(
                     excluded_geographical_area=geo_area,
                 )
-                existing_exclusion.new_version(
-                    workbasket=WorkBasket.current(self.request),
-                    transaction=quota.transaction,
-                    origin=updated_origin,
-                    excluded_geographical_area=geo_area,
+                make_real_edit(
+                    tx=updated_origin.transaction,
+                    cls=models.QuotaOrderNumberOriginExclusion,
+                    obj=existing_exclusion,
+                    data=data,
+                    workbasket=self.workbasket,
+                    update_type=UpdateType.UPDATE,
                 )
 
             else:
-                models.QuotaOrderNumberOriginExclusion.objects.create(
-                    origin=updated_origin,
-                    excluded_geographical_area=geo_area,
+                make_real_edit(
+                    tx=updated_origin.transaction,
+                    cls=models.QuotaOrderNumberOriginExclusion,
+                    obj=None,
+                    data=data,
+                    workbasket=self.workbasket,
                     update_type=UpdateType.CREATE,
-                    transaction=quota.transaction,
                 )
 
     @transaction.atomic
