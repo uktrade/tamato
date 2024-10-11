@@ -1,0 +1,18 @@
+{% extends "layouts/confirm.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Delete quota definition" %}
+
+{% set messages %}
+  {% for message in get_messages(request) %}
+    {{ message }}
+  {% endfor %}
+{% endset  %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": messages,
+    "text": "This change has been added to your workbasket",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
