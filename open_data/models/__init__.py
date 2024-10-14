@@ -26,6 +26,12 @@ from open_data.models.commodities_model import GoodsNomenclatureOriginLatest
 from open_data.models.commodities_model import GoodsNomenclatureOriginLookUp
 from open_data.models.commodities_model import GoodsNomenclatureSuccessorLatest
 from open_data.models.commodities_model import GoodsNomenclatureSuccessorLookUp
+from open_data.models.footnotes_models import FootnoteDescriptionLatest
+from open_data.models.footnotes_models import FootnoteDescriptionLookUp
+from open_data.models.footnotes_models import FootnoteLatest
+from open_data.models.footnotes_models import FootnoteLookUp
+from open_data.models.footnotes_models import FootnoteTypeLatest
+from open_data.models.footnotes_models import FootnoteTypeLookUp
 
 __all__ = [
     "AdditionalCodeTypeLatest",
@@ -52,4 +58,10 @@ __all__ = [
     "GoodsNomenclatureDescriptionLookUp",
     "FootnoteAssociationGoodsNomenclatureLatest",
     "FootnoteAssociationGoodsNomenclatureLookUp",
+    "FootnoteTypeLatest",
+    "FootnoteTypeLookUp",
+    "FootnoteLatest",
+    "FootnoteLookUp",
+    "FootnoteDescriptionLatest",
+    "FootnoteDescriptionLookUp",
 ]

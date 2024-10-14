@@ -99,7 +99,7 @@ class GoodsNomenclatureDescriptionLookUp(models.Model):
 class FootnoteAssociationGoodsNomenclatureLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange()
-    # associated_footnote = models.ForeignKey("FootnotesFootnote", models.DO_NOTHING)
+    associated_footnote = models.ForeignKey("FootnoteLookUp", models.DO_NOTHING)
     goods_nomenclature = models.ForeignKey(
         GoodsNomenclatureLookUp,
         models.DO_NOTHING,
