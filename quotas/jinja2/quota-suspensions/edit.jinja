@@ -1,0 +1,13 @@
+{% extends "common/edit.jinja" %}
+
+{% set page_title = "Edit quota suspension details" %} 
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+      {"text": object.quota_definition.order_number._meta.verbose_name|capitalize ~ " " ~ object.quota_definition.order_number|string, "href": object.quota_definition.order_number.get_url()},
+      {"text": object.quota_definition.order_number._meta.verbose_name|capitalize ~ " " ~ object.quota_definition.order_number|string ~ ": Data" , "href": url('quota_definition-ui-list', args=[object.quota_definition.order_number.sid])},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}

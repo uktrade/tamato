@@ -1157,6 +1157,50 @@ class QuotaBlockingConfirmCreate(TrackedModelDetailView):
         return context
 
 
+class QuotaSuspensionUpdateMixin(TrackedModelDetailMixin):
+    model = QuotaSuspension
+    template_name = "quota-suspensions/edit.jinja"
+    form_class = forms.QuotaSuspensionUpdateForm
+    permission_required = ["common.change_trackedmodel"]
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["sid"] = self.kwargs["sid"]
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(
+            "quota_suspension-ui-confirm-update",
+            kwargs={"sid": self.object.sid},
+        )
+
+
+class QuotaSuspensionUpdate(
+    QuotaSuspensionUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class QuotaSuspensionEditCreate(
+    QuotaSuspensionUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaSuspensionEditUpdate(
+    QuotaSuspensionUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaSuspensionConfirmUpdate(TrackedModelDetailView):
+    model = models.QuotaSuspension
+    template_name = "quota-suspensions/confirm-update.jinja"
+
+
 class SubQuotaDefinitionAssociationMixin:
     template_name = "quota-definitions/sub-quota-definitions-updates.jinja"
     form_class = forms.SubQuotaDefinitionAssociationUpdateForm

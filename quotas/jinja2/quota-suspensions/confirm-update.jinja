@@ -1,0 +1,25 @@
+{% extends "common/confirm_update.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+      {"text": object.quota_definition.order_number._meta.verbose_name|capitalize ~ ": " ~ object.quota_definition.order_number|string, "href": object.quota_definition.order_number.get_url()},
+      {"text": "Quota ID: " ~ object.quota_definition.order_number.order_number ~ " - Data", "href": url("quota_definition-ui-list", args=[object.quota_definition.order_number.sid])},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block main_button %}
+{{ govukButton({
+  "text": "View other definition periods for this quota order number",
+  "href": url('quota_definition-ui-list', kwargs={'sid': object.quota_definition.order_number.sid}),
+  "classes": "govuk-button--primary"
+}) }}
+{% endblock%}
+
+{% block actions %}
+<li><a class="govuk-link" href="{{ object.quota_definition.order_number.get_url() }}">View this definition's quota order number</a></li>
+<li><a href="{{ object.quota_definition.order_number.get_url('list') }}">Find and edit quotas</a></li>
+{% endblock %}

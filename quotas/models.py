@@ -480,6 +480,9 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
 
     business_rules = (business_rules.QSP2, UniqueIdentifyingFields, UpdateValidity)
 
+    def __str__(self):
+        return f"{self.sid}"
+
 
 class QuotaBlocking(TrackedModel, ValidityMixin):
     """Defines a blocking period for a (sub-)quota."""

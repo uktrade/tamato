@@ -999,6 +999,71 @@ class QuotaSuspensionOrBlockingCreateForm(
         )
 
 
+class QuotaSuspensionUpdateForm(ValidityPeriodForm, forms.ModelForm):
+
+    description = forms.CharField(
+        label="Description",
+        validators=[SymbolValidator],
+        widget=forms.Textarea(),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        sid = kwargs.pop("sid")
+        super().__init__(*args, **kwargs)
+        self.quota_suspension = models.QuotaSuspension.objects.current().get(sid=sid)
+        self.init_layout()
+
+    def init_layout(self):
+        cancel_url = reverse_lazy(
+            "quota-ui-detail",
+            kwargs={"sid": self.quota_suspension.quota_definition.order_number.sid},
+        )
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "start_date",
+            "end_date",
+            Field.textarea("description", rows=5),
+            Div(
+                Submit(
+                    "submit",
+                    "Save",
+                    css_class="govuk-button--primary",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f"<a class='govuk-button govuk-button--secondary' href={cancel_url}>Cancel</a>",
+                ),
+                css_class="govuk-button-group",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        definition_period = self.quota_suspension.quota_definition.valid_between
+        validity_period = cleaned_data.get("valid_between")
+        if (
+            definition_period
+            and validity_period
+            and not validity_range_contains_range(definition_period, validity_period)
+        ):
+            raise ValidationError(
+                f"The start and end date must sit within the selected quota definition's start and end date ({definition_period.lower} - {definition_period.upper})",
+            )
+
+        return cleaned_data
+
+    class Meta:
+        model = models.QuotaSuspension
+        fields = [
+            "valid_between",
+            "description",
+        ]
+
+
 class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):
     pass
 
