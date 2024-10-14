@@ -1,6 +1,5 @@
-from django.apps import AppConfig
+from common.app_config import CommonConfig
 
 
-class OpenDataConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
+class OpenDataConfig(CommonConfig):
     name = "open_data"

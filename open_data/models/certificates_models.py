@@ -1,60 +1,45 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
+from psycopg.types.range import DateRange
 
 
-class CertificatesCertificate(models.Model):
-    trackedmodel_ptr = models.OneToOneField(
-        "CommonTrackedmodel",
-        models.DO_NOTHING,
-        primary_key=True,
-    )
-    valid_between = models.TextField()  # This field type is a guess.
-    sid = models.CharField(max_length=3)
-    certificate_type = models.ForeignKey(
-        "CertificatesCertificatetype",
-        models.DO_NOTHING,
-    )
-
-    class Meta:
-        managed = False
-        db_table = "certificates_certificate"
-
-
-class CertificatesCertificatetype(models.Model):
-    trackedmodel_ptr = models.OneToOneField(
-        "CommonTrackedmodel",
-        models.DO_NOTHING,
-        primary_key=True,
-    )
-    valid_between = models.TextField()  # This field type is a guess.
+class CertificateTypeLatest(models.Model):
+    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    valid_between = DateRange()
     sid = models.CharField(max_length=1)
     description = models.CharField(max_length=500, blank=True, null=True)
 
-    class Meta:
-        managed = False
-        db_table = "certificates_certificatetype"
+
+class CertificateTypeLookUp(models.Model):
+    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    current_version = models.ForeignKey(CertificateTypeLatest, models.DO_NOTHING)
 
 
-class CertificatesCertificatedescription(models.Model):
-    trackedmodel_ptr = models.OneToOneField(
-        "CommonTrackedmodel",
+class CertificateLatest(models.Model):
+    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    valid_between = DateRange()
+    sid = models.CharField(max_length=3)
+    certificate_type = models.ForeignKey(
+        "CertificatetypeLookUp",
         models.DO_NOTHING,
-        primary_key=True,
     )
+
+
+class CertificateLookUp(models.Model):
+    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    current_version = models.ForeignKey(CertificateLatest, models.DO_NOTHING)
+
+
+class CertificateDescriptionLatest(models.Model):
+    trackedmodel_ptr = models.IntegerField(primary_key=True)
     sid = models.IntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     described_certificate = models.ForeignKey(
-        CertificatesCertificate,
+        CertificateLookUp,
         models.DO_NOTHING,
     )
     validity_start = models.DateField()
 
-    class Meta:
-        managed = False
-        db_table = "certificates_certificatedescription"
+
+class CertificateDescriptionLookUp(models.Model):
+    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    current_version = models.ForeignKey(CertificateDescriptionLatest, models.DO_NOTHING)
