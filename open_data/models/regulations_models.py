@@ -2,24 +2,24 @@ from django.db import models
 from psycopg.types.range import DateRange
 
 
-class RegulationsAmendment(models.Model):
+class Amendment(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
-    enacting_regulation = models.ForeignKey("RegulationsRegulation", models.DO_NOTHING)
+    enacting_regulation = models.ForeignKey("Regulation ", models.DO_NOTHING)
     target_regulation = models.ForeignKey(
-        "RegulationsRegulation",
+        "Regulation ",
         models.DO_NOTHING,
         related_name="regulationsamendment_target_regulation_set",
     )
 
 
-class RegulationsGroup(models.Model):
+class Group(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     group_id = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class RegulationsRegulation(models.Model):
+class Regulation(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     role_type = models.IntegerField()
     regulation_id = models.CharField(max_length=8)
@@ -39,32 +39,32 @@ class RegulationsRegulation(models.Model):
     stopped = models.BooleanField()
     community_code = models.IntegerField(blank=True, null=True)
     regulation_group = models.ForeignKey(
-        RegulationsGroup,
+        Group,
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
 
 
-class RegulationsSuspension(models.Model):
+class Suspension(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     effective_end_date = models.DateField(blank=True, null=True)
-    enacting_regulation = models.ForeignKey(RegulationsRegulation, models.DO_NOTHING)
+    enacting_regulation = models.ForeignKey(Regulation, models.DO_NOTHING)
     target_regulation = models.ForeignKey(
-        RegulationsRegulation,
+        Regulation,
         models.DO_NOTHING,
         related_name="regulationssuspension_target_regulation_set",
     )
 
 
-class RegulationsReplacement(models.Model):
+class Replacement(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     measure_type_id = models.CharField(max_length=6, blank=True, null=True)
     geographical_area_id = models.CharField(max_length=4, blank=True, null=True)
     chapter_heading = models.CharField(max_length=2, blank=True, null=True)
-    enacting_regulation = models.ForeignKey(RegulationsRegulation, models.DO_NOTHING)
+    enacting_regulation = models.ForeignKey(Regulation, models.DO_NOTHING)
     target_regulation = models.ForeignKey(
-        RegulationsRegulation,
+        Regulation,
         models.DO_NOTHING,
         related_name="regulationsreplacement_target_regulation_set",
     )

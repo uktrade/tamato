@@ -2,19 +2,19 @@ from django.db import models
 from psycopg.types.range import DateRange
 
 
-class QuotasQuotaassociation(models.Model):
+class QuotaAssociation(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     sub_quota_relation_type = models.CharField(max_length=2)
     coefficient = models.DecimalField(max_digits=16, decimal_places=5)
-    main_quota = models.ForeignKey("QuotasQuotadefinition", models.DO_NOTHING)
+    main_quota = models.ForeignKey("QuotaDefinition", models.DO_NOTHING)
     sub_quota = models.ForeignKey(
-        "QuotasQuotadefinition",
+        "QuotaDefinition",
         models.DO_NOTHING,
         related_name="quotasquotaassociation_sub_quota_set",
     )
 
 
-class QuotasQuotadefinition(models.Model):
+class QuotaDefinition(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.IntegerField()
@@ -45,7 +45,7 @@ class QuotasQuotadefinition(models.Model):
     order_number = models.ForeignKey("QuotasQuotaordernumber", models.DO_NOTHING)
 
 
-class QuotasQuotaordernumber(models.Model):
+class QuotaOrderNumber(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.IntegerField()
@@ -54,43 +54,43 @@ class QuotasQuotaordernumber(models.Model):
     category = models.SmallIntegerField()
 
 
-class QuotasQuotaordernumberorigin(models.Model):
+class QuotaOrderNumberOrigin(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.IntegerField()
     geographical_area = models.ForeignKey("GeoAreasGeographicalarea", models.DO_NOTHING)
-    order_number = models.ForeignKey(QuotasQuotaordernumber, models.DO_NOTHING)
+    order_number = models.ForeignKey(QuotaOrderNumber, models.DO_NOTHING)
 
 
-class QuotasQuotasuspension(models.Model):
+class QuotaSuspension(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.IntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
-    quota_definition = models.ForeignKey(QuotasQuotadefinition, models.DO_NOTHING)
+    quota_definition = models.ForeignKey(QuotaDefinition, models.DO_NOTHING)
 
 
-class QuotasQuotaordernumberoriginexclusion(models.Model):
+class QuotaOrderNumberOriginExclusion(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     excluded_geographical_area = models.ForeignKey(
         "GeoAreasGeographicalarea",
         models.DO_NOTHING,
     )
-    origin = models.ForeignKey(QuotasQuotaordernumberorigin, models.DO_NOTHING)
+    origin = models.ForeignKey(QuotaOrderNumberOrigin, models.DO_NOTHING)
 
 
-class QuotasQuotaevent(models.Model):
+class QuotaEvent(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     subrecord_code = models.CharField(max_length=2)
     occurrence_timestamp = models.DateTimeField()
     data = models.JSONField()
-    quota_definition = models.ForeignKey(QuotasQuotadefinition, models.DO_NOTHING)
+    quota_definition = models.ForeignKey(QuotaDefinition, models.DO_NOTHING)
 
 
-class QuotasQuotablocking(models.Model):
+class QuotaBlocking(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.IntegerField()
     blocking_period_type = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
-    quota_definition = models.ForeignKey(QuotasQuotadefinition, models.DO_NOTHING)
+    quota_definition = models.ForeignKey(QuotaDefinition, models.DO_NOTHING)

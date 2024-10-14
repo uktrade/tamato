@@ -2,7 +2,7 @@ from django.db import models
 from psycopg.types.range import DateRange
 
 
-class AdditionalCodeTypemeasuretype(models.Model):
+class AdditionalCodeTypeMeasureType(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = models.DateRange
     additional_code_type = models.ForeignKey(
@@ -12,7 +12,7 @@ class AdditionalCodeTypemeasuretype(models.Model):
     measure_type = models.ForeignKey("MeasuresMeasuretype", models.DO_NOTHING)
 
 
-class MeasuresDutyexpression(models.Model):
+class DutyExpression(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = models.DateRange
     sid = models.IntegerField()
@@ -23,13 +23,13 @@ class MeasuresDutyexpression(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class MeasuresFootnoteassociationmeasure(models.Model):
+class FootnoteAssociationMeasure(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     associated_footnote = models.ForeignKey("FootnotesFootnote", models.DO_NOTHING)
     footnoted_measure = models.ForeignKey("MeasuresMeasure", models.DO_NOTHING)
 
 
-class MeasuresMeasure(models.Model):
+class Measure(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.IntegerField()
@@ -71,7 +71,7 @@ class MeasuresMeasure(models.Model):
     )
 
 
-class MeasuresMeasureaction(models.Model):
+class MeasureAction(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=3)
@@ -79,7 +79,7 @@ class MeasuresMeasureaction(models.Model):
     requires_duty = models.BooleanField()
 
 
-class MeasuresMeasureconditioncomponent(models.Model):
+class MeasureConditionComponent(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     duty_amount = models.DecimalField(
         max_digits=10,
@@ -103,7 +103,7 @@ class MeasuresMeasureconditioncomponent(models.Model):
     )
 
 
-class MeasuresMeasurecondition(models.Model):
+class MeasureCondition(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     sid = models.IntegerField()
     component_sequence_number = models.SmallIntegerField()
@@ -114,7 +114,7 @@ class MeasuresMeasurecondition(models.Model):
         null=True,
     )
     action = models.ForeignKey(
-        MeasuresMeasureaction,
+        MeasureAction,
         models.DO_NOTHING,
         blank=True,
         null=True,
@@ -129,7 +129,7 @@ class MeasuresMeasurecondition(models.Model):
         blank=True,
         null=True,
     )
-    dependent_measure = models.ForeignKey(MeasuresMeasure, models.DO_NOTHING)
+    dependent_measure = models.ForeignKey(Measure, models.DO_NOTHING)
     monetary_unit = models.ForeignKey(
         "MeasuresMonetaryunit",
         models.DO_NOTHING,
@@ -144,7 +144,7 @@ class MeasuresMeasurecondition(models.Model):
     )
 
 
-class MeasuresMeasureconditioncode(models.Model):
+class MeasureConditionCode(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=2)
@@ -153,7 +153,7 @@ class MeasuresMeasureconditioncode(models.Model):
     accepts_price = models.BooleanField()
 
 
-class MeasuresMeasurementunit(models.Model):
+class MeasurementUnit(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=3)
@@ -161,7 +161,7 @@ class MeasuresMeasurementunit(models.Model):
     abbreviation = models.CharField(max_length=32)
 
 
-class MeasuresMeasurementunitqualifier(models.Model):
+class MeasurementUnitQualifier(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=1)
@@ -169,7 +169,7 @@ class MeasuresMeasurementunitqualifier(models.Model):
     abbreviation = models.CharField(max_length=32)
 
 
-class MeasuresMeasuretypeseries(models.Model):
+class MeasureTypeSeries(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.CharField(max_length=2)
@@ -177,14 +177,14 @@ class MeasuresMeasuretypeseries(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class MeasuresMonetaryunit(models.Model):
+class MonetaryUnit(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class MeasuresMeasuretype(models.Model):
+class MeasureType(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.CharField(max_length=6)
@@ -196,12 +196,12 @@ class MeasuresMeasuretype(models.Model):
     measure_explosion_level = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     measure_type_series = models.ForeignKey(
-        MeasuresMeasuretypeseries,
+        MeasureTypeSeries,
         models.DO_NOTHING,
     )
 
 
-class MeasuresMeasurement(models.Model):
+class Measurement(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     measurement_unit = models.ForeignKey(MeasuresMeasurementunit, models.DO_NOTHING)
@@ -213,16 +213,16 @@ class MeasuresMeasurement(models.Model):
     )
 
 
-class MeasuresMeasureexcludedgeographicalarea(models.Model):
+class MeasureExcludedGeographicalArea(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     excluded_geographical_area = models.ForeignKey(
         "GeoAreasGeographicalarea",
         models.DO_NOTHING,
     )
-    modified_measure = models.ForeignKey(MeasuresMeasure, models.DO_NOTHING)
+    modified_measure = models.ForeignKey(Measure, models.DO_NOTHING)
 
 
-class MeasuresMeasurecomponent(models.Model):
+class MeasureComponent(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     duty_amount = models.DecimalField(
         max_digits=10,
@@ -230,16 +230,16 @@ class MeasuresMeasurecomponent(models.Model):
         blank=True,
         null=True,
     )
-    component_measure = models.ForeignKey(MeasuresMeasure, models.DO_NOTHING)
+    component_measure = models.ForeignKey(Measure, models.DO_NOTHING)
     component_measurement = models.ForeignKey(
-        MeasuresMeasurement,
+        Measurement,
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    duty_expression = models.ForeignKey(MeasuresDutyexpression, models.DO_NOTHING)
+    duty_expression = models.ForeignKey(DutyExpression, models.DO_NOTHING)
     monetary_unit = models.ForeignKey(
-        MeasuresMonetaryunit,
+        MonetaryUnit,
         models.DO_NOTHING,
         blank=True,
         null=True,

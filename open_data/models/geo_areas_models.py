@@ -2,7 +2,7 @@ from django.db import models
 from psycopg.types.range import DateRange
 
 
-class GeoAreasGeographicalarea(models.Model):
+class GeographicalArea(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange()
     sid = models.IntegerField()
@@ -11,23 +11,23 @@ class GeoAreasGeographicalarea(models.Model):
     parent = models.ForeignKey("self", models.DO_NOTHING, blank=True, null=True)
 
 
-class GeoAreasGeographicalmembership(models.Model):
+class GeographicalMembership(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange()
-    geo_group = models.ForeignKey(GeoAreasGeographicalarea, models.DO_NOTHING)
+    geo_group = models.ForeignKey(GeographicalArea, models.DO_NOTHING)
     member = models.ForeignKey(
-        GeoAreasGeographicalarea,
+        GeographicalArea,
         models.DO_NOTHING,
         related_name="geoareasgeographicalmembership_member_set",
     )
 
 
-class GeoAreasGeographicalareadescription(models.Model):
+class GeographicalareaDescription(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=500, blank=True, null=True)
     sid = models.IntegerField()
     described_geographicalarea = models.ForeignKey(
-        GeoAreasGeographicalarea,
+        GeographicalArea,
         models.DO_NOTHING,
     )
     validity_start = models.DateField()
