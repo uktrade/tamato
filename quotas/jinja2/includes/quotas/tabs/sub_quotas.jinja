@@ -1,41 +1,41 @@
 {% set table_rows = [] %}
-{% for quota_association in sub_quota_associations %}
+{% for object in sub_quota_associations %}
   {% set sub_quota_link %}
     <a class="govuk-link govuk-!-font-weight-bold"
-      href="{{ url('quota-ui-detail', args=[quota_association.sub_quota.order_number.sid]) }}">
-      {{ quota_association.sub_quota.order_number }}
+      href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}">
+      {{ object.sub_quota.order_number }}
     </a>
   {% endset %}
   {% set actions_html %}
-      <a class="govuk-link" href="{{ quota_association.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
+      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
       <br/>
-      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[quota_association.pk]) }}">Delete</a>
+      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
   {% endset %}
   {{ table_rows.append([
     {"html": sub_quota_link},
-    {"html": quota_association.sub_quota_relation_type},
-    {"text": quota_association.coefficient},
+    {"html": object.sub_quota_relation_type},
+    {"text": object.coefficient},
     {"text": actions_html }
   ]) or "" }}
 {% endfor %}
 
-{% for quota_association in main_quota_associations %}
+{% for object in main_quota_associations %}
   {% set main_quota_link %}
     <a class="govuk-link govuk-!-font-weight-bold"
-      href="{{ url('quota-ui-detail', args=[quota_association.main_quota.order_number.sid]) }}">
-      {{ quota_association.main_quota.order_number }}
+      href="{{ url('quota-ui-detail', args=[object.main_quota.order_number.sid]) }}">
+      {{ object.main_quota.order_number }}
     </a>
   {% endset %}
   {% set actions_html %}
-      <a class="govuk-link" href="{{ quota_association.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
+      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
       <br/>
-      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[quota_association.pk]) }}">Delete</a>
+      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
   {% endset %}
 
   {{ table_rows.append([
     {"html": main_quota_link},
-    {"html": quota_association.sub_quota_relation_type},
-    {"text": quota_association.coefficient},
+    {"html": object.sub_quota_relation_type},
+    {"text": object.coefficient},
     {"text": actions_html }
   ]) or "" }}
 {% endfor %}

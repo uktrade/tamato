@@ -680,6 +680,7 @@ def test_quota_detail_sub_quota_tab(
     valid_user_client,
     date_ranges,
     mock_quota_api_no_data,
+    session_request_with_workbasket,
 ):
     quota_order_number = factories.QuotaOrderNumberFactory()
     current_definition = factories.QuotaDefinitionFactory.create(
