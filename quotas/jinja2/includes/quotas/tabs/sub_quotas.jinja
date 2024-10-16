@@ -6,10 +6,16 @@
       {{ quota_association.sub_quota.order_number }}
     </a>
   {% endset %}
+  {% set actions_html %}
+      <a class="govuk-link" href="{{ quota_association.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
+      <br/>
+      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[quota_association.pk]) }}">Delete</a>
+  {% endset %}
   {{ table_rows.append([
     {"html": sub_quota_link},
     {"html": quota_association.sub_quota_relation_type},
     {"text": quota_association.coefficient},
+    {"text": actions_html }
   ]) or "" }}
 {% endfor %}
 
@@ -20,10 +26,17 @@
       {{ quota_association.main_quota.order_number }}
     </a>
   {% endset %}
+  {% set actions_html %}
+      <a class="govuk-link" href="{{ quota_association.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
+      <br/>
+      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[quota_association.pk]) }}">Delete</a>
+  {% endset %}
+
   {{ table_rows.append([
     {"html": main_quota_link},
     {"html": quota_association.sub_quota_relation_type},
     {"text": quota_association.coefficient},
+    {"text": actions_html }
   ]) or "" }}
 {% endfor %}
 
@@ -37,6 +50,7 @@
                 {"text": "Sub-quota order number"},
                 {"text": "Relation type"},
                 {"text": "Co-efficient"},
+                {"text": "Actions"}
             ],
             "rows": table_rows
             }) }}
@@ -48,6 +62,7 @@
               {"text": "Main quota order number"},
               {"text": "Relation type"},
               {"text": "Co-efficient"},
+              {"text": "Actions"}
             ],
             "rows": table_rows
           })

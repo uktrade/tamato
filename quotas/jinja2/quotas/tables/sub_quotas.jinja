@@ -53,10 +53,7 @@
       <br/>
       <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
     {% endset %}
-    {{ definition_link }}
-    {{ main_quota_link }}
-    {{ object }}
-    {# {{ table_rows.append([
+    {{ table_rows.append([
       {"text": definition_link },
       {"text": main_quota_link },
       {"text": "{:%d %b %Y}".format(object.main_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.lower) },
@@ -64,7 +61,7 @@
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
       {"text": actions_html },
-    ]) or "" }} #}
+    ]) or "" }}
   {% endfor %}
   {{ govukTable({
     "head": [
