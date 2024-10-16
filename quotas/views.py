@@ -304,7 +304,11 @@ class QuotaDefinitionList(SortingMixin, ListView):
 
     @property
     def suspension_periods(self):
-        return QuotaSuspension.objects.filter(quota_definition__order_number=self.quota)
+        return (
+            QuotaSuspension.objects.current()
+            .filter(quota_definition__order_number=self.quota)
+            .order_by("quota_definition__sid")
+        )
 
     @property
     def sub_quotas(self):

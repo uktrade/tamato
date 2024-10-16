@@ -2039,7 +2039,7 @@ def test_quota_definition_view(client_with_current_workbasket):
     )
     assert response.status_code == 200
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    description_cell_text = soup.select("tbody tr:first-child td:last-child")[0].text
+    description_cell_text = soup.select("tbody tr:first-child td")[-2].text
     assert description_cell_text == suspension.description
 
 
