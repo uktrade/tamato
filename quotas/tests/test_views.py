@@ -2479,3 +2479,80 @@ def test_delete_quota_association(client_with_current_workbasket):
         h1.text.strip()
         == f"Quota association between {main_quota.sid} and {sub_quota.sid} has been deleted"
     )
+
+
+def test_quota_suspension_edit(client_with_current_workbasket):
+    """Test the QuotaSuspensionUpdate view including the
+    QuotaSuspensionUpdateMixin."""
+    suspension = factories.QuotaSuspensionFactory.create()
+    current_validity = suspension.valid_between
+    data = {
+        "start_date_0": current_validity.lower.day + 1,
+        "start_date_1": current_validity.lower.month,
+        "start_date_2": current_validity.lower.year,
+        "end_date_0": current_validity.upper.day,
+        "end_date_1": current_validity.upper.month,
+        "end_date_2": current_validity.upper.year,
+        "description": "New description",
+    }
+
+    url = reverse("quota_suspension-ui-edit", kwargs={"sid": suspension.sid})
+
+    response = client_with_current_workbasket.post(url, data=data)
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "quota_suspension-ui-confirm-update",
+        kwargs={"sid": suspension.quota_definition.order_number.sid},
+    )
+
+    updated_suspension = models.QuotaSuspension.objects.approved_up_to_transaction(
+        Transaction.objects.last(),
+    ).get(sid=suspension.sid)
+    assert updated_suspension.description == "New description"
+    assert updated_suspension.update_type == UpdateType.UPDATE
+
+    confirm_response = client_with_current_workbasket.get(response.url)
+
+    soup = BeautifulSoup(
+        confirm_response.content.decode(response.charset),
+        "html.parser",
+    )
+    div = soup.select("div .govuk-panel__body")[0]
+
+    assert f"Quota suspension: {suspension.sid} has been updated" in div.text.strip()
+
+
+def test_quota_suspension_edit_update(client_with_current_workbasket):
+    """Test that posting the edit update form edits the existing quota
+    suspension update object rather than creating a new one."""
+    suspension = factories.QuotaSuspensionFactory.create()
+    data = {
+        "start_date_0": suspension.valid_between.lower.day,
+        "start_date_1": suspension.valid_between.lower.month,
+        "start_date_2": suspension.valid_between.lower.year,
+        "end_date_0": suspension.valid_between.upper.day,
+        "end_date_1": suspension.valid_between.upper.month,
+        "end_date_2": suspension.valid_between.upper.year,
+        "description": "New description",
+    }
+
+    edit_url = reverse("quota_suspension-ui-edit", kwargs={"sid": suspension.sid})
+    client_with_current_workbasket.post(edit_url, data=data)
+    edit_update_url = reverse(
+        "quota_suspension-ui-edit-update",
+        kwargs={"sid": suspension.sid},
+    )
+    response = client_with_current_workbasket.post(edit_update_url, data=data)
+    assert response.status_code == 302
+    versions = models.QuotaSuspension.objects.all().filter(sid=suspension.sid)
+    assert len(versions) == 2
+    assert versions.first().update_type == UpdateType.CREATE
+    assert versions.last().update_type == UpdateType.UPDATE
+
+
+@pytest.mark.parametrize(
+    "factory",
+    (factories.QuotaSuspensionFactory,),
+)
+def test_quota_suspension_delete_form(factory, use_delete_form):
+    use_delete_form(factory())
