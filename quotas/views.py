@@ -1201,6 +1201,30 @@ class QuotaSuspensionConfirmUpdate(TrackedModelDetailView):
     template_name = "quota-suspensions/confirm-update.jinja"
 
 
+class QuotaSuspensionDelete(TrackedModelDetailMixin, CreateTaricDeleteView):
+    form_class = forms.QuotaSuspensionDeleteForm
+    model = models.QuotaSuspension
+    template_name = "quota-suspensions/delete.jinja"
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Quota suspension period {self.object.sid} has been deleted",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "quota_suspension-ui-confirm-delete",
+            kwargs={"sid": self.object.quota_definition.order_number.sid},
+        )
+
+
+class QuotaSuspensionConfirmDelete(TrackedModelDetailView):
+    model = models.QuotaOrderNumber
+    template_name = "quota-suspensions/confirm-delete.jinja"
+
+
 class SubQuotaDefinitionAssociationMixin:
     template_name = "quota-definitions/sub-quota-definitions-updates.jinja"
     form_class = forms.SubQuotaDefinitionAssociationUpdateForm

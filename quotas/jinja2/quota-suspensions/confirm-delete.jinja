@@ -1,0 +1,41 @@
+{% extends "layouts/confirm.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Quota suspension deleted" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object|string, "href": object.get_url()},
+      {"text": "Quota ID: " ~ object.order_number ~ " - Data", "href": url("quota_definition-ui-list", args=[object.sid])},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% set messages %}
+  {% for message in get_messages(request) %}
+    {{ message }}
+  {% endfor %}
+{% endset  %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": messages,
+    "text": "This change has been added to your workbasket",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block main_button %}
+{{ govukButton({
+  "text": "View other suspension periods for this quota order number",
+  "href": url('quota_definition-ui-list-filter', kwargs={'sid': object.sid, 'quota_type': "suspension_periods"}),
+  "classes": "govuk-button--primary"
+}) }}
+{% endblock%}
+
+
+{% block actions %}
+<li><a href="{{ object.get_url('list') }}">Find and edit quotas</a></li>
+{% endblock %}

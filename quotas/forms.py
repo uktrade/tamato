@@ -1003,7 +1003,6 @@ class QuotaSuspensionUpdateForm(ValidityPeriodForm, forms.ModelForm):
 
     description = forms.CharField(
         label="Description",
-        validators=[SymbolValidator],
         widget=forms.Textarea(),
         required=False,
     )
@@ -1062,6 +1061,9 @@ class QuotaSuspensionUpdateForm(ValidityPeriodForm, forms.ModelForm):
             "valid_between",
             "description",
         ]
+
+
+QuotaSuspensionDeleteForm = delete_form_for(models.QuotaSuspension)
 
 
 class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):

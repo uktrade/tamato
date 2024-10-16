@@ -206,6 +206,16 @@ urlpatterns = [
         name="quota_suspension-ui-confirm-update",
     ),
     path(
+        f"quotas/suspension-periods/<sid>/delete/",
+        views.QuotaSuspensionDelete.as_view(),
+        name="quota_suspension-ui-delete",
+    ),
+    path(
+        f"quotas/suspension-periods/<sid>/confirm-delete/",
+        views.QuotaSuspensionConfirmDelete.as_view(),
+        name="quota_suspension-ui-confirm-delete",
+    ),
+    path(
         f"quota_definitions/quota-association/<pk>/delete/",
         views.QuotaAssociationDelete.as_view(),
         name="quota_association-ui-delete",
