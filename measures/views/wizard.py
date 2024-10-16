@@ -5,10 +5,10 @@ from typing import List
 from crispy_forms_gds.helper import FormHelper
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from formtools.wizard.views import NamedUrlSessionWizardView
@@ -167,7 +167,7 @@ class MeasureEditWizard(
         measures_bulk_editor.schedule_task()
 
         return redirect(
-            "measure-ui-edit-confirm",
+            "measure-ui-edit-async-confirm",
             expected_measures_count=len(db_selected_measures),
         )
 
@@ -197,14 +197,10 @@ class MeasureEditWizard(
 
         edited_measures = self.edit_measures(selected_measures, cleaned_data)
         self.session_store.clear()
-
-        context = self.get_context_data(
-            form=None,
-            edited_measures=edited_measures,
-            **kwargs,
+        return redirect(
+            "measure-ui-edit-sync-confirm",
+            edited_measures_count=len(edited_measures),
         )
-
-        return render(self.request, "measures/confirm-edit-multiple.jinja", context)
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
@@ -391,7 +387,7 @@ class MeasureCreateWizard(
         measures_bulk_creator.schedule_task()
 
         return redirect(
-            "measure-ui-create-confirm",
+            "measure-ui-create-async-confirm",
             expected_measures_count=measures_bulk_creator.expected_measures_count,
         )
 
@@ -619,10 +615,19 @@ class MeasureCreateWizard(
         )
 
 
-class MeasuresWizardCreateConfirm(TemplateView):
+class MeasuresWizardAsyncConfirm(TemplateView):
     template_name = "measures/confirm-create-multiple-async.jinja"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["expected_measures_count"] = self.kwargs.get("expected_measures_count")
+        return context    
+
+
+class MeasuresWizardSyncConfirm(TemplateView):
+    template_name = "measures/confirm-edit-multiple.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["edited_measures_count"] = self.kwargs.get("edited_measures_count")
         return context
