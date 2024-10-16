@@ -1,5 +1,5 @@
 {% set table_rows = [] %}
-{% for quota_association in quota_associations %}
+{% for quota_association in sub_quota_associations %}
   {% set sub_quota_link %}
     <a class="govuk-link govuk-!-font-weight-bold"
       href="{{ url('quota-ui-detail', args=[quota_association.sub_quota.order_number.sid]) }}">
@@ -13,10 +13,25 @@
   ]) or "" }}
 {% endfor %}
 
+{% for quota_association in main_quota_associations %}
+  {% set main_quota_link %}
+    <a class="govuk-link govuk-!-font-weight-bold"
+      href="{{ url('quota-ui-detail', args=[quota_association.main_quota.order_number.sid]) }}">
+      {{ quota_association.main_quota.order_number }}
+    </a>
+  {% endset %}
+  {{ table_rows.append([
+    {"html": main_quota_link},
+    {"html": quota_association.sub_quota_relation_type},
+    {"text": quota_association.coefficient},
+  ]) or "" }}
+{% endfor %}
+
 <div class="quota__sub-quotas govuk-grid-row">
     <div class="quota__sub-quotas__content govuk-grid-column-three-quarters">
-        <h2 class="govuk-heading-l">Details</h2>
-        {% if quota_associations %}
+      <h2 class="govuk-heading-l">Quota associations</h2>
+        {% if sub_quota_associations %}
+        <h3>Sub-quotas</h3>
         {{ govukTable({
             "head": [
                 {"text": "Sub-quota order number"},
@@ -25,8 +40,20 @@
             ],
             "rows": table_rows
             }) }}
+        {% elif main_quota_associations %}
+        <h3>Main quota</h3>
+        {{
+          govukTable({
+            "head": [
+              {"text": "Main quota order number"},
+              {"text": "Relation type"},
+              {"text": "Co-efficient"},
+            ],
+            "rows": table_rows
+          })
+        }}
         {% else %}
-          <p class="govuk-body">No active sub-quotas.</p>
+          <p class="govuk-body">No active main or sub-quotas.</p>
         {% endif %}
     </div>
     {% include "includes/quotas/actions.jinja"%}

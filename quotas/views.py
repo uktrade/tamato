@@ -241,9 +241,13 @@ class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
         )
 
         context[
-            "quota_associations"
+            "sub_quota_associations"
         ] = QuotaAssociation.objects.latest_approved().filter(
             main_quota=current_definition,
+        )
+
+        context["main_quota_associations"] = QuotaAssociation.objects.current().filter(
+            sub_quota=current_definition,
         )
 
         context["blocking_period"] = (
@@ -314,6 +318,18 @@ class QuotaDefinitionList(SortingMixin, ListView):
             .order_by("sub_quota__sid")
         )
 
+    @property
+    def main_quotas(self):
+        main_quotas = QuotaAssociation.objects.all().filter(
+            sub_quota__order_number=self.quota,
+        )
+        # return main_quota
+        return main_quotas
+        # return (
+        #     QuotaAssociation.objects.current()
+        #     .get(sub_quota__order_number=self.quota)
+        # )
+
     @cached_property
     def quota_data(self):
         if not self.kwargs.get("quota_type"):
@@ -332,6 +348,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
             blocking_periods=self.blocking_periods,
             suspension_periods=self.suspension_periods,
             sub_quotas=self.sub_quotas,
+            main_quotas=self.main_quotas,
             *args,
             **kwargs,
         )

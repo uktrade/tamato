@@ -2010,7 +2010,7 @@ def test_quota_definition_view(client_with_current_workbasket):
     response = client_with_current_workbasket.get(
         reverse(
             "quota_definition-ui-list-filter",
-            kwargs={"sid": main_quota.sid, "quota_type": "sub_quotas"},
+            kwargs={"sid": main_quota.sid, "quota_type": "quota_associations"},
         ),
     )
     assert response.status_code == 200
