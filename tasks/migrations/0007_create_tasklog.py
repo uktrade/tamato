@@ -56,7 +56,7 @@ class Migration(migrations.Migration):
                     "task",
                     models.ForeignKey(
                         editable=False,
-                        on_delete=django.db.models.deletion.PROTECT,
+                        on_delete=django.db.models.deletion.CASCADE,
                         related_name="logs",
                         to="tasks.task",
                     ),

@@ -218,11 +218,12 @@ class TaskLog(TimestampedMixin):
     action = models.CharField(
         max_length=100,
         choices=AuditActionType.choices,
+        editable=False,
     )
     description = models.TextField(editable=False)
     task = models.ForeignKey(
         Task,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         editable=False,
         related_name="logs",
     )

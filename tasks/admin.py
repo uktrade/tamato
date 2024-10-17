@@ -6,6 +6,7 @@ from tasks.models import Category
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
+from tasks.models import TaskLog
 
 
 class TaskAdminMixin:
@@ -77,6 +78,19 @@ class TaskAssigneeAdmin(TaskAdminMixin, admin.ModelAdmin):
         return self.link_to_task(obj.task)
 
 
+class TaskLogAdmin(admin.ModelAdmin):
+    list_display = ["task", "action", "created_at"]
+    list_filter = ["action"]
+    readonly_fields = [
+        "id",
+        "action",
+        "description",
+        "task",
+        "instigator",
+        "created_at",
+    ]
+
+
 admin.site.register(Task, TaskAdmin)
 
 admin.site.register(Category, CategoryAdmin)
@@ -84,3 +98,5 @@ admin.site.register(Category, CategoryAdmin)
 admin.site.register(ProgressState, ProgressStateAdmin)
 
 admin.site.register(TaskAssignee, TaskAssigneeAdmin)
+
+admin.site.register(TaskLog, TaskLogAdmin)
