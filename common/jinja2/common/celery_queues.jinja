@@ -11,7 +11,7 @@
       "selected": selected_tab == "measure-create-process-queue"
     },
     {
-      "text": "Measure edit process queue",
+      "text": "Edit",
       "href": url('measure-edit-process-queue'),
       "selected": selected_tab == "measure-edit-process-queue"
     },
@@ -32,6 +32,7 @@
 {%- endset %}
 
 {% block content %}
+  <h1 class="govuk-heading-xl">Measure processing queue</h1>
   {{ fake_tabs(links) }}
   <div class="govuk-tabs__panel">
     {% block tab_content %}{% endblock %}
