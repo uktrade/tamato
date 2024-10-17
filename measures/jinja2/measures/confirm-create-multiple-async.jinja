@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {% macro panel_subtitle(created_measures) %}
-  You can view {% if expected_measures_count > 1 %}their{% else %}its{% endif %} status on the Measures process queue page.
+  You can view {% if expected_measures_count > 1 %}their{% else %}its{% endif %} status on the measures process queue page.
 {% endmacro %}
 
 {% block breadcrumb %}
@@ -37,6 +37,11 @@
           "href": url("home"),
           "classes": "govuk-button--secondary"
         }) }}
+        {{ govukButton({
+        "text": "Return to workbasket",
+        "href": url("workbaskets:current-workbasket"),
+        "classes": "govuk-button--secondary"
+      }) }}
       </div>
     </div>
   </div>
