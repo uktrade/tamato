@@ -13,7 +13,7 @@
   {% endset %}
   {{ table_rows.append([
     {"html": sub_quota_link},
-    {"html": object.sub_quota_relation_type},
+    {"html": object.get_sub_quota_relation_type_display()},
     {"text": object.coefficient},
     {"text": actions_html }
   ]) or "" }}
@@ -34,7 +34,7 @@
 
   {{ table_rows.append([
     {"html": main_quota_link},
-    {"html": object.sub_quota_relation_type},
+    {"html": object.get_sub_quota_relation_type_display()},
     {"text": object.coefficient},
     {"text": actions_html }
   ]) or "" }}
@@ -45,31 +45,23 @@
       <h2 class="govuk-heading-l">Quota associations</h2>
         {% if sub_quota_associations %}
         <h3>Sub-quotas</h3>
-        {{ govukTable({
-            "head": [
-                {"text": "Sub-quota order number"},
-                {"text": "Relation type"},
-                {"text": "Co-efficient"},
-                {"text": "Actions"}
-            ],
-            "rows": table_rows
-            }) }}
         {% elif main_quota_associations %}
         <h3>Main quota</h3>
+        {% else %}
+          <p class="govuk-body">No active main or sub-quotas.</p>
+        {% endif %}
         {{
           govukTable({
             "head": [
-              {"text": "Main quota order number"},
-              {"text": "Relation type"},
+              {"text": "Order number"},
+              {"text": "Relationship type"},
               {"text": "Co-efficient"},
               {"text": "Actions"}
             ],
             "rows": table_rows
           })
         }}
-        {% else %}
-          <p class="govuk-body">No active main or sub-quotas.</p>
-        {% endif %}
+        
     </div>
     {% include "includes/quotas/actions.jinja"%}
 </div>
