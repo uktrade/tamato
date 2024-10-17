@@ -36,4 +36,6 @@
   }) }}
 {% endblock %}
 
-{% block actions %} {% endblock %}
+{% block actions %}
+  <li><a href="{{ url("workflow:task-ui-list") }}">Find and view tasks</a></li>
+{% endblock %}

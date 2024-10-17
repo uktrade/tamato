@@ -4,7 +4,7 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = " Task created" %}
+{% set page_title = "Task created" %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -38,5 +38,5 @@
 {% endblock %}
 
 {% block actions %}
-  <li><a href="{{ url("workflow:task-ui-list") }}">Find and edit tasks</a></li>
+  <li><a href="{{ url("workflow:task-ui-list") }}">Find and view tasks</a></li>
 {% endblock %}

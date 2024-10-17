@@ -5,13 +5,7 @@
 
 {% set page_title = "Find and view tasks" %}
 
-
 {% set base_url = url("workflow:task-ui-list") %}
-
-{% set sortable_created_at %}
-  {{ create_sortable_anchor(request, "created_at", "Created", base_url) }}
-{% endset %}
-
 
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
@@ -35,7 +29,6 @@
     {% if object_list %}
       {% set table_rows = [] %}
       {% for object in object_list %}
-
         {%- set task_linked_id -%}
           <a
             class="govuk-link"
@@ -67,7 +60,7 @@
           {"text": "Category"},
           {"text": "Status"},
           {"text": "Workbasket"},
-          {"text": sortable_created_at},
+          {"text": create_sortable_anchor(request, "created_at", "Created", base_url)},
         ],
           "rows": table_rows
         }) }}
