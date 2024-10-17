@@ -483,7 +483,7 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
     def get_url(self, action: str = "detail") -> Optional[str]:
         """Overrides the parent get_url as there is no detail view for
         QuotaSuspensions for it to default to."""
-        url = super().get_url()
+        url = super().get_url(action=action)
         if not url:
             url = self.quota_definition.get_url()
 

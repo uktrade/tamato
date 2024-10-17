@@ -13,13 +13,12 @@
 
 {% block main_button %}
 {{ govukButton({
-  "text": "View other definition periods for this quota order number",
-  "href": url('quota_definition-ui-list', kwargs={'sid': object.quota_definition.order_number.sid}),
-  "classes": "govuk-button--primary"
+  "text": "View other suspension periods for this quota order number",
+  "href": url('quota_definition-ui-list-filter', kwargs={'sid': object.quota_definition.order_number.sid, 'quota_type': "suspension_periods"}),
+  "classes": "govuk-button--secondary"
 }) }}
 {% endblock%}
 
 {% block actions %}
-<li><a class="govuk-link" href="{{ object.quota_definition.order_number.get_url() }}">View this definition's quota order number</a></li>
 <li><a href="{{ object.quota_definition.order_number.get_url('list') }}">Find and edit quotas</a></li>
 {% endblock %}
