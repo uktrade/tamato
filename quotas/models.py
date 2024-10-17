@@ -480,6 +480,15 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
 
     business_rules = (business_rules.QSP2, UniqueIdentifyingFields, UpdateValidity)
 
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """Overrides the parent get_url as there is no detail view for
+        QuotaSuspensions for it to default to."""
+        url = super().get_url()
+        if not url:
+            url = self.quota_definition.get_url()
+
+        return url
+
     def __str__(self):
         return f"{self.sid}"
 
