@@ -71,10 +71,10 @@ class TaskUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = "tasks.change_task"
     form_class = TaskUpdateForm
 
-    @transaction.atomic
     def form_valid(self, form):
         set_current_instigator(self.request.user)
-        self.object = form.save()
+        with transaction.atomic():
+            self.object = form.save()
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):

@@ -19,6 +19,12 @@ def set_current_instigator(instigator):
 
 @receiver(pre_save, sender=Task)
 def create_tasklog_for_task_update(sender, instance, **kwargs):
+    """
+    Creates a `TaskLog` entry when a `Task` is being updated and the update
+    action is a `TaskLog.AuditActionType`.
+
+    Note that this signal is triggered before the `Task` instance is saved.
+    """
     if not instance.pk:
         return
 
