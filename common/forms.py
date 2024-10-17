@@ -7,6 +7,7 @@ from typing import Type
 
 from crispy_forms_gds.fields import DateInputField
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
@@ -458,12 +459,18 @@ class DeleteForm(forms.ModelForm):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            Submit(
-                "submit",
-                "Delete",
-                css_class="govuk-button--warning",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
+            Div(
+                Submit(
+                    "submit",
+                    "Delete",
+                    css_class="govuk-button--warning",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f"<a class='govuk-button govuk-button--secondary' href={self.instance.get_url()}>Cancel</a>",
+                ),
+                css_class="govuk-button-group",
             ),
         )
 

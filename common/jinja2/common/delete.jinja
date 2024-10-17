@@ -22,10 +22,4 @@
   {% call django_form(action=object.get_url("delete")) %}
     {{ crispy(form) }}
   {% endcall %}
-
-  {{ govukButton({
-    "text": "Cancel",
-    "href": object.get_url(),
-    "classes": "govuk-button--secondary"
-  }) }}
 {% endblock %}
