@@ -1923,3 +1923,118 @@ def test_measure_forms_geo_area_serialize_deserialize(form_data, request):
         assert deserialized_form.is_valid()
         assert type(deserialized_form) == forms.MeasureGeographicalAreaForm
         assert deserialized_form.data == form.data
+
+
+@pytest.mark.parametrize(
+    "form_class, form_data_fixture, has_form_kwargs",
+    [
+        (
+            forms.MeasureStartDateForm,
+            "measure_edit_start_date_form_data",
+            True,
+        ),
+        (
+            forms.MeasureEndDateForm,
+            "measure_edit_end_date_form_data",
+            True,
+        ),
+        (
+            forms.MeasureQuotaOrderNumberForm,
+            "measure_quota_order_number_form_data",
+            False,
+        ),
+        (
+            forms.MeasureRegulationForm,
+            "measure_edit_regulation_form_data",
+            True,
+        ),
+        (
+            forms.MeasureDutiesForm,
+            "measure_edit_duties_form_data",
+            True,
+        ),
+    ],
+    ids=[
+        "measure_edit_start_date_form",
+        "measure_edit_end_date_form",
+        "measure_edit_quota_order_number_form",
+        "measure_edit_regulation_form",
+        "measure_edit_duties_form",
+    ],
+)
+def test_simple_measure_edit_forms_serialize_deserialize(
+    form_class,
+    form_data_fixture,
+    has_form_kwargs,
+    date_ranges,
+    request,
+    duty_sentence_parser,
+):
+    """Test that the EditMeasure simple forms that use the
+    SerializableFormMixin behave correctly and as expected."""
+
+    # Create some measures to apply this data to, for the kwargs
+    quota_order_number = factories.QuotaOrderNumberFactory()
+    regulation = factories.RegulationFactory.create()
+    selected_measures = factories.MeasureFactory.create_batch(
+        4,
+        valid_between=date_ranges.normal,
+        order_number=quota_order_number,
+        generating_regulation=regulation,
+    )
+
+    # Check the forms are valid on data submission
+    form_data = request.getfixturevalue(form_data_fixture)
+    form_kwarg_data = {}
+
+    if has_form_kwargs:
+        form_kwarg_data = {
+            "selected_measures": selected_measures,
+        }
+
+    form = form_class(form_data, **form_kwarg_data)
+    assert form.is_valid()
+
+    # Create the serialized data
+    serialized_data = form.serializable_data()
+    serialized_data_kwargs = {}
+
+    if has_form_kwargs:
+        serialized_data_kwargs = form.serializable_init_kwargs(form_kwarg_data)
+
+    # Deserialize the kwargs
+    deserialized_form_kwargs = form.deserialize_init_kwargs(
+        serialized_data_kwargs,
+    )
+
+    # Make a form from serialized data.Check the form is the right type, valid, and the data that went in is the same that comes out
+    deserialized_form = form_class(
+        data=serialized_data,
+        **deserialized_form_kwargs,
+    )
+
+    # Check the form is the right type, valid, and the data that went in is the same that comes out
+    assert type(deserialized_form) == form_class
+    assert deserialized_form.is_valid()
+    assert deserialized_form.data == form_data
+
+
+def test_measure_edit_forms_geo_area_exclusions_serialize_deserialize():
+    geo_area1 = factories.GeographicalAreaFactory.create()
+    geo_area2 = factories.GeographicalAreaFactory.create()
+
+    form_data = {"form-0-excluded_area": geo_area1, "form-1-excluded_area": geo_area2}
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.MeasureGeographicalAreaExclusionsFormSet(
+            form_data,
+        )
+        assert form.is_valid()
+
+        serializable_form_data = form.serializable_data()
+
+        deserialized_form = forms.MeasureGeographicalAreaExclusionsFormSet(
+            data=serializable_form_data,
+        )
+        assert deserialized_form.is_valid()
+        assert type(deserialized_form) == forms.MeasureGeographicalAreaExclusionsFormSet
+        assert deserialized_form.data == form.data

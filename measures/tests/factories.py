@@ -106,3 +106,15 @@ class MeasuresBulkCreatorFactory(factory.django.DjangoModelFactory):
     workbasket = factory.SubFactory(factories.WorkBasketFactory)
     form_data = {}
     form_kwargs = {}
+
+
+class MeasuresBulkEditorFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "measures.MeasuresBulkEditor"
+
+    user = factory.SubFactory(factories.UserFactory)
+    created_at = factory.Faker("date_object")
+    workbasket = factory.SubFactory(factories.WorkBasketFactory)
+    form_data = {}
+    form_kwargs = {}
+    selected_measures = []
