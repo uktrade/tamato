@@ -6,6 +6,8 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
+from django.db.models import Q
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -13,7 +15,6 @@ from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.views.generic import FormView
 from django.views.generic import TemplateView
-from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 from formtools.wizard.views import NamedUrlSessionWizardView
 from rest_framework import permissions
@@ -307,7 +308,11 @@ class QuotaDefinitionList(SortingMixin, ListView):
 
     @property
     def sub_quotas(self):
-        return QuotaAssociation.objects.filter(main_quota__order_number=self.quota)
+        return (
+            QuotaAssociation.objects.current()
+            .filter(main_quota__order_number=self.quota)
+            .order_by("sub_quota__sid")
+        )
 
     @cached_property
     def quota_data(self):
@@ -751,6 +756,28 @@ class QuotaDefinitionDelete(
     form_class = delete_form_for(models.QuotaDefinition)
     template_name = "quota-definitions/delete.jinja"
 
+    @property
+    def related_associations(self):
+        return models.QuotaAssociation.objects.current().filter(
+            Q(main_quota__sid=self.object.sid) | Q(sub_quota__sid=self.object.sid),
+        )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        """Delete the definition and any linked associations."""
+        definition_instance = super().get_result_object(form)
+        for association in self.related_associations:
+            association_form = forms.QuotaAssociationUpdateForm(
+                instance=association,
+            )
+            association_form.instance.new_version(
+                workbasket=self.workbasket,
+                update_type=self.update_type,
+                transaction=definition_instance.transaction,
+            )
+
+        return definition_instance
+
     def form_valid(self, form):
         messages.success(
             self.request,
@@ -1128,3 +1155,193 @@ class QuotaBlockingConfirmCreate(TrackedModelDetailView):
             },
         )
         return context
+
+
+class SubQuotaDefinitionAssociationMixin:
+    template_name = "quota-definitions/sub-quota-definitions-updates.jinja"
+    form_class = forms.SubQuotaDefinitionAssociationUpdateForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["sid"] = self.kwargs["sid"]
+        kwargs["request"] = self.request
+        return kwargs
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Should a user land on the form for a definition which is not a sub-
+        quota, perform a redirect.
+
+        This is not possible with current user journeys but this is included for
+        security and test purposes.
+        """
+        try:
+            self.association
+        except models.QuotaAssociation.DoesNotExist:
+            return HttpResponseRedirect(
+                reverse(
+                    "quota-ui-detail",
+                    kwargs={"sid": self.sub_quota.order_number.sid},
+                ),
+            )
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse(
+            "sub_quota_definition-confirm-update",
+            kwargs={"sid": self.kwargs["sid"]},
+        )
+
+    @property
+    def last_transaction(self):
+        return self.workbasket.transactions.last()
+
+    @property
+    def sub_quota(self):
+        return models.QuotaDefinition.objects.current().get(sid=self.kwargs["sid"])
+
+    @property
+    def association(self):
+        return models.QuotaAssociation.objects.current().get(
+            sub_quota__sid=self.sub_quota.sid,
+        )
+
+    def get_main_definition(self):
+        return self.association.main_quota
+
+
+class SubQuotaDefinitionAssociationUpdate(
+    SubQuotaDefinitionAssociationMixin,
+    QuotaDefinitionUpdate,
+):
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        self.original_association = self.association
+        instance = super().get_result_object(form)
+
+        sub_quota_relation_type = form.cleaned_data.get("relationship_type")
+        coefficient = form.cleaned_data.get("coefficient")
+
+        self.update_association(instance, sub_quota_relation_type, coefficient)
+
+        return instance
+
+    def update_association(self, instance, sub_quota_relation_type, coefficient):
+        "Update the association too if there is updated data submitted."
+        form_data = {
+            "main_quota": self.get_main_definition(),
+            "sub_quota": self.sub_quota,
+            "coefficient": coefficient,
+            "sub_quota_relation_type": sub_quota_relation_type,
+        }
+
+        form = forms.QuotaAssociationUpdateForm(
+            data=form_data,
+            instance=self.original_association,
+        )
+
+        form.instance.new_version(
+            workbasket=WorkBasket.current(self.request),
+            transaction=instance.transaction,
+            sub_quota=instance,
+            main_quota=self.get_main_definition(),
+            coefficient=coefficient,
+            sub_quota_relation_type=sub_quota_relation_type,
+        )
+
+
+class SubQuotaDefinitionAssociationEditUpdate(
+    SubQuotaDefinitionAssociationMixin,
+    QuotaDefinitionEditUpdate,
+):
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        instance = super().get_result_object(form)
+
+        sub_quota_relation_type = form.cleaned_data.get("relationship_type")
+        coefficient = form.cleaned_data.get("coefficient")
+
+        self.update_association(instance, sub_quota_relation_type, coefficient)
+
+        return instance
+
+    def update_association(self, instance, sub_quota_relation_type, coefficient):
+        "Update the association too if there is updated data submitted."
+        current_instance = self.association.version_at(self.last_transaction)
+        form_data = {
+            "main_quota": self.get_main_definition(),
+            "sub_quota": instance,
+            "coefficient": coefficient,
+            "sub_quota_relation_type": sub_quota_relation_type,
+        }
+
+        form = forms.QuotaAssociationUpdateForm(
+            data=form_data,
+            instance=current_instance,
+        )
+        form.save()
+
+
+class SubQuotaConfirmUpdate(TrackedModelDetailView):
+    model = models.QuotaDefinition
+    template_name = "quota-definitions/sub-quota-definitions-confirm-update.jinja"
+
+    @property
+    def association(self):
+        return QuotaAssociation.objects.current().get(sub_quota__sid=self.kwargs["sid"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["association"] = self.association
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Should a user land on the this page for a definition which is not a sub-
+        quota, perform a redirect.
+
+        This is not possible with current user journeys but this is included for
+        security and test purposes.
+        """
+        try:
+            self.association
+        except models.QuotaAssociation.DoesNotExist:
+            return HttpResponseRedirect(
+                reverse(
+                    "quota-ui-list",
+                ),
+            )
+        return super().dispatch(request, *args, **kwargs)
+
+
+class QuotaAssociationDelete(
+    CreateTaricDeleteView,
+):
+    form_class = delete_form_for(models.QuotaAssociation)
+    template_name = "quota-associations/delete.jinja"
+    model = models.QuotaAssociation
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Quota association between {self.object.main_quota.sid} and {self.object.sub_quota.sid} has been deleted",
+        )
+        return super().form_valid(form)
+
+    def get_queryset(self):
+        return models.QuotaAssociation.objects.current()
+
+    def get_success_url(self):
+        return reverse(
+            "quota_association-ui-confirm-delete",
+            kwargs={"sid": self.object.sub_quota.sid},
+        )
+
+
+class QuotaAssociationConfirmDelete(
+    TrackedModelDetailView,
+):
+    template_name = "quota-associations/confirm-delete.jinja"
+    model = models.QuotaDefinition

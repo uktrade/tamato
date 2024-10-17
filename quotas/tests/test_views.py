@@ -116,7 +116,7 @@ def test_quota_delete_form(factory, use_delete_form):
 def test_quota_detail_views(
     view,
     url_pattern,
-    valid_user_client,
+    client_with_current_workbasket,
     mock_quota_api_no_data,
 ):
     """Verify that quota detail views are under the url quotas and don't return
@@ -124,7 +124,7 @@ def test_quota_detail_views(
     assert_model_view_renders(
         view,
         url_pattern,
-        valid_user_client,
+        client_with_current_workbasket,
         override_models={"quotas.views.QuotaDefinitionCreate": models.QuotaOrderNumber},
     )
 
@@ -389,17 +389,20 @@ def test_quota_event_api_list_view(valid_user_client):
     )
 
 
-def test_quota_definitions_list_200(valid_user_client, quota_order_number):
+def test_quota_definitions_list_200(client_with_current_workbasket, quota_order_number):
     factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     assert response.status_code == 200
 
 
-def test_quota_definitions_list_no_quota_data(valid_user_client, quota_order_number):
+def test_quota_definitions_list_no_quota_data(
+    client_with_current_workbasket,
+    quota_order_number,
+):
     factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
 
     url = (
@@ -410,13 +413,16 @@ def test_quota_definitions_list_no_quota_data(valid_user_client, quota_order_num
     with mock.patch(
         "common.tariffs_api.get_quota_definitions_data",
     ) as mock_get_quotas:
-        response = valid_user_client.get(url)
+        response = client_with_current_workbasket.get(url)
         mock_get_quotas.assert_not_called()
 
     assert response.status_code == 200
 
 
-def test_quota_definitions_list_sids(valid_user_client, quota_order_number):
+def test_quota_definitions_list_sids(
+    client_with_current_workbasket,
+    quota_order_number,
+):
     definitions = factories.QuotaDefinitionFactory.create_batch(
         5,
         order_number=quota_order_number,
@@ -424,7 +430,7 @@ def test_quota_definitions_list_sids(valid_user_client, quota_order_number):
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     sids = {
@@ -437,12 +443,15 @@ def test_quota_definitions_list_sids(valid_user_client, quota_order_number):
     assert not sids.difference(object_sids)
 
 
-def test_quota_definitions_list_title(valid_user_client, quota_order_number):
+def test_quota_definitions_list_title(
+    client_with_current_workbasket,
+    quota_order_number,
+):
     factories.QuotaDefinitionFactory.create_batch(5, order_number=quota_order_number)
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     title = soup.select("h1")[0].text
@@ -450,7 +459,7 @@ def test_quota_definitions_list_title(valid_user_client, quota_order_number):
 
 
 def test_quota_definitions_list_current_versions(
-    valid_user_client,
+    client_with_current_workbasket,
     approved_transaction,
 ):
     quota_order_number = factories.QuotaOrderNumberFactory()
@@ -477,7 +486,7 @@ def test_quota_definitions_list_current_versions(
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     num_definitions = len(
@@ -515,7 +524,7 @@ def test_quota_definitions_list_current_measures(
 
 
 def test_quota_definitions_list_edit_delete(
-    valid_user_client,
+    client_with_current_workbasket,
     date_ranges,
     mock_quota_api_no_data,
 ):
@@ -537,7 +546,7 @@ def test_quota_definitions_list_edit_delete(
 
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     actions = [item.text for item in soup.select("table tbody tr td:last-child")]
@@ -557,7 +566,7 @@ def test_quota_definitions_list_edit_delete(
 
 
 def test_quota_definitions_list_sort_by_start_date(
-    valid_user_client,
+    client_with_current_workbasket,
     date_ranges,
 ):
     """Test that quota definitions list can be sorted by start date in ascending
@@ -575,7 +584,9 @@ def test_quota_definitions_list_sort_by_start_date(
     )
     url = reverse("quota_definition-ui-list", kwargs={"sid": quota_order_number.sid})
 
-    response = valid_user_client.get(f"{url}?sort_by=valid_between&ordered=asc")
+    response = client_with_current_workbasket.get(
+        f"{url}?sort_by=valid_between&ordered=asc",
+    )
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     definition_sids = [
@@ -584,7 +595,9 @@ def test_quota_definitions_list_sort_by_start_date(
     ]
     assert definition_sids == [definition1.sid, definition2.sid]
 
-    response = valid_user_client.get(f"{url}?sort_by=valid_between&ordered=desc")
+    response = client_with_current_workbasket.get(
+        f"{url}?sort_by=valid_between&ordered=desc",
+    )
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     definition_sids = [
@@ -697,7 +710,7 @@ def test_quota_detail_sub_quota_tab(
 
 def test_current_quota_order_number_returned(
     workbasket,
-    valid_user_client,
+    client_with_current_workbasket,
     mock_quota_api_no_data,
     date_ranges,
 ):
@@ -713,7 +726,7 @@ def test_current_quota_order_number_returned(
         valid_between=date_ranges.normal,
     )
     url = reverse("quota_definition-ui-list", kwargs={"sid": current_version.sid})
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
 
     assert response.status_code == 200
 
@@ -954,6 +967,56 @@ def test_delete_quota_definition(client_with_current_workbasket, date_ranges):
         h1.text.strip()
         == f"Quota definition period {quota_definition.sid} has been deleted"
     )
+
+
+def test_delete_quota_definition_deletes_associations(
+    client_with_current_workbasket,
+    date_ranges,
+):
+    """Test that when a quota definition is deleted that all linked associations
+    are deleted too."""
+    main_quota = factories.QuotaDefinitionFactory.create(
+        sid=1,
+        valid_between=date_ranges.future,
+        measurement_unit=factories.MeasurementUnitFactory(),
+    )
+    for i in range(2, 6):
+        factories.QuotaAssociationFactory.create(
+            sub_quota=factories.QuotaDefinitionFactory.create(
+                sid=i,
+                valid_between=date_ranges.future,
+            ),
+            main_quota=main_quota,
+        )
+
+    # Delete a sub-quota and verify the related association gets deleted too
+    sub_quota_2 = models.QuotaDefinition.objects.all().get(sid=2)
+    url = reverse("quota_definition-ui-delete", kwargs={"sid": sub_quota_2.sid})
+    client_with_current_workbasket.post(url, {"submit": "Delete"})
+
+    sub_quota_2_new_version = models.QuotaDefinition.objects.all().filter(sid=2).last()
+    association_2_new_version = (
+        models.QuotaAssociation.objects.all().filter(sub_quota__sid=2).last()
+    )
+    assert sub_quota_2_new_version.update_type == UpdateType.DELETE
+    assert association_2_new_version.update_type == UpdateType.DELETE
+
+    # Delete the main_quota and verify that all remaining associations get deleted too
+    url = reverse("quota_definition-ui-delete", kwargs={"sid": main_quota.sid})
+    client_with_current_workbasket.post(url, {"submit": "Delete"})
+
+    main_quota_new_version = models.QuotaDefinition.objects.all().filter(sid=1).last()
+    association_new_versions = [
+        models.QuotaAssociation.objects.all().filter(sub_quota__sid=i).last()
+        for i in range(3, 6)
+    ]
+
+    deleted_associations = models.QuotaAssociation.objects.all().filter(
+        update_type=UpdateType.DELETE,
+    )
+    assert main_quota_new_version.update_type == UpdateType.DELETE
+    for association in association_new_versions:
+        assert association in deleted_associations
 
 
 def test_quota_create_with_origins(
@@ -1913,7 +1976,7 @@ def test_quota_blocking_confirm_create_view(valid_user_client):
     )
 
 
-def test_quota_definition_view(valid_user_client):
+def test_quota_definition_view(client_with_current_workbasket):
     """Test all 4 of the quota definition tabs load and display the correct
     objects."""
     main_quota_definition = factories.QuotaDefinitionFactory.create(sid=123)
@@ -1933,7 +1996,7 @@ def test_quota_definition_view(valid_user_client):
     )
 
     # Definition period tab
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse("quota_definition-ui-list", kwargs={"sid": main_quota.sid}),
     )
     assert response.status_code == 200
@@ -1943,8 +2006,8 @@ def test_quota_definition_view(valid_user_client):
     )[0].text.strip()
     assert int(sid_cell_text) == main_quota_definition.sid
 
-    # Sub quotas tab
-    response = valid_user_client.get(
+    # Sub-quotas tab
+    response = client_with_current_workbasket.get(
         reverse(
             "quota_definition-ui-list-filter",
             kwargs={"sid": main_quota.sid, "quota_type": "sub_quotas"},
@@ -1956,7 +2019,7 @@ def test_quota_definition_view(valid_user_client):
     assert int(sid_cell_text) == sub_quota_definition.sid
 
     # Blocking periods tab
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse(
             "quota_definition-ui-list-filter",
             kwargs={"sid": main_quota.sid, "quota_type": "blocking_periods"},
@@ -1968,7 +2031,7 @@ def test_quota_definition_view(valid_user_client):
     assert description_cell_text == blocking.description
 
     # Suspension period tab
-    response = valid_user_client.get(
+    response = client_with_current_workbasket.get(
         reverse(
             "quota_definition-ui-list-filter",
             kwargs={"sid": main_quota.sid, "quota_type": "suspension_periods"},
@@ -2247,3 +2310,172 @@ def test_format_date(wizard):
     date_str = "2021-01-01"
     formatted_date = wizard.format_date(date_str)
     assert formatted_date == "01 Jan 2021"
+
+
+@pytest.fixture
+def sub_quota_association(date_ranges):
+    sub_quota = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.future,
+        is_physical=True,
+        initial_volume=1234,
+        volume=1234,
+        measurement_unit=factories.MeasurementUnitFactory(),
+    )
+    main_quota = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.future,
+        volume=9999,
+        initial_volume=9999,
+        measurement_unit=sub_quota.measurement_unit,
+    )
+    association = factories.QuotaAssociationFactory.create(
+        sub_quota=sub_quota,
+        main_quota=main_quota,
+        sub_quota_relation_type="EQ",
+        coefficient=1.5,
+    )
+    return association
+
+
+def test_sub_quota_update(sub_quota_association, client_with_current_workbasket):
+    """Test that SubQuotaDefinitionAssociationUpdate returns 200 and creates an
+    update object for sub-quota definition and association."""
+    sub_quota = sub_quota_association.sub_quota
+    response = client_with_current_workbasket.get(
+        reverse("sub_quota_definition-edit", kwargs={"sid": sub_quota.sid}),
+    )
+    assert response.status_code == 200
+
+    form_data = {
+        "coefficient": 1.2,
+        "start_date_0": sub_quota.valid_between.lower.day,
+        "start_date_1": sub_quota.valid_between.lower.month,
+        "start_date_2": sub_quota.valid_between.lower.year,
+        "measurement_unit": sub_quota.measurement_unit.pk,
+        "relationship_type": "EQ",
+        "end_date_0": sub_quota.valid_between.lower.day,
+        "end_date_1": sub_quota.valid_between.lower.month,
+        "end_date_2": sub_quota.valid_between.lower.year,
+        "volume": 100,
+        "initial_volume": 100,
+    }
+    response = client_with_current_workbasket.post(
+        reverse("sub_quota_definition-edit", kwargs={"sid": sub_quota.sid}),
+        form_data,
+    )
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "sub_quota_definition-confirm-update",
+        kwargs={"sid": sub_quota.sid},
+    )
+    tx = Transaction.objects.last()
+    sub_quota_association = models.QuotaAssociation.objects.approved_up_to_transaction(
+        tx,
+    ).get(sub_quota__sid=sub_quota.sid)
+    assert str(sub_quota_association.coefficient) == "1.20000"
+    assert sub_quota_association.sub_quota.volume == 100
+    assert sub_quota_association.update_type == UpdateType.UPDATE
+    assert sub_quota_association.sub_quota.update_type == UpdateType.UPDATE
+
+
+def test_sub_quota_edit_update(sub_quota_association, client_with_current_workbasket):
+    """Test that SubQuotaDefinitionAssociationEditUpdate returns 200 and
+    overwrites the update objects for the sub-quota definition and
+    association."""
+    # Call the previous test first to create the objects and some update instances of them
+    test_sub_quota_update(sub_quota_association, client_with_current_workbasket)
+    sub_quota = sub_quota_association.sub_quota
+    response = client_with_current_workbasket.get(
+        reverse("sub_quota_definition-edit-update", kwargs={"sid": sub_quota.sid}),
+    )
+    assert response.status_code == 200
+
+    form_data = {
+        "coefficient": 1,
+        "start_date_0": sub_quota.valid_between.lower.day,
+        "start_date_1": sub_quota.valid_between.lower.month,
+        "start_date_2": sub_quota.valid_between.lower.year,
+        "measurement_unit": sub_quota.measurement_unit.pk,
+        "relationship_type": "NM",
+        "end_date_0": sub_quota.valid_between.lower.day,
+        "end_date_1": sub_quota.valid_between.lower.month,
+        "end_date_2": sub_quota.valid_between.lower.year,
+        "volume": 200,
+        "initial_volume": 200,
+    }
+    response = client_with_current_workbasket.post(
+        reverse("sub_quota_definition-edit-update", kwargs={"sid": sub_quota.sid}),
+        form_data,
+    )
+    assert response.status_code == 302
+    # Assert that the update instances have been edited rather than creating another 2 update instances
+    tx = Transaction.objects.last()
+    sub_quota_association = models.QuotaAssociation.objects.approved_up_to_transaction(
+        tx,
+    ).get(sub_quota__sid=sub_quota.sid)
+    assert str(sub_quota_association.coefficient) == "1.00000"
+    assert sub_quota_association.sub_quota.volume == 200
+    sub_quota_definitions = models.QuotaDefinition.objects.all().filter(
+        sid=sub_quota.sid,
+    )
+    sub_quota_associations = models.QuotaAssociation.objects.all().filter(
+        sub_quota__sid=sub_quota.sid,
+    )
+    assert len(sub_quota_definitions) == 2
+    assert len(sub_quota_associations) == 2
+    assert sub_quota_definitions[1].update_type == UpdateType.UPDATE
+    assert sub_quota_associations[1].update_type == UpdateType.UPDATE
+
+
+def test_sub_quota_confirm_update_page(
+    client_with_current_workbasket,
+    sub_quota_association,
+):
+    sub_quota = sub_quota_association.sub_quota
+    response = client_with_current_workbasket.get(
+        reverse(
+            "sub_quota_definition-confirm-update",
+            kwargs={"sid": sub_quota.sid},
+        ),
+    )
+    workbasket = response.context_data["view"].workbasket
+    assert (
+        f"Sub-quota definition: {sub_quota.sid} and association have been updated in workbasket {workbasket.pk}"
+        in str(response.content)
+    )
+
+
+def test_delete_quota_association(client_with_current_workbasket):
+    main_quota = factories.QuotaDefinitionFactory.create()
+    sub_quota = factories.QuotaDefinitionFactory.create()
+    quota_association = factories.QuotaAssociationFactory.create(
+        main_quota=main_quota,
+        sub_quota=sub_quota,
+    )
+
+    url = reverse(
+        "quota_association-ui-delete",
+        kwargs={"pk": quota_association.pk},
+    )
+
+    response = client_with_current_workbasket.post(url, {"submit": "Delete"})
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "quota_association-ui-confirm-delete",
+        kwargs={"sid": sub_quota.sid},
+    )
+
+    tx = Transaction.objects.last()
+
+    assert tx.workbasket.tracked_models.first().update_type == UpdateType.DELETE
+    confirm_response = client_with_current_workbasket.get(response.url)
+
+    soup = BeautifulSoup(
+        confirm_response.content.decode(response.charset),
+        "html.parser",
+    )
+    h1 = soup.select("h1")[0]
+
+    assert (
+        h1.text.strip()
+        == f"Quota association between {main_quota.sid} and {sub_quota.sid} has been deleted"
+    )
