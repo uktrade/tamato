@@ -978,11 +978,11 @@ def test_quota_suspension_update_form_valid(date_ranges):
     current_validity = suspension.valid_between
     data = {
         "start_date_0": current_validity.lower.day + 1,
-        "start_date_1": current_validity.lower.month + 1,
-        "start_date_2": current_validity.lower.year + 1,
-        "end_date_0": current_validity.upper.day - 1,
-        "end_date_1": current_validity.upper.month - 1,
-        "end_date_2": current_validity.upper.year + -1,
+        "start_date_1": current_validity.lower.month,
+        "start_date_2": current_validity.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
         "description": "New description",
     }
     with override_current_transaction(Transaction.objects.last()):

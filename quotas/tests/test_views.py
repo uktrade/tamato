@@ -2502,7 +2502,7 @@ def test_quota_suspension_edit(client_with_current_workbasket):
     assert response.status_code == 302
     assert response.url == reverse(
         "quota_suspension-ui-confirm-update",
-        kwargs={"sid": suspension.quota_definition.order_number.sid},
+        kwargs={"sid": suspension.sid},
     )
 
     updated_suspension = models.QuotaSuspension.objects.approved_up_to_transaction(
