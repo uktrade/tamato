@@ -222,7 +222,7 @@ class TaskLog(TimestampedMixin):
     description = models.TextField(editable=False)
     task = models.ForeignKey(
         Task,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         editable=False,
         related_name="logs",
     )
