@@ -621,7 +621,7 @@ class MeasuresWizardAsyncConfirm(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["expected_measures_count"] = self.kwargs.get("expected_measures_count")
-        return context    
+        return context
 
 
 class MeasuresWizardSyncConfirm(TemplateView):
