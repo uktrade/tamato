@@ -5,6 +5,12 @@
 {% set page_title = "Quota ID: " ~ object.order_number %}
 {% set find_edit_url = url("quota-ui-list") %}
 
+{% if sub_quota_associations %}
+  {% set title_caption = "Main quota" %}
+{% elif main_quota_associations %}
+  {% set title_caption = "Sub-quota" %}
+{% endif %}
+
 {% set core_data_tab_html %}{% include "includes/quotas/tabs/core_data.jinja" %}{% endset %}
 {% set definition_details_html %}{% include "includes/quotas/tabs/definition_details.jinja" %}{% endset %}
 {% set sub_quotas_html %}{% include "includes/quotas/tabs/sub_quotas.jinja" %}{% endset %}

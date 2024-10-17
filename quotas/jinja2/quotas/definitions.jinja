@@ -10,6 +10,12 @@
 {% set page_title = "Quota ID: " ~ quota.order_number ~ " - Data" %}
 {% set find_edit_url = url("quota-ui-list") %}
 
+{% if sub_quotas %}
+  {% set page_subtitle = "Main quota" %}
+{% elif main_quotas %}
+  {% set page_subtitle = "Sub-quota" %}
+{% endif %}
+
 {% set links = [
     {
       "text": "Quota definition periods",
@@ -44,7 +50,13 @@
 
 {% block content %}
 
+<span class="govuk-caption-xl">
+  {% block page_subtitle %}
+    {{ page_subtitle }}
+  {% endblock %}
+</span>
 <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
 
 {{ fake_tabs(links) }}
 <div class="quota-definitions">
