@@ -32,7 +32,7 @@ class GeographicalMembershipLookUp(models.Model):
     current_version = models.ForeignKey(GeographicalMembershipLatest, models.DO_NOTHING)
 
 
-class GeographicalareaDescriptionLatest(models.Model):
+class GeographicalAreaDescriptionLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=500, blank=True, null=True)
     sid = models.IntegerField()
@@ -43,9 +43,9 @@ class GeographicalareaDescriptionLatest(models.Model):
     validity_start = models.DateField()
 
 
-class GeographicalareaDescriptionLookUp(models.Model):
+class GeographicalAreaDescriptionLookUp(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     current_version = models.ForeignKey(
-        GeographicalareaDescriptionLatest,
+        GeographicalAreaDescriptionLatest,
         models.DO_NOTHING,
     )

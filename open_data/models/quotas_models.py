@@ -6,9 +6,9 @@ class QuotaAssociationLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     sub_quota_relation_type = models.CharField(max_length=2)
     coefficient = models.DecimalField(max_digits=16, decimal_places=5)
-    main_quota = models.ForeignKey("QuotaDefinition", models.DO_NOTHING)
+    main_quota = models.ForeignKey("QuotaDefinitionLookUp", models.DO_NOTHING)
     sub_quota = models.ForeignKey(
-        "QuotaDefinition",
+        "QuotaDefinitionLookUp",
         models.DO_NOTHING,
         related_name="quotasquotaassociation_sub_quota_set",
     )
@@ -30,24 +30,24 @@ class QuotaDefinitionLatest(models.Model):
     quota_critical_threshold = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     measurement_unit = models.ForeignKey(
-        "MeasuresMeasurementunit",
+        "MeasurementUnitLookup",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     measurement_unit_qualifier = models.ForeignKey(
-        "MeasuresMeasurementunitqualifier",
+        "MeasurementUnitQualifierLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     monetary_unit = models.ForeignKey(
-        "MeasuresMonetaryunit",
+        "MonetaryunitLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    order_number = models.ForeignKey("QuotasQuotaordernumber", models.DO_NOTHING)
+    order_number = models.ForeignKey("QuotaOrderNumberLookUp", models.DO_NOTHING)
 
 
 class QuotaDefinitionLookUp(models.Model):
@@ -73,8 +73,8 @@ class QuotaOrderNumberOriginLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.IntegerField()
-    geographical_area = models.ForeignKey("GeoAreasGeographicalarea", models.DO_NOTHING)
-    order_number = models.ForeignKey(QuotaOrderNumber, models.DO_NOTHING)
+    geographical_area = models.ForeignKey("GeographicalAreaLookUp", models.DO_NOTHING)
+    order_number = models.ForeignKey(QuotaOrderNumberLookUp, models.DO_NOTHING)
 
 
 class QuotaOrderNumberOriginLookUp(models.Model):
@@ -87,7 +87,7 @@ class QuotaSuspensionLatest(models.Model):
     valid_between = DateRange
     sid = models.IntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
-    quota_definition = models.ForeignKey(QuotaDefinition, models.DO_NOTHING)
+    quota_definition = models.ForeignKey(QuotaDefinitionLookUp, models.DO_NOTHING)
 
 
 class QuotaSuspensionLookUp(models.Model):
@@ -98,10 +98,10 @@ class QuotaSuspensionLookUp(models.Model):
 class QuotaOrderNumberOriginExclusionLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     excluded_geographical_area = models.ForeignKey(
-        "GeoAreasGeographicalarea",
+        "GeographicalAreaLookUp",
         models.DO_NOTHING,
     )
-    origin = models.ForeignKey(QuotaOrderNumberOrigin, models.DO_NOTHING)
+    origin = models.ForeignKey(QuotaOrderNumberOriginLookUp, models.DO_NOTHING)
 
 
 class QuotaOrderNumberOriginExclusionLookUp(models.Model):
@@ -117,7 +117,7 @@ class QuotaEventLatest(models.Model):
     subrecord_code = models.CharField(max_length=2)
     occurrence_timestamp = models.DateTimeField()
     data = models.JSONField()
-    quota_definition = models.ForeignKey(QuotaDefinition, models.DO_NOTHING)
+    quota_definition = models.ForeignKey(QuotaDefinitionLookUp, models.DO_NOTHING)
 
 
 class QuotaEventLookUp(models.Model):
@@ -131,7 +131,7 @@ class QuotaBlockingLatest(models.Model):
     sid = models.IntegerField()
     blocking_period_type = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
-    quota_definition = models.ForeignKey(QuotaDefinition, models.DO_NOTHING)
+    quota_definition = models.ForeignKey(QuotaDefinitionLookUp, models.DO_NOTHING)
 
 
 class QuotaBlockingLookUp(models.Model):

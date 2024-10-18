@@ -4,12 +4,12 @@ from psycopg.types.range import DateRange
 
 class AdditionalCodeTypeMeasureTypeLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = models.DateRange
+    valid_between = DateRange
     additional_code_type = models.ForeignKey(
-        "AdditionalCodesAdditionalcodetype",
+        "AdditionalCodeTypeLookUp",
         models.DO_NOTHING,
     )
-    measure_type = models.ForeignKey("MeasuresMeasuretype", models.DO_NOTHING)
+    measure_type = models.ForeignKey("MeasureTypeLookUp", models.DO_NOTHING)
 
 
 class AdditionalCodeTypeMeasureTypeLookUp(models.Model):
@@ -22,7 +22,7 @@ class AdditionalCodeTypeMeasureTypeLookUp(models.Model):
 
 class DutyExpressionLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = models.DateRange
+    valid_between = DateRange
     sid = models.IntegerField()
     prefix = models.CharField(max_length=14)
     duty_amount_applicability_code = models.SmallIntegerField()
@@ -38,8 +38,8 @@ class DutyExpressionLookUp(models.Model):
 
 class FootnoteAssociationMeasureLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
-    associated_footnote = models.ForeignKey("FootnotesFootnote", models.DO_NOTHING)
-    footnoted_measure = models.ForeignKey("MeasuresMeasure", models.DO_NOTHING)
+    associated_footnote = models.ForeignKey("FootnoteLookUp", models.DO_NOTHING)
+    footnoted_measure = models.ForeignKey("MeasureLookUp", models.DO_NOTHING)
 
 
 class FootnoteAssociationMeasureLookUp(models.Model):
@@ -60,31 +60,31 @@ class MeasureLatest(models.Model):
     stopped = models.BooleanField()
     export_refund_nomenclature_sid = models.IntegerField(blank=True, null=True)
     additional_code = models.ForeignKey(
-        "AdditionalCodesAdditionalcode",
+        "AdditionalcodeLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     generating_regulation = models.ForeignKey(
-        "RegulationsRegulation",
+        "RegulationLookUp",
         models.DO_NOTHING,
     )
-    geographical_area = models.ForeignKey("GeoAreasGeographicalarea", models.DO_NOTHING)
+    geographical_area = models.ForeignKey("GeographicalAreaLookUp", models.DO_NOTHING)
     goods_nomenclature = models.ForeignKey(
-        "CommoditiesGoodsnomenclature",
+        "GoodsNomenclatureLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    measure_type = models.ForeignKey("MeasuresMeasuretype", models.DO_NOTHING)
+    measure_type = models.ForeignKey("MeasureTypeLookUp", models.DO_NOTHING)
     order_number = models.ForeignKey(
-        "QuotasQuotaordernumber",
+        "QuotaOrderNumberLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     terminating_regulation = models.ForeignKey(
-        "RegulationsRegulation",
+        "RegulationLookUp",
         models.DO_NOTHING,
         related_name="measuresmeasure_terminating_regulation_set",
         blank=True,
@@ -118,16 +118,16 @@ class MeasureConditionComponentLatest(models.Model):
         blank=True,
         null=True,
     )
-    condition = models.ForeignKey("MeasuresMeasurecondition", models.DO_NOTHING)
+    condition = models.ForeignKey("MeasureConditionLookUp", models.DO_NOTHING)
     component_measurement = models.ForeignKey(
-        "MeasuresMeasurement",
+        "MeasurementLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    duty_expression = models.ForeignKey("DutyExpressionLatest", models.DO_NOTHING)
+    duty_expression = models.ForeignKey("DutyExpressionLookUp", models.DO_NOTHING)
     monetary_unit = models.ForeignKey(
-        "MeasuresMonetaryunit",
+        "MonetaryUnitLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
@@ -153,30 +153,30 @@ class MeasureConditionLatest(models.Model):
         null=True,
     )
     action = models.ForeignKey(
-        MeasureAction,
+        MeasureActionLookUp,
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     condition_code = models.ForeignKey(
-        "MeasuresMeasureconditioncode",
+        "MeasureConditionCodeLookUp",
         models.DO_NOTHING,
     )
     condition_measurement = models.ForeignKey(
-        "MeasuresMeasurement",
+        "MeasurementLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     dependent_measure = models.ForeignKey(MeasureLookUp, models.DO_NOTHING)
     monetary_unit = models.ForeignKey(
-        "MeasuresMonetaryunit",
+        "MonetaryUnitLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     required_certificate = models.ForeignKey(
-        "CertificatesCertificate",
+        "CertificateLookUp",
         models.DO_NOTHING,
         blank=True,
         null=True,
@@ -268,7 +268,7 @@ class MeasureTypeLatest(models.Model):
     measure_explosion_level = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     measure_type_series = models.ForeignKey(
-        MeasureTypeSeries,
+        MeasureTypeSeriesLookUp,
         models.DO_NOTHING,
     )
 
@@ -281,9 +281,9 @@ class MeasureTypeLookUp(models.Model):
 class MeasurementLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
-    measurement_unit = models.ForeignKey(MeasuresMeasurementunit, models.DO_NOTHING)
+    measurement_unit = models.ForeignKey(MeasurementUnitLookUp, models.DO_NOTHING)
     measurement_unit_qualifier = models.ForeignKey(
-        MeasuresMeasurementunitqualifier,
+        MeasurementUnitQualifierLookUp,
         models.DO_NOTHING,
         blank=True,
         null=True,
@@ -298,10 +298,10 @@ class MeasurementLookUp(models.Model):
 class MeasureExcludedGeographicalAreaLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     excluded_geographical_area = models.ForeignKey(
-        "GeoAreasGeographicalarea",
+        "GeographicalAreaLookUp",
         models.DO_NOTHING,
     )
-    modified_measure = models.ForeignKey(Measure, models.DO_NOTHING)
+    modified_measure = models.ForeignKey(MeasureLookUp, models.DO_NOTHING)
 
 
 class MeasureExcludedGeographicalAreaLookUp(models.Model):
@@ -322,14 +322,14 @@ class MeasureComponentLatest(models.Model):
     )
     component_measure = models.ForeignKey(MeasureLookUp, models.DO_NOTHING)
     component_measurement = models.ForeignKey(
-        Measurement,
+        MeasurementLookUp,
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    duty_expression = models.ForeignKey(DutyExpression, models.DO_NOTHING)
+    duty_expression = models.ForeignKey(DutyExpressionLookUp, models.DO_NOTHING)
     monetary_unit = models.ForeignKey(
-        MonetaryUnit,
+        MonetaryUnitLookUp,
         models.DO_NOTHING,
         blank=True,
         null=True,

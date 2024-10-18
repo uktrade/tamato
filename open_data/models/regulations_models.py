@@ -4,9 +4,9 @@ from psycopg.types.range import DateRange
 
 class AmendmentLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
-    enacting_regulation = models.ForeignKey("Regulation ", models.DO_NOTHING)
+    enacting_regulation = models.ForeignKey("RegulationLookUp", models.DO_NOTHING)
     target_regulation = models.ForeignKey(
-        "Regulation ",
+        "RegulationLookUp",
         models.DO_NOTHING,
         related_name="regulationsamendment_target_regulation_set",
     )
@@ -64,7 +64,7 @@ class RegulationLookUp(models.Model):
 class SuspensionLatest(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     effective_end_date = models.DateField(blank=True, null=True)
-    enacting_regulation = models.ForeignKey(Regulation, models.DO_NOTHING)
+    enacting_regulation = models.ForeignKey(RegulationLookUp, models.DO_NOTHING)
     target_regulation = models.ForeignKey(
         RegulationLookUp,
         models.DO_NOTHING,
