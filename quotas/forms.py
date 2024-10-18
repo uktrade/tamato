@@ -1008,15 +1008,13 @@ class QuotaSuspensionUpdateForm(ValidityPeriodForm, forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        sid = kwargs.pop("sid")
         super().__init__(*args, **kwargs)
-        self.quota_suspension = models.QuotaSuspension.objects.current().get(sid=sid)
         self.init_layout()
 
     def init_layout(self):
         cancel_url = reverse_lazy(
             "quota-ui-detail",
-            kwargs={"sid": self.quota_suspension.quota_definition.order_number.sid},
+            kwargs={"sid": self.instance.quota_definition.order_number.sid},
         )
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -1042,7 +1040,7 @@ class QuotaSuspensionUpdateForm(ValidityPeriodForm, forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        definition_period = self.quota_suspension.quota_definition.valid_between
+        definition_period = self.instance.quota_definition.valid_between
         validity_period = cleaned_data.get("valid_between")
         if (
             definition_period

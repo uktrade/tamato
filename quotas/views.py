@@ -1167,11 +1167,6 @@ class QuotaSuspensionUpdateMixin(TrackedModelDetailMixin):
     form_class = forms.QuotaSuspensionUpdateForm
     permission_required = ["common.change_trackedmodel"]
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["sid"] = self.kwargs["sid"]
-        return kwargs
-
     def get_success_url(self):
         return reverse(
             "quota_suspension-ui-confirm-update",
@@ -1210,23 +1205,19 @@ class QuotaSuspensionDelete(TrackedModelDetailMixin, CreateTaricDeleteView):
     model = models.QuotaSuspension
     template_name = "quota-suspensions/delete.jinja"
 
-    def form_valid(self, form):
-        messages.success(
-            self.request,
-            f"Quota suspension period {self.object.sid} has been deleted",
-        )
-        return super().form_valid(form)
-
     def get_success_url(self):
         return reverse(
             "quota_suspension-ui-confirm-delete",
-            kwargs={"sid": self.object.quota_definition.order_number.sid},
+            kwargs={"sid": self.object},
         )
 
 
 class QuotaSuspensionConfirmDelete(TrackedModelDetailView):
-    model = models.QuotaOrderNumber
+    model = models.QuotaSuspension
     template_name = "quota-suspensions/confirm-delete.jinja"
+
+    def get_queryset(self):
+        return QuotaSuspension.objects.filter(update_type=UpdateType.DELETE)
 
 
 class SubQuotaDefinitionAssociationMixin:

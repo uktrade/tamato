@@ -485,7 +485,13 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
         QuotaSuspensions for it to default to."""
         url = super().get_url(action=action)
         if not url:
-            url = self.quota_definition.get_url()
+            url = reverse(
+                "quota_definition-ui-list-filter",
+                kwargs={
+                    "sid": self.quota_definition.order_number.sid,
+                    "quota_type": "suspension_periods",
+                },
+            )
 
         return url
 
