@@ -479,6 +479,10 @@ class MeasuresBulkEditor(BulkProcessor):
     )
     """The user who submitted the task to create measures."""
 
+    @property
+    def expected_measures_count(self) -> int:
+        return len(self.selected_measures)
+
     def schedule_task(self) -> AsyncResult:
         """Implementation of base class method."""
 
