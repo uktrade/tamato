@@ -2487,7 +2487,7 @@ def test_quota_suspension_edit(client_with_current_workbasket):
     suspension = factories.QuotaSuspensionFactory.create()
     current_validity = suspension.valid_between
     data = {
-        "start_date_0": current_validity.lower.day + 1,
+        "start_date_0": current_validity.lower.day,
         "start_date_1": current_validity.lower.month,
         "start_date_2": current_validity.lower.year,
         "end_date_0": current_validity.upper.day,

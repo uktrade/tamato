@@ -989,7 +989,6 @@ def test_quota_suspension_update_form_valid(date_ranges):
         form = forms.QuotaSuspensionUpdateForm(
             data=data,
             instance=suspension,
-            sid=suspension.sid,
         )
         assert form.is_valid()
 
@@ -1013,7 +1012,6 @@ def test_quota_suspension_update_form_invalid(date_ranges):
         form = forms.QuotaSuspensionUpdateForm(
             data=data,
             instance=suspension,
-            sid=suspension.sid,
         )
         assert not form.is_valid()
         assert (

@@ -1213,11 +1213,23 @@ class QuotaSuspensionDelete(TrackedModelDetailMixin, CreateTaricDeleteView):
 
 
 class QuotaSuspensionConfirmDelete(TrackedModelDetailView):
-    model = models.QuotaSuspension
+    model = QuotaSuspension
     template_name = "quota-suspensions/confirm-delete.jinja"
 
+    @property
+    def deleted_suspension(self):
+        return QuotaSuspension.objects.filter(sid=self.kwargs["sid"]).last()
+
     def get_queryset(self):
-        return QuotaSuspension.objects.filter(update_type=UpdateType.DELETE)
+        """
+        Returns a queryset with one single version of the suspension in
+        question.
+
+        Done this way so the sid can be rendered on the confirm delete page and
+        generic tests don't fail which try to load the page without having
+        deleted anything.
+        """
+        return QuotaSuspension.objects.filter(pk=self.deleted_suspension)
 
 
 class SubQuotaDefinitionAssociationMixin:
