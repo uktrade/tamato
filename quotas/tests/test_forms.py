@@ -977,7 +977,7 @@ def test_quota_suspension_update_form_valid(date_ranges):
     )
     current_validity = suspension.valid_between
     data = {
-        "start_date_0": current_validity.lower.day + 1,
+        "start_date_0": current_validity.lower.day,
         "start_date_1": current_validity.lower.month,
         "start_date_2": current_validity.lower.year,
         "end_date_0": "",
