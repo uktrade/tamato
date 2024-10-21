@@ -203,7 +203,7 @@ class GA20(BusinessRule):
         if not membership.geo_group.parent:
             return
 
-        parent = membership.geo_group.parent.current_version
+        parent = membership.geo_group.parent.latest_approved_version
 
         if (
             parent.members.filter(
