@@ -44,10 +44,11 @@
     <div class="quota__sub-quotas__content govuk-grid-column-three-quarters">
       <h2 class="govuk-heading-l">Quota associations</h2>
       {% if sub_quota_associations or main_quota_associations %}
-          {% if sub_quota_associations %}
-          <h3>Sub-quotas</h3>
-          {% elif main_quota_associations %}
-          <h3>Main quota</h3>
+          {% if main_quota_associations %}
+            <h3>Main quota</h3>
+          {% elif sub_quota_associations %}
+            <h3>Sub-quotas</h3>
+          {% endif %}
           {{
             govukTable({
               "head": [
@@ -59,10 +60,9 @@
               "rows": table_rows
             })
           }}
-          {% endif %}
-      {% else %}
-        <p class="govuk-body">No active main or sub-quotas.</p>
-      {% endif %}
+    {% else %}
+      <p class="govuk-body">No active main or sub-quotas.</p>
+    {% endif %}
         
     </div>
     {% include "includes/quotas/actions.jinja"%}
