@@ -10,6 +10,12 @@
 {% set page_title = "Quota ID: " ~ quota.order_number ~ " - Data" %}
 {% set find_edit_url = url("quota-ui-list") %}
 
+{% if sub_quotas %}
+  {% set page_subtitle = "Main quota" %}
+{% elif main_quotas %}
+  {% set page_subtitle = "Sub-quota" %}
+{% endif %}
+
 {% set links = [
     {
       "text": "Quota definition periods",
@@ -17,9 +23,9 @@
       "selected": quota_type == None
     },
     {
-      "text": "Sub-quotas",
-      "href": url('quota_definition-ui-list-filter', kwargs={"sid": quota.sid, "quota_type": "sub_quotas"}),
-      "selected": quota_type == "sub_quotas",
+      "text": "Quota associations",
+      "href": url('quota_definition-ui-list-filter', kwargs={"sid": quota.sid, "quota_type": "quota_associations"}),
+      "selected": quota_type == "quota_associations",
     },
     {
       "text": "Blocking periods",
@@ -43,8 +49,15 @@
 {% endblock %}
 
 {% block content %}
-
+{% if page_subtitle %}
+  <span class="govuk-caption-xl">
+    {% block page_subtitle %}
+      {{ page_subtitle }}
+    {% endblock %}
+  </span>
+{% endif %}
 <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
 
 {{ fake_tabs(links) }}
 <div class="quota-definitions">
@@ -54,7 +67,7 @@
     {% include "quotas/tables/blocking_periods.jinja" %}
   {% elif quota_type == "suspension_periods" %}
     {% include "quotas/tables/suspension_periods.jinja" %}
-  {% elif quota_type == "sub_quotas" %}
+  {% elif quota_type == "quota_associations" %}
     {% include "quotas/tables/sub_quotas.jinja" %}
   {% else %}
     {% include "quotas/tables/definitions.jinja" %}
