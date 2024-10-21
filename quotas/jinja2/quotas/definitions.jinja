@@ -49,12 +49,13 @@
 {% endblock %}
 
 {% block content %}
-
-<span class="govuk-caption-xl">
-  {% block page_subtitle %}
-    {{ page_subtitle }}
-  {% endblock %}
-</span>
+{% if page_subtitle %}
+  <span class="govuk-caption-xl">
+    {% block page_subtitle %}
+      {{ page_subtitle }}
+    {% endblock %}
+  </span>
+{% endif %}
 <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
 
