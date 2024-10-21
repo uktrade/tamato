@@ -240,11 +240,11 @@ class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
             f"{URLs.BASE_URL.value}quota_search?order_number={self.object.order_number}"
         )
 
-        context["sub_quota_associations"] = QuotaAssociation.objects.all().filter(
+        context["sub_quota_associations"] = QuotaAssociation.objects.current().filter(
             main_quota=current_definition,
         )
 
-        context["main_quota_associations"] = QuotaAssociation.objects.all().filter(
+        context["main_quota_associations"] = QuotaAssociation.objects.current().filter(
             sub_quota=current_definition,
         )
 
@@ -318,7 +318,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
 
     @property
     def main_quotas(self):
-        main_quotas = QuotaAssociation.objects.all().filter(
+        main_quotas = QuotaAssociation.objects.current().filter(
             sub_quota__order_number=self.quota,
         )
         return main_quotas
