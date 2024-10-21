@@ -116,14 +116,14 @@ def test_workbasket_accepted_updates_current_tracked_models(
         update_type=UpdateType.UPDATE,
     )
 
-    assert new_footnote.version_group.current_version.pk == original_footnote.pk
+    assert new_footnote.version_group.latest_approved_version.pk == original_footnote.pk
 
     assert_workbasket_valid(assigned_workbasket)
 
     assigned_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     new_footnote.refresh_from_db()
 
-    assert new_footnote.version_group.current_version.pk == new_footnote.pk
+    assert new_footnote.version_group.latest_approved_version.pk == new_footnote.pk
 
 
 @patch("exporter.tasks.upload_workbaskets")
@@ -143,10 +143,10 @@ def test_workbasket_errored_updates_tracked_models(
 
     assigned_workbasket.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
     new_footnote.refresh_from_db()
-    assert new_footnote.version_group.current_version.pk == new_footnote.pk
+    assert new_footnote.version_group.latest_approved_version.pk == new_footnote.pk
     assigned_workbasket.cds_error()
     new_footnote.refresh_from_db()
-    assert new_footnote.version_group.current_version.pk == original_footnote.pk
+    assert new_footnote.version_group.latest_approved_version.pk == original_footnote.pk
 
 
 @pytest.mark.parametrize("status", [WorkflowStatus.EDITING, WorkflowStatus.ERRORED])

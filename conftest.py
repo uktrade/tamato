@@ -1026,8 +1026,8 @@ def imported_fields_match(run_xml_import, update_type):
             1 if update_type == UpdateType.CREATE else 2
         )
         assert version_group == updated_model.version_group
-        assert version_group.current_version == updated_model
-        assert version_group.current_version.update_type == update_type
+        assert version_group.latest_approved_version == updated_model
+        assert version_group.latest_approved_version.update_type == update_type
         return updated_model
 
     return check

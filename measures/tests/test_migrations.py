@@ -85,7 +85,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         polymorphic_ctype=goods_content_type,
     )
     version_group = goods_1.version_group
-    version_group.current_version_id = goods_1.id
+    version_group.latest_approved_version_id = goods_1.id
     version_group.save()
 
     goods_2 = GoodsNomenclature.objects.create(
@@ -98,7 +98,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         polymorphic_ctype=goods_content_type,
     )
     version_group = goods_2.version_group
-    version_group.current_version_id = goods_2.id
+    version_group.latest_approved_version_id = goods_2.id
     version_group.save()
 
     goods_3 = GoodsNomenclature.objects.create(
@@ -111,7 +111,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         polymorphic_ctype=goods_content_type,
     )
     version_group = goods_3.version_group
-    version_group.current_version_id = goods_3.id
+    version_group.latest_approved_version_id = goods_3.id
     version_group.save()
 
     # create the geo area
@@ -126,7 +126,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         polymorphic_ctype=geo_area_content_type,
     )
     version_group = new_geographical_area.version_group
-    version_group.current_version_id = new_geographical_area.id
+    version_group.latest_approved_version_id = new_geographical_area.id
     version_group.save()
 
     # create the regulation group
@@ -141,7 +141,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         polymorphic_ctype=regulation_group_content_type,
     )
     version_group = new_regulation_group.version_group
-    version_group.current_version_id = new_regulation_group.id
+    version_group.latest_approved_version_id = new_regulation_group.id
     version_group.save()
 
     # create the regulation
@@ -159,7 +159,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         polymorphic_ctype=regulation_content_type,
     )
     version_group = new_regulation.version_group
-    version_group.current_version_id = new_regulation.id
+    version_group.latest_approved_version_id = new_regulation.id
     version_group.save()
 
     # create the measure type
@@ -174,7 +174,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         polymorphic_ctype=measure_series_content_type,
     )
     version_group = new_measure_type_series.version_group
-    version_group.current_version_id = new_measure_type_series.id
+    version_group.latest_approved_version_id = new_measure_type_series.id
     version_group.save()
 
     new_measure_type = MeasureType.objects.create(
@@ -193,7 +193,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         polymorphic_ctype=measure_type_content_type,
     )
     version_group = new_measure_type.version_group
-    version_group.current_version_id = new_measure_type.id
+    version_group.latest_approved_version_id = new_measure_type.id
     version_group.save()
 
     # create the duty expression
@@ -209,7 +209,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         polymorphic_ctype=duty_expression_content_type,
     )
     version_group = new_duty_expression.version_group
-    version_group.current_version_id = new_duty_expression.id
+    version_group.latest_approved_version_id = new_duty_expression.id
     version_group.save()
 
     # at this point all the appropriate elements are available within the database for the migration to create the
@@ -233,7 +233,7 @@ def test_add_back_deleted_measures(migrator, setup_content_types, date_ranges):
         assert measure_to_check.transaction.partition == TransactionPartition.REVISION
         # verify that the current version is as expected
         assert (
-            measure_to_check.version_group.current_version_id
+            measure_to_check.version_group.latest_approved_version_id
             == measure_to_check.trackedmodel_ptr_id
         )
 

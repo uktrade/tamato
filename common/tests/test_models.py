@@ -187,7 +187,7 @@ def test_get_latest_relation_with_latest_links(
     with django_assert_num_queries(1):
         instance = TestModel3.objects.all().with_latest_links()[0]
         fetched_oldest_link = instance.linked_model
-        fetched_latest_link = instance.linked_model.current_version
+        fetched_latest_link = instance.linked_model.latest_approved_version
 
     assert oldest_link.pk == fetched_oldest_link.pk
     assert latest_link.pk == fetched_latest_link.pk
@@ -206,7 +206,7 @@ def test_get_latest_relation_without_latest_links(
     - Get the originating object as a starting point (e.g. start = TrackedModel.objects.get(pk=1))
     - Get the related object (e.g. related = start.link)
     - Get the related objects version group (e.g. group = related.version_group)
-    - Get the current version (e.g. current = group.current_version)
+    - Get the current latest approved version (e.g. current = group.latest_approved_version_id)
     """
     oldest_link = model1_with_history.all_models[0]
     latest_link = model1_with_history.all_models[-1]
@@ -216,25 +216,25 @@ def test_get_latest_relation_without_latest_links(
     with django_assert_num_queries(4):
         instance = TestModel3.objects.all().select_related("linked_model")[0]
         fetched_oldest_link = instance.linked_model
-        fetched_latest_link = instance.linked_model.current_version
+        fetched_latest_link = instance.linked_model.latest_approved_version
 
     assert oldest_link == fetched_oldest_link
     assert latest_link == fetched_latest_link
 
 
-def test_current_version(sample_model):
-    assert sample_model.current_version == sample_model
+def test_latest_approved_version(sample_model):
+    assert sample_model.latest_approved_version == sample_model
 
     version_group = sample_model.version_group
-    version_group.current_version = None
+    version_group.latest_approved_version = None
     version_group.save()
 
     with pytest.raises(models.TestModel1.DoesNotExist):
-        sample_model.current_version
+        sample_model.latest_approved_version
 
 
 def test_save(sample_model):
-    assert sample_model.current_version == sample_model
+    assert sample_model.latest_approved_version == sample_model
 
     with pytest.raises(common.exceptions.IllegalSaveError):
         sample_model.name = "fails"
@@ -602,12 +602,12 @@ def test_revert_current_version(queued_workbasket):
     new_version = original_version.new_version(other_workbasket)
 
     # sanity check
-    assert new_version.version_group.current_version == new_version
+    assert new_version.version_group.latest_approved_version == new_version
 
     new_version.transaction.workbasket.transactions.revert_current_version()
     new_version.refresh_from_db()
 
-    assert new_version.version_group.current_version == original_version
+    assert new_version.version_group.latest_approved_version == original_version
 
 
 def test_structure_description(trackedmodel_factory):

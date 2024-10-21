@@ -236,7 +236,7 @@ class TrackedModelQuerySet(
             related_lookups.append(f"{prefix}{relation.name}")
             related_lookups.append(f"{prefix}{relation.name}__version_group")
             related_lookups.append(
-                f"{prefix}{relation.name}__version_group__current_version",
+                f"{prefix}{relation.name}__version_group__latest_approved_version",
             )
 
             if recurse_level:
@@ -244,7 +244,7 @@ class TrackedModelQuerySet(
                     self._get_current_related_lookups(
                         model,
                         *lookups,
-                        prefix=f"{prefix}{relation.name}__version_group__current_version__",
+                        prefix=f"{prefix}{relation.name}__version_group__latest_approved_version__",
                         recurse_level=recurse_level - 1,
                     ),
                 )
@@ -267,7 +267,7 @@ class TrackedModelQuerySet(
         )
         return self.select_related(
             "version_group",
-            "version_group__current_version",
+            "version_group__latest_approved_version",
             *related_lookups,
         )
 

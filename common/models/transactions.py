@@ -188,15 +188,15 @@ class TransactionQueryset(models.QuerySet):
 
         for obj in self.tracked_models.order_by("pk"):
             version_group = obj.version_group
-            version_group.current_version = obj
+            version_group.latest_approved_version = obj
             version_group.save()
 
         self.move_to_end_of_partition(approved_partition)
 
     @atomic
     def revert_current_version(self):
-        """Set current_version to previous version or None on a basket's tracked
-        model version groups."""
+        """Set latest_approved_version to previous version or None on a basket's
+        tracked model version groups."""
         for obj in self.tracked_models.order_by("-pk").select_related("version_group"):
             version_group = obj.version_group
             versions = (
@@ -205,9 +205,9 @@ class TransactionQueryset(models.QuerySet):
                 .exclude(pk=obj.pk)
             )
             if versions.count() == 0:
-                version_group.current_version = None
+                version_group.latest_approved_version = None
             else:
-                version_group.current_version = versions.first()
+                version_group.latest_approved_version = versions.first()
             version_group.save()
 
     @atomic
@@ -215,8 +215,8 @@ class TransactionQueryset(models.QuerySet):
         """
         Save SEED_FILE or REVISION transactions as DRAFT.
 
-        Set current_version to previous version or None on a basket's tracked
-        model version groups.
+        Set latest_approved_version to previous version or None on a basket's
+        tracked model version groups.
         """
         if not self.exists():
             logger.info("Queryset contains no transactions, bailing out early.")

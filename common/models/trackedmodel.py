@@ -43,7 +43,7 @@ from workbaskets.validators import WorkflowStatus
 class VersionGroup(TimestampedMixin):
     """A group that contains all versions of the same TrackedModel."""
 
-    current_version = models.OneToOneField(
+    latest_approved_version = models.OneToOneField(
         "common.TrackedModel",
         on_delete=models.SET_NULL,
         null=True,
@@ -336,12 +336,12 @@ class TrackedModel(PolymorphicModel, TimestampedMixin):
         return dict(UpdateType.choices)[self.update_type]
 
     @property
-    def current_version(self: Cls) -> Cls:
-        """The current version of this model."""
-        current_version = self.version_group.current_version
-        if current_version is None:
+    def latest_approved_version(self: Cls) -> Cls:
+        """The latest_approved_version of this model."""
+        latest_approved_version = self.version_group.latest_approved_version
+        if latest_approved_version is None:
             raise self.__class__.DoesNotExist("Object has no current version")
-        return current_version
+        return latest_approved_version
 
     def version_at(self: Cls, transaction) -> Cls:
         """
@@ -605,7 +605,7 @@ class TrackedModel(PolymorphicModel, TimestampedMixin):
         return_value = super().save(*args, **kwargs)
 
         if self.transaction.workbasket.status in WorkflowStatus.approved_statuses():
-            self.version_group.current_version = self
+            self.version_group.latest_approved_version = self
             self.version_group.save()
 
         auto_fields = {

@@ -340,7 +340,7 @@ class OverlappingQuotaDefinition(BusinessRule):
             for potential_quota_definition in potential_quota_definition_matches:
                 if (
                     potential_quota_definition
-                    == potential_quota_definition.current_version
+                    == potential_quota_definition.latest_approved_version
                 ):
                     raise self.violation(quota_definition)
 

@@ -33,7 +33,7 @@ def clear_workbasket(workbasket):
         if version_group.versions.count() == 0:
             version_group.delete()
         else:
-            version_group.current_version = version_group.versions.order_by(
+            version_group.latest_approved_version = version_group.versions.order_by(
                 "-pk",
             ).first()
             version_group.save()
