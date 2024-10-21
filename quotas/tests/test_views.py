@@ -680,6 +680,7 @@ def test_quota_detail_sub_quota_tab(
     valid_user_client,
     date_ranges,
     mock_quota_api_no_data,
+    session_request_with_workbasket,
 ):
     quota_order_number = factories.QuotaOrderNumberFactory()
     current_definition = factories.QuotaDefinitionFactory.create(
@@ -2010,7 +2011,7 @@ def test_quota_definition_view(client_with_current_workbasket):
     response = client_with_current_workbasket.get(
         reverse(
             "quota_definition-ui-list-filter",
-            kwargs={"sid": main_quota.sid, "quota_type": "sub_quotas"},
+            kwargs={"sid": main_quota.sid, "quota_type": "quota_associations"},
         ),
     )
     assert response.status_code == 200
