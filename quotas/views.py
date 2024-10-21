@@ -1208,7 +1208,7 @@ class QuotaSuspensionDelete(TrackedModelDetailMixin, CreateTaricDeleteView):
     def get_success_url(self):
         return reverse(
             "quota_suspension-ui-confirm-delete",
-            kwargs={"sid": self.object},
+            kwargs={"sid": self.object.sid},
         )
 
 
