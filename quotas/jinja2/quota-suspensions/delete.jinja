@@ -1,0 +1,13 @@
+{% extends "common/delete.jinja" %}
+
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list")},
+      {"text": object.quota_definition.order_number._meta.verbose_name|capitalize ~ " " ~ object.quota_definition.order_number|string, "href": object.quota_definition.order_number.get_url()},
+      {"text": object.quota_definition.order_number._meta.verbose_name|capitalize ~ " " ~ object.quota_definition.order_number|string ~ ": Data" , "href": url('quota_definition-ui-list', args=[object.quota_definition.order_number.sid])},
+      {"text": "Suspension periods", "href": url('quota_definition-ui-list-filter', kwargs={'sid': object.quota_definition.order_number.sid, 'quota_type': "suspension_periods"})},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
