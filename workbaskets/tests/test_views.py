@@ -2606,30 +2606,36 @@ def test_current_tasks_is_called(valid_user_client):
         assert "QUEUED" in queued_checks[0].get_text()
         assert "QUEUED" in queued_checks[1].get_text()
 
-def test_remove_all_workbasket_changes_button_only_shown_to_superusers(client, user_workbasket, superuser):
-        url = reverse(
+
+def test_remove_all_workbasket_changes_button_only_shown_to_superusers(
+    client, user_workbasket, superuser
+):
+    url = reverse(
         "workbaskets:workbasket-ui-changes",
         kwargs={"pk": user_workbasket.pk},
     )
 
-        client.force_login(superuser)
-        
-        response = client.get(url)
-        assert response.status_code == 200
-        page = BeautifulSoup(str(response.content), "html.parser")
+    client.force_login(superuser)
 
-        remove_all_button = page.find("button", value="remove-all")
-        assert remove_all_button
+    response = client.get(url)
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
 
-def test_remove_all_workbasket_changes_button_not_shown_to_users_without_permision(valid_user_client, user_workbasket):
-        url = reverse(
+    remove_all_button = page.find("button", value="remove-all")
+    assert remove_all_button
+
+
+def test_remove_all_workbasket_changes_button_not_shown_to_users_without_permision(
+    valid_user_client, user_workbasket
+):
+    url = reverse(
         "workbaskets:workbasket-ui-changes",
         kwargs={"pk": user_workbasket.pk},
     )
 
-        response = valid_user_client.get(url)
-        assert response.status_code == 200
-        page = BeautifulSoup(str(response.content), "html.parser")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
 
-        remove_all_button = page.find("button", value="remove-all")
-        assert not remove_all_button
+    remove_all_button = page.find("button", value="remove-all")
+    assert not remove_all_button
