@@ -98,9 +98,17 @@
             }) }}
         {% endif %}
 
-        <div class="govuk-button-group">
+        <div class="govuk-grid-row">
+        {# <div class="govuk-button-group"> #}
+        <div class="govuk-grid-column-one-third">
           <button value="remove-selected" name="form-action" class="govuk-button govuk-button--secondary" data-module="govuk-button">Remove</button>
-          <button value="remove-all" name="form-action" class="govuk-button govuk-button--warning" data-module="govuk-button">Remove all workbasket changes</button>
+        </div>
+          {% if request.user.is_superuser %}
+          <div class="govuk-grid-column-two-thirds govuk-!-margin-bottom-4"> 
+          <button value="remove-all" name="form-action" class="govuk-button govuk-button--warning" data-module="govuk-button" style="float: right;">Remove all workbasket changes</button>
+          </div>
+          {% endif %}
+        {# </div> #}
         </div>
 
         {% include "includes/common/pagination.jinja" %}
