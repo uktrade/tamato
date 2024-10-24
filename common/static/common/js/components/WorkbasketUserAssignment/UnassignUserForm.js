@@ -5,8 +5,8 @@ import accessibleAutocomplete from "accessible-autocomplete";
 import PropTypes from "prop-types";
 
 function UnassignUserForm({ users }) {
-  const elementId = "assignments-select";
-  const elementName = "assignments";
+  const elementId = "assignees-select";
+  const elementName = "assignees";
   const label = "Unassign user";
   const hint = "Select a user to unassign";
 
@@ -66,7 +66,7 @@ UnassignUserForm.propTypes = {
     PropTypes.shape({
       pk: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
-    })
+    }),
   ),
 };
 

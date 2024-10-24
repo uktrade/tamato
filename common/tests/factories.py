@@ -30,7 +30,8 @@ from measures.validators import MeasureTypeCombination
 from measures.validators import OrderNumberCaptureCode
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
-from tasks.models import UserAssignment
+from tasks.models import ProgressState
+from tasks.models import TaskAssignee
 from workbaskets.validators import WorkflowStatus
 
 User = get_user_model()
@@ -1533,40 +1534,61 @@ class CrownDependenciesEnvelopeFailedNotificationFactory(
         model = "notifications.CrownDependenciesEnvelopeFailedNotification"
 
 
+class CategoryFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("word")
+
+    class Meta:
+        model = "tasks.Category"
+
+
+class ProgressStateFactory(factory.django.DjangoModelFactory):
+    name = FuzzyChoice(ProgressState.State.values)
+
+    class Meta:
+        model = "tasks.ProgressState"
+        django_get_or_create = ("name",)
+
+
 class TaskFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("sentence")
     description = factory.Faker("sentence")
+    category = factory.SubFactory(CategoryFactory)
+    progress_state = factory.SubFactory(ProgressStateFactory)
     workbasket = factory.SubFactory(WorkBasketFactory)
+    creator = factory.SubFactory(UserFactory)
 
     class Meta:
         model = "tasks.Task"
 
 
-class UserAssignmentFactory(factory.django.DjangoModelFactory):
+class SubTaskFactory(TaskFactory):
+    parent_task = factory.SubFactory(TaskFactory)
+
+
+class TaskAssigneeFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
-    assigned_by = factory.SubFactory(UserFactory)
-    assignment_type = FuzzyChoice(UserAssignment.AssignmentType.values)
+    assignment_type = FuzzyChoice(TaskAssignee.AssignmentType.values)
     task = factory.SubFactory(TaskFactory)
 
     class Meta:
-        model = "tasks.UserAssignment"
+        model = "tasks.TaskAssignee"
 
 
 class AssignedWorkBasketFactory(WorkBasketFactory):
     """Creates a workbasket which has an assigned worker and reviewer."""
 
     @factory.post_generation
-    def user_assignments(self, create, extracted, **kwargs):
+    def create_workbasket_assignments(self, create, extracted, **kwargs):
         if not create:
             return
 
         task = TaskFactory.create(workbasket=self)
-        UserAssignmentFactory.create(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        TaskAssigneeFactory.create(
+            assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
             task=task,
         )
-        UserAssignmentFactory.create(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        TaskAssigneeFactory.create(
+            assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
             task=task,
         )
 
