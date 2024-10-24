@@ -6,12 +6,12 @@
 
 {% set links = [
     {
-      "text": "Create",
+      "text": "Create measures queue",
       "href": url('measure-create-process-queue'),
       "selected": selected_tab == "measure-create-process-queue"
     },
     {
-      "text": "Edit",
+      "text": "Edit measures queue",
       "href": url('measure-edit-process-queue'),
       "selected": selected_tab == "measure-edit-process-queue"
     },
@@ -32,7 +32,7 @@
 {%- endset %}
 
 {% block content %}
-  <h1 class="govuk-heading-xl">Measure processing queue</h1>
+  <h1 class="govuk-heading-xl">Processing queues</h1>
   {{ fake_tabs(links) }}
   <div class="govuk-tabs__panel">
     {% block tab_content %}{% endblock %}
