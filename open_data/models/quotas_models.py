@@ -8,7 +8,7 @@ class ReportQuotaAssociation(models.Model):
     coefficient = models.DecimalField(max_digits=16, decimal_places=5)
     main_quota = models.ForeignKey("ReportQuotaDefinition", models.DO_NOTHING)
     sub_quota = models.ForeignKey(
-        "QuotaDefinition",
+        "ReportQuotaDefinition",
         models.DO_NOTHING,
         related_name="quotasquotaassociation_sub_quota_set",
     )
@@ -25,7 +25,7 @@ class ReportQuotaDefinition(models.Model):
     quota_critical_threshold = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     measurement_unit = models.ForeignKey(
-        "ReportMeasurementUnitLookup",
+        "ReportMeasurementUnit",
         models.DO_NOTHING,
         blank=True,
         null=True,
@@ -73,7 +73,7 @@ class ReportQuotaSuspension(models.Model):
 class ReportQuotaOrderNumberOriginExclusion(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     excluded_geographical_area = models.ForeignKey(
-        "GeographicalArea",
+        "ReportGeographicalArea",
         models.DO_NOTHING,
     )
     origin = models.ForeignKey(ReportQuotaOrderNumberOrigin, models.DO_NOTHING)

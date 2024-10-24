@@ -14,7 +14,7 @@ class ReportFootnote(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange()
     footnote_id = models.CharField(max_length=5)
-    footnote_type = models.ForeignKey("FootnoteType", models.DO_NOTHING)
+    footnote_type = models.ForeignKey("ReportFootnoteType", models.DO_NOTHING)
 
 
 class ReportFootnoteDescription(models.Model):

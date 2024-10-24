@@ -9,11 +9,6 @@ class ReportCertificateType(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class ReportCertificateType(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(ReportCertificateType, models.DO_NOTHING)
-
-
 class ReportCertificate(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange()
@@ -22,11 +17,6 @@ class ReportCertificate(models.Model):
         "ReportCertificateType",
         models.DO_NOTHING,
     )
-
-
-class ReportCertificate(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(ReportCertificate, models.DO_NOTHING)
 
 
 class ReportCertificateDescription(models.Model):

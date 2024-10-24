@@ -48,14 +48,14 @@ class ReportMeasure(models.Model):
         "ReportRegulation",
         models.DO_NOTHING,
     )
-    geographical_area = models.ForeignKey("GeographicalArea", models.DO_NOTHING)
+    geographical_area = models.ForeignKey("ReportGeographicalArea", models.DO_NOTHING)
     goods_nomenclature = models.ForeignKey(
         "ReportGoodsNomenclature",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    measure_type = models.ForeignKey("MeasureType", models.DO_NOTHING)
+    measure_type = models.ForeignKey("ReportMeasureType", models.DO_NOTHING)
     order_number = models.ForeignKey(
         "ReportQuotaOrderNumber",
         models.DO_NOTHING,
@@ -96,7 +96,7 @@ class ReportMeasureConditionComponent(models.Model):
     )
     duty_expression = models.ForeignKey("ReportDutyExpression", models.DO_NOTHING)
     monetary_unit = models.ForeignKey(
-        "MonetaryUnit",
+        "ReportMonetaryUnit",
         models.DO_NOTHING,
         blank=True,
         null=True,
@@ -137,7 +137,7 @@ class ReportMeasureCondition(models.Model):
         null=True,
     )
     required_certificate = models.ForeignKey(
-        "ReportReportCertificate",
+        "ReportCertificate",
         models.DO_NOTHING,
         blank=True,
         null=True,
