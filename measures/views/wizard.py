@@ -199,7 +199,7 @@ class MeasureEditWizard(
         self.session_store.clear()
         return redirect(
             "measure-ui-edit-sync-confirm",
-            edited_measures_count=len(edited_measures),
+            edited_or_created_measures_count=len(edited_measures),
         )
 
 
@@ -360,13 +360,10 @@ class MeasureCreateWizard(
 
         cleaned_data = self.get_all_cleaned_data()
         created_measures = self.create_measures(cleaned_data)
-        context = self.get_context_data(
-            form=None,
-            created_measures=created_measures,
-            **kwargs,
+        return redirect(
+            "measure-ui-create-sync-confirm",
+            edited_or_created_measures_count=len(created_measures),
         )
-
-        return render(self.request, "measures/confirm-create-multiple.jinja", context)
 
     def async_done(self, form_list, **kwargs):
         """Handles this wizard's done step, handing off most of the processing
@@ -631,5 +628,5 @@ class MeasuresWizardSyncConfirm(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["edited_measures_count"] = self.kwargs.get("edited_measures_count")
+        context["edited_or_created_measures_count"] = self.kwargs.get("edited_or_created_measures_count")
         return context

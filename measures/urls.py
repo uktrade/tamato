@@ -49,7 +49,7 @@ ui_patterns = [
         name="measure-ui-edit-async-confirm",
     ),
     path(
-        "edit/done-sync/<int:edited_measures_count>/",
+        "edit/done-sync/<int:edited_or_created_measures_count>/",
         views.MeasuresWizardSyncConfirm.as_view(),
         name="measure-ui-edit-sync-confirm",
     ),
@@ -70,6 +70,11 @@ ui_patterns = [
         "create/done-async/<int:expected_measures_count>/",
         views.MeasuresWizardAsyncConfirm.as_view(),
         name="measure-ui-create-async-confirm",
+    ),
+    path(
+        "create/done-sync/<int:edited_or_created_measures_count>/",
+        views.MeasuresWizardSyncConfirm.as_view(),
+        name="measure-ui-create-sync-confirm",
     ),
     path(
         f"{detail}/edit-footnotes/",

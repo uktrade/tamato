@@ -3,11 +3,11 @@
 
 {% set page_title = "Edit measure details" %}
 
-{% macro panel_title(edited_measures_count) %}
-  {% if edited_measures_count > 1 %}
-    {{ edited_measures_count }} measures have been edited
+{% macro panel_title(edited_or_created_measures_count) %}
+  {% if edited_or_created_measures_count > 1 %}
+    {{ edited_or_created_measures_count }} measures have been edited or created
   {% else %}
-    {{ edited_measures_count }} measure has been edited
+    {{ edited_or_created_measures_count }} measure has been edited or created
   {% endif %}
 {% endmacro %}
 
@@ -26,7 +26,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({
-        "titleText": panel_title(edited_measures_count),
+        "titleText": panel_title(edited_or_created_measures_count),
         "text": panel_subtitle(),
         "classes": "govuk-!-margin-bottom-7"
       }) }}
