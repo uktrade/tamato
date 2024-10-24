@@ -2,34 +2,24 @@ from django.db import models
 from psycopg.types.range import DateRange
 
 
-class AmendmentLatest(models.Model):
+class ReportAmendment(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
-    enacting_regulation = models.ForeignKey("RegulationLookUp", models.DO_NOTHING)
+    enacting_regulation = models.ForeignKey("ReportRegulation", models.DO_NOTHING)
     target_regulation = models.ForeignKey(
-        "RegulationLookUp",
+        "ReportRegulation",
         models.DO_NOTHING,
         related_name="regulationsamendment_target_regulation_set",
     )
 
 
-class AmendmentLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(AmendmentLatest, models.DO_NOTHING)
-
-
-class GroupLatest(models.Model):
+class ReportGroup(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     group_id = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class GroupLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(GroupLatest, models.DO_NOTHING)
-
-
-class RegulationLatest(models.Model):
+class ReportRegulation(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     role_type = models.IntegerField()
     regulation_id = models.CharField(max_length=8)
@@ -49,47 +39,32 @@ class RegulationLatest(models.Model):
     stopped = models.BooleanField()
     community_code = models.IntegerField(blank=True, null=True)
     regulation_group = models.ForeignKey(
-        GroupLookUp,
+        ReportGroup,
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
 
 
-class RegulationLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(RegulationLatest, models.DO_NOTHING)
-
-
-class SuspensionLatest(models.Model):
+class ReportSuspension(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     effective_end_date = models.DateField(blank=True, null=True)
-    enacting_regulation = models.ForeignKey(RegulationLookUp, models.DO_NOTHING)
+    enacting_regulation = models.ForeignKey(ReportRegulation, models.DO_NOTHING)
     target_regulation = models.ForeignKey(
-        RegulationLookUp,
+        ReportRegulation,
         models.DO_NOTHING,
         related_name="regulationssuspension_target_regulation_set",
     )
 
 
-class SuspensionLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(SuspensionLatest, models.DO_NOTHING)
-
-
-class ReplacementLatest(models.Model):
+class ReportReplacement(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     measure_type_id = models.CharField(max_length=6, blank=True, null=True)
     geographical_area_id = models.CharField(max_length=4, blank=True, null=True)
     chapter_heading = models.CharField(max_length=2, blank=True, null=True)
-    enacting_regulation = models.ForeignKey(RegulationLookUp, models.DO_NOTHING)
+    enacting_regulation = models.ForeignKey(ReportRegulation, models.DO_NOTHING)
     target_regulation = models.ForeignKey(
-        RegulationLookUp,
+        ReportRegulation,
         models.DO_NOTHING,
         related_name="regulationsreplacement_target_regulation_set",
     )
-
-
-class ReplacementLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(ReplacementLatest, models.DO_NOTHING)

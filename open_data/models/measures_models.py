@@ -2,25 +2,17 @@ from django.db import models
 from psycopg.types.range import DateRange
 
 
-class AdditionalCodeTypeMeasureTypeLatest(models.Model):
+class ReportAdditionalCodeTypeMeasureType(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     additional_code_type = models.ForeignKey(
-        "AdditionalCodeTypeLookUp",
+        "ReportAdditionalCodeType",
         models.DO_NOTHING,
     )
-    measure_type = models.ForeignKey("MeasureTypeLookUp", models.DO_NOTHING)
+    measure_type = models.ForeignKey("ReportMeasureType", models.DO_NOTHING)
 
 
-class AdditionalCodeTypeMeasureTypeLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(
-        AdditionalCodeTypeMeasureTypeLatest,
-        models.DO_NOTHING,
-    )
-
-
-class DutyExpressionLatest(models.Model):
+class ReportDutyExpression(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.IntegerField()
@@ -31,26 +23,13 @@ class DutyExpressionLatest(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class DutyExpressionLookUp(models.Model):
+class ReportFootnoteAssociationMeasure(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(DutyExpressionLatest, models.DO_NOTHING)
+    associated_footnote = models.ForeignKey("ReportFootnote", models.DO_NOTHING)
+    footnoted_measure = models.ForeignKey("ReportMeasure", models.DO_NOTHING)
 
 
-class FootnoteAssociationMeasureLatest(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    associated_footnote = models.ForeignKey("FootnoteLookUp", models.DO_NOTHING)
-    footnoted_measure = models.ForeignKey("MeasureLookUp", models.DO_NOTHING)
-
-
-class FootnoteAssociationMeasureLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(
-        FootnoteAssociationMeasureLatest,
-        models.DO_NOTHING,
-    )
-
-
-class MeasureLatest(models.Model):
+class ReportMeasure(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.IntegerField()
@@ -60,31 +39,31 @@ class MeasureLatest(models.Model):
     stopped = models.BooleanField()
     export_refund_nomenclature_sid = models.IntegerField(blank=True, null=True)
     additional_code = models.ForeignKey(
-        "AdditionalcodeLookUp",
+        "ReportAdditionalCode",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     generating_regulation = models.ForeignKey(
-        "RegulationLookUp",
+        "ReportRegulation",
         models.DO_NOTHING,
     )
-    geographical_area = models.ForeignKey("GeographicalAreaLookUp", models.DO_NOTHING)
+    geographical_area = models.ForeignKey("GeographicalArea", models.DO_NOTHING)
     goods_nomenclature = models.ForeignKey(
-        "GoodsNomenclatureLookUp",
+        "ReportGoodsNomenclature",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    measure_type = models.ForeignKey("MeasureTypeLookUp", models.DO_NOTHING)
+    measure_type = models.ForeignKey("MeasureType", models.DO_NOTHING)
     order_number = models.ForeignKey(
-        "QuotaOrderNumberLookUp",
+        "ReportQuotaOrderNumber",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     terminating_regulation = models.ForeignKey(
-        "RegulationLookUp",
+        "ReportRegulation",
         models.DO_NOTHING,
         related_name="measuresmeasure_terminating_regulation_set",
         blank=True,
@@ -92,12 +71,7 @@ class MeasureLatest(models.Model):
     )
 
 
-class MeasureLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MeasureLatest, models.DO_NOTHING)
-
-
-class MeasureActionLatest(models.Model):
+class ReportMeasureAction(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=3)
@@ -105,12 +79,7 @@ class MeasureActionLatest(models.Model):
     requires_duty = models.BooleanField()
 
 
-class MeasureActionLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MeasureActionLatest, models.DO_NOTHING)
-
-
-class MeasureConditionComponentLatest(models.Model):
+class ReportMeasureConditionComponent(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     duty_amount = models.DecimalField(
         max_digits=10,
@@ -118,31 +87,23 @@ class MeasureConditionComponentLatest(models.Model):
         blank=True,
         null=True,
     )
-    condition = models.ForeignKey("MeasureConditionLookUp", models.DO_NOTHING)
+    condition = models.ForeignKey("ReportMeasureCondition", models.DO_NOTHING)
     component_measurement = models.ForeignKey(
-        "MeasurementLookUp",
+        "ReportMeasurement",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    duty_expression = models.ForeignKey("DutyExpressionLookUp", models.DO_NOTHING)
+    duty_expression = models.ForeignKey("ReportDutyExpression", models.DO_NOTHING)
     monetary_unit = models.ForeignKey(
-        "MonetaryUnitLookUp",
+        "MonetaryUnit",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
 
 
-class MeasureConditionComponentLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(
-        MeasureConditionComponentLatest,
-        models.DO_NOTHING,
-    )
-
-
-class MeasureConditionLatest(models.Model):
+class ReportMeasureCondition(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     sid = models.IntegerField()
     component_sequence_number = models.SmallIntegerField()
@@ -153,42 +114,37 @@ class MeasureConditionLatest(models.Model):
         null=True,
     )
     action = models.ForeignKey(
-        MeasureActionLookUp,
+        ReportMeasureAction,
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     condition_code = models.ForeignKey(
-        "MeasureConditionCodeLookUp",
+        "ReportMeasureConditionCode",
         models.DO_NOTHING,
     )
     condition_measurement = models.ForeignKey(
-        "MeasurementLookUp",
+        "ReportMeasurement",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    dependent_measure = models.ForeignKey(MeasureLookUp, models.DO_NOTHING)
+    dependent_measure = models.ForeignKey(ReportMeasure, models.DO_NOTHING)
     monetary_unit = models.ForeignKey(
-        "MonetaryUnitLookUp",
+        "ReportMonetaryUnit",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
     required_certificate = models.ForeignKey(
-        "CertificateLookUp",
+        "ReportReportCertificate",
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
 
 
-class MeasureConditionLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MeasureConditionLatest, models.DO_NOTHING)
-
-
-class MeasureConditionCodeLatest(models.Model):
+class ReportMeasureConditionCode(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=2)
@@ -197,12 +153,7 @@ class MeasureConditionCodeLatest(models.Model):
     accepts_price = models.BooleanField()
 
 
-class MeasureConditionCodeLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MeasureConditionCodeLatest, models.DO_NOTHING)
-
-
-class MeasurementUnitLatest(models.Model):
+class ReportMeasurementUnit(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=3)
@@ -210,12 +161,7 @@ class MeasurementUnitLatest(models.Model):
     abbreviation = models.CharField(max_length=32)
 
 
-class MeasurementUnitLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MeasurementUnitLatest, models.DO_NOTHING)
-
-
-class MeasurementUnitQualifierLatest(models.Model):
+class ReportMeasurementUnitQualifier(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=1)
@@ -223,15 +169,7 @@ class MeasurementUnitQualifierLatest(models.Model):
     abbreviation = models.CharField(max_length=32)
 
 
-class MeasurementUnitQualifierLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(
-        MeasurementUnitQualifierLatest,
-        models.DO_NOTHING,
-    )
-
-
-class MeasureTypeSeriesLatest(models.Model):
+class ReportMeasureTypeSeries(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.CharField(max_length=2)
@@ -239,24 +177,14 @@ class MeasureTypeSeriesLatest(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class MeasureTypeSeriesLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MeasureTypeSeriesLatest, models.DO_NOTHING)
-
-
-class MonetaryUnitLatest(models.Model):
+class ReportMonetaryUnit(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     code = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class MonetaryUnitLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MonetaryUnitLatest, models.DO_NOTHING)
-
-
-class MeasureTypeLatest(models.Model):
+class ReportMeasureType(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
     sid = models.CharField(max_length=6)
@@ -268,51 +196,33 @@ class MeasureTypeLatest(models.Model):
     measure_explosion_level = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     measure_type_series = models.ForeignKey(
-        MeasureTypeSeriesLookUp,
+        ReportMeasureTypeSeries,
         models.DO_NOTHING,
     )
 
 
-class MeasureTypeLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MeasureTypeLatest, models.DO_NOTHING)
-
-
-class MeasurementLatest(models.Model):
+class ReportMeasurement(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange
-    measurement_unit = models.ForeignKey(MeasurementUnitLookUp, models.DO_NOTHING)
+    measurement_unit = models.ForeignKey(ReportMeasurementUnit, models.DO_NOTHING)
     measurement_unit_qualifier = models.ForeignKey(
-        MeasurementUnitQualifierLookUp,
+        ReportMeasurementUnitQualifier,
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
 
 
-class MeasurementLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MeasurementLatest, models.DO_NOTHING)
-
-
-class MeasureExcludedGeographicalAreaLatest(models.Model):
+class ReportMeasureExcludedGeographicalArea(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     excluded_geographical_area = models.ForeignKey(
-        "GeographicalAreaLookUp",
+        "ReportGeographicalArea",
         models.DO_NOTHING,
     )
-    modified_measure = models.ForeignKey(MeasureLookUp, models.DO_NOTHING)
+    modified_measure = models.ForeignKey(ReportMeasure, models.DO_NOTHING)
 
 
-class MeasureExcludedGeographicalAreaLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(
-        MeasureExcludedGeographicalAreaLatest,
-        models.DO_NOTHING,
-    )
-
-
-class MeasureComponentLatest(models.Model):
+class ReportMeasureComponent(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     duty_amount = models.DecimalField(
         max_digits=10,
@@ -320,22 +230,17 @@ class MeasureComponentLatest(models.Model):
         blank=True,
         null=True,
     )
-    component_measure = models.ForeignKey(MeasureLookUp, models.DO_NOTHING)
+    component_measure = models.ForeignKey(ReportMeasure, models.DO_NOTHING)
     component_measurement = models.ForeignKey(
-        MeasurementLookUp,
+        ReportMeasurement,
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-    duty_expression = models.ForeignKey(DutyExpressionLookUp, models.DO_NOTHING)
+    duty_expression = models.ForeignKey(ReportDutyExpression, models.DO_NOTHING)
     monetary_unit = models.ForeignKey(
-        MonetaryUnitLookUp,
+        ReportMonetaryUnit,
         models.DO_NOTHING,
         blank=True,
         null=True,
     )
-
-
-class MeasureComponentLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(MeasureComponentLatest, models.DO_NOTHING)

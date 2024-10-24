@@ -2,7 +2,7 @@ from django.db import models
 from psycopg.types.range import DateRange
 
 
-class GeographicalAreaLatest(models.Model):
+class ReportGeographicalArea(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange()
     sid = models.IntegerField()
@@ -11,41 +11,23 @@ class GeographicalAreaLatest(models.Model):
     parent = models.ForeignKey("self", models.DO_NOTHING, blank=True, null=True)
 
 
-class GeographicalAreaLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(GeographicalAreaLatest, models.DO_NOTHING)
-
-
-class GeographicalMembershipLatest(models.Model):
+class ReportGeographicalMembership(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     valid_between = DateRange()
-    geo_group = models.ForeignKey(GeographicalAreaLookUp, models.DO_NOTHING)
+    geo_group = models.ForeignKey(ReportGeographicalArea, models.DO_NOTHING)
     member = models.ForeignKey(
-        GeographicalAreaLookUp,
+        ReportGeographicalArea,
         models.DO_NOTHING,
         related_name="geoareasgeographicalmembership_member_set",
     )
 
 
-class GeographicalMembershipLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(GeographicalMembershipLatest, models.DO_NOTHING)
-
-
-class GeographicalAreaDescriptionLatest(models.Model):
+class ReportGeographicalAreaDescription(models.Model):
     trackedmodel_ptr = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=500, blank=True, null=True)
     sid = models.IntegerField()
     described_geographicalarea = models.ForeignKey(
-        GeographicalAreaLookUp,
+        ReportGeographicalArea,
         models.DO_NOTHING,
     )
     validity_start = models.DateField()
-
-
-class GeographicalAreaDescriptionLookUp(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    current_version = models.ForeignKey(
-        GeographicalAreaDescriptionLatest,
-        models.DO_NOTHING,
-    )
