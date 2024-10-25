@@ -516,6 +516,9 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
 
     business_rules = (business_rules.QBP2, UniqueIdentifyingFields, UpdateValidity)
 
+    def __str__(self):
+        return f"{self.sid}"
+
 
 class QuotaEvent(TrackedModel):
     """
