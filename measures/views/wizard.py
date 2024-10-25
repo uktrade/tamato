@@ -613,7 +613,8 @@ class MeasureCreateWizard(
 
 
 class MeasuresWizardAsyncConfirm(TemplateView):
-    """ A success view that serves both the bulk create and bulk edit asynchronous pathways. """
+    """A success view that serves both the bulk create and bulk edit asynchronous pathways."""
+
     template_name = "measures/confirm-create-multiple-async.jinja"
 
     def get_context_data(self, **kwargs):
@@ -623,10 +624,13 @@ class MeasuresWizardAsyncConfirm(TemplateView):
 
 
 class MeasuresWizardSyncConfirm(TemplateView):
-    """ A success view that serves both the bulk create and bulk edit synchronous pathways. """
+    """A success view that serves both the bulk create and bulk edit synchronous pathways."""
+
     template_name = "measures/confirm-edit-multiple.jinja"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["edited_or_created_measures_count"] = self.kwargs.get("edited_or_created_measures_count")
+        context["edited_or_created_measures_count"] = self.kwargs.get(
+            "edited_or_created_measures_count"
+        )
         return context
