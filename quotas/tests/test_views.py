@@ -2557,3 +2557,132 @@ def test_quota_suspension_edit_update(client_with_current_workbasket):
 )
 def test_quota_suspension_delete_form(factory, use_delete_form):
     use_delete_form(factory())
+
+
+def test_quota_blocking_edit(client_with_current_workbasket, date_ranges):
+    """Test the QuotaBlockingUpdate view including the
+    QuotaBlockingUpdateMixin."""
+    blocking = factories.QuotaBlockingFactory.create(valid_between=date_ranges.future)
+    current_validity = blocking.valid_between
+    data = {
+        "start_date_0": current_validity.lower.day,
+        "start_date_1": current_validity.lower.month,
+        "start_date_2": current_validity.lower.year,
+        "end_date_0": current_validity.upper.day,
+        "end_date_1": current_validity.upper.month,
+        "end_date_2": current_validity.upper.year,
+        "blocking_period_type": 1,
+        "description": "New description",
+    }
+
+    url = reverse("quota_blocking-ui-edit", kwargs={"sid": blocking.sid})
+
+    response = client_with_current_workbasket.post(url, data=data)
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "quota_blocking-ui-confirm-update",
+        kwargs={"sid": blocking.sid},
+    )
+
+    updated_blocking = models.QuotaBlocking.objects.approved_up_to_transaction(
+        Transaction.objects.last(),
+    ).get(sid=blocking.sid)
+    assert updated_blocking.description == "New description"
+    assert updated_blocking.blocking_period_type == 1
+    assert updated_blocking.update_type == UpdateType.UPDATE
+
+    confirm_response = client_with_current_workbasket.get(response.url)
+
+    soup = BeautifulSoup(
+        confirm_response.content.decode(response.charset),
+        "html.parser",
+    )
+    div = soup.select("div .govuk-panel__body")[0]
+
+    assert f"Quota blocking: {blocking.sid} has been updated" in div.text.strip()
+
+
+def test_quota_blocking_edit_update(client_with_current_workbasket, date_ranges):
+    """Test that posting the edit update form edits the existing quota blocking
+    update object rather than creating a new one."""
+    blocking = factories.QuotaBlockingFactory.create(valid_between=date_ranges.future)
+    current_validity = blocking.valid_between
+    data = {
+        "start_date_0": current_validity.lower.day,
+        "start_date_1": current_validity.lower.month,
+        "start_date_2": current_validity.lower.year,
+        "end_date_0": current_validity.upper.day,
+        "end_date_1": current_validity.upper.month,
+        "end_date_2": current_validity.upper.year,
+        "blocking_period_type": 1,
+        "description": "New description",
+    }
+
+    edit_url = reverse("quota_blocking-ui-edit", kwargs={"sid": blocking.sid})
+    client_with_current_workbasket.post(edit_url, data=data)
+    edit_update_url = reverse(
+        "quota_blocking-ui-edit-update",
+        kwargs={"sid": blocking.sid},
+    )
+    response = client_with_current_workbasket.post(edit_update_url, data=data)
+    assert response.status_code == 302
+    versions = models.QuotaBlocking.objects.all().filter(sid=blocking.sid)
+    assert len(versions) == 2
+    assert versions.first().update_type == UpdateType.CREATE
+    assert versions.last().update_type == UpdateType.UPDATE
+
+
+def test_user_cannot_edit_past_blocking_period(
+    client_with_current_workbasket,
+    date_ranges,
+):
+    """Test that form fields are disabled and posting data to these fields does
+    not alter the object."""
+    quota_definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.earlier,
+    )
+    blocking = factories.QuotaBlockingFactory.create(
+        valid_between=date_ranges.earlier,
+        blocking_period_type=1,
+        quota_definition=quota_definition,
+    )
+    current_validity = blocking.valid_between
+    data = {
+        "start_date_0": current_validity.lower.day,
+        "start_date_1": current_validity.lower.month,
+        "start_date_2": current_validity.lower.year,
+        "end_date_0": current_validity.upper.day,
+        "end_date_1": current_validity.upper.month,
+        "end_date_2": current_validity.upper.year,
+        "blocking_period_type": 2,
+        "description": "New description",
+    }
+
+    url = reverse("quota_blocking-ui-edit", kwargs={"sid": blocking.sid})
+
+    get_response = client_with_current_workbasket.get(url, data=data)
+
+    soup = BeautifulSoup(
+        get_response.content.decode(get_response.charset),
+        "html.parser",
+    )
+
+    disabled_fields = soup.select("[disabled]")
+    assert len(disabled_fields) == 5
+
+    post_response = client_with_current_workbasket.post(url, data=data)
+    assert post_response.status_code == 302
+
+    updated_blocking = models.QuotaBlocking.objects.approved_up_to_transaction(
+        Transaction.objects.last(),
+    ).get(sid=blocking.sid)
+    assert updated_blocking.description != "New description"
+    assert updated_blocking.blocking_period_type == 1
+
+
+@pytest.mark.parametrize(
+    "factory",
+    (factories.QuotaBlockingFactory,),
+)
+def test_quota_blocking_delete_form(factory, use_delete_form):
+    use_delete_form(factory())
