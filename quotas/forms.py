@@ -1081,6 +1081,7 @@ class QuotaBlockingUpdateForm(ValidityPeriodForm, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.init_fields()
         self.init_layout()
 
     def init_layout(self):
@@ -1128,6 +1129,12 @@ class QuotaBlockingUpdateForm(ValidityPeriodForm, forms.ModelForm):
             )
 
         return cleaned_data
+
+    def init_fields(self):
+        if self.instance.valid_between.lower <= date.today():
+            self.fields["description"].disabled = True
+            self.fields["blocking_period_type"].disabled = True
+            self.fields["start_date"].disabled = True
 
     class Meta:
         model = models.QuotaBlocking
