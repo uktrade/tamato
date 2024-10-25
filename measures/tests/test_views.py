@@ -1262,7 +1262,7 @@ def test_measure_form_wizard_finish(
 
     complete_response = client_with_current_workbasket.get(response.url)
 
-    assert complete_response.status_code == 200
+    assert complete_response.status_code == 302
 
 
 @unittest.mock.patch("workbaskets.models.WorkBasket.current")
