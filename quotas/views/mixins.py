@@ -73,9 +73,6 @@ class QuotaUpdateMixin(
         return kwargs
 
     def update_origins(self, instance, form_origins):
-        workbasket_origins = self.workbasket.tracked_models.instance_of(
-            models.QuotaOrderNumberOrigin,
-        )
         existing_origin_pks = {origin.pk for origin in instance.get_current_origins()}
 
         if form_origins:
@@ -86,20 +83,27 @@ class QuotaUpdateMixin(
                 origin = models.QuotaOrderNumberOrigin.objects.get(
                     pk=origin_pk,
                 )
-                origin.new_version(
+                new_tx = self.workbasket.new_transaction()
+                make_real_edit(
+                    tx=new_tx,
+                    cls=models.QuotaOrderNumberOrigin,
+                    obj=origin,
+                    data=None,
+                    workbasket=self.workbasket,
                     update_type=UpdateType.DELETE,
-                    workbasket=WorkBasket.current(self.request),
-                    transaction=instance.transaction,
                 )
                 # Delete the exclusions as well
                 exclusions = models.QuotaOrderNumberOriginExclusion.objects.filter(
                     origin__pk=origin_pk,
                 )
                 for exclusion in exclusions:
-                    exclusion.new_version(
+                    make_real_edit(
+                        tx=new_tx,
+                        cls=models.QuotaOrderNumberOriginExclusion,
+                        obj=exclusion,
+                        data=None,
+                        workbasket=self.workbasket,
                         update_type=UpdateType.DELETE,
-                        workbasket=WorkBasket.current(self.request),
-                        transaction=instance.transaction,
                     )
 
             for origin_data in form_origins:
