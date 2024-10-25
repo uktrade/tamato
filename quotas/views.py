@@ -302,8 +302,12 @@ class QuotaDefinitionList(SortingMixin, ListView):
 
     @property
     def blocking_periods(self):
-        return QuotaBlocking.objects.current().filter(
-            quota_definition__order_number=self.quota,
+        return (
+            QuotaBlocking.objects.current()
+            .filter(
+                quota_definition__order_number=self.quota,
+            )
+            .order_by("quota_definition__sid")
         )
 
     @property

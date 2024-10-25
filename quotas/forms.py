@@ -1013,8 +1013,11 @@ class QuotaSuspensionUpdateForm(ValidityPeriodForm, forms.ModelForm):
 
     def init_layout(self):
         cancel_url = reverse_lazy(
-            "quota-ui-detail",
-            kwargs={"sid": self.instance.quota_definition.order_number.sid},
+            "quota_definition-ui-list-filter",
+            kwargs={
+                "sid": self.instance.quota_definition.order_number.sid,
+                "quota_type": "suspension_periods",
+            },
         )
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -1082,8 +1085,11 @@ class QuotaBlockingUpdateForm(ValidityPeriodForm, forms.ModelForm):
 
     def init_layout(self):
         cancel_url = reverse_lazy(
-            "quota-ui-detail",
-            kwargs={"sid": self.instance.quota_definition.order_number.sid},
+            "quota_definition-ui-list-filter",
+            kwargs={
+                "sid": self.instance.quota_definition.order_number.sid,
+                "quota_type": "blocking_periods",
+            },
         )
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
