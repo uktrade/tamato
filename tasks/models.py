@@ -3,11 +3,101 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.transaction import atomic
 
 from common.models.mixins import TimestampedMixin
+from common.util import TableLock
 from workbaskets.models import WorkBasket
 
 User = get_user_model()
+
+
+class FifoQueue(TimestampedMixin):
+    def get_first(self) -> "FifoQueueItem":
+        """Get the first element in the queue."""
+        # TODO
+
+
+class FifoQueueItemManager(models.Manager):
+    @atomic
+    @TableLock.acquire_lock("tasks.FifoQueueItem", lock=TableLock.EXCLUSIVE)
+    def create(self, fifo_queue: FifoQueue) -> "FifoQueueItem":
+        """Create a new FifoQueueItem instance on fifo_queue and place it in
+        last position."""
+        # TODO
+
+
+class FifoQueueItemQuerySet(models.QuerySet):
+    """QuerySet implementation for FifoQueueItem model."""
+
+    # TODO
+
+
+class FifoQueueItem(models.Model):
+    class Meta:
+        ordering = ["fifo_queue", "position"]
+
+    objects: FifoQueueItemQuerySet = FifoQueueItemManager.from_queryset(
+        FifoQueueItemQuerySet,
+    )()
+
+    fifo_queue = models.ForeignKey(
+        FifoQueue,
+        on_delete=models.CASCADE,
+    )
+    """The FifoQueue instance that this instance is a member of."""
+    position = models.PositiveSmallIntegerField(
+        db_index=True,
+        editable=False,
+    )
+    """
+    1-based positioning - 1 is the first position.
+    """
+
+    @atomic
+    def delete(self):
+        """Remove and delete instance from its queue, shuffling all successive
+        queued instances up one position."""
+        # TODO
+
+    @atomic
+    def promote_to_first(self):
+        """Promote the instance to the top position of the package processing
+        queue so that it occupies position 1."""
+        # TODO
+
+    @atomic
+    def demote_to_last(self):
+        """Promote the instance to the top position of the package processing
+        queue so that it occupies position 1."""
+        # TODO
+
+    @atomic
+    def promote(self):
+        """Promote the instance by one position up the queue."""
+        # TODO
+
+    @atomic
+    def demote(self):
+        """Demote the instance by one position down the queue."""
+        # TODO
+
+
+class TaskTemplateSerialWorkflow(FifoQueue):
+    """Task workflow template."""
+
+    title = models.CharField()
+    description = models.CharField()
+
+
+class TaskSerialWorkflow(FifoQueue):
+    """Task workflow."""
+
+    title = models.CharField()
+    description = models.CharField()
+    creator_template = models.ForeignKey(
+        TaskTemplateSerialWorkflow,
+    )
 
 
 class Task(TimestampedMixin):
