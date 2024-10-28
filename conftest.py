@@ -290,7 +290,7 @@ def api_client() -> APIClient:
 
 @pytest.fixture
 def policy_group(db) -> Group:
-    group = factories.UserGroupFactory.create(name="Policy")
+    group = factories.UserGroupFactory.create(name="Tariff Managers")
 
     for app_label, codename in [
         ("common", "add_trackedmodel"),
