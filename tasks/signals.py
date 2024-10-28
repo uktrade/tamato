@@ -4,6 +4,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from tasks.models import Task
+from tasks.models import TaskAssignee
 from tasks.models import TaskLog
 
 _thread_locals = threading.local()
@@ -25,7 +26,7 @@ def create_tasklog_for_task_update(sender, instance, **kwargs):
 
     Note that this signal is triggered before the `Task` instance is saved.
     """
-    if not instance.pk:
+    if instance._state.adding:
         return
 
     old_instance = Task.objects.get(pk=instance.pk)
@@ -36,4 +37,31 @@ def create_tasklog_for_task_update(sender, instance, **kwargs):
             action=TaskLog.AuditActionType.PROGRESS_STATE_UPDATED,
             instigator=get_current_instigator(),
             progress_state=instance.progress_state,
+        )
+
+
+@receiver(pre_save, sender=TaskAssignee)
+def create_tasklog_for_task_assignee(sender, instance, **kwargs):
+    """
+    Creates a `TaskLog` entry when a user is assigned to or unassigned from a
+    `Task`.
+
+    Note that this signal is triggered before the `TaskAssignee` instance is saved.
+    """
+    if instance._state.adding:
+        return TaskLog.objects.create(
+            task=instance.task,
+            action=TaskLog.AuditActionType.TASK_ASSIGNED,
+            instigator=get_current_instigator(),
+            assignee=instance.user,
+        )
+
+    old_instance = TaskAssignee.objects.get(pk=instance.pk)
+
+    if instance.unassigned_at and instance.unassigned_at != old_instance.unassigned_at:
+        return TaskLog.objects.create(
+            task=instance.task,
+            action=TaskLog.AuditActionType.TASK_UNASSIGNED,
+            instigator=get_current_instigator(),
+            assignee=old_instance.user,
         )

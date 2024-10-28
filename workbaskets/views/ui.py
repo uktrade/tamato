@@ -1661,7 +1661,6 @@ class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
         )
         return kwargs
 
-    @atomic
     def form_valid(self, form):
         form.unassign_users()
         return redirect(self.get_success_url())

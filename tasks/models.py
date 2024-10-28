@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db import transaction
 
 from common.models.mixins import TimestampedMixin
 from workbaskets.models import WorkBasket
@@ -134,13 +135,17 @@ class TaskAssignee(TimestampedMixin):
         return True if not self.unassigned_at else False
 
     @classmethod
-    def unassign_user(cls, user, task):
+    def unassign_user(cls, user, task, instigator):
+        from tasks.signals import set_current_instigator
+
         try:
             assignment = cls.objects.get(user=user, task=task)
             if assignment.unassigned_at:
                 return False
-            assignment.unassigned_at = datetime.now()
-            assignment.save(update_fields=["unassigned_at"])
+            set_current_instigator(instigator)
+            with transaction.atomic():
+                assignment.unassigned_at = datetime.now()
+                assignment.save(update_fields=["unassigned_at"])
             return True
         except cls.DoesNotExist:
             return False

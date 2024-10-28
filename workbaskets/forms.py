@@ -11,6 +11,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Q
 from django.urls import reverse
 
@@ -20,6 +21,7 @@ from common.validators import markdown_tags_allowlist
 from tasks.models import Comment
 from tasks.models import Task
 from tasks.models import TaskAssignee
+from tasks.signals import set_current_instigator
 from workbaskets import models
 from workbaskets import validators
 from workbaskets.util import serialize_uploaded_data
@@ -248,11 +250,14 @@ class WorkBasketAssignUsersForm(forms.Form):
             ),
         )
 
+    @transaction.atomic
     def assign_users(self, task):
+        set_current_instigator(self.request.user)
+
         assignment_type = self.cleaned_data["assignment_type"]
 
         assignees = [
-            TaskAssignee(
+            TaskAssignee.objects.create(
                 user=user,
                 assignment_type=assignment_type,
                 task=task,
@@ -266,7 +271,7 @@ class WorkBasketAssignUsersForm(forms.Form):
             .assigned()
             .exists()
         ]
-        return TaskAssignee.objects.bulk_create(assignees)
+        return assignees
 
 
 class WorkBasketUnassignUsersForm(forms.Form):
@@ -309,15 +314,14 @@ class WorkBasketUnassignUsersForm(forms.Form):
             ),
         )
 
+    @transaction.atomic
     def unassign_users(self):
+        set_current_instigator(self.request.user)
         assignees = self.cleaned_data["assignees"]
         for assignee in assignees:
             assignee.unassigned_at = datetime.now()
-
-        return TaskAssignee.objects.bulk_update(
-            assignees,
-            fields=["unassigned_at"],
-        )
+            assignee.save()
+        return assignees
 
 
 class WorkBasketCommentForm(forms.ModelForm):

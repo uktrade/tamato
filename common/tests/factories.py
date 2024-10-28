@@ -7,6 +7,7 @@ from itertools import product
 
 import factory
 from django.contrib.auth import get_user_model
+from django.db.models import signals
 from factory.fuzzy import FuzzyChoice
 from factory.fuzzy import FuzzyText
 from faker import Faker
@@ -1565,6 +1566,7 @@ class SubTaskFactory(TaskFactory):
     parent_task = factory.SubFactory(TaskFactory)
 
 
+@factory.django.mute_signals(signals.pre_save)
 class TaskAssigneeFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     assignment_type = FuzzyChoice(TaskAssignee.AssignmentType.values)

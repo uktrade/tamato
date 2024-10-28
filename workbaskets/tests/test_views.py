@@ -27,6 +27,7 @@ from importer.models import ImportBatchStatus
 from measures.models import Measure
 from tasks.models import Comment
 from tasks.models import TaskAssignee
+from tasks.models import TaskLog
 from workbaskets import models
 from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
@@ -2275,18 +2276,36 @@ def test_disabled_packaging_for_unassigned_workbasket(
     assert not packaging_button.has_attr("disabled")
 
 
-def test_workbasket_assign_users_view(valid_user, valid_user_client, user_workbasket):
-    valid_user.user_permissions.add(
-        Permission.objects.get(codename="add_taskassignee"),
+def test_workbasket_assign_users_view(valid_user, valid_user_client, new_workbasket):
+    """Tests that a user can be assigned to a workbasket and that a `TaskLog`
+    entry is created together with the `TaskAssignee` instance."""
+    url = reverse(
+        "workbaskets:workbasket-ui-assign-users",
+        kwargs={"pk": new_workbasket.pk},
     )
-    response = valid_user_client.get(
-        reverse(
-            "workbaskets:workbasket-ui-assign-users",
-            kwargs={"pk": user_workbasket.pk},
-        ),
-    )
+
+    form_data = {
+        "users": [valid_user.pk],
+        "assignment_type": TaskAssignee.AssignmentType.WORKBASKET_WORKER,
+    }
+
+    response = valid_user_client.get(url)
     assert response.status_code == 200
-    assert "Assign users to workbasket" in str(response.content)
+
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    assert TaskAssignee.objects.get(
+        user=valid_user,
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
+        task__workbasket=new_workbasket,
+    )
+
+    assert TaskLog.objects.get(
+        task__workbasket=new_workbasket,
+        action=TaskLog.AuditActionType.TASK_ASSIGNED,
+        instigator=response.wsgi_request.user,
+    )
 
 
 def test_workbasket_assign_users_view_without_permission(client, user_workbasket):
@@ -2301,18 +2320,35 @@ def test_workbasket_assign_users_view_without_permission(client, user_workbasket
     assert response.status_code == 403
 
 
-def test_workbasket_unassign_users_view(valid_user, valid_user_client, user_workbasket):
-    valid_user.user_permissions.add(
-        Permission.objects.get(codename="change_taskassignee"),
+def test_workbasket_unassign_users_view(valid_user, valid_user_client):
+    """Tests that a user can be unassigned from a workbasket and that a
+    `TaskLog` entry is created together with the updated `TaskAssignee`
+    instance."""
+    assignee = factories.TaskAssigneeFactory.create(user=valid_user)
+    workbasket = assignee.task.workbasket
+
+    url = reverse(
+        "workbaskets:workbasket-ui-unassign-users",
+        kwargs={"pk": workbasket.pk},
     )
-    response = valid_user_client.get(
-        reverse(
-            "workbaskets:workbasket-ui-unassign-users",
-            kwargs={"pk": user_workbasket.pk},
-        ),
-    )
+    form_data = {
+        "assignees": [assignee.pk],
+    }
+
+    response = valid_user_client.get(url)
     assert response.status_code == 200
-    assert "Unassign users from workbasket" in str(response.content)
+
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    assignee.refresh_from_db()
+
+    assert not assignee.is_assigned
+    assert TaskLog.objects.get(
+        task__workbasket=workbasket,
+        action=TaskLog.AuditActionType.TASK_UNASSIGNED,
+        instigator=response.wsgi_request.user,
+    )
 
 
 def test_workbasket_unassign_users_view_without_permission(client, user_workbasket):

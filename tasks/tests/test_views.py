@@ -6,9 +6,9 @@ from tasks.models import ProgressState
 from tasks.models import TaskLog
 
 
-def test_task_update_view_creates_tasklog(valid_user_client):
-    """Tests that a `TaskLog` entry is created when a `Task` instance is
-    updated."""
+def test_task_update_view_update_progress_state(valid_user_client):
+    """Tests that `TaskUpdateView` updates `Task.progress_state` and that a
+    related `TaskLog` entry is also created."""
     instance = TaskFactory.create(progress_state__name=ProgressState.State.TO_DO)
     new_progress_state = ProgressStateFactory.create(
         name=ProgressState.State.IN_PROGRESS,
