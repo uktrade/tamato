@@ -22,7 +22,7 @@ from common.views import TrackedModelDetailMixin
 from geo_areas.validators import AreaCode
 from quotas import models
 from quotas import validators
-from quotas.forms import QuotaSuspensionType
+from quotas.forms.base import QuotaSuspensionType
 from quotas.views import DuplicateDefinitionsWizard
 from quotas.views import QuotaList
 from quotas.wizard import QuotaDefinitionDuplicatorSessionStorage

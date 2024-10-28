@@ -16,7 +16,6 @@ from django.db.models import TextChoices
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 
-from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import ExtraErrorFormMixin
 from common.forms import FormSet
@@ -40,8 +39,6 @@ from quotas import validators
 from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
-from quotas.serializers import serialize_duplicate_data
-from workbaskets.forms import SelectableObjectsForm
 
 RELATIONSHIP_TYPE_HELP_TEXT = "Select the relationship type for the quota association"
 COEFFICIENT_HELP_TEXT = "Select the coefficient for the quota association"
@@ -1062,116 +1059,6 @@ class QuotaSuspensionUpdateForm(ValidityPeriodForm, forms.ModelForm):
 
 
 QuotaSuspensionDeleteForm = delete_form_for(models.QuotaSuspension)
-
-
-class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):
-    pass
-
-
-class QuotaOrderNumbersSelectForm(forms.Form):
-    main_quota_order_number = AutoCompleteField(
-        label="Main quota order number",
-        queryset=models.QuotaOrderNumber.objects.all(),
-        required=True,
-    )
-    sub_quota_order_number = AutoCompleteField(
-        label="Sub-quota order number",
-        queryset=models.QuotaOrderNumber.objects.all(),
-        required=True,
-    )
-
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", None)
-        super().__init__(*args, **kwargs)
-        self.init_layout(self.request)
-
-    def init_layout(self, request):
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-
-        self.helper.layout = Layout(
-            Div(
-                HTML(
-                    '<h2 class="govuk-heading">Enter main and sub-quota order numbers</h2>',
-                ),
-            ),
-            Div(
-                "main_quota_order_number",
-                Div(
-                    "sub_quota_order_number",
-                    css_class="govuk-inset-text",
-                ),
-            ),
-            Submit(
-                "submit",
-                "Continue",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
-            ),
-        )
-
-
-class SelectSubQuotaDefinitionsForm(
-    SelectableObjectsForm,
-):
-    """Form to select the main quota definitions that are to be duplicated."""
-
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", None)
-        super().__init__(*args, **kwargs)
-
-    def set_staged_definition_data(self, selected_definitions):
-        if (
-            self.prefix in ["select_definition_periods"]
-            and self.request.path != "/quotas/duplicate_quota_definitions/complete"
-        ):
-            staged_definition_data = []
-            for definition in selected_definitions:
-                staged_definition_data.append(
-                    {
-                        "main_definition": definition.pk,
-                        "sub_definition_staged_data": serialize_duplicate_data(
-                            definition,
-                        ),
-                    },
-                )
-            self.request.session["staged_definition_data"] = staged_definition_data
-
-    def clean(self):
-        cleaned_data = super().clean()
-        selected_definitions = {
-            key: value for key, value in cleaned_data.items() if value
-        }
-        definitions_pks = [
-            self.object_id_from_field_name(key) for key in selected_definitions
-        ]
-        if len(selected_definitions) < 1:
-            raise ValidationError("At least one quota definition must be selected")
-        selected_definitions = models.QuotaDefinition.objects.filter(
-            pk__in=definitions_pks,
-        ).current()
-        cleaned_data["selected_definitions"] = selected_definitions
-        self.set_staged_definition_data(selected_definitions)
-        return cleaned_data
-
-
-class SelectedDefinitionsForm(forms.Form):
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request")
-        super().__init__(*args, **kwargs)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        cleaned_data["staged_definitions"] = self.request.session[
-            "staged_definition_data"
-        ]
-        for definition in cleaned_data["staged_definitions"]:
-            if not definition["sub_definition_staged_data"]["status"]:
-                raise ValidationError(
-                    "Each definition period must have a specified relationship and co-efficient value",
-                )
-        return cleaned_data
 
 
 class SubQuotaDefinitionsUpdatesForm(

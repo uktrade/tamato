@@ -1,0 +1,28 @@
+{# TODO: This is identical to the sub-quota-duplicate-definitions-step.jinja 
+Investigate renaming the other one and using that here as well.
+#}
+
+{% extends "layouts/form.jinja" %}
+{% from "components/details/macro.njk" import govukDetails %}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+
+{% block content %}
+    <div class="govuk-grid-uk">
+        <div class="govuk-grid-colum-two-thirds">
+            <span class="govuk-caption-l">{{ page_subtitle|default("")}}</span>
+            <h1 class="govuk-heading-xl">
+                {% block page_title_heading %}
+                    {{ page_title }}
+                {% endblock %}
+            </h1>
+            {% if step_metadata[wizard.steps.current].info %}
+                <p class="govuk-body">{{ step_metadata[wizard.steps.current].info }}</p>
+            {% endif %}
+            {% call django_form(action=view.get_step_url(wizard.steps.current)) %}
+                {{ wizard.management_form }}
+                {% block form %}{{ crispy(form) }}{% endblock %}
+            {% endcall %}
+        </div>
+    </div>
+{% endblock %}
