@@ -1,11 +1,27 @@
 from django.db import models
 
 from common.fields import TaricDateRangeField
+from measures.models.tracked_models import AdditionalCodeTypeMeasureType
+from measures.models.tracked_models import DutyExpression
+from measures.models.tracked_models import FootnoteAssociationMeasure
 from measures.models.tracked_models import Measure
+from measures.models.tracked_models import MeasureAction
+from measures.models.tracked_models import MeasureComponent
+from measures.models.tracked_models import MeasureCondition
+from measures.models.tracked_models import MeasureConditionCode
+from measures.models.tracked_models import MeasureConditionComponent
+from measures.models.tracked_models import MeasureExcludedGeographicalArea
+from measures.models.tracked_models import Measurement
+from measures.models.tracked_models import MeasurementUnit
+from measures.models.tracked_models import MeasurementUnitQualifier
+from measures.models.tracked_models import MeasureType
+from measures.models.tracked_models import MeasureTypeSeries
+from measures.models.tracked_models import MonetaryUnit
 from open_data.models.utils import ReportModel
 
 
 class ReportAdditionalCodeTypeMeasureType(ReportModel):
+    shadowed_model = AdditionalCodeTypeMeasureType
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -17,8 +33,13 @@ class ReportAdditionalCodeTypeMeasureType(ReportModel):
     )
     measure_type = models.ForeignKey("ReportMeasureType", models.DO_NOTHING)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(AdditionalCodeTypeMeasureType)
+
 
 class ReportDutyExpression(ReportModel):
+    shadowed_model = DutyExpression
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -31,14 +52,22 @@ class ReportDutyExpression(ReportModel):
     monetary_unit_applicability_code = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(DutyExpression)
+
 
 class ReportFootnoteAssociationMeasure(ReportModel):
+    shadowed_model = FootnoteAssociationMeasure
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
     associated_footnote = models.ForeignKey("ReportFootnote", models.DO_NOTHING)
     footnoted_measure = models.ForeignKey("ReportMeasure", models.DO_NOTHING)
+
+    class Meta:
+        db_table = ReportModel.create_table_name(FootnoteAssociationMeasure)
 
 
 class ReportMeasure(ReportModel):
@@ -91,6 +120,8 @@ class ReportMeasure(ReportModel):
 
 
 class ReportMeasureAction(ReportModel):
+    shadowed_model = MeasureAction
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -100,8 +131,13 @@ class ReportMeasureAction(ReportModel):
     description = models.CharField(max_length=500, blank=True, null=True)
     requires_duty = models.BooleanField()
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasureAction)
+
 
 class ReportMeasureConditionComponent(ReportModel):
+    shadowed_model = MeasureConditionComponent
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -127,8 +163,13 @@ class ReportMeasureConditionComponent(ReportModel):
         null=True,
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasureConditionComponent)
+
 
 class ReportMeasureCondition(ReportModel):
+    shadowed_model = MeasureCondition
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -171,8 +212,13 @@ class ReportMeasureCondition(ReportModel):
         null=True,
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasureCondition)
+
 
 class ReportMeasureConditionCode(ReportModel):
+    shadowed_model = MeasureConditionCode
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -183,8 +229,13 @@ class ReportMeasureConditionCode(ReportModel):
     accepts_certificate = models.BooleanField()
     accepts_price = models.BooleanField()
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasureConditionCode)
+
 
 class ReportMeasurementUnit(ReportModel):
+    shadowed_model = MeasurementUnit
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -194,8 +245,13 @@ class ReportMeasurementUnit(ReportModel):
     description = models.CharField(max_length=500, blank=True, null=True)
     abbreviation = models.CharField(max_length=32)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasurementUnit)
+
 
 class ReportMeasurementUnitQualifier(ReportModel):
+    shadowed_model = MeasurementUnitQualifier
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -205,8 +261,13 @@ class ReportMeasurementUnitQualifier(ReportModel):
     description = models.CharField(max_length=500, blank=True, null=True)
     abbreviation = models.CharField(max_length=32)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasurementUnitQualifier)
+
 
 class ReportMeasureTypeSeries(ReportModel):
+    shadowed_model = MeasureTypeSeries
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -216,8 +277,13 @@ class ReportMeasureTypeSeries(ReportModel):
     measure_type_combination = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasureTypeSeries)
+
 
 class ReportMonetaryUnit(ReportModel):
+    shadowed_model = MonetaryUnit
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -226,8 +292,13 @@ class ReportMonetaryUnit(ReportModel):
     code = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MonetaryUnit)
+
 
 class ReportMeasureType(ReportModel):
+    shadowed_model = MeasureType
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -246,8 +317,13 @@ class ReportMeasureType(ReportModel):
         models.DO_NOTHING,
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasureType)
+
 
 class ReportMeasurement(ReportModel):
+    shadowed_model = Measurement
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -261,8 +337,13 @@ class ReportMeasurement(ReportModel):
         null=True,
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(Measurement)
+
 
 class ReportMeasureExcludedGeographicalArea(ReportModel):
+    shadowed_model = MeasureExcludedGeographicalArea
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -273,8 +354,13 @@ class ReportMeasureExcludedGeographicalArea(ReportModel):
     )
     modified_measure = models.ForeignKey(ReportMeasure, models.DO_NOTHING)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasureExcludedGeographicalArea)
+
 
 class ReportMeasureComponent(ReportModel):
+    shadowed_model = MeasureComponent
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -299,3 +385,6 @@ class ReportMeasureComponent(ReportModel):
         blank=True,
         null=True,
     )
+
+    class Meta:
+        db_table = ReportModel.create_table_name(MeasureComponent)
