@@ -2,9 +2,16 @@ from django.db import models
 
 from common.fields import TaricDateRangeField
 from open_data.models.utils import ReportModel
+from regulations.models import Amendment
+from regulations.models import Group
+from regulations.models import Regulation
+from regulations.models import Replacement
+from regulations.models import Suspension
 
 
 class ReportAmendment(ReportModel):
+    shadowed_model = Amendment
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -16,8 +23,13 @@ class ReportAmendment(ReportModel):
         related_name="regulationsamendment_target_regulation_set",
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(Amendment)
+
 
 class ReportGroup(ReportModel):
+    shadowed_model = Group
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -26,8 +38,13 @@ class ReportGroup(ReportModel):
     group_id = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(Group)
+
 
 class ReportRegulation(ReportModel):
+    shadowed_model = Regulation
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -56,8 +73,13 @@ class ReportRegulation(ReportModel):
         null=True,
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(Regulation)
+
 
 class ReportSuspension(ReportModel):
+    shadowed_model = Suspension
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -70,8 +92,13 @@ class ReportSuspension(ReportModel):
         related_name="regulationssuspension_target_regulation_set",
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(Suspension)
+
 
 class ReportReplacement(ReportModel):
+    shadowed_model = Replacement
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -85,3 +112,6 @@ class ReportReplacement(ReportModel):
         models.DO_NOTHING,
         related_name="regulationsreplacement_target_regulation_set",
     )
+
+    class Meta:
+        db_table = ReportModel.create_table_name(Replacement)
