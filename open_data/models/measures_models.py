@@ -5,7 +5,7 @@ from measures.models.tracked_models import Measure
 from open_data.models.utils import ReportModel
 
 
-class ReportAdditionalCodeTypeMeasureType(models.Model):
+class ReportAdditionalCodeTypeMeasureType(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -18,7 +18,7 @@ class ReportAdditionalCodeTypeMeasureType(models.Model):
     measure_type = models.ForeignKey("ReportMeasureType", models.DO_NOTHING)
 
 
-class ReportDutyExpression(models.Model):
+class ReportDutyExpression(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -32,7 +32,7 @@ class ReportDutyExpression(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class ReportFootnoteAssociationMeasure(models.Model):
+class ReportFootnoteAssociationMeasure(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -90,7 +90,7 @@ class ReportMeasure(ReportModel):
         db_table = ReportModel.create_table_name(Measure)
 
 
-class ReportMeasureAction(models.Model):
+class ReportMeasureAction(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -101,7 +101,7 @@ class ReportMeasureAction(models.Model):
     requires_duty = models.BooleanField()
 
 
-class ReportMeasureConditionComponent(models.Model):
+class ReportMeasureConditionComponent(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -128,7 +128,7 @@ class ReportMeasureConditionComponent(models.Model):
     )
 
 
-class ReportMeasureCondition(models.Model):
+class ReportMeasureCondition(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -172,7 +172,7 @@ class ReportMeasureCondition(models.Model):
     )
 
 
-class ReportMeasureConditionCode(models.Model):
+class ReportMeasureConditionCode(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -184,7 +184,7 @@ class ReportMeasureConditionCode(models.Model):
     accepts_price = models.BooleanField()
 
 
-class ReportMeasurementUnit(models.Model):
+class ReportMeasurementUnit(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -195,7 +195,7 @@ class ReportMeasurementUnit(models.Model):
     abbreviation = models.CharField(max_length=32)
 
 
-class ReportMeasurementUnitQualifier(models.Model):
+class ReportMeasurementUnitQualifier(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -206,7 +206,7 @@ class ReportMeasurementUnitQualifier(models.Model):
     abbreviation = models.CharField(max_length=32)
 
 
-class ReportMeasureTypeSeries(models.Model):
+class ReportMeasureTypeSeries(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -217,7 +217,7 @@ class ReportMeasureTypeSeries(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class ReportMonetaryUnit(models.Model):
+class ReportMonetaryUnit(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -227,7 +227,7 @@ class ReportMonetaryUnit(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class ReportMeasureType(models.Model):
+class ReportMeasureType(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -247,7 +247,7 @@ class ReportMeasureType(models.Model):
     )
 
 
-class ReportMeasurement(models.Model):
+class ReportMeasurement(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -262,7 +262,7 @@ class ReportMeasurement(models.Model):
     )
 
 
-class ReportMeasureExcludedGeographicalArea(models.Model):
+class ReportMeasureExcludedGeographicalArea(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -274,7 +274,7 @@ class ReportMeasureExcludedGeographicalArea(models.Model):
     modified_measure = models.ForeignKey(ReportMeasure, models.DO_NOTHING)
 
 
-class ReportMeasureComponent(models.Model):
+class ReportMeasureComponent(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",

@@ -1,9 +1,10 @@
 from django.db import models
 
 from common.fields import TaricDateRangeField
+from open_data.models.utils import ReportModel
 
 
-class ReportAmendment(models.Model):
+class ReportAmendment(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -16,7 +17,7 @@ class ReportAmendment(models.Model):
     )
 
 
-class ReportGroup(models.Model):
+class ReportGroup(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -26,7 +27,7 @@ class ReportGroup(models.Model):
     description = models.CharField(max_length=500, blank=True, null=True)
 
 
-class ReportRegulation(models.Model):
+class ReportRegulation(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -56,7 +57,7 @@ class ReportRegulation(models.Model):
     )
 
 
-class ReportSuspension(models.Model):
+class ReportSuspension(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -70,7 +71,7 @@ class ReportSuspension(models.Model):
     )
 
 
-class ReportReplacement(models.Model):
+class ReportReplacement(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",

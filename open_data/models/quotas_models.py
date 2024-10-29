@@ -1,9 +1,10 @@
 from django.db import models
 
 from common.fields import TaricDateRangeField
+from open_data.models.utils import ReportModel
 
 
-class ReportQuotaAssociation(models.Model):
+class ReportQuotaAssociation(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -18,7 +19,7 @@ class ReportQuotaAssociation(models.Model):
     )
 
 
-class ReportQuotaDefinition(models.Model):
+class ReportQuotaDefinition(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -52,7 +53,7 @@ class ReportQuotaDefinition(models.Model):
     order_number = models.ForeignKey("ReportQuotaOrderNumber", models.DO_NOTHING)
 
 
-class ReportQuotaOrderNumber(models.Model):
+class ReportQuotaOrderNumber(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -64,7 +65,7 @@ class ReportQuotaOrderNumber(models.Model):
     category = models.SmallIntegerField()
 
 
-class ReportQuotaOrderNumberOrigin(models.Model):
+class ReportQuotaOrderNumberOrigin(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -75,7 +76,7 @@ class ReportQuotaOrderNumberOrigin(models.Model):
     order_number = models.ForeignKey(ReportQuotaOrderNumber, models.DO_NOTHING)
 
 
-class ReportQuotaSuspension(models.Model):
+class ReportQuotaSuspension(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -86,7 +87,7 @@ class ReportQuotaSuspension(models.Model):
     quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
 
 
-class ReportQuotaOrderNumberOriginExclusion(models.Model):
+class ReportQuotaOrderNumberOriginExclusion(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -98,7 +99,7 @@ class ReportQuotaOrderNumberOriginExclusion(models.Model):
     origin = models.ForeignKey(ReportQuotaOrderNumberOrigin, models.DO_NOTHING)
 
 
-class ReportQuotaEvent(models.Model):
+class ReportQuotaEvent(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -109,7 +110,7 @@ class ReportQuotaEvent(models.Model):
     quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
 
 
-class ReportQuotaBlocking(models.Model):
+class ReportQuotaBlocking(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",

@@ -1,9 +1,18 @@
 from django.db import models
 
+from commodities.models import FootnoteAssociationGoodsNomenclature
+from commodities.models import GoodsNomenclature
+from commodities.models import GoodsNomenclatureDescription
+from commodities.models import GoodsNomenclatureIndent
+from commodities.models import GoodsNomenclatureOrigin
+from commodities.models import GoodsNomenclatureSuccessor
 from common.fields import TaricDateRangeField
+from open_data.models.utils import ReportModel
 
 
-class ReportGoodsNomenclature(models.Model):
+class ReportGoodsNomenclature(ReportModel):
+    shadowed_model = GoodsNomenclature
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -14,8 +23,13 @@ class ReportGoodsNomenclature(models.Model):
     suffix = models.CharField(max_length=2)
     statistical = models.BooleanField()
 
+    class Meta:
+        db_table = ReportModel.create_table_name(GoodsNomenclature)
 
-class ReportGoodsNomenclatureIndent(models.Model):
+
+class ReportGoodsNomenclatureIndent(ReportModel):
+    shadowed_model = GoodsNomenclatureIndent
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -28,8 +42,12 @@ class ReportGoodsNomenclatureIndent(models.Model):
     )
     validity_start = models.DateField()
 
+    class Meta:
+        db_table = ReportModel.create_table_name(GoodsNomenclatureIndent)
 
-class ReportGoodsNomenclatureSuccessor(models.Model):
+
+class ReportGoodsNomenclatureSuccessor(ReportModel):
+    shadowed_model = GoodsNomenclatureSuccessor
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -44,8 +62,13 @@ class ReportGoodsNomenclatureSuccessor(models.Model):
         related_name="commoditiesgoodsnomenclaturesuccessor_replaced_goods_nomenclature_set",
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(GoodsNomenclatureSuccessor)
 
-class ReportGoodsNomenclatureOrigin(models.Model):
+
+class ReportGoodsNomenclatureOrigin(ReportModel):
+    shadowed_model = GoodsNomenclatureOrigin
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -60,8 +83,13 @@ class ReportGoodsNomenclatureOrigin(models.Model):
         related_name="commoditiesgoodsnomenclatureorigin_new_goods_nomenclature_set",
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(GoodsNomenclatureOrigin)
 
-class ReportGoodsNomenclatureDescription(models.Model):
+
+class ReportGoodsNomenclatureDescription(ReportModel):
+    shadowed_model = GoodsNomenclatureDescription
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -74,8 +102,13 @@ class ReportGoodsNomenclatureDescription(models.Model):
     )
     validity_start = models.DateField()
 
+    class Meta:
+        db_table = ReportModel.create_table_name(GoodsNomenclatureDescription)
 
-class ReportFootnoteAssociationGoodsNomenclature(models.Model):
+
+class ReportFootnoteAssociationGoodsNomenclature(ReportModel):
+    shadowed_model = FootnoteAssociationGoodsNomenclature
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -86,3 +119,6 @@ class ReportFootnoteAssociationGoodsNomenclature(models.Model):
         ReportGoodsNomenclature,
         models.DO_NOTHING,
     )
+
+    class Meta:
+        db_table = ReportModel.create_table_name(FootnoteAssociationGoodsNomenclature)

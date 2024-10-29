@@ -1,9 +1,10 @@
 from django.db import models
 
 from common.fields import TaricDateRangeField
+from open_data.models.utils import ReportModel
 
 
-class ReportGeographicalArea(models.Model):
+class ReportGeographicalArea(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -15,7 +16,7 @@ class ReportGeographicalArea(models.Model):
     parent = models.ForeignKey("self", models.DO_NOTHING, blank=True, null=True)
 
 
-class ReportGeographicalMembership(models.Model):
+class ReportGeographicalMembership(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -29,7 +30,7 @@ class ReportGeographicalMembership(models.Model):
     )
 
 
-class ReportGeographicalAreaDescription(models.Model):
+class ReportGeographicalAreaDescription(ReportModel):
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
