@@ -2,9 +2,19 @@ from django.db import models
 
 from common.fields import TaricDateRangeField
 from open_data.models.utils import ReportModel
+from quotas.models import QuotaAssociation
+from quotas.models import QuotaBlocking
+from quotas.models import QuotaDefinition
+from quotas.models import QuotaEvent
+from quotas.models import QuotaOrderNumber
+from quotas.models import QuotaOrderNumberOrigin
+from quotas.models import QuotaOrderNumberOriginExclusion
+from quotas.models import QuotaSuspension
 
 
 class ReportQuotaAssociation(ReportModel):
+    shadowed_model = QuotaAssociation
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -18,8 +28,13 @@ class ReportQuotaAssociation(ReportModel):
         related_name="quotasquotaassociation_sub_quota_set",
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(QuotaAssociation)
+
 
 class ReportQuotaDefinition(ReportModel):
+    shadowed_model = QuotaDefinition
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -52,8 +67,13 @@ class ReportQuotaDefinition(ReportModel):
     )
     order_number = models.ForeignKey("ReportQuotaOrderNumber", models.DO_NOTHING)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(QuotaDefinition)
+
 
 class ReportQuotaOrderNumber(ReportModel):
+    shadowed_model = QuotaOrderNumber
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -64,8 +84,13 @@ class ReportQuotaOrderNumber(ReportModel):
     mechanism = models.SmallIntegerField()
     category = models.SmallIntegerField()
 
+    class Meta:
+        db_table = ReportModel.create_table_name(QuotaOrderNumber)
+
 
 class ReportQuotaOrderNumberOrigin(ReportModel):
+    shadowed_model = QuotaOrderNumberOrigin
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -75,8 +100,13 @@ class ReportQuotaOrderNumberOrigin(ReportModel):
     geographical_area = models.ForeignKey("ReportGeographicalArea", models.DO_NOTHING)
     order_number = models.ForeignKey(ReportQuotaOrderNumber, models.DO_NOTHING)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(QuotaOrderNumberOrigin)
+
 
 class ReportQuotaSuspension(ReportModel):
+    shadowed_model = QuotaSuspension
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -86,8 +116,13 @@ class ReportQuotaSuspension(ReportModel):
     description = models.CharField(max_length=500, blank=True, null=True)
     quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(QuotaSuspension)
+
 
 class ReportQuotaOrderNumberOriginExclusion(ReportModel):
+    shadowed_model = QuotaOrderNumberOriginExclusion
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -98,8 +133,13 @@ class ReportQuotaOrderNumberOriginExclusion(ReportModel):
     )
     origin = models.ForeignKey(ReportQuotaOrderNumberOrigin, models.DO_NOTHING)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(QuotaOrderNumberOriginExclusion)
+
 
 class ReportQuotaEvent(ReportModel):
+    shadowed_model = QuotaEvent
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -109,8 +149,13 @@ class ReportQuotaEvent(ReportModel):
     data = models.JSONField()
     quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(QuotaEvent)
+
 
 class ReportQuotaBlocking(ReportModel):
+    shadowed_model = QuotaBlocking
+
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -120,3 +165,6 @@ class ReportQuotaBlocking(ReportModel):
     blocking_period_type = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
+
+    class Meta:
+        db_table = ReportModel.create_table_name(QuotaBlocking)
