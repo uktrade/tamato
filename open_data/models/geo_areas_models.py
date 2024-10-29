@@ -1,10 +1,14 @@
 from django.db import models
 
 from common.fields import TaricDateRangeField
+from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalAreaDescription
+from geo_areas.models import GeographicalMembership
 from open_data.models.utils import ReportModel
 
 
 class ReportGeographicalArea(ReportModel):
+    shadowed_model = GeographicalArea
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -15,8 +19,12 @@ class ReportGeographicalArea(ReportModel):
     area_code = models.SmallIntegerField()
     parent = models.ForeignKey("self", models.DO_NOTHING, blank=True, null=True)
 
+    class Meta:
+        db_table = ReportModel.create_table_name(GeographicalArea)
+
 
 class ReportGeographicalMembership(ReportModel):
+    shadowed_model = GeographicalMembership
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -29,8 +37,12 @@ class ReportGeographicalMembership(ReportModel):
         related_name="geoareasgeographicalmembership_member_set",
     )
 
+    class Meta:
+        db_table = ReportModel.create_table_name(GeographicalMembership)
+
 
 class ReportGeographicalAreaDescription(ReportModel):
+    shadowed_model = GeographicalAreaDescription
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -42,3 +54,7 @@ class ReportGeographicalAreaDescription(ReportModel):
         models.DO_NOTHING,
     )
     validity_start = models.DateField()
+
+
+class Meta:
+    db_table = ReportModel.create_table_name(GeographicalAreaDescription)
