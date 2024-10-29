@@ -2,15 +2,7 @@
   <div class="app-related-items" role="complementary">
       <h2 class="govuk-heading-s" id="subsection-title">Actions</h2>
       <ul class="govuk-list govuk-!-font-size-16">
-            <li><a class="govuk-link" href="{{ url('quota_definition-ui-list', args=[object.sid]) }}">View and edit quota data</a></li>
-            <li><a class="govuk-link" href="{{ url('quota_definition-ui-create', args=[object.sid]) }}">Create definition period</a></li>
-            <br>
-            <li><a class="govuk-link" href="{{ url('sub_quota_definitions-ui-create') }}">Create quota associations</a></li>
-            <br>
-            <li><a class="govuk-link" href="{{ url('quota_suspension_or_blocking-ui-create', args=[object.sid]) }}">Create suspension or blocking period</a></li>
-            <br>
-            <li><a class="govuk-link" href="{{ measures_url }}">View all measures</a></li>
-            <br>
+          <strong class=govuk-heading-xs">Edit and delete quota</strong>
           {% set edit_url = object.get_url('edit') %}
           {% if edit_url %}
             <li><a class="govuk-link" href="{{ edit_url }}">Edit this {{object._meta.verbose_name}}</a></li>
@@ -19,8 +11,17 @@
           {% if delete_url %}
             <li><a class="govuk-link" href="{{ delete_url }}">Delete this {{object._meta.verbose_name}}</a></li>
           {% endif %}
-          <br><br>
-          <li><a class="govuk-link" href="{{ uk_tariff_url }}" target="_blank" noopener noreferrer>View this quota on the UK Integrated Online Tariff </a></li>
+          <br>
+          <strong class=govuk-heading-xs">Create quota data</strong>
+            <li><a class="govuk-link" href="{{ url('quota_definition-ui-create', args=[object.sid]) }}">Create definition period</a></li>
+            <li><a class="govuk-link" href="{{ url('sub_quota_definitions-ui-create') }}">Create quota associations</a></li>
+            <li><a class="govuk-link" href="{{ url('quota_suspension_or_blocking-ui-create', args=[object.sid]) }}">Create suspension or blocking period</a></li>
+          <br>
+          <strong class=govuk-heading-xs">View and edit quota data</strong>
+            <li><a class="govuk-link" href="{{ url('quota_definition-ui-list', args=[object.sid]) }}">View and edit quota data</a></li>
+            <li><a class="govuk-link" href="{{ measures_url }}">View all measures</a></li>
+            <li><a class="govuk-link" href="{{ uk_tariff_url }}" target="_blank" noopener noreferrer>View this quota on the UK Integrated Online Tariff </a></li>
+            
       </ul>
   </div>
 </div>

@@ -4,6 +4,239 @@ exports[`QuotaOriginFormset renders empty formset when no initial data 1`] = `
 <div
   aria-live="polite"
 >
+  <div>
+    <h3
+      className="govuk-heading-m"
+    >
+      Origin 
+      1
+    </h3>
+    <input
+      name="origins-0-pk"
+      type="hidden"
+      value=""
+    />
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 kSOVkC"
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 jZJbVy"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 deblVS"
+            size="S"
+          >
+            Start date
+          </legend>
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 UBJjX"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 eTSPOL bXvZdL"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 jZJbVy"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 esEbTY"
+              defaultValue=""
+              error={false}
+              name="origins-0-start_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 eTSPOL bXvZdL"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 jZJbVy"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 esEbTY"
+              defaultValue=""
+              error={false}
+              name="origins-0-start_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 eTSPOL kjRNx"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 jZJbVy"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 esEbTY"
+              defaultValue=""
+              error={false}
+              name="origins-0-start_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <div
+        className="src__StyledContainer-sc-1l2t4xv-0 kSOVkC"
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 jZJbVy"
+        >
+          <legend
+            className="legend__StyledLegend-sc-12rap65-0 deblVS"
+            size="S"
+          >
+            End date
+          </legend>
+        </span>
+        <span
+          className="src__HintText-sc-tq1z5r-0 hIpBPn"
+        >
+          Leave empty if a quota order number origin is needed for an unlimited time
+        </span>
+        <div
+          className="input__StyledList-sc-una33r-1 UBJjX"
+        >
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 eTSPOL bXvZdL"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 jZJbVy"
+            >
+              Day
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 esEbTY"
+              defaultValue=""
+              error={false}
+              name="origins-0-end_date_0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 eTSPOL bXvZdL"
+            error={false}
+            year={false}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 jZJbVy"
+            >
+              Month
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 esEbTY"
+              defaultValue=""
+              error={false}
+              name="origins-0-end_date_1"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+          <label
+            className="src__Label-sc-iqzvxn-0 input__StyledLabel-sc-una33r-0 eTSPOL kjRNx"
+            error={false}
+            year={true}
+          >
+            <span
+              className="src__LabelText-sc-1lbxenh-0 jZJbVy"
+            >
+              Year
+            </span>
+            <input
+              className="src__Input-sc-1ch9crp-0 esEbTY"
+              defaultValue=""
+              error={false}
+              name="origins-0-end_date_2"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              type="text"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+    <div
+      className="govuk-form-group"
+    >
+      <legend
+        className="legend__StyledLegend-sc-12rap65-0 deblVS"
+        size="S"
+      >
+        Geographical area
+      </legend>
+      <label
+        className="src__Label-sc-iqzvxn-0 eTSPOL"
+        defaultValue=""
+        error={false}
+      >
+        <span
+          className="src__LabelText-sc-1lbxenh-0 jZJbVy"
+        />
+        <select
+          className="src__StyledSelect-sc-sgud4a-0 lmpfTQ"
+          defaultValue=""
+          error={false}
+          name="origins-0-geographical_area"
+          onChange={[Function]}
+        >
+          <option
+            value={1}
+          />
+          <option
+            value={2}
+          />
+          <option
+            value={3}
+          />
+          <option
+            value={4}
+          />
+          <option
+            value={5}
+          />
+        </select>
+      </label>
+    </div>
+    <hr
+      className="govuk-!-margin-top-3"
+    />
+  </div>
   <button
     className="govuk-button govuk-button--secondary"
     onClick={[Function]}

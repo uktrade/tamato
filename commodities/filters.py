@@ -9,6 +9,7 @@ from commodities.forms import CommodityFilterForm
 from commodities.models.orm import GoodsNomenclature
 from common.filters import ActiveStateMixin
 from common.filters import CurrentWorkBasketMixin
+from common.filters import EndDateMixin
 from common.filters import TamatoFilter
 from common.filters import TamatoFilterBackend
 from common.validators import AlphanumericValidator
@@ -33,9 +34,14 @@ class GoodsNomenclatureFilterBackend(TamatoFilterBackend):
         return super().search_queryset(queryset, search_term)
 
 
-class CommodityFilter(ActiveStateMixin, TamatoFilter, CurrentWorkBasketMixin):
+class CommodityFilter(
+    ActiveStateMixin,
+    TamatoFilter,
+    CurrentWorkBasketMixin,
+    EndDateMixin,
+):
     item_id = CharFilter(
-        label="Code",
+        label="Commodity code",
         widget=forms.TextInput(),
         lookup_expr="startswith",
         validators=[NumericValidator],

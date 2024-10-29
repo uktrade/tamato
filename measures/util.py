@@ -1,13 +1,21 @@
 import decimal
 from datetime import date
 from math import floor
-from typing import Type
 
 from common.models import TrackedModel
 from common.models.transactions import Transaction
 from common.validators import UpdateType
-from measures.models import MeasureComponent
-from workbaskets.models import WorkBasket
+
+from geo_areas.models import GeographicalArea
+from geo_areas.utils import get_all_members_of_geo_groups
+from measures import models as measure_models
+from typing import List
+from typing import Type
+from workbaskets import models as workbasket_models
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def convert_eur_to_gbp(amount: str, eur_gbp_conversion_rate: float) -> str:
@@ -29,9 +37,9 @@ def diff_components(
     instance,
     duty_sentence: str,
     start_date: date,
-    workbasket: WorkBasket,
+    workbasket: "workbasket_models.WorkBasket",
     transaction: Type[Transaction],
-    component_output: Type[TrackedModel] = MeasureComponent,
+    component_output: type = None,
     reverse_attribute: str = "component_measure",
 ):
     """
@@ -48,6 +56,11 @@ def diff_components(
     ActionRequiresDuty).
     """
     from measures.parsers import DutySentenceParser
+
+    # We add in the component output type here as otherwise we run into circular import issues.
+    component_output = (
+        measure_models.MeasureComponent if not component_output else component_output
+    )
 
     parser = DutySentenceParser.create(
         start_date,
@@ -91,3 +104,103 @@ def diff_components(
                 update_type=UpdateType.DELETE,
                 transaction=workbasket.new_transaction(),
             )
+
+
+def update_measure_components(
+    duties: str,
+    workbasket: "workbasket_models.WorkBasket",
+    measure: "measure_models.Measure",
+):
+    """Updates the measure components associated to the measure."""
+    diff_components(
+        instance=measure,
+        duty_sentence=duties if duties else measure.duty_sentence,
+        start_date=measure.valid_between.lower,
+        workbasket=workbasket,
+        transaction=workbasket.current_transaction,
+    )
+
+
+def update_measure_condition_components(
+    measure: "measure_models.Measure",
+    workbasket: "workbasket_models.WorkBasket",
+):
+    """Updates the measure condition components associated to the
+    measure."""
+    conditions = measure.conditions.current()
+    for condition in conditions:
+        condition.new_version(
+            dependent_measure=measure,
+            workbasket=workbasket,
+        )
+
+
+def update_measure_excluded_geographical_areas(
+    edited: bool,
+    measure: "measure_models.Measure",
+    exclusions: List[GeographicalArea],
+    workbasket: "workbasket_models.WorkBasket",
+):
+    """Updates the excluded geographical areas associated to the measure."""
+    existing_exclusions = measure.exclusions.current()
+
+    # Update any exclusions to new measure version
+    if not edited:
+        for exclusion in existing_exclusions:
+            exclusion.new_version(
+                modified_measure=measure,
+                workbasket=workbasket,
+            )
+        return
+
+    new_excluded_areas = get_all_members_of_geo_groups(
+        validity=measure.valid_between,
+        geo_areas=exclusions,
+    )
+
+    for geo_area in new_excluded_areas:
+        existing_exclusion = existing_exclusions.filter(
+            excluded_geographical_area=geo_area,
+        ).first()
+        if existing_exclusion:
+            existing_exclusion.new_version(
+                modified_measure=measure,
+                workbasket=workbasket,
+            )
+        else:
+            measure_models.MeasureExcludedGeographicalArea.objects.create(
+                modified_measure=measure,
+                excluded_geographical_area=geo_area,
+                update_type=UpdateType.CREATE,
+                transaction=workbasket.new_transaction(),
+            )
+
+    removed_excluded_areas = {
+        e.excluded_geographical_area for e in existing_exclusions
+    }.difference(set(exclusions))
+
+    exclusions_to_remove = [
+        existing_exclusions.get(excluded_geographical_area__id=geo_area.id)
+        for geo_area in removed_excluded_areas
+    ]
+
+    for exclusion in exclusions_to_remove:
+        exclusion.new_version(
+            update_type=UpdateType.DELETE,
+            modified_measure=measure,
+            workbasket=workbasket,
+        )
+
+
+def update_measure_footnote_associations(measure, workbasket):
+    """Updates the footnotes associated to the measure."""
+    footnote_associations = (
+        measure_models.FootnoteAssociationMeasure.objects.current().filter(
+            footnoted_measure__sid=measure.sid,
+        )
+    )
+    for fa in footnote_associations:
+        fa.new_version(
+            footnoted_measure=measure,
+            workbasket=workbasket,
+        )

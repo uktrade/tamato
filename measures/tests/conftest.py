@@ -326,8 +326,31 @@ def mock_request(rf, valid_user, valid_user_client):
 
 
 @pytest.fixture()
+def measure_edit_start_date_form_data():
+    return {
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2023,
+    }
+
+
+@pytest.fixture()
+def measure_edit_end_date_form_data():
+    return {
+        "end_date_0": 2,
+        "end_date_1": 2,
+        "end_date_2": 2026,
+    }
+
+
+@pytest.fixture()
 def measure_regulation_id_form_data():
     return {"generating_regulation": factories.RegulationFactory.create().pk}
+
+
+@pytest.fixture()
+def measure_edit_regulation_form_data():
+    return {"generating_regulation": factories.RegulationFactory.create()}
 
 
 @pytest.fixture()
@@ -488,6 +511,11 @@ def measure_geo_area_geo_group_exclusions_form_data(erga_omnes):
 
 
 @pytest.fixture()
+def measure_edit_duties_form_data():
+    return {"duties": "4%"}
+
+
+@pytest.fixture()
 def simple_measures_bulk_creator(
     user_empty_workbasket,
     approved_transaction,
@@ -503,9 +531,34 @@ def simple_measures_bulk_creator(
 
 
 @pytest.fixture()
-def mocked_schedule_apply_async():
+def mocked_create_schedule_apply_async():
     with patch(
         "measures.tasks.bulk_create_measures.apply_async",
+        return_value=MagicMock(id=faker.Faker().uuid4()),
+    ) as apply_async_mock:
+        yield apply_async_mock
+
+
+@pytest.fixture()
+def simple_measures_bulk_editor(
+    user_empty_workbasket,
+    approved_transaction,
+):
+    from measures.tests.factories import MeasuresBulkEditorFactory
+
+    return MeasuresBulkEditorFactory.create(
+        form_data={},
+        form_kwargs={},
+        workbasket=user_empty_workbasket,
+        selected_measures=[],
+        user=None,
+    )
+
+
+@pytest.fixture()
+def mocked_edit_schedule_apply_async():
+    with patch(
+        "measures.tasks.bulk_edit_measures.apply_async",
         return_value=MagicMock(id=faker.Faker().uuid4()),
     ) as apply_async_mock:
         yield apply_async_mock
