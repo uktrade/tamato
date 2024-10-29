@@ -8,7 +8,7 @@ class ReportCertificateType(models.Model):
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
-    valid_between = TaricDateRangeField(db_index=True)()
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.CharField(max_length=1)
     description = models.CharField(max_length=500, blank=True, null=True)
 
@@ -18,7 +18,7 @@ class ReportCertificate(models.Model):
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
-    valid_between = TaricDateRangeField(db_index=True)()
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.CharField(max_length=3)
     certificate_type = models.ForeignKey(
         "ReportCertificateType",

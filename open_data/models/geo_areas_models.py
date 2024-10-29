@@ -8,7 +8,7 @@ class ReportGeographicalArea(models.Model):
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
-    valid_between = TaricDateRangeField(db_index=True)()
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     area_id = models.CharField(max_length=4)
     area_code = models.SmallIntegerField()
@@ -20,7 +20,7 @@ class ReportGeographicalMembership(models.Model):
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
-    valid_between = TaricDateRangeField(db_index=True)()
+    valid_between = TaricDateRangeField(db_index=True)
     geo_group = models.ForeignKey(ReportGeographicalArea, models.DO_NOTHING)
     member = models.ForeignKey(
         ReportGeographicalArea,

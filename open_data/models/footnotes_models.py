@@ -8,7 +8,7 @@ class ReportFootnoteType(models.Model):
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
-    valid_between = TaricDateRangeField(db_index=True)()
+    valid_between = TaricDateRangeField(db_index=True)
     footnote_type_id = models.CharField(max_length=3)
     application_code = models.IntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
@@ -19,7 +19,7 @@ class ReportFootnote(models.Model):
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
-    valid_between = TaricDateRangeField(db_index=True)()
+    valid_between = TaricDateRangeField(db_index=True)
     footnote_id = models.CharField(max_length=5)
     footnote_type = models.ForeignKey("ReportFootnoteType", models.DO_NOTHING)
 

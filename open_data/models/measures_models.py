@@ -86,8 +86,8 @@ class ReportMeasure(ReportModel):
         null=True,
     )
 
-    # class Meta:
-    #     db_table = Measure._meta.db_table
+    class Meta:
+        db_table = ReportModel.create_table_name(Measure)
 
 
 class ReportMeasureAction(models.Model):

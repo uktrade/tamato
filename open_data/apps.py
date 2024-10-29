@@ -1,5 +1,7 @@
 from common.app_config import CommonConfig
 
+APP_LABEL = "open_data"
+
 
 class OpenDataConfig(CommonConfig):
-    name = "open_data"
+    name = APP_LABEL

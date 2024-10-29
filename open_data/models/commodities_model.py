@@ -8,7 +8,7 @@ class ReportGoodsNomenclature(models.Model):
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
-    valid_between = TaricDateRangeField(db_index=True)()
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     item_id = models.CharField(max_length=10)
     suffix = models.CharField(max_length=2)
@@ -80,7 +80,7 @@ class ReportFootnoteAssociationGoodsNomenclature(models.Model):
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
-    valid_between = TaricDateRangeField(db_index=True)()
+    valid_between = TaricDateRangeField(db_index=True)
     associated_footnote = models.ForeignKey("ReportFootnote", models.DO_NOTHING)
     goods_nomenclature = models.ForeignKey(
         ReportGoodsNomenclature,
