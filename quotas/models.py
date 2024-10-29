@@ -480,6 +480,24 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
 
     business_rules = (business_rules.QSP2, UniqueIdentifyingFields, UpdateValidity)
 
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """Overrides the parent get_url as there is no detail view for
+        QuotaSuspensions for it to default to."""
+        url = super().get_url(action=action)
+        if not url:
+            url = reverse(
+                "quota_definition-ui-list-filter",
+                kwargs={
+                    "sid": self.quota_definition.order_number.sid,
+                    "quota_type": "suspension_periods",
+                },
+            )
+
+        return url
+
+    def __str__(self):
+        return f"{self.sid}"
+
 
 class QuotaBlocking(TrackedModel, ValidityMixin):
     """Defines a blocking period for a (sub-)quota."""

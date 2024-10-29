@@ -240,10 +240,12 @@ class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
             f"{URLs.BASE_URL.value}quota_search?order_number={self.object.order_number}"
         )
 
-        context[
-            "quota_associations"
-        ] = QuotaAssociation.objects.latest_approved().filter(
+        context["sub_quota_associations"] = QuotaAssociation.objects.current().filter(
             main_quota=current_definition,
+        )
+
+        context["main_quota_associations"] = QuotaAssociation.objects.current().filter(
+            sub_quota=current_definition,
         )
 
         context["blocking_period"] = (
@@ -304,7 +306,11 @@ class QuotaDefinitionList(SortingMixin, ListView):
 
     @property
     def suspension_periods(self):
-        return QuotaSuspension.objects.filter(quota_definition__order_number=self.quota)
+        return (
+            QuotaSuspension.objects.current()
+            .filter(quota_definition__order_number=self.quota)
+            .order_by("quota_definition__sid")
+        )
 
     @property
     def sub_quotas(self):
@@ -313,6 +319,13 @@ class QuotaDefinitionList(SortingMixin, ListView):
             .filter(main_quota__order_number=self.quota)
             .order_by("sub_quota__sid")
         )
+
+    @property
+    def main_quotas(self):
+        main_quotas = QuotaAssociation.objects.current().filter(
+            sub_quota__order_number=self.quota,
+        )
+        return main_quotas
 
     @cached_property
     def quota_data(self):
@@ -332,6 +345,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
             blocking_periods=self.blocking_periods,
             suspension_periods=self.suspension_periods,
             sub_quotas=self.sub_quotas,
+            main_quotas=self.main_quotas,
             *args,
             **kwargs,
         )
@@ -1155,6 +1169,77 @@ class QuotaBlockingConfirmCreate(TrackedModelDetailView):
             },
         )
         return context
+
+
+class QuotaSuspensionUpdateMixin(TrackedModelDetailMixin):
+    model = QuotaSuspension
+    template_name = "quota-suspensions/edit.jinja"
+    form_class = forms.QuotaSuspensionUpdateForm
+    permission_required = ["common.change_trackedmodel"]
+
+    def get_success_url(self):
+        return reverse(
+            "quota_suspension-ui-confirm-update",
+            kwargs={"sid": self.object.sid},
+        )
+
+
+class QuotaSuspensionUpdate(
+    QuotaSuspensionUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class QuotaSuspensionEditCreate(
+    QuotaSuspensionUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaSuspensionEditUpdate(
+    QuotaSuspensionUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaSuspensionConfirmUpdate(TrackedModelDetailView):
+    model = models.QuotaSuspension
+    template_name = "quota-suspensions/confirm-update.jinja"
+
+
+class QuotaSuspensionDelete(TrackedModelDetailMixin, CreateTaricDeleteView):
+    form_class = forms.QuotaSuspensionDeleteForm
+    model = models.QuotaSuspension
+    template_name = "quota-suspensions/delete.jinja"
+
+    def get_success_url(self):
+        return reverse(
+            "quota_suspension-ui-confirm-delete",
+            kwargs={"sid": self.object.sid},
+        )
+
+
+class QuotaSuspensionConfirmDelete(TrackedModelDetailView):
+    model = QuotaSuspension
+    template_name = "quota-suspensions/confirm-delete.jinja"
+
+    @property
+    def deleted_suspension(self):
+        return QuotaSuspension.objects.filter(sid=self.kwargs["sid"]).last()
+
+    def get_queryset(self):
+        """
+        Returns a queryset with one single version of the suspension in
+        question.
+
+        Done this way so the sid can be rendered on the confirm delete page and
+        generic tests don't fail which try to load the page without having
+        deleted anything.
+        """
+        return QuotaSuspension.objects.filter(pk=self.deleted_suspension)
 
 
 class SubQuotaDefinitionAssociationMixin:

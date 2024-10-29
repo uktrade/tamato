@@ -949,7 +949,7 @@ def test_quota_association_edit_form_valid():
 
 
 def test_quota_association_edit_form_invalid():
-    "Test that the quota association edit form is invalid when data is passed in."
+    "Test that the quota association edit form is invalid when invalid data is passed in."
     association = factories.QuotaAssociationFactory.create(
         coefficient=1.67,
         sub_quota_relation_type="EQ",
@@ -968,3 +968,53 @@ def test_quota_association_edit_form_invalid():
     )
     assert "Enter a number." in form.errors["coefficient"]
     assert not form.is_valid()
+
+
+def test_quota_suspension_update_form_valid(date_ranges):
+    "Test that the quota suspension update form is valid when correct data is passed in"
+    suspension = factories.QuotaSuspensionFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    current_validity = suspension.valid_between
+    data = {
+        "start_date_0": current_validity.lower.day,
+        "start_date_1": current_validity.lower.month,
+        "start_date_2": current_validity.lower.year,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "description": "New description",
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.QuotaSuspensionUpdateForm(
+            data=data,
+            instance=suspension,
+        )
+        assert form.is_valid()
+
+
+def test_quota_suspension_update_form_invalid(date_ranges):
+    "Test that the quota suspension update form is invalid when the validity period does not span the validity of the definition"
+    definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.normal,
+    )
+    suspension = factories.QuotaSuspensionFactory.create(
+        quota_definition=definition,
+        valid_between=date_ranges.normal,
+    )
+    data = {
+        "start_date_0": date_ranges.earlier.lower.day,
+        "start_date_1": date_ranges.earlier.lower.month,
+        "start_date_2": date_ranges.earlier.lower.year,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.QuotaSuspensionUpdateForm(
+            data=data,
+            instance=suspension,
+        )
+        assert not form.is_valid()
+        assert (
+            f"The start and end date must sit within the selected quota definition's start and end date ({definition.valid_between.lower} - {definition.valid_between.upper})"
+            in form.errors["__all__"]
+        )
