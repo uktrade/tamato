@@ -14,7 +14,15 @@ User = get_user_model()
 
 class FifoQueue(TimestampedMixin):
     def get_first(self) -> "FifoQueueItem":
-        """Get the first element in the queue."""
+        """Get the first item in the queue."""
+        # TODO
+
+    def get_last(self) -> "FifoQueueItem":
+        """Get the last item in the queue."""
+        # TODO
+
+    def get_item(self, position: int) -> "FifoQueueItem":
+        """Get the item at `position` position in the queue."""
         # TODO
 
 
@@ -62,14 +70,14 @@ class FifoQueueItem(models.Model):
 
     @atomic
     def promote_to_first(self):
-        """Promote the instance to the top position of the package processing
-        queue so that it occupies position 1."""
+        """Promote the instance to the first place in the queue so that it
+        occupies position 1."""
         # TODO
 
     @atomic
     def demote_to_last(self):
-        """Promote the instance to the top position of the package processing
-        queue so that it occupies position 1."""
+        """Demote the instance to the last place in the queue so that it
+        occupies position of queue length."""
         # TODO
 
     @atomic
