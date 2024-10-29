@@ -228,7 +228,8 @@ class TaskLog(TimestampedMixin):
     description = models.TextField(editable=False)
     task = models.ForeignKey(
         Task,
-        on_delete=models.CASCADE,
+        null=True,
+        on_delete=models.SET_NULL,
         editable=False,
         related_name="logs",
     )

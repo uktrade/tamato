@@ -40,6 +40,7 @@ class Migration(migrations.Migration):
                             ("TASK_UNASSIGNED", "Task Unassigned"),
                             ("PROGRESS_STATE_UPDATED", "Progress State Updated"),
                         ],
+                        editable=False,
                         max_length=100,
                     ),
                 ),
@@ -56,7 +57,8 @@ class Migration(migrations.Migration):
                     "task",
                     models.ForeignKey(
                         editable=False,
-                        on_delete=django.db.models.deletion.CASCADE,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
                         related_name="logs",
                         to="tasks.task",
                     ),
