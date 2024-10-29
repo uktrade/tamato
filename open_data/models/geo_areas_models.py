@@ -1,10 +1,14 @@
 from django.db import models
-from psycopg.types.range import DateRange
+
+from common.fields import TaricDateRangeField
 
 
 class ReportGeographicalArea(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange()
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)()
     sid = models.IntegerField()
     area_id = models.CharField(max_length=4)
     area_code = models.SmallIntegerField()
@@ -12,8 +16,11 @@ class ReportGeographicalArea(models.Model):
 
 
 class ReportGeographicalMembership(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange()
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)()
     geo_group = models.ForeignKey(ReportGeographicalArea, models.DO_NOTHING)
     member = models.ForeignKey(
         ReportGeographicalArea,
@@ -23,7 +30,10 @@ class ReportGeographicalMembership(models.Model):
 
 
 class ReportGeographicalAreaDescription(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
     description = models.CharField(max_length=500, blank=True, null=True)
     sid = models.IntegerField()
     described_geographicalarea = models.ForeignKey(

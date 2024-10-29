@@ -1,9 +1,13 @@
 from django.db import models
-from psycopg.types.range import DateRange
+
+from common.fields import TaricDateRangeField
 
 
 class ReportQuotaAssociation(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
     sub_quota_relation_type = models.CharField(max_length=2)
     coefficient = models.DecimalField(max_digits=16, decimal_places=5)
     main_quota = models.ForeignKey("ReportQuotaDefinition", models.DO_NOTHING)
@@ -15,8 +19,11 @@ class ReportQuotaAssociation(models.Model):
 
 
 class ReportQuotaDefinition(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     volume = models.DecimalField(max_digits=14, decimal_places=3)
     initial_volume = models.DecimalField(max_digits=14, decimal_places=3)
@@ -46,8 +53,11 @@ class ReportQuotaDefinition(models.Model):
 
 
 class ReportQuotaOrderNumber(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     order_number = models.CharField(max_length=6)
     mechanism = models.SmallIntegerField()
@@ -55,23 +65,32 @@ class ReportQuotaOrderNumber(models.Model):
 
 
 class ReportQuotaOrderNumberOrigin(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     geographical_area = models.ForeignKey("ReportGeographicalArea", models.DO_NOTHING)
     order_number = models.ForeignKey(ReportQuotaOrderNumber, models.DO_NOTHING)
 
 
 class ReportQuotaSuspension(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
 
 
 class ReportQuotaOrderNumberOriginExclusion(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
     excluded_geographical_area = models.ForeignKey(
         "ReportGeographicalArea",
         models.DO_NOTHING,
@@ -80,7 +99,10 @@ class ReportQuotaOrderNumberOriginExclusion(models.Model):
 
 
 class ReportQuotaEvent(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
     subrecord_code = models.CharField(max_length=2)
     occurrence_timestamp = models.DateTimeField()
     data = models.JSONField()
@@ -88,8 +110,11 @@ class ReportQuotaEvent(models.Model):
 
 
 class ReportQuotaBlocking(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     blocking_period_type = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)

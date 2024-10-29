@@ -1,10 +1,14 @@
 from django.db import models
-from psycopg.types.range import DateRange
+
+from common.fields import TaricDateRangeField
 
 
 class ReportGoodsNomenclature(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange()
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)()
     sid = models.IntegerField()
     item_id = models.CharField(max_length=10)
     suffix = models.CharField(max_length=2)
@@ -12,7 +16,10 @@ class ReportGoodsNomenclature(models.Model):
 
 
 class ReportGoodsNomenclatureIndent(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
     sid = models.IntegerField()
     indent = models.IntegerField()
     indented_goods_nomenclature = models.ForeignKey(
@@ -23,7 +30,10 @@ class ReportGoodsNomenclatureIndent(models.Model):
 
 
 class ReportGoodsNomenclatureSuccessor(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
     absorbed_into_goods_nomenclature = models.ForeignKey(
         ReportGoodsNomenclature,
         models.DO_NOTHING,
@@ -36,7 +46,10 @@ class ReportGoodsNomenclatureSuccessor(models.Model):
 
 
 class ReportGoodsNomenclatureOrigin(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
     derived_from_goods_nomenclature = models.ForeignKey(
         ReportGoodsNomenclature,
         models.DO_NOTHING,
@@ -49,7 +62,10 @@ class ReportGoodsNomenclatureOrigin(models.Model):
 
 
 class ReportGoodsNomenclatureDescription(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
     sid = models.IntegerField()
     description = models.TextField(blank=True, null=True)
     described_goods_nomenclature = models.ForeignKey(
@@ -60,8 +76,11 @@ class ReportGoodsNomenclatureDescription(models.Model):
 
 
 class ReportFootnoteAssociationGoodsNomenclature(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange()
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)()
     associated_footnote = models.ForeignKey("ReportFootnote", models.DO_NOTHING)
     goods_nomenclature = models.ForeignKey(
         ReportGoodsNomenclature,

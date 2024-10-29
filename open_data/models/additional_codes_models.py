@@ -1,25 +1,38 @@
 from django.db import models
-from psycopg.types.range import DateRange
+
+from common.fields import TaricDateRangeField
 
 
 class ReportAdditionalCodeType(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)
     sid = models.CharField(max_length=1)
     description = models.CharField(max_length=500, blank=True, null=True)
     application_code = models.SmallIntegerField()
 
 
 class ReportAdditionalCode(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
-    valid_between = DateRange()
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
+    valid_between = TaricDateRangeField(db_index=True)()
     sid = models.IntegerField()
     code = models.CharField(max_length=3)
     type = models.ForeignKey(ReportAdditionalCodeType, models.DO_NOTHING)
 
+    class Meta:
+        db_table = "TempName"
+
 
 class ReportAdditionalCodeDescription(models.Model):
-    trackedmodel_ptr = models.IntegerField(primary_key=True)
+    trackedmodel_ptr = models.IntegerField(
+        primary_key=True,
+        db_column="trackedmodel_ptr_id",
+    )
     sid = models.IntegerField()
     description = models.TextField(blank=True, null=True)
     described_additionalcode = models.ForeignKey(
