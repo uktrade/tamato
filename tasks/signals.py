@@ -19,7 +19,7 @@ def set_current_instigator(instigator):
 
 
 @receiver(pre_save, sender=Task)
-def create_tasklog_for_task_update(sender, instance, **kwargs):
+def create_tasklog_for_task_update(sender, instance, old_instance=None, **kwargs):
     """
     Creates a `TaskLog` entry when a `Task` is being updated and the update
     action is a `TaskLog.AuditActionType`.
@@ -29,7 +29,7 @@ def create_tasklog_for_task_update(sender, instance, **kwargs):
     if instance._state.adding:
         return
 
-    old_instance = Task.objects.get(pk=instance.pk)
+    old_instance = old_instance or Task.objects.get(pk=instance.pk)
 
     if instance.progress_state != old_instance.progress_state:
         TaskLog.objects.create(
@@ -41,7 +41,7 @@ def create_tasklog_for_task_update(sender, instance, **kwargs):
 
 
 @receiver(pre_save, sender=TaskAssignee)
-def create_tasklog_for_task_assignee(sender, instance, **kwargs):
+def create_tasklog_for_task_assignee(sender, instance, old_instance=None, **kwargs):
     """
     Creates a `TaskLog` entry when a user is assigned to or unassigned from a
     `Task`.
@@ -56,7 +56,7 @@ def create_tasklog_for_task_assignee(sender, instance, **kwargs):
             assignee=instance.user,
         )
 
-    old_instance = TaskAssignee.objects.get(pk=instance.pk)
+    old_instance = old_instance or TaskAssignee.objects.get(pk=instance.pk)
 
     if instance.unassigned_at and instance.unassigned_at != old_instance.unassigned_at:
         return TaskLog.objects.create(

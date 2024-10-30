@@ -257,7 +257,7 @@ class WorkBasketAssignUsersForm(forms.Form):
         assignment_type = self.cleaned_data["assignment_type"]
 
         assignees = [
-            TaskAssignee.objects.create(
+            TaskAssignee(
                 user=user,
                 assignment_type=assignment_type,
                 task=task,
@@ -271,7 +271,7 @@ class WorkBasketAssignUsersForm(forms.Form):
             .assigned()
             .exists()
         ]
-        return assignees
+        return TaskAssignee.objects.bulk_create(assignees)
 
 
 class WorkBasketUnassignUsersForm(forms.Form):
@@ -317,11 +317,15 @@ class WorkBasketUnassignUsersForm(forms.Form):
     @transaction.atomic
     def unassign_users(self):
         set_current_instigator(self.request.user)
+
         assignees = self.cleaned_data["assignees"]
         for assignee in assignees:
             assignee.unassigned_at = datetime.now()
-            assignee.save()
-        return assignees
+
+        return TaskAssignee.objects.bulk_update(
+            assignees,
+            fields=["unassigned_at"],
+        )
 
 
 class WorkBasketCommentForm(forms.ModelForm):
