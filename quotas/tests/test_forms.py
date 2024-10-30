@@ -1018,3 +1018,54 @@ def test_quota_suspension_update_form_invalid(date_ranges):
             f"The start and end date must sit within the selected quota definition's start and end date ({definition.valid_between.lower} - {definition.valid_between.upper})"
             in form.errors["__all__"]
         )
+
+
+def test_quota_blocking_update_form_valid(date_ranges):
+    "Test that the quota blocking update form is valid when correct data is passed in"
+    blocking = factories.QuotaBlockingFactory.create(
+        valid_between=date_ranges.future,
+    )
+    current_validity = blocking.valid_between
+    data = {
+        "start_date_0": current_validity.lower.day,
+        "start_date_1": current_validity.lower.month,
+        "start_date_2": current_validity.lower.year,
+        "blocking_period_type": blocking.blocking_period_type,
+        "end_date_0": "",
+        "end_date_1": "",
+        "end_date_2": "",
+        "description": "New description",
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.QuotaBlockingUpdateForm(
+            data=data,
+            instance=blocking,
+        )
+        assert form.is_valid()
+
+
+def test_quota_blocking_update_form_invalid(date_ranges):
+    "Test that the quota blocking update form is invalid when the validity period does not span the validity of the definition"
+    definition = factories.QuotaDefinitionFactory.create(
+        valid_between=date_ranges.future,
+    )
+    blocking = factories.QuotaBlockingFactory.create(
+        quota_definition=definition,
+        valid_between=date_ranges.future,
+    )
+    data = {
+        "start_date_0": date_ranges.earlier.lower.day,
+        "start_date_1": date_ranges.earlier.lower.month,
+        "start_date_2": date_ranges.earlier.lower.year,
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        form = forms.QuotaBlockingUpdateForm(
+            data=data,
+            instance=blocking,
+        )
+        assert not form.is_valid()
+        assert (
+            f"The start and end date must sit within the selected quota definition's start and end date ({definition.valid_between.lower} - {definition.valid_between.upper})"
+            in form.errors["__all__"]
+        )

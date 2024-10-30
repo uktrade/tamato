@@ -302,7 +302,13 @@ class QuotaDefinitionList(SortingMixin, ListView):
 
     @property
     def blocking_periods(self):
-        return QuotaBlocking.objects.filter(quota_definition__order_number=self.quota)
+        return (
+            QuotaBlocking.objects.current()
+            .filter(
+                quota_definition__order_number=self.quota,
+            )
+            .order_by("quota_definition__sid")
+        )
 
     @property
     def suspension_periods(self):
@@ -1240,6 +1246,77 @@ class QuotaSuspensionConfirmDelete(TrackedModelDetailView):
         deleted anything.
         """
         return QuotaSuspension.objects.filter(pk=self.deleted_suspension)
+
+
+class QuotaBlockingUpdateMixin(TrackedModelDetailMixin):
+    model = QuotaBlocking
+    template_name = "quota-blocking/edit.jinja"
+    form_class = forms.QuotaBlockingUpdateForm
+    permission_required = ["common.change_trackedmodel"]
+
+    def get_success_url(self):
+        return reverse(
+            "quota_blocking-ui-confirm-update",
+            kwargs={"sid": self.object.sid},
+        )
+
+
+class QuotaBlockingUpdate(
+    QuotaBlockingUpdateMixin,
+    CreateTaricUpdateView,
+):
+    pass
+
+
+class QuotaBlockingEditCreate(
+    QuotaBlockingUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaBlockingEditUpdate(
+    QuotaBlockingUpdateMixin,
+    EditTaricView,
+):
+    pass
+
+
+class QuotaBlockingConfirmUpdate(TrackedModelDetailView):
+    model = models.QuotaBlocking
+    template_name = "quota-blocking/confirm-update.jinja"
+
+
+class QuotaBlockingDelete(TrackedModelDetailMixin, CreateTaricDeleteView):
+    form_class = forms.QuotaBlockingDeleteForm
+    model = models.QuotaBlocking
+    template_name = "quota-blocking/delete.jinja"
+
+    def get_success_url(self):
+        return reverse(
+            "quota_blocking-ui-confirm-delete",
+            kwargs={"sid": self.object.sid},
+        )
+
+
+class QuotaBlockingConfirmDelete(TrackedModelDetailView):
+    model = QuotaBlocking
+    template_name = "quota-blocking/confirm-delete.jinja"
+
+    @property
+    def deleted_blocking_period(self):
+        return QuotaBlocking.objects.filter(sid=self.kwargs["sid"]).last()
+
+    def get_queryset(self):
+        """
+        Returns a queryset with one single version of the blocking period in
+        question.
+
+        Done this way so the sid can be rendered on the confirm delete page and
+        generic tests don't fail which try to load the page without having
+        deleted anything.
+        """
+        return QuotaBlocking.objects.filter(pk=self.deleted_blocking_period)
 
 
 class SubQuotaDefinitionAssociationMixin:
