@@ -55,6 +55,5 @@ class ReportGeographicalAreaDescription(ReportModel):
     )
     validity_start = models.DateField()
 
-
-class Meta:
-    db_table = ReportModel.create_table_name(GeographicalAreaDescription)
+    class Meta:
+        db_table = ReportModel.create_table_name(GeographicalAreaDescription)
