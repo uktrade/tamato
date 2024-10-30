@@ -1,4 +1,3 @@
-
 <h2 class="govuk-heading-l">Suspension periods</h2>
 
 {% set table_rows = [] %}
@@ -8,20 +7,26 @@
     {% set definition_link -%}
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.quota_definition.order_number.sid]) }}#definition-details">{{ object.quota_definition.sid }}</a>
     {% endset %}
+    {% set actions  %}
+         <a class="govuk-link" href="{{ object.get_url('edit') }}">Edit</a><br>
+         <a class="govuk-link" href="{{ object.get_url('delete') }}">Delete</a>
+    {% endset %}
       {{ table_rows.append([
         {"text": definition_link },
         {"text": "{:%d %b %Y}".format(object.valid_between.lower) },
         {"text": "{:%d %b %Y}".format(object.valid_between.upper) if object.valid_between.upper else "-"},
         {"text": object.description },
+        {"html": actions},
       ]) or "" }}
     {% endfor %}
 
   {{ govukTable({
     "head": [
-      {"text": "Quota definition sid"},
+      {"text": "Quota definition SID"},
       {"text": "Start date"},
       {"text": "End date"},
       {"text": "Description", "classes": "govuk-!-width-one-half"},
+      {"text": "Actions",},
     ],
     "rows": table_rows
   }) }}
