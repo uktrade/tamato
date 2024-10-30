@@ -346,3 +346,66 @@ class SubQuotaDefinitionAssociationEditUpdate(
             instance=current_instance,
         )
         form.save()
+
+
+class SubQuotaConfirmUpdate(TrackedModelDetailView):
+    model = models.QuotaDefinition
+    template_name = "quota-definitions/sub-quota-definitions-confirm-update.jinja"
+
+    @property
+    def association(self):
+        return QuotaAssociation.objects.current().get(sub_quota__sid=self.kwargs["sid"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["association"] = self.association
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Should a user land on the this page for a definition which is not a sub-
+        quota, perform a redirect.
+
+        This is not possible with current user journeys but this is included for
+        security and test purposes.
+        """
+        try:
+            self.association
+        except models.QuotaAssociation.DoesNotExist:
+            return HttpResponseRedirect(
+                reverse(
+                    "quota-ui-list",
+                ),
+            )
+        return super().dispatch(request, *args, **kwargs)
+
+
+class QuotaAssociationDelete(
+    CreateTaricDeleteView,
+):
+    form_class = delete_form_for(models.QuotaAssociation)
+    template_name = "quota-associations/delete.jinja"
+    model = models.QuotaAssociation
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            f"Quota association between {self.object.main_quota.sid} and {self.object.sub_quota.sid} has been deleted",
+        )
+        return super().form_valid(form)
+
+    def get_queryset(self):
+        return models.QuotaAssociation.objects.current()
+
+    def get_success_url(self):
+        return reverse(
+            "quota_association-ui-confirm-delete",
+            kwargs={"sid": self.object.sub_quota.sid},
+        )
+
+
+class QuotaAssociationConfirmDelete(
+    TrackedModelDetailView,
+):
+    template_name = "quota-associations/confirm-delete.jinja"
+    model = models.QuotaDefinition
