@@ -53,6 +53,8 @@ class ReportModel(models.Model):
 
         shadowed_tb_name = shadowed_model._meta.db_table
         new_name = shadowed_tb_name.split(shadowed_model._meta.app_label + "_")[1]
+        # NOTE: the " around the stop are really important.
+        # without them, the table will not be created in the correct schema
         return f'{SCHEMA_NAME}"."{APP_LABEL}_report{new_name}'
 
     @classmethod
