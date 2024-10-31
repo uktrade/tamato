@@ -30,15 +30,22 @@ class ReportModel(models.Model):
         db_from_table = cls.shadowed_model._meta.db_table
         update_field = f'INSERT INTO "{cls._meta.db_table}" ('
         read_field = ") SELECT "
+        # Find the SQL query that return the latest_approved on the
+        # model we are shadowing
         latest_query = str(cls.shadowed_model.objects.latest_approved().query)
         query_splitted = latest_query.split(" FROM")
-        query_from = f" FROM {query_splitted[1]}"
+        # The query is split at the FROM keyword, and the second part contains
+        # the correct table we want to copy from and the correct WHERE
+        query_from_and_where = f" FROM {query_splitted[1]}"
         field_list = query_splitted[0].split()
+        # The Django generated latest_approved query contains fields from the
+        # track models. We only want to copy the fields from the table
+        # The next loop eliminates fields that don't belong to the table.
         for field in field_list:
             if db_from_table in field:
                 read_field += field
                 update_field += field.split(".")[1]
-        return update_field + read_field + query_from + ";"
+        return update_field + read_field + query_from_and_where + ";"
 
     @classmethod
     def create_update_fk_queries(cls):

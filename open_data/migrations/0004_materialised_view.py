@@ -11,6 +11,7 @@ CREATE MATERIALIZED VIEW reporting.foreign_key_lookup AS
 WHERE (current_version_id IS NOT NULL AND NOT (common_trackedmodel.update_type = 2));
 
 CREATE UNIQUE INDEX old_id_idx ON reporting.foreign_key_lookup (old_id);
+CREATE UNIQUE INDEX current_version_id_idx ON reporting.foreign_key_lookup (current_version_id);
 """
 
 

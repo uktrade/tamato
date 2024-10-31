@@ -52,6 +52,7 @@ class ReportGeographicalAreaDescription(ReportModel):
     described_geographicalarea = models.ForeignKey(
         ReportGeographicalArea,
         models.DO_NOTHING,
+        related_name="descriptions",
     )
     validity_start = models.DateField()
 

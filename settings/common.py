@@ -337,11 +337,9 @@ else:
     )
     DATABASES = {
         "default": dj_database_url.parse(DB_URL),
-        "reporting": dj_database_url.parse(DB_REPORTING_URL),
     }
 
 SQLITE = DB_URL.startswith("sqlite")
-DATABASE_ROUTERS = ["routers.DatabaseRouter"]
 
 # -- Cache
 
