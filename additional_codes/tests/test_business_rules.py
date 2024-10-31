@@ -84,6 +84,7 @@ def test_ACN2_type_must_exist(reference_nonexistent_record):
 def test_ACN2_allowed_application_codes(app_code, expect_error):
     """The referenced additional code type must have as application code "non-
     Meursing" or "Export Refund for Processed Agricultural Goods”."""
+
     additional_code = factories.AdditionalCodeFactory.create(
         type__application_code=app_code,
     )
