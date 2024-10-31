@@ -29,13 +29,6 @@ from quotas import models
 from quotas import validators
 from quotas.constants import QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX
 
-CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
-SAFEGUARD_HELP_TEXT = (
-    "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
-)
-START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
-ORDER_NUMBER_HELP_TEXT = "The order number must begin with 05 and be 6 digits long. Licensed quotas must begin 054 and safeguards must begin 058"
-
 
 class QuotaFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -353,8 +346,11 @@ class QuotaSuspensionUpdateForm(ValidityPeriodForm, forms.ModelForm):
 
     def init_layout(self):
         cancel_url = reverse_lazy(
-            "quota-ui-detail",
-            kwargs={"sid": self.instance.quota_definition.order_number.sid},
+            "quota_definition-ui-list-filter",
+            kwargs={
+                "sid": self.instance.quota_definition.order_number.sid,
+                "quota_type": "suspension_periods",
+            },
         )
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -402,3 +398,84 @@ class QuotaSuspensionUpdateForm(ValidityPeriodForm, forms.ModelForm):
 
 
 QuotaSuspensionDeleteForm = delete_form_for(models.QuotaSuspension)
+
+
+class QuotaBlockingUpdateForm(ValidityPeriodForm, forms.ModelForm):
+
+    blocking_period_type = forms.ChoiceField(
+        choices=validators.BlockingPeriodType.choices,
+    )
+
+    description = forms.CharField(
+        label="Description",
+        widget=forms.Textarea(),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.init_layout()
+
+    def init_layout(self):
+        cancel_url = reverse_lazy(
+            "quota_definition-ui-list-filter",
+            kwargs={
+                "sid": self.instance.quota_definition.order_number.sid,
+                "quota_type": "blocking_periods",
+            },
+        )
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "blocking_period_type",
+            "start_date",
+            "end_date",
+            Field.textarea("description", rows=5),
+            Div(
+                Submit(
+                    "submit",
+                    "Save",
+                    css_class="govuk-button--primary",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f"<a class='govuk-button govuk-button--secondary' href={cancel_url}>Cancel</a>",
+                ),
+                css_class="govuk-button-group",
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        definition_period = self.instance.quota_definition.valid_between
+        validity_period = cleaned_data.get("valid_between")
+        if (
+            definition_period
+            and validity_period
+            and not validity_range_contains_range(definition_period, validity_period)
+        ):
+            raise ValidationError(
+                f"The start and end date must sit within the selected quota definition's start and end date ({definition_period.lower} - {definition_period.upper})",
+            )
+
+        return cleaned_data
+
+    def init_fields(self):
+        if self.instance.valid_between.lower <= date.today():
+            self.fields["description"].disabled = True
+            self.fields["blocking_period_type"].disabled = True
+            self.fields["start_date"].disabled = True
+
+    class Meta:
+        model = models.QuotaBlocking
+        fields = [
+            "valid_between",
+            "description",
+            "blocking_period_type",
+        ]
+
+
+QuotaBlockingDeleteForm = delete_form_for(models.QuotaBlocking)

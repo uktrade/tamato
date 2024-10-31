@@ -17,17 +17,14 @@ from common.forms import unprefix_formset_data
 from geo_areas.models import GeographicalArea
 from quotas import models
 from quotas import validators
+from quotas.constants import CATEGORY_HELP_TEXT
+from quotas.constants import ORDER_NUMBER_HELP_TEXT
 from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
+from quotas.constants import SAFEGUARD_HELP_TEXT
+from quotas.constants import START_DATE_HELP_TEXT
 
 from .base import QuotaOrderNumberOriginUpdateForm
-
-ORDER_NUMBER_HELP_TEXT = "The order number must begin with 05 and be 6 digits long. Licensed quotas must begin 054 and safeguards must begin 058"
-SAFEGUARD_HELP_TEXT = (
-    "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
-)
-CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
-START_DATE_HELP_TEXT = "If possible, avoid putting a start date in the past as this may cause issues with CDS downstream"
 
 
 class QuotaOriginsReactMixin(ExtraErrorFormMixin):

@@ -18,10 +18,9 @@ from measures.models import MeasurementUnit
 from quotas import business_rules
 from quotas import models
 from quotas import validators
+from quotas.constants import COEFFICIENT_HELP_TEXT
+from quotas.constants import RELATIONSHIP_TYPE_HELP_TEXT
 from workbaskets.models import WorkBasket
-
-RELATIONSHIP_TYPE_HELP_TEXT = "Select the relationship type for the quota association"
-COEFFICIENT_HELP_TEXT = "Select the coefficient for the quota association"
 
 
 class QuotaDefinitionMixin:
