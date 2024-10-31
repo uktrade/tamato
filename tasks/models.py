@@ -4,55 +4,21 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db import transaction
-from django.db.models import signals
 from django.urls import reverse
 
 from common.models.mixins import TimestampedMixin
+from common.models.mixins import WithSignalManagerMixin
+from common.models.mixins import WithSignalQuerysetMixin
 from workbaskets.models import WorkBasket
 
 User = get_user_model()
 
 
-class WithSignalManagerMixin(models.Manager):
-    """A mixin that overrides default Manager methods to send pre_save signals
-    for model instances."""
-
-    def bulk_create(self, objs, **kwargs) -> list:
-        for obj in objs:
-            signals.pre_save.send(sender=self.model, instance=obj)
-        return super().bulk_create(objs, **kwargs)
-
-
-class WithSignalQuerysetMixin(models.QuerySet):
-    """A mixin that overrides default QuerySet methods to send pre_save signals
-    for model instances."""
-
-    def update(self, **kwargs) -> int:
-        objs_to_update = list(self)
-        rows_updated = super().update(**kwargs)
-
-        old_instances_map = {}
-        pk_list = []
-        for obj in objs_to_update:
-            old_instances_map[obj.pk] = obj
-            pk_list.append(obj.pk)
-
-        for new_instance in self.model.objects.filter(pk__in=pk_list):
-            old_instance = old_instances_map.get(new_instance.pk)
-            signals.pre_save.send(
-                sender=self.model,
-                instance=new_instance,
-                old_instance=old_instance,
-            )
-
-        return rows_updated
-
-
-class TaskManager(WithSignalManagerMixin):
+class TaskManager(WithSignalManagerMixin, models.Manager):
     pass
 
 
-class TaskQueryset(WithSignalQuerysetMixin):
+class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
     pass
 
 
@@ -129,11 +95,11 @@ class ProgressState(models.Model):
         return self.get_name_display()
 
 
-class TaskAssigneeManager(WithSignalManagerMixin):
+class TaskAssigneeManager(WithSignalManagerMixin, models.Manager):
     pass
 
 
-class TaskAssigneeQueryset(WithSignalQuerysetMixin):
+class TaskAssigneeQueryset(WithSignalQuerysetMixin, models.QuerySet):
     def assigned(self):
         return self.exclude(unassigned_at__isnull=False)
 
