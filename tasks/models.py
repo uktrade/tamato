@@ -3,11 +3,23 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db import transaction
+from django.urls import reverse
 
 from common.models.mixins import TimestampedMixin
+from common.models.mixins import WithSignalManagerMixin
+from common.models.mixins import WithSignalQuerysetMixin
 from workbaskets.models import WorkBasket
 
 User = get_user_model()
+
+
+class TaskManager(WithSignalManagerMixin, models.Manager):
+    pass
+
+
+class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
+    pass
 
 
 class Task(TimestampedMixin):
@@ -44,8 +56,13 @@ class Task(TimestampedMixin):
         related_name="created_tasks",
     )
 
+    objects = TaskManager.from_queryset(TaskQueryset)()
+
     def __str__(self):
         return self.title
+
+    def get_url(self):
+        return reverse("workflow:task-ui-detail", kwargs={"pk": self.pk})
 
 
 class Category(models.Model):
@@ -78,7 +95,11 @@ class ProgressState(models.Model):
         return self.get_name_display()
 
 
-class TaskAssigneeQueryset(models.QuerySet):
+class TaskAssigneeManager(WithSignalManagerMixin, models.Manager):
+    pass
+
+
+class TaskAssigneeQueryset(WithSignalQuerysetMixin, models.QuerySet):
     def assigned(self):
         return self.exclude(unassigned_at__isnull=False)
 
@@ -122,7 +143,7 @@ class TaskAssignee(TimestampedMixin):
         null=True,
     )
 
-    objects = TaskAssigneeQueryset.as_manager()
+    objects = TaskAssigneeManager.from_queryset(TaskAssigneeQueryset)()
 
     def __str__(self):
         return (
@@ -134,13 +155,17 @@ class TaskAssignee(TimestampedMixin):
         return True if not self.unassigned_at else False
 
     @classmethod
-    def unassign_user(cls, user, task):
+    def unassign_user(cls, user, task, instigator):
+        from tasks.signals import set_current_instigator
+
         try:
             assignment = cls.objects.get(user=user, task=task)
             if assignment.unassigned_at:
                 return False
-            assignment.unassigned_at = datetime.now()
-            assignment.save(update_fields=["unassigned_at"])
+            set_current_instigator(instigator)
+            with transaction.atomic():
+                assignment.unassigned_at = datetime.now()
+                assignment.save(update_fields=["unassigned_at"])
             return True
         except cls.DoesNotExist:
             return False
@@ -218,11 +243,13 @@ class TaskLog(TimestampedMixin):
     action = models.CharField(
         max_length=100,
         choices=AuditActionType.choices,
+        editable=False,
     )
     description = models.TextField(editable=False)
     task = models.ForeignKey(
         Task,
-        on_delete=models.PROTECT,
+        null=True,
+        on_delete=models.SET_NULL,
         editable=False,
         related_name="logs",
     )

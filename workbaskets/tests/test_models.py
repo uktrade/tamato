@@ -462,7 +462,7 @@ def test_unassigned_workbasket_cannot_be_queued():
     )
     assert workbasket.is_fully_assigned()
 
-    TaskAssignee.unassign_user(user=worker, task=task)
+    TaskAssignee.unassign_user(user=worker, task=task, instigator=worker)
     assert not workbasket.is_fully_assigned()
 
 

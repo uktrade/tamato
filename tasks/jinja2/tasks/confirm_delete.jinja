@@ -1,0 +1,41 @@
+{% extends "layouts/confirm.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Task deleted" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": "Task ID: " ~ deleted_pk,
+    "text": "Task has been deleted",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block button_group %}
+  {{ govukButton({
+    "text": "Find and view tasks",
+    "href": url("workflow:task-ui-list"),
+    "classes": "govuk-button"
+  }) }}
+  {{ govukButton({
+    "text": "Return to homepage",
+    "href": url("home"),
+    "classes": "govuk-button--secondary"
+  }) }}
+{% endblock %}
+
+{% block actions %}
+  <li><a href="{{ url("workflow:task-ui-create") }}">Create a task</a></li>
+{% endblock %}

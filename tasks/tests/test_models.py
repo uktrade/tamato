@@ -29,9 +29,9 @@ def test_task_assignee_unassign_user_classmethod(task_assignee):
     user = task_assignee.user
     task = task_assignee.task
 
-    assert TaskAssignee.unassign_user(user=user, task=task)
+    assert TaskAssignee.unassign_user(user=user, task=task, instigator=user)
     # User has already been unassigned
-    assert not TaskAssignee.unassign_user(user=user, task=task)
+    assert not TaskAssignee.unassign_user(user=user, task=task, instigator=user)
 
 
 def test_task_assignee_assigned_queryset(
@@ -41,7 +41,7 @@ def test_task_assignee_assigned_queryset(
 
     user = task_assignee.user
     task = task_assignee.task
-    TaskAssignee.unassign_user(user=user, task=task)
+    TaskAssignee.unassign_user(user=user, task=task, instigator=user)
 
     assert not TaskAssignee.objects.assigned()
 
@@ -53,7 +53,7 @@ def test_task_assignee_unassigned_queryset(
 
     user = task_assignee.user
     task = task_assignee.task
-    TaskAssignee.unassign_user(user=user, task=task)
+    TaskAssignee.unassign_user(user=user, task=task, instigator=user)
 
     assert TaskAssignee.objects.unassigned().count() == 1
 
