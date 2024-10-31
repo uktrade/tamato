@@ -22,6 +22,7 @@ class TaskListView(PermissionRequiredMixin, SortingMixin, WithPaginationListView
     model = Task
     template_name = "tasks/list.jinja"
     permission_required = "tasks.view_task"
+    paginate_by = 20
     filterset_class = TaskFilter
     sort_by_fields = ["created_at"]
 
