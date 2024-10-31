@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.db import transaction
 from django.db.models import signals
+from django.urls import reverse
 
 from common.models.mixins import TimestampedMixin
 from workbaskets.models import WorkBasket
@@ -93,6 +94,9 @@ class Task(TimestampedMixin):
 
     def __str__(self):
         return self.title
+
+    def get_url(self):
+        return reverse("workflow:task-ui-detail", kwargs={"pk": self.pk})
 
 
 class Category(models.Model):

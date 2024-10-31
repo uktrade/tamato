@@ -93,6 +93,11 @@ class TaskDeleteView(PermissionRequiredMixin, DeleteView):
     permission_required = "tasks.delete_task"
     form_class = TaskDeleteForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = self.object
+        return kwargs
+
     def get_success_url(self):
         return reverse("workflow:task-ui-confirm-delete", kwargs={"pk": self.object.pk})
 
