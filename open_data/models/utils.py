@@ -33,22 +33,32 @@ class ReportModel(models.Model):
         # Find the SQL query that return the latest_approved on the
         # model we are shadowing
         latest_query = str(cls.shadowed_model.objects.latest_approved().query)
-        query_splitted = latest_query.split(" FROM")
+        split_query = latest_query.split(" FROM")
         # The query is split at the FROM keyword, and the second part contains
-        # the correct table we want to copy from and the correct WHERE
-        query_from_and_where = f" FROM {query_splitted[1]}"
-        field_list = query_splitted[0].split()
+        # the correct table we want to copy from and the correct WHERE clause
+        query_from_and_where = f" FROM {split_query[1]}"
+        # The first part of the query contains all the fields retrieved
+        # by latest_approved.
+        field_list = split_query[0].split()
         # The Django generated latest_approved query contains fields from the
-        # track models. We only want to copy the fields from the table
+        # track models. We only want to copy the fields from the table being shadowed
         # The next loop eliminates fields that don't belong to the table.
         for field in field_list:
             if db_from_table in field:
                 read_field += field
+                # Remove the table name from the field definition
                 update_field += field.split(".")[1]
         return update_field + read_field + query_from_and_where + ";"
 
     @classmethod
     def create_update_fk_queries(cls):
+        # The foreign keys in a table don't always point to the object latest version
+        # It is an unfortunate fact, with several causes. It will not be fixed, at least
+        # for now. So there is a materialised view, mapping every single primary key to
+        # the equivalent latest version.
+        # The following code generate the queries required to update the foreign keys
+        # in the table.
+        # There is no attempt to make the process efficient!
         query_list = []
         for f in cls._meta.get_fields():
             if type(f) is models.fields.related.ForeignKey:
