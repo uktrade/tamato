@@ -21,7 +21,28 @@ class Queue(models.Model):
         # TODO
 
 
-class QueueItem(models.Model):
+class RequiredFieldError(Exception):
+    pass
+
+
+class QueueItemMetaClass(models.base.ModelBase):
+    def __new__(cls, name, bases, attrs):
+        new_class = super().__new__(cls, name, bases, attrs)
+
+        if (
+            "QueueItem" in [base.__name__ for base in bases]
+            and not new_class._meta.abstract
+        ):
+            queue_field = attrs.get("queue", None)
+            if not queue_field or not isinstance(queue_field, models.ForeignKey):
+                raise RequiredFieldError(
+                    f"{name} must have a 'queue' ForeignKey field.",
+                )
+
+        return new_class
+
+
+class QueueItem(models.Model, metaclass=QueueItemMetaClass):
     """Item that is a member of a Queue."""
 
     class Meta:
