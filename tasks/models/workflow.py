@@ -53,7 +53,9 @@ class TaskItemManager(models.Manager):
         position = kwargs.pop("position", (task_workflow.queue_items.count() + 1))
 
         if position <= 0:
-            raise ValueError("TaskItem.position must be a positive integer.")
+            raise ValueError(
+                "TaskItem.position must be a positive integer greater than zero.",
+            )
 
         return super().create(
             queue=task_workflow,
