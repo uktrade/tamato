@@ -28,15 +28,6 @@ class QueueItem(models.Model):
         abstract = True
         ordering = ["queue", "position"]
 
-    # TODO:
-    # - How to enforce/represent/name a foreign key that needs to be defined in
-    #   Queue's subclasses?
-    # - ContentType or GenericForeignKey with ContentType perhaps?
-    queue = models.ForeignKey(
-        Queue,
-        related_name="queue_items",
-        on_delete=models.CASCADE,
-    )
     """The Queue that this instance is a member of."""
     position = models.PositiveSmallIntegerField(
         db_index=True,

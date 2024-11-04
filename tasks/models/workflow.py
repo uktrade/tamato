@@ -40,10 +40,6 @@ class TaskWorkflow(TaskWorkflowBase):
         null=True,
         on_delete=models.SET_NULL,
     )
-    parent_task = models.OneToOneField(
-        "tasks.Task",
-        on_delete=models.CASCADE,
-    )
 
 
 class TaskItemManager(models.Manager):
@@ -54,11 +50,14 @@ class TaskItemManager(models.Manager):
         named param, and place it in last position."""
 
         task_workflow: TaskWorkflow = kwargs.pop("queue")
+        position = kwargs.pop("position", (task_workflow.queue_items.count() + 1))
+
+        if position <= 0:
+            raise ValueError("TaskItem.position must be a positive integer.")
 
         return super().create(
             queue=task_workflow,
-            # TODO: this'll be incorrect if all items haven't yet been saved.
-            position=task_workflow.queue_items.count() + 1,
+            position=position,
             **kwargs,
         )
 
@@ -67,12 +66,18 @@ class TaskItem(QueueItem):
     """Task item queue management for Task instances (these should always be
     subtasks)."""
 
-    objects = TaskItemManager()
-    subtask = models.OneToOneField(
+    queue = models.ForeignKey(
+        TaskWorkflow,
+        related_name="queue_items",
+        on_delete=models.CASCADE,
+    )
+    task = models.OneToOneField(
         "tasks.Task",
         on_delete=models.CASCADE,
     )
-    """The subtask Task instance managed by this TaskItem."""
+    """The Task instance managed by this TaskItem."""
+
+    objects = TaskItemManager()
 
 
 # ----------------------------------------
@@ -83,9 +88,8 @@ class TaskItem(QueueItem):
 class TaskWorkflowTemplate(TaskWorkflowBase):
     """Template used to create TaskWorkflow instance."""
 
-    # TODO: TableLock
     @atomic
-    def create_task_workflow(self, parent_task) -> "TaskWorkflow":
+    def create_task_workflow(self) -> "TaskWorkflow":
         """Create a workflow and it subtasks, using values from this template
         workflow and its task templates."""
 
@@ -93,19 +97,22 @@ class TaskWorkflowTemplate(TaskWorkflowBase):
             title=self.title,
             description=self.description,
             creator_template=self,
-            parent_task=parent_task,
         )
 
-        task_item_templates = TaskItemTemplate.objects.filter(queue=self)
+        task_item_templates = TaskItemTemplate.objects.select_related(
+            "task_template",
+        ).filter(queue=self)
         for task_item_template in task_item_templates:
-            subtask = Task.objects.create(
-                title=task_item_template.title,
-                description=task_item_template.description,
-                category=task_item_template.category,
+            task_template = task_item_template.task_template
+            task = Task.objects.create(
+                title=task_template.title,
+                description=task_template.description,
+                category=task_template.category,
             )
             TaskItem.objects.create(
+                position=task_template.position,
                 queue=task_workflow,
-                subtask=subtask,
+                task=task,
             )
 
         return task_workflow
@@ -122,7 +129,6 @@ class TaskItemTemplateManager(models.Manager):
 
         return super().create(
             queue=task_workflow_template,
-            # TODO: this'll be incorrect if all items haven't yet been saved.
             position=task_workflow_template.queue_items.count() + 1,
             **kwargs,
         )
@@ -131,11 +137,17 @@ class TaskItemTemplateManager(models.Manager):
 class TaskItemTemplate(QueueItem):
     """Queue item management for TaskTemplate instances."""
 
-    objects = TaskItemTemplateManager()
+    queue = models.ForeignKey(
+        TaskWorkflowTemplate,
+        related_name="queue_items",
+        on_delete=models.CASCADE,
+    )
     task_template = models.OneToOneField(
         "tasks.TaskTemplate",
         on_delete=models.CASCADE,
     )
+
+    objects = TaskItemTemplateManager()
 
 
 class TaskTemplate(TaskBase):
