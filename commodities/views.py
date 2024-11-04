@@ -182,7 +182,9 @@ class CommodityHierarchy(CommodityDetail):
 
         if is_current:
             prefix = self.object.item_id[0:4]
-            commodities_collection = CommodityCollectionLoader(prefix=prefix).load()
+            commodities_collection = CommodityCollectionLoader(prefix=prefix).load(
+                current_only=True,
+            )
             active_commodities = [
                 commodity
                 for commodity in commodities_collection.commodities

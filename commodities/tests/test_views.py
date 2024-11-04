@@ -719,3 +719,16 @@ def test_commodities_hierarchy_inactive_commodity(valid_user_client, date_ranges
         "This commodity has been end dated so no longer forms part of the hierarchy."
         in str(response.content)
     )
+
+
+def test_commodities_hierarchy_only_shows_current(valid_user_client, workbasket):
+    """Test that only current versions of a commodity are shown and no
+    duplicates."""
+    commodity1 = factories.GoodsNomenclatureFactory.create(item_id="8540111111")
+    factories.GoodsNomenclatureFactory.create(item_id="8540222222")
+    commodity1.new_version(workbasket=workbasket, update_type=UpdateType.UPDATE)
+    url = reverse("commodity-ui-detail-hierarchy", kwargs={"sid": commodity1.sid})
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    commodities = [p.text[:10] for p in soup.find_all("p")]
+    assert len(commodities) == len(set(commodities))
