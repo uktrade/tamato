@@ -698,7 +698,7 @@ def log_timing(logger_function: typing.Callable):
 
 def get_related_name(instance, related_model) -> str | None:
     """
-    Returns the related named of a reverse foreign-key relationship to
+    Returns the related name of a reverse foreign-key relationship to
     (subclasses of) the specified `related_model` for the given `instance`.
 
     If a reverse foreign-key relationship exists but no related name has been defined, a default name in the format `relatedmodel_set` will be returned.
