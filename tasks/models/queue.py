@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 from django.db import models
 from django.db.transaction import atomic
+
+from common.util import get_related_objects
 
 
 class Queue(models.Model):
@@ -8,17 +12,20 @@ class Queue(models.Model):
     class Meta:
         abstract = True
 
-    def get_first(self) -> "QueueItem":
+    def get_first(self) -> QueueItem | None:
         """Get the first item in the queue."""
-        # TODO
+        return get_related_objects(self, QueueItem).first()
 
-    def get_last(self) -> "QueueItem":
+    def get_last(self) -> QueueItem | None:
         """Get the last item in the queue."""
-        # TODO
+        return get_related_objects(self, QueueItem).last()
 
-    def get_item(self, position: int) -> "QueueItem":
+    def get_item(self, position: int) -> QueueItem | None:
         """Get the item at `position` position in the queue."""
-        # TODO
+        try:
+            return get_related_objects(self, QueueItem).get(position=position)
+        except self.__class__.DoesNotExist:
+            return None
 
 
 class RequiredFieldError(Exception):

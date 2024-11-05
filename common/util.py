@@ -694,3 +694,32 @@ def log_timing(logger_function: typing.Callable):
         return result
 
     return wrapper
+
+
+def get_related_name(instance, related_model) -> str | None:
+    """
+    Returns the related named of a reverse foreign-key relationship to
+    (subclasses of) the specified `related_model` for the given `instance`.
+
+    If a reverse foreign-key relationship exists but no related name has been defined, a default name in the format `relatedmodel_set` will be returned.
+    If no such relationship exists, `None` is returned instead.
+    """
+    for field in instance._meta.get_fields():
+        if field.one_to_many and issubclass(field.related_model, related_model):
+            return field.get_accessor_name()
+    return None
+
+
+def get_related_objects(instance, related_model) -> QuerySet:
+    """
+    Returns the related objects for the given `instance` to the specified
+    `related_model` by using a related name to follow a reverse foreign-key
+    relationship.
+
+    If no such relationship exists, an empty queryset for the specified related
+    model is returned instead.
+    """
+    related_name = get_related_name(instance, related_model)
+    if related_name:
+        return getattr(instance, related_name).all()
+    return related_model.objects.none()
