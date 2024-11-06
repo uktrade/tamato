@@ -8,7 +8,12 @@ BASE_SERVICE_URL = "http://localhost"
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
 
-INSTALLED_APPS.append("common.tests")
+INSTALLED_APPS.extend(
+    [
+        "common.tests",
+        "tasks.tests.test_queue",
+    ],
+)
 
 # Bucket settings are belt-and-braces to guard against running in a real bucket
 HMRC_BUCKET_STORAGE_NAME = os.environ.get("TEST_HMRC_BUCKET_STORAGE_NAME", "test-hmrc")
