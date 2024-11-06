@@ -19,6 +19,10 @@ class Queue(models.Model):
     class Meta:
         abstract = True
 
+    def get_items(self) -> models.QuerySet:
+        """Get all queue items as a queryset."""
+        return get_related_objects(self, QueueItem)
+
     def get_first(self) -> QueueItem | None:
         """Get the first item in the queue."""
         return get_related_objects(self, QueueItem).first()
@@ -132,7 +136,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         return instance
 
     @atomic
-    def promote_to_first(self):
+    def promote_to_first(self) -> Self:
         """Promote the instance to the first place in the queue so that it
         occupies position 1."""
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
@@ -151,7 +155,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         return instance
 
     @atomic
-    def demote_to_last(self):
+    def demote_to_last(self) -> Self:
         """
         Demote the instance to the last place in the queue so that it occupies
         position of queue length.
