@@ -60,9 +60,7 @@ def three_item_queue(queue) -> TestQueue:
 
 
 def test_empty_queue(queue):
-    # TODO: Is None the correct return value to check for from max_position() on an empty queue?
-    # TODO: Add to max_position docstring what empty queue behaviour is.
-    assert queue.max_position == None
+    assert queue.max_position == 0
     assert queue.get_first() == None
     assert queue.get_item(1) == None
     assert queue.get_last() == None
@@ -92,49 +90,49 @@ def test_item_delete(three_item_queue):
     three_item_queue.get_item(1).delete()
     three_item_queue.get_last().delete()
 
-    assert three_item_queue.get_items().empty()
+    assert three_item_queue.get_items().count() == 0
 
 
 def test_item_promote(three_item_queue):
-    item = three_item_queue.get_first()
-
-    assert item.position == 1
-
-    item.promote()
-    item.promote()
-
-    assert item.position == 3
-
-    item.promote()
-
-    assert item.position == 3
-
-
-def test_item_demote(three_item_queue):
     item = three_item_queue.get_last()
 
     assert item.position == 3
 
-    item.demote()
-    item.demote()
+    item = item.promote()
+    item = item.promote()
 
     assert item.position == 1
 
-    item.demote()
+    item = item.promote()
 
     assert item.position == 1
 
 
-def test_item_promote_to_last(three_item_queue):
+def test_item_demote(three_item_queue):
     item = three_item_queue.get_first()
 
     assert item.position == 1
 
-    item.promote_to_last()
+    item = item.demote()
+    item = item.demote()
 
     assert item.position == 3
 
-    item.promote_to_last()
+    item = item.demote()
+
+    assert item.position == 3
+
+
+def test_item_demote_to_last(three_item_queue):
+    item = three_item_queue.get_first()
+
+    assert item.position == 1
+
+    item = item.demote_to_last()
+
+    assert item.position == 3
+
+    item = item.demote_to_last()
 
     assert item.position == 3
 
@@ -144,10 +142,10 @@ def test_item_promote_to_first(three_item_queue):
 
     assert item.position == 3
 
-    item.promote_to_first()
+    item = item.promote_to_first()
 
     assert item.position == 1
 
-    item.promote_to_first()
+    item = item.promote_to_first()
 
     assert item.position == 1

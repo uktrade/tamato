@@ -41,10 +41,15 @@ class Queue(models.Model):
 
     @property
     def max_position(self) -> int:
-        """Returns the maximum item position in the queue."""
-        return get_related_objects(self, QueueItem).aggregate(
+        """
+        Returns the highest item position in the queue.
+
+        If the queue is empty it returns zero.
+        """
+        max = get_related_objects(self, QueueItem).aggregate(
             max_position=models.Max("position"),
         )["max_position"]
+        return max if max is not None else 0
 
 
 class QueueItemMetaClass(models.base.ModelBase):
