@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.transaction import atomic
 
+from common.util import TableLock
 from common.util import get_related_objects
 
 
@@ -63,6 +64,28 @@ class QueueItemMetaClass(models.base.ModelBase):
         return new_class
 
 
+class QueueItemManager(models.Manager):
+    @atomic
+    def create(self, **kwargs) -> QueueItem:
+        """Create a new item instance in a queue, given by the `queue` named
+        param, and place it in last position."""
+
+        with TableLock(self.model, lock=TableLock.EXCLUSIVE):
+            queue = kwargs.pop("queue")
+            position = kwargs.pop("position", (queue.get_items().count() + 1))
+
+            if position <= 0:
+                raise ValueError(
+                    "QueueItem.position must be a positive integer greater than zero.",
+                )
+
+            return super().create(
+                queue=queue,
+                position=position,
+                **kwargs,
+            )
+
+
 class QueueItem(models.Model, metaclass=QueueItemMetaClass):
     """Item that is a member of a Queue."""
 
@@ -70,7 +93,6 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         abstract = True
         ordering = ["queue", "position"]
 
-    """The Queue that this instance is a member of."""
     position = models.PositiveSmallIntegerField(
         db_index=True,
         editable=False,
@@ -78,6 +100,8 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
     """
     1-based positioning - 1 is the first position.
     """
+
+    objects = QueueItemManager()
 
     @atomic
     def delete(self):

@@ -42,28 +42,6 @@ class TaskWorkflow(TaskWorkflowBase):
     )
 
 
-class TaskItemManager(models.Manager):
-    @atomic
-    @TableLock.acquire_lock("tasks.TaskItem", lock=TableLock.EXCLUSIVE)
-    def create(self, **kwargs) -> "TaskItem":
-        """Create a new TaskItem instance in a workflow, given by the `queue`
-        named param, and place it in last position."""
-
-        task_workflow: TaskWorkflow = kwargs.pop("queue")
-        position = kwargs.pop("position", (task_workflow.queue_items.count() + 1))
-
-        if position <= 0:
-            raise ValueError(
-                "TaskItem.position must be a positive integer greater than zero.",
-            )
-
-        return super().create(
-            queue=task_workflow,
-            position=position,
-            **kwargs,
-        )
-
-
 class TaskItem(QueueItem):
     """Task item queue management for Task instances (these should always be
     subtasks)."""
@@ -78,8 +56,6 @@ class TaskItem(QueueItem):
         on_delete=models.CASCADE,
     )
     """The Task instance managed by this TaskItem."""
-
-    objects = TaskItemManager()
 
 
 # ----------------------------------------
