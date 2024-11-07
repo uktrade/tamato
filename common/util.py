@@ -432,8 +432,8 @@ def get_field_tuple(model: Model, field_name: str) -> Tuple[str, Any]:
 
 
 class TableLock:
-    """Provides a decorator for locking database tables for the duration of a
-    decorated function."""
+    """Provides a decorator and context manager for locking database tables for
+    the duration of a decorated function or context block."""
 
     ACCESS_SHARE = "ACCESS SHARE"
     ROW_SHARE = "ROW SHARE"
@@ -455,6 +455,29 @@ class TableLock:
         ACCESS_EXCLUSIVE,
     )
 
+    def __init__(self, *models, lock=None):
+        if lock is None:
+            lock = self.ACCESS_EXCLUSIVE
+
+        if lock not in self.LOCK_TYPES:
+            raise ValueError("%s is not a PostgreSQL supported lock mode.")
+
+        self.lock = lock
+        self.models = models
+
+    def __enter__(self):
+        with atomic():
+            with transaction.get_connection().cursor() as cursor:
+                for model in self.models:
+                    if isinstance(model, str):
+                        model = apps.get_model(model)
+                    cursor.execute(
+                        f"LOCK TABLE {model._meta.db_table} IN {self.lock} MODE",
+                    )
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
     @classmethod
     def acquire_lock(cls, *models, lock=None):
         """
@@ -469,24 +492,11 @@ class TableLock:
         PostgreSQL's LOCK Documentation:
         http://www.postgresql.org/docs/8.3/interactive/sql-lock.html
         """
-        if lock is None:
-            lock = cls.ACCESS_EXCLUSIVE
-
-        if lock not in cls.LOCK_TYPES:
-            raise ValueError("%s is not a PostgreSQL supported lock mode.")
 
         @wrapt.decorator
         def wrapper(wrapped, instance, args, kwargs):
-            with atomic():
-                with transaction.get_connection().cursor() as cursor:
-                    for model in models:
-                        if isinstance(model, str):
-                            model = apps.get_model(model)
-                        cursor.execute(
-                            f"LOCK TABLE {model._meta.db_table} IN {lock} MODE",
-                        )
-
-                    return wrapped(*args, **kwargs)
+            with cls(*models, lock=lock):
+                return wrapped(*args, **kwargs)
 
         return wrapper
 

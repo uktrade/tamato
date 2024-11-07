@@ -27,7 +27,7 @@ pytestmark = pytest.mark.django_db
                 "port": 1234,
                 "dbname": "dbname",
             },
-            "engine://username:password@host:1234/dbname",
+            "engine://username:password@host:1234/dbname",  # /PS-IGNORE
         ),
         (
             {
@@ -379,3 +379,42 @@ def test_xml_fromstring_vulnerabilities(file_name):
     string = open(file).read()
     with pytest.raises((XMLSyntaxError, DTDForbidden)):
         util.xml_fromstring(string)
+
+
+@mock.patch("django.db.transaction.get_connection")
+def test_tablelock_as_context_manager(mock_get_connection):
+    mock_cursor = mock.MagicMock()
+    mock_get_connection.return_value.cursor.return_value.__enter__.return_value = (
+        mock_cursor
+    )
+
+    instance = factories.TestModel1Factory.create()
+    model = instance._meta.model
+    lock = util.TableLock.EXCLUSIVE
+
+    with util.TableLock(model, lock=lock):
+        assert model.objects.select_for_update().get(pk=instance.pk)
+        mock_cursor.execute.assert_called_once_with(
+            f"LOCK TABLE {model._meta.db_table} IN {lock} MODE",
+        )
+
+
+@mock.patch("django.db.transaction.get_connection")
+def test_tablelock_as_decorator(mock_get_connection):
+    mock_cursor = mock.MagicMock()
+    mock_get_connection.return_value.cursor.return_value.__enter__.return_value = (
+        mock_cursor
+    )
+
+    instance = factories.TestModel1Factory.create()
+    model = instance._meta.model
+    lock = util.TableLock.EXCLUSIVE
+
+    @util.TableLock.acquire_lock(model, lock=lock)
+    def decorated_function():
+        return True
+
+    assert decorated_function()
+    mock_cursor.execute.assert_called_once_with(
+        f"LOCK TABLE {model._meta.db_table} IN {lock} MODE",
+    )
