@@ -126,6 +126,8 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         Promote the instance by one place up the queue.
 
         No change is made if the instance is already in its queue's first place.
+
+        Returns the promoted instance with any database updates applied.
         """
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
 
@@ -148,6 +150,8 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         Demote the instance by one place down the queue.
 
         No change is made if the instance is already in its queue's last place.
+
+        Returns the demoted instance with any database updates applied.
         """
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
 
@@ -166,8 +170,15 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
     @atomic
     def promote_to_first(self) -> Self:
-        """Promote the instance to the first place in the queue so that it
-        occupies position 1."""
+        """
+        Promote the instance to the first place in the queue so that it occupies
+        position 1.
+
+        No change is made if the instance is already in its queue's first place.
+
+        Returns the promoted instance with any database updates applied.
+        """
+
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
 
         if instance.position == 1:
@@ -190,6 +201,8 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         position of queue length.
 
         No change is made if the instance is already in its queue's last place.
+
+        Returns the demoted instance with any database updates applied.
         """
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
 
