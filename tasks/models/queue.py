@@ -7,7 +7,7 @@ from django.db import models
 from django.db.transaction import atomic
 
 from common.util import TableLock
-from common.util import get_related_objects
+from common.util import get_related_names
 
 
 class RequiredFieldError(Exception):
@@ -15,27 +15,36 @@ class RequiredFieldError(Exception):
 
 
 class Queue(models.Model):
-    """A (FIFO) queue."""
+    """
+    A (FIFO) queue.
+
+    Note: This abstract class only supports a single reverse foreign-key relationship
+    to `QueueItem` for each instance. As such, all instance methods in this class use
+    the first-returned related name to access related `QueueItem` objects. This means that
+    if there are multiple relationships, only the first one will be considered when
+    retrieving items from the queue,
+    """
 
     class Meta:
         abstract = True
 
     def get_items(self) -> models.QuerySet:
         """Get all queue items as a queryset."""
-        return get_related_objects(self, QueueItem)
+        related_name = get_related_names(self, QueueItem)[0]
+        return getattr(self, related_name).all()
 
     def get_first(self) -> QueueItem | None:
         """Get the first item in the queue."""
-        return get_related_objects(self, QueueItem).first()
+        return self.get_items().first()
 
     def get_last(self) -> QueueItem | None:
         """Get the last item in the queue."""
-        return get_related_objects(self, QueueItem).last()
+        return self.get_items().last()
 
     def get_item(self, position: int) -> QueueItem | None:
         """Get the item at `position` position in the queue."""
         try:
-            return get_related_objects(self, QueueItem).get(position=position)
+            return self.get_items().get(position=position)
         except ObjectDoesNotExist:
             return None
 
@@ -46,7 +55,7 @@ class Queue(models.Model):
 
         If the queue is empty it returns zero.
         """
-        max = get_related_objects(self, QueueItem).aggregate(
+        max = self.get_items().aggregate(
             max_position=models.Max("position"),
         )["max_position"]
         return max if max is not None else 0
