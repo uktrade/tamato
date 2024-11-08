@@ -14,6 +14,32 @@ from workbaskets.models import WorkBasket
 User = get_user_model()
 
 
+class ProgressState(models.Model):
+    class State(models.TextChoices):
+        TO_DO = "TO_DO", "To do"
+        IN_PROGRESS = "IN_PROGRESS", "In progress"
+        DONE = "DONE", "Done"
+
+    DEFAULT_STATE_NAME = State.TO_DO
+    """The name of the default `State` object for `ProgressState`."""
+
+    name = models.CharField(
+        max_length=255,
+        choices=State.choices,
+        unique=True,
+    )
+
+    def __str__(self):
+        return self.get_name_display()
+
+    @classmethod
+    def get_default_state_id(cls):
+        """Get the id / pk of the default `State` object for `ProgressState`."""
+        # Failsafe get_or_create() avoids attempt to get non-existant instance.
+        default, _ = cls.objects.get_or_create(name=cls.DEFAULT_STATE_NAME)
+        return default.id
+
+
 class TaskManager(WithSignalManagerMixin, models.Manager):
     pass
 
@@ -41,7 +67,8 @@ class TaskBase(TimestampedMixin):
 
 class Task(TaskBase):
     progress_state = models.ForeignKey(
-        "ProgressState",
+        ProgressState,
+        default=ProgressState.get_default_state_id,
         on_delete=models.PROTECT,
     )
     parent_task = models.ForeignKey(
@@ -86,22 +113,6 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class ProgressState(models.Model):
-    class State(models.TextChoices):
-        TO_DO = "TO_DO", "To do"
-        IN_PROGRESS = "IN_PROGRESS", "In progress"
-        DONE = "DONE", "Done"
-
-    name = models.CharField(
-        max_length=255,
-        choices=State.choices,
-        unique=True,
-    )
-
-    def __str__(self):
-        return self.get_name_display()
 
 
 class TaskAssigneeManager(WithSignalManagerMixin, models.Manager):
