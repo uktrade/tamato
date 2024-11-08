@@ -1,7 +1,6 @@
 from django.db import models
 from django.db.transaction import atomic
 
-from common.util import TableLock
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
 from tasks.models.task import Task
@@ -41,6 +40,11 @@ class TaskWorkflow(TaskWorkflowBase):
         on_delete=models.SET_NULL,
     )
 
+    def get_tasks(self) -> models.QuerySet:
+        """Get a QuerySet of the Tasks associated through their TaskItem
+        instances to this TaskWorkflow."""
+        return Task.objects.filter(taskitem__queue=self)
+
 
 class TaskItem(QueueItem):
     """Task item queue management for Task instances (these should always be
@@ -66,6 +70,11 @@ class TaskItem(QueueItem):
 class TaskWorkflowTemplate(TaskWorkflowBase):
     """Template used to create TaskWorkflow instance."""
 
+    def get_task_templates(self) -> models.QuerySet:
+        """Get a QuerySet of the TaskTemplates associated through their
+        TaskItemTemplate instances to this TaskWorkflowTemplate."""
+        return TaskTemplate.objects.filter(taskitemtemplate__queue=self)
+
     @atomic
     def create_task_workflow(self) -> "TaskWorkflow":
         """Create a workflow and it subtasks, using values from this template
@@ -88,28 +97,12 @@ class TaskWorkflowTemplate(TaskWorkflowBase):
                 category=task_template.category,
             )
             TaskItem.objects.create(
-                position=task_template.position,
+                position=task_item_template.position,
                 queue=task_workflow,
                 task=task,
             )
 
         return task_workflow
-
-
-class TaskItemTemplateManager(models.Manager):
-    @atomic
-    @TableLock.acquire_lock("tasks.TaskItemTemplate", lock=TableLock.EXCLUSIVE)
-    def create(self, **kwargs) -> "TaskItemTemplate":
-        """Create a new TaskItemTemplate instance in a workflow, given by the
-        `queue` named param, and place it in last position."""
-
-        task_workflow_template: TaskWorkflowTemplate = kwargs.pop("queue")
-
-        return super().create(
-            queue=task_workflow_template,
-            position=task_workflow_template.queue_items.count() + 1,
-            **kwargs,
-        )
 
 
 class TaskItemTemplate(QueueItem):
@@ -124,8 +117,6 @@ class TaskItemTemplate(QueueItem):
         "tasks.TaskTemplate",
         on_delete=models.CASCADE,
     )
-
-    objects = TaskItemTemplateManager()
 
 
 class TaskTemplate(TaskBase):
