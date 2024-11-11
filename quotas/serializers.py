@@ -271,7 +271,8 @@ class QuotaEventSerializer(TrackedModelSerializerMixin):
 
 
 def serialize_duplicate_data(selected_definition):
-    # returns a JSON dictionary of serialized definition data
+    # returns a JSON dictionary of serialized definition data from a
+    # QuotaDefinition object
     duplicate_data = {
         "initial_volume": str(selected_definition.initial_volume),
         "volume": str(selected_definition.volume),
@@ -310,6 +311,7 @@ def deserialize_definition_data(self, definition):
 
 
 def serialize_definition_data(definition):
+    # Serializes data and returns a JSON dict that can be saved to session
     definition_data = {
         "id": str(definition["id"]),
         "initial_volume": str(definition["volume"]),
