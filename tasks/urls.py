@@ -27,9 +27,14 @@ ui_patterns = [
         name="task-ui-confirm-delete",
     ),
     path(
-        "<int:pk>/sub-tasks/create",
+        "<int:pk>/subtasks/create",
         views.SubTaskCreateView.as_view(),
         name="subtask-ui-create",
+    ),
+    path(
+        "<int:pk>/subtask-confirm-create/",
+        views.SubTaskConfirmCreateView.as_view(),
+        name="subtask-ui-confirm-create",
     ),
 ]
 

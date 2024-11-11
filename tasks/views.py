@@ -66,6 +66,11 @@ class TaskConfirmCreateView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/confirm_create.jinja"
     permission_required = "tasks.add_task"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "task"
+        return context
+
 
 class TaskUpdateView(PermissionRequiredMixin, UpdateView):
     model = Task
@@ -132,4 +137,17 @@ class SubTaskCreateView(PermissionRequiredMixin, CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse("workflow:task-ui-confirm-create", kwargs={"pk": self.object.pk})
+        return reverse(
+            "workflow:subtask-ui-confirm-create",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class SubTaskConfirmCreateView(DetailView):
+    model = Task
+    template_name = "tasks/confirm_create.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "subtask"
+        return context
