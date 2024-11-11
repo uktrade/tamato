@@ -11,6 +11,7 @@ from django.views.generic.edit import UpdateView
 from common.views import SortingMixin
 from common.views import WithPaginationListView
 from tasks.filters import TaskFilter
+from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
 from tasks.forms import TaskUpdateForm
@@ -112,3 +113,23 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         context_data = super().get_context_data(**kwargs)
         context_data["deleted_pk"] = self.kwargs["pk"]
         return context_data
+
+
+class SubTaskCreateView(PermissionRequiredMixin, CreateView):
+    model = Task
+    template_name = "layouts/create.jinja"
+    permission_required = "tasks.add_task"
+    form_class = SubTaskCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "Create a subtask"
+        return context
+
+    def form_valid(self, form):
+        parent_task = Task.objects.filter(pk=self.kwargs["pk"]).first()
+        self.object = form.save(parent_task, user=self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse("workflow:task-ui-confirm-create", kwargs={"pk": self.object.pk})
