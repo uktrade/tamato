@@ -1,0 +1,46 @@
+{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% block form %}
+    {% set data = view.get_staged_definition_data() %}
+    {% set table_rows = [] %}
+    {% for definition in data %}
+        {% set formatted_start_date = view.format_date(definition.start_date)%}
+        {% set formatted_end_date = view.format_date(definition.end_date)%}
+        {% set edit_link -%}
+            <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('quota_definition-ui-bulk-create-edit', args=[definition.id]) }}">Edit</a>
+        {%- endset %}
+
+        {{ table_rows.append([
+            {"text": formatted_start_date },
+            {"text": formatted_end_date },
+            {"text": definition.volume },
+            {"text": definition.measurement_unit_abbreviation },
+            {"text": definition.threshold ~ "%"},
+            {"text": edit_link },
+        ]) or ""}}
+    {% endfor %}
+
+    <p>Each row represents a Quota definition period to be created. You can edit these by clicking the edit link, or after creation via the edit definition period page.</p>
+    {{ govukTable({
+        "head": [
+            {"text": "Start date"},
+            {"text": "End date"},
+            {"text": "Volume"},
+            {"text": "Unit"},
+            {"text": "Threshold"},
+            {"text": "Edit details"},
+        ],
+        "rows": table_rows
+    }) }}
+<div class="govuk-button-group">
+  {{ govukButton({
+    "text": "Submit",
+  }) }}
+  {{ govukButton({
+    "text": "Start again",
+    "classes": "govuk-button--secondary",
+    "href": url('quota_definition-ui-bulk-create', args={'step': 'start'}),
+  }) }}
+  </div>
+{% endblock %}

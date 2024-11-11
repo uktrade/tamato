@@ -307,3 +307,43 @@ def deserialize_definition_data(self, definition):
         "quota_critical_threshold": 90,
     }
     return staged_data
+
+
+def serialize_definition_data(definition):
+    definition_data = {
+        "id": str(definition["id"]),
+        "initial_volume": str(definition["volume"]),
+        "volume": str(definition["volume"]),
+        "measurement_unit_code": definition["measurement_unit"].code,
+        "measurement_unit_abbreviation": definition["measurement_unit"].abbreviation,
+        "threshold": str(definition["quota_critical_threshold"]),
+        "quota_critical": definition["quota_critical"],
+        "start_date": serialize_date(definition["valid_between"].lower),
+        "end_date": serialize_date(definition["valid_between"].upper),
+    }
+    return definition_data
+
+
+def deserialize_bulk_create_definition_data(definition, order_number):
+    start_date = deserialize_date(definition["start_date"])
+    end_date = deserialize_date(definition["end_date"])
+    initial_volume = Decimal(definition["initial_volume"])
+    vol = Decimal(definition["volume"])
+    measurement_unit = MeasurementUnit.objects.get(
+        code=definition["measurement_unit_code"],
+    )
+    valid_between = TaricDateRange(start_date, end_date)
+    order_number_obj = models.QuotaOrderNumber.objects.current().get(
+        pk=order_number,
+    )
+    staged_data = {
+        "volume": vol,
+        "initial_volume": initial_volume,
+        "measurement_unit": measurement_unit,
+        "order_number": order_number_obj,
+        "valid_between": valid_between,
+        "update_type": UpdateType.CREATE,
+        "maximum_precision": 3,
+        "quota_critical_threshold": 90,
+    }
+    return staged_data

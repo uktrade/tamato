@@ -1,0 +1,23 @@
+{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+
+{% set page_title = step_metadata[wizard.steps.current].title %}
+{% block form %}
+    <p class="govuk-body">
+        Before you start, you'll need:
+        <ul class="govuk-list govuk-list--bullet">
+            <li>the quota order number</li>
+            <li>all required details for the first definition period</li>
+            <li>details of any changes that are to be made for subsequent definition periods</li>
+            <li>the frequency with which the definition period should be duplicated (e.g. quarterly, bi-annually, annually)</li>
+            <li>(additional updates can be made after creation, via the edit definition page)</li>
+        </ul>
+    </p>
+    <div class="govuk-button-group">
+    {{ govukButton({"text": "Start now", "isStartButton": True}) }}
+    {{ govukButton({
+      "text": "Back",
+      "href": url("workbaskets:edit-workbasket"),
+      "classes": "govuk-button--secondary"
+    }) }}
+  </div>
+{% endblock %}

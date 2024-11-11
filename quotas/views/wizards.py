@@ -15,6 +15,7 @@ from common.validators import UpdateType
 from common.views import BusinessRulesMixin
 from quotas import forms
 from quotas import models
+from quotas.serializers import deserialize_bulk_create_definition_data
 from quotas.serializers import deserialize_definition_data
 from settings.common import DATE_FORMAT
 from workbaskets.models import WorkBasket
@@ -228,7 +229,7 @@ class QuotaDefinitionDuplicateUpdates(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["page_title"] = "Update definition and association details"
-        context["quota_order_number"] = self.kwargs["pk"]
+        context["quota_order_number_pk"] = self.kwargs["pk"]
         return context
 
     def get_main_definition(self):
@@ -271,3 +272,143 @@ class QuotaDefinitionDuplicatorSuccess(TemplateView):
         context["sub_quota"] = success_data["sub_quota"]
         context["definition_view_url"] = success_data["definition_view_url"]
         return context
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class QuotaDefinitionBulkCreatorWizard(
+    PermissionRequiredMixin,
+    NamedUrlSessionWizardView,
+):
+    """Multipart form wizard to bulk create QuotaDefinitions."""
+
+    storage_name = "quotas.wizard.QuotaDefinitionBulkCreatorSessionStorage"
+    permission_required = ["common.add_trackedmodel"]
+
+    START = "start"
+    INITIAL_INFO = "initial_info"
+    DEFINITION_PERIOD_INFO = "definition_period_info"
+    REVIEW = "review"
+    COMPLETE = "complete"
+
+    form_list = [
+        (START, forms.BulkQuotaDefinitionCreateStartForm),
+        (INITIAL_INFO, forms.BulkQuotaDefinitionCreateInitialInformation),
+        (DEFINITION_PERIOD_INFO, forms.QuotaDefinitionBulkCreateDefinitionInformation),
+        (REVIEW, forms.BulkQuotaDefinitionCreateReviewForm),
+    ]
+
+    templates = {
+        START: "quota-definitions/bulk-create-start.jinja",
+        INITIAL_INFO: "quota-definitions/bulk-create-initial-info.jinja",
+        DEFINITION_PERIOD_INFO: "quota-definitions/bulk-create-definition-info.jinja",
+        REVIEW: "quota-definitions/bulk-create-review.jinja",
+        COMPLETE: "quota-definitions/bulk-create-done.jinja",
+    }
+
+    step_metadata = {
+        START: {
+            "title": "Bulk create quota definitions",
+            "link_text": "start",
+        },
+        INITIAL_INFO: {
+            "title": "Bulk create quota definition initial information",
+            "link_text": "Initial information",
+        },
+        DEFINITION_PERIOD_INFO: {
+            "title": "Definition period information",
+            "link_text": "Definition period information",
+        },
+        REVIEW: {
+            "title": "Review bulk creation information",
+            "link_text": "Review information",
+        },
+        COMPLETE: {
+            "title": "Finished",
+            "link_text": "Success",
+        },
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form=form, **kwargs)
+        context["step_metadata"] = self.step_metadata
+        return context
+
+    def get_template_names(self):
+        template = self.templates.get(
+            self.steps.current,
+            "quota-definitions/bulk-create-step.jinja",
+        )
+        return template
+
+    def get_form_kwargs(self, step):
+        # kwargs = super().get_form_kwargs()
+        kwargs = {}
+        kwargs["request"] = self.request
+        return kwargs
+
+    def get_staged_definition_data(self):
+        return self.request.session["staged_definition_data"]
+
+    def format_date(self, date_str):
+        """Parses and converts a date string from that used for storing data to
+        the one used in the TAP UI."""
+        if date_str:
+            date_object = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            return date_object.strftime(DATE_FORMAT)
+        return ""
+
+    def create_definition(self, order_number, definition):
+        transaction = self.workbasket.new_transaction()
+        staged_data = deserialize_bulk_create_definition_data(
+            definition,
+            order_number,
+        )
+        models.QuotaDefinition.objects.create(
+            **staged_data,
+            transaction=transaction,
+        )
+
+    def done(self, form_list, **kwargs):
+        order_number_pk = self.request.session["recurrance_data"][
+            "quota_order_number_pk"
+        ]
+        definition_data = self.request.session["staged_definition_data"]
+        with transaction.atomic():
+            for definition in definition_data:
+                self.create_definition(order_number_pk, definition)
+
+        return redirect("quota_definition-ui-bulk-create-success")
+
+
+class QuotaDefinitionBulkCreatorUpdateDefinitionData(
+    FormView,
+):
+    template_name = "quota-definitions/bulk-create-definition-edit.jinja"
+    permission_required = ["common.change_trackedmodel"]
+    form_class = forms.BulkDefinitionUpdateData
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["pk"] = self.kwargs["pk"]
+        kwargs["request"] = self.request
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Update definitiondetails"
+        return context
+
+    def form_valid(self, form):
+        return redirect(reverse("quota_definition-ui-bulk-create"))
+
+
+class QuotaDefinitionBulkCreateSuccess(TemplateView):
+    template_name = "quota-definitions/bulk-create-done.jinja"
+
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     return context
