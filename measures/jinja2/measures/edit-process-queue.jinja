@@ -5,8 +5,9 @@
 {% from "components/button/macro.njk" import govukButton %}
 
 {% set list_include = "includes/measures/create-task-list.jinja"%}
+{# Might wanna make an edit one or make this one useable by both #}
 
-{% set page_title = "Create measures queue" %}
+{% set page_title = "Edit measures queue" %}
 
 
 {% block breadcrumb %}
@@ -59,7 +60,7 @@
 
       {{ govukButton({
             "html": refresh_button_content,
-            "href": url("measure-create-process-queue"),
+            "href": url("measure-edit-process-queue"),
             "classes": "govuk-button--primary align-right govuk-!-margin-bottom-0 refresh-button",
       }) }}
     </nav>
@@ -73,7 +74,7 @@
     {% if object_list %}
       {% include list_include%}
     {% else %}
-      <p class="govuk-body">No bulk create/edit tasks with this status</p>
+      <p class="govuk-body">No bulk edit tasks with this status</p>
     {% endif %}
   </div>
 

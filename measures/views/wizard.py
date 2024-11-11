@@ -5,10 +5,10 @@ from typing import List
 from crispy_forms_gds.helper import FormHelper
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from formtools.wizard.views import NamedUrlSessionWizardView
@@ -167,10 +167,8 @@ class MeasureEditWizard(
         measures_bulk_editor.schedule_task()
 
         return redirect(
-            reverse(
-                "workbaskets:workbasket-ui-review-measures",
-                kwargs={"pk": self.workbasket.pk},
-            ),
+            "measure-ui-edit-async-confirm",
+            expected_measures_count=len(db_selected_measures),
         )
 
     def edit_measures(self, selected_measures, cleaned_data):
@@ -197,14 +195,11 @@ class MeasureEditWizard(
         cleaned_data = self.get_all_cleaned_data()
         selected_measures = self.get_queryset()
 
-        self.edit_measures(selected_measures, cleaned_data)
+        edited_measures = self.edit_measures(selected_measures, cleaned_data)
         self.session_store.clear()
-
         return redirect(
-            reverse(
-                "workbaskets:workbasket-ui-review-measures",
-                kwargs={"pk": self.workbasket.pk},
-            ),
+            "measure-ui-edit-sync-confirm",
+            edited_or_created_measures_count=len(edited_measures),
         )
 
 
@@ -365,13 +360,10 @@ class MeasureCreateWizard(
 
         cleaned_data = self.get_all_cleaned_data()
         created_measures = self.create_measures(cleaned_data)
-        context = self.get_context_data(
-            form=None,
-            created_measures=created_measures,
-            **kwargs,
+        return redirect(
+            "measure-ui-create-sync-confirm",
+            edited_or_created_measures_count=len(created_measures),
         )
-
-        return render(self.request, "measures/confirm-create-multiple.jinja", context)
 
     def async_done(self, form_list, **kwargs):
         """Handles this wizard's done step, handing off most of the processing
@@ -392,7 +384,7 @@ class MeasureCreateWizard(
         measures_bulk_creator.schedule_task()
 
         return redirect(
-            "measure-ui-create-confirm",
+            "measure-ui-create-async-confirm",
             expected_measures_count=measures_bulk_creator.expected_measures_count,
         )
 
@@ -620,10 +612,25 @@ class MeasureCreateWizard(
         )
 
 
-class MeasuresWizardCreateConfirm(TemplateView):
+class MeasuresWizardAsyncConfirm(TemplateView):
+    """A success view that serves both the bulk create and bulk edit asynchronous pathways."""
+
     template_name = "measures/confirm-create-multiple-async.jinja"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["expected_measures_count"] = self.kwargs.get("expected_measures_count")
+        return context
+
+
+class MeasuresWizardSyncConfirm(TemplateView):
+    """A success view that serves both the bulk create and bulk edit synchronous pathways."""
+
+    template_name = "measures/confirm-edit-multiple.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["edited_or_created_measures_count"] = self.kwargs.get(
+            "edited_or_created_measures_count"
+        )
         return context

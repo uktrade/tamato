@@ -113,6 +113,6 @@ class MeasuresEditor:
                         workbasket=self.workbasket,
                     )
 
-                    edited_measures.append(new_measure.id)
+                    edited_measures.append(new_measure)
 
             return edited_measures
