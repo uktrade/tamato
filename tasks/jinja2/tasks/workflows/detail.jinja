@@ -1,0 +1,97 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Workflow template: " ~ object.title %}
+
+{% set edit_url = "#TODO" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and view workflow templates", "href": "#TODO"},
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+    </div>
+  </div>
+
+  <h2 class="govuk-heading-m">Details</h2>
+  
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        ID
+      </dt>
+      <dd class="govuk-summary-list__value">
+        {{ object.pk }}
+      </dd>
+    </div>
+
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        Title
+      </dt>
+      <dd class="govuk-summary-list__value">
+        {{ object.title }}
+      </dd>
+      <dd class="govuk-summary-list__actions">
+        <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> title</span></a>
+      </dd>
+    </div>
+
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        Description
+      </dt>
+      <dd class="govuk-summary-list__value">
+        {{ object.description }}
+      </dd>
+      <dd class="govuk-summary-list__actions">
+        <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> description</span></a>
+      </dd>
+    </div>
+  </dl>
+
+  <h2 class="govuk-heading-m">Task templates</h2>
+
+  {% if not task_template_items %}
+    <p class="govuk-body">There are currently no task templates for this workflow template.</p>
+  {% else %}
+    <ol class="govuk-task-list">
+      {% for task_template_item in task_template_items %}
+        <li class="govuk-task-list__item govuk-task-list__item--with-link">
+          <div class="govuk-task-list__name-and-hint">
+            <a class="govuk-link govuk-task-list__link" href="#TODO">
+              {{ task_template_item.task_template.title }}
+            </a>
+            {% if task_template_item.task_template.description %}
+              <div class="govuk-task-list__hint">
+                {{ task_template_item.task_template.description|truncate(50) }}
+              </div>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% endif %}
+
+<div class="govuk-button-group govuk-!-margin-top-6">
+  {{ govukButton({
+    "text": "Delete workflow template",
+    "href": "#TODO",
+    "classes": "govuk-button--warning"
+  }) }}
+  {{ govukButton({
+    "text": "Find and view workflow templates",
+    "href": "#TODO",
+    "classes": "govuk-button--secondary"
+  }) }}
+</div>
+{% endblock %}

@@ -15,6 +15,7 @@ from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
 from tasks.forms import TaskUpdateForm
 from tasks.models import Task
+from tasks.models import TaskWorkflowTemplate
 from tasks.signals import set_current_instigator
 
 
@@ -111,4 +112,17 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data["deleted_pk"] = self.kwargs["pk"]
+        return context_data
+
+
+class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
+    model = TaskWorkflowTemplate
+    template_name = "tasks/workflows/detail.jinja"
+    permission_required = "tasks.view_taskworkflowtemplate"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["task_template_items"] = (
+            self.get_object().get_items().select_related("task_template")
+        )
         return context_data
