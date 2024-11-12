@@ -32,7 +32,7 @@ ui_patterns = [
         name="subtask-ui-create",
     ),
     path(
-        "<int:pk>/subtask-confirm-create/",
+        "subtasks/<int:pk>/confirm-create/",
         views.SubTaskConfirmCreateView.as_view(),
         name="subtask-ui-confirm-create",
     ),
