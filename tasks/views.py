@@ -138,7 +138,7 @@ class SubTaskCreateView(PermissionRequiredMixin, CreateView):
 
 class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
     model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/detail.jinja"
+    template_name = "tasks/workflows/template_detail.jinja"
     permission_required = "tasks.view_taskworkflowtemplate"
 
     def get_context_data(self, **kwargs):
