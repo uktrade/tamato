@@ -216,6 +216,36 @@ urlpatterns = [
         name="quota_suspension-ui-confirm-delete",
     ),
     path(
+        f"quotas/blocking-periods/<sid>/edit/",
+        views.QuotaBlockingUpdate.as_view(),
+        name="quota_blocking-ui-edit",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/edit-create/",
+        views.QuotaBlockingEditCreate.as_view(),
+        name="quota_blocking-ui-edit-create",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/edit-update/",
+        views.QuotaBlockingEditUpdate.as_view(),
+        name="quota_blocking-ui-edit-update",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/confirm-update/",
+        views.QuotaBlockingConfirmUpdate.as_view(),
+        name="quota_blocking-ui-confirm-update",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/delete/",
+        views.QuotaBlockingDelete.as_view(),
+        name="quota_blocking-ui-delete",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/confirm-delete/",
+        views.QuotaBlockingConfirmDelete.as_view(),
+        name="quota_blocking-ui-confirm-delete",
+    ),
+    path(
         f"quota_definitions/quota-association/<pk>/delete/",
         views.QuotaAssociationDelete.as_view(),
         name="quota_association-ui-delete",
