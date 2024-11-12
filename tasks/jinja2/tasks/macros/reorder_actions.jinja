@@ -1,0 +1,21 @@
+{% macro render_reorder_actions(item, max_position) %}
+  <div class="task-list__reorder-actions">
+    {% if not item.position == 1 %}
+      <button name="promote_item"
+        value="{{ item.pk }}"
+        class="govuk-link fake-link govuk-!-padding-right-2"
+        data-module="govuk-button"
+        data-prevent-double-click="true"
+      >Move up <span aria-hidden="true">&#9206;</span></button>
+    {% endif %}
+
+    {% if not item.position == max_position %}
+      <button name="demote_item"
+        value="{{ item.pk }}"
+        class="govuk-link fake-link"
+        data-module="govuk-button"
+        data-prevent-double-click="true"
+      >Move down <span aria-hidden="true">&#9207;</span></button>
+    {% endif %}
+  </div>
+{% endmacro %}

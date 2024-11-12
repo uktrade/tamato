@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
@@ -16,6 +17,7 @@ from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
 from tasks.forms import TaskUpdateForm
 from tasks.models import Task
+from tasks.models import TaskItemTemplate
 from tasks.models import TaskWorkflowTemplate
 from tasks.signals import set_current_instigator
 
@@ -141,9 +143,32 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/workflows/template_detail.jinja"
     permission_required = "tasks.view_taskworkflowtemplate"
 
+    @property
+    def view_url(self) -> str:
+        return reverse(
+            "workflow:task-workflow-template-ui-detail",
+            kwargs={"pk": self.get_object().pk},
+        )
+
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data["task_template_items"] = (
             self.get_object().get_items().select_related("task_template")
         )
         return context_data
+
+    def post(self, request, *args, **kwargs):
+        if "promote_item" in request.POST:
+            self.promote_item(request.POST.get("promote_item"))
+        elif "demote_item" in request.POST:
+            self.demote_item(request.POST.get("demote_item"))
+
+        return HttpResponseRedirect(self.view_url)
+
+    def promote_item(self, item_id: int) -> None:
+        task_item_template = get_object_or_404(TaskItemTemplate, id=item_id)
+        task_item_template.promote()
+
+    def demote_item(self, item_id: int) -> None:
+        task_item_template = get_object_or_404(TaskItemTemplate, id=item_id)
+        task_item_template.demote()
