@@ -14,6 +14,32 @@ from workbaskets.models import WorkBasket
 User = get_user_model()
 
 
+class ProgressState(models.Model):
+    class State(models.TextChoices):
+        TO_DO = "TO_DO", "To do"
+        IN_PROGRESS = "IN_PROGRESS", "In progress"
+        DONE = "DONE", "Done"
+
+    DEFAULT_STATE_NAME = State.TO_DO
+    """The name of the default `State` object for `ProgressState`."""
+
+    name = models.CharField(
+        max_length=255,
+        choices=State.choices,
+        unique=True,
+    )
+
+    def __str__(self):
+        return self.get_name_display()
+
+    @classmethod
+    def get_default_state_id(cls):
+        """Get the id / pk of the default `State` object for `ProgressState`."""
+        # Failsafe get_or_create() avoids attempt to get non-existant instance.
+        default, _ = cls.objects.get_or_create(name=cls.DEFAULT_STATE_NAME)
+        return default.id
+
+
 class TaskManager(WithSignalManagerMixin, models.Manager):
     pass
 
@@ -22,7 +48,13 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
     pass
 
 
-class Task(TimestampedMixin):
+class TaskBase(TimestampedMixin):
+    """Abstract model mixin containing model fields common to TaskTemplate and
+    Task models."""
+
+    class Meta:
+        abstract = True
+
     title = models.CharField(max_length=255)
     description = models.TextField()
     category = models.ForeignKey(
@@ -31,8 +63,12 @@ class Task(TimestampedMixin):
         null=True,
         on_delete=models.PROTECT,
     )
+
+
+class Task(TaskBase):
     progress_state = models.ForeignKey(
-        "ProgressState",
+        ProgressState,
+        default=ProgressState.get_default_state_id,
         on_delete=models.PROTECT,
     )
     parent_task = models.ForeignKey(
@@ -77,22 +113,6 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class ProgressState(models.Model):
-    class State(models.TextChoices):
-        TO_DO = "TO_DO", "To do"
-        IN_PROGRESS = "IN_PROGRESS", "In progress"
-        DONE = "DONE", "Done"
-
-    name = models.CharField(
-        max_length=255,
-        choices=State.choices,
-        unique=True,
-    )
-
-    def __str__(self):
-        return self.get_name_display()
 
 
 class TaskAssigneeManager(WithSignalManagerMixin, models.Manager):
@@ -169,97 +189,6 @@ class TaskAssignee(TimestampedMixin):
             return True
         except cls.DoesNotExist:
             return False
-
-
-class TaskLogManager(models.Manager):
-    def create(
-        self,
-        task: Task,
-        action: "TaskLog.AuditActionType",
-        instigator: User,
-        **kwargs,
-    ) -> "TaskLog":
-        """
-        Creates a new `TaskLog` instance with a generated description based on
-        `action`, saving it to the database and returning the created instance.
-
-        A TaskLog's `description` is generated using a template retrieved from `TaskLog.AUDIT_ACTION_MAP` that maps an `action` to its corresponding description.
-        Additional `kwargs` are required to format the description template depending on the provided action.
-        """
-
-        if action not in self.model.AuditActionType:
-            raise ValueError(
-                f"The action '{action}' is an invalid TaskLog.AuditActionType value.",
-            )
-
-        description_template = self.model.AUDIT_ACTION_MAP.get(action)
-        if not description_template:
-            raise ValueError(
-                f"No description template found for action '{action}' in TaskLog.AUDIT_ACTION_MAP.",
-            )
-
-        context = {"instigator": instigator}
-
-        if action in {
-            self.model.AuditActionType.TASK_ASSIGNED,
-            self.model.AuditActionType.TASK_UNASSIGNED,
-        }:
-            assignee = kwargs.pop("assignee", None)
-            if not assignee:
-                raise ValueError(f"Missing 'assignee' in kwargs for action '{action}'.")
-            context["assignee"] = assignee
-
-        elif action == self.model.AuditActionType.PROGRESS_STATE_UPDATED:
-            progress_state = kwargs.pop("progress_state", None)
-            if not progress_state:
-                raise ValueError(
-                    f"Missing 'progress_state' in kwargs for action '{action}'.",
-                )
-            context["progress_state"] = progress_state
-
-        description = description_template.format(**context)
-
-        return super().create(
-            task=task,
-            action=action,
-            instigator=instigator,
-            description=description,
-            **kwargs,
-        )
-
-
-class TaskLog(TimestampedMixin):
-    class AuditActionType(models.TextChoices):
-        TASK_ASSIGNED = ("TASK_ASSIGNED",)
-        TASK_UNASSIGNED = ("TASK_UNASSIGNED",)
-        PROGRESS_STATE_UPDATED = ("PROGRESS_STATE_UPDATED",)
-
-    AUDIT_ACTION_MAP = {
-        AuditActionType.TASK_ASSIGNED: "{instigator} assigned {assignee}",
-        AuditActionType.TASK_UNASSIGNED: "{instigator} unassigned {assignee}",
-        AuditActionType.PROGRESS_STATE_UPDATED: "{instigator} changed the status to {progress_state}",
-    }
-
-    action = models.CharField(
-        max_length=100,
-        choices=AuditActionType.choices,
-        editable=False,
-    )
-    description = models.TextField(editable=False)
-    task = models.ForeignKey(
-        Task,
-        null=True,
-        on_delete=models.SET_NULL,
-        editable=False,
-        related_name="logs",
-    )
-    instigator = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        editable=False,
-    )
-
-    objects = TaskLogManager()
 
 
 class Comment(TimestampedMixin):
