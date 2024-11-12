@@ -5,7 +5,7 @@ from tasks import views
 
 app_name = "workflow"
 
-ui_patterns = [
+task_ui_patterns = [
     path("", views.TaskListView.as_view(), name="task-ui-list"),
     path("<int:pk>/", views.TaskDetailView.as_view(), name="task-ui-detail"),
     path("create/", views.TaskCreateView.as_view(), name="task-ui-create"),
@@ -33,6 +33,17 @@ ui_patterns = [
     ),
 ]
 
+workflow_template_ui_patterns = [
+    path(
+        "templates/<int:pk>/",
+        views.TaskWorkflowTemplateDetailView.as_view(),
+        name="task-workflow-template-ui-detail",
+    ),
+]
+
+workflow_ui_patterns = workflow_template_ui_patterns
+
 urlpatterns = [
-    path("tasks/", include(ui_patterns)),
+    path("tasks/", include(task_ui_patterns)),
+    path("workflows/", include(workflow_ui_patterns)),
 ]

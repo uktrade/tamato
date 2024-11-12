@@ -310,6 +310,7 @@ def policy_group(db) -> Group:
         ("tasks", "view_comment"),
         ("tasks", "change_comment"),
         ("tasks", "delete_comment"),
+        ("tasks", "view_taskworkflowtemplate"),
     ]:
         group.permissions.add(
             Permission.objects.get(
