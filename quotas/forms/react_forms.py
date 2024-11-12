@@ -344,28 +344,13 @@ class QuotaOrderNumberCreateForm(
         )
 
         self.helper.layout = Layout(
-            Accordion(
-                AccordionSection(
-                    "Order number",
-                    Field("order_number", css_class="govuk-input--width-20"),
-                ),
-                AccordionSection(
-                    "Validity",
-                    "start_date",
-                    "end_date",
-                ),
-                AccordionSection(
-                    "Category and mechanism",
-                    "category",
-                    "mechanism",
-                ),
-                AccordionSection(
-                    "Quota origins",
-                    Div(
-                        HTML(origins_html),
-                    ),
-                ),
-                css_class="govuk-width-!-two-thirds",
+            Field("order_number", css_class="govuk-input--width-20"),
+            "start_date",
+            "end_date",
+            "category",
+            "mechanism",
+            Div(
+                HTML(origins_html),
             ),
             Submit(
                 "submit",
