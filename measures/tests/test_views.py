@@ -1262,7 +1262,7 @@ def test_measure_form_wizard_finish(
 
     complete_response = client_with_current_workbasket.get(response.url)
 
-    assert complete_response.status_code == 200
+    assert complete_response.status_code == 302
 
 
 @unittest.mock.patch("workbaskets.models.WorkBasket.current")
@@ -2724,7 +2724,7 @@ def test_measures_wizard_create_confirm_view(valid_user_client):
 
     expected_measures_count = 99
     url = reverse(
-        "measure-ui-create-confirm",
+        "measure-ui-create-async-confirm",
         kwargs={
             "expected_measures_count": expected_measures_count,
         },
