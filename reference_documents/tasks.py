@@ -14,8 +14,8 @@ def run_alignment_check(
     """
     Task for running alignment check.
 
-    The task executes alignment checks against a reference document version
-    and records the results in the TAP database for later review. 
+    The task executes alignment checks against a reference document version and
+    records the results in the TAP database for later review.
     """
 
     logger.info(

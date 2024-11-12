@@ -195,7 +195,8 @@ class TaricDateRange(DateRange):
 
     def contains(self, compared_date_range: TaricDateRange):
         """
-        Returns a boolean indicating if a taric date range is fully contained within a provided date range.
+        Returns a boolean indicating if a taric date range is fully contained
+        within a provided date range.
 
         Args:
             compared_date_range: TaricDateRange to check against

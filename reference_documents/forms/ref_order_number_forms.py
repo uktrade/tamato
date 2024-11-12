@@ -195,5 +195,3 @@ class RefOrderNumberDeleteForm(forms.Form):
             )
 
         return cleaned_data
-
-

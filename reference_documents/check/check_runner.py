@@ -1,12 +1,25 @@
 import logging
 
-from reference_documents.check.base import BaseCheck, BaseOrderNumberCheck, BaseQuotaDefinitionCheck, BaseQuotaSuspensionCheck, BaseRateCheck
+from reference_documents.check.base import BaseCheck
+from reference_documents.check.base import BaseOrderNumberCheck
+from reference_documents.check.base import BaseQuotaDefinitionCheck
+from reference_documents.check.base import BaseQuotaSuspensionCheck
+from reference_documents.check.base import BaseRateCheck
 from reference_documents.check.ref_order_numbers import OrderNumberChecks  # noqa
-from reference_documents.check.ref_quota_definitions import QuotaDefinitionChecks  # noqa
-from reference_documents.check.ref_quota_suspensions import QuotaSuspensionChecks  # noqa
+from reference_documents.check.ref_quota_definitions import (  # noqa
+    QuotaDefinitionChecks,
+)
+from reference_documents.check.ref_quota_suspensions import (  # noqa
+    QuotaSuspensionChecks,
+)
 from reference_documents.check.ref_rates import RateChecks  # noqa
 from reference_documents.check.utils import Utils
-from reference_documents.models import AlignmentReport, AlignmentReportCheck, AlignmentReportCheckStatus, AlignmentReportStatus, ReferenceDocumentVersion, RefQuotaSuspension
+from reference_documents.models import AlignmentReport
+from reference_documents.models import AlignmentReportCheck
+from reference_documents.models import AlignmentReportCheckStatus
+from reference_documents.models import AlignmentReportStatus
+from reference_documents.models import ReferenceDocumentVersion
+from reference_documents.models import RefQuotaSuspension
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +78,8 @@ class Checks:
             boolean: True if the child checks pass or warn, False otherwise
         """
         if (
-                AlignmentReportCheckStatus.FAIL in statuses
-                or AlignmentReportCheckStatus.SKIPPED in statuses
+            AlignmentReportCheckStatus.FAIL in statuses
+            or AlignmentReportCheckStatus.SKIPPED in statuses
         ):
             return True
         return False
@@ -110,14 +123,14 @@ class Checks:
 
                 # Quota definition checks
                 for (
-                        ref_quota_definition
+                    ref_quota_definition
                 ) in ref_order_number.ref_quota_definitions.all():
                     logger.info(
                         f"starting checks for quota definition {ref_quota_definition.commodity_code} for order number {ref_quota_definition.ref_order_number.order_number}",
                     )
                     pref_quota_check_statuses = []
                     for quota_definition_check in Checks.get_checks_for(
-                            BaseQuotaDefinitionCheck,
+                        BaseQuotaDefinitionCheck,
                     ):
                         logger.info(
                             f"starting run: check {quota_definition_check.__class__.__name__}",
@@ -134,13 +147,13 @@ class Checks:
 
                         # Quota suspension checks
                         for (
-                                ref_quota_suspension
+                            ref_quota_suspension
                         ) in RefQuotaSuspension.objects.all().filter(
                             ref_quota_definition=ref_quota_definition,
                         ):
                             logger.info(f"starting checks for quota suspensions")
                             for quota_suspension_check in Checks.get_checks_for(
-                                    BaseQuotaSuspensionCheck,
+                                BaseQuotaSuspensionCheck,
                             ):
                                 logger.info(
                                     f"starting run: check {quota_suspension_check.__class__.__name__}",
@@ -154,14 +167,14 @@ class Checks:
                                 )
                 # Quota definition checks (range)
                 for (
-                        ref_quota_definition_range
+                    ref_quota_definition_range
                 ) in ref_order_number.ref_quota_definition_ranges.all():
                     for (
-                            ref_quota_definition
+                        ref_quota_definition
                     ) in ref_quota_definition_range.dynamic_quota_definitions():
                         pref_quota_check_statuses = []
                         for quota_definition_check in Checks.get_checks_for(
-                                BaseQuotaDefinitionCheck,
+                            BaseQuotaDefinitionCheck,
                         ):
                             pref_quota_check_statuses.append(
                                 self.capture_check_result(
@@ -175,17 +188,17 @@ class Checks:
 
                             # Quota suspension checks (range)
                             for quota_suspension_check in Checks.get_checks_for(
-                                    BaseQuotaSuspensionCheck,
+                                BaseQuotaSuspensionCheck,
                             ):
                                 for (
-                                        ref_quota_suspension_range
+                                    ref_quota_suspension_range
                                 ) in (
-                                        ref_quota_definition_range.ref_quota_suspension_ranges.all()
+                                    ref_quota_definition_range.ref_quota_suspension_ranges.all()
                                 ):
                                     for (
-                                            pref_suspension
+                                        pref_suspension
                                     ) in (
-                                            ref_quota_suspension_range.dynamic_quota_suspensions()
+                                        ref_quota_suspension_range.dynamic_quota_suspensions()
                                     ):
                                         self.capture_check_result(
                                             quota_suspension_check(pref_suspension),
@@ -199,15 +212,15 @@ class Checks:
         logger.info("finished alignment check run")
 
     def capture_check_result(
-            self,
-            check: BaseCheck,
-            ref_rate=None,
-            ref_quota_definition=None,
-            ref_quota_definition_range=None,
-            ref_order_number=None,
-            ref_quota_suspension=None,
-            ref_quota_suspension_range=None,
-            parent_has_failed_or_skipped_result=None,
+        self,
+        check: BaseCheck,
+        ref_rate=None,
+        ref_quota_definition=None,
+        ref_quota_definition_range=None,
+        ref_order_number=None,
+        ref_quota_suspension=None,
+        ref_quota_suspension_range=None,
+        parent_has_failed_or_skipped_result=None,
     ) -> AlignmentReportCheckStatus:
         """
         Captures the result if a single check and stores it in the database as a

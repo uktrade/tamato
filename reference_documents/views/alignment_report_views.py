@@ -2,7 +2,6 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic import DetailView
 
 from reference_documents.models import AlignmentReport
-from reference_documents.models import AlignmentReportCheck
 
 
 class AlignmentReportContext:

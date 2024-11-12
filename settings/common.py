@@ -674,7 +674,6 @@ CELERY_ROUTES = {
     re.compile(r"(reference_documents)\.tasks\..*"): {
         "queue": "standard",
     },
-
 }
 
 SQLITE_EXCLUDED_APPS = [

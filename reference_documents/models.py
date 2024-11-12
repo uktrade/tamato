@@ -235,7 +235,8 @@ class ReferenceDocumentVersion(TimestampedMixin):
         custom={"label": "Mark the reference document version for review."},
     )
     def editing_from_published(self):
-        """Reference document version is published and needs to transition to editable."""
+        """Reference document version is published and needs to transition to
+        editable."""
         super(ReferenceDocumentVersion, self).save()
         return
 
@@ -246,7 +247,8 @@ class ReferenceDocumentVersion(TimestampedMixin):
         custom={"label": "Mark the reference document version for review."},
     )
     def editing_from_in_review(self):
-        """Reference document version is in review and needs to transition to editable"""
+        """Reference document version is in review and needs to transition to
+        editable."""
         super(ReferenceDocumentVersion, self).save()
         return
 
