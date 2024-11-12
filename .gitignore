@@ -168,4 +168,4 @@ _dumped_cache.pkl
 # Database dumps
 *.sql
 /.vscode/settings.json
-/quotas_export/*
+
