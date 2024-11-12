@@ -67,4 +67,14 @@ class TaskUpdateForm(TaskBaseForm):
     pass
 
 
+class SubTaskCreateForm(TaskBaseForm):
+    def save(self, parent_task, user, commit=True):
+        instance = super().save(commit=False)
+        instance.creator = user
+        instance.parent_task = parent_task
+        if commit:
+            instance.save()
+        return instance
+
+
 TaskDeleteForm = delete_form_for(Task)

@@ -26,6 +26,11 @@ task_ui_patterns = [
         views.TaskConfirmDeleteView.as_view(),
         name="task-ui-confirm-delete",
     ),
+    path(
+        "<int:pk>/sub-tasks/create",
+        views.SubTaskCreateView.as_view(),
+        name="subtask-ui-create",
+    ),
 ]
 
 workflow_template_ui_patterns = [
