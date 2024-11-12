@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db import OperationalError
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -167,8 +168,14 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
 
     def promote_item(self, item_id: int) -> None:
         task_item_template = get_object_or_404(TaskItemTemplate, id=item_id)
-        task_item_template.promote()
+        try:
+            task_item_template.promote()
+        except OperationalError:
+            pass
 
     def demote_item(self, item_id: int) -> None:
         task_item_template = get_object_or_404(TaskItemTemplate, id=item_id)
-        task_item_template.demote()
+        try:
+            task_item_template.demote()
+        except OperationalError:
+            pass
