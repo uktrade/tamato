@@ -1,9 +1,11 @@
+from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
 from tasks.models import TaskLog
+from tasks.tests.test_workflow_models import TaskItemTemplateFactory
 
 
 def test_task_update_view_update_progress_state(valid_user_client):
@@ -33,3 +35,20 @@ def test_task_update_view_update_progress_state(valid_user_client):
         action=TaskLog.AuditActionType.PROGRESS_STATE_UPDATED,
         instigator=response.wsgi_request.user,
     )
+
+
+def test_workflow_template_detail_view_displays_task_templates(valid_user_client):
+    task_item_template = TaskItemTemplateFactory.create()
+    task_template = task_item_template.task_template
+    workflow_template = task_item_template.queue
+
+    url = reverse(
+        "workflow:task-workflow-template-ui-detail",
+        kwargs={"pk": workflow_template.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    assert page.find("h1", text=workflow_template.title)
+    assert page.find("a", text=task_template.title)
