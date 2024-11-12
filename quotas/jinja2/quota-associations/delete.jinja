@@ -1,0 +1,30 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Delete " ~ object._meta.verbose_name ~ " between main quota " ~ object.main_quota ~ " and sub-quota " ~ object.sub_quota %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit quotas", "href": url("quota-ui-list") },
+      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object.pk, "href": object.get_url()},
+      {"text": page_title }
+    ])
+  }}
+{% endblock %}
+
+{% block form %}
+  {{ govukWarningText({
+    "text": "Are you sure you want to delete this " ~ object._meta.verbose_name ~ "?"
+  }) }}
+  {% call django_form(action="") %}
+    {{ crispy(form) }}
+  {% endcall %}
+
+  {{ govukButton({
+    "text": "Cancel",
+    "href": object.get_url(),
+    "classes": "govuk-button--secondary"
+  }) }}
+{% endblock %}

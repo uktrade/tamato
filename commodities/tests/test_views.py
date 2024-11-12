@@ -27,6 +27,7 @@ pytestmark = pytest.mark.django_db
 
 def test_commodity_list_displays_commodity_suffix_indent_and_description(
     valid_user_client,
+    date_ranges,
 ):
     """Test that a list of commodity codes with links and their suffixes,
     indents and descriptions are displayed on the list view template."""
@@ -36,6 +37,9 @@ def test_commodity_list_displays_commodity_suffix_indent_and_description(
     commodity2 = GoodsNomenclatureDescriptionFactory.create(
         description="A second commodity code description",
     ).described_goods_nomenclature
+
+    commodity2.valid_between = date_ranges.normal
+    commodity2.save(force_write=True)
 
     url = reverse("commodity-ui-list")
     response = valid_user_client.get(url)
@@ -51,6 +55,10 @@ def test_commodity_list_displays_commodity_suffix_indent_and_description(
         text=commodity1.get_indent_as_at(datetime.date.today()).indent,
     )
     assert page.find("tbody").find("td", text="A commodity code description")
+    assert page.find("tbody").find(
+        "td",
+        text=f"{commodity1.valid_between.lower:%d %b %Y}",
+    )
 
     assert page.find("tbody").find("td", text=commodity2.item_id)
     assert page.find("tbody").find(href=f"/commodities/{commodity2.sid}/")
@@ -60,6 +68,14 @@ def test_commodity_list_displays_commodity_suffix_indent_and_description(
         text=commodity2.get_indent_as_at(datetime.date.today()).indent,
     )
     assert page.find("tbody").find("td", text="A second commodity code description")
+    assert page.find("tbody").find(
+        "td",
+        text=f"{commodity2.valid_between.lower:%d %b %Y}",
+    )
+    assert page.find("tbody").find(
+        "td",
+        text=f"{commodity2.valid_between.upper:%d %b %Y}",
+    )
 
 
 def test_commodity_list_queryset():
@@ -703,3 +719,16 @@ def test_commodities_hierarchy_inactive_commodity(valid_user_client, date_ranges
         "This commodity has been end dated so no longer forms part of the hierarchy."
         in str(response.content)
     )
+
+
+def test_commodities_hierarchy_only_shows_current(valid_user_client, workbasket):
+    """Test that only current versions of a commodity are shown and no
+    duplicates."""
+    commodity1 = factories.GoodsNomenclatureFactory.create(item_id="8540111111")
+    factories.GoodsNomenclatureFactory.create(item_id="8540222222")
+    commodity1.new_version(workbasket=workbasket, update_type=UpdateType.UPDATE)
+    url = reverse("commodity-ui-detail-hierarchy", kwargs={"sid": commodity1.sid})
+    response = valid_user_client.get(url)
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    commodities = [p.text[:10] for p in soup.find_all("p")]
+    assert len(commodities) == len(set(commodities))

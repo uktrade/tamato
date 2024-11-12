@@ -293,7 +293,7 @@ class PreventQuotaDefinitionDeletion(BusinessRule):
 class QuotaAssociationMustReferToANonDeletedSubQuota(
     PreventDeletingLinkedQuotaDefinitions,
 ):
-    """A Quota Association must refer to a non-deleted sub quota."""
+    """A Quota Association must refer to a non-deleted sub-quota."""
 
     sid_prefix = "sub_quota__"
 
@@ -525,7 +525,7 @@ class QA6(BusinessRule):
 
 def check_QA6_dict(main_quota, new_relation_type, transaction=None):
     """
-    Confirms the provided data is compliant with the above businsess rule.
+    Confirms the provided data is compliant with the above business rule.
 
     The above test will be re-run so as to separate historic violations, which
     will require TAP to fix, from a user trying to introduce a new violation.
@@ -540,10 +540,12 @@ def check_QA6_dict(main_quota, new_relation_type, transaction=None):
         .order_by("sub_quota_relation_type")
         .distinct()
     )
-    if relation_type.count() > 1:
-        return False
+    if relation_type.count() == 0:
+        return True
     elif relation_type.count() == 1:
         return relation_type[0]["sub_quota_relation_type"] == new_relation_type
+    else:
+        return False
 
 
 class SameMainAndSubQuota(BusinessRule):

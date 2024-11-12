@@ -58,11 +58,11 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture()
 def mocked_diff_components():
-    """Mocks `diff_components()` inside `update_measure_components()` in
+    """Mocks `diff_components()` inside `update_measure_components()` that is called in
     `MeasureEditWizard` to prevent parsing errors where test measures lack a
     duty sentence."""
     with patch(
-        "measures.views.MeasureEditWizard.update_measure_components",
+        "measures.editors.update_measure_components",
     ) as update_measure_components:
         yield update_measure_components
 
@@ -1262,7 +1262,7 @@ def test_measure_form_wizard_finish(
 
     complete_response = client_with_current_workbasket.get(response.url)
 
-    assert complete_response.status_code == 200
+    assert complete_response.status_code == 302
 
 
 @unittest.mock.patch("workbaskets.models.WorkBasket.current")
@@ -1834,6 +1834,7 @@ def test_measuretype_api_list_view(valid_user_client):
     )
 
 
+@override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_start_and_end_date_edit_functionality(
     valid_user_client,
     user_workbasket,
@@ -1966,6 +1967,7 @@ def test_multiple_measure_start_and_end_date_edit_functionality(
         ),
     ],
 )
+@override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_single_form_functionality(
     step,
     form_data,
@@ -2039,6 +2041,7 @@ def test_multiple_measure_edit_single_form_functionality(
         assert reduce(getattr, updated_attribute.split("."), measure) == expected_data
 
 
+@override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_only_regulation(
     valid_user_client,
     user_workbasket,
@@ -2264,6 +2267,7 @@ def test_measure_list_selected_measures_list(valid_user_client):
     assert not measure_ids_in_table.difference(selected_measures_ids)
 
 
+@override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_only_quota_order_number(
     valid_user_client,
     user_workbasket,
@@ -2335,6 +2339,7 @@ def test_multiple_measure_edit_only_quota_order_number(
         assert measure.order_number == quota_order_number
 
 
+@override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_only_duties(
     valid_user_client,
     user_workbasket,
@@ -2406,6 +2411,7 @@ def test_multiple_measure_edit_only_duties(
         assert measure.duty_sentence == duties
 
 
+@override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_preserves_footnote_associations(
     valid_user_client,
     user_workbasket,
@@ -2482,6 +2488,7 @@ def test_multiple_measure_edit_preserves_footnote_associations(
             assert footnote in expected_footnotes
 
 
+@override_settings(MEASURES_ASYNC_EDIT=False)
 def test_multiple_measure_edit_geographical_area_exclusions(
     valid_user_client,
     user_workbasket,
@@ -2717,7 +2724,7 @@ def test_measures_wizard_create_confirm_view(valid_user_client):
 
     expected_measures_count = 99
     url = reverse(
-        "measure-ui-create-confirm",
+        "measure-ui-create-async-confirm",
         kwargs={
             "expected_measures_count": expected_measures_count,
         },

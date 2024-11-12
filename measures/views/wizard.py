@@ -5,20 +5,17 @@ from typing import List
 from crispy_forms_gds.helper import FormHelper
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from formtools.wizard.views import NamedUrlSessionWizardView
 
-from common.util import TaricDateRange
-from common.validators import UpdateType
 from geo_areas import constants
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
-from geo_areas.utils import get_all_members_of_geo_groups
 from geo_areas.validators import AreaCode
 from measures import forms
 from measures import models
@@ -27,7 +24,8 @@ from measures.conditions import show_step_quota_origins
 from measures.constants import START
 from measures.constants import MeasureEditSteps
 from measures.creators import MeasuresCreator
-from measures.util import diff_components
+from measures.editors import MeasuresEditor
+from measures.views.mixins import MeasureSerializableWizardMixin
 from workbaskets.models import WorkBasket
 from workbaskets.views.decorators import require_current_workbasket
 
@@ -41,6 +39,7 @@ class MeasureEditWizard(
     PermissionRequiredMixin,
     MeasureSelectionQuerysetMixin,
     NamedUrlSessionWizardView,
+    MeasureSerializableWizardMixin,
 ):
     """
     Multipart form wizard for editing multiple measures.
@@ -51,8 +50,7 @@ class MeasureEditWizard(
     storage_name = "measures.wizard.MeasureEditSessionStorage"
     permission_required = ["common.change_trackedmodel"]
 
-    form_list = [
-        (START, forms.MeasuresEditFieldsForm),
+    data_form_list = [
         (MeasureEditSteps.START_DATE, forms.MeasureStartDateForm),
         (MeasureEditSteps.END_DATE, forms.MeasureEndDateForm),
         (MeasureEditSteps.QUOTA_ORDER_NUMBER, forms.MeasureQuotaOrderNumberForm),
@@ -63,6 +61,14 @@ class MeasureEditWizard(
             forms.MeasureGeographicalAreaExclusionsFormSet,
         ),
     ]
+    """Forms in this wizard's steps that collect user data."""
+
+    form_list = [
+        (START, forms.MeasuresEditFieldsForm),
+        *data_form_list,
+    ]
+    """All Forms in this wizard's steps, including both those that collect user
+    data and those that don't."""
 
     templates = {
         START: "measures/edit-multiple-start.jinja",
@@ -100,6 +106,10 @@ class MeasureEditWizard(
             "measures/edit-wizard-step.jinja",
         )
 
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
         context["step_metadata"] = self.step_metadata
@@ -131,179 +141,71 @@ class MeasureEditWizard(
 
         return kwargs
 
-    def update_measure_components(
-        self,
-        measure: models.Measure,
-        duties: str,
-        workbasket: WorkBasket,
-    ):
-        """Updates the measure components associated to the measure."""
-        diff_components(
-            instance=measure,
-            duty_sentence=duties if duties else measure.duty_sentence,
-            start_date=measure.valid_between.lower,
-            workbasket=workbasket,
-            transaction=workbasket.current_transaction,
-        )
-
-    def update_measure_condition_components(
-        self,
-        measure: models.Measure,
-        workbasket: WorkBasket,
-    ):
-        """Updates the measure condition components associated to the
-        measure."""
-        conditions = measure.conditions.current()
-        for condition in conditions:
-            condition.new_version(
-                dependent_measure=measure,
-                workbasket=workbasket,
-            )
-
-    def update_measure_excluded_geographical_areas(
-        self,
-        edited: bool,
-        measure: models.Measure,
-        exclusions: List[GeographicalArea],
-        workbasket: WorkBasket,
-    ):
-        """Updates the excluded geographical areas associated to the measure."""
-        existing_exclusions = measure.exclusions.current()
-
-        # Update any exclusions to new measure version
-        if not edited:
-            for exclusion in existing_exclusions:
-                exclusion.new_version(
-                    modified_measure=measure,
-                    workbasket=workbasket,
-                )
-            return
-
-        new_excluded_areas = get_all_members_of_geo_groups(
-            validity=measure.valid_between,
-            geo_areas=exclusions,
-        )
-
-        for geo_area in new_excluded_areas:
-            existing_exclusion = existing_exclusions.filter(
-                excluded_geographical_area=geo_area,
-            ).first()
-            if existing_exclusion:
-                existing_exclusion.new_version(
-                    modified_measure=measure,
-                    workbasket=workbasket,
-                )
-            else:
-                models.MeasureExcludedGeographicalArea.objects.create(
-                    modified_measure=measure,
-                    excluded_geographical_area=geo_area,
-                    update_type=UpdateType.CREATE,
-                    transaction=workbasket.new_transaction(),
-                )
-
-        removed_excluded_areas = {
-            e.excluded_geographical_area for e in existing_exclusions
-        }.difference(set(exclusions))
-
-        exclusions_to_remove = [
-            existing_exclusions.get(excluded_geographical_area__id=geo_area.id)
-            for geo_area in removed_excluded_areas
-        ]
-
-        for exclusion in exclusions_to_remove:
-            exclusion.new_version(
-                update_type=UpdateType.DELETE,
-                modified_measure=measure,
-                workbasket=workbasket,
-            )
-
-    def update_measure_footnote_associations(self, measure, workbasket):
-        """Updates the footnotes associated to the measure."""
-        footnote_associations = (
-            models.FootnoteAssociationMeasure.objects.current().filter(
-                footnoted_measure__sid=measure.sid,
-            )
-        )
-        for fa in footnote_associations:
-            fa.new_version(
-                footnoted_measure=measure,
-                workbasket=workbasket,
-            )
-
     def done(self, form_list, **kwargs):
-        cleaned_data = self.get_all_cleaned_data()
-        selected_measures = self.get_queryset()
-        workbasket = WorkBasket.current(self.request)
-        new_start_date = cleaned_data.get("start_date", None)
-        new_end_date = cleaned_data.get("end_date", False)
-        new_quota_order_number = cleaned_data.get("order_number", None)
-        new_generating_regulation = cleaned_data.get("generating_regulation", None)
-        new_duties = cleaned_data.get("duties", None)
-        new_exclusions = [
-            e["excluded_area"]
-            for e in cleaned_data.get("formset-geographical_area_exclusions", [])
-        ]
-        for measure in selected_measures:
-            new_measure = measure.new_version(
-                workbasket=workbasket,
-                update_type=UpdateType.UPDATE,
-                valid_between=TaricDateRange(
-                    lower=(
-                        new_start_date
-                        if new_start_date
-                        else measure.valid_between.lower
-                    ),
-                    upper=(
-                        new_end_date
-                        if new_end_date is not False
-                        else measure.valid_between.upper
-                    ),
-                ),
-                order_number=(
-                    new_quota_order_number
-                    if new_quota_order_number
-                    else measure.order_number
-                ),
-                generating_regulation=(
-                    new_generating_regulation
-                    if new_generating_regulation
-                    else measure.generating_regulation
-                ),
-            )
-            self.update_measure_components(
-                measure=new_measure,
-                duties=new_duties,
-                workbasket=workbasket,
-            )
-            self.update_measure_condition_components(
-                measure=new_measure,
-                workbasket=workbasket,
-            )
-            self.update_measure_excluded_geographical_areas(
-                edited="geographical_area_exclusions"
-                in cleaned_data.get("fields_to_edit", []),
-                measure=new_measure,
-                exclusions=new_exclusions,
-                workbasket=workbasket,
-            )
-            self.update_measure_footnote_associations(
-                measure=new_measure,
-                workbasket=workbasket,
-            )
+        if settings.MEASURES_ASYNC_EDIT:
+            return self.async_done(form_list, **kwargs)
+        else:
+            return self.sync_done(form_list, **kwargs)
+
+    def async_done(self, form_list, **kwargs):
+        logger.info("Editing measures asynchronously.")
+        serializable_data = self.all_serializable_form_data()
+        serializable_form_kwargs = self.all_serializable_form_kwargs()
+
+        db_selected_measures = []
+        for measure in self.get_queryset():
+            db_selected_measures.append(measure.id)
+
+        measures_bulk_editor = models.MeasuresBulkEditor.objects.create(
+            form_data=serializable_data,
+            form_kwargs=serializable_form_kwargs,
+            workbasket=self.workbasket,
+            user=self.request.user,
+            selected_measures=db_selected_measures,
+        )
         self.session_store.clear()
+        measures_bulk_editor.schedule_task()
 
         return redirect(
-            reverse(
-                "workbaskets:workbasket-ui-review-measures",
-                kwargs={"pk": workbasket.pk},
-            ),
+            "measure-ui-edit-async-confirm",
+            expected_measures_count=len(db_selected_measures),
+        )
+
+    def edit_measures(self, selected_measures, cleaned_data):
+        """Synchronously edit measures within the context of the view / web
+        worker using accumulated data, `cleaned_data`, from all the necessary
+        wizard forms."""
+
+        measures_editor = MeasuresEditor(
+            self.workbasket, selected_measures, cleaned_data
+        )
+        return measures_editor.edit_measures()
+
+    def sync_done(self, form_list, **kwargs):
+        """
+        Handles this wizard's done step to edit measures within the context of
+        the web worker process.
+
+        Because bulk editing measures can be computationally expensive, this can
+        take an excessive amount of time within the context of HTTP request
+        processing.
+        """
+        logger.info("Editing measures synchronously.")
+
+        cleaned_data = self.get_all_cleaned_data()
+        selected_measures = self.get_queryset()
+
+        edited_measures = self.edit_measures(selected_measures, cleaned_data)
+        self.session_store.clear()
+        return redirect(
+            "measure-ui-edit-sync-confirm",
+            edited_or_created_measures_count=len(edited_measures),
         )
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class MeasureCreateWizard(
-    PermissionRequiredMixin,
-    NamedUrlSessionWizardView,
+    PermissionRequiredMixin, NamedUrlSessionWizardView, MeasureSerializableWizardMixin
 ):
     """
     Multipart form wizard for creating a single measure.
@@ -426,24 +328,6 @@ class MeasureCreateWizard(
     boolean or boolean values that indicate whether a wizard step should be
     shown."""
 
-    def get_data_form_list(self) -> dict:
-        """
-        Returns a form list based on form_list, conditionally including only
-        those items as per condition_list and also appearing in data_form_list.
-
-        The list is generated dynamically because conditions in condition_list
-        may be dynamic.
-
-        Essentially, version of `WizardView.get_form_list()` filtering in only
-        those list items appearing in `data_form_list`.
-        """
-        data_form_keys = [key for key, form in self.data_form_list]
-        return {
-            form_key: form_class
-            for form_key, form_class in self.get_form_list().items()
-            if form_key in data_form_keys
-        }
-
     @property
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
@@ -476,13 +360,10 @@ class MeasureCreateWizard(
 
         cleaned_data = self.get_all_cleaned_data()
         created_measures = self.create_measures(cleaned_data)
-        context = self.get_context_data(
-            form=None,
-            created_measures=created_measures,
-            **kwargs,
+        return redirect(
+            "measure-ui-create-sync-confirm",
+            edited_or_created_measures_count=len(created_measures),
         )
-
-        return render(self.request, "measures/confirm-create-multiple.jinja", context)
 
     def async_done(self, form_list, **kwargs):
         """Handles this wizard's done step, handing off most of the processing
@@ -503,60 +384,9 @@ class MeasureCreateWizard(
         measures_bulk_creator.schedule_task()
 
         return redirect(
-            "measure-ui-create-confirm",
+            "measure-ui-create-async-confirm",
             expected_measures_count=measures_bulk_creator.expected_measures_count,
         )
-
-    def all_serializable_form_data(self) -> Dict:
-        """
-        Returns serializable data for all wizard steps.
-
-        This is a re-implementation of
-        MeasureCreateWizard.get_all_cleaned_data(), but using self.data after
-        is_valid() has been successfully run.
-        """
-
-        all_data = {}
-
-        for form_key in self.get_data_form_list().keys():
-            all_data[form_key] = self.serializable_form_data_for_step(form_key)
-
-        return all_data
-
-    def serializable_form_data_for_step(self, step) -> Dict:
-        """
-        Returns serializable data for a wizard step.
-
-        This is a re-implementation of WizardView.get_cleaned_data_for_step(),
-        returning the serializable version of data in place of the form's
-        regular cleaned_data.
-        """
-
-        form_obj = self.get_form(
-            step=step,
-            data=self.storage.get_step_data(step),
-            files=self.storage.get_step_files(step),
-        )
-
-        return form_obj.serializable_data(remove_key_prefix=step)
-
-    def all_serializable_form_kwargs(self) -> Dict:
-        """Returns serializable kwargs for all wizard steps."""
-
-        all_kwargs = {}
-
-        for form_key in self.get_data_form_list().keys():
-            all_kwargs[form_key] = self.serializable_form_kwargs_for_step(form_key)
-
-        return all_kwargs
-
-    def serializable_form_kwargs_for_step(self, step) -> Dict:
-        """Returns serializable kwargs for a wizard step."""
-
-        form_kwargs = self.get_form_kwargs(step)
-        form_class = self.form_list[step]
-
-        return form_class.serializable_init_kwargs(form_kwargs)
 
     def get_all_cleaned_data(self):
         """
@@ -782,10 +612,25 @@ class MeasureCreateWizard(
         )
 
 
-class MeasuresWizardCreateConfirm(TemplateView):
+class MeasuresWizardAsyncConfirm(TemplateView):
+    """A success view that serves both the bulk create and bulk edit asynchronous pathways."""
+
     template_name = "measures/confirm-create-multiple-async.jinja"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["expected_measures_count"] = self.kwargs.get("expected_measures_count")
+        return context
+
+
+class MeasuresWizardSyncConfirm(TemplateView):
+    """A success view that serves both the bulk create and bulk edit synchronous pathways."""
+
+    template_name = "measures/confirm-edit-multiple.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["edited_or_created_measures_count"] = self.kwargs.get(
+            "edited_or_created_measures_count"
+        )
         return context

@@ -404,6 +404,26 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
     def slugify_model_name(cls):
         return cls._meta.verbose_name.replace(" ", "_")
 
+    def get_association_edit_url(self):
+        """Get the edit url for the sub-quota definition and association edit
+        journey by checking if it has been updated in an 'EDITING' status
+        workbasket."""
+        url = "sub_quota_definition-edit"
+        try:
+            if self.transaction.workbasket.status == WorkflowStatus.EDITING:
+                # There is no edit-create journey for quota definitions so edits of a
+                # newly created object will add a new update object to the workbasket
+                if self.update_type == UpdateType.UPDATE:
+                    url += "-update"
+
+            url = reverse(
+                url,
+                kwargs={"sid": self.sid},
+            )
+            return url
+        except NoReverseMatch:
+            return None
+
 
 class QuotaAssociation(TrackedModel):
     """The quota association defines the relation between quota and sub-
@@ -460,6 +480,24 @@ class QuotaSuspension(TrackedModel, ValidityMixin):
 
     business_rules = (business_rules.QSP2, UniqueIdentifyingFields, UpdateValidity)
 
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """Overrides the parent get_url as there is no detail view for
+        QuotaSuspensions for it to default to."""
+        url = super().get_url(action=action)
+        if not url:
+            url = reverse(
+                "quota_definition-ui-list-filter",
+                kwargs={
+                    "sid": self.quota_definition.order_number.sid,
+                    "quota_type": "suspension_periods",
+                },
+            )
+
+        return url
+
+    def __str__(self):
+        return f"{self.sid}"
+
 
 class QuotaBlocking(TrackedModel, ValidityMixin):
     """Defines a blocking period for a (sub-)quota."""
@@ -477,6 +515,24 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
     description = ShortDescription()
 
     business_rules = (business_rules.QBP2, UniqueIdentifyingFields, UpdateValidity)
+
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """Overrides the parent get_url as there is no detail view for
+        QuotaBlocking objects for it to default to."""
+        url = super().get_url(action=action)
+        if not url:
+            url = reverse(
+                "quota_definition-ui-list-filter",
+                kwargs={
+                    "sid": self.quota_definition.order_number.sid,
+                    "quota_type": "blocking_periods",
+                },
+            )
+
+        return url
+
+    def __str__(self):
+        return f"{self.sid}"
 
 
 class QuotaEvent(TrackedModel):
