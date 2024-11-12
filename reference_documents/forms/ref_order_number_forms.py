@@ -134,7 +134,6 @@ class RefOrderNumberCreateUpdateForm(
     coefficient = forms.CharField(
         label="Coefficient",
         help_text="Enter a decimal number",
-        validators=[],
         required=False,
         error_messages={
             "invalid": "Coefficient is not a valid number",
@@ -146,7 +145,6 @@ class RefOrderNumberCreateUpdateForm(
         label="Relation type",
         help_text="If this is a sub-quota, what relation type is it. Leave blank if not a sub quota",
         choices=[],
-        validators=[],
         required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
     )
@@ -155,7 +153,6 @@ class RefOrderNumberCreateUpdateForm(
         label="Main order number",
         help_text="Select a main order number",
         queryset=RefOrderNumber.objects.all(),
-        validators=[],
         error_messages={
             "invalid": "Main order number is invalid",
         },
@@ -165,6 +162,11 @@ class RefOrderNumberCreateUpdateForm(
 
 
 class RefOrderNumberDeleteForm(forms.Form):
+
+    class Meta:
+        model = RefOrderNumber
+        fields = []
+
     def __init__(self, *args, **kwargs) -> None:
         self.instance = kwargs.pop("instance")
         super().__init__(*args, **kwargs)
@@ -194,6 +196,4 @@ class RefOrderNumberDeleteForm(forms.Form):
 
         return cleaned_data
 
-    class Meta:
-        model = RefOrderNumber
-        fields = []
+

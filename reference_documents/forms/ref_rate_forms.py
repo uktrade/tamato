@@ -32,7 +32,6 @@ class RefRateCreateUpdateForm(
     )
 
     duty_rate = forms.CharField(
-        validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
             "required": "Duty rate is required",
@@ -100,7 +99,6 @@ class RefRateBulkCreateForm(forms.Form):
     )
 
     duty_rate = forms.CharField(
-        validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
             "required": "Duty rate is required",

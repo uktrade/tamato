@@ -314,7 +314,6 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
 
     duty_rate = forms.CharField(
         help_text="Quota duty rate",
-        validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
             "required": "Duty rate is required",
@@ -325,7 +324,6 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
         label="Order number",
         help_text="Select order number",
         queryset=RefOrderNumber.objects.all(),
-        validators=[],
         error_messages={
             "invalid": "Quota order number is invalid",
         },
@@ -335,7 +333,6 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
 
     measurement = forms.CharField(
         help_text="Measurement",
-        validators=[],
         error_messages={
             "invalid": "Measurement invalid",
             "required": "Measurement is required",
@@ -345,7 +342,6 @@ class RefQuotaDefinitionRangeCreateUpdateForm(
     yearly_volume_increment_text = forms.CharField(
         label="Yearly volume increment text",
         help_text="If the yearly volume increment logic is complex, describe it here",
-        validators=[],
         required=False,
     )
 

@@ -5,30 +5,16 @@ from reference_documents.views.alignment_report_views import AlignmentReportDeta
 from reference_documents.views.order_number_views import RefOrderNumberCreate
 from reference_documents.views.order_number_views import RefOrderNumberDelete
 from reference_documents.views.order_number_views import RefOrderNumberEdit
-from reference_documents.views.quota_definition_range_views import (
-    RefQuotaDefinitionRangeCreate,
-)
-from reference_documents.views.quota_definition_range_views import (
-    RefQuotaDefinitionRangeDelete,
-)
-from reference_documents.views.quota_definition_range_views import (
-    RefQuotaDefinitionRangeEdit,
-)
-from reference_documents.views.quota_definition_views import (
-    RefQuotaDefinitionBulkCreate,
-)
+from reference_documents.views.quota_definition_range_views import RefQuotaDefinitionRangeCreate
+from reference_documents.views.quota_definition_range_views import RefQuotaDefinitionRangeDelete
+from reference_documents.views.quota_definition_range_views import RefQuotaDefinitionRangeEdit
+from reference_documents.views.quota_definition_views import RefQuotaDefinitionBulkCreate
 from reference_documents.views.quota_definition_views import RefQuotaDefinitionCreate
 from reference_documents.views.quota_definition_views import RefQuotaDefinitionDelete
 from reference_documents.views.quota_definition_views import RefQuotaDefinitionEdit
-from reference_documents.views.quota_suspension_range_views import (
-    RefQuotaSuspensionRangeCreate,
-)
-from reference_documents.views.quota_suspension_range_views import (
-    RefQuotaSuspensionRangeDelete,
-)
-from reference_documents.views.quota_suspension_range_views import (
-    RefQuotaSuspensionRangeEdit,
-)
+from reference_documents.views.quota_suspension_range_views import RefQuotaSuspensionRangeCreate
+from reference_documents.views.quota_suspension_range_views import RefQuotaSuspensionRangeDelete
+from reference_documents.views.quota_suspension_range_views import     RefQuotaSuspensionRangeEdit
 from reference_documents.views.quota_suspension_views import RefQuotaSuspensionCreate
 from reference_documents.views.quota_suspension_views import RefQuotaSuspensionDelete
 from reference_documents.views.quota_suspension_views import RefQuotaSuspensionEdit

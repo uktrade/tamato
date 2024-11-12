@@ -39,7 +39,7 @@ class AlignmentReportStatus(models.TextChoices):
     """Choices for alignment report state."""
 
     # The check has not started and is queued
-    PENDING = "PENDING", "PENDING"
+    PENDING = "PENDING", "Pending"
     # the check is in progress, and currently running
     PROCESSING = "PROCESSING", "Processing"
     # The check has completed
@@ -204,7 +204,6 @@ class ReferenceDocumentVersion(TimestampedMixin):
         Returns:
             None
         """
-        # if (self.editable() or force_save is True) and self.pk is not None:
         if (self.editable() or force_save is True) or self.pk is None:
             super(ReferenceDocumentVersion, self).save(*args, **kwargs)
 
@@ -236,7 +235,7 @@ class ReferenceDocumentVersion(TimestampedMixin):
         custom={"label": "Mark the reference document version for review."},
     )
     def editing_from_published(self):
-        """Reference document version has passed review and is published."""
+        """Reference document version is published and needs to transition to editable."""
         super(ReferenceDocumentVersion, self).save()
         return
 
@@ -247,7 +246,7 @@ class ReferenceDocumentVersion(TimestampedMixin):
         custom={"label": "Mark the reference document version for review."},
     )
     def editing_from_in_review(self):
-        """Reference document version has passed review and is published."""
+        """Reference document version is in review and needs to transition to editable"""
         super(ReferenceDocumentVersion, self).save()
         return
 

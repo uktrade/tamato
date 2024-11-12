@@ -174,12 +174,12 @@ class ReferenceDocumentDetails(PermissionRequiredMixin, DetailView):
                 if self.request.user.has_perm(
                     "reference_documents.change_referencedocumentversion",
                 ):
-                    actions += f'<a href="{reverse("reference_documents:version-status-change-to-in-review", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Ready for review</a><br>'
+                    actions += f'<a href="{reverse("reference_documents:version-status-change-to-in-review", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Mark for review</a><br>'
             elif version.status == ReferenceDocumentVersionStatus.IN_REVIEW:
                 if self.request.user.has_perm(
                     "reference_documents.change_referencedocumentversion",
                 ):
-                    actions += f'<a href="{reverse("reference_documents:version-status-change-to-published", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">Ready to publish</a><br>'
+                    actions += f'<a href="{reverse("reference_documents:version-status-change-to-published", kwargs={"ref_doc_pk": context["object"].pk, "pk": version.id})}">publish</a><br>'
                 if self.request.user.has_perm(
                     "reference_documents.change_referencedocumentversion",
                 ):

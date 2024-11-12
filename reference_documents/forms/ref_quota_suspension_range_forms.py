@@ -303,7 +303,6 @@ class RefQuotaSuspensionRangeCreateUpdateForm(
         label="Quota definition range",
         help_text="Select quota definition range",
         queryset=None,
-        validators=[],
         error_messages={
             "invalid": "Quota definition range is invalid",
         },

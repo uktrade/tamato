@@ -122,7 +122,6 @@ class RefQuotaSuspensionCreateUpdateForm(
         label="Quota definition",
         help_text="Select the quota definition to be suspended",
         queryset=None,
-        validators=[],
         error_messages={
             "invalid": "The selected quota definition is invalid",
         },

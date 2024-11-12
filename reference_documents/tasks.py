@@ -12,11 +12,10 @@ def run_alignment_check(
     reference_document_version_id: int,
 ):
     """
-    Task for importing an XML chunk into the database.
+    Task for running alignment check.
 
-    This task must ensure the chunks workbasket_status reflects the import
-    process, whether it is currently running, errored or done. Once complete it
-    is also responsible for finding and setting up the next chunk tasks.
+    The task executes alignment checks against a reference document version
+    and records the results in the TAP database for later review. 
     """
 
     logger.info(

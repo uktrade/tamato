@@ -126,7 +126,6 @@ class RefQuotaDefinitionCreateUpdateForm(
 
     duty_rate = forms.CharField(
         help_text="Quota duty rate",
-        validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
             "required": "Duty rate is required",
@@ -137,7 +136,6 @@ class RefQuotaDefinitionCreateUpdateForm(
         label="Order number",
         help_text="Select quota order number",
         queryset=RefOrderNumber.objects.all(),
-        validators=[],
         error_messages={
             "invalid": "Order number is invalid",
         },
@@ -148,7 +146,6 @@ class RefQuotaDefinitionCreateUpdateForm(
     volume = forms.CharField(
         help_text="Volume",
         widget=forms.TextInput(),
-        validators=[],
         error_messages={
             "invalid": "Volume invalid",
             "required": "Volume is required",
@@ -157,7 +154,6 @@ class RefQuotaDefinitionCreateUpdateForm(
 
     measurement = forms.CharField(
         help_text="Measurement",
-        validators=[],
         error_messages={
             "invalid": "Measurement invalid",
             "required": "Measurement is required",
@@ -181,7 +177,6 @@ class RefQuotaDefinitionBulkCreateForm(forms.Form):
     )
 
     duty_rate = forms.CharField(
-        validators=[],
         error_messages={
             "invalid": "Duty rate is invalid",
             "required": "Duty rate is required",
@@ -198,7 +193,6 @@ class RefQuotaDefinitionBulkCreateForm(forms.Form):
     )
 
     measurement = forms.CharField(
-        validators=[],
         error_messages={
             "invalid": "Measurement invalid",
             "required": "Measurement is required",

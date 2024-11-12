@@ -16,35 +16,6 @@ class AlignmentReportContext:
             {"text": "Status"},
         ]
 
-    def get_links(self, alignment_report_check: AlignmentReportCheck):
-        html = ""
-
-        if alignment_report_check.ref_rate:
-            html += " Pref Rate"
-
-        if alignment_report_check.ref_order_number:
-            html += " Order Number"
-
-        if alignment_report_check.ref_quota_definition:
-            html += " Pref Quota"
-
-        if alignment_report_check.ref_quota_definition_range:
-            html += " Pref Quota Template"
-
-        if alignment_report_check.ref_quota_suspension:
-            html += " Order Number..."
-
-        if alignment_report_check.ref_quota_suspension_range:
-            html += " Pref Suspension"
-
-        return html
-
-    def get_actions(self, alignment_report_check: AlignmentReportCheck):
-
-        html = "Mark "
-
-        return html
-
     def rows(self):
         rows = []
         for (
