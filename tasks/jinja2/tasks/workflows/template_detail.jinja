@@ -1,7 +1,7 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
-{% from "tasks/macros/reorder_actions.jinja" import render_reorder_actions %}
+{% from "tasks/macros/item_actions.jinja" import render_reorder_item_actions %}
 
 {% set page_title = "Workflow template: " ~ object.title %}
 
@@ -81,7 +81,7 @@
                 </div>
               {% endif %}
             </div>
-            {{ render_reorder_actions(task_template_item, max_position) }}
+            {{ render_reorder_item_actions(task_template_item, max_position) }}
           </li>
         {% endfor %}
       </ol>
