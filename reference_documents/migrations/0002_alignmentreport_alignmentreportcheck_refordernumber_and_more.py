@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                     "status",
                     django_fsm.FSMField(
                         choices=[
-                            ("PENDING", "PENDING"),
+                            ("PENDING", "Pending"),
                             ("PROCESSING", "Processing"),
                             ("COMPLETE", "Complete"),
                             ("ERRORED", "Errored"),
