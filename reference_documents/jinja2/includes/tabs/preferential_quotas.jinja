@@ -47,7 +47,7 @@
                     {% endif %}
 
                     {% if request.user.has_perm("add_refquotadefinitionrange") %}
-                        <a class="order_number_link" href="{{ url('reference_documents:quota-definition-range-create', args=[object.pk]) }}">Add new quota template</a>
+                        <a class="order_number_link" href="{{ url('reference_documents:quota-definition-range-create', args=[object.pk]) }}">Add new quota defintion range</a>
                     {% endif %}
 
                     {% if request.user.has_perm("reference_documents.add_refquotadefinition") %}

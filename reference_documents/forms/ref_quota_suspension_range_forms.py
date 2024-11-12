@@ -49,7 +49,7 @@ class RefQuotaSuspensionRangeCreateUpdateForm(
             "The last year if the suspension, leave blank if there is no end date."
         )
         self.fields["ref_quota_definition_range"].help_text = (
-            "The quota template this suspension relates to"
+            "The quota definition range this suspension relates to"
         )
 
         self.fields[
