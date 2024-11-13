@@ -14,6 +14,7 @@ from django.views.generic.edit import FormView
 from common.views import WithPaginationListView
 from measures import models
 from measures.filters import MeasureCreateTaskFilter
+from measures.filters import MeasureEditTaskFilter
 from measures.forms import CancelBulkProcessorTaskForm
 from measures.models.bulk_processing import MeasuresBulkCreator
 from measures.models.bulk_processing import ProcessingState
@@ -77,28 +78,21 @@ class CancelBulkProcessorTaskDone(
         return self.request.user.is_superuser
 
 
-class MeasuresCreateProcessQueue(
+class MeasuresProcessQueue(
     PermissionRequiredMixin,
     WithPaginationListView,
 ):
-    """UI endpoint for bulk creating Measures process queue."""
+    """Base class for UI endpoint for bulk creating and editing Measures process queue."""
 
     permission_required = [
         "common.add_trackedmodel",
         "common.change_trackedmodel",
     ]
-    template_name = "measures/create-process-queue.jinja"
-    model = models.MeasuresBulkCreator
-    queryset = models.MeasuresBulkCreator.objects.filter(
-        workbasket__status=WorkflowStatus.EDITING,
-    ).order_by("-created_at")
-    filterset_class = MeasureCreateTaskFilter
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         context["selected_link"] = "all"
-        context["selected_tab"] = "measure-process-queue"
         processing_state = self.request.GET.get("processing_state")
 
         if processing_state == "PROCESSING":
@@ -196,3 +190,35 @@ class MeasuresCreateProcessQueue(
                 "text": "",
                 "tag_class": "",
             }
+
+
+class MeasuresCreateProcessQueue(MeasuresProcessQueue):
+    """UI endpoint for bulk creating Measures process queue."""
+
+    template_name = "measures/create-process-queue.jinja"
+    model = models.MeasuresBulkCreator
+    queryset = models.MeasuresBulkCreator.objects.filter(
+        workbasket__status=WorkflowStatus.EDITING,
+    ).order_by("-created_at")
+    filterset_class = MeasureCreateTaskFilter
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["selected_tab"] = "measure-create-process-queue"
+        return context
+
+
+class MeasuresEditProcessQueue(MeasuresProcessQueue):
+    """UI endpoint for bulk editing Measures process queue."""
+
+    template_name = "measures/edit-process-queue.jinja"
+    model = models.MeasuresBulkEditor
+    queryset = models.MeasuresBulkEditor.objects.filter(
+        workbasket__status=WorkflowStatus.EDITING,
+    ).order_by("-created_at")
+    filterset_class = MeasureEditTaskFilter
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["selected_tab"] = "measure-edit-process-queue"
+        return context

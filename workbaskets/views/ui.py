@@ -64,7 +64,6 @@ from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from regulations.models import Regulation
 from tasks.models import Comment
-from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from workbaskets import forms
@@ -1624,9 +1623,6 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
             defaults={
                 "title": self.workbasket.title,
                 "description": self.workbasket.reason,
-                "progress_state": ProgressState.objects.get(
-                    name=ProgressState.State.TO_DO,
-                ),
                 "creator": self.request.user,
             },
         )

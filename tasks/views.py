@@ -16,6 +16,7 @@ from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
 from tasks.forms import TaskUpdateForm
 from tasks.models import Task
+from tasks.models import TaskWorkflowTemplate
 from tasks.signals import set_current_instigator
 
 
@@ -151,3 +152,17 @@ class SubTaskConfirmCreateView(DetailView):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "subtask"
         return context
+        return reverse("workflow:task-ui-confirm-create", kwargs={"pk": self.object.pk})
+
+
+class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
+    model = TaskWorkflowTemplate
+    template_name = "tasks/workflows/template_detail.jinja"
+    permission_required = "tasks.view_taskworkflowtemplate"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["task_template_items"] = (
+            self.get_object().get_items().select_related("task_template")
+        )
+        return context_data

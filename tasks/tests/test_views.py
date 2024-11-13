@@ -7,6 +7,7 @@ from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
 from tasks.models import TaskLog
+from tasks.tests.test_workflow_models import TaskItemTemplateFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -103,3 +104,20 @@ def test_create_subtask_button_only_shows_for_tasks_without_parents(
     )
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     assert page.find("a", href=subtask_create_url)
+
+
+def test_workflow_template_detail_view_displays_task_templates(valid_user_client):
+    task_item_template = TaskItemTemplateFactory.create()
+    task_template = task_item_template.task_template
+    workflow_template = task_item_template.queue
+
+    url = reverse(
+        "workflow:task-workflow-template-ui-detail",
+        kwargs={"pk": workflow_template.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    assert page.find("h1", text=workflow_template.title)
+    assert page.find("a", text=task_template.title)

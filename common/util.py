@@ -15,6 +15,7 @@ from pathlib import Path
 from platform import python_version_tuple
 from typing import IO
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Optional
 from typing import Sequence
@@ -51,6 +52,8 @@ from django.utils import timezone
 from lxml import etree
 from psycopg.types.range import DateRange
 from psycopg.types.range import TimestampRange
+
+from common.validators import UpdateType
 
 major, minor, patch = python_version_tuple()
 
@@ -432,8 +435,8 @@ def get_field_tuple(model: Model, field_name: str) -> Tuple[str, Any]:
 
 
 class TableLock:
-    """Provides a decorator for locking database tables for the duration of a
-    decorated function."""
+    """Provides a decorator and context manager for locking database tables for
+    the duration of a decorated function or context block."""
 
     ACCESS_SHARE = "ACCESS SHARE"
     ROW_SHARE = "ROW SHARE"
@@ -455,6 +458,29 @@ class TableLock:
         ACCESS_EXCLUSIVE,
     )
 
+    def __init__(self, *models, lock=None):
+        if lock is None:
+            lock = self.ACCESS_EXCLUSIVE
+
+        if lock not in self.LOCK_TYPES:
+            raise ValueError("%s is not a PostgreSQL supported lock mode.")
+
+        self.lock = lock
+        self.models = models
+
+    def __enter__(self):
+        with atomic():
+            with transaction.get_connection().cursor() as cursor:
+                for model in self.models:
+                    if isinstance(model, str):
+                        model = apps.get_model(model)
+                    cursor.execute(
+                        f"LOCK TABLE {model._meta.db_table} IN {self.lock} MODE",
+                    )
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
     @classmethod
     def acquire_lock(cls, *models, lock=None):
         """
@@ -469,24 +495,11 @@ class TableLock:
         PostgreSQL's LOCK Documentation:
         http://www.postgresql.org/docs/8.3/interactive/sql-lock.html
         """
-        if lock is None:
-            lock = cls.ACCESS_EXCLUSIVE
-
-        if lock not in cls.LOCK_TYPES:
-            raise ValueError("%s is not a PostgreSQL supported lock mode.")
 
         @wrapt.decorator
         def wrapper(wrapped, instance, args, kwargs):
-            with atomic():
-                with transaction.get_connection().cursor() as cursor:
-                    for model in models:
-                        if isinstance(model, str):
-                            model = apps.get_model(model)
-                        cursor.execute(
-                            f"LOCK TABLE {model._meta.db_table} IN {lock} MODE",
-                        )
-
-                    return wrapped(*args, **kwargs)
+            with cls(*models, lock=lock):
+                return wrapped(*args, **kwargs)
 
         return wrapper
 
@@ -694,3 +707,83 @@ def log_timing(logger_function: typing.Callable):
         return result
 
     return wrapper
+
+
+def make_real_edit(
+    tx: "common.models.Transaction",
+    cls: Callable,
+    obj: Optional["common.models.TrackedModel"],
+    data: dict,
+    workbasket: "workbasket.models.WorkBasket",
+    update_type: UpdateType,
+):
+    """
+    Checks whether an object exists in the workbasket and makes the appropriate
+    update/create/delete.
+
+    update_type == CREATE:
+    * New model is created in the workbasket
+
+    update_type == UPDATE:
+    * nothing in workbasket: New UPDATE version created in workbasket
+    * with CREATE/UPDATE in workbasket: Updates the trackedmodel in the workbasket. No new version is created
+
+    update_type == DELETE:
+    * nothing in workbasket: New DELETE version created in workbasket
+    * with UPDATE in workbasket: Update type of current change in workbasket is changed to DELETE
+    * with CREATE in workbasket: Removes the trackedmodel from the workbasket
+    """
+
+    data = data or {}
+
+    if update_type == UpdateType.CREATE:
+        new_obj = cls(transaction=tx, update_type=update_type, **data)
+        new_obj.save()
+        return new_obj
+
+    workbasket_objects = workbasket.tracked_models.instance_of(cls)
+
+    if not obj:
+        raise ValueError("If update_type is not CREATE obj param is required.")
+
+    if not workbasket_objects.filter(pk=obj.pk).exists():
+        # if it's not already in the workbasket, create a new version
+        new_version = cls.objects.get(pk=obj.pk).new_version(
+            workbasket=workbasket,
+            transaction=tx,
+            update_type=update_type,
+            **data,
+        )
+        return new_version
+
+    else:
+        if update_type == UpdateType.UPDATE:
+            cls.objects.filter(pk=obj.pk).update(transaction=tx, **data)
+            return cls.objects.get(pk=obj.pk)
+
+        elif update_type == UpdateType.DELETE:
+            # we're deleting the object we just created. remove it from the workbasket
+            if obj.update_type == UpdateType.CREATE:
+                obj.delete()
+
+            # we're now deleting an object instead of updating it. change the update type
+            elif obj.update_type == UpdateType.UPDATE:
+                cls.objects.filter(pk=obj.pk).update(update_type=UpdateType.DELETE)
+
+        return None
+
+
+def get_related_names(instance, related_model) -> list[str]:
+    """
+    Return a list of related names of reverse foreign-key relationships to
+    (subclasses of) the specified `related_model` for the given `instance`.
+
+    If a reverse foreign-key relationship exists but no related name has been
+    defined, a default name in the format `relatedmodel_set` will be returned.
+    If no such relationships exist, an empty list if returned.
+    """
+    related_names = []
+    for field in instance._meta.get_fields():
+        if field.one_to_many and issubclass(field.related_model, related_model):
+            related_names.append(field.get_accessor_name())
+    return related_names
