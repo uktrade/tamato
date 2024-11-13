@@ -26,7 +26,7 @@ class TestQuotaExport:
 
     def test_csv_headers(self):
         target = self.get_target()
-        assert len(target.csv_headers()) == 12
+        assert len(target.csv_headers()) == 13
 
     def test_get_geographical_areas_and_exclusions(self):
         # seed setup
@@ -300,7 +300,8 @@ class TestQuotaExport:
             "quota__geographical_areas,"
             "quota__geographical_area_exclusions,"
             "quota__headings,"
-            "quota__commoditiesquota__measurement_unit,"
+            "quota__commodities",
+            "quota__measurement_unit,"
             "quota__monetary_unit,"
             "quota_definition__description,"
             "quota_definition__validity_start_date,"
@@ -308,7 +309,7 @@ class TestQuotaExport:
             "quota_definition__initial_volume,"
             "api_query_date"
         )
-        assert headers_str in content
+        assert str(headers_str) in content
         # check rows count
         assert len(content.split("\n")) > 2
         assert "0102-zzz" in content
