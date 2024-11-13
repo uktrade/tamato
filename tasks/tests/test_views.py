@@ -3,9 +3,12 @@ from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from common.tests.factories import ProgressStateFactory
+from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
 from tasks.models import TaskLog
+
+pytestmark = pytest.mark.django_db
 
 
 def test_task_update_view_update_progress_state(valid_user_client):
@@ -50,8 +53,8 @@ def test_confirmcreate_template_shows_task_or_subtask(
     object_type,
     success_url,
 ):
-    """Test the confirmation page for measures creation, validating URL lookup
-    and correct rendering applying captured params to content."""
+    """Test the confirm create template distinguishes between subtask or task
+    creation."""
 
     parent_task_instance = TaskFactory.create(
         progress_state__name=ProgressState.State.TO_DO,
@@ -71,3 +74,32 @@ def test_confirmcreate_template_shows_task_or_subtask(
     expected_h1_text = f"{object_type}: {parent_task_instance.title}"
 
     assert expected_h1_text in page.find("h1").text
+
+
+def test_create_subtask_button_only_shows_for_tasks_without_parents(
+    superuser_client,
+):
+    """Test that 'create subtask' button is only visible on details page for
+    task without parent task."""
+
+    parent_task_instance = TaskFactory.create(
+        progress_state__name=ProgressState.State.TO_DO,
+    )
+    SubTaskFactory.create()
+
+    url = reverse(
+        "workflow:task-ui-detail",
+        kwargs={
+            "pk": parent_task_instance.pk,
+        },
+    )
+    response = superuser_client.get(url)
+
+    assert response.status_code == 200
+
+    subtask_create_url = url(
+        "workflow:subtask-ui-create",
+        kwargs={"pk": parent_task_instance.pk},
+    )
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    assert page.find("a", href=subtask_create_url)
