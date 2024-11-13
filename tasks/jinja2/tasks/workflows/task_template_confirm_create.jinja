@@ -1,0 +1,49 @@
+{% extends "common/confirm_create.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Task template created" %}
+
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {"text": "Find and view workflow templates", "href": "#TODO"},
+      {
+        "text": "Workflow template: " ~ task_workflow_template.title,
+        "href": url(
+          "workflow:task-workflow-template-ui-detail",
+          kwargs={"pk": task_workflow_template.pk}),
+      },
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": "Task template: " ~ object.title,
+    "text": "You have created a new task template",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block button_group %}
+  {{ govukButton({
+    "text": "View task template",
+    "classes": "govuk-button"
+  }) }}
+  {{ govukButton({
+    "text": "Return to homepage",
+    "href": url("home"),
+    "classes": "govuk-button--secondary"
+  }) }}
+{% endblock %}
+
+{% block actions %}
+  <li><a href="TODO" class="govuk-link">Find and edit workflow templates</a></li>
+{% endblock %}
