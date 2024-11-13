@@ -1,5 +1,6 @@
 {% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/inset-text/macro.njk" import govukInsetText %}
 
 {% block form %}
     {% set table_rows = [] %}
@@ -17,32 +18,32 @@
       {% set main_definition = view.get_main_definition(definition.main_definition)%}
 
       {{ table_rows.append([
-        {"text": main_definition.sid},
-        {"text": "{:%d %b %Y}".format(main_definition.valid_between.lower) },
-        {"text": "{:%d %b %Y}".format(main_definition.valid_between.upper) if main_definition.valid_between.upper else "-" },
-        {"text": intcomma(main_definition.volume) },
-        {"text": main_definition.measurement_unit.abbreviation },
-        {"text": "-" },
-        {"text": "-" },
-        {"text": "-" },
-        {"text": "-" },
+        {"text": main_definition.sid, "classes": "definition-original" },
+        {"text": "{:%d %b %Y}".format(main_definition.valid_between.lower), "classes": "definition-original" },
+        {"text": "{:%d %b %Y}".format(main_definition.valid_between.upper) if main_definition.valid_between.upper else "-", "classes": "definition-original" },
+        {"text": intcomma(main_definition.volume), "classes": "definition-original" },
+        {"text": main_definition.measurement_unit.abbreviation, "classes": "definition-original" },
+        {"text": "-", "classes": "definition-original" },
+        {"text": "-", "classes": "definition-original" },
+        {"text": "-", "classes": "definition-original" },
+        {"text": "-", "classes": "definition-original" },
       ]) or "" }}
       {% set formatted_start_date = view.format_date(definition.sub_definition_staged_data.start_date) %}
       {% set formatted_end_date = view.format_date(definition.sub_definition_staged_data.end_date) %}
       {{ table_rows.append([
-        {"text": "-"},
-        {"text": formatted_start_date },
-        {"text": formatted_end_date },
-        {"text": intcomma(definition.sub_definition_staged_data.volume) },
-        {"text": definition.sub_definition_staged_data.measurement_unit_abbreviation or main_definition.measurement_unit.abbreviation},
-        {"text": definition.sub_definition_staged_data.relationship_type or "-" },
-        {"text": definition.sub_definition_staged_data.coefficient or "-"   },
-        {"text": definition_status_cell },
-        {"text": edit_link },
+        {"text": "-", "classes": "definition-duplicate"},
+        {"text": formatted_start_date, "classes": "definition-duplicate" },
+        {"text": formatted_end_date, "classes": "definition-duplicate" },
+        {"text": intcomma(definition.sub_definition_staged_data.volume), "classes": "definition-duplicate" },
+        {"text": definition.sub_definition_staged_data.measurement_unit_abbreviation or main_definition.measurement_unit.abbreviation, "classes": "definition-duplicate"},
+        {"text": definition.sub_definition_staged_data.relationship_type or "-", "classes": "definition-duplicate" },
+        {"text": definition.sub_definition_staged_data.coefficient or "-", "classes": "definition-duplicate"   },
+        {"text": definition_status_cell, "classes": "definition-duplicate" },
+        {"text": edit_link, "classes": "definition-duplicate" },
       ]) or "" }}
       
     {% endfor %}
-    <p>You must enter a co-efficient value and specify the relationship type for each definition period.</p>
+    {{ govukInsetText({'text': "You must enter a co-efficient value and specify the relationship type for each definition period."})}}
     {{ govukTable({
       "head": [
         {"text": "SID"},
