@@ -409,7 +409,7 @@ def test_get_description_dates(description_factory, date_ranges):
 
 def test_trackedmodel_get_url(
     trackedmodel_factory,
-    valid_user_client,
+    client_with_current_workbasket,
     mock_quota_api_no_data,
 ):
     """Verify get_url() returns something sensible and doesn't crash."""
@@ -428,7 +428,7 @@ def test_trackedmodel_get_url(
     # Verify URL is not local
     assert not urlparse(url).netloc
 
-    response = valid_user_client.get(url)
+    response = client_with_current_workbasket.get(url)
     assert response.status_code == 200
 
 

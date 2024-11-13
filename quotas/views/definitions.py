@@ -3,6 +3,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.generic.list import ListView
 from rest_framework import permissions
@@ -23,6 +24,7 @@ from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaSuspension
 from workbaskets.models import WorkBasket
+from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.generic import CreateTaricCreateView
 from workbaskets.views.generic import CreateTaricDeleteView
 from workbaskets.views.generic import CreateTaricUpdateView
@@ -36,6 +38,7 @@ class QuotaDefinitionViewset(viewsets.ReadOnlyModelViewSet):
     search_fields = ["sid", "order_number__order_number", "description"]
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class QuotaDefinitionList(SortingMixin, ListView):
     template_name = "quotas/definitions.jinja"
     model = models.QuotaDefinition
