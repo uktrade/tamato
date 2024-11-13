@@ -134,8 +134,15 @@ class SubTaskCreateView(PermissionRequiredMixin, CreateView):
 
     def form_valid(self, form):
         parent_task = Task.objects.filter(pk=self.kwargs["pk"]).first()
-        self.object = form.save(parent_task, user=self.request.user)
-        return HttpResponseRedirect(self.get_success_url())
+        if parent_task.parent_task:
+            form.add_error(
+                None,
+                "You cannot make a subtask from a subtask.",
+            )
+            return self.form_invalid(form)
+        else:
+            self.object = form.save(parent_task, user=self.request.user)
+            return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
         return reverse(
