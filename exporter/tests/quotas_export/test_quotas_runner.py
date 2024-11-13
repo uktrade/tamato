@@ -46,12 +46,12 @@ class TestQuotaExport:
         )
         for origin in quota.order_number.quotaordernumberorigin_set.all():
             assert (
-                    origin.geographical_area.descriptions.all().last().description
-                    in geo_areas
+                origin.geographical_area.descriptions.all().last().description
+                in geo_areas
             )
         assert (
-                exclusion.excluded_geographical_area.descriptions.all().last().description
-                in geo_area_exclusions
+            exclusion.excluded_geographical_area.descriptions.all().last().description
+            in geo_area_exclusions
         )
 
     def test_get_monetary_unit_populated(self):
@@ -66,8 +66,8 @@ class TestQuotaExport:
 
         target = self.get_target()
         assert (
-                target.get_monetary_unit(quota)
-                == f"{quota.monetary_unit.description} ({quota.monetary_unit.code})"
+            target.get_monetary_unit(quota)
+            == f"{quota.monetary_unit.description} ({quota.monetary_unit.code})"
         )
 
     def test_get_monetary_unit_blank(self):
@@ -296,18 +296,18 @@ class TestQuotaExport:
             content = open(ntf.name, "r").read()
 
         headers_str = (
-                "quota_definition__sid,quota__order_number," +
-                "quota__geographical_areas," +
-                "quota__geographical_area_exclusions," +
-                "quota__headings," +
-                "quota__commodities," +
-                "quota__measurement_unit," +
-                "quota__monetary_unit," +
-                "quota_definition__description," +
-                "quota_definition__validity_start_date," +
-                "quota_definition__validity_end_date," +
-                "quota_definition__initial_volume," +
-                "api_query_date"
+            "quota_definition__sid,quota__order_number,"
+            + "quota__geographical_areas,"
+            + "quota__geographical_area_exclusions,"
+            + "quota__headings,"
+            + "quota__commodities,"
+            + "quota__measurement_unit,"
+            + "quota__monetary_unit,"
+            + "quota_definition__description,"
+            + "quota_definition__validity_start_date,"
+            + "quota_definition__validity_end_date,"
+            + "quota_definition__initial_volume,"
+            + "api_query_date"
         )
 
         assert headers_str in content
