@@ -18,6 +18,7 @@ from geo_areas.models import GeographicalArea
 from quotas import models
 from quotas import validators
 from quotas.constants import CATEGORY_HELP_TEXT
+from quotas.constants import MECHANISM_HELP_TEXT
 from quotas.constants import ORDER_NUMBER_HELP_TEXT
 from quotas.constants import QUOTA_EXCLUSIONS_FORMSET_PREFIX
 from quotas.constants import QUOTA_ORIGINS_FORMSET_PREFIX
@@ -296,6 +297,7 @@ class QuotaOrderNumberCreateForm(
     )
     mechanism = forms.ChoiceField(
         choices=validators.AdministrationMechanism.choices,
+        help_text=MECHANISM_HELP_TEXT,
         error_messages={
             "invalid_choice": "Please select a valid mechanism",
             "required": "Choose the mechanism",
