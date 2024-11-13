@@ -49,12 +49,12 @@ def test_task_update_view_update_progress_state(valid_user_client):
     ],
     ids=("task test", "subtask test"),
 )
-def test_confirmcreate_template_shows_task_or_subtask(
+def test_confirm_create_template_shows_task_or_subtask(
     valid_user_client,
     object_type,
     success_url,
 ):
-    """Test the confirm create template distinguishes between subtask or task
+    """Test the confirm create template distinguishes between subtask or task's
     creation."""
 
     parent_task_instance = TaskFactory.create(
@@ -77,33 +77,36 @@ def test_confirmcreate_template_shows_task_or_subtask(
     assert expected_h1_text in page.find("h1").text
 
 
-def test_create_subtask_button_only_shows_for_tasks_without_parents(
+@pytest.mark.parametrize(
+    ("task_factory", "expected_result"),
+    [
+        (TaskFactory, True),
+        (SubTaskFactory, False),
+    ],
+    ids=("task test", "subtask test"),
+)
+def test_create_subtask_button_shows_only_for_non_parent_tasks(
     superuser_client,
+    task_factory,
+    expected_result,
 ):
-    """Test that 'create subtask' button is only visible on details page for
-    task without parent task."""
-
-    parent_task_instance = TaskFactory.create(
-        progress_state__name=ProgressState.State.TO_DO,
-    )
-    SubTaskFactory.create()
+    task = task_factory.create()
 
     url = reverse(
         "workflow:task-ui-detail",
         kwargs={
-            "pk": parent_task_instance.pk,
+            "pk": task.pk,
         },
     )
     response = superuser_client.get(url)
-
     assert response.status_code == 200
 
-    subtask_create_url = url(
-        "workflow:subtask-ui-create",
-        kwargs={"pk": parent_task_instance.pk},
-    )
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    assert page.find("a", href=subtask_create_url)
+
+    if expected_result:
+        assert page.find("a", href=f"/tasks/{task.pk}/subtasks/create")
+    else:
+        assert not page.find("a", href=f"/tasks/{task.pk}/subtasks/create")
 
 
 def test_workflow_template_detail_view_displays_task_templates(valid_user_client):

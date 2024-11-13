@@ -152,7 +152,6 @@ class SubTaskConfirmCreateView(DetailView):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "subtask"
         return context
-        return reverse("workflow:task-ui-confirm-create", kwargs={"pk": self.object.pk})
 
 
 class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
