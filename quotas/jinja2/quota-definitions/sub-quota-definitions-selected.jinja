@@ -43,7 +43,7 @@
       ]) or "" }}
       
     {% endfor %}
-    {{ govukInsetText({'text': "You must enter a co-efficient value and specify the relationship type for each definition period."})}}
+    {{ govukInsetText({'text': "You must enter a co-efficient value and specify the relationship type for each duplicated definition period."})}}
     {{ govukTable({
       "head": [
         {"text": "SID"},
@@ -60,7 +60,8 @@
     }) }}
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-    <p>Selecting 'Submit' will create the new definitions and create a quota association. Further edits to the definition periods can be made on the quota order number page.</p>
+    <p>Selecting 'Submit' will create the new definitions and quota associations. </p>
+    <p>Further edits to the definition periods can be made on the quota order number page through an additional workbasket transaction.</p>
       </div>
     </div>
   <div class="govuk-button-group">
