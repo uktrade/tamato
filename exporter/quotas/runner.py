@@ -31,9 +31,7 @@ def normalise_loglevel(loglevel):
 
 
 class QuotaExport:
-    """
-    Runs the export command against TAP data to extract quota CSV data
-    """
+    """Runs the export command against TAP data to extract quota CSV data."""
 
     def __init__(self, target_file: NamedTemporaryFile):
         # self.rows = []
@@ -43,11 +41,10 @@ class QuotaExport:
     @staticmethod
     def csv_headers():
         """
-        produces a list of headers for the CSV
+        Produces a list of headers for the CSV.
 
         Returns:
             list: list of header names
-
         """
         quota_headers = [
             "quota_definition__sid",
@@ -75,11 +72,10 @@ class QuotaExport:
 
     def run(self):
         """
-        produces data for the quota export CSV, from the TAP database.
+        Produces data for the quota export CSV, from the TAP database.
 
         Returns:
             None: Operations performed and stored within the NamedTemporaryFile
-
         """
 
         quotas = QuotaDefinition.objects.latest_approved().filter(
@@ -120,7 +116,8 @@ class QuotaExport:
     @staticmethod
     def get_geographical_areas_and_exclusions(quota):
         """
-        returns a tuple of geographical areas and exclusions associated with a Quota
+        Returns a tuple of geographical areas and exclusions associated with a
+        Quota.
 
         Args:
             quota: the quota to be queried
@@ -163,14 +160,13 @@ class QuotaExport:
     @staticmethod
     def get_monetary_unit(quota):
         """
-        returns the monetary unit associated with a Quota as a string
+        Returns the monetary unit associated with a Quota as a string.
 
         Args:
             quota: the quota to be queried
 
         Returns:
             str or None: Monetary unit as string or None
-
         """
         monetary_unit = None
         if quota.monetary_unit:
@@ -182,14 +178,13 @@ class QuotaExport:
     @staticmethod
     def get_measurement_unit(quota):
         """
-        returns the measurement unit associated with a Quota as a string
+        Returns the measurement unit associated with a Quota as a string.
 
         Args:
             quota: the quota to be queried
 
         Returns:
             str or None: Measurement unit as string or None
-
         """
         if quota.measurement_unit:
             measurement_unit_description = f"{quota.measurement_unit.description}"
@@ -204,7 +199,7 @@ class QuotaExport:
     @staticmethod
     def get_api_query_date(quota):
         """
-        returns the most appropriate date for querying the HMRC API
+        Returns the most appropriate date for querying the HMRC API.
 
         Dates are checked against current date and collected, the oldest of
         the dates is used as the API query date. Typically, this wil be today's date
@@ -218,7 +213,6 @@ class QuotaExport:
 
         Returns:
             date or none: a date if available or none if quota is in the future
-
         """
         api_query_dates = []
 
@@ -261,7 +255,7 @@ class QuotaExport:
     @staticmethod
     def get_associated_measures(quota):
         """
-        returns associated measures for the quota
+        Returns associated measures for the quota.
 
         Args:
             quota: The quota to be queried
@@ -269,7 +263,6 @@ class QuotaExport:
         Returns:
             TrackedModelQuerySet(Measures): A set of measures associated with the
             provided quota
-
         """
         measures = (
             Measure.objects.latest_approved()
@@ -291,7 +284,7 @@ class QuotaExport:
 
     def get_goods_nomenclature_item_ids(self, quota):
         """
-        collects associated item_ids for a quota
+        Collects associated item_ids for a quota.
 
         Args:
             quota: The quota to be queried
@@ -299,7 +292,6 @@ class QuotaExport:
         Returns:
             list(str): list of strings each containing the associated item_id for a
             measure
-
         """
         item_ids = []
         for measure in self.get_associated_measures(quota):
@@ -309,8 +301,9 @@ class QuotaExport:
 
     def get_goods_nomenclature_headings(self, item_ids: List[str]):
         """
-        returns a string representing the headings and descriptions for measures
-        associated with a quota. Headings are at the 4 digit level, e.g. 1234000000
+        Returns a string representing the headings and descriptions for measures
+        associated with a quota. Headings are at the 4 digit level, e.g.
+        1234000000.
 
         Args:
             item_ids: list(str) : a list of strings representing item_ids
@@ -340,7 +333,7 @@ class QuotaExport:
     @staticmethod
     def get_goods_nomenclature_description(item_id):
         """
-        returns the description associated with an item_id
+        Returns the description associated with an item_id.
 
         Args:
             item_id: the item_id to be queried
