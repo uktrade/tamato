@@ -1069,3 +1069,164 @@ def test_quota_blocking_update_form_invalid(date_ranges):
             f"The start and end date must sit within the selected quota definition's start and end date ({definition.valid_between.lower} - {definition.valid_between.upper})"
             in form.errors["__all__"]
         )
+
+
+@pytest.fixture
+def quota() -> models.QuotaOrderNumber:
+    """Provides a main quota order number for use across the fixtures and
+    following tests."""
+    return factories.QuotaOrderNumberFactory()
+
+
+@pytest.fixture
+def bulk_create_initial_form(
+    session_request,
+) -> forms.BulkQuotaDefinitionCreateInitialInformation:
+    return forms.BulkQuotaDefinitionCreateInitialInformation(
+        request=session_request,
+        prefix="initial_info",
+    )
+
+
+def test_quota_definition_bulk_create_initial_info_sets_data(
+    session_request,
+    quota,
+    bulk_create_initial_form,
+):
+
+    # form = forms.BulkQuotaDefinitionCreateInitialInformation(
+    #     request=session_request,
+    #     prefix="initial_info"
+    # )
+    data = {
+        "instance_count": 5,
+        "frequency": 3,
+        "quota_order_number": quota,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        bulk_create_initial_form.save_initial_data_to_session(data)
+        assert (
+            session_request.session["recurrance_data"]["quota_order_number"]
+            == quota.order_number
+        )
+        assert session_request.session["recurrance_data"]["instance_count"] == "5"
+
+
+@pytest.fixture
+def bulk_create_definition_form(
+    session_request,
+) -> forms.QuotaDefinitionBulkCreateDefinitionInformation:
+    return forms.QuotaDefinitionBulkCreateDefinitionInformation(
+        request=session_request,
+        prefix="definition_period_info",
+    )
+
+
+def test_quota_definition_bulk_create_definition_info_sets_data_annual_recurrance(
+    session_request,
+    quota,
+    bulk_create_initial_form,
+    bulk_create_definition_form,
+):
+    measurement_unit = factories.MeasurementUnitFactory()
+
+    initial_data = {
+        "instance_count": 5,
+        "frequency": 2,
+        "quota_order_number": quota,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        bulk_create_initial_form.save_initial_data_to_session(initial_data)
+
+    form_data = {
+        "valid_between": TaricDateRange(
+            datetime.date(2001, 1, 1),
+            datetime.date(2001, 12, 31),
+        ),
+        "volume": "600.000",
+        "initial_volume": "500.000",
+        "measurement_unit": measurement_unit,
+        "measurement_unit_qualifier": "",
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        bulk_create_definition_form.save_definition_data_to_session(form_data)
+        assert (
+            session_request.session["recurrance_data"]["quota_order_number"]
+            == quota.order_number
+        )
+        # check that the length staged_definitions matches the initial_info['instance_count']
+        assert (
+            len(session_request.session["staged_definition_data"])
+            == initial_data["instance_count"]
+        )
+        assert (
+            session_request.session["staged_definition_data"][1]["start_date"]
+            == "2002-01-01"
+        )
+        assert (
+            session_request.session["staged_definition_data"][1]["end_date"]
+            == "2002-12-31"
+        )
+
+
+def test_quota_definition_bulk_create_definition_info_sets_data_quarterly_recurrance(
+    session_request,
+    quota,
+    bulk_create_initial_form,
+    bulk_create_definition_form,
+):
+    measurement_unit = factories.MeasurementUnitFactory()
+
+    initial_data = {
+        "instance_count": 5,
+        "frequency": 3,
+        "quota_order_number": quota,
+    }
+    with override_current_transaction(Transaction.objects.last()):
+        bulk_create_initial_form.save_initial_data_to_session(initial_data)
+
+    form_data = {
+        "valid_between": TaricDateRange(
+            datetime.date(2001, 1, 1),
+            datetime.date(2001, 3, 31),
+        ),
+        "volume": "600.000",
+        "initial_volume": "500.000",
+        "measurement_unit": measurement_unit,
+        "measurement_unit_qualifier": "",
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
+    }
+
+    with override_current_transaction(Transaction.objects.last()):
+        bulk_create_definition_form.save_definition_data_to_session(form_data)
+        assert (
+            session_request.session["recurrance_data"]["quota_order_number"]
+            == quota.order_number
+        )
+        # check that the length staged_definitions matches the initial_info['instance_count']
+        assert (
+            len(session_request.session["staged_definition_data"])
+            == initial_data["instance_count"]
+        )
+        assert (
+            session_request.session["staged_definition_data"][1]["start_date"]
+            == "2001-04-01"
+        )
+        assert (
+            session_request.session["staged_definition_data"][1]["end_date"]
+            == "2001-06-30"
+        )
+
+
+# def test_quota_definition_bulk_create_definition_info_sets_data_period(session_request):
+# save initial info to session
+# 2 x definition periods
+# annual/quarterly split
+
+# save definition info to session
+
+# assert that the date ranges match what is expected

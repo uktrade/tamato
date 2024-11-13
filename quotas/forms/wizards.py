@@ -279,13 +279,13 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
         self.fields["maximum_precision"].initial = 3
 
-    def save_definition_data_to_session(self):
+    def save_definition_data_to_session(self, definition_data):
         recurrance_data = self.request.session["recurrance_data"]
         instance_count = decimal.Decimal(recurrance_data["instance_count"])
         frequency = decimal.Decimal(recurrance_data["frequency"])
 
         staged_definitions = []
-        definition_data = self.cleaned_data
+        # definition_data = self.cleaned_data
         definition_data.update(
             {
                 "id": 1,
@@ -356,7 +356,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     def clean(self):
         cleaned_data = super().clean()
-        self.save_definition_data_to_session()
+        self.save_definition_data_to_session(definition_data=cleaned_data)
         return cleaned_data
 
     def init_layout(self, request):
