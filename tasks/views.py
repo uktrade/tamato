@@ -4,6 +4,7 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
@@ -144,17 +145,21 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/workflows/template_detail.jinja"
     permission_required = "tasks.view_taskworkflowtemplate"
 
+    @cached_property
+    def task_workflow_template(self) -> TaskWorkflowTemplate:
+        return self.get_object()
+
     @property
     def view_url(self) -> str:
         return reverse(
             "workflow:task-workflow-template-ui-detail",
-            kwargs={"pk": self.get_object().pk},
+            kwargs={"pk": self.task_workflow_template.pk},
         )
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data["task_template_items"] = (
-            self.get_object().get_items().select_related("task_template")
+            self.task_workflow_template.get_items().select_related("task_template")
         )
         return context_data
 
@@ -167,14 +172,22 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
         return HttpResponseRedirect(self.view_url)
 
     def promote_item(self, item_id: int) -> None:
-        task_item_template = get_object_or_404(TaskItemTemplate, id=item_id)
+        task_item_template = get_object_or_404(
+            TaskItemTemplate,
+            id=item_id,
+            queue=self.task_workflow_template,
+        )
         try:
             task_item_template.promote()
         except OperationalError:
             pass
 
     def demote_item(self, item_id: int) -> None:
-        task_item_template = get_object_or_404(TaskItemTemplate, id=item_id)
+        task_item_template = get_object_or_404(
+            TaskItemTemplate,
+            id=item_id,
+            queue=self.task_workflow_template,
+        )
         try:
             task_item_template.demote()
         except OperationalError:
