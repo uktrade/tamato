@@ -23,7 +23,7 @@
   {% endset -%}
 
   {%- set title_cell_content %}
-    <a href="#TODO" class="govuk-link">{{ obj.title }}</a>
+    <a href="{{ obj.get_url(action='detail') }}" class="govuk-link">{{ obj.title }}</a>
   {% endset -%}
 
   {%- set description_cell_content %}

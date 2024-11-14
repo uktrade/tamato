@@ -81,12 +81,12 @@ class SubTaskCreateForm(TaskBaseForm):
 TaskDeleteForm = delete_form_for(Task)
 
 
-class TaskTemplateCreateForm(ModelForm):
+class TaskTemplateFormBase(ModelForm):
     class Meta:
         model = TaskTemplate
         fields = ("title", "description")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, submit_title, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -97,8 +97,18 @@ class TaskTemplateCreateForm(ModelForm):
             "description",
             Submit(
                 "submit",
-                "Create",
+                submit_title,
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
         )
+
+
+class TaskTemplateCreateForm(TaskTemplateFormBase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, submit_title="Create", **kwargs)
+
+
+class TaskTemplateUpdateForm(TaskTemplateFormBase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, submit_title="Update", **kwargs)
