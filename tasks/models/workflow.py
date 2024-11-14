@@ -42,8 +42,9 @@ class TaskWorkflow(TaskWorkflowBase):
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
-        instances to this TaskWorkflow."""
-        return Task.objects.filter(taskitem__queue=self)
+        instances to this TaskWorkflow, ordered by the position of the
+        TaskItem."""
+        return Task.objects.filter(taskitem__queue=self).order_by("taskitem__position")
 
 
 class TaskItem(QueueItem):
@@ -72,8 +73,11 @@ class TaskWorkflowTemplate(TaskWorkflowBase):
 
     def get_task_templates(self) -> models.QuerySet:
         """Get a QuerySet of the TaskTemplates associated through their
-        TaskItemTemplate instances to this TaskWorkflowTemplate."""
-        return TaskTemplate.objects.filter(taskitemtemplate__queue=self)
+        TaskItemTemplate instances to this TaskWorkflowTemplate, ordered by the
+        position of the TaskItemTemplate."""
+        return TaskTemplate.objects.filter(taskitemtemplate__queue=self).order_by(
+            "taskitemtemplate__position",
+        )
 
     @atomic
     def create_task_workflow(self) -> "TaskWorkflow":

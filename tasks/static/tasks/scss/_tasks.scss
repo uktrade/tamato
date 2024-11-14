@@ -32,18 +32,7 @@
   @include govuk-text-colour;
 }
 
-.govuk-task-list__link::after {
-  content: "";
-  display: block;
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-
 .govuk-task-list__hint {
   margin-top: govuk-spacing(1);
   color: $govuk-secondary-text-colour;
 }
-
