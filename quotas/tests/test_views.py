@@ -1,3 +1,4 @@
+import datetime
 from typing import OrderedDict
 from unittest import mock
 
@@ -16,6 +17,7 @@ from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -2686,3 +2688,72 @@ def test_user_cannot_edit_past_blocking_period(
 )
 def test_quota_blocking_delete_form(factory, use_delete_form):
     use_delete_form(factory())
+
+
+def test_quota_definition_bulk_creator_wizard_start(client_with_current_workbasket):
+    url = reverse("quota_definition-ui-bulk-create", kwargs={"step": "start"})
+    response = client_with_current_workbasket.get(url)
+    assert response.status_code == 200
+
+
+def test_quota_definition_bulk_creator_wizard_finish(client_with_current_workbasket):
+    quota = factories.QuotaOrderNumberFactory.create()
+    quota_pk = str(quota.pk)
+    measurement_unit = factories.MeasurementUnitFactory()
+    valid_between = TaricDateRange(
+        datetime.date(2025, 1, 1),
+        datetime.date(2025, 12, 31),
+    )
+    wizard_data = [
+        (
+            {"quota_definition_bulk_creator_wizard-current_step": "start"},
+            "initial_info",
+        ),
+        (
+            {
+                "quota_definition_bulk_creator_wizard-current_step": "initial_info",
+                "initial_info-instance_count": "5",
+                "initial_info-frequency": "3",
+                "initial_info-quota_order_number": quota_pk,
+            },
+            "definition_period_info",
+        ),
+        (
+            {
+                "quota_definition_bulk_creator_wizard-current_step": "definition_period_info",
+                "definition_period_info-start_date_0": "01",
+                "definition_period_info-start_date_1": "01",
+                "definition_period_info-start_date_2": "2025",
+                "definition_period_info-end_date_0": "31",
+                "definition_period_info-end_date_1": "12",
+                "definition_period_info-end_date_2": "2025",
+                "definition_period_info-volume": "200.000",
+                "definition_period_info-initial_volume": "500.000",
+                "definition_period_info-measurement_unit": measurement_unit.pk,
+                "definition_period_info-measurement_unit_qualifier": "",
+                "definition_period_info-quota_critical_threshold": "90",
+                "definition_period_info-quota_critical": "False",
+            },
+            "review",
+        ),
+        ({"quota_definition_bulk_creator_wizard-current_step": "review"}, "complete"),
+    ]
+
+    for data, next_step in wizard_data:
+        url = reverse(
+            "quota_definition-ui-bulk-create",
+            kwargs={"step": data["quota_definition_bulk_creator_wizard-current_step"]},
+        )
+
+        response = client_with_current_workbasket.get(url)
+        assert response.status_code == 200
+        response = client_with_current_workbasket.post(url, data)
+        print(f"success, {next_step=}")
+        assert response.status_code == 302
+        assert response.url == reverse(
+            "quota_definition-ui-bulk-create",
+            kwargs={"step": next_step},
+        )
+
+    complete_response = client_with_current_workbasket.get(response.url)
+    assert complete_response.status_code == 302

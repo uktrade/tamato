@@ -1093,11 +1093,6 @@ def test_quota_definition_bulk_create_initial_info_sets_data(
     quota,
     bulk_create_initial_form,
 ):
-
-    # form = forms.BulkQuotaDefinitionCreateInitialInformation(
-    #     request=session_request,
-    #     prefix="initial_info"
-    # )
     data = {
         "instance_count": 5,
         "frequency": 3,

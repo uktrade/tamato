@@ -345,9 +345,9 @@ class QuotaDefinitionBulkCreatorWizard(
         return template
 
     def get_form_kwargs(self, step):
-        # kwargs = super().get_form_kwargs()
         kwargs = {}
-        kwargs["request"] = self.request
+        if step != self.START:
+            kwargs["request"] = self.request
         return kwargs
 
     def get_staged_definition_data(self):

@@ -134,9 +134,10 @@ class SelectedDefinitionsForm(forms.Form):
 
 
 class BulkQuotaDefinitionCreateStartForm(forms.Form):
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request")
-        super().__init__(*args, **kwargs)
+    pass
+    # def __init__(self, *args, **kwargs):
+    #     self.request = kwargs.pop("request")
+    #     super().__init__(*args, **kwargs)
 
 
 class BulkQuotaDefinitionCreateInitialInformation(forms.Form):
