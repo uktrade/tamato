@@ -1,3 +1,4 @@
+import factory
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
@@ -52,3 +53,57 @@ def test_workflow_template_detail_view_displays_task_templates(valid_user_client
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     assert page.find("h1", text=workflow_template.title)
     assert page.find("a", text=task_template.title)
+
+
+def test_create_task_template_view(valid_user_client, task_workflow_template):
+    """Test the view for creating new TaskTemplates and the confirmation view
+    that a successful creation redirects to."""
+
+    assert task_workflow_template.get_task_templates().count() == 0
+
+    create_url = reverse(
+        "workflow:task-template-ui-create",
+        kwargs={"workflow_template_pk": task_workflow_template.pk},
+    )
+    form_data = {
+        "title": factory.Faker("sentence"),
+        "description": factory.Faker("sentence"),
+    }
+    create_response = valid_user_client.post(create_url, form_data)
+    created_task_template = task_workflow_template.get_task_templates().get()
+    confirmation_url = reverse(
+        "workflow:task-template-ui-confirm-create",
+        kwargs={"pk": created_task_template.pk},
+    )
+
+    assert create_response.status_code == 302
+    assert task_workflow_template.get_task_templates().count() == 1
+    assert create_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+
+    assert confirmation_response.status_code == 200
+    assert created_task_template.title in soup.select("h1.govuk-panel__title")[0].text
+
+
+def test_task_template_detail_view(
+    valid_user_client,
+    task_workflow_template_single_task_template_item,
+):
+    task_template = (
+        task_workflow_template_single_task_template_item.get_task_templates().get()
+    )
+    url = reverse("workflow:task-template-ui-detail", kwargs={"pk": task_template.pk})
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    assert response.status_code == 200
+    assert (
+        task_template.title
+        in soup.select("div.govuk-summary-list__row:nth-child(2) > dd:nth-child(2)")[
+            0
+        ].text
+    )
