@@ -1,21 +1,29 @@
-{% macro render_reorder_item_actions(item, item_count) %}
-  <div class="task-list__reorder-item-actions">
-    {% if item.position != 1 %}
-      <button name="promote_item"
-        value="{{ item.pk }}"
-        class="govuk-link fake-link govuk-!-padding-right-2"
-        data-module="govuk-button"
-        data-prevent-double-click="true"
-      >Move up <span aria-hidden="true">&#9206;</span></button>
-    {% endif %}
+{% macro move_item(obj, action, use_icon=False) %}
+  {% set action_text = {
+    "promote": "Move up",
+    "demote": "Move down",
+    "promote_to_first": "Move to first",
+    "demote_to_last": "Move to last",
+  }[action] %}
 
-    {% if item.position != item_count %}
-      <button name="demote_item"
-        value="{{ item.pk }}"
-        class="govuk-link fake-link"
-        data-module="govuk-button"
-        data-prevent-double-click="true"
-      >Move down <span aria-hidden="true">&#9207;</span></button>
-    {% endif %}
-  </div>
+  {% set icon_src = {
+    "promote": "/common/images/chevron-up.svg",
+    "demote": "/common/images/chevron-down.svg",
+  }[action] %}
+
+  <button name="{{ action }}"
+    value="{{ obj.pk }}"
+    class="govuk-link fake-link govuk-!-padding-right-2"
+    data-module="govuk-button"
+    data-prevent-double-click="true"
+  >
+    {% if use_icon and action != "promote_to_first" and action != "promote_to_last" %}
+      <img class="icon"
+        src="{{ static(icon_src) }}"
+        alt="{{ action_text}} icon"
+      >
+    {% else %}
+      {{ action_text }}
+    {% endif%}
+  </button>
 {% endmacro %}
