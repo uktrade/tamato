@@ -155,3 +155,53 @@ def test_task_template_detail_view(
             0
         ].text
     )
+
+
+def test_update_task_template_view(
+    valid_user_client,
+    task_workflow_template_single_task_template_item,
+):
+    """Test the view for updating TaskTemplates and the confirmation view that a
+    successful update redirects to."""
+
+    assert (
+        task_workflow_template_single_task_template_item.get_task_templates().count()
+        == 1
+    )
+
+    task_template = (
+        task_workflow_template_single_task_template_item.get_task_templates().get()
+    )
+    update_url = reverse(
+        "workflow:task-template-ui-update",
+        kwargs={"pk": task_template.pk},
+    )
+    appended_text = "updated"
+    form_data = {
+        "title": f"{task_template.title} {appended_text}",
+        "description": f"{task_template.description} {appended_text}",
+    }
+    update_response = valid_user_client.post(update_url, form_data)
+    updated_task_template = (
+        task_workflow_template_single_task_template_item.get_task_templates().get()
+    )
+    confirmation_url = reverse(
+        "workflow:task-template-ui-confirm-update",
+        kwargs={"pk": updated_task_template.pk},
+    )
+
+    assert update_response.status_code == 302
+    assert update_response.url == confirmation_url
+    assert (
+        task_workflow_template_single_task_template_item.get_task_templates().count()
+        == 1
+    )
+    assert updated_task_template.title.endswith(appended_text)
+    assert updated_task_template.description.endswith(appended_text)
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+
+    assert confirmation_response.status_code == 200
+    assert updated_task_template.title in soup.select("h1.govuk-panel__title")[0].text
