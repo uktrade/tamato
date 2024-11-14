@@ -62,10 +62,12 @@ def test_workflow_template_detail_view_displays_task_templates(valid_user_client
 @pytest.mark.parametrize(
     ("action", "item_position", "expected_item_order"),
     [
-        ("promote_item", 1, [1, 2, 3]),
-        ("promote_item", 2, [2, 1, 3]),
-        ("demote_item", 2, [1, 3, 2]),
-        ("demote_item", 3, [1, 2, 3]),
+        ("promote", 1, [1, 2, 3]),
+        ("promote", 2, [2, 1, 3]),
+        ("demote", 2, [1, 3, 2]),
+        ("demote", 3, [1, 2, 3]),
+        ("promote_to_first", 3, [3, 1, 2]),
+        ("demote_to_last", 1, [2, 3, 1]),
     ],
 )
 def test_workflow_template_detail_view_reorder_items(
