@@ -129,7 +129,7 @@ class SubTaskCreateView(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["page_title"] = "Create a subtask"
+        context["page_title"] = f"Create a subtask for task {self.kwargs["pk"]}"
         return context
 
     def form_valid(self, form):
