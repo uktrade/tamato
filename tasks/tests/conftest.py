@@ -76,7 +76,7 @@ def task_workflow_template_single_task_template_item(
 
 
 @pytest.fixture()
-def task_workflow_template_three_task_items(
+def task_workflow_template_three_task_template_items(
     task_workflow_template,
 ) -> TaskWorkflowTemplate:
     """Return a TaskWorkflowTemplate instance containing three TaskItemTemplate
