@@ -58,6 +58,24 @@ def task_workflow_template() -> TaskWorkflowTemplate:
 
 
 @pytest.fixture()
+def task_workflow_template_single_task_template_item(
+    task_workflow_template,
+) -> TaskWorkflowTemplate:
+    """Return a TaskWorkflowTemplate instance containing a single
+    TaskTemplateItem instance."""
+
+    task_template = factories.TaskTemplateFactory.create()
+    factories.TaskItemTemplateFactory.create(
+        queue=task_workflow_template,
+        task_template=task_template,
+    )
+
+    assert task_workflow_template.get_items().count() == 1
+
+    return task_workflow_template
+
+
+@pytest.fixture()
 def task_workflow_template_three_task_items(
     task_workflow_template,
 ) -> TaskWorkflowTemplate:
