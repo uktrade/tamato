@@ -1,7 +1,10 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db import OperationalError
 from django.db import transaction
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
@@ -144,12 +147,77 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/workflows/template_detail.jinja"
     permission_required = "tasks.view_taskworkflowtemplate"
 
+    @cached_property
+    def task_workflow_template(self) -> TaskWorkflowTemplate:
+        return self.get_object()
+
+    @property
+    def view_url(self) -> str:
+        return reverse(
+            "workflow:task-workflow-template-ui-detail",
+            kwargs={"pk": self.task_workflow_template.pk},
+        )
+
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["task_template_items"] = (
-            self.get_object().get_items().select_related("task_template")
-        )
+        context_data["object_list"] = self.task_workflow_template.get_task_templates()
         return context_data
+
+    def post(self, request, *args, **kwargs):
+        if "promote" in request.POST:
+            self.promote(request.POST.get("promote"))
+        elif "demote" in request.POST:
+            self.demote(request.POST.get("demote"))
+        elif "promote_to_first" in request.POST:
+            self.promote_to_first(request.POST.get("promote_to_first"))
+        elif "demote_to_last" in request.POST:
+            self.demote_to_last(request.POST.get("demote_to_last"))
+
+        return HttpResponseRedirect(self.view_url)
+
+    def promote(self, task_template_id: int) -> None:
+        task_item_template = get_object_or_404(
+            TaskItemTemplate,
+            task_template_id=task_template_id,
+            queue=self.task_workflow_template,
+        )
+        try:
+            task_item_template.promote()
+        except OperationalError:
+            pass
+
+    def demote(self, task_template_id: int) -> None:
+        task_item_template = get_object_or_404(
+            TaskItemTemplate,
+            task_template_id=task_template_id,
+            queue=self.task_workflow_template,
+        )
+        try:
+            task_item_template.demote()
+        except OperationalError:
+            pass
+
+    def promote_to_first(self, task_template_id: int) -> None:
+        task_item_template = get_object_or_404(
+            TaskItemTemplate,
+            task_template_id=task_template_id,
+            queue=self.task_workflow_template,
+        )
+        try:
+            task_item_template.promote_to_first()
+        except OperationalError:
+            pass
+
+    def demote_to_last(self, task_template_id: int) -> None:
+        task_item_template = get_object_or_404(
+            TaskItemTemplate,
+            task_template_id=task_template_id,
+            queue=self.task_workflow_template,
+        )
+        try:
+            task_item_template.demote_to_last()
+        except OperationalError:
+            pass
 
 
 class TaskTemplateDetailView(PermissionRequiredMixin, DetailView):
