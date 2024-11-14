@@ -35,6 +35,7 @@
 {% block button_group %}
   {{ govukButton({
     "text": "View task template",
+    "href": url("workflow:task-template-ui-detail", kwargs={"pk": object.pk}),
     "classes": "govuk-button"
   }) }}
   {{ govukButton({
