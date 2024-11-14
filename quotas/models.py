@@ -516,6 +516,24 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
 
     business_rules = (business_rules.QBP2, UniqueIdentifyingFields, UpdateValidity)
 
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """Overrides the parent get_url as there is no detail view for
+        QuotaBlocking objects for it to default to."""
+        url = super().get_url(action=action)
+        if not url:
+            url = reverse(
+                "quota_definition-ui-list-filter",
+                kwargs={
+                    "sid": self.quota_definition.order_number.sid,
+                    "quota_type": "blocking_periods",
+                },
+            )
+
+        return url
+
+    def __str__(self):
+        return f"{self.sid}"
+
 
 class QuotaEvent(TrackedModel):
     """
