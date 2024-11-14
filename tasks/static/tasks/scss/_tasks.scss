@@ -36,11 +36,3 @@
   margin-top: govuk-spacing(1);
   color: $govuk-secondary-text-colour;
 }
-
-.task-list__reorder-item-actions {
-  display: table-cell;
-  padding-left: govuk-spacing(2);
-  text-align: right;
-  vertical-align: top;
-  @include govuk-text-colour;
-}

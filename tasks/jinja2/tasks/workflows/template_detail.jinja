@@ -1,9 +1,9 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
-{% from "tasks/macros/item_actions.jinja" import render_reorder_item_actions %}
 
 {% set page_title = "Workflow template: " ~ object.title %}
+{% set list_include = "tasks/includes/task_queue.jinja" %}
 
 {% set edit_url = "#TODO" %}
 
@@ -33,6 +33,7 @@
       <dd class="govuk-summary-list__value">
         {{ object.pk }}
       </dd>
+      <dd class="govuk-summary-list__actions"></dd>
     </div>
 
     <div class="govuk-summary-list__row">
@@ -62,42 +63,26 @@
 
   <h2 class="govuk-heading-m">Task templates</h2>
 
-  {% if not task_template_items %}
-    <p class="govuk-body">There are currently no task templates for this workflow template.</p>
-  {% else %}
-    <form method="post">
-      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-      <ol class="govuk-task-list">
-        {% set max_position = task_template_items.count() %}
-        {% for task_template_item in task_template_items %}
-          <li class="govuk-task-list__item govuk-task-list__item--with-link">
-            <div class="govuk-task-list__name-and-hint">
-              <a class="govuk-link govuk-task-list__link" href="#TODO">
-                {{- task_template_item.task_template.title -}}
-              </a>
-              {% if task_template_item.task_template.description %}
-                <div class="govuk-task-list__hint">
-                  {{ task_template_item.task_template.description|truncate(50) }}
-                </div>
-              {% endif %}
-            </div>
-            {{ render_reorder_item_actions(task_template_item, max_position) }}
-          </li>
-        {% endfor %}
-      </ol>
-    </form>
-  {% endif %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      {% if object_list %}
+        {% include list_include %}
+      {% else %}
+        <p class="govuk-body">There are no task templates for this workflow template.</p>
+      {% endif %}
+    </div>
+  </div>
 
-<div class="govuk-button-group govuk-!-margin-top-6">
-  {{ govukButton({
-    "text": "Delete workflow template",
-    "href": "#TODO",
-    "classes": "govuk-button--warning"
-  }) }}
-  {{ govukButton({
-    "text": "Find and view workflow templates",
-    "href": "#TODO",
-    "classes": "govuk-button--secondary"
-  }) }}
-</div>
+  <div class="govuk-button-group govuk-!-margin-top-6">
+    {{ govukButton({
+      "text": "Delete workflow template",
+      "href": "#TODO",
+      "classes": "govuk-button--warning"
+    }) }}
+    {{ govukButton({
+      "text": "Find and view workflow templates",
+      "href": "#TODO",
+      "classes": "govuk-button--secondary"
+    }) }}
+  </div>
 {% endblock %}

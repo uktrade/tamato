@@ -1,0 +1,81 @@
+{% from "components/table/macro.njk" import govukTable %}
+{% from "tasks/macros/item_actions.jinja" import move_item %}
+
+{%- set table_rows = [] -%}
+
+{%- for obj in object_list %}
+  {%- set up_down_cell_content %}
+    {% if loop.index == 1 %}
+      {{ move_item(obj, "demote", use_icon=True) }}
+    {% elif loop.index == 2 %}
+      {{ move_item(obj, "promote", use_icon=True) }}
+      <br>
+      {% if 2 < object_list | length %}
+        {{ move_item(obj, "demote", use_icon=True) }}
+      {% endif %}
+    {% elif loop.index == object_list | length %}
+      {{ move_item(obj, "promote", use_icon=True) }}
+    {% else %}
+      {{ move_item(obj, "promote", use_icon=True) }}
+      <br>
+      {{ move_item(obj, "demote", use_icon=True) }}
+    {% endif %}
+  {% endset -%}
+
+  {%- set title_cell_content %}
+    <a href="#TODO" class="govuk-link">{{ obj.title }}</a>
+  {% endset -%}
+
+  {%- set description_cell_content %}
+    <span>{{ obj.description|truncate(50) }}</span>
+  {% endset -%}
+
+  {%- set order_cell_content %}
+    {% if loop.index == 1%}
+      {{ move_item(obj, "demote_to_last") }}
+    {% elif loop.index == object_list | length %}
+      {{ move_item(obj, "promote_to_first") }}
+    {% else %}
+      {{ move_item(obj, "promote_to_first") }}
+      <br>
+      {{ move_item(obj, "demote_to_last") }}
+    {% endif %}
+  {% endset -%}
+
+  {%- set remove_cell_content %}
+    <button
+      class="govuk-link fake-link"
+      name="remove_item"
+      value="{{ obj.pk }}"
+      data-prevent-double-click="true"
+    >
+      Remove
+    </button>
+  {% endset -%}
+
+  {{ table_rows.append([
+    {"html": up_down_cell_content},
+    {"text": loop.index},
+    {"html": title_cell_content},
+    {"html": description_cell_content},
+    {"html": order_cell_content},
+    {"html": remove_cell_content},
+  ]) or "" }}
+
+{% endfor -%}
+
+<form method="post">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+  {{ govukTable({
+    "head": [
+      {"text": ""},
+      {"text": "Position"},
+      {"text": "Title"},
+      {"text": "Description"},
+      {"text": "Order"},
+      {"text": "Remove"},
+    ],
+    "rows": table_rows,
+  }) }}
+</form>
