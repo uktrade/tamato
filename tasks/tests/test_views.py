@@ -5,7 +5,7 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
 from tasks.models import TaskLog
-from tasks.tests.test_workflow_models import TaskItemTemplateFactory
+from tasks.tests.factories import TaskItemTemplateFactory
 
 
 def test_task_update_view_update_progress_state(valid_user_client):

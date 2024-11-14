@@ -1,82 +1,11 @@
-import factory
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from factory import SubFactory
-from factory.django import DjangoModelFactory
 
-from common.tests.factories import CategoryFactory
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
-from tasks.models import TaskWorkflowTemplate
+from tasks.tests import factories
 
 pytestmark = pytest.mark.django_db
-
-
-class TaskWorkflowTemplateFactory(DjangoModelFactory):
-    """Factory to create TaskWorkflowTemplate instances."""
-
-    class Meta:
-        model = TaskWorkflowTemplate
-
-
-class TaskTemplateFactory(DjangoModelFactory):
-    """Factory to create TaskTemplate instances."""
-
-    title = factory.Faker("sentence")
-    description = factory.Faker("sentence")
-    category = factory.SubFactory(CategoryFactory)
-
-    class Meta:
-        model = TaskTemplate
-
-
-class TaskItemTemplateFactory(DjangoModelFactory):
-    """Factory to create TaskItemTemplate instances."""
-
-    class Meta:
-        model = TaskItemTemplate
-
-    queue = SubFactory(TaskWorkflowTemplateFactory)
-    task_template = SubFactory(TaskTemplateFactory)
-
-
-@pytest.fixture()
-def task_workflow_template() -> TaskWorkflowTemplate:
-    """Return an empty TaskWorkflowTemplate instance (containing no items)."""
-    return TaskWorkflowTemplateFactory.create()
-
-
-@pytest.fixture()
-def task_workflow_template_three_task_items(
-    task_workflow_template,
-) -> TaskWorkflowTemplate:
-    """Return a TaskWorkflowTemplate instance containing three TaskItemTemplate
-    and related TaskTemplates."""
-
-    task_item_templates = []
-    for _ in range(3):
-        task_template = TaskTemplateFactory.create()
-        task_item_template = TaskItemTemplateFactory.create(
-            queue=task_workflow_template,
-            task_template=task_template,
-        )
-        task_item_templates.append(task_item_template)
-
-    assert task_workflow_template.get_items().count() == 3
-    assert (
-        TaskItemTemplate.objects.filter(
-            queue=task_workflow_template,
-        ).count()
-        == 3
-    )
-    assert (
-        TaskTemplate.objects.filter(
-            taskitemtemplate__in=task_item_templates,
-        ).count()
-        == 3
-    )
-
-    return task_workflow_template
 
 
 def test_create_task_workflow_from_task_workflow_template(
@@ -114,7 +43,7 @@ def test_create_task_workflow_from_task_workflow_template(
 
 
 def test_delete_task_item_template():
-    task_item_template = TaskItemTemplateFactory.create()
+    task_item_template = factories.TaskItemTemplateFactory.create()
     task_item_template_id = task_item_template.id
     task_template_id = task_item_template.task_template.id
 
@@ -129,7 +58,7 @@ def test_delete_task_item_template():
 
 
 def test_delete_task_template():
-    task_item_template = TaskItemTemplateFactory.create()
+    task_item_template = factories.TaskItemTemplateFactory.create()
     task_item_template_id = task_item_template.id
     task_template = task_item_template.task_template
     task_template_id = task_item_template.task_template.id
