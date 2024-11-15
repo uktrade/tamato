@@ -7,6 +7,7 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
 from tasks.models import TaskLog
+from tasks.models import TaskWorkflowTemplate
 from tasks.tests.factories import TaskItemTemplateFactory
 
 
@@ -101,6 +102,40 @@ def test_workflow_template_detail_view_reorder_items(
         expected_position = convert_to_index(expected_item_order[i])
         expected_item = items[expected_position]
         assert reordered_item.id == expected_item.id
+
+
+def test_workflow_template_create_view(valid_user_client):
+    """Tests that a new workflow template can be created and that the
+    corresponding confirmation view returns a HTTP 200 response."""
+
+    assert not TaskWorkflowTemplate.objects.exists()
+
+    create_url = reverse("workflow:task-workflow-template-ui-create")
+    form_data = {
+        "title": "Test workflow template",
+        "description": "Test description",
+    }
+    create_response = valid_user_client.post(create_url, form_data)
+
+    created_workflow_template = TaskWorkflowTemplate.objects.get(
+        title=form_data["title"],
+        description=form_data["description"],
+    )
+    confirmation_url = reverse(
+        "workflow:task-workflow-template-ui-confirm-create",
+        kwargs={"pk": created_workflow_template.pk},
+    )
+    assert create_response.status_code == 302
+    assert create_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+
+    assert confirmation_response.status_code == 200
+    assert (
+        created_workflow_template.title in soup.select("h1.govuk-panel__title")[0].text
+    )
 
 
 def test_create_task_template_view(valid_user_client, task_workflow_template):

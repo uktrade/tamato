@@ -20,6 +20,7 @@ from tasks.forms import TaskDeleteForm
 from tasks.forms import TaskTemplateCreateForm
 from tasks.forms import TaskTemplateUpdateForm
 from tasks.forms import TaskUpdateForm
+from tasks.forms import TaskWorkflowTemplateCreateForm
 from tasks.models import Task
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
@@ -219,6 +220,25 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
             task_item_template.demote_to_last()
         except OperationalError:
             pass
+
+
+class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
+    model = TaskWorkflowTemplate
+    permission_required = "tasks.add_taskworkflowtemplate"
+    template_name = "tasks/workflows/template_create.jinja"
+    form_class = TaskWorkflowTemplateCreateForm
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-workflow-template-ui-confirm-create",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class TaskWorkflowTemplateConfirmCreateView(PermissionRequiredMixin, DetailView):
+    model = TaskWorkflowTemplate
+    template_name = "tasks/workflows/template_confirm_create.jinja"
+    permission_required = "tasks.add_taskworkflowtemplate"
 
 
 class TaskTemplateDetailView(PermissionRequiredMixin, DetailView):
