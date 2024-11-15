@@ -767,3 +767,15 @@ class DataRow(ValidityMixin, models.Model):
         null=True,
         blank=True,
     )
+
+
+class MissingMeasureCommCode(TimestampedMixin, models.Model):
+    workbasket = models.ForeignKey(
+        WorkBasket,
+        on_delete=models.CASCADE,
+        related_name="missing_measure_comm_codes",
+    )
+    commodity = models.ForeignKey(
+        "commodities.GoodsNomenclature",
+        on_delete=models.CASCADE,
+    )

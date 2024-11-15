@@ -39,7 +39,7 @@ from markdownify import markdownify
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
-from commodities.helpers import get_comm_code_measure_type_103
+from commodities.helpers import get_comm_codes_with_missing_measures
 from commodities.models.orm import GoodsNomenclature
 from commodities.models.orm import GoodsNomenclatureIndent
 from common.filters import TamatoFilter
@@ -72,6 +72,7 @@ from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
+from workbaskets.models import MissingMeasureCommCode
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
@@ -1062,50 +1063,77 @@ class WorkBasketViolationDetail(DetailView):
         return redirect("workbaskets:workbasket-ui-violations")
 
 
-class WorkBasketCommCodeChecks(TemplateView):
-    """UI endpoint for viewing a specified workbasket's business rule
-    violations."""
+def check_for_missing_measures(workbasket):
+    comm_codes = None
+    if any(
+        [
+            isinstance(item, GoodsNomenclature)
+            for item in workbasket.tracked_models.all()
+        ],
+    ):
+        comm_codes = {
+            item
+            for item in workbasket.tracked_models.all()
+            if isinstance(item, GoodsNomenclature)
+        }
+    elif any(
+        [
+            isinstance(item, GoodsNomenclatureIndent)
+            for item in workbasket.tracked_models.all()
+        ],
+    ):
+        comm_codes = {
+            item.indented_goods_nomenclature
+            for item in workbasket.tracked_models.all()
+            if isinstance(item, GoodsNomenclatureIndent)
+        }
 
-    template_name = "workbaskets/comm_code_checks.jinja"
+    # delete any previous checks on workbasket first
+    MissingMeasureCommCode.objects.filter(workbasket=workbasket).delete()
+
+    if comm_codes:
+        codes_w_missing_measures = get_comm_codes_with_missing_measures(
+            comm_codes,
+            date=date.today(),
+        )
+        for comm_code in codes_w_missing_measures:
+            MissingMeasureCommCode.objects.create(
+                workbasket=workbasket,
+                commodity=comm_code,
+            )
+
+
+class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
+    success_url = reverse_lazy("workbaskets:workbasket-ui-comm-code-checks")
+    template_name = "workbaskets/checks/missing_measures.jinja"
+    form_class = forms.WorkbasketMeasuresCheckForm
+
+    model = MissingMeasureCommCode
+    sort_by_fields = ["commodity"]
+    custom_sorting = {
+        "commodity": "commodity__item_id",
+    }
 
     @property
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
+    def get_queryset(self):
+        self.queryset = MissingMeasureCommCode.objects.filter(
+            workbasket=self.workbasket,
+        )
+        return super().get_queryset()
+
+    def form_valid(self, form):
+        check_for_missing_measures(self.workbasket)
+        return super().form_valid(form)
+
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(workbasket=self.workbasket, **kwargs)
-
-        comm_codes = None
-        if any(
-            [
-                isinstance(item, GoodsNomenclature)
-                for item in self.workbasket.tracked_models.all()
-            ],
-        ):
-            comm_codes = {
-                item
-                for item in self.workbasket.tracked_models.all()
-                if isinstance(item, GoodsNomenclature)
-            }
-        elif any(
-            [
-                isinstance(item, GoodsNomenclatureIndent)
-                for item in self.workbasket.tracked_models.all()
-            ],
-        ):
-            comm_codes = {
-                item.indented_goods_nomenclature
-                for item in self.workbasket.tracked_models.all()
-                if isinstance(item, GoodsNomenclatureIndent)
-            }
-
-        if comm_codes:
-            context["measures_check"] = get_comm_code_measure_type_103(
-                comm_codes,
-                date=date.today(),
-            )
-
-        return context
+        return super().get_context_data(
+            workbasket=self.workbasket,
+            selected_tab="measures-check",
+            **kwargs,
+        )
 
 
 class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
@@ -1173,7 +1201,7 @@ class WorkBasketDeleteDone(TemplateView):
 
 class WorkBasketCompare(WithCurrentWorkBasket, FormView):
     success_url = reverse_lazy("workbaskets:workbasket-check-ui-compare")
-    template_name = "workbaskets/compare.jinja"
+    template_name = "workbaskets/checks/worksheet.jinja"
     form_class = forms.WorkbasketCompareForm
 
     @property
@@ -1236,6 +1264,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             workbasket=self.workbasket,
             data_upload=self.data_upload,
             matching_measures=self.matching_measures,
+            selected_tab="worksheet-check",
             *args,
             **kwargs,
         )
@@ -1243,7 +1272,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketChecksView(FormView):
-    template_name = "workbaskets/checks.jinja"
+    template_name = "workbaskets/checks/business_rules.jinja"
     form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.
@@ -1285,16 +1314,7 @@ class WorkBasketChecksView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["comm_code_check"] = False
-        if any(
-            [
-                isinstance(item, GoodsNomenclature)
-                or isinstance(item, GoodsNomenclatureIndent)
-                for item in self.workbasket.tracked_models.all()
-            ],
-        ):
-            context["comm_code_check"] = True
-
+        context["selected_tab"] = "rules-check"
         # set to true if there is an associated goods import batch with an unsent notification
         try:
             import_batch = self.workbasket.importbatch

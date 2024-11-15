@@ -25,7 +25,7 @@ def get_measures_on_declarable_commodities(transaction, item_id, date=None):
     return measure_snapshot.get_applicable_measures(this_commodity)
 
 
-def get_comm_code_measure_type_103(comm_codes, date=None):
+def get_comm_codes_with_missing_measures(comm_codes, date=None):
     output = []
     third_country_duty = MeasureType.objects.get(sid=103)
 
@@ -38,14 +38,13 @@ def get_comm_code_measure_type_103(comm_codes, date=None):
             date,
         )
         if not measures:
-            item = (code, None)
+            output.append(code)
         else:
-            item = (
-                code,
-                measures.filter(
-                    measure_type=third_country_duty,
-                    geographical_area=GeographicalArea.objects.erga_omnes().first(),
-                ),
+            filtered_measures = measures.filter(
+                measure_type=third_country_duty,
+                geographical_area=GeographicalArea.objects.erga_omnes().first(),
             )
-        output.append(item)
+            if not filtered_measures:
+                output.append(code)
+
     return output
