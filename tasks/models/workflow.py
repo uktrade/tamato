@@ -46,6 +46,9 @@ class TaskWorkflow(TaskWorkflowBase):
         TaskItem."""
         return Task.objects.filter(taskitem__queue=self).order_by("taskitem__position")
 
+    def __str__(self):
+        return self.title
+
 
 class TaskItem(QueueItem):
     """Task item queue management for Task instances (these should always be
@@ -126,3 +129,6 @@ class TaskItemTemplate(QueueItem):
 class TaskTemplate(TaskBase):
     """Template used to create Task instances from within a template
     workflow."""
+
+    def __str__(self):
+        return self.title

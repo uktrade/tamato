@@ -1,3 +1,4 @@
+import factory
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
@@ -6,11 +7,7 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
 from tasks.models import TaskLog
-from tasks.tests.test_workflow_models import TaskItemTemplateFactory
-from tasks.tests.test_workflow_models import task_workflow_template  # noqa
-from tasks.tests.test_workflow_models import (  # noqa
-    task_workflow_template_three_task_items,
-)
+from tasks.tests.factories import TaskItemTemplateFactory
 
 
 def test_task_update_view_update_progress_state(valid_user_client):
@@ -75,7 +72,7 @@ def test_workflow_template_detail_view_reorder_items(
     item_position,
     expected_item_order,
     valid_user_client,
-    task_workflow_template_three_task_items,
+    task_workflow_template_three_task_template_items,
 ):
     """Tests that `TaskWorkflowTemplateDetailView` handles POST requests to
     promote or demote task templates."""
@@ -85,12 +82,12 @@ def test_workflow_template_detail_view_reorder_items(
         access."""
         return position - 1
 
-    items = list(task_workflow_template_three_task_items.get_items())
+    items = list(task_workflow_template_three_task_template_items.get_items())
     item_to_move = items[convert_to_index(item_position)]
 
     url = reverse(
         "workflow:task-workflow-template-ui-detail",
-        kwargs={"pk": task_workflow_template_three_task_items.pk},
+        kwargs={"pk": task_workflow_template_three_task_template_items.pk},
     )
     form_data = {
         action: item_to_move.id,
@@ -99,8 +96,62 @@ def test_workflow_template_detail_view_reorder_items(
     response = valid_user_client.post(url, form_data)
     assert response.status_code == 302
 
-    reordered_items = task_workflow_template_three_task_items.get_items()
+    reordered_items = task_workflow_template_three_task_template_items.get_items()
     for i, reordered_item in enumerate(reordered_items):
         expected_position = convert_to_index(expected_item_order[i])
         expected_item = items[expected_position]
         assert reordered_item.id == expected_item.id
+
+
+def test_create_task_template_view(valid_user_client, task_workflow_template):
+    """Test the view for creating new TaskTemplates and the confirmation view
+    that a successful creation redirects to."""
+
+    assert task_workflow_template.get_task_templates().count() == 0
+
+    create_url = reverse(
+        "workflow:task-template-ui-create",
+        kwargs={"workflow_template_pk": task_workflow_template.pk},
+    )
+    form_data = {
+        "title": factory.Faker("sentence"),
+        "description": factory.Faker("sentence"),
+    }
+    create_response = valid_user_client.post(create_url, form_data)
+    created_task_template = task_workflow_template.get_task_templates().get()
+    confirmation_url = reverse(
+        "workflow:task-template-ui-confirm-create",
+        kwargs={"pk": created_task_template.pk},
+    )
+
+    assert create_response.status_code == 302
+    assert task_workflow_template.get_task_templates().count() == 1
+    assert create_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+
+    assert confirmation_response.status_code == 200
+    assert created_task_template.title in soup.select("h1.govuk-panel__title")[0].text
+
+
+def test_task_template_detail_view(
+    valid_user_client,
+    task_workflow_template_single_task_template_item,
+):
+    task_template = (
+        task_workflow_template_single_task_template_item.get_task_templates().get()
+    )
+    url = reverse("workflow:task-template-ui-detail", kwargs={"pk": task_template.pk})
+    response = valid_user_client.get(url)
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+
+    assert response.status_code == 200
+    assert (
+        task_template.title
+        in soup.select("div.govuk-summary-list__row:nth-child(2) > dd:nth-child(2)")[
+            0
+        ].text
+    )

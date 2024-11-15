@@ -17,11 +17,7 @@
 {% endblock %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-    </div>
-  </div>
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
 
   <h2 class="govuk-heading-m">Details</h2>
   
@@ -61,7 +57,19 @@
     </div>
   </dl>
 
-  <h2 class="govuk-heading-m">Task templates</h2>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+      <h2 class="govuk-heading-m">Task templates</h2>
+    </div>
+
+    <div class="govuk-grid-column-one-quarter">
+      {{ govukButton({
+        "text": "Create task template",
+        "href": url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}),
+        "classes": "govuk-button align-right"
+      }) }}
+    </div>
+  </div>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
