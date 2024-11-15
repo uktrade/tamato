@@ -112,6 +112,20 @@ class TaskWorkflowTemplate(TaskWorkflowBase):
 
         return task_workflow
 
+    def get_url(self, action: str = "detail"):
+        if action == "detail":
+            return reverse(
+                "workflow:task-workflow-template-ui-detail",
+                kwargs={"pk": self.pk},
+            )
+        elif action == "edit":
+            return reverse(
+                "workflow:task-workflow-template-ui-update",
+                kwargs={"pk": self.pk},
+            )
+
+        return "#NOT-IMPLEMENTED"
+
 
 class TaskItemTemplate(QueueItem):
     """Queue item management for TaskTemplate instances."""

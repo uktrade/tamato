@@ -118,6 +118,10 @@ class TaskWorkflowTemplateCreateForm(TaskWorkflowTemplateBaseForm):
     pass
 
 
+class TaskWorkflowTemplateUpdateForm(TaskWorkflowTemplateBaseForm):
+    pass
+
+
 class TaskTemplateFormBase(ModelForm):
     class Meta:
         model = TaskTemplate

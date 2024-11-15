@@ -49,9 +49,19 @@ workflow_template_ui_patterns = [
         name="task-workflow-template-ui-create",
     ),
     path(
-        "confirm-create/<int:pk>",
+        "<int:pk>/confirm-create/",
         views.TaskWorkflowTemplateConfirmCreateView.as_view(),
         name="task-workflow-template-ui-confirm-create",
+    ),
+    path(
+        "<int:pk>/update/",
+        views.TaskWorkflowTemplateUpdateView.as_view(),
+        name="task-workflow-template-ui-update",
+    ),
+    path(
+        "<int:pk>/confirm-update/",
+        views.TaskWorkflowTemplateConfirmUpdateView.as_view(),
+        name="task-workflow-template-ui-confirm-update",
     ),
     path(
         "task-templates/<int:pk>/",

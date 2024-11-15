@@ -21,6 +21,7 @@ from tasks.forms import TaskTemplateCreateForm
 from tasks.forms import TaskTemplateUpdateForm
 from tasks.forms import TaskUpdateForm
 from tasks.forms import TaskWorkflowTemplateCreateForm
+from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.models import Task
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
@@ -239,6 +240,25 @@ class TaskWorkflowTemplateConfirmCreateView(PermissionRequiredMixin, DetailView)
     model = TaskWorkflowTemplate
     template_name = "tasks/workflows/template_confirm_create.jinja"
     permission_required = "tasks.add_taskworkflowtemplate"
+
+
+class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
+    model = TaskWorkflowTemplate
+    template_name = "tasks/workflows/template_edit.jinja"
+    permission_required = "tasks.change_taskworkflowtemplate"
+    form_class = TaskWorkflowTemplateUpdateForm
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-workflow-template-ui-confirm-update",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class TaskWorkflowTemplateConfirmUpdateView(PermissionRequiredMixin, DetailView):
+    model = TaskWorkflowTemplate
+    template_name = "tasks/workflows/template_confirm_update.jinja"
+    permission_required = "tasks.change_taskworkflowtemplate"
 
 
 class TaskTemplateDetailView(PermissionRequiredMixin, DetailView):

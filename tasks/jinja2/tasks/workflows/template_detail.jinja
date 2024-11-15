@@ -5,7 +5,7 @@
 {% set page_title = "Workflow template: " ~ object.title %}
 {% set list_include = "tasks/includes/task_queue.jinja" %}
 
-{% set edit_url = "#TODO" %}
+{% set edit_url = object.get_url("edit") %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [

@@ -138,6 +138,42 @@ def test_workflow_template_create_view(valid_user_client):
     )
 
 
+def test_workflow_template_update_view(
+    valid_user_client,
+    task_workflow_template,
+):
+    """Tests that a workflow template can be updated and that the corresponding
+    confirmation view returns a HTTP 200 response."""
+
+    update_url = reverse(
+        "workflow:task-workflow-template-ui-update",
+        kwargs={"pk": task_workflow_template.pk},
+    )
+    form_data = {
+        "title": "Updated test title",
+        "description": "Updated test title",
+    }
+
+    update_response = valid_user_client.post(update_url, form_data)
+    assert update_response.status_code == 302
+
+    task_workflow_template.refresh_from_db()
+    assert task_workflow_template.title == form_data["title"]
+    assert task_workflow_template.description == form_data["description"]
+
+    confirmation_url = reverse(
+        "workflow:task-workflow-template-ui-confirm-update",
+        kwargs={"pk": task_workflow_template.pk},
+    )
+    assert update_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+    assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    assert task_workflow_template.title in soup.select("h1.govuk-panel__title")[0].text
+
+
 def test_create_task_template_view(valid_user_client, task_workflow_template):
     """Test the view for creating new TaskTemplates and the confirmation view
     that a successful creation redirects to."""
