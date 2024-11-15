@@ -52,6 +52,26 @@ ui_patterns = [
         name="workbasket-checks",
     ),
     path(
+        f"rule-check-queue/",
+        ui_views.RuleCheckQueueView.as_view(),
+        name="rule-check-queue",
+    ),
+    path(
+        f"current/violations/",
+        ui_views.WorkBasketViolations.as_view(),
+        name="workbasket-ui-violations",
+    ),
+    path(
+        f"current/comm-code-checks/",
+        ui_views.WorkBasketCommCodeChecks.as_view(),
+        name="workbasket-ui-comm-code-checks",
+    ),
+    path(
+        f"current/worksheet-check/",
+        ui_views.WorkBasketCompare.as_view(),
+        name="workbasket-check-ui-compare",
+    ),
+    path(
         f"<pk>/review-additional-codes/",
         ui_views.WorkBasketReviewAdditionalCodesView.as_view(),
         name="workbasket-ui-review-additional-codes",
@@ -117,16 +137,6 @@ ui_patterns = [
         name="workbasket-ui-review-regulations",
     ),
     path(
-        f"current/violations/",
-        ui_views.WorkBasketViolations.as_view(),
-        name="workbasket-ui-violations",
-    ),
-    path(
-        f"current/comm-code-checks/",
-        ui_views.WorkBasketCommCodeChecks.as_view(),
-        name="workbasket-ui-comm-code-checks",
-    ),
-    path(
         f"<pk>/confirm-create/",
         ui_views.WorkBasketConfirmCreate.as_view(),
         name="workbasket-ui-confirm-create",
@@ -137,19 +147,9 @@ ui_patterns = [
         name="workbasket-ui-confirm-update",
     ),
     path(
-        f"compare/",
-        ui_views.WorkBasketCompare.as_view(),
-        name="workbasket-check-ui-compare",
-    ),
-    path(
         "no-active-workbasket/",
         ui_views.NoActiveWorkBasket.as_view(),
         name="no-active-workbasket",
-    ),
-    path(
-        f"rule-check-queue/",
-        ui_views.RuleCheckQueueView.as_view(),
-        name="rule-check-queue",
     ),
     path(
         f"<pk>/",

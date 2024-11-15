@@ -133,16 +133,14 @@ govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--seco
   {% set rule_check_block %}{% endset %}
 {% endif %}
 {{rule_check_block}}
-<dl class="govuk-summary-list govuk-!-margin-bottom-0">
-  <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Live rule check status
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ live_rule_check_status }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        {{ rule_check_button }}
-      </dd>
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-one-quarter">
+    <h2 class="govuk-heading-s">Live rule check status</h2>
   </div>
-</dl>
+  <div class="govuk-grid-column-one-half">
+    {{ live_rule_check_status }}
+  </div>
+  <div class="govuk-grid-column-one-quarter">
+    {{ rule_check_button }}
+  </div>
+</div>

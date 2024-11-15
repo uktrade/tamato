@@ -1,0 +1,84 @@
+{% extends "workbaskets/checks/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+
+{% set page_title %}Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Commodity code check results {% endset %}
+
+{% block tab_content %}
+  <h2 class="govuk-heading-s">Missing measures check</h2>
+  {% if not workbasket.missing_measure_comm_codes.count() %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">No missing measures check has been performed yet</p>
+    </div>
+    <div class="govuk-grid-column-one-third">
+      <form
+        style="float:right"
+        method="post"
+        class="govuk-!-display-inline-block govuk-!-margin-left-5"
+      >
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+        {{ govukButton({
+          "text": "Run missing measures check",
+          "classes": "",
+          "name": "form-action",
+          "value": "submit",
+          "preventDoubleClick": true,
+        }) }}
+      </form>
+    </div>
+  </div>
+
+  {% else %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">The following commodity codes are missing a type 103 measure</p>
+    </div>
+    <div class="govuk-grid-column-one-third">
+      <form
+        method="post"
+      >
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+        {{ govukButton({
+          "text": "Re-run missing measures check",
+          "classes": "",
+          "name": "form-action",
+          "value": "submit",
+          "preventDoubleClick": true,
+        }) }}
+      </form>
+    </div>
+  </div>
+
+  {% set base_url = url("workbaskets:workbasket-ui-comm-code-checks") %}
+
+  {% set commodity_code %}
+    {{ create_sortable_anchor(request, "commodity", "Commodity code", base_url) }}
+  {% endset %}
+
+  {% set table_rows = [] %}
+  {% for check in object_list %}
+    {% set link -%}
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', kwargs={'sid': check.commodity.sid}) }}">{{ check.commodity.item_id }}</a>
+    {%- endset %}
+    {{ table_rows.append([
+      {"html": link},
+      {"text": check.commodity.get_description().description if check.commodity.get_description().description else "—"},
+    ]) or "" }}
+  {% endfor %}
+  {{ govukTable({
+    "head": [
+      {"text": commodity_code},
+      {"text": "Description"},
+    ],
+    "rows": table_rows
+  }) }}
+  {% endif %}
+{% endblock %}
