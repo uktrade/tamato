@@ -109,6 +109,37 @@ def test_create_subtask_button_shows_only_for_non_parent_tasks(
         assert not page.find("a", href=f"/tasks/{task.pk}/subtasks/create")
 
 
+def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
+    """Tests that the SubtaskCreateForm errors when a form is submitted that has
+    a subtask as a parent."""
+
+    subtask_parent = SubTaskFactory.create()
+    progress_state = ProgressStateFactory.create()
+
+    subtask_form_data = {
+        "progress_state": progress_state.pk,
+        "title": "subtask test title",
+        "description": "subtask test description",
+    }
+
+    url = reverse(
+        "workflow:subtask-ui-create",
+        kwargs={
+            "pk": subtask_parent.pk,
+        },
+    )
+
+    response = valid_user_client.post(url, subtask_form_data)
+
+    assert response.status_code == 200
+    assert not response.context_data["form"].is_valid()
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    assert (
+        "You cannot make a subtask from a subtask."
+        in soup.find("div", class_="govuk-error-summary").text
+    )
+
+
 def test_workflow_template_detail_view_displays_task_templates(valid_user_client):
     task_item_template = TaskItemTemplateFactory.create()
     task_template = task_item_template.task_template
