@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.transaction import atomic
+from django.urls import reverse
 
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
@@ -42,8 +43,12 @@ class TaskWorkflow(TaskWorkflowBase):
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
-        instances to this TaskWorkflow."""
-        return Task.objects.filter(taskitem__queue=self)
+        instances to this TaskWorkflow, ordered by the position of the
+        TaskItem."""
+        return Task.objects.filter(taskitem__queue=self).order_by("taskitem__position")
+
+    def __str__(self):
+        return self.title
 
 
 class TaskItem(QueueItem):
@@ -72,8 +77,11 @@ class TaskWorkflowTemplate(TaskWorkflowBase):
 
     def get_task_templates(self) -> models.QuerySet:
         """Get a QuerySet of the TaskTemplates associated through their
-        TaskItemTemplate instances to this TaskWorkflowTemplate."""
-        return TaskTemplate.objects.filter(taskitemtemplate__queue=self)
+        TaskItemTemplate instances to this TaskWorkflowTemplate, ordered by the
+        position of the TaskItemTemplate."""
+        return TaskTemplate.objects.filter(taskitemtemplate__queue=self).order_by(
+            "taskitemtemplate__position",
+        )
 
     @atomic
     def create_task_workflow(self) -> "TaskWorkflow":
@@ -122,3 +130,14 @@ class TaskItemTemplate(QueueItem):
 class TaskTemplate(TaskBase):
     """Template used to create Task instances from within a template
     workflow."""
+
+    def get_url(self, action: str = "detail"):
+        if action == "detail":
+            return reverse("workflow:task-template-ui-detail", kwargs={"pk": self.pk})
+        elif action == "edit":
+            return reverse("workflow:task-template-ui-update", kwargs={"pk": self.pk})
+
+        return "#NOT-IMPLEMENTED"
+
+    def __str__(self):
+        return self.title

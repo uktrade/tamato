@@ -311,6 +311,10 @@ def policy_group(db) -> Group:
         ("tasks", "change_comment"),
         ("tasks", "delete_comment"),
         ("tasks", "view_taskworkflowtemplate"),
+        ("tasks", "add_tasktemplate"),
+        ("tasks", "change_tasktemplate"),
+        ("tasks", "delete_tasktemplate"),
+        ("tasks", "view_tasktemplate"),
     ]:
         group.permissions.add(
             Permission.objects.get(

@@ -1,4 +1,12 @@
 {% set table_rows = [] %}
+{% set table_head = [
+                {"text": "Order number"},
+                {"text": "Relationship type"},
+                {"text": "Co-efficient"},
+              ] %}
+{% if sub_quota_associations %}
+  {{ table_head.append({"text": "Actions"}) or "" }}
+{% endif %}
 {% for object in sub_quota_associations %}
   {% set sub_quota_link %}
     <a class="govuk-link govuk-!-font-weight-bold"
@@ -36,7 +44,6 @@
     {"html": main_quota_link},
     {"html": object.get_sub_quota_relation_type_display()},
     {"text": object.coefficient},
-    {"text": actions_html }
   ]) or "" }}
 {% endfor %}
 
@@ -51,12 +58,7 @@
           {% endif %}
           {{
             govukTable({
-              "head": [
-                {"text": "Order number"},
-                {"text": "Relationship type"},
-                {"text": "Co-efficient"},
-                {"text": "Actions"}
-              ],
+              "head": table_head,
               "rows": table_rows
             })
           }}

@@ -38,17 +38,45 @@ task_ui_patterns = [
     ),
 ]
 
+workflow_ui_patterns = [
+    # TODO
+]
+
 workflow_template_ui_patterns = [
     path(
-        "templates/<int:pk>/",
+        "<int:pk>/",
         views.TaskWorkflowTemplateDetailView.as_view(),
         name="task-workflow-template-ui-detail",
     ),
+    path(
+        "task-templates/<int:pk>/",
+        views.TaskTemplateDetailView.as_view(),
+        name="task-template-ui-detail",
+    ),
+    path(
+        "<int:workflow_template_pk>/task-templates/create/",
+        views.TaskTemplateCreateView.as_view(),
+        name="task-template-ui-create",
+    ),
+    path(
+        "task-templates/confirm-create/<int:pk>/",
+        views.TaskTemplateConfirmCreateView.as_view(),
+        name="task-template-ui-confirm-create",
+    ),
+    path(
+        "task-templates/<int:pk>/update/",
+        views.TaskTemplateUpdateView.as_view(),
+        name="task-template-ui-update",
+    ),
+    path(
+        "task-templates/confirm-update/<int:pk>/",
+        views.TaskTemplateConfirmUpdateView.as_view(),
+        name="task-template-ui-confirm-update",
+    ),
 ]
-
-workflow_ui_patterns = workflow_template_ui_patterns
 
 urlpatterns = [
     path("tasks/", include(task_ui_patterns)),
     path("workflows/", include(workflow_ui_patterns)),
+    path("workflow-templates/", include(workflow_template_ui_patterns)),
 ]
