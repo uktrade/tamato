@@ -18,6 +18,7 @@ from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
 from tasks.forms import TaskTemplateCreateForm
+from tasks.forms import TaskTemplateUpdateForm
 from tasks.forms import TaskUpdateForm
 from tasks.models import Task
 from tasks.models import TaskItemTemplate
@@ -234,7 +235,7 @@ class TaskTemplateDetailView(PermissionRequiredMixin, DetailView):
 
 
 class TaskTemplateCreateView(PermissionRequiredMixin, CreateView):
-    template_name = "tasks/workflows/task_template_create.jinja"
+    template_name = "tasks/workflows/task_template_save.jinja"
     form_class = TaskTemplateCreateForm
     permission_required = "tasks.add_tasktemplate"
 
@@ -247,6 +248,7 @@ class TaskTemplateCreateView(PermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
+        context["page_title"] = "Create a task template"
         context["task_workflow_template"] = self.get_task_workflow_template()
 
         return context
@@ -271,6 +273,40 @@ class TaskTemplateCreateView(PermissionRequiredMixin, CreateView):
 class TaskTemplateConfirmCreateView(PermissionRequiredMixin, DetailView):
     model = TaskTemplate
     template_name = "tasks/workflows/task_template_confirm_create.jinja"
+    permission_required = "tasks.add_tasktemplate"
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+
+        context["task_workflow_template"] = self.get_object().taskitemtemplate.queue
+
+        return context
+
+
+class TaskTemplateUpdateView(PermissionRequiredMixin, UpdateView):
+    model = TaskTemplate
+    template_name = "tasks/workflows/task_template_save.jinja"
+    permission_required = "tasks.change_tasktemplate"
+    form_class = TaskTemplateUpdateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["page_title"] = f"Update task template: {self.get_object().title}"
+        context["task_workflow_template"] = self.get_object().taskitemtemplate.queue
+
+        return context
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-template-ui-confirm-update",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class TaskTemplateConfirmUpdateView(PermissionRequiredMixin, DetailView):
+    model = TaskTemplate
+    template_name = "tasks/workflows/task_template_confirm_update.jinja"
     permission_required = "tasks.add_tasktemplate"
 
     def get_context_data(self, **kwargs) -> dict:

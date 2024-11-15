@@ -40,7 +40,7 @@
       <dt class="govuk-summary-list__key">Title</dt>
       <dd class="govuk-summary-list__value">{{ object.title }}</dd>
       <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href="#TODO">Change<span class="govuk-visually-hidden"> title</span></a>
+        <a class="govuk-link" href="{{ object.get_url(action='edit') }}">Change<span class="govuk-visually-hidden"> title</span></a>
       </dd>
     </div>
 
@@ -48,7 +48,7 @@
       <dt class="govuk-summary-list__key">Description</dt>
       <dd class="govuk-summary-list__value">{{ object.description }}</dd>
       <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href="#TODO">Change<span class="govuk-visually-hidden"> description</span></a>
+        <a class="govuk-link" href="{{ object.get_url(action='edit') }}">Change<span class="govuk-visually-hidden"> description</span></a>
       </dd>
     </div>
   </dl>

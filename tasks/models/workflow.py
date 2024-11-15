@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.transaction import atomic
+from django.urls import reverse
 
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
@@ -129,6 +130,14 @@ class TaskItemTemplate(QueueItem):
 class TaskTemplate(TaskBase):
     """Template used to create Task instances from within a template
     workflow."""
+
+    def get_url(self, action: str = "detail"):
+        if action == "detail":
+            return reverse("workflow:task-template-ui-detail", kwargs={"pk": self.pk})
+        elif action == "edit":
+            return reverse("workflow:task-template-ui-update", kwargs={"pk": self.pk})
+
+        return "#NOT-IMPLEMENTED"
 
     def __str__(self):
         return self.title

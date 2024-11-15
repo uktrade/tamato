@@ -58,6 +58,16 @@ workflow_template_ui_patterns = [
         views.TaskTemplateConfirmCreateView.as_view(),
         name="task-template-ui-confirm-create",
     ),
+    path(
+        "task-templates/<int:pk>/update/",
+        views.TaskTemplateUpdateView.as_view(),
+        name="task-template-ui-update",
+    ),
+    path(
+        "task-templates/confirm-update/<int:pk>/",
+        views.TaskTemplateConfirmUpdateView.as_view(),
+        name="task-template-ui-confirm-update",
+    ),
 ]
 
 urlpatterns = [
