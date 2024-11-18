@@ -96,7 +96,7 @@ class TaskWorkflowTemplateBaseForm(ModelForm):
             },
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, submit_title, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper(self)
@@ -107,7 +107,7 @@ class TaskWorkflowTemplateBaseForm(ModelForm):
             "description",
             Submit(
                 "submit",
-                "Save",
+                submit_title,
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
@@ -115,11 +115,13 @@ class TaskWorkflowTemplateBaseForm(ModelForm):
 
 
 class TaskWorkflowTemplateCreateForm(TaskWorkflowTemplateBaseForm):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, submit_title="Create", **kwargs)
 
 
 class TaskWorkflowTemplateUpdateForm(TaskWorkflowTemplateBaseForm):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, submit_title="Update", **kwargs)
 
 
 class TaskTemplateFormBase(ModelForm):
