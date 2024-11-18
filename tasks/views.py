@@ -76,6 +76,11 @@ class TaskConfirmCreateView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/confirm_create.jinja"
     permission_required = "tasks.add_task"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "task"
+        return context
+
 
 class TaskUpdateView(PermissionRequiredMixin, UpdateView):
     model = Task
@@ -133,16 +138,36 @@ class SubTaskCreateView(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["page_title"] = "Create a subtask"
+        context["page_title"] = f"Create a subtask for task {self.kwargs["pk"]}"
         return context
 
     def form_valid(self, form):
         parent_task = Task.objects.filter(pk=self.kwargs["pk"]).first()
-        self.object = form.save(parent_task, user=self.request.user)
-        return HttpResponseRedirect(self.get_success_url())
+        if parent_task.parent_task:
+            form.add_error(
+                None,
+                "You cannot make a subtask from a subtask.",
+            )
+            return self.form_invalid(form)
+        else:
+            self.object = form.save(parent_task, user=self.request.user)
+            return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse("workflow:task-ui-confirm-create", kwargs={"pk": self.object.pk})
+        return reverse(
+            "workflow:subtask-ui-confirm-create",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class SubTaskConfirmCreateView(DetailView):
+    model = Task
+    template_name = "tasks/confirm_create.jinja"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "subtask"
+        return context
 
 
 class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
