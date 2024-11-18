@@ -111,5 +111,12 @@
     "href": url("workflow:task-ui-list"),
     "classes": "govuk-button--secondary"
   }) }}
+  {% if not object.parent_task %}
+    {{ govukButton({
+      "text": "Create subtask",
+      "href": url("workflow:subtask-ui-create", kwargs={"pk": object.pk}),
+      "classes": "govuk-button--secondary"
+    }) }}
+  {% endif %}
 </div>
 {% endblock %}

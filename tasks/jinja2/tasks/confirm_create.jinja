@@ -4,29 +4,29 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Task created" %}
+{% set page_title = verbose_name|capitalize ~ " created" %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("home")},
-      {"text": "Create a new task", "href": url("workflow:task-ui-create") },
-      {"text": "Task created"}
+      {"text": "Create a new " ~ verbose_name, "href": url("workflow:task-ui-create") },
+      {"text": verbose_name|capitalize ~ " created"}
     ]
   }) }}
 {% endblock %}
 
 {% block panel %}
   {{ govukPanel({
-    "titleText": "Task: " ~ object.title,
-    "text": "You have created a new task",
+    "titleText": verbose_name|capitalize ~ ": " ~ object.title,
+    "text": "You have created a new " ~ verbose_name,
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}
 
 {% block button_group %}
   {{ govukButton({
-    "text": "View task",
+    "text": "View " ~ verbose_name,
     "href": url('workflow:task-ui-detail', kwargs={"pk": object.pk}),
     "classes": "govuk-button"
   }) }}
