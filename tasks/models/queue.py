@@ -125,6 +125,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         self.__class__.objects.select_for_update(nowait=True).filter(
             position__gt=instance.position,
+            queue=instance.queue,
         ).update(position=models.F("position") - 1)
 
         return super().delete()
@@ -145,6 +146,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         item_to_demote = self.__class__.objects.select_for_update(nowait=True).get(
             position=instance.position - 1,
+            queue=instance.queue,
         )
         item_to_demote.position += 1
         instance.position -= 1
@@ -169,6 +171,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         item_to_promote = self.__class__.objects.select_for_update(nowait=True).get(
             position=instance.position + 1,
+            queue=instance.queue,
         )
         item_to_promote.position -= 1
         instance.position += 1
@@ -194,7 +197,8 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
             return instance
 
         self.__class__.objects.select_for_update(nowait=True).filter(
-            models.Q(position__lt=instance.position),
+            position__lt=instance.position,
+            queue=instance.queue,
         ).update(position=models.F("position") + 1)
 
         instance.position = 1
@@ -221,6 +225,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         self.__class__.objects.select_for_update(nowait=True).filter(
             position__gt=instance.position,
+            queue=instance.queue,
         ).update(position=models.F("position") - 1)
 
         instance.position = last_place
