@@ -314,7 +314,8 @@ class SubQuotaDefinitionAssociationMixin:
 
 class SubQuotaDefinitionAssociationUpdate(
     SubQuotaDefinitionAssociationMixin,
-    QuotaDefinitionUpdate,
+    QuotaDefinitionUpdateMixin,
+    CreateTaricUpdateView,
 ):
 
     @transaction.atomic
