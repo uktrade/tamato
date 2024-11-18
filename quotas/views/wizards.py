@@ -356,6 +356,8 @@ class QuotaDefinitionBulkCreatorWizard(
     def format_date(self, date_str):
         """Parses and converts a date string from that used for storing data to
         the one used in the TAP UI."""
+        # TODO: factor this out to a helper function/into the other formatters
+        # it's identical to the one used in the duplicator
         if date_str:
             date_object = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
             return date_object.strftime(DATE_FORMAT)
@@ -408,7 +410,3 @@ class QuotaDefinitionBulkCreatorUpdateDefinitionData(
 
 class QuotaDefinitionBulkCreateSuccess(TemplateView):
     template_name = "quota-definitions/bulk-create-done.jinja"
-
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
-    #     return context

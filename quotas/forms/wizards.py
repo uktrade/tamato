@@ -135,9 +135,6 @@ class SelectedDefinitionsForm(forms.Form):
 
 class BulkQuotaDefinitionCreateStartForm(forms.Form):
     pass
-    # def __init__(self, *args, **kwargs):
-    #     self.request = kwargs.pop("request")
-    #     super().__init__(*args, **kwargs)
 
 
 class BulkQuotaDefinitionCreateInitialInformation(forms.Form):
@@ -183,7 +180,6 @@ class BulkQuotaDefinitionCreateInitialInformation(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        # save the initial information to session
         self.save_initial_data_to_session(cleaned_data)
         return cleaned_data
 
@@ -210,6 +206,7 @@ class BulkQuotaDefinitionCreateInitialInformation(forms.Form):
         )
 
 
+# TODO: Investigate extending QuotaDefinitionCreateForm here
 class QuotaDefinitionBulkCreateDefinitionInformation(
     ValidityPeriodForm,
     forms.Form,
@@ -428,6 +425,7 @@ class BulkQuotaDefinitionCreateReviewForm(forms.Form):
         super().__init__(*args, **kwargs)
 
 
+# TODO: Investigate extending QuotaDefinitionCreateForm here
 class BulkDefinitionUpdateData(
     ValidityPeriodForm,
     forms.Form,

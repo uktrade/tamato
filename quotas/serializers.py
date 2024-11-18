@@ -335,7 +335,7 @@ def deserialize_bulk_create_definition_data(definition, order_number):
         code=definition["measurement_unit_code"],
     )
     valid_between = TaricDateRange(start_date, end_date)
-    order_number_obj = models.QuotaOrderNumber.objects.current().get(
+    order_number_obj = models.QuotaOrderNumber.objects.get(
         pk=order_number,
     )
     staged_data = {
