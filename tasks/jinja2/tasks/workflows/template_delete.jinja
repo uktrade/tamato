@@ -1,0 +1,56 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Delete workflow template: " ~ object.title %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {"text": "Find and view workflow templates", "href": "#TODO"},
+      {
+        "text": "Workflow template: " ~ object.title,
+        "href": object.get_url("detail"),
+      },
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
+
+{% block form %}
+  {% if task_templates %}
+    <p class="govuk-body">The workflow template contains the following task templates which will not be deleted:</p>
+    <ol class="govuk-task-list">
+      {% for task_template in task_templates %}
+        <li class="govuk-task-list__item govuk-task-list__item--with-link">
+        <div class="govuk-task-list__name-and-hint">
+            <a
+              class="govuk-link govuk-task-list__link"
+              href={{ task_template.get_url("detail") }}
+              rel="noreferrer noopener" target="_blank"
+            >
+              {{- task_template.title -}} <span class="govuk-visually-hidden"> (opens in new tab)</span>
+            </a>
+            {% if task_template.description %}
+              <div class="govuk-task-list__hint">
+                {{ task_template.description|truncate(50) }}
+              </div>
+            {% endif %}
+        </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% endif %}
+
+  {{ govukWarningText({
+    "text": "Are you sure you want to delete this workflow template?"
+  }) }}
+
+  {% call django_form(action=object.get_url("delete")) %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}
