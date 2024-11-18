@@ -18,6 +18,7 @@ from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
 from tasks.forms import TaskTemplateCreateForm
+from tasks.forms import TaskTemplateDeleteForm
 from tasks.forms import TaskTemplateUpdateForm
 from tasks.forms import TaskUpdateForm
 from tasks.models import Task
@@ -338,5 +339,48 @@ class TaskTemplateConfirmUpdateView(PermissionRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         context["task_workflow_template"] = self.get_object().taskitemtemplate.queue
+
+        return context
+
+
+class TaskTemplateDeleteView(PermissionRequiredMixin, DeleteView):
+    model = TaskTemplate
+    template_name = "tasks/workflows/task_template_delete.jinja"
+    permission_required = "tasks.delete_tasktemplate"
+    form_class = TaskTemplateDeleteForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = self.object
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["task_workflow_template"] = self.get_object().taskitemtemplate.queue
+
+        return context
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-template-ui-confirm-delete",
+            kwargs={
+                "workflow_template_pk": self.kwargs["workflow_template_pk"],
+                "pk": self.object.pk,
+            },
+        )
+
+
+class TaskTemplateConfirmDeleteView(PermissionRequiredMixin, TemplateView):
+    template_name = "tasks/workflows/task_template_confirm_delete.jinja"
+    permission_required = "tasks.delete_tasktemplate"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["deleted_pk"] = self.kwargs["pk"]
+        context["task_workflow_template"] = TaskWorkflowTemplate.objects.get(
+            pk=self.kwargs["workflow_template_pk"],
+        )
 
         return context

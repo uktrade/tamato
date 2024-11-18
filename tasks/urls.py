@@ -73,6 +73,16 @@ workflow_template_ui_patterns = [
         views.TaskTemplateConfirmUpdateView.as_view(),
         name="task-template-ui-confirm-update",
     ),
+    path(
+        "<int:workflow_template_pk>/task-templates/<int:pk>/delete/",
+        views.TaskTemplateDeleteView.as_view(),
+        name="task-template-ui-delete",
+    ),
+    path(
+        "<int:workflow_template_pk>/task-templates/<int:pk>/confirm-delete/",
+        views.TaskTemplateConfirmDeleteView.as_view(),
+        name="task-template-ui-confirm-delete",
+    ),
 ]
 
 urlpatterns = [

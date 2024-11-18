@@ -112,3 +112,6 @@ class TaskTemplateCreateForm(TaskTemplateFormBase):
 class TaskTemplateUpdateForm(TaskTemplateFormBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, submit_title="Update", **kwargs)
+
+
+TaskTemplateDeleteForm = delete_form_for(TaskTemplate)

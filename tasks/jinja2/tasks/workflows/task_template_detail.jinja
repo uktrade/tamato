@@ -56,7 +56,14 @@
   <div class="govuk-button-group govuk-!-margin-top-6">
   {{ govukButton({
       "text": "Delete task template",
-      "href": "#TODO",
+      "href": url(
+        "workflow:task-template-ui-delete",
+        kwargs={
+          "workflow_template_pk": task_workflow_template.pk,
+          "pk": object.pk,
+        },
+      ),
+
       "classes": "govuk-button--warning"
   }) }}
   </div>
