@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db import transaction
 from django.urls import reverse
@@ -66,6 +67,8 @@ class TaskBase(TimestampedMixin):
 
 
 class Task(TaskBase):
+    PARENT_SUBTASK_ERROR_MSG = "A subtask can not be a parent of another subtask."
+
     progress_state = models.ForeignKey(
         ProgressState,
         default=ProgressState.get_default_state_id,
@@ -93,6 +96,11 @@ class Task(TaskBase):
     )
 
     objects = TaskManager.from_queryset(TaskQueryset)()
+
+    def clean(self):
+        if self.parent_task and self.parent_task.parent_task_id:
+            raise ValidationError(self.PARENT_SUBTASK_ERROR_MSG)
+        return super().clean()
 
     def __str__(self):
         return self.title

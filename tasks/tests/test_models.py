@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 
 from common.tests.factories import CategoryFactory
@@ -16,6 +17,12 @@ def test_task_category_uniqueness():
     CategoryFactory.create(name=name)
     with pytest.raises(IntegrityError):
         CategoryFactory.create(name=name)
+
+
+def test_task_clean(subtask):
+    with pytest.raises(ValidationError):
+        subsubtask = TaskFactory.build(parent_task=subtask)
+        subsubtask.full_clean()
 
 
 def test_task_progress_state_uniqueness():

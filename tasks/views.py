@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ValidationError
 from django.db import OperationalError
 from django.db import transaction
 from django.http import HttpResponseRedirect
@@ -143,16 +144,22 @@ class SubTaskCreateView(PermissionRequiredMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        parent_task = Task.objects.filter(pk=self.kwargs["pk"]).first()
-        if parent_task.parent_task:
-            form.add_error(
-                None,
-                "You cannot make a subtask from a subtask.",
-            )
+        self.object = form.save(
+            parent_task=Task.objects.get(pk=self.kwargs["pk"]),
+            user=self.request.user,
+            commit=False,
+        )
+
+        try:
+            self.object.full_clean()
+        except ValidationError as error:
+            for message in error.messages:
+                form.add_error(field=None, error=message)
             return self.form_invalid(form)
-        else:
-            self.object = form.save(parent_task, user=self.request.user)
-            return HttpResponseRedirect(self.get_success_url())
+
+        self.objectj.save()
+
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
         return reverse(

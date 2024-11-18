@@ -7,6 +7,7 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
+from tasks.models import Task
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskLog
 from tasks.models import TaskTemplate
@@ -139,7 +140,7 @@ def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
     assert not response.context_data["form"].is_valid()
     soup = BeautifulSoup(str(response.content), "html.parser")
     assert (
-        "You cannot make a subtask from a subtask."
+        Task.PARENT_SUBTASK_ERROR_MSG
         in soup.find("div", class_="govuk-error-summary").text
     )
 
