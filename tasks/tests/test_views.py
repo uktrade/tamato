@@ -7,7 +7,9 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
+from tasks.models import TaskItemTemplate
 from tasks.models import TaskLog
+from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflowTemplate
 from tasks.tests.factories import TaskItemTemplateFactory
 
@@ -378,3 +380,60 @@ def test_update_task_template_view(
 
     assert confirmation_response.status_code == 200
     assert updated_task_template.title in soup.select("h1.govuk-panel__title")[0].text
+
+
+def test_delete_task_template_view(
+    valid_user_client,
+    task_workflow_template_single_task_template_item,
+):
+    """Test the view for deleting TaskTemplates and the confirmation view that a
+    successful deletion redirects to."""
+
+    assert (
+        task_workflow_template_single_task_template_item.get_task_templates().count()
+        == 1
+    )
+    assert task_workflow_template_single_task_template_item.get_items().count() == 1
+
+    task_template_pk = (
+        task_workflow_template_single_task_template_item.get_task_templates().get().pk
+    )
+    task_item_template_pk = (
+        task_workflow_template_single_task_template_item.get_items().get().pk
+    )
+    delete_url = reverse(
+        "workflow:task-template-ui-delete",
+        kwargs={
+            "workflow_template_pk": task_workflow_template_single_task_template_item.pk,
+            "pk": task_template_pk,
+        },
+    )
+
+    delete_response = valid_user_client.post(delete_url)
+    task_workflow_template_after = TaskWorkflowTemplate.objects.get(
+        pk=task_workflow_template_single_task_template_item.pk,
+    )
+
+    confirmation_url = reverse(
+        "workflow:task-template-ui-confirm-delete",
+        kwargs={
+            "workflow_template_pk": task_workflow_template_single_task_template_item.pk,
+            "pk": task_template_pk,
+        },
+    )
+
+    assert delete_response.status_code == 302
+    assert delete_response.url == confirmation_url
+    assert task_workflow_template_after.get_task_templates().count() == 0
+    assert not TaskTemplate.objects.filter(pk=task_template_pk)
+    assert not TaskItemTemplate.objects.filter(pk=task_item_template_pk)
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+
+    assert confirmation_response.status_code == 200
+    assert (
+        f"Task template ID: {task_template_pk}"
+        in soup.select(".govuk-panel__title")[0].text
+    )
