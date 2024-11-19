@@ -6,37 +6,50 @@ from tasks import views
 app_name = "workflow"
 
 task_ui_patterns = [
+    # Task urls
     path("", views.TaskListView.as_view(), name="task-ui-list"),
     path("<int:pk>/", views.TaskDetailView.as_view(), name="task-ui-detail"),
     path("create/", views.TaskCreateView.as_view(), name="task-ui-create"),
     path(
-        "<int:pk>/confirm-create",
+        "<int:pk>/confirm-create/",
         views.TaskConfirmCreateView.as_view(),
         name="task-ui-confirm-create",
     ),
     path("<int:pk>/update/", views.TaskUpdateView.as_view(), name="task-ui-update"),
     path(
-        "<int:pk>/confirm-update",
+        "<int:pk>/confirm-update/",
         views.TaskConfirmUpdateView.as_view(),
         name="task-ui-confirm-update",
     ),
     path("<int:pk>/delete/", views.TaskDeleteView.as_view(), name="task-ui-delete"),
     path(
-        "<int:pk>/confirm-delete",
+        "<int:pk>/confirm-delete/",
         views.TaskConfirmDeleteView.as_view(),
         name="task-ui-confirm-delete",
     ),
+    # Subtask urls
     path(
-        "<int:pk>/subtasks/create",
+        "<int:parent_task_pk>/subtasks/create/",
         views.SubTaskCreateView.as_view(),
         name="subtask-ui-create",
     ),
     path(
-        "subtasks/<int:pk>/confirm-create/",
+        "subtasks/confirm-create/<int:pk>/",
         views.SubTaskConfirmCreateView.as_view(),
         name="subtask-ui-confirm-create",
     ),
+    path(
+        "subtasks/<int:pk>/update/",
+        views.SubTaskUpdateView.as_view(),
+        name="subtask-ui-update",
+    ),
+    path(
+        "subtasks/confirm-update/<int:pk>/",
+        views.SubTaskConfirmUpdateView.as_view(),
+        name="subtask-ui-confirm-update",
+    ),
 ]
+
 
 workflow_ui_patterns = [
     # TODO
