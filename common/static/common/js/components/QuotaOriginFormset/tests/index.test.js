@@ -149,9 +149,9 @@ describe("QuotaOriginFormset", () => {
 
     // add an empty origin
     fireEvent.click(screen.getByText("Add another origin"));
-    expect(screen.getByText("Origin 1")).toBeInTheDocument();
-    expect(screen.queryByText("Origin 2")).toBeInTheDocument();
-    expect(screen.queryByText("Origin 3")).not.toBeInTheDocument();
+    expect(screen.getByText("Quota origin 1")).toBeInTheDocument();
+    expect(screen.queryByText("Quota origin 2")).toBeInTheDocument();
+    expect(screen.queryByText("Quota origin 3")).not.toBeInTheDocument();
   });
 
   it("should remove origin form when delete button is clicked", () => {
@@ -170,7 +170,7 @@ describe("QuotaOriginFormset", () => {
 
     // delete the last origin
     fireEvent.click(screen.getByText("Delete this origin"));
-    expect(screen.getByText("Origin 1")).toBeInTheDocument();
-    expect(screen.queryByText("Origin 2")).not.toBeInTheDocument();
+    expect(screen.getByText("Quota origin 1")).toBeInTheDocument();
+    expect(screen.queryByText("Quota origin 2")).not.toBeInTheDocument();
   });
 });
