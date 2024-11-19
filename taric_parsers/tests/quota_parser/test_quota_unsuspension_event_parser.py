@@ -1,3 +1,5 @@
+from datetime import timezone
+
 import pytest
 
 # note : need to import these objects to make them available to the parser
@@ -34,7 +36,7 @@ class TestQuotaEventParserV2:
     ):
         expected_data_example = {
             "quota_definition_sid": "123",
-            "occurrence_timestamp": "2020-09-25T14:58:58",
+            "occurrence_timestamp": "2020-09-25T14:58:58Z",
             "unsuspension_date": "2021-07-04",
         }
 
@@ -49,7 +51,15 @@ class TestQuotaEventParserV2:
         )
 
         # verify all properties
-        assert target.occurrence_timestamp == datetime(2020, 9, 25, 14, 58, 58)
+        assert target.occurrence_timestamp == datetime(
+            2020,
+            9,
+            25,
+            14,
+            58,
+            58,
+            tzinfo=timezone.utc,
+        )
         assert target.quota_definition__sid == 123
         assert target.unsuspension_date == "2021-07-04"
 
@@ -73,7 +83,15 @@ class TestQuotaEventParserV2:
         target = target_message.taric_object
 
         assert target.quota_definition__sid == 100
-        assert target.occurrence_timestamp == datetime(2020, 9, 25, 14, 58, 58)
+        assert target.occurrence_timestamp == datetime(
+            2020,
+            9,
+            25,
+            14,
+            58,
+            58,
+            tzinfo=timezone.utc,
+        )
         assert target.unsuspension_date == "2021-01-01"
 
         assert target.data == '{"unsuspension.date": "2021-01-01"}'
