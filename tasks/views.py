@@ -294,15 +294,15 @@ class TaskWorkflowTemplateDeleteView(PermissionRequiredMixin, DeleteView):
     permission_required = "tasks.delete_taskworkflowtemplate"
     form_class = TaskWorkflowTemplateDeleteForm
 
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["task_templates"] = self.object.get_task_templates()
-        return context_data
-
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["instance"] = self.object
         return kwargs
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object.get_task_templates().delete()
+        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(

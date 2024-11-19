@@ -282,7 +282,8 @@ def test_workflow_template_delete_view(
     valid_user_client,
     task_workflow_template_single_task_template_item,
 ):
-    """Tests that a workflow template can be deleted and that the corresponding
+    """Tests that a workflow template can be deleted (along with related
+    TaskItemPosition and TaskTemplate objects) and that the corresponding
     confirmation view returns a HTTP 200 response."""
 
     task_workflow_template_pk = task_workflow_template_single_task_template_item.pk
@@ -300,7 +301,7 @@ def test_workflow_template_delete_view(
     assert not TaskItemTemplate.objects.filter(
         queue_id=task_workflow_template_pk,
     ).exists()
-    assert TaskTemplate.objects.filter(pk=task_template_pk).exists()
+    assert not TaskTemplate.objects.filter(pk=task_template_pk).exists()
 
     confirmation_url = reverse(
         "workflow:task-workflow-template-ui-confirm-delete",
