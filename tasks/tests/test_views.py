@@ -278,6 +278,47 @@ def test_workflow_template_update_view(
     assert task_workflow_template.title in soup.select("h1.govuk-panel__title")[0].text
 
 
+def test_workflow_template_delete_view(
+    valid_user_client,
+    task_workflow_template_single_task_template_item,
+):
+    """Tests that a workflow template can be deleted (along with related
+    TaskItemPosition and TaskTemplate objects) and that the corresponding
+    confirmation view returns a HTTP 200 response."""
+
+    task_workflow_template_pk = task_workflow_template_single_task_template_item.pk
+    task_template_pk = (
+        task_workflow_template_single_task_template_item.get_task_templates().get().pk
+    )
+
+    delete_url = task_workflow_template_single_task_template_item.get_url("delete")
+    delete_response = valid_user_client.post(delete_url)
+    assert delete_response.status_code == 302
+
+    assert not TaskWorkflowTemplate.objects.filter(
+        pk=task_workflow_template_pk,
+    ).exists()
+    assert not TaskItemTemplate.objects.filter(
+        queue_id=task_workflow_template_pk,
+    ).exists()
+    assert not TaskTemplate.objects.filter(pk=task_template_pk).exists()
+
+    confirmation_url = reverse(
+        "workflow:task-workflow-template-ui-confirm-delete",
+        kwargs={"pk": task_workflow_template_pk},
+    )
+    assert delete_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+    assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    assert (
+        f"Workflow template ID: {task_workflow_template_pk}"
+        in soup.select(".govuk-panel__title")[0].text
+    )
+
+
 def test_create_task_template_view(valid_user_client, task_workflow_template):
     """Test the view for creating new TaskTemplates and the confirmation view
     that a successful creation redirects to."""
