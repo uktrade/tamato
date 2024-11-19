@@ -4,8 +4,11 @@
 
 {% set page_title = "Task: " ~ object.title %}
 
-{# Change this depending on task or subtask #}
-{% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
+{%if object.parent_task%}
+  {% set edit_url = url("workflow:subtask-ui-update", kwargs={"pk": object.pk}) %}
+{% else %}
+  {% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
+{% endif%}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
