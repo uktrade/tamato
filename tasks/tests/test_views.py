@@ -108,9 +108,9 @@ def test_create_subtask_button_shows_only_for_non_parent_tasks(
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     if expected_result:
-        assert page.find("a", href=f"/tasks/{task.pk}/subtasks/create")
+        assert page.find("a", href=f"/tasks/{task.pk}/subtasks/create/")
     else:
-        assert not page.find("a", href=f"/tasks/{task.pk}/subtasks/create")
+        assert not page.find("a", href=f"/tasks/{task.pk}/subtasks/create/")
 
 
 def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
@@ -129,7 +129,7 @@ def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
     url = reverse(
         "workflow:subtask-ui-create",
         kwargs={
-            "pk": subtask_parent.pk,
+            "parent_task_pk": subtask_parent.pk,
         },
     )
 
