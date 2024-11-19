@@ -401,7 +401,7 @@ class QuotaDefinitionBulkCreatorUpdateDefinitionData(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["page_title"] = "Update definitiondetails"
+        context["page_title"] = "Update definition details"
         return context
 
     def form_valid(self, form):

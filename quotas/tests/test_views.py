@@ -1,3 +1,4 @@
+import decimal
 from typing import OrderedDict
 from unittest import mock
 
@@ -2760,20 +2761,6 @@ def test_quota_definition_bulk_creator_wizard_finish(client_with_current_workbas
     assert complete_response.status_code == 302
 
 
-# @pytest.fixture
-# def bulk_create_wizard(requests_mock, session_request):
-#     """Provides an instance of the form wizard for use across the following
-#     tests."""
-#     storage = QuotaDefinitionBulkCreatorSessionStorage(
-#         request=session_request,
-#         prefix="",
-#     )
-#     return QuotaDefinitionBulkCreatorWizard(
-#         request=requests_mock,
-#         storage=storage,
-#     )
-
-
 @pytest.fixture
 def quota_order_number(date_ranges) -> models.QuotaOrderNumber:
     """Provides a main quota order number for use across the fixtures and
@@ -2829,5 +2816,61 @@ def test_quota_definition_bulk_creator_wizard_creates_definitions(
     assert definition_count_before == 0
     for definition in session_request_with_workbasket.session["staged_definition_data"]:
         wizard.create_definition(quota_order_number.pk, definition)
-
     assert len(models.QuotaDefinition.objects.all()) == len(staged_definitions)
+
+
+def test_quota_definition_bulk_creator_wizard_creates_definitions_done(
+    session_request_with_workbasket,
+    quota_order_number,
+):
+    measurement_unit = factories.MeasurementUnitFactory()
+    recurrance_data = {
+        "quota_order_number_pk": quota_order_number.pk,
+        "instance_count": "2",
+        "frequency": "2",
+    }
+
+    staged_definitions = [
+        {
+            "id": "1",
+            "initial_volume": "10000",
+            "volume": "10000",
+            "measurement_unit_code": measurement_unit.code,
+            "threshold": "90",
+            "quota_critical": False,
+            "start_date": "2025-01-01",
+            "end_date": "2025-12-31",
+        },
+        {
+            "id": "2",
+            "initial_volume": "20000",
+            "volume": "20000",
+            "measurement_unit_code": measurement_unit.code,
+            "threshold": "90",
+            "quota_critical": False,
+            "start_date": "2026-01-01",
+            "end_date": "2026-12-31",
+        },
+    ]
+
+    session_request_with_workbasket.session["staged_definition_data"] = (
+        staged_definitions
+    )
+    session_request_with_workbasket.session["recurrance_data"] = recurrance_data
+
+    storage = QuotaDefinitionBulkCreatorSessionStorage(
+        request=session_request_with_workbasket,
+        prefix="",
+    )
+    storage._set_current_step("review")
+    wizard = QuotaDefinitionBulkCreatorWizard(
+        request=session_request_with_workbasket,
+        storage=storage,
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    definition_count_before = len(models.QuotaDefinition.objects.all())
+    assert definition_count_before == 0
+    wizard.done(wizard.form_list)
+    assert len(models.QuotaDefinition.objects.all()) == decimal.Decimal(
+        recurrance_data["instance_count"],
+    )
