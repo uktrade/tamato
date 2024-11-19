@@ -1,0 +1,29 @@
+{% macro render_item_button(obj, action, use_icon=False) %}
+  {% set action_text = {
+    "promote": "Move up",
+    "demote": "Move down",
+    "promote_to_first": "Move to first",
+    "demote_to_last": "Move to last",
+  }[action] %}
+
+  {% set icon_src = {
+    "promote": "/common/images/chevron-up.svg",
+    "demote": "/common/images/chevron-down.svg",
+  }[action] %}
+
+  <button name="{{ action }}"
+    value="{{ obj.pk }}"
+    class="govuk-link fake-link govuk-!-padding-right-2"
+    data-module="govuk-button"
+    data-prevent-double-click="true"
+  >
+    {% if use_icon and icon_src %}
+      <img class="icon"
+        src="{{ static(icon_src) }}"
+        alt="{{ action_text}} icon"
+      >
+    {% else %}
+      {{ action_text }}
+    {% endif%}
+  </button>
+{% endmacro %}

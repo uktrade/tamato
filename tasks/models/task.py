@@ -97,8 +97,11 @@ class Task(TaskBase):
     def __str__(self):
         return self.title
 
-    def get_url(self):
-        return reverse("workflow:task-ui-detail", kwargs={"pk": self.pk})
+    def get_url(self, action: str = "detail"):
+        if action == "detail":
+            return reverse("workflow:task-ui-detail", kwargs={"pk": self.pk})
+
+        return "#NOT-IMPLEMENTED"
 
 
 class Category(models.Model):

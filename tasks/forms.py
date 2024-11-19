@@ -6,6 +6,8 @@ from django.forms import ModelForm
 
 from common.forms import delete_form_for
 from tasks.models import Task
+from tasks.models import TaskTemplate
+from tasks.models import TaskWorkflowTemplate
 from workbaskets.models import WorkBasket
 
 
@@ -78,3 +80,84 @@ class SubTaskCreateForm(TaskBaseForm):
 
 
 TaskDeleteForm = delete_form_for(Task)
+
+
+class TaskWorkflowTemplateBaseForm(ModelForm):
+    class Meta:
+        model = TaskWorkflowTemplate
+        fields = ("title", "description")
+
+        error_messages = {
+            "title": {
+                "required": "Enter a title",
+            },
+            "description": {
+                "required": "Enter a description",
+            },
+        }
+
+    def __init__(self, *args, submit_title, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "title",
+            "description",
+            Submit(
+                "submit",
+                submit_title,
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
+class TaskWorkflowTemplateCreateForm(TaskWorkflowTemplateBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, submit_title="Create", **kwargs)
+
+
+class TaskWorkflowTemplateUpdateForm(TaskWorkflowTemplateBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, submit_title="Update", **kwargs)
+
+
+TaskWorkflowTemplateDeleteForm = delete_form_for(TaskWorkflowTemplate)
+
+
+class TaskTemplateFormBase(ModelForm):
+    class Meta:
+        model = TaskTemplate
+        fields = ("title", "description")
+
+    def __init__(self, *args, submit_title, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "title",
+            "description",
+            Submit(
+                "submit",
+                submit_title,
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
+class TaskTemplateCreateForm(TaskTemplateFormBase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, submit_title="Create", **kwargs)
+
+
+class TaskTemplateUpdateForm(TaskTemplateFormBase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, submit_title="Update", **kwargs)
+
+
+TaskTemplateDeleteForm = delete_form_for(TaskTemplate)

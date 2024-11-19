@@ -27,7 +27,7 @@ task_ui_patterns = [
         name="task-ui-confirm-delete",
     ),
     path(
-        "<int:pk>/sub-tasks/create",
+        "<int:pk>/subtasks/create",
         views.SubTaskCreateView.as_view(),
         name="subtask-ui-create",
     ),
@@ -41,19 +41,92 @@ task_ui_patterns = [
         views.SubTaskConfirmDeleteView.as_view(),
         name="subtask-ui-confirm-delete",
     ),
+    path(
+        "subtasks/<int:pk>/confirm-create/",
+        views.SubTaskConfirmCreateView.as_view(),
+        name="subtask-ui-confirm-create",
+    ),
+]
+
+workflow_ui_patterns = [
+    # TODO
 ]
 
 workflow_template_ui_patterns = [
     path(
-        "templates/<int:pk>/",
+        "<int:pk>/",
         views.TaskWorkflowTemplateDetailView.as_view(),
         name="task-workflow-template-ui-detail",
     ),
+    path(
+        "create/",
+        views.TaskWorkflowTemplateCreateView.as_view(),
+        name="task-workflow-template-ui-create",
+    ),
+    path(
+        "<int:pk>/confirm-create/",
+        views.TaskWorkflowTemplateConfirmCreateView.as_view(),
+        name="task-workflow-template-ui-confirm-create",
+    ),
+    path(
+        "<int:pk>/update/",
+        views.TaskWorkflowTemplateUpdateView.as_view(),
+        name="task-workflow-template-ui-update",
+    ),
+    path(
+        "<int:pk>/confirm-update/",
+        views.TaskWorkflowTemplateConfirmUpdateView.as_view(),
+        name="task-workflow-template-ui-confirm-update",
+    ),
+    path(
+        "<int:pk>/delete/",
+        views.TaskWorkflowTemplateDeleteView.as_view(),
+        name="task-workflow-template-ui-delete",
+    ),
+    path(
+        "<int:pk>/confirm-delete/",
+        views.TaskWorkflowTemplateConfirmDeleteView.as_view(),
+        name="task-workflow-template-ui-confirm-delete",
+    ),
+    path(
+        "task-templates/<int:pk>/",
+        views.TaskTemplateDetailView.as_view(),
+        name="task-template-ui-detail",
+    ),
+    path(
+        "<int:workflow_template_pk>/task-templates/create/",
+        views.TaskTemplateCreateView.as_view(),
+        name="task-template-ui-create",
+    ),
+    path(
+        "task-templates/confirm-create/<int:pk>/",
+        views.TaskTemplateConfirmCreateView.as_view(),
+        name="task-template-ui-confirm-create",
+    ),
+    path(
+        "task-templates/<int:pk>/update/",
+        views.TaskTemplateUpdateView.as_view(),
+        name="task-template-ui-update",
+    ),
+    path(
+        "task-templates/confirm-update/<int:pk>/",
+        views.TaskTemplateConfirmUpdateView.as_view(),
+        name="task-template-ui-confirm-update",
+    ),
+    path(
+        "<int:workflow_template_pk>/task-templates/<int:pk>/delete/",
+        views.TaskTemplateDeleteView.as_view(),
+        name="task-template-ui-delete",
+    ),
+    path(
+        "<int:workflow_template_pk>/task-templates/<int:pk>/confirm-delete/",
+        views.TaskTemplateConfirmDeleteView.as_view(),
+        name="task-template-ui-confirm-delete",
+    ),
 ]
-
-workflow_ui_patterns = workflow_template_ui_patterns
 
 urlpatterns = [
     path("tasks/", include(task_ui_patterns)),
     path("workflows/", include(workflow_ui_patterns)),
+    path("workflow-templates/", include(workflow_template_ui_patterns)),
 ]
