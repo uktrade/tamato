@@ -35,11 +35,18 @@ class TaskWorkflowBase(Queue):
 class TaskWorkflow(TaskWorkflowBase):
     """Workflow of ordered Tasks."""
 
+    summary_task = models.OneToOneField(
+        Task,
+        on_delete=models.PROTECT,
+    )
+    """Provides task-like filtering and display capabilities for this
+    workflow."""
     creator_template = models.ForeignKey(
         "tasks.TaskWorkflowTemplate",
         null=True,
         on_delete=models.SET_NULL,
     )
+    """The template from which this workflow was created, if any."""
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
