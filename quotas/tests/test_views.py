@@ -2686,3 +2686,40 @@ def test_user_cannot_edit_past_blocking_period(
 )
 def test_quota_blocking_delete_form(factory, use_delete_form):
     use_delete_form(factory())
+
+
+def test_quota_definition_update_updates_association(
+    client_with_current_workbasket,
+    date_ranges,
+):
+    """Test that when updating a quota definition that if related associations
+    exist, they also get updated."""
+    association = factories.QuotaAssociationFactory.create()
+    sub_quota = association.sub_quota
+    url = reverse("quota_definition-ui-edit", kwargs={"sid": sub_quota.sid})
+    measurement_unit = factories.MeasurementUnitFactory()
+
+    data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "description": "Lorem ipsum.",
+        "volume": "80601000.000",
+        "initial_volume": "80601000.000",
+        "measurement_unit": measurement_unit.pk,
+        "measurement_unit_qualifier": "",
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
+    }
+    response = client_with_current_workbasket.post(url, data)
+    assert response.status_code == 302
+    associations = models.QuotaAssociation.objects.all().filter(
+        main_quota__sid=association.main_quota.sid,
+        sub_quota__sid=association.sub_quota.sid,
+    )
+    assert len(associations) == 2
+    assert associations[0].update_type == UpdateType.CREATE
+    assert associations[1].update_type == UpdateType.UPDATE
