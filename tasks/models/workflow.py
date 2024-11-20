@@ -123,6 +123,11 @@ class TaskWorkflowTemplate(TaskWorkflowBase):
                 "workflow:task-workflow-template-ui-update",
                 kwargs={"pk": self.pk},
             )
+        elif action == "delete":
+            return reverse(
+                "workflow:task-workflow-template-ui-delete",
+                kwargs={"pk": self.pk},
+            )
 
         return "#NOT-IMPLEMENTED"
 
