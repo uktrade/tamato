@@ -21,3 +21,11 @@
         border: 0;
     }
 }
+
+.definition-duplicate {
+    border-bottom: 3px solid govuk-colour("dark-grey");
+}
+
+.definition-original {
+    color: $govuk-secondary-text-colour;
+}

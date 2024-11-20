@@ -48,7 +48,11 @@ class QuotaDefinitionUpdateForm(
             "quota_critical",
         ]
 
-    description = forms.CharField(label="", widget=forms.Textarea(), required=False)
+    description = forms.CharField(
+        label="Description",
+        widget=forms.Textarea(),
+        required=False,
+    )
     volume = forms.DecimalField(
         label="Current volume",
         widget=forms.TextInput(),
@@ -116,33 +120,15 @@ class QuotaDefinitionUpdateForm(
         self.helper.legend_size = Size.SMALL
 
         self.helper.layout = Layout(
-            Accordion(
-                AccordionSection(
-                    "Description",
-                    "description",
-                ),
-                AccordionSection(
-                    "Validity period",
-                    "start_date",
-                    "end_date",
-                ),
-                AccordionSection(
-                    "Measurements",
-                    Field("measurement_unit", css_class="govuk-!-width-full"),
-                    Field("measurement_unit_qualifier", css_class="govuk-!-width-full"),
-                ),
-                AccordionSection(
-                    "Volume",
-                    "initial_volume",
-                    "volume",
-                ),
-                AccordionSection(
-                    "Criticality",
-                    "quota_critical_threshold",
-                    "quota_critical",
-                ),
-                css_class="govuk-!-width-two-thirds",
-            ),
+            "description",
+            "start_date",
+            "end_date",
+            Field("measurement_unit", css_class="govuk-!-width-full"),
+            Field("measurement_unit_qualifier", css_class="govuk-!-width-full"),
+            "initial_volume",
+            "volume",
+            "quota_critical_threshold",
+            "quota_critical",
             Submit(
                 "submit",
                 "Save",
