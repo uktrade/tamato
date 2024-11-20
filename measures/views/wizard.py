@@ -1,6 +1,4 @@
 import logging
-from typing import Dict
-from typing import List
 
 from crispy_forms_gds.helper import FormHelper
 from django.conf import settings
@@ -177,7 +175,9 @@ class MeasureEditWizard(
         wizard forms."""
 
         measures_editor = MeasuresEditor(
-            self.workbasket, selected_measures, cleaned_data
+            self.workbasket,
+            selected_measures,
+            cleaned_data,
         )
         return measures_editor.edit_measures()
 
@@ -205,7 +205,9 @@ class MeasureEditWizard(
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class MeasureCreateWizard(
-    PermissionRequiredMixin, NamedUrlSessionWizardView, MeasureSerializableWizardMixin
+    PermissionRequiredMixin,
+    NamedUrlSessionWizardView,
+    MeasureSerializableWizardMixin,
 ):
     """
     Multipart form wizard for creating a single measure.

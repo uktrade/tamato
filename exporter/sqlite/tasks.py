@@ -47,10 +47,10 @@ def export_and_upload_sqlite(local_path: str = None) -> bool:
     db_name = get_output_filename()
 
     if local_path:
-        logger.info("SQLite export process targetting local file system.")
+        logger.info("SQLite export process targeting local file system.")
         storage = storages.SQLiteLocalStorage(location=local_path)
     else:
-        logger.info("SQLite export process targetting S3 file system.")
+        logger.info("SQLite export process targeting S3 file system.")
         storage = storages.SQLiteS3Storage()
 
     export_filename = storage.generate_filename(db_name)
