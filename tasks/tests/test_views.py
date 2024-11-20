@@ -114,6 +114,26 @@ def test_create_subtask_button_shows_only_for_non_parent_tasks(
         assert not page.find("a", href=f"/tasks/{task.pk}/subtasks/create")
 
 
+def test_create_subtask_view(valid_user_client, task, category, progress_state):
+    assert Task.objects.count() == 1
+
+    url = reverse(
+        "workflow:subtask-ui-create",
+        kwargs={"pk": task.pk},
+    )
+    form_data = {
+        "category": category,
+        "progress_state": progress_state,
+        "title": factory.Faker("sentence"),
+        "description": factory.Faker("sentence"),
+    }
+    response = valid_user_client.post(url, form_data)
+
+    assert response.status_code == 302
+    assert Task.objects.count() == 2
+    assert task.subtasks.count() == 1
+
+
 def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
     """Tests that the SubtaskCreateForm errors when a form is submitted that has
     a subtask as a parent."""

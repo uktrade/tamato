@@ -98,6 +98,12 @@ class Task(TaskBase):
     objects = TaskManager.from_queryset(TaskQueryset)()
 
     def clean(self):
+        print()
+        print()
+        print(f"Task.clean()")
+        print()
+        print()
+
         if self.parent_task and self.parent_task.parent_task_id:
             raise ValidationError(self.PARENT_SUBTASK_ERROR_MSG)
         return super().clean()

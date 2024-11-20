@@ -2,6 +2,7 @@ from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
+from django.forms import IntegerField
 from django.forms import ModelForm
 
 from common.forms import delete_form_for
@@ -14,7 +15,13 @@ from workbaskets.models import WorkBasket
 class TaskBaseForm(ModelForm):
     class Meta:
         model = Task
-        exclude = ["parent_task", "creator"]
+        fields = [
+            "title",
+            "description",
+            "category",
+            "progress_state",
+            "workbasket",
+        ]
 
         error_messages = {
             "title": {
@@ -70,10 +77,39 @@ class TaskUpdateForm(TaskBaseForm):
 
 
 class SubTaskCreateForm(TaskBaseForm):
-    def save(self, parent_task, user, commit=True):
+    # class Meta(TaskBaseForm.Meta):
+    #    fields = TaskBaseForm.Meta.fields + ["parent_task"]
+    parent_task_id = IntegerField()
+
+    def __init__(self, *args, **kwargs):
+        parent_task = kwargs.pop("parent_task")
+        super().__init__(*args, **kwargs)
+        self.fields["parent_task_id"].initial = parent_task.id
+
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
+
+    def is_valid(self):
+        print()
+        print()
+        print(f"Entered into SubTaskCreateForm.is_valid()")
+        result = super().is_valid()
+        print()
+        print()
+        print("SubTaskCreateForm.errors:")
+        for e in self.errors:
+            print(f"   {e}")
+        print()
+        print()
+        print(f"Returning from SubTaskCreateForm.is_valid()")
+        print()
+        print()
+        return result
+
+    def save(self, user, commit=True):
         instance = super().save(commit=False)
         instance.creator = user
-        instance.parent_task = parent_task
         if commit:
             instance.save()
         return instance
