@@ -18,15 +18,14 @@
   }) }}
 
   {% if not object.parent_task %}
-  {% call django_form(action=url("workflow:task-ui-delete", kwargs={"pk": object.pk})) %}
-    {{ crispy(form) }}
-  {% endcall %}
-  
+    {% set url_name = "workflow:task-ui-delete" %}
   {% else %}
-  {% call django_form(action=url("workflow:subtask-ui-delete", kwargs={"pk": object.pk})) %}
+    {% set url_name = "workflow:subtask-ui-delete" %}
+  {% endif %}
+  
+  {% call django_form(action=url(url_name, kwargs={"pk": object.pk})) %}
     {{ crispy(form) }}
   {% endcall %}
-  {% endif %}
 
   {% endblock %}
 </div>
