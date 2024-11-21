@@ -13,13 +13,16 @@ from measures.duty_sentence_parser import InvalidDutyExpression
 from measures.duty_sentence_parser import InvalidMeasurementUnit
 from measures.duty_sentence_parser import InvalidMeasurementUnitQualififer
 from measures.duty_sentence_parser import InvalidMonetaryUnit
+from measures.models import DutyExpression
 
 pytestmark = pytest.mark.django_db
 
 PERCENT_OR_AMOUNT_FIXTURE_NAME = "percent_or_amount"
-PLUS_PERCENT_OR_AMOUNT_FIXTURE_NAME = "plus_percent_or_amount"
+PLUS_PERCENT_OR_AMOUNT_SID = (4, 19, 20)
 SUPPLEMENTARY_UNIT_FIXTURE_NAME = "supplementary_unit"
 PLUS_AGRI_COMPONENT_FIXTURE_NAME = "plus_agri_component"
+MAXIMUM_SID = (17, 35)
+BRITISH_POUND_FIXTURE_NAME = "british_pound"
 EURO_FIXTURE_NAME = "euro"
 KILOGRAM_FIXTURE_NAME = "kilogram"
 THOUSAND_ITEMS_FIXTURE_NAME = "thousand_items"
@@ -48,6 +51,26 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
             ],
         ),
         (
+            "9.10% MAX 1.00% + 0.90 GBP / 100 kg",
+            ["9.10", "%", "MAX", "1.00", "%", "+", "0.90", "GBP", "100 kg"],
+            [
+                {
+                    "duty_amount": 9.1,
+                    "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
+                },
+                {
+                    "duty_expression_sid": MAXIMUM_SID[0],
+                    "duty_amount": 1.0,
+                },
+                {
+                    "duty_expression_sid": PLUS_PERCENT_OR_AMOUNT_SID[1],
+                    "duty_amount": 0.9,
+                    "monetary_unit": BRITISH_POUND_FIXTURE_NAME,
+                    "measurement_unit": HECTOKILOGRAM_FIXTURE_NAME,
+                },
+            ],
+        ),
+        (
             "0.300 XEM / 100 kg / lactic.",
             ["0.300", "XEM", "100 kg", "lactic."],
             [
@@ -70,7 +93,7 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
                 },
                 {
                     "duty_amount": 20.0,
-                    "duty_expression": PLUS_PERCENT_OR_AMOUNT_FIXTURE_NAME,
+                    "duty_expression_sid": PLUS_PERCENT_OR_AMOUNT_SID[0],
                     "measurement_unit": KILOGRAM_FIXTURE_NAME,
                     "monetary_unit": EURO_FIXTURE_NAME,
                 },
@@ -119,6 +142,7 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
     ids=[
         "simple_ad_valorem",
         "simple_specific_duty",
+        "max_compound_duty",
         "unit_with_qualifier",
         "multi_component_expression",
         "supplementary_unit",
@@ -146,7 +170,7 @@ def reversible_duty_sentence_data(request):
                 },
                 {
                     "duty_amount": 10.0,
-                    "duty_expression": PLUS_PERCENT_OR_AMOUNT_FIXTURE_NAME,
+                    "duty_expression_sid": PLUS_PERCENT_OR_AMOUNT_SID[0],
                     "measurement_unit": HECTOKILOGRAM_FIXTURE_NAME,
                     "monetary_unit": EURO_FIXTURE_NAME,
                 },
@@ -191,6 +215,28 @@ def irreversible_duty_sentence_data(request):
     return duty_sentence, exp_parsed, exp_transformed
 
 
+def replace_with_component_instances(expected_components: dict, request) -> None:
+    """
+    Modifies `expected_components` so that it can be compared to a dictionary of
+    parsed and transformed duty components.
+
+    Duty component fixture names and duty expression SID values are replaced
+    with their object instances.
+    """
+    if "duty_expression_sid" in expected_components:
+        expected_components["duty_expression"] = DutyExpression.objects.get(
+            sid=expected_components["duty_expression_sid"],
+        )
+        expected_components.pop("duty_expression_sid")
+
+    with_fixtures = {
+        key: request.getfixturevalue(val)
+        for key, val in expected_components.items()
+        if type(val) == str
+    }
+    expected_components.update(with_fixtures)
+
+
 def duty_sentence_parser_test(
     lark_duty_sentence_parser: DutySentenceParser,
     duty_sentence_data: Tuple[str, List[str], List[Dict]],
@@ -207,12 +253,7 @@ def duty_sentence_parser_test(
     transformed = lark_duty_sentence_parser.transform(duty_sentence)
     assert len(transformed) == len(exp_components)
     for phrase, exp in zip(transformed, exp_components):
-        with_fixtures = {
-            key: request.getfixturevalue(val)
-            for key, val in exp.items()
-            if type(val) == str
-        }
-        exp.update(with_fixtures)
+        replace_with_component_instances(exp, request)
         assert phrase == exp
 
 
