@@ -45,7 +45,18 @@ class TaskManager(WithSignalManagerMixin, models.Manager):
 
 
 class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
-    pass
+    def filter_top_level(self):
+        """
+        Return a queryset of Task instances that are either:
+        1. Stand-alone Task instances that are not part of a Workflow tasks
+        2. Workflow.summary_task instances.
+
+        The intent is to provide a top-level filtering of Task instances,
+        permitting a combined at-a-glance view of Tasks and Workflow instances.
+        """
+        return self.filter(
+            models.Q(taskitem__isnull=True) | models.Q(taskworkflow__isnull=False),
+        )
 
 
 class TaskBase(TimestampedMixin):

@@ -5,6 +5,7 @@ from common.tests.factories import CategoryFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
+from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskLog
 
@@ -76,6 +77,18 @@ def test_task_assignee_workbasket_reviewers_queryset(
 
     assert workbasket_reviewers.count() == 1
     assert workbasket_reviewer_assignee in workbasket_reviewers
+
+
+def test_task_filter_top_level_queryset(task, task_workflow_single_task_item):
+    """Test correct behaviour of TaskQueryset.filter_top_level()."""
+
+    top_level_tasks = Task.objects.filter_top_level()
+
+    assert Task.objects.count() == 3
+    assert top_level_tasks.count() == 2
+    assert task_workflow_single_task_item.summary_task in top_level_tasks
+    assert task in top_level_tasks
+    assert task_workflow_single_task_item.get_tasks().get() not in top_level_tasks
 
 
 def test_create_task_log_task_assigned():
