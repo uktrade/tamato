@@ -82,17 +82,17 @@ def test_confirm_create_template_shows_task_or_subtask(
 
 
 @pytest.mark.parametrize(
-    ("task_factory", "update_subtask_url"),
+    ("task_factory", "update_url"),
     [
-        (TaskFactory, False),
-        (SubTaskFactory, True),
+        (TaskFactory, "workflow:task-ui-update"),
+        (SubTaskFactory, "workflow:subtask-ui-update"),
     ],
     ids=("task test", "subtask test"),
 )
 def test_update_link_changes_for_task_and_subtask(
     superuser_client,
     task_factory,
-    update_subtask_url,
+    update_url,
 ):
     task = task_factory.create()
 
@@ -107,12 +107,13 @@ def test_update_link_changes_for_task_and_subtask(
 
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
-    if update_subtask_url:
-        assert page.find("a", href=f"/tasks/subtasks/{task.pk}/update/")
-        assert not page.find("a", href=f"/tasks/{task.pk}/update/")
-    else:
-        assert page.find("a", href=f"/tasks/{task.pk}/update/")
-        assert not page.find("a", href=f"/tasks/subtasks/{task.pk}/update/")
+    update_link = reverse(
+        update_url,
+        kwargs={
+            "pk": task.pk,
+        },
+    )
+    assert page.find("a", href=update_link)
 
 
 @pytest.mark.parametrize(
