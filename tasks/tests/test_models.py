@@ -79,10 +79,32 @@ def test_task_assignee_workbasket_reviewers_queryset(
     assert workbasket_reviewer_assignee in workbasket_reviewers
 
 
-def test_task_filter_top_level_queryset(task, task_workflow_single_task_item):
-    """Test correct behaviour of TaskQueryset.filter_top_level()."""
+def test_non_workflow_task_queryset(task, task_workflow_single_task_item):
+    """Test correct behaviour of TaskQueryset.non_workflow()."""
 
-    top_level_tasks = Task.objects.filter_top_level()
+    non_workflow_tasks = Task.objects.non_workflow()
+
+    assert Task.objects.count() == 3
+    assert task == non_workflow_tasks.get()
+
+
+def test_workflow_summary_task_queryset(task, task_workflow_single_task_item):
+    """Test correct behaviour of TaskQueryset.workflow_summary()."""
+
+    """Return a queryset of TaskWorkflow summary Task instances, i.e. those
+    with a non-null related_name=taskworkflow."""
+    # models.Q(taskworkflow__isnull=False),
+
+    non_workflow_tasks = Task.objects.workflow_summary()
+
+    assert Task.objects.count() == 3
+    assert task_workflow_single_task_item.summary_task == non_workflow_tasks.get()
+
+
+def test_top_level_task_queryset(task, task_workflow_single_task_item):
+    """Test correct behaviour of TaskQueryset.top_level()."""
+
+    top_level_tasks = Task.objects.top_level()
 
     assert Task.objects.count() == 3
     assert top_level_tasks.count() == 2
