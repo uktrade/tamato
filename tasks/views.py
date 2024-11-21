@@ -117,6 +117,11 @@ class TaskDeleteView(PermissionRequiredMixin, DeleteView):
         kwargs["instance"] = self.object
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["verbose_name"] = "task"
+        return context_data
+
     def get_success_url(self):
         return reverse("workflow:task-ui-confirm-delete", kwargs={"pk": self.object.pk})
 
@@ -129,6 +134,7 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data["deleted_pk"] = self.kwargs["pk"]
+        context_data["verbose_name"] = "task"
         return context_data
 
 
@@ -170,6 +176,41 @@ class SubTaskConfirmCreateView(DetailView):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "subtask"
         return context
+
+
+class SubTaskDeleteView(PermissionRequiredMixin, DeleteView):
+    model = Task
+    template_name = "tasks/delete.jinja"
+    permission_required = "tasks.delete_task"
+    form_class = TaskDeleteForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = self.object
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["verbose_name"] = "subtask"
+        return context_data
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:subtask-ui-confirm-delete",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class SubTaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
+    model = Task
+    template_name = "tasks/confirm_delete.jinja"
+    permission_required = "tasks.delete_task"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["verbose_name"] = "subtask"
+        context_data["deleted_pk"] = self.kwargs["pk"]
+        return context_data
 
 
 class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):

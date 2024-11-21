@@ -18,7 +18,7 @@
 {% block panel %}
   {{ govukPanel({
     "titleText": "Task ID: " ~ deleted_pk,
-    "text": "Task has been deleted",
+    "text": verbose_name|capitalize ~ " has been deleted",
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}
