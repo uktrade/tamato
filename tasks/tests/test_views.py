@@ -162,23 +162,18 @@ def test_delete_subtask_missing_user_permissions(
     """Tests that attempting to delete a subtask fails for users without the
     necessary permissions."""
     client_type = request.getfixturevalue(client_type)
-
-    # Creating an instance of a subtask that will be deleted
     subtask_instance = SubTaskFactory.create(
         progress_state__name=ProgressState.State.TO_DO,
     )
 
-    # The DeleteSubTask view and URL
     url = reverse(
         "workflow:subtask-ui-delete",
         kwargs={"pk": subtask_instance.pk},
     )
 
-    # Test DeleteSubtask form view
     get_response = client_type.get(url)
     assert get_response.status_code == expected_status_code_get
 
-    # POST the delete subtask form
     response = client_type.post(url)
     assert response.status_code == expected_status_code_post
 
