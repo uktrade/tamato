@@ -15,6 +15,8 @@ from tasks.tests.factories import TaskItemTemplateFactory
 
 pytestmark = pytest.mark.django_db
 
+pytestmark = pytest.mark.django_db
+
 
 def test_task_update_view_update_progress_state(valid_user_client):
     """Tests that `TaskUpdateView` updates `Task.progress_state` and that a
@@ -142,6 +144,38 @@ def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
         "You cannot make a subtask from a subtask."
         in soup.find("div", class_="govuk-error-summary").text
     )
+
+
+@pytest.mark.parametrize(
+    ("client_type", "expected_status_code_get", "expected_status_code_post"),
+    [
+        ("valid_user_client", 200, 302),
+        ("client_with_current_workbasket_no_permissions", 403, 403),
+    ],
+)
+def test_delete_subtask_missing_user_permissions(
+    client_type,
+    expected_status_code_get,
+    expected_status_code_post,
+    request,
+):
+    """Tests that attempting to delete a subtask fails for users without the
+    necessary permissions."""
+    client_type = request.getfixturevalue(client_type)
+    subtask_instance = SubTaskFactory.create(
+        progress_state__name=ProgressState.State.TO_DO,
+    )
+
+    url = reverse(
+        "workflow:subtask-ui-delete",
+        kwargs={"pk": subtask_instance.pk},
+    )
+
+    get_response = client_type.get(url)
+    assert get_response.status_code == expected_status_code_get
+
+    response = client_type.post(url)
+    assert response.status_code == expected_status_code_post
 
 
 def test_workflow_template_detail_view_displays_task_templates(valid_user_client):
