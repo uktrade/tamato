@@ -302,14 +302,15 @@ class DutyTransformer(Transformer):
 
             # Each duty expression can only be used once in a sentence and in order of increasing
             # SID so once we have a match, remove it from the list of duty expression sids
-            duty_expression_sids.remove(match.sid)
+            duty_expression_sids[:] = [
+                sid for sid in duty_expression_sids if sid > match.sid
+            ]
             # Update with the matching DutyExpression we found
             phrase["duty_expression"] = match
 
         transformed_duty_expression_sids = [
             phrase["duty_expression"].sid for phrase in transformed
         ]
-
         if transformed_duty_expression_sids != sorted(transformed_duty_expression_sids):
             raise ValidationError(
                 "Duty expressions must be used in the duty sentence in ascending order of SID.",
