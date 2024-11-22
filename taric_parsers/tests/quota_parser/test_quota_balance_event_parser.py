@@ -97,7 +97,15 @@ class TestQuotaBalanceEventParserV2:
         assert target.imported_amount == "0"
         assert target.last_import_date_in_allocation == "2021-01-01"
         assert target.quota_definition__sid == 100
-        assert target.occurrence_timestamp == datetime(2020, 9, 25, 14, 58, 58)
+        assert target.occurrence_timestamp == datetime(
+            2020,
+            9,
+            25,
+            14,
+            58,
+            58,
+            tzinfo=timezone.utc,
+        )
 
         assert (
             target.data
