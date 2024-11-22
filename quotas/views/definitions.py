@@ -30,7 +30,7 @@ from workbaskets.views.generic import EditTaricView
 
 
 class QuotaDefinitionViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = models.QuotaDefinition.objects.has_approved_state()
+    queryset = models.QuotaDefinition.objects.has_approved_state().order_by("sid")
     serializer_class = serializers.QuotaDefinitionSerializer
     permission_classes = [permissions.IsAuthenticated]
     search_fields = ["sid", "order_number__order_number", "description"]

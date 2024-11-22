@@ -45,13 +45,14 @@ class CertificatesViewSet(viewsets.ReadOnlyModelViewSet):
             models.Certificate.objects.approved_up_to_transaction(tx)
             .select_related("certificate_type")
             .prefetch_related("descriptions")
+            .order_by("sid")
         )
 
 
 class CertificateTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows certificate types to be viewed."""
 
-    queryset = models.CertificateType.objects.all()
+    queryset = models.CertificateType.objects.all().order_by("sid")
     serializer_class = CertificateTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
 

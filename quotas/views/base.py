@@ -55,41 +55,49 @@ class QuotaOrderNumberViewset(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         tx = WorkBasket.get_current_transaction(self.request)
-        return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx)
+        return models.QuotaOrderNumber.objects.approved_up_to_transaction(tx).order_by(
+            "sid",
+        )
 
 
 class QuotaOrderNumberOriginViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = models.QuotaOrderNumberOrigin.objects.has_approved_state()
+    queryset = models.QuotaOrderNumberOrigin.objects.has_approved_state().order_by(
+        "sid",
+    )
     serializer_class = serializers.QuotaOrderNumberOriginSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class QuotaOrderNumberOriginExclusionViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = models.QuotaOrderNumberOriginExclusion.objects.has_approved_state()
+    queryset = (
+        models.QuotaOrderNumberOriginExclusion.objects.has_approved_state().order_by(
+            "pk",
+        )
+    )
     serializer_class = serializers.QuotaOrderNumberOriginExclusionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class QuotaAssociationViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = models.QuotaAssociation.objects.has_approved_state()
+    queryset = models.QuotaAssociation.objects.has_approved_state().order_by("pk")
     serializer_class = serializers.QuotaAssociationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class QuotaSuspensionViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = models.QuotaSuspension.objects.has_approved_state()
+    queryset = models.QuotaSuspension.objects.has_approved_state().order_by("sid")
     serializer_class = serializers.QuotaSuspensionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class QuotaBlockingViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = models.QuotaBlocking.objects.has_approved_state()
+    queryset = models.QuotaBlocking.objects.has_approved_state().order_by("sid")
     serializer_class = serializers.QuotaBlockingSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class QuotaEventViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = models.QuotaEvent.objects.has_approved_state()
+    queryset = models.QuotaEvent.objects.has_approved_state().order_by("pk")
     serializer_class = serializers.QuotaEventSerializer
     permission_classes = [permissions.IsAuthenticated]
 
