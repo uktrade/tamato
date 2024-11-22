@@ -9,6 +9,8 @@ from factory.fuzzy import FuzzyDecimal
 from factory.fuzzy import FuzzyText
 
 from common.util import TaricDateRange
+from reference_documents.models import AlignmentReportCheckStatus
+from reference_documents.models import AlignmentReportStatus
 from reference_documents.models import ReferenceDocumentVersionStatus
 
 
@@ -58,9 +60,9 @@ class ReferenceDocumentVersionFactory(factory.django.DjangoModelFactory):
         )
 
 
-class PreferentialRateFactory(factory.django.DjangoModelFactory):
+class RefRateFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "reference_documents.PreferentialRate"
+        model = "reference_documents.RefRate"
 
     commodity_code = FuzzyText(length=6, chars=string.digits, suffix="0000")
 
@@ -106,11 +108,11 @@ class PreferentialRateFactory(factory.django.DjangoModelFactory):
         )
 
 
-class PreferentialQuotaOrderNumberFactory(factory.django.DjangoModelFactory):
+class RefOrderNumberFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "reference_documents.PreferentialQuotaOrderNumber"
+        model = "reference_documents.RefOrderNumber"
 
-    quota_order_number = FuzzyText(prefix="054", length=3, chars=string.digits)
+    order_number = FuzzyText(prefix="054", length=3, chars=string.digits)
 
     coefficient = None
     main_order_number = None
@@ -128,21 +130,87 @@ class PreferentialQuotaOrderNumberFactory(factory.django.DjangoModelFactory):
     )
 
 
-class PreferentialQuotaFactory(factory.django.DjangoModelFactory):
+class RefQuotaDefinitionRangeFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "reference_documents.PreferentialQuota"
+        model = "reference_documents.RefQuotaDefinitionRange"
+
+    start_day = 1
+    start_month = 1
+    start_year = 2020
+    end_day = 31
+    end_month = 12
+    end_year = 2024
 
     commodity_code = FuzzyText(length=6, chars=string.digits, suffix="0000")
 
-    quota_duty_rate = FuzzyText(length=2, chars=string.digits, suffix="%")
+    duty_rate = FuzzyText(length=2, chars=string.digits, suffix="%")
 
-    preferential_quota_order_number = factory.SubFactory(
-        PreferentialQuotaOrderNumberFactory,
+    ref_order_number = factory.SubFactory(
+        RefOrderNumberFactory,
     )
 
-    volume = FuzzyDecimal(100.0, 10000.0, 1)
+    initial_volume = FuzzyDecimal(100.0, 10000.0, 1)
+    yearly_volume_increment = FuzzyDecimal(10.0, 30.0, 1)
+    yearly_volume_increment_text = ""
+    measurement = "Tonne"
 
-    measurement = "tonnes"
+
+class RefQuotaDefinitionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.RefQuotaDefinition"
+
+    commodity_code = FuzzyText(length=6, chars=string.digits, suffix="0000")
+    duty_rate = FuzzyText(length=2, chars=string.digits, suffix="%")
+    ref_order_number = factory.SubFactory(
+        RefOrderNumberFactory,
+    )
+    volume = FuzzyDecimal(100.0, 10000.0, 1)
+    measurement = "Tonne"
+    valid_between = TaricDateRange(
+        get_random_date(
+            date.today() + timedelta(days=-(365 * 2)),
+            date.today() + timedelta(days=-365),
+        ),
+        get_random_date(
+            date.today() + timedelta(days=-364),
+            date.today(),
+        ),
+    )
+
+    class Params:
+        valid_between_current = factory.Trait(
+            valid_between=TaricDateRange(
+                date.today() + timedelta(days=-200),
+                date.today() + timedelta(days=165),
+            ),
+        )
+        valid_between_current_open_ended = factory.Trait(
+            valid_between=TaricDateRange(
+                date.today() + timedelta(days=-200),
+                None,
+            ),
+        )
+        valid_between_in_past = factory.Trait(
+            valid_between=TaricDateRange(
+                date.today() + timedelta(days=-375),
+                date.today() + timedelta(days=-10),
+            ),
+        )
+        valid_between_in_future = factory.Trait(
+            valid_between=TaricDateRange(
+                date.today() + timedelta(days=10),
+                date.today() + timedelta(days=375),
+            ),
+        )
+
+
+class RefQuotaSuspensionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.RefQuotaSuspension"
+
+    ref_quota_definition = factory.SubFactory(
+        RefQuotaDefinitionFactory,
+    )
 
     valid_between = TaricDateRange(
         get_random_date(
@@ -180,3 +248,43 @@ class PreferentialQuotaFactory(factory.django.DjangoModelFactory):
                 date.today() + timedelta(days=375),
             ),
         )
+
+
+class RefQuotaSuspensionRangeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.RefQuotaSuspensionRange"
+
+    ref_quota_definition_range = factory.SubFactory(
+        RefQuotaDefinitionRangeFactory,
+    )
+
+    start_day = 1
+    start_month = 2
+    start_year = 2020
+    end_day = 28
+    end_month = 9
+    end_year = 2024
+
+
+class AlignmentReportFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.AlignmentReport"
+
+    reference_document_version = factory.SubFactory(
+        ReferenceDocumentVersionFactory,
+    )
+
+    status = AlignmentReportStatus.PENDING
+
+
+class AlignmentReportCheckFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.AlignmentReportCheck"
+
+    alignment_report = factory.SubFactory(
+        AlignmentReportFactory,
+    )
+    check_name = FuzzyText(length=5)
+    status = AlignmentReportCheckStatus.PASS
+    message = FuzzyText(length=10)
+    ref_rate = None
