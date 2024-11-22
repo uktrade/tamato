@@ -34,9 +34,19 @@ task_ui_patterns = [
         name="subtask-ui-create",
     ),
     path(
-        "subtasks/confirm-create/<int:pk>/",
+        "subtasks/<int:pk>/confirm-create/",
         views.SubTaskConfirmCreateView.as_view(),
         name="subtask-ui-confirm-create",
+    ),
+    path(
+        "subtasks/<int:pk>/delete",
+        views.SubTaskDeleteView.as_view(),
+        name="subtask-ui-delete",
+    ),
+    path(
+        "subtasks/<int:pk>/confirm-delete",
+        views.SubTaskConfirmDeleteView.as_view(),
+        name="subtask-ui-confirm-delete",
     ),
     path(
         "subtasks/<int:pk>/update/",
@@ -80,6 +90,16 @@ workflow_template_ui_patterns = [
         "<int:pk>/confirm-update/",
         views.TaskWorkflowTemplateConfirmUpdateView.as_view(),
         name="task-workflow-template-ui-confirm-update",
+    ),
+    path(
+        "<int:pk>/delete/",
+        views.TaskWorkflowTemplateDeleteView.as_view(),
+        name="task-workflow-template-ui-delete",
+    ),
+    path(
+        "<int:pk>/confirm-delete/",
+        views.TaskWorkflowTemplateConfirmDeleteView.as_view(),
+        name="task-workflow-template-ui-confirm-delete",
     ),
     path(
         "task-templates/<int:pk>/",

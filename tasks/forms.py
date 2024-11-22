@@ -124,6 +124,9 @@ class TaskWorkflowTemplateUpdateForm(TaskWorkflowTemplateBaseForm):
         super().__init__(*args, submit_title="Update", **kwargs)
 
 
+TaskWorkflowTemplateDeleteForm = delete_form_for(TaskWorkflowTemplate)
+
+
 class TaskTemplateFormBase(ModelForm):
     class Meta:
         model = TaskTemplate

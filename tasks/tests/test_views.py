@@ -15,6 +15,8 @@ from tasks.tests.factories import TaskItemTemplateFactory
 
 pytestmark = pytest.mark.django_db
 
+pytestmark = pytest.mark.django_db
+
 
 def test_task_update_view_update_progress_state(valid_user_client):
     """Tests that `TaskUpdateView` updates `Task.progress_state` and that a
@@ -177,6 +179,38 @@ def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
     )
 
 
+@pytest.mark.parametrize(
+    ("client_type", "expected_status_code_get", "expected_status_code_post"),
+    [
+        ("valid_user_client", 200, 302),
+        ("client_with_current_workbasket_no_permissions", 403, 403),
+    ],
+)
+def test_delete_subtask_missing_user_permissions(
+    client_type,
+    expected_status_code_get,
+    expected_status_code_post,
+    request,
+):
+    """Tests that attempting to delete a subtask fails for users without the
+    necessary permissions."""
+    client_type = request.getfixturevalue(client_type)
+    subtask_instance = SubTaskFactory.create(
+        progress_state__name=ProgressState.State.TO_DO,
+    )
+
+    url = reverse(
+        "workflow:subtask-ui-delete",
+        kwargs={"pk": subtask_instance.pk},
+    )
+
+    get_response = client_type.get(url)
+    assert get_response.status_code == expected_status_code_get
+
+    response = client_type.post(url)
+    assert response.status_code == expected_status_code_post
+
+
 def test_workflow_template_detail_view_displays_task_templates(valid_user_client):
     task_item_template = TaskItemTemplateFactory.create()
     task_template = task_item_template.task_template
@@ -309,6 +343,47 @@ def test_workflow_template_update_view(
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert task_workflow_template.title in soup.select("h1.govuk-panel__title")[0].text
+
+
+def test_workflow_template_delete_view(
+    valid_user_client,
+    task_workflow_template_single_task_template_item,
+):
+    """Tests that a workflow template can be deleted (along with related
+    TaskItemPosition and TaskTemplate objects) and that the corresponding
+    confirmation view returns a HTTP 200 response."""
+
+    task_workflow_template_pk = task_workflow_template_single_task_template_item.pk
+    task_template_pk = (
+        task_workflow_template_single_task_template_item.get_task_templates().get().pk
+    )
+
+    delete_url = task_workflow_template_single_task_template_item.get_url("delete")
+    delete_response = valid_user_client.post(delete_url)
+    assert delete_response.status_code == 302
+
+    assert not TaskWorkflowTemplate.objects.filter(
+        pk=task_workflow_template_pk,
+    ).exists()
+    assert not TaskItemTemplate.objects.filter(
+        queue_id=task_workflow_template_pk,
+    ).exists()
+    assert not TaskTemplate.objects.filter(pk=task_template_pk).exists()
+
+    confirmation_url = reverse(
+        "workflow:task-workflow-template-ui-confirm-delete",
+        kwargs={"pk": task_workflow_template_pk},
+    )
+    assert delete_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+    assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    assert (
+        f"Workflow template ID: {task_workflow_template_pk}"
+        in soup.select(".govuk-panel__title")[0].text
+    )
 
 
 def test_create_task_template_view(valid_user_client, task_workflow_template):
