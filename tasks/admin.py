@@ -33,6 +33,7 @@ class TaskAdmin(TaskAdminMixin, admin.ModelAdmin):
     list_display = [
         "id",
         "title",
+        "is_subtask",
         "description",
         "category",
         "progress_state",

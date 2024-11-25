@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.conf import settings
+from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db import transaction
@@ -95,6 +96,7 @@ class Task(TaskBase):
     objects = TaskManager.from_queryset(TaskQueryset)()
 
     @property
+    @admin.display(boolean=True)
     def is_subtask(self) -> bool:
         return bool(self.parent_task)
 
