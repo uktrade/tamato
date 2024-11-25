@@ -20,8 +20,8 @@
     {{ table_rows.append([
       {"text": definition_link },
       {"text": sub_quota_link },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
+      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
       {"text": actions_html },
@@ -53,8 +53,8 @@
     {{ table_rows.append([
       {"text": definition_link },
       {"text": main_quota_link },
-      {"text": "{:%d %b %Y}".format(object.main_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(object.main_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.upper) if object.main_quota.valid_between.upper else "-"},
+      {"text": "{:%d %b %Y}".format(object.main_quota.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(object.main_quota.valid_between.upper) if object.main_quota.valid_between.upper else "-"},
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
     ]) or "" }}

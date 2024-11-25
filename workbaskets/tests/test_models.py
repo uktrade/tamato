@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from django.conf import settings
+from django.utils.timezone import make_aware
 from django_fsm import TransitionNotAllowed
 
 from checks.tests.factories import TransactionCheckFactory
@@ -478,7 +479,7 @@ def test_workbasket_user_assignments_queryset():
     )
     # Inactive assignment
     factories.TaskAssigneeFactory.create(
-        unassigned_at=datetime.now(),
+        unassigned_at=make_aware(datetime.now()),
         task__workbasket=workbasket,
     )
     # Unrelated assignment

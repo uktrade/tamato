@@ -8,6 +8,7 @@ from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.timezone import make_aware
 
 from certificates.models import Certificate
 from common.fields import AutoCompleteField
@@ -246,7 +247,7 @@ class MeasureConditionsFormMixin(forms.ModelForm):
             )
 
         if price:
-            date = measure_start_date or datetime.datetime.now()
+            date = measure_start_date or make_aware(datetime.now())
             parser = LarkDutySentenceParser(compound_duties=False, date=date)
             try:
                 components = parser.transform(price)

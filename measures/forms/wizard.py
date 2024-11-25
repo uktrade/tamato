@@ -13,6 +13,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.timezone import make_aware
 
 from additional_codes.models import AdditionalCode
 from commodities.models import GoodsNomenclature
@@ -630,7 +631,7 @@ class MeasureCommodityAndDutiesFormSet(
         # Filter tuples(duty, form) for unique duties to avoid parsing the same duty more than once
         duties = [next(group) for duty, group in groupby(data, key=lambda x: x[0])]
         duty_sentence_parser = LarkDutySentenceParser(
-            date=self.measure_start_date or datetime.datetime.now(),
+            date=self.measure_start_date or make_aware(datetime.datetime.now()),
         )
         for duty, form in duties:
             try:
@@ -836,7 +837,7 @@ class MeasureStartDateForm(forms.Form, SerializableFormMixin):
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
         deserialized_selected_measures = models.Measure.objects.filter(
-            pk__in=serialized_selected_measures_pks
+            pk__in=serialized_selected_measures_pks,
         )
 
         kwargs = {
@@ -904,7 +905,7 @@ class MeasureEndDateForm(forms.Form, SerializableFormMixin):
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
         deserialized_selected_measures = models.Measure.objects.filter(
-            pk__in=serialized_selected_measures_pks
+            pk__in=serialized_selected_measures_pks,
         )
 
         kwargs = {
@@ -957,7 +958,7 @@ class MeasureRegulationForm(forms.Form, SerializableFormMixin):
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
         deserialized_selected_measures = models.Measure.objects.filter(
-            pk__in=serialized_selected_measures_pks
+            pk__in=serialized_selected_measures_pks,
         )
 
         kwargs = {
@@ -1027,7 +1028,7 @@ class MeasureDutiesForm(forms.Form, SerializableFormMixin):
     def deserialize_init_kwargs(cls, form_kwargs: Dict) -> Dict:
         serialized_selected_measures_pks = form_kwargs.get("selected_measures")
         deserialized_selected_measures = models.Measure.objects.filter(
-            pk__in=serialized_selected_measures_pks
+            pk__in=serialized_selected_measures_pks,
         )
 
         kwargs = {
