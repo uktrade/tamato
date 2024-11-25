@@ -262,9 +262,8 @@ class DutyTransformer(Transformer):
             .exclude(prefix__isnull=True)
             .order_by("sid")
         )
-
-        matched_sids = []
         duty_expression_sids = [d.sid for d in duty_expressions]
+        matched_sids = set()
         supplementary_unit = models.DutyExpression.objects.as_at(self.date).get(sid=99)
 
         if len(transformed) == 1:
@@ -290,17 +289,7 @@ class DutyTransformer(Transformer):
                 .first()
             )
 
-            # A duty amount will be mistakenly matched by prefix as a supplementary unit
-            # if all possible duty amount expression SIDs have already been applied
-            if (
-                match
-                and match == supplementary_unit
-                and "duty_amount" in phrase
-                and "measurement_unit" not in phrase
-            ):
-                match = None
-
-            if match is None:
+            if not self.is_valid_match(match, supplementary_unit, phrase):
                 potential_match = (
                     models.DutyExpression.objects.as_at(self.date)
                     .filter(
@@ -319,9 +308,8 @@ class DutyTransformer(Transformer):
                     f"Duty expressions must be used in the duty sentence in ascending order of SID. Matching expression: {potential_match.description} ({potential_match.prefix}).",
                 )
 
-            # Each duty expression can only be used once in a sentence and in order of increasing
-            # SID so once we have a match, remove it from the list of duty expression sids
-            matched_sids.append(match.sid)
+            # Each duty expression can only be used once in a sentence and in ascending SID order
+            matched_sids.add(match.sid)
             duty_expression_sids[:] = [
                 sid for sid in duty_expression_sids if sid > match.sid
             ]
@@ -335,6 +323,31 @@ class DutyTransformer(Transformer):
             raise ValidationError(
                 "Duty expressions must be used in the duty sentence in ascending order of SID.",
             )
+
+    def is_valid_match(
+        self,
+        match: models.DutyExpression | None,
+        supplementary_unit: models.DutyExpression,
+        phrase: dict,
+    ) -> bool:
+        """
+        Checks whether a match has been found and is valid, returning `True` if
+        so and `False` if not.
+
+        A duty amount may be mistakenly matched by prefix as a supplementary unit if all possible duty amount expression SIDs have already been applied,
+        in which case `False` is returned.
+        """
+        if match is None:
+            return False
+
+        if (
+            match == supplementary_unit
+            and "duty_amount" in phrase
+            and "measurement_unit" not in phrase
+        ):
+            return False
+
+        return True
 
     @staticmethod
     def validate_according_to_applicability_code(
