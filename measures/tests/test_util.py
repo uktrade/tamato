@@ -70,7 +70,7 @@ def test_diff_components_update_multiple(
     component_2 = factories.MeasureComponentFactory.create(
         component_measure=component_1.component_measure,
         duty_amount=253.000,
-        duty_expression=plus_percent_or_amount,
+        duty_expression=plus_percent_or_amount[0],
         monetary_unit=monetary_units["GBP"],
         component_measurement__measurement_unit=measurement_units[1],
     )
