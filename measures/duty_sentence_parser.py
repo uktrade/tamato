@@ -288,6 +288,17 @@ class DutyTransformer(Transformer):
                 .order_by("sid")
                 .first()
             )
+
+            # A duty amount will be mistakenly matched by prefix as a supplementary unit
+            # if all possible duty amount expression SIDs have already been applied
+            if (
+                match
+                and match == supplementary_unit
+                and "duty_amount" in phrase
+                and "measurement_unit" not in phrase
+            ):
+                match = None
+
             if match is None:
                 potential_match = (
                     models.DutyExpression.objects.as_at(self.date)
