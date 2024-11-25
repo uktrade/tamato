@@ -14,6 +14,7 @@ from measures.duty_sentence_parser import InvalidMeasurementUnit
 from measures.duty_sentence_parser import InvalidMeasurementUnitQualififer
 from measures.duty_sentence_parser import InvalidMonetaryUnit
 from measures.models import DutyExpression
+from measures.validators import ApplicabilityCode
 
 pytestmark = pytest.mark.django_db
 
@@ -22,6 +23,7 @@ PLUS_PERCENT_OR_AMOUNT_SID = (4, 19, 20)
 SUPPLEMENTARY_UNIT_FIXTURE_NAME = "supplementary_unit"
 PLUS_AGRI_COMPONENT_FIXTURE_NAME = "plus_agri_component"
 MAXIMUM_SID = (17, 35)
+NOTHING_FIXTURE_NAME = "nothing"
 BRITISH_POUND_FIXTURE_NAME = "british_pound"
 EURO_FIXTURE_NAME = "euro"
 KILOGRAM_FIXTURE_NAME = "kilogram"
@@ -284,10 +286,10 @@ def test_irreversible_duty_sentence_parsing(
 def test_only_permitted_measurements_allowed(lark_duty_sentence_parser):
     with pytest.raises(ValidationError) as e:
         lark_duty_sentence_parser.transform("1.0 EUR / kg / lactic.")
-        assert (
-            e.message
-            == "Measurement unit qualifier lactic. cannot be used with measurement unit kg."
-        )
+    assert (
+        "Measurement unit qualifier lactic. cannot be used with measurement unit kg."
+        in str(e.value)
+    )
 
 
 @pytest.mark.parametrize(
@@ -337,25 +339,67 @@ def test_compound_duty_not_permitted_error(sentence, simple_lark_duty_sentence_p
             "A duty expression cannot be used more than once in a duty sentence.",
         ),
         (
-            f"+ 5.5% 10%",
+            f"+ AC 10%",
             "Duty expressions must be used in the duty sentence in ascending order of SID.",
         ),
         (
-            "+ AC 10%",
-            f"Duty amount cannot be used with duty expression + agricultural component (+ AC).",
-        ),
-        (
             "NIHIL / 100 kg",
-            f"Measurement unit 100 kg (KGM) cannot be used with duty expression (nothing) (NIHIL).",
+            f"Measurement unit 100 kg (DTN) cannot be used with duty expression (nothing) (NIHIL).",
         ),
     ],
 )
-def test_duty_validation_errors(sentence, exp_error_message, lark_duty_sentence_parser):
-    """
-    Tests validation based on applicability codes.
-
-    See conftest.py for DutyExpression fixture details.
-    """
-    with pytest.raises(ValidationError) as e:
+def test_duty_transformer_duty_expression_validation_errors(
+    sentence,
+    exp_error_message,
+    lark_duty_sentence_parser,
+):
+    with pytest.raises(ValidationError) as error:
         lark_duty_sentence_parser.transform(sentence)
-        assert exp_error_message in e.message
+    assert exp_error_message in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "code, duty_expression, item, item_name, error_message",
+    [
+        (
+            ApplicabilityCode.NOT_PERMITTED,
+            PLUS_AGRI_COMPONENT_FIXTURE_NAME,
+            10.0,
+            "duty amount",
+            "Duty amount cannot be used with duty expression + agricultural component (+ AC).",
+        ),
+        (
+            ApplicabilityCode.NOT_PERMITTED,
+            NOTHING_FIXTURE_NAME,
+            BRITISH_POUND_FIXTURE_NAME,
+            "monetary unit",
+            "Monetary unit cannot be used with duty expression (nothing) (NIHIL).",
+        ),
+        (
+            ApplicabilityCode.MANDATORY,
+            PERCENT_OR_AMOUNT_FIXTURE_NAME,
+            None,
+            "duty amount",
+            f"Duty expression % or amount () requires a duty amount.",
+        ),
+    ],
+)
+def test_duty_transformer_applicability_code_validation_errors(
+    code,
+    duty_expression,
+    item,
+    item_name,
+    error_message,
+    lark_duty_sentence_parser,
+    request,
+):
+    with pytest.raises(ValidationError) as error:
+        transformer = lark_duty_sentence_parser.transformer
+        duty_expression = request.getfixturevalue(duty_expression)
+        transformer.validate_according_to_applicability_code(
+            code,
+            duty_expression,
+            item,
+            item_name,
+        )
+    assert error_message in str(error.value)
