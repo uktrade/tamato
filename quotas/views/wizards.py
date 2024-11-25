@@ -285,21 +285,18 @@ class QuotaDefinitionBulkCreatorWizard(
     permission_required = ["common.add_trackedmodel"]
 
     START = "start"
-    INITIAL_INFO = "initial_info"
     DEFINITION_PERIOD_INFO = "definition_period_info"
     REVIEW = "review"
     COMPLETE = "complete"
 
     form_list = [
         (START, forms.BulkQuotaDefinitionCreateStartForm),
-        (INITIAL_INFO, forms.BulkQuotaDefinitionCreateInitialInformation),
         (DEFINITION_PERIOD_INFO, forms.QuotaDefinitionBulkCreateDefinitionInformation),
         (REVIEW, forms.BulkQuotaDefinitionCreateReviewForm),
     ]
 
     templates = {
         START: "quota-definitions/bulk-create-start.jinja",
-        INITIAL_INFO: "quota-definitions/bulk-create-initial-info.jinja",
         DEFINITION_PERIOD_INFO: "quota-definitions/bulk-create-definition-info.jinja",
         REVIEW: "quota-definitions/bulk-create-review.jinja",
         COMPLETE: "quota-definitions/bulk-create-done.jinja",
@@ -307,16 +304,12 @@ class QuotaDefinitionBulkCreatorWizard(
 
     step_metadata = {
         START: {
-            "title": "Bulk create quota definitions",
+            "title": "Create multiple definition periods",
             "link_text": "start",
         },
-        INITIAL_INFO: {
-            "title": "Bulk create quota definition initial information",
-            "link_text": "Initial information",
-        },
         DEFINITION_PERIOD_INFO: {
-            "title": "Definition period information",
-            "link_text": "Definition period information",
+            "title": "Enter quota definition period data",
+            "link_text": "Enter quota definition period data",
         },
         REVIEW: {
             "title": "Review bulk creation information",
@@ -332,6 +325,12 @@ class QuotaDefinitionBulkCreatorWizard(
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
+    @property
+    def quota_order_number(self) -> models.QuotaOrderNumber:
+        cleaned_data = self.get_cleaned_data_for_step(self.START)
+        quota_order_number = cleaned_data.get("quota_order_number")
+        return quota_order_number
+
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
         context["step_metadata"] = self.step_metadata
@@ -346,8 +345,7 @@ class QuotaDefinitionBulkCreatorWizard(
 
     def get_form_kwargs(self, step):
         kwargs = {}
-        if step != self.START:
-            kwargs["request"] = self.request
+        kwargs["request"] = self.request
         return kwargs
 
     def get_staged_definition_data(self):
@@ -375,6 +373,18 @@ class QuotaDefinitionBulkCreatorWizard(
         )
 
     def done(self, form_list, **kwargs):
+        # this will need changing.
+        # Data structure:
+        # {
+        # "order_number": 1234567,
+        # "recurrance_data": {
+        # "count": int
+        # "frequency": int
+        # }
+        # staged_data: [
+        # {} of definition data
+        # ]
+        # }
         order_number_pk = self.request.session["recurrance_data"][
             "quota_order_number_pk"
         ]
