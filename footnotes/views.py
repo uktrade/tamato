@@ -49,7 +49,6 @@ class FootnoteViewSet(viewsets.ReadOnlyModelViewSet):
             models.Footnote.objects.approved_up_to_transaction(tx)
             .select_related("footnote_type")
             .prefetch_related("descriptions")
-            .order_by("pk")
         )
 
 
@@ -59,7 +58,7 @@ class FootnoteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     # Since the introduction of the current_objects ModelManager instance on
     # TrackedModel, View.queryset can be better expressed as:
     # queryset = models.FootnoteType.current_objects
-    queryset = models.FootnoteType.objects.latest_approved().order_by("pk")
+    queryset = models.FootnoteType.objects.latest_approved()
     serializer_class = FootnoteTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
 

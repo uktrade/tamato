@@ -1287,7 +1287,7 @@ class WorkBasketReviewView(PermissionRequiredMixin, WithPaginationListView):
     def get_queryset(self):
         return self.model.objects.filter(
             transaction__workbasket=self.workbasket,
-        ).order_by("transaction__id")
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

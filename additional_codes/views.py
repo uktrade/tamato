@@ -50,13 +50,13 @@ class AdditionalCodeViewSet(viewsets.ReadOnlyModelViewSet):
             AdditionalCode.objects.approved_up_to_transaction(tx)
             .select_related("type")
             .prefetch_related("descriptions")
-        ).order_by("sid")
+        )
 
 
 class AdditionalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint that allows additional code types to be viewed."""
 
-    queryset = AdditionalCodeType.objects.latest_approved().order_by("sid")
+    queryset = AdditionalCodeType.objects.latest_approved()
     serializer_class = AdditionalCodeTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
