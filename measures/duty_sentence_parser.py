@@ -262,6 +262,7 @@ class DutyTransformer(Transformer):
             .order_by("sid")
         )
 
+        matched_sids = []
         duty_expression_sids = [d.sid for d in duty_expressions]
         supplementary_unit = models.DutyExpression.objects.as_at(self.date).get(sid=99)
 
@@ -296,12 +297,19 @@ class DutyTransformer(Transformer):
                     .order_by("sid")
                     .first()
                 )
+
+                if potential_match.sid in matched_sids:
+                    raise ValidationError(
+                        f"A duty expression cannot be used more than once in a duty sentence. Matching expression: {potential_match.description} ({potential_match.prefix})",
+                    )
+
                 raise ValidationError(
-                    f"A duty expression cannot be used more than once in a duty sentence. Matching expression: {potential_match.description} ({potential_match.prefix})",
+                    f"Duty expressions must be used in the duty sentence in ascending order of SID. Matching expression: {potential_match.description} ({potential_match.prefix}).",
                 )
 
             # Each duty expression can only be used once in a sentence and in order of increasing
             # SID so once we have a match, remove it from the list of duty expression sids
+            matched_sids.append(match.sid)
             duty_expression_sids[:] = [
                 sid for sid in duty_expression_sids if sid > match.sid
             ]
