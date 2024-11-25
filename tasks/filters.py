@@ -26,3 +26,12 @@ class TaskFilter(TamatoFilter):
     class Meta:
         model = Task
         fields = ["search", "category", "progress_state"]
+
+
+class WorkflowTemplateFilter(TamatoFilter):
+    search_fields = (
+        "id",
+        "title",
+        "description",
+    )
+    clear_url = reverse_lazy("workflow:task-workflow-template-ui-list")
