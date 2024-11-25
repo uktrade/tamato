@@ -8,6 +8,7 @@ from lark import Lark
 from lark import Transformer
 from lark import UnexpectedInput
 
+from common.models import TrackedModel
 from measures import models
 from measures.validators import ApplicabilityCode
 
@@ -347,7 +348,7 @@ class DutyTransformer(Transformer):
                 f"Duty expression {duty_expression.description} ({duty_expression.prefix}) requires a {item_name}.",
             )
         if code == ApplicabilityCode.NOT_PERMITTED and item:
-            if isinstance(item, object):
+            if isinstance(item, TrackedModel):
                 message = f"{item_name.capitalize()} {item.abbreviation} ({item.code}) cannot be used with duty expression {duty_expression.description} ({duty_expression.prefix})."
             else:
                 message = f"{item_name.capitalize()} cannot be used with duty expression {duty_expression.description} ({duty_expression.prefix})."
