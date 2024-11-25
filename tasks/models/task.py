@@ -94,6 +94,10 @@ class Task(TaskBase):
 
     objects = TaskManager.from_queryset(TaskQueryset)()
 
+    @property
+    def is_subtask(self) -> bool:
+        return bool(self.parent_task)
+
     def __str__(self):
         return self.title
 
