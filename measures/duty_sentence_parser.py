@@ -4,6 +4,7 @@ from typing import Sequence
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.db.models.expressions import RawSQL
+from django.utils.timezone import make_aware
 from lark import Lark
 from lark import Transformer
 from lark import UnexpectedInput
@@ -95,7 +96,7 @@ class DutySentenceParser:
     def __init__(
         self,
         compound_duties: bool = True,
-        date: datetime = datetime.now(),
+        date: datetime = make_aware(datetime.now()),
         duty_expressions: Sequence[models.DutyExpression] = None,
         monetary_units: Sequence[models.MonetaryUnit] = None,
         measurements: Sequence[models.Measurement] = None,
@@ -172,7 +173,7 @@ class DutySentenceParser:
         )
 
         self.transformer = DutyTransformer(
-            date=datetime.now(),
+            date=make_aware(datetime.now()),
             duty_expressions=duty_expressions,
             monetary_units=monetary_units,
             measurements=measurements,
@@ -305,7 +306,6 @@ class DutyTransformer(Transformer):
             duty_expression_sids.remove(match.sid)
             # Update with the matching DutyExpression we found
             phrase["duty_expression"] = match
-
         transformed_duty_expression_sids = [
             phrase["duty_expression"].sid for phrase in transformed
         ]

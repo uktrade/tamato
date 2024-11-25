@@ -8,7 +8,7 @@ exports[`QuotaOriginFormset renders empty formset when no initial data 1`] = `
     <h3
       className="govuk-heading-m"
     >
-      Origin 
+      Quota origin 
       1
     </h3>
     <input
@@ -254,7 +254,7 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
     <h3
       className="govuk-heading-m"
     >
-      Origin 
+      Quota origin 
       1
     </h3>
     <input
@@ -637,7 +637,7 @@ exports[`QuotaOriginFormset renders formset with props 1`] = `
     <h3
       className="govuk-heading-m"
     >
-      Origin 
+      Quota origin 
       2
     </h3>
     <input
@@ -1023,7 +1023,7 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
     <h3
       className="govuk-heading-m"
     >
-      Origin 
+      Quota origin 
       1
     </h3>
     <input
@@ -1412,7 +1412,7 @@ exports[`QuotaOriginFormset renders with formset errors 1`] = `
     <h3
       className="govuk-heading-m"
     >
-      Origin 
+      Quota origin 
       2
     </h3>
     <input

@@ -11,7 +11,7 @@
                     <oub:update.type>2</oub:update.type>
                     <oub:quota.unblocking.event>
                         <oub:quota.definition.sid>100</oub:quota.definition.sid>
-                        <oub:occurrence.timestamp>2020-09-25T14:58:58</oub:occurrence.timestamp>
+                        <oub:occurrence.timestamp>2020-09-25T14:58:58Z</oub:occurrence.timestamp>
                         <oub:unblocking.date>2021-01-01</oub:unblocking.date>
                     </oub:quota.unblocking.event>
                 </oub:record>

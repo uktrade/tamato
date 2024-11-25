@@ -6,6 +6,7 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
+from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskLog
 
@@ -77,6 +78,39 @@ def test_task_assignee_workbasket_reviewers_queryset(
 
     assert workbasket_reviewers.count() == 1
     assert workbasket_reviewer_assignee in workbasket_reviewers
+
+
+def test_non_workflow_task_queryset(task, task_workflow_single_task_item):
+    """Test correct behaviour of TaskQueryset.non_workflow()."""
+
+    non_workflow_tasks = Task.objects.non_workflow()
+
+    assert Task.objects.count() == 3
+    assert task == non_workflow_tasks.get()
+
+
+def test_workflow_summary_task_queryset(task, task_workflow_single_task_item):
+    """Test correct behaviour of TaskQueryset.workflow_summary()."""
+
+    """Return a queryset of TaskWorkflow summary Task instances, i.e. those
+    with a non-null related_name=taskworkflow."""
+
+    workflow_tasks = Task.objects.workflow_summary()
+
+    assert Task.objects.count() == 3
+    assert task_workflow_single_task_item.summary_task == workflow_tasks.get()
+
+
+def test_top_level_task_queryset(task, task_workflow_single_task_item):
+    """Test correct behaviour of TaskQueryset.top_level()."""
+
+    top_level_tasks = Task.objects.top_level()
+
+    assert Task.objects.count() == 3
+    assert top_level_tasks.count() == 2
+    assert task_workflow_single_task_item.summary_task in top_level_tasks
+    assert task in top_level_tasks
+    assert task_workflow_single_task_item.get_tasks().get() not in top_level_tasks
 
 
 def test_create_task_log_task_assigned():

@@ -15,7 +15,7 @@
     </a>
   {% endset %}
   {% set actions_html %}
-      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
+      <a class="govuk-link" href="{{ object.sub_quota.get_association_edit_url() }}">Edit</a>
       <br/>
       <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
   {% endset %}
@@ -33,11 +33,6 @@
       href="{{ url('quota-ui-detail', args=[object.main_quota.order_number.sid]) }}">
       {{ object.main_quota.order_number }}
     </a>
-  {% endset %}
-  {% set actions_html %}
-      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
-      <br/>
-      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
   {% endset %}
 
   {{ table_rows.append([

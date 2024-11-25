@@ -2,6 +2,7 @@ QUOTA_ORIGIN_EXCLUSIONS_FORMSET_PREFIX = "quota-origin-exclusions-formset"
 QUOTA_ORIGINS_FORMSET_PREFIX = "origins"
 QUOTA_EXCLUSIONS_FORMSET_PREFIX = "exclusions"
 CATEGORY_HELP_TEXT = "Categories are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
+MECHANISM_HELP_TEXT = "Mechanisms are required for the TAP database but will not appear as a TARIC3 object in your workbasket"
 SAFEGUARD_HELP_TEXT = (
     "Once the quota category has been set as ‘Safeguard’, this cannot be changed"
 )

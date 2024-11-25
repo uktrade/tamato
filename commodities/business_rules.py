@@ -5,6 +5,8 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta
 
+from django.utils.timezone import make_aware
+
 from common.business_rules import BusinessRule
 from common.business_rules import DescriptionsRules
 from common.business_rules import FootnoteApplicability
@@ -122,7 +124,10 @@ class NIG2(BusinessRule):
 
         commodity = Commodity(obj=good, indent_obj=indent)
         collection = get_chapter_collection(good)
-        snapshot = collection.get_snapshot(self.transaction, datetime.today())
+        snapshot = collection.get_snapshot(
+            self.transaction,
+            make_aware(datetime.today()),
+        )
 
         potential_parents = snapshot.get_potential_parents(commodity)
 

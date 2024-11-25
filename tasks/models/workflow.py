@@ -7,39 +7,26 @@ from tasks.models.queue import QueueItem
 from tasks.models.task import Task
 from tasks.models.task import TaskBase
 
-# ---------------
-# - Base classes.
-# ---------------
-
-
-class TaskWorkflowBase(Queue):
-    """Abstract model base class containing model fields common to TaskWorkflow
-    and TaskWorkflowTemplate."""
-
-    class Meta:
-        abstract = True
-
-    title = models.CharField(
-        max_length=255,
-    )
-    description = models.TextField(
-        blank=True,
-    )
-
-
 # ----------------------
 # - Workflows and tasks.
 # ----------------------
 
 
-class TaskWorkflow(TaskWorkflowBase):
+class TaskWorkflow(Queue):
     """Workflow of ordered Tasks."""
 
+    summary_task = models.OneToOneField(
+        Task,
+        on_delete=models.PROTECT,
+    )
+    """Provides task-like filtering and display capabilities for this
+    workflow."""
     creator_template = models.ForeignKey(
         "tasks.TaskWorkflowTemplate",
         null=True,
         on_delete=models.SET_NULL,
     )
+    """The template from which this workflow was created, if any."""
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
@@ -72,8 +59,28 @@ class TaskItem(QueueItem):
 # ----------------------------------------
 
 
-class TaskWorkflowTemplate(TaskWorkflowBase):
+class TaskWorkflowTemplate(Queue):
     """Template used to create TaskWorkflow instance."""
+
+    title = models.CharField(
+        max_length=255,
+    )
+    """
+    A title name for the instance.
+
+    This isn't the same as the title assigned to a TaskWorkflow instance
+    generated from a template.
+    """
+    description = models.TextField(
+        blank=True,
+        help_text="Description of what this workflow template is used for. ",
+    )
+    """
+    Description of what the instance is used for.
+
+    This isn't the same as the description that may be applied to a TaskWorkflow
+    instance generated from a template.
+    """
 
     def get_task_templates(self) -> models.QuerySet:
         """Get a QuerySet of the TaskTemplates associated through their
