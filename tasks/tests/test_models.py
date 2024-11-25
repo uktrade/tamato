@@ -94,7 +94,6 @@ def test_workflow_summary_task_queryset(task, task_workflow_single_task_item):
 
     """Return a queryset of TaskWorkflow summary Task instances, i.e. those
     with a non-null related_name=taskworkflow."""
-    # models.Q(taskworkflow__isnull=False),
 
     non_workflow_tasks = Task.objects.workflow_summary()
 
