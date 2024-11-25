@@ -84,17 +84,17 @@ def test_confirm_create_template_shows_task_or_subtask(
 
 
 @pytest.mark.parametrize(
-    ("task_factory", "expected_result"),
+    ("task_factory", "update_url"),
     [
-        (TaskFactory, True),
-        (SubTaskFactory, False),
+        (TaskFactory, "workflow:task-ui-update"),
+        (SubTaskFactory, "workflow:subtask-ui-update"),
     ],
     ids=("task test", "subtask test"),
 )
-def test_create_subtask_button_shows_only_for_non_parent_tasks(
+def test_update_link_changes_for_task_and_subtask(
     superuser_client,
     task_factory,
-    expected_result,
+    update_url,
 ):
     task = task_factory.create()
 
@@ -109,10 +109,43 @@ def test_create_subtask_button_shows_only_for_non_parent_tasks(
 
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
-    if expected_result:
-        assert page.find("a", href=f"/tasks/{task.pk}/subtasks/create")
-    else:
-        assert not page.find("a", href=f"/tasks/{task.pk}/subtasks/create")
+    update_link = reverse(
+        update_url,
+        kwargs={
+            "pk": task.pk,
+        },
+    )
+    assert page.find("a", href=update_link)
+
+
+@pytest.mark.parametrize(
+    ("task_factory"),
+    [TaskFactory, SubTaskFactory],
+    ids=("task test", "subtask test"),
+)
+def test_create_subtask_button_shows_only_for_non_parent_tasks(
+    superuser_client,
+    task_factory,
+):
+    task = task_factory.create()
+
+    url = reverse(
+        "workflow:task-ui-detail",
+        kwargs={
+            "pk": task.pk,
+        },
+    )
+    response = superuser_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    create_subtask_url = reverse(
+        "workflow:subtask-ui-create",
+        kwargs={"parent_task_pk": task.pk},
+    )
+
+    assert bool(page.find("a", href=create_subtask_url)) != task.is_subtask
 
 
 def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
@@ -131,7 +164,7 @@ def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
     url = reverse(
         "workflow:subtask-ui-create",
         kwargs={
-            "pk": subtask_parent.pk,
+            "parent_task_pk": subtask_parent.pk,
         },
     )
 

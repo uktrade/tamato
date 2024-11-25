@@ -4,12 +4,12 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Task updated" %}
+{% set page_title = page_title %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
     "items": [
-      {"text": "Task: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk})},
+      {"text": object_type ~ ": " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk})},
       {"text": page_title}
     ]
   }) }}
@@ -17,15 +17,15 @@
 
 {% block panel %}
   {{ govukPanel({
-    "titleText": "Task: " ~ object.title,
-    "text": "Task has been updated",
+    "titleText": object_type ~ ": " ~ object.title,
+    "text": object_type ~ " has been updated",
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}
 
 {% block button_group %}
   {{ govukButton({
-    "text": "View task",
+    "text": "View " ~ object_type,
     "href": url('workflow:task-ui-detail', kwargs={"pk": object.pk}),
     "classes": "govuk-button"
   }) }}

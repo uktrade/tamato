@@ -105,6 +105,12 @@ class TaskConfirmUpdateView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/confirm_update.jinja"
     permission_required = "tasks.change_task"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "Task updated"
+        context["object_type"] = "Task"
+        return context
+
 
 class TaskDeleteView(PermissionRequiredMixin, DeleteView):
     model = Task
@@ -146,11 +152,13 @@ class SubTaskCreateView(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["page_title"] = f"Create a subtask for task {self.kwargs['pk']}"
+        context["page_title"] = (
+            f"Create a subtask for task {self.kwargs['parent_task_pk']}"
+        )
         return context
 
     def form_valid(self, form):
-        parent_task = Task.objects.filter(pk=self.kwargs["pk"]).first()
+        parent_task = Task.objects.filter(pk=self.kwargs["parent_task_pk"]).first()
         if parent_task.parent_task:
             form.add_error(
                 None,
@@ -175,6 +183,42 @@ class SubTaskConfirmCreateView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "subtask"
+        return context
+
+
+class SubTaskUpdateView(PermissionRequiredMixin, UpdateView):
+    model = Task
+    template_name = "tasks/edit.jinja"
+    permission_required = "tasks.change_task"
+    form_class = TaskUpdateForm
+
+    def form_valid(self, form):
+        set_current_instigator(self.request.user)
+        with transaction.atomic():
+            self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = f"Edit subtask {self.object.pk}"
+        return context
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:subtask-ui-confirm-update",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class SubTaskConfirmUpdateView(PermissionRequiredMixin, DetailView):
+    model = Task
+    template_name = "tasks/confirm_update.jinja"
+    permission_required = "tasks.change_task"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "Subtask updated"
+        context["object_type"] = "Subtask"
         return context
 
 

@@ -3,6 +3,7 @@ from django.db.utils import IntegrityError
 
 from common.tests.factories import CategoryFactory
 from common.tests.factories import ProgressStateFactory
+from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
 from tasks.models import TaskAssignee
@@ -154,3 +155,14 @@ def test_create_task_log_missing_kwargs():
     assert f"Missing 'assignee' in kwargs for action '{action}'." in str(
         error,
     )
+
+
+@pytest.mark.parametrize(
+    ("task_factory"),
+    [TaskFactory, SubTaskFactory],
+    ids=("task test", "subtask test"),
+)
+def test_task_is_subtask_property(task_factory):
+    task = task_factory.create()
+
+    assert bool(task.parent_task) == task.is_subtask
