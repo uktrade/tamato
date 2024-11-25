@@ -4,7 +4,11 @@
 
 {% set page_title = "Task: " ~ object.title %}
 
-{% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
+{%if object.parent_task%}
+  {% set edit_url = url("workflow:subtask-ui-update", kwargs={"pk": object.pk}) %}
+{% else %}
+  {% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
+{% endif%}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
@@ -122,7 +126,7 @@
   {% if not object.parent_task %}
     {{ govukButton({
       "text": "Create subtask",
-      "href": url("workflow:subtask-ui-create", kwargs={"pk": object.pk}),
+      "href": url("workflow:subtask-ui-create", kwargs={"parent_task_pk": object.pk}),
       "classes": "govuk-button--secondary"
     }) }}
   {% endif %}

@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.db import transaction
 from django.urls import reverse
+from django.utils.timezone import make_aware
 
 from common.models.mixins import TimestampedMixin
 from common.models.mixins import WithSignalManagerMixin
@@ -120,6 +121,10 @@ class Task(TaskBase):
 
     objects = TaskManager.from_queryset(TaskQueryset)()
 
+    @property
+    def is_subtask(self) -> bool:
+        return bool(self.parent_task)
+
     def __str__(self):
         return self.title
 
@@ -213,7 +218,7 @@ class TaskAssignee(TimestampedMixin):
                 return False
             set_current_instigator(instigator)
             with transaction.atomic():
-                assignment.unassigned_at = datetime.now()
+                assignment.unassigned_at = make_aware(datetime.now())
                 assignment.save(update_fields=["unassigned_at"])
             return True
         except cls.DoesNotExist:

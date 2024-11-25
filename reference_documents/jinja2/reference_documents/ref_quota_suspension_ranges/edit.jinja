@@ -1,0 +1,23 @@
+{% extends 'layouts/form.jinja' %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Edit preferential quota suspension template" %}
+
+{% block breadcrumb %}
+    {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.ref_quota_definition_range.ref_order_number.reference_document_version.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.ref_quota_definition_range.ref_order_number.reference_document_version.reference_document.pk})},
+    {"text": "Version " ~ object.ref_quota_definition_range.ref_order_number.reference_document_version.version, 'href': url("reference_documents:version-details", kwargs={"pk":object.ref_quota_definition_range.ref_order_number.reference_document_version.pk})},
+    {"text": "Order number " ~ object.ref_quota_definition_range.ref_order_number.order_number},
+    {"text": "Quota definition template"},
+    {"text": "Edit preferential quota suspension template"}
+    ]
+  }) }}
+{% endblock %}
+
+{% block form %}
+    {% call django_form() %}
+        {{ crispy(form) }}
+    {% endcall %}
+{% endblock %}
