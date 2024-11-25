@@ -95,10 +95,10 @@ def test_workflow_summary_task_queryset(task, task_workflow_single_task_item):
     """Return a queryset of TaskWorkflow summary Task instances, i.e. those
     with a non-null related_name=taskworkflow."""
 
-    non_workflow_tasks = Task.objects.workflow_summary()
+    workflow_tasks = Task.objects.workflow_summary()
 
     assert Task.objects.count() == 3
-    assert task_workflow_single_task_item.summary_task == non_workflow_tasks.get()
+    assert task_workflow_single_task_item.summary_task == workflow_tasks.get()
 
 
 def test_top_level_task_queryset(task, task_workflow_single_task_item):
