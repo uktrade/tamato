@@ -313,6 +313,12 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
         )
 
 
+class TaskWorkflowConfirmCreateView(PermissionRequiredMixin, DetailView):
+    model = TaskWorkflow
+    template_name = "tasks/workflows/confirm_create.jinja"
+    permission_required = "tasks.add_taskworkflow"
+
+
 class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
     model = TaskWorkflowTemplate
     template_name = "tasks/workflows/template_detail.jinja"
@@ -411,7 +417,7 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
 
 class TaskWorkflowTemplateConfirmCreateView(PermissionRequiredMixin, DetailView):
     model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/template_confirm_create.jinja"
+    template_name = "tasks/workflows/confirm_create.jinja"
     permission_required = "tasks.add_taskworkflowtemplate"
 
 
