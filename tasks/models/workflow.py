@@ -28,14 +28,44 @@ class TaskWorkflow(Queue):
     )
     """The template from which this workflow was created, if any."""
 
+    class Meta:
+        verbose_name = "workflow"
+
+    def __str__(self):
+        return self.summary_task.title
+
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
         instances to this TaskWorkflow, ordered by the position of the
         TaskItem."""
         return Task.objects.filter(taskitem__queue=self).order_by("taskitem__position")
 
-    def __str__(self):
-        return self.title
+    def get_url(self, action: str = "detail"):
+        # if action == "detail":
+        #     return reverse(
+        #         "workflow:task-workflow-ui-detail",
+        #         kwargs={"pk": self.pk},
+        #     )
+        # elif action == "edit":
+        #     return reverse(
+        #         "workflow:task-workflow-ui-update",
+        #         kwargs={"pk": self.pk},
+        #     )
+        # elif action == "delete":
+        #     return reverse(
+        #         "workflow:task-workflow-ui-delete",
+        #         kwargs={"pk": self.pk},
+        #     )
+        if action == "create":
+            return reverse(
+                "workflow:task-workflow-ui-create",
+            )
+        # elif action == "list":
+        #     return reverse(
+        #         "workflow:task-workflow-ui-list",
+        #     )
+
+        return "#NOT-IMPLEMENTED"
 
 
 class TaskItem(QueueItem):
@@ -81,6 +111,9 @@ class TaskWorkflowTemplate(Queue):
     This isn't the same as the description that may be applied to a TaskWorkflow
     instance generated from a template.
     """
+
+    class Meta:
+        verbose_name = "workflow template"
 
     def __str__(self):
         return self.title
@@ -142,6 +175,14 @@ class TaskWorkflowTemplate(Queue):
                 "workflow:task-workflow-template-ui-delete",
                 kwargs={"pk": self.pk},
             )
+        elif action == "create":
+            return reverse(
+                "workflow:task-workflow-template-ui-create",
+            )
+        # elif action == "list":
+        #     return reverse(
+        #         "workflow:task-workflow-template-ui-list",
+        #     )
 
         return "#NOT-IMPLEMENTED"
 
