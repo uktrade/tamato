@@ -29,6 +29,24 @@ class TaskAdminMixin:
         )
 
 
+class SubtaskFilter(admin.SimpleListFilter):
+    title = "Subtasks"
+    parameter_name = "is_subtask"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("TRUE", "Subtasks"),
+            ("FALSE", "Tasks"),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == "TRUE":
+            return queryset.exclude(parent_task=None)
+        elif value == "FALSE":
+            return queryset.filter(parent_task=None)
+
+
 class TaskAdmin(TaskAdminMixin, admin.ModelAdmin):
     list_display = [
         "id",
@@ -42,7 +60,11 @@ class TaskAdmin(TaskAdminMixin, admin.ModelAdmin):
         "creator",
     ]
     search_fields = ["id", "title", "description"]
-    list_filter = ["category", "progress_state"]
+    list_filter = (
+        SubtaskFilter,
+        "category",
+        "progress_state",
+    )
 
     def parent_task_id(self, obj):
         if not obj.parent_task:
