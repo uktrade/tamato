@@ -6,7 +6,20 @@ SCHEMA_NAME = "reporting"
 LOOK_UP_VIEW = f"{SCHEMA_NAME}.foreign_key_lookup"
 
 
+def create_name_with_schema(name):
+    # NOTE: the " around the stop are really important.
+    # without them, the table will not be created in the correct schema
+    return f'{SCHEMA_NAME}"."{APP_LABEL}_report{name}'
+
+
 class ReportModel(models.Model):
+    # Individual classes can define extra restrictions on the copy to the report data.
+    # For instance, they may remove rows that have validity in the past
+    # The 'AND' clause must be defined in the extra_where, otherwise it will give
+    # an error. I could parse it and check if AND is in the clause, but it is too
+    # much extra effort, as the error will be identified immediately.
+    extra_where = ""
+
     def contain_all_fields(self):
         # This function will check that there are no new field in the shadowed table
         pass
@@ -19,9 +32,13 @@ class ReportModel(models.Model):
         # with 'report', the app_label and the schema
         shadowed_tb_name = shadowed_model._meta.db_table
         new_name = shadowed_tb_name.split(shadowed_model._meta.app_label + "_")[1]
-        # NOTE: the " around the stop are really important.
-        # without them, the table will not be created in the correct schema
-        return f'{SCHEMA_NAME}"."{APP_LABEL}_report{new_name}'
+        return create_name_with_schema(new_name)
+
+    @classmethod
+    def extra_queries(cls):
+        # Individual classes can define a list of sql command to be executed
+        # after the table has been updated
+        return []
 
     @classmethod
     def create_update_query(cls):
@@ -48,7 +65,10 @@ class ReportModel(models.Model):
                 read_field += field
                 # Remove the table name from the field definition
                 update_field += field.split(".")[1]
-        return update_field + read_field + query_from_and_where + ";"
+        # return update_field + read_field + query_from_and_where + ";"
+        return (
+            f"{update_field} {read_field}  {query_from_and_where} {cls.extra_where} ;"
+        )
 
     @classmethod
     def create_update_fk_queries(cls):
