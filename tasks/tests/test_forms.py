@@ -55,10 +55,7 @@ def test_workflow_create_form_valid_data(form_data, task_workflow_template):
 
     form = forms.TaskWorkflowCreateForm(form_data)
     assert form.is_valid()
-    assert form.cleaned_data
-
-    for key in form_data.keys():
-        assert form.cleaned_data[key] == form_data[key]
+    assert form.cleaned_data == form_data
 
 
 @pytest.mark.parametrize(
