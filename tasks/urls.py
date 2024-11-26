@@ -72,7 +72,11 @@ task_ui_patterns = [
 
 
 workflow_ui_patterns = [
-    # TODO
+    path(
+        "create/",
+        views.TaskWorkflowCreateView.as_view(),
+        name="task-workflow-ui-create",
+    ),
 ]
 
 workflow_template_ui_patterns = [
