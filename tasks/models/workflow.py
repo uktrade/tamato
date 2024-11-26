@@ -82,6 +82,9 @@ class TaskWorkflowTemplate(Queue):
     instance generated from a template.
     """
 
+    def __str__(self):
+        return self.title
+
     def get_task_templates(self) -> models.QuerySet:
         """Get a QuerySet of the TaskTemplates associated through their
         TaskItemTemplate instances to this TaskWorkflowTemplate, ordered by the
