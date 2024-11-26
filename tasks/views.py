@@ -279,32 +279,16 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
         create_type = form.cleaned_data["create_type"]
 
         if create_type == TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE:
-            self.object = self.create_with_template(
-                template=form.cleaned_data["workflow_template"],
-                summary_data=summary_data,
-            )
+            template = form.cleaned_data["workflow_template"]
+            self.object = template.create_task_workflow(summary_data)
         elif create_type == TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE:
-            self.object = self.create_without_template(summary_data)
+            with transaction.atomic():
+                summary_task = Task.objects.create(**summary_data)
+                self.object = TaskWorkflow.objects.create(
+                    summary_task=summary_task,
+                )
 
         return super().form_valid(form)
-
-    def create_with_template(
-        self,
-        template: TaskWorkflowTemplate,
-        summary_data: dict,
-    ) -> TaskWorkflow:
-        template = get_object_or_404(
-            TaskWorkflowTemplate,
-            pk=template.pk,
-        )
-        return template.create_task_workflow(summary_data)
-
-    @transaction.atomic
-    def create_without_template(self, summary_data: dict) -> TaskWorkflow:
-        summary_task = Task.objects.create(**summary_data)
-        return TaskWorkflow.objects.create(
-            summary_task=summary_task,
-        )
 
     def get_success_url(self):
         return reverse(
