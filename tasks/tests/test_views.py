@@ -6,10 +6,12 @@ from django.urls import reverse
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
+from tasks.forms import TaskWorkflowCreateForm
 from tasks.models import ProgressState
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskLog
 from tasks.models import TaskTemplate
+from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.tests.factories import TaskItemTemplateFactory
 
@@ -545,3 +547,72 @@ def test_delete_task_template_view(
         f"Task template ID: {task_template_pk}"
         in soup.select(".govuk-panel__title")[0].text
     )
+
+
+@pytest.mark.parametrize(
+    "form_data",
+    [
+        {
+            "title": "Test workflow 1",
+            "description": "Workflow created without using template",
+            "create_type": TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE,
+        },
+        {
+            "title": "Test workflow 2",
+            "description": "Workflow created using template",
+            "create_type": TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE,
+        },
+    ],
+    ids=(
+        "without_template",
+        "with_template",
+    ),
+)
+def test_workflow_create_view(
+    form_data,
+    valid_user_client,
+    task_workflow_template_single_task_template_item,
+):
+    """Tests that a new workflow can be created (with or without workflow
+    template) and that the corresponding confirmation view returns a HTTP 200
+    response."""
+
+    with_template = (
+        form_data["create_type"] == TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE
+    )
+
+    if with_template:
+        form_data["workflow_template"] = (
+            task_workflow_template_single_task_template_item.pk
+        )
+
+    assert not TaskWorkflow.objects.exists()
+
+    create_url = reverse("workflow:task-workflow-ui-create")
+    create_response = valid_user_client.post(create_url, form_data)
+    assert create_response.status_code == 302
+
+    created_workflow = TaskWorkflow.objects.get(
+        summary_task__title=form_data["title"],
+        summary_task__description=form_data["description"],
+    )
+
+    if with_template:
+        assert (
+            created_workflow.get_tasks().count()
+            == task_workflow_template_single_task_template_item.get_task_templates().count()
+        )
+    else:
+        assert created_workflow.get_tasks().count() == 0
+
+    confirmation_url = reverse(
+        "workflow:task-workflow-ui-confirm-create",
+        kwargs={"pk": created_workflow.pk},
+    )
+    assert create_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+    assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    assert str(created_workflow) in soup.select("h1.govuk-panel__title")[0].text
