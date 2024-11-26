@@ -116,26 +116,3 @@ def test_get_comm_codes_with_missing_measures_new_comm_code_103_pass(
         date=date.today(),
     )
     assert not comm_codes_with_missing_measures
-
-
-def test_get_comm_codes_with_missing_measures_new_comm_code_mfn_pass(
-    erga_omnes,
-    measure_type103,
-):
-    workbasket = factories.WorkBasketFactory.create()
-    new_commodity = factories.GoodsNomenclatureFactory.create(
-        transaction=workbasket.new_transaction(),
-    )
-    mfn = factories.MeasureFactory.create(
-        measure_type=measure_type103,
-        goods_nomenclature=new_commodity,
-        geographical_area=erga_omnes,
-        transaction=workbasket.new_transaction(),
-    )
-    tx = Transaction.objects.last()
-    comm_codes_with_missing_measures = get_comm_codes_with_missing_measures(
-        tx,
-        [new_commodity],
-        date=date.today(),
-    )
-    assert not comm_codes_with_missing_measures
