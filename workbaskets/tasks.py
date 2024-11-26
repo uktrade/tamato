@@ -140,3 +140,6 @@ def call_end_measures(measure_pks, workbasket_pk):
     workbasket = WorkBasket.objects.all().get(pk=workbasket_pk)
     measures = Measure.objects.all().filter(pk__in=measure_pks)
     end_measures(measures, workbasket)
+
+
+# TODO: create missing measures task here

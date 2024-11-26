@@ -40,8 +40,6 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
 from commodities.helpers import get_comm_codes_with_missing_measures
-from commodities.models.orm import GoodsNomenclature
-from commodities.models.orm import GoodsNomenclatureIndent
 from common.filters import TamatoFilter
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
@@ -79,6 +77,7 @@ from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.tasks import call_end_measures
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
+from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 logger = logging.getLogger(__name__)
@@ -1063,46 +1062,6 @@ class WorkBasketViolationDetail(DetailView):
         return redirect("workbaskets:workbasket-ui-violations")
 
 
-def check_for_missing_measures(workbasket):
-    comm_codes = None
-    if any(
-        [
-            isinstance(item, GoodsNomenclature)
-            for item in workbasket.tracked_models.all()
-        ],
-    ):
-        comm_codes = {
-            item
-            for item in workbasket.tracked_models.all()
-            if isinstance(item, GoodsNomenclature)
-        }
-    elif any(
-        [
-            isinstance(item, GoodsNomenclatureIndent)
-            for item in workbasket.tracked_models.all()
-        ],
-    ):
-        comm_codes = {
-            item.indented_goods_nomenclature
-            for item in workbasket.tracked_models.all()
-            if isinstance(item, GoodsNomenclatureIndent)
-        }
-
-    # delete any previous checks on workbasket first
-    MissingMeasureCommCode.objects.filter(workbasket=workbasket).delete()
-
-    if comm_codes:
-        codes_w_missing_measures = get_comm_codes_with_missing_measures(
-            comm_codes,
-            date=date.today(),
-        )
-        for comm_code in codes_w_missing_measures:
-            MissingMeasureCommCode.objects.create(
-                workbasket=workbasket,
-                commodity=comm_code,
-            )
-
-
 class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
     success_url = reverse_lazy("workbaskets:workbasket-ui-comm-code-checks")
     template_name = "workbaskets/checks/missing_measures.jinja"
@@ -1124,8 +1083,22 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
         )
         return super().get_queryset()
 
+    def create_missing_measure_checks(self, objects):
+        tx = self.workbasket.transactions.last()
+        codes_w_missing_measures = get_comm_codes_with_missing_measures(
+            tx,
+            objects,
+            date=date.today(),
+        )
+        for comm_code in codes_w_missing_measures:
+            MissingMeasureCommCode.objects.create(
+                workbasket=self.workbasket,
+                commodity=comm_code,
+            )
+
     def form_valid(self, form):
-        check_for_missing_measures(self.workbasket)
+        objects = get_comm_codes_affected_by_workbasket_changes(self.workbasket)
+        self.create_missing_measure_checks(objects)
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
