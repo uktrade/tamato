@@ -64,3 +64,6 @@ def call_check_workbasket_sync(self, workbasket_id: int):
     workbasket: WorkBasket = WorkBasket.objects.get(pk=workbasket_id)
     workbasket.delete_checks()
     check_workbasket_sync(workbasket)
+
+
+# TODO: create missing measures task here
