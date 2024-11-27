@@ -32,7 +32,15 @@ class TaskWorkflow(Queue):
         verbose_name = "workflow"
 
     def __str__(self):
+        return self.title
+
+    @property
+    def title(self) -> str:
         return self.summary_task.title
+
+    @property
+    def description(self) -> str:
+        return self.summary_task.description
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
