@@ -106,7 +106,7 @@ class QueueItemMetaClass(models.base.ModelBase):
 
         if not issubclass(queue_field.remote_field.model, Queue):
             raise RequiredFieldError(
-                f"{queue_field} must be a ForeignKey field to a sublass of 'Queue' model.",
+                f"{queue_field} must be a ForeignKey field to a subclass of 'Queue' model.",
             )
 
 
