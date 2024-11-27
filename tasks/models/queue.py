@@ -18,11 +18,8 @@ class Queue(models.Model):
     """
     A (FIFO) queue.
 
-    Note: This abstract class only supports a single reverse foreign-key relationship
-    to `QueueItem` for each instance. As such, all instance methods in this class use
-    the first-returned related name to access related `QueueItem` objects. This means that
-    if there are multiple relationships, only the first one will be considered when
-    retrieving items from the queue,
+    Note: This abstract class only supports a single, reverse foreign-key relationship
+    to `QueueItem` for each instance (i.e `QueueItem` instances are assumed to belong only to a single `Queue` instance).
     """
 
     class Meta:
