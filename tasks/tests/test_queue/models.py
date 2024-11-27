@@ -17,6 +17,8 @@ class TestQueueItem(QueueItem):
     class Meta:
         abstract = False
 
+    queue_field = "queue"
+
     queue = models.ForeignKey(
         TestQueue,
         related_name="queue_items",

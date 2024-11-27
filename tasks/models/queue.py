@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from typing import Self
+from typing import Type
 
+from django.core.exceptions import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.transaction import atomic
@@ -62,17 +64,50 @@ class QueueItemMetaClass(models.base.ModelBase):
     def __new__(cls, name, bases, attrs):
         new_class = super().__new__(cls, name, bases, attrs)
 
-        if (
-            "QueueItem" in [base.__name__ for base in bases]
-            and not new_class._meta.abstract
-        ):
-            queue_field = attrs.get("queue", None)
-            if not queue_field or not isinstance(queue_field, models.ForeignKey):
-                raise RequiredFieldError(
-                    f"{name} must have a 'queue' ForeignKey field.",
-                )
+        if not new_class._meta.abstract:
+            queue_field_name = attrs.get("queue_field", None)
+            cls.validate_queue_field(new_class, queue_field_name)
+            cls.update_meta_ordering(cls.get_meta(bases, attrs), queue_field_name)
 
         return new_class
+
+    @staticmethod
+    def get_meta(bases, attrs):
+        """Get the model Meta of a class or its subclasses."""
+        meta = attrs.get("Meta", None)
+        if not meta:
+            for base in bases:
+                if hasattr(base, "Meta"):
+                    meta = base.Meta
+                    break
+        return meta
+
+    @staticmethod
+    def update_meta_ordering(meta, queue_field: str):
+        """Ensure Meta ordering attribute references the appropriate queue field
+        name."""
+        meta.ordering = [
+            queue_field if field == "queue" else field for field in meta.ordering
+        ]
+
+    @staticmethod
+    def validate_queue_field(new_class: Type[Self], queue_field_name: str):
+        """Validate that `new_class` has a `queue_field_name` ForeignKey field
+        to a subclass of `Queue` model."""
+        try:
+            queue_field = new_class._meta.get_field(queue_field_name)
+        except FieldDoesNotExist:
+            queue_field = None
+
+        if not queue_field or not isinstance(queue_field, models.ForeignKey):
+            raise RequiredFieldError(
+                f"{new_class.__name__} must have a 'queue' ForeignKey field. The name of the field must match the value given to the 'queue_field' attribute on the model.",
+            )
+
+        if not issubclass(queue_field.remote_field.model, Queue):
+            raise RequiredFieldError(
+                f"{queue_field} must be a ForeignKey field to a sublass of 'Queue' model.",
+            )
 
 
 class QueueItemManager(models.Manager):
@@ -103,6 +138,10 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
     class Meta:
         abstract = True
         ordering = ["queue", "position"]
+
+    queue_field = "queue"
+    """The name of the ForeignKey field relating this instance to a Queue
+    instance."""
 
     position = models.PositiveSmallIntegerField(
         db_index=True,
