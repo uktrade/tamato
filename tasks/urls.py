@@ -73,6 +73,11 @@ task_ui_patterns = [
 
 workflow_ui_patterns = [
     path(
+        "<int:pk>/",
+        views.TaskWorkflowDetailView.as_view(),
+        name="task-workflow-ui-detail",
+    ),
+    path(
         "create/",
         views.TaskWorkflowCreateView.as_view(),
         name="task-workflow-ui-create",
