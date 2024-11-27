@@ -49,11 +49,11 @@ class TaskWorkflow(Queue):
         return Task.objects.filter(taskitem__queue=self).order_by("taskitem__position")
 
     def get_url(self, action: str = "detail"):
-        # if action == "detail":
-        #     return reverse(
-        #         "workflow:task-workflow-ui-detail",
-        #         kwargs={"pk": self.pk},
-        #     )
+        if action == "detail":
+            return reverse(
+                "workflow:task-workflow-ui-detail",
+                kwargs={"pk": self.pk},
+            )
         # elif action == "edit":
         #     return reverse(
         #         "workflow:task-workflow-ui-update",
@@ -64,7 +64,7 @@ class TaskWorkflow(Queue):
         #         "workflow:task-workflow-ui-delete",
         #         kwargs={"pk": self.pk},
         #     )
-        if action == "create":
+        elif action == "create":
             return reverse(
                 "workflow:task-workflow-ui-create",
             )
@@ -218,6 +218,14 @@ class TaskTemplate(TaskBase):
             return reverse("workflow:task-template-ui-detail", kwargs={"pk": self.pk})
         elif action == "edit":
             return reverse("workflow:task-template-ui-update", kwargs={"pk": self.pk})
+        elif action == "delete":
+            return reverse(
+                "workflow:task-template-ui-delete",
+                kwargs={
+                    "workflow_template_pk": self.taskitemtemplate.queue.pk,
+                    "pk": self.pk,
+                },
+            )
 
         return "#NOT-IMPLEMENTED"
 
