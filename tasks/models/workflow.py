@@ -59,11 +59,11 @@ class TaskWorkflow(Queue):
         #         "workflow:task-workflow-ui-update",
         #         kwargs={"pk": self.pk},
         #     )
-        # elif action == "delete":
-        #     return reverse(
-        #         "workflow:task-workflow-ui-delete",
-        #         kwargs={"pk": self.pk},
-        #     )
+        elif action == "delete":
+            return reverse(
+                "workflow:task-workflow-ui-delete",
+                kwargs={"pk": self.pk},
+            )
         elif action == "create":
             return reverse(
                 "workflow:task-workflow-ui-create",

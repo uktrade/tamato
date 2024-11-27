@@ -1,0 +1,49 @@
+{% extends "layouts/confirm.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = verbose_name|capitalize ~ " deleted" %}
+
+{% if verbose_name == "workflow" %}
+  {% set list_url = "#TODO" %}
+  {% set create_url = url("workflow:task-workflow-ui-create") %}
+{% elif verbose_name == "workflow template" %}
+  {% set list_url = "#TODO" %}
+  {% set create_url = url("workflow:task-workflow-template-ui-create") %}
+{% endif %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {"text": "Find and view "~ verbose_name ~ "s", "href": list_url},
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": verbose_name|capitalize ~ " ID: " ~ deleted_pk,
+    "text": verbose_name|capitalize ~ " has been deleted",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block button_group %}
+  {{ govukButton({
+    "text": "Find and view " ~ verbose_name ~ "s",
+    "href": list_url,
+    "classes": "govuk-button"
+  }) }}
+  {{ govukButton({
+    "text": "Create a " ~ verbose_name,
+    "href": create_url,
+    "classes": "govuk-button--secondary"
+  }) }}
+{% endblock %}
+
+{% block actions %}{% endblock %}
