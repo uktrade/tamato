@@ -226,7 +226,7 @@ def test_workflow_template_detail_view_displays_task_templates(valid_user_client
     assert response.status_code == 200
 
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    assert page.find("h1", text=workflow_template.title)
+    assert page.find("h1", text=f"Workflow template: {workflow_template.title}")
     assert page.find("a", text=task_template.title)
 
 
@@ -256,7 +256,7 @@ def test_workflow_template_detail_view_reorder_items(
         access."""
         return position - 1
 
-    items = list(task_workflow_template_three_task_template_items.get_items())
+    items = list(task_workflow_template_three_task_template_items.get_task_templates())
     item_to_move = items[convert_to_index(item_position)]
 
     url = reverse(
@@ -270,7 +270,9 @@ def test_workflow_template_detail_view_reorder_items(
     response = valid_user_client.post(url, form_data)
     assert response.status_code == 302
 
-    reordered_items = task_workflow_template_three_task_template_items.get_items()
+    reordered_items = (
+        task_workflow_template_three_task_template_items.get_task_templates()
+    )
     for i, reordered_item in enumerate(reordered_items):
         expected_position = convert_to_index(expected_item_order[i])
         expected_item = items[expected_position]
@@ -547,6 +549,72 @@ def test_delete_task_template_view(
         f"Task template ID: {task_template_pk}"
         in soup.select(".govuk-panel__title")[0].text
     )
+
+
+def test_workflow_detail_view_displays_tasks(
+    valid_user_client,
+    task_workflow_single_task_item,
+):
+    workflow = task_workflow_single_task_item
+    task = task_workflow_single_task_item.get_tasks().get()
+
+    url = reverse(
+        "workflow:task-workflow-ui-detail",
+        kwargs={"pk": workflow.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    assert page.find("h1", text=f"Workflow: {workflow.title}")
+    assert page.find("a", text=task.title)
+
+
+@pytest.mark.parametrize(
+    ("action", "item_position", "expected_item_order"),
+    [
+        ("promote", 1, [1, 2, 3]),
+        ("promote", 2, [2, 1, 3]),
+        ("demote", 2, [1, 3, 2]),
+        ("demote", 3, [1, 2, 3]),
+        ("promote_to_first", 3, [3, 1, 2]),
+        ("demote_to_last", 1, [2, 3, 1]),
+    ],
+)
+def test_workflow_detail_view_reorder_items(
+    action,
+    item_position,
+    expected_item_order,
+    valid_user_client,
+    task_workflow_three_task_items,
+):
+    """Tests that `TaskWorkflowDetailView` handles POST requests to promote or
+    demote tasks."""
+
+    def convert_to_index(position: int) -> int:
+        """Converts a 1-based item position to a 0-based index for items array
+        access."""
+        return position - 1
+
+    items = list(task_workflow_three_task_items.get_tasks())
+    item_to_move = items[convert_to_index(item_position)]
+
+    url = reverse(
+        "workflow:task-workflow-ui-detail",
+        kwargs={"pk": task_workflow_three_task_items.pk},
+    )
+    form_data = {
+        action: item_to_move.id,
+    }
+
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    reordered_items = task_workflow_three_task_items.get_tasks()
+    for i, reordered_item in enumerate(reordered_items):
+        expected_position = convert_to_index(expected_item_order[i])
+        expected_item = items[expected_position]
+        assert reordered_item.id == expected_item.id
 
 
 @pytest.mark.parametrize(

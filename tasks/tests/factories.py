@@ -14,6 +14,9 @@ from tasks.models import TaskWorkflowTemplate
 class TaskWorkflowTemplateFactory(DjangoModelFactory):
     """Factory to create TaskWorkflowTemplate instances."""
 
+    title = factory.Faker("sentence")
+    description = factory.Faker("sentence")
+
     class Meta:
         model = TaskWorkflowTemplate
 
