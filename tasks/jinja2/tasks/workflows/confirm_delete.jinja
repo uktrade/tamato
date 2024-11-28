@@ -6,14 +6,6 @@
 
 {% set page_title = verbose_name|capitalize ~ " deleted" %}
 
-{% if verbose_name == "workflow" %}
-  {% set list_url = "#TODO" %}
-  {% set create_url = url("workflow:task-workflow-ui-create") %}
-{% elif verbose_name == "workflow template" %}
-  {% set list_url = "#TODO" %}
-  {% set create_url = url("workflow:task-workflow-template-ui-create") %}
-{% endif %}
-
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,

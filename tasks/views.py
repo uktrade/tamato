@@ -416,8 +416,14 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["verbose_name"] = "workflow"
-        context_data["deleted_pk"] = self.kwargs["pk"]
+        context_data.update(
+            {
+                "verbose_name": "workflow",
+                "deleted_pk": self.kwargs["pk"],
+                "create_url": reverse("workflow:task-workflow-ui-create"),
+                "list_url": "#NOT-IMPLEMENTED",
+            },
+        )
         return context_data
 
 
@@ -572,8 +578,14 @@ class TaskWorkflowTemplateConfirmDeleteView(PermissionRequiredMixin, TemplateVie
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["verbose_name"] = "workflow template"
-        context_data["deleted_pk"] = self.kwargs["pk"]
+        context_data.update(
+            {
+                "verbose_name": "workflow template",
+                "deleted_pk": self.kwargs["pk"],
+                "create_url": reverse("workflow:task-workflow-template-ui-create"),
+                "list_url": "#NOT-IMPLEMENTED",
+            },
+        )
         return context_data
 
 
