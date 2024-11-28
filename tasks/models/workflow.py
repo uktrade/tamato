@@ -2,6 +2,7 @@ from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
 
+from common.models import User
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
 from tasks.models.task import Task
@@ -127,15 +128,20 @@ class TaskWorkflowTemplate(Queue):
         )
 
     @atomic
-    def create_task_workflow(self, summary_data: dict) -> "TaskWorkflow":
-        """
-        Create a workflow and it subtasks, using values from this template
-        workflow and its task templates.
+    def create_task_workflow(
+        self,
+        title: str,
+        description: str,
+        creator: User,
+    ) -> "TaskWorkflow":
+        """Create a workflow and it subtasks, using values from this template
+        workflow and its task templates."""
 
-        The `summary_data` param is used to populate the details of the `TaskWorkflow.summary_task` instance.
-        """
-
-        summary_task = Task.objects.create(**summary_data)
+        summary_task = Task.objects.create(
+            title=title,
+            description=description,
+            creator=creator,
+        )
         task_workflow = TaskWorkflow.objects.create(
             summary_task=summary_task,
             creator_template=self,
