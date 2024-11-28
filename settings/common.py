@@ -122,6 +122,7 @@ DOMAIN_APPS = [
     "footnotes.apps.FootnotesConfig",
     "geo_areas.apps.GeoAreasConfig",
     "measures.apps.MeasuresConfig",
+    "open_data.apps.OpenDataConfig",
     "quotas.apps.QuotasConfig",
     "reports.apps.ReportsConfig",
     "regulations.apps.RegulationsConfig",
@@ -335,11 +336,17 @@ elif VCAP_SERVICES.get("postgres"):
     }
 else:
     DB_URL = os.environ.get("DATABASE_URL", "postgres://localhost:5432/tamato")
+    DB_REPORTING_URL = os.environ.get(
+        "DATABASE_REPORTING_URL",
+        "postgres://localhost:5432/reporting",
+    )
     DATABASES = {
         "default": dj_database_url.parse(DB_URL),
+        "reporting": dj_database_url.parse(DB_REPORTING_URL),
     }
 
 SQLITE = DB_URL.startswith("sqlite")
+DATABASE_ROUTERS = ["routers.DatabaseRouter"]
 
 # -- Cache
 
