@@ -211,6 +211,16 @@ ui_patterns = [
         ui_views.WorkBasketCommentDelete.as_view(),
         name="workbasket-ui-comment-delete",
     ),
+    path(
+        f"<wb_pk>/auto-end-date-measures/",
+        ui_views.AutoEndDateMeasures.as_view(),
+        name="workbasket-ui-auto-end-date-measures",
+    ),
+    path(
+        f"<pk>/confirm-auto-end-date-measures/",
+        ui_views.AutoEndDateMeasuresConfirm.as_view(),
+        name="workbasket-ui-auto-end-date-measures-confirm",
+    ),
 ]
 
 urlpatterns = [

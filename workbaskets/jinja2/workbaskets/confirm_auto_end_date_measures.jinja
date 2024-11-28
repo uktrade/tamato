@@ -1,0 +1,32 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Measures ended" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Workbasket " ~ request.user.current_workbasket.id },
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " checks", "href": url("workbaskets:workbasket-checks")},
+      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " auto end date measures"},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        "titleText": page_title,
+        "text": "You have end dated or deleted measures linked to commodities end dated in workbasket " ~ request.user.current_workbasket.id,
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+      <a href="{{ url('workbaskets:edit-workbasket') }}" class="govuk-button govuk-button--primary">Continue to workbasket</a>
+    </div>
+  </div>
+{% endblock %}

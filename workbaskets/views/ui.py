@@ -39,11 +39,14 @@ from markdownify import markdownify
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
+from commodities.models.orm import GoodsNomenclature
 from common.filters import TamatoFilter
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
+from common.util import TaricDateRange
 from common.util import format_date_string
+from common.validators import UpdateType
 from common.views import SortingMixin
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
@@ -1779,3 +1782,130 @@ class RuleCheckQueueView(
                 "text": task_status,
                 "tag_class": "",
             }
+
+
+class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
+    model = Measure
+    paginate_by = 20
+    template_name = "workbaskets/auto_end_date_measures.jinja"
+    sort_by_fields = ["start_date", "goods_nomenclature"]
+    custom_sorting = {
+        "start_date": "valid_between",
+        "goods_nomenclature": "goods_nomenclature__item_id",
+    }
+
+    @cached_property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["wb_pk"])
+
+    @property
+    def commodities(self):
+        """Return commodities in the current workbasket which have an end
+        date."""
+        return (
+            GoodsNomenclature.objects.current()
+            .filter(
+                transaction__workbasket=self.workbasket,
+                valid_between__upper_inf=False,
+            )
+            .values_list("pk")
+        )
+
+    @cached_property
+    def measures(self):
+        # Should I only be filtering for measures without an end date?
+        return Measure.objects.current().filter(
+            goods_nomenclature__id__in=self.commodities,
+        )
+
+    def workbasket_transactions(self):
+        """Returns the current workbasket's transactions ordered by `order`,
+        while guarding against non-editing status on workbasket to minimise
+        chances of mishap."""
+        return Transaction.objects.filter(
+            workbasket=self.workbasket,
+            workbasket__status=WorkflowStatus.EDITING,
+        ).order_by("order")
+
+    def get_queryset(self):
+        ordering = self.get_ordering()
+        queryset = self.measures
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["workbasket"] = self.workbasket
+        context["today"] = date.today()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action", None) == "auto-end-date-measures":
+            self.end_measures()
+
+        return redirect(
+            "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+            self.workbasket.pk,
+        )
+
+    @atomic
+    def end_measures(self):
+        """Iterate through measures on commodities, end-date those which have
+        already began and delete those which have not yet started."""
+        # TODO: How do you check that the commodity code has actually been updated and it isn't a create or the same date as before
+        for (
+            measure
+        ) in self.measures:  # Does this need to be here? is this a likely occurence?
+            commodity = GoodsNomenclature.objects.all().get(
+                pk=measure.goods_nomenclature_id,
+                transaction__workbasket=self.workbasket,
+            )
+            if measure.valid_between.lower > commodity.valid_between.upper:
+                continue
+            if measure.valid_between.lower > date.today():
+                new_measure_version = measure.new_version(
+                    workbasket=self.workbasket,
+                    update_type=UpdateType.DELETE,
+                )
+            else:
+                new_measure_version = measure.new_version(
+                    workbasket=self.workbasket,
+                    update_type=UpdateType.UPDATE,
+                    valid_between=TaricDateRange(
+                        measure.valid_between.lower,
+                        commodity.valid_between.upper,
+                    ),
+                )
+            self.promote_measure_to_top(new_measure_version.transaction)
+
+    def promote_measure_to_top(self, promoted_measure):
+        """Set the transaction order of `promoted_measure` to be first in the
+        workbasket, demoting the transactions that came before it."""
+        # Is it better to bulk move all measure transactions at the end?
+
+        top_transaction = self.workbasket_transactions().first()
+
+        if (
+            not promoted_measure
+            or not top_transaction
+            or promoted_measure == top_transaction
+        ):
+            return
+
+        current_position = promoted_measure.order
+        top_position = top_transaction.order
+        self.workbasket_transactions().filter(order__lt=current_position).update(
+            order=F("order") + 1,
+        )
+
+        promoted_measure.order = top_position
+        promoted_measure.save(update_fields=["order"])
+
+
+class AutoEndDateMeasuresConfirm(DetailView):
+    template_name = "workbaskets/confirm_auto_end_date_measures.jinja"
+    model = WorkBasket
+    queryset = WorkBasket.objects.all()

@@ -1,0 +1,81 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/button/macro.njk" import govukButton %}
+
+
+{% set page_title %}
+  Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Auto end-date measures
+{% endset %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+
+ {% set table_rows = [] %}
+  {% for measure in object_list %}
+    {% set measure_link %}
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('measure-ui-detail', kwargs={'sid': measure.sid}) }}">{{ measure.sid }}</a>
+    {% endset %}
+
+    {% set commodity_link %}
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', args=[measure.goods_nomenclature.sid]) }}">{{ measure.goods_nomenclature.item_id }}</a>
+    {% endset %}
+
+    {% set action %}
+      {% if measure.valid_between.lower > today %}To be deleted{% else %}To be end-dated{% endif %}
+    {% endset %}
+
+    {{ table_rows.append([
+      {"text": measure_link},
+      {"html": commodity_link if measure.goods_nomenclature else "-"},
+      {"text": "{:%d %b %Y}".format(measure.goods_nomenclature.valid_between.upper) if measure.goods_nomenclature.valid_between.upper else "-" },
+      {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
+      {"text": action},
+    ]) or "" }}
+  {% endfor %}
+
+  {% set base_url = url('workbaskets:workbasket-ui-auto-end-date-measures', kwargs={"wb_pk": workbasket.id}) %}
+
+  {% set commodity_code %}
+    {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
+  {% endset %}
+
+  {% set start_date %}
+    {{ create_sortable_anchor(request, "start_date", "Measure start date", base_url) }}
+  {% endset %}
+
+  {% if object_list %}
+    <p>The following measures' commodity codes have been end-dated in your workbasket. Click submit to end-date or delete these measures.</p>
+    {{ govukTable({
+      "head": [
+        {"text": "Measure SID"},
+        {"text": commodity_code},
+        {"text": "Commodity end date"},
+        {"text": start_date},
+        {"text": "Action"},
+      ],
+      "rows": table_rows
+    }) }}
+    
+    <form
+    method="post"
+  >
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+    {{ govukButton({
+        'text': "Submit",
+        'preventDoubleClick': true,
+        "name": "action",
+        "value": "auto-end-date-measures",
+}) }}
+  </form>
+
+
+
+  {% else %}
+    <p class="govuk-body">There are no current measures related to commodity codes updated in this workbasket.</p>
+  {% endif %}
+  {% include "includes/common/pagination.jinja" %}
+
+    
+{% endblock %}
