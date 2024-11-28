@@ -91,15 +91,11 @@ class TaskWorkflowTemplate(Queue):
         )
 
     @atomic
-    def create_task_workflow(self, summary_data: dict) -> "TaskWorkflow":
-        """
-        Create a workflow and it subtasks, using values from this template
-        workflow and its task templates.
+    def create_task_workflow(self, title: str, description: str) -> "TaskWorkflow":
+        """Create a workflow and it subtasks, using values from this template
+        workflow and its task templates."""
 
-        The `summary_data` param is used to populate the details of the `TaskWorkflow.summary_task` instance.
-        """
-
-        summary_task = Task.objects.create(**summary_data)
+        summary_task = Task.objects.create(title=title, description=description)
         task_workflow = TaskWorkflow.objects.create(
             summary_task=summary_task,
             creator_template=self,

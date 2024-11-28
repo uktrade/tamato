@@ -13,13 +13,12 @@ def test_create_task_workflow_from_task_workflow_template(
 ):
     """Test creation of TaskWorkflow instances from TaskWorkflowTemplates using
     its `create_task_workflow()` method."""
-    summary_data = {
-        "title": "Workflow title",
-        "description": "Workflow description",
-    }
+    title = "Workflow title"
+    description = "Workflow description"
     task_workflow = (
         task_workflow_template_three_task_template_items.create_task_workflow(
-            summary_data,
+            title=title,
+            description=description,
         )
     )
 
@@ -28,8 +27,8 @@ def test_create_task_workflow_from_task_workflow_template(
         task_workflow.creator_template
         == task_workflow_template_three_task_template_items
     )
-    assert task_workflow.summary_task.title == summary_data["title"]
-    assert task_workflow.summary_task.description == summary_data["description"]
+    assert task_workflow.summary_task.title == title
+    assert task_workflow.summary_task.description == description
     assert task_workflow.get_items().count() == 3
 
     # Validate that item positions are equivalent.
