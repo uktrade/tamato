@@ -360,7 +360,7 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
 
         if create_type == TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE:
             template = form.cleaned_data["workflow_template"]
-            self.object = template.create_task_workflow(summary_data)
+            self.object = template.create_task_workflow(**summary_data)
         elif create_type == TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE:
             with transaction.atomic():
                 summary_task = Task.objects.create(**summary_data)
