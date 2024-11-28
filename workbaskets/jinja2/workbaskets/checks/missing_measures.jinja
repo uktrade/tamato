@@ -10,7 +10,7 @@
 
 {% block tab_content %}
   <h2 class="govuk-heading-s">Missing measures check</h2>
-  {% if not workbasket.missing_measure_comm_codes.count() %}
+  {% if not object_list %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <p class="govuk-body">No missing measures check has been performed yet</p>

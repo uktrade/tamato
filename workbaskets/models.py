@@ -326,6 +326,12 @@ class WorkBasket(TimestampedMixin):
         blank=True,
         unique=True,
     )
+    missing_measures_check_task_id = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        unique=True,
+    )
 
     transactions: TransactionQueryset
 
@@ -622,6 +628,13 @@ class WorkBasket(TimestampedMixin):
             transaction__workbasket=self,
         ).delete()
 
+    def delete_missing_measure_checks(self):
+        """Delete all MissingMeasureCommCode instances related to the
+        WorkBasket."""
+        MissingMeasureCommCode.objects.filter(
+            commodity__transaction__workbasket=self,
+        ).delete()
+
     @property
     def unchecked_or_errored_transactions(self):
         """
@@ -726,11 +739,6 @@ class DataRow(ValidityMixin, models.Model):
 
 
 class MissingMeasureCommCode(TimestampedMixin, models.Model):
-    workbasket = models.ForeignKey(
-        WorkBasket,
-        on_delete=models.CASCADE,
-        related_name="missing_measure_comm_codes",
-    )
     commodity = models.ForeignKey(
         "commodities.GoodsNomenclature",
         on_delete=models.CASCADE,

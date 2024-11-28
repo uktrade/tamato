@@ -1,7 +1,6 @@
 from commodities.models.dc import CommodityCollectionLoader
 from commodities.models.dc import CommodityTreeSnapshot
 from commodities.models.dc import SnapshotMoment
-from geo_areas.models import GeographicalArea
 from measures.snapshots import MeasureSnapshot
 
 
@@ -22,31 +21,3 @@ def get_measures_on_declarable_commodities(transaction, item_id, date=None):
     )[0]
     measure_snapshot = MeasureSnapshot(moment, tree)
     return measure_snapshot.get_applicable_measures(this_commodity)
-
-
-def get_comm_codes_with_missing_measures(tx, comm_codes, date=None):
-    output = []
-
-    for code in comm_codes:
-        if code.item_id.startswith("99") or code.item_id.startswith("98"):
-            continue
-
-        applicable_measures = get_measures_on_declarable_commodities(
-            tx,
-            code.item_id,
-            date,
-        )
-
-        if not applicable_measures:
-            output.append(code)
-            continue
-
-        filtered_measures = applicable_measures.filter(
-            measure_type__sid=103,
-            geographical_area=GeographicalArea.objects.erga_omnes().first(),
-        )
-
-        if not filtered_measures:
-            output.append(code)
-
-    return output
