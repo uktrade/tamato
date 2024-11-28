@@ -16,6 +16,7 @@ from common.forms import delete_form_for
 from common.validators import SymbolValidator
 from tasks.models import Task
 from tasks.models import TaskTemplate
+from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from workbaskets.models import WorkBasket
 
@@ -156,6 +157,9 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
                 data_prevent_double_click="true",
             ),
         )
+
+
+TaskWorkflowDeleteForm = delete_form_for(TaskWorkflow)
 
 
 class TaskWorkflowTemplateBaseForm(ModelForm):

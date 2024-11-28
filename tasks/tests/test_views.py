@@ -8,6 +8,8 @@ from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from tasks.forms import TaskWorkflowCreateForm
 from tasks.models import ProgressState
+from tasks.models import Task
+from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskLog
 from tasks.models import TaskTemplate
@@ -354,7 +356,7 @@ def test_workflow_template_delete_view(
     task_workflow_template_single_task_template_item,
 ):
     """Tests that a workflow template can be deleted (along with related
-    TaskItemPosition and TaskTemplate objects) and that the corresponding
+    TaskItemTemplate and TaskTemplate objects) and that the corresponding
     confirmation view returns a HTTP 200 response."""
 
     task_workflow_template_pk = task_workflow_template_single_task_template_item.pk
@@ -686,3 +688,40 @@ def test_workflow_create_view(
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert str(created_workflow) in soup.select("h1.govuk-panel__title")[0].text
+
+
+def test_workflow_delete_view(
+    valid_user_client,
+    task_workflow_single_task_item,
+):
+    """Tests that a workflow can be deleted (along with related TaskItem and
+    Task objects) and that the corresponding confirmation view returns a HTTP
+    200 response."""
+
+    workflow_pk = task_workflow_single_task_item.pk
+    summary_task_pk = task_workflow_single_task_item.summary_task.pk
+    task_pk = task_workflow_single_task_item.get_tasks().get().pk
+
+    delete_url = task_workflow_single_task_item.get_url("delete")
+    delete_response = valid_user_client.post(delete_url)
+    assert delete_response.status_code == 302
+
+    assert not TaskWorkflow.objects.filter(
+        pk=workflow_pk,
+    ).exists()
+    assert not TaskItem.objects.filter(
+        queue_id=workflow_pk,
+    ).exists()
+    assert not Task.objects.filter(pk__in=[summary_task_pk, task_pk]).exists()
+
+    confirmation_url = reverse(
+        "workflow:task-workflow-ui-confirm-delete",
+        kwargs={"pk": workflow_pk},
+    )
+    assert delete_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+    assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    assert f"Workflow ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
