@@ -91,13 +91,13 @@ class TaskWorkflowTemplate(Queue):
         )
 
     @atomic
-    def create_task_workflow(self) -> "TaskWorkflow":
+    def create_task_workflow(self, title: str, description: str) -> "TaskWorkflow":
         """Create a workflow and it subtasks, using values from this template
         workflow and its task templates."""
 
+        summary_task = Task.objects.create(title=title, description=description)
         task_workflow = TaskWorkflow.objects.create(
-            title=self.title,
-            description=self.description,
+            summary_task=summary_task,
             creator_template=self,
         )
 
