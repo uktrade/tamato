@@ -1,5 +1,6 @@
 import pytest
 
+from commodities.models.orm import GoodsNomenclature
 from common.tests import factories
 from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
 
@@ -17,6 +18,7 @@ def test_get_goods_nom():
     assert result
     # each GoodsNomenclatureFactory creates an origin as well so there will be 4 total
     assert len(result) == 4
-    assert set([item.__class__._meta.verbose_name for item in result]) == {
+    comm_codes = GoodsNomenclature.objects.filter(pk__in=result)
+    assert set([item.__class__._meta.verbose_name for item in comm_codes]) == {
         "commodity code",
     }

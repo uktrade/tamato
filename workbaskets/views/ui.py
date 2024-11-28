@@ -39,7 +39,6 @@ from markdownify import markdownify
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
-from commodities.helpers import get_comm_codes_with_missing_measures
 from common.filters import TamatoFilter
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
@@ -75,6 +74,7 @@ from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.tasks import call_end_measures
+from workbaskets.tasks import check_workbasket_for_missing_measures
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
@@ -1079,26 +1079,31 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
 
     def get_queryset(self):
         self.queryset = MissingMeasureCommCode.objects.filter(
-            workbasket=self.workbasket,
+            commodity__transaction__workbasket=self.workbasket,
         )
         return super().get_queryset()
 
-    def create_missing_measure_checks(self, objects):
-        tx = self.workbasket.transactions.last()
-        codes_w_missing_measures = get_comm_codes_with_missing_measures(
-            tx,
-            objects,
-            date=date.today(),
+    @atomic
+    def run_missing_measure_checks(self, pks):
+        """Remove old checks, start new checks via a Celery task and save the
+        newly created task's ID on the workbasket."""
+        workbasket = self.workbasket
+        last_tx = self.workbasket.transactions.last()
+        task = check_workbasket_for_missing_measures.delay(
+            workbasket.pk,
+            last_tx.pk,
+            pks,
         )
-        for comm_code in codes_w_missing_measures:
-            MissingMeasureCommCode.objects.create(
-                workbasket=self.workbasket,
-                commodity=comm_code,
-            )
+        logger.info(
+            f"Started missing measures check against workbasket.id={workbasket.pk} "
+            f"on task.id={task.id}",
+        )
+        workbasket.missing_measures_check_task_id = task.id
+        workbasket.save()
 
     def form_valid(self, form):
         objects = get_comm_codes_affected_by_workbasket_changes(self.workbasket)
-        self.create_missing_measure_checks(objects)
+        self.run_missing_measure_checks(objects)
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
