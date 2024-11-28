@@ -638,6 +638,7 @@ def test_workflow_detail_view_reorder_items(
 )
 def test_workflow_create_view(
     form_data,
+    valid_user,
     valid_user_client,
     task_workflow_template_single_task_template_item,
 ):
@@ -663,6 +664,7 @@ def test_workflow_create_view(
     created_workflow = TaskWorkflow.objects.get(
         summary_task__title=form_data["title"],
         summary_task__description=form_data["description"],
+        summary_task__creator=valid_user,
     )
 
     if with_template:
