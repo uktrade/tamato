@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import OperationalError
 from django.db import transaction
@@ -14,6 +15,7 @@ from django.views.generic.edit import UpdateView
 from common.views import SortingMixin
 from common.views import WithPaginationListView
 from tasks.filters import TaskFilter
+from tasks.filters import TaskWorkflowFilter
 from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
@@ -255,6 +257,27 @@ class SubTaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         context_data["verbose_name"] = "subtask"
         context_data["deleted_pk"] = self.kwargs["pk"]
         return context_data
+
+
+class TaskWorkflowListView(
+    PermissionRequiredMixin,
+    SortingMixin,
+    WithPaginationListView,
+):
+    model = Task
+    template_name = "tasks/workflows/list.jinja"
+    permission_required = "tasks.view_task"
+    paginate_by = settings.DEFAULT_PAGINATOR_PER_PAGE_MAX
+    filterset_class = TaskWorkflowFilter
+    sort_by_fields = ["created_at"]
+
+    def get_queryset(self):
+        queryset = Task.objects.all()
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
 
 
 class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):

@@ -26,3 +26,28 @@ class TaskFilter(TamatoFilter):
     class Meta:
         model = Task
         fields = ["search", "category", "progress_state"]
+
+
+class TaskWorkflowFilter(TamatoFilter):
+    search_fields = (
+        "id",
+        "title",
+        "description",
+    )
+    clear_url = reverse_lazy("workflow:task-ui-list")
+
+    progress_state = ModelMultipleChoiceFilter(
+        label="Status",
+        help_text="Select all that apply",
+        queryset=ProgressState.objects.all(),
+        widget=CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = Task
+        fields = ["search", "category", "progress_state"]
+
+    @property
+    def qs(self):
+        qs = super().qs
+        return qs.workflow_summary()

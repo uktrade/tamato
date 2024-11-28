@@ -72,7 +72,11 @@ task_ui_patterns = [
 
 
 workflow_ui_patterns = [
-    # TODO
+    path(
+        "",
+        views.TaskWorkflowListView.as_view(),
+        name="task-workflow-ui-list",
+    ),
 ]
 
 workflow_template_ui_patterns = [
