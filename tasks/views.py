@@ -9,6 +9,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import DeleteView
+from django.views.generic.edit import FormView
 from django.views.generic.edit import UpdateView
 
 from common.views import SortingMixin
@@ -21,12 +22,14 @@ from tasks.forms import TaskTemplateCreateForm
 from tasks.forms import TaskTemplateDeleteForm
 from tasks.forms import TaskTemplateUpdateForm
 from tasks.forms import TaskUpdateForm
+from tasks.forms import TaskWorkflowCreateForm
 from tasks.forms import TaskWorkflowTemplateCreateForm
 from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.models import Task
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
+from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.signals import set_current_instigator
 
@@ -257,6 +260,49 @@ class SubTaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
+class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
+    permission_required = "tasks.add_taskworkflow"
+    template_name = "tasks/workflows/create.jinja"
+    form_class = TaskWorkflowCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "workflow"
+        return context
+
+    def form_valid(self, form):
+        summary_data = {
+            "title": form.cleaned_data["title"],
+            "description": form.cleaned_data["description"],
+            "creator": self.request.user,
+        }
+        create_type = form.cleaned_data["create_type"]
+
+        if create_type == TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE:
+            template = form.cleaned_data["workflow_template"]
+            self.object = template.create_task_workflow(**summary_data)
+        elif create_type == TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE:
+            with transaction.atomic():
+                summary_task = Task.objects.create(**summary_data)
+                self.object = TaskWorkflow.objects.create(
+                    summary_task=summary_task,
+                )
+
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-workflow-ui-confirm-create",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class TaskWorkflowConfirmCreateView(PermissionRequiredMixin, DetailView):
+    model = TaskWorkflow
+    template_name = "tasks/workflows/confirm_create.jinja"
+    permission_required = "tasks.add_taskworkflow"
+
+
 class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
     model = TaskWorkflowTemplate
     template_name = "tasks/workflows/template_detail.jinja"
@@ -338,8 +384,13 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
 class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
     model = TaskWorkflowTemplate
     permission_required = "tasks.add_taskworkflowtemplate"
-    template_name = "tasks/workflows/template_create.jinja"
+    template_name = "tasks/workflows/create.jinja"
     form_class = TaskWorkflowTemplateCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "workflow template"
+        return context
 
     def get_success_url(self):
         return reverse(
@@ -350,7 +401,7 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
 
 class TaskWorkflowTemplateConfirmCreateView(PermissionRequiredMixin, DetailView):
     model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/template_confirm_create.jinja"
+    template_name = "tasks/workflows/confirm_create.jinja"
     permission_required = "tasks.add_taskworkflowtemplate"
 
 

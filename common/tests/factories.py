@@ -1536,7 +1536,7 @@ class CrownDependenciesEnvelopeFailedNotificationFactory(
 
 
 class CategoryFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker("word")
+    name = factory.Faker("bs")
 
     class Meta:
         model = "tasks.Category"
