@@ -55,11 +55,6 @@ class TaskWorkflow(Queue):
                 "workflow:task-workflow-ui-detail",
                 kwargs={"pk": self.pk},
             )
-        # elif action == "edit":
-        #     return reverse(
-        #         "workflow:task-workflow-ui-update",
-        #         kwargs={"pk": self.pk},
-        #     )
         elif action == "delete":
             return reverse(
                 "workflow:task-workflow-ui-delete",
@@ -69,10 +64,6 @@ class TaskWorkflow(Queue):
             return reverse(
                 "workflow:task-workflow-ui-create",
             )
-        # elif action == "list":
-        #     return reverse(
-        #         "workflow:task-workflow-ui-list",
-        #     )
 
         return "#NOT-IMPLEMENTED"
 
@@ -193,10 +184,6 @@ class TaskWorkflowTemplate(Queue):
             return reverse(
                 "workflow:task-workflow-template-ui-create",
             )
-        # elif action == "list":
-        #     return reverse(
-        #         "workflow:task-workflow-template-ui-list",
-        #     )
 
         return "#NOT-IMPLEMENTED"
 
