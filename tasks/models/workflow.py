@@ -33,7 +33,15 @@ class TaskWorkflow(Queue):
         verbose_name = "workflow"
 
     def __str__(self):
+        return self.title
+
+    @property
+    def title(self) -> str:
         return self.summary_task.title
+
+    @property
+    def description(self) -> str:
+        return self.summary_task.description
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
@@ -42,7 +50,12 @@ class TaskWorkflow(Queue):
         return Task.objects.filter(taskitem__queue=self).order_by("taskitem__position")
 
     def get_url(self, action: str = "detail"):
-        if action == "create":
+        if action == "detail":
+            return reverse(
+                "workflow:task-workflow-ui-detail",
+                kwargs={"pk": self.pk},
+            )
+        elif action == "create":
             return reverse(
                 "workflow:task-workflow-ui-create",
             )
@@ -193,6 +206,14 @@ class TaskTemplate(TaskBase):
             return reverse("workflow:task-template-ui-detail", kwargs={"pk": self.pk})
         elif action == "edit":
             return reverse("workflow:task-template-ui-update", kwargs={"pk": self.pk})
+        elif action == "delete":
+            return reverse(
+                "workflow:task-template-ui-delete",
+                kwargs={
+                    "workflow_template_pk": self.taskitemtemplate.queue.pk,
+                    "pk": self.pk,
+                },
+            )
 
         return "#NOT-IMPLEMENTED"
 

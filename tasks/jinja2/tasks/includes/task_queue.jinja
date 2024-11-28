@@ -47,7 +47,7 @@
   {% endset -%}
 
   {%- set remove_cell_content %}
-    TODO
+    <a href="{{ obj.get_url("delete") }}" class="govuk-link">Remove</a>
   {% endset -%}
 
   {{ table_rows.append([
