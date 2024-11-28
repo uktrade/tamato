@@ -15,6 +15,7 @@ from common.fields import AutoCompleteField
 from common.forms import ValidityPeriodForm
 from common.serializers import deserialize_date
 from common.util import TaricDateRange
+from common.widgets import DecimalSuffix
 from measures.models import MeasurementUnit
 from quotas import models
 from quotas import validators
@@ -216,7 +217,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     volume = forms.DecimalField(
         label="Current volume",
-        widget=forms.TextInput(),
+        widget=DecimalSuffix(),
         help_text="The current volume is the starting balance for the quota",
         error_messages={
             "invalid": "Volume must be a number",
@@ -240,6 +241,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
+        widget=DecimalSuffix(suffix="%"),
         help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
         error_messages={
             "invalid": "Critical threshold must be a number",
@@ -445,15 +447,9 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                     HTML(
                         '<h3 class="govuk-heading">Criticality</h3>',
                     ),
-                    Div(
-                        Field(
-                            "quota_critical_threshold",
-                            css_class="govuk-input govuk-input--width-5",
-                        ),
-                        HTML(
-                            '<p class="govuk-input__suffix", aria_hidden="true">%</p>',
-                        ),
-                        css_class="govuk-input__wrapper",
+                    Field(
+                        "quota_critical_threshold",
+                        css_class="govuk-!-width-two-thirds",
                     ),
                     "quota_critical",
                 ),

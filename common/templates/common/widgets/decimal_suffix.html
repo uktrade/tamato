@@ -1,0 +1,16 @@
+<div class="govuk-input__wrapper">
+	<input 
+        class="numberinput govuk-input govuk-input govuk-input--width-2" 
+        type="{{ widget.type }}" 
+        name="{{ widget.name }}"
+        {% if widget.value != None %} 
+            value="{{ widget.value|stringformat:'s' }}"
+        {% endif %}
+        {% include "django/forms/widgets/attrs.html" %}>
+    {% if widget.suffix %}
+        <div class="govuk-input__suffix" aria-hidden="true">{{widget.suffix}}</div>
+    {% endif %}
+	<label{% if widget.attrs.id %} id="{{ widget.attrs.id }}-label" for="{{ widget.attrs.id }}"{% endif %} class="govuk-label">
+		{{ widget.label }}
+	</label>
+</div>
