@@ -139,9 +139,14 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         abstract = True
         ordering = ["queue", "position"]
 
-    queue_field = "queue"
-    """The name of the ForeignKey field relating this instance to a Queue
-    instance."""
+    queue_field: str = "queue"
+    """
+    The name of the required ForeignKey field relating this instance to a Queue
+    instance.
+
+    The value of this attribute can be inherited as is or overridden in
+    subclasses to reflect the specific purpose or role of the queue.
+    """
 
     position = models.PositiveSmallIntegerField(
         db_index=True,
