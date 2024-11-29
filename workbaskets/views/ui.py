@@ -44,9 +44,7 @@ from common.filters import TamatoFilter
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
-from common.util import TaricDateRange
 from common.util import format_date_string
-from common.validators import UpdateType
 from common.views import SortingMixin
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
@@ -75,6 +73,7 @@ from workbaskets.models import DataUpload
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
+from workbaskets.tasks import call_end_measures
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
@@ -1794,7 +1793,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
         "goods_nomenclature": "goods_nomenclature__item_id",
     }
 
-    @cached_property
+    @property
     def workbasket(self):
         return WorkBasket.objects.get(pk=self.kwargs["wb_pk"])
 
@@ -1811,7 +1810,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
             .values_list("pk")
         )
 
-    @cached_property
+    @property
     def measures(self):
         # Should I only be filtering for measures without an end date?
         return Measure.objects.current().filter(
@@ -1845,7 +1844,6 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) == "auto-end-date-measures":
             self.end_measures()
-
         return redirect(
             "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
             self.workbasket.pk,
@@ -1853,56 +1851,8 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     @atomic
     def end_measures(self):
-        """Iterate through measures on commodities, end-date those which have
-        already began and delete those which have not yet started."""
-        # TODO: How do you check that the commodity code has actually been updated and it isn't a create or the same date as before
-        for (
-            measure
-        ) in self.measures:  # Does this need to be here? is this a likely occurence?
-            commodity = GoodsNomenclature.objects.all().get(
-                pk=measure.goods_nomenclature_id,
-                transaction__workbasket=self.workbasket,
-            )
-            if measure.valid_between.lower > commodity.valid_between.upper:
-                continue
-            if measure.valid_between.lower > date.today():
-                new_measure_version = measure.new_version(
-                    workbasket=self.workbasket,
-                    update_type=UpdateType.DELETE,
-                )
-            else:
-                new_measure_version = measure.new_version(
-                    workbasket=self.workbasket,
-                    update_type=UpdateType.UPDATE,
-                    valid_between=TaricDateRange(
-                        measure.valid_between.lower,
-                        commodity.valid_between.upper,
-                    ),
-                )
-            self.promote_measure_to_top(new_measure_version.transaction)
-
-    def promote_measure_to_top(self, promoted_measure):
-        """Set the transaction order of `promoted_measure` to be first in the
-        workbasket, demoting the transactions that came before it."""
-        # Is it better to bulk move all measure transactions at the end?
-
-        top_transaction = self.workbasket_transactions().first()
-
-        if (
-            not promoted_measure
-            or not top_transaction
-            or promoted_measure == top_transaction
-        ):
-            return
-
-        current_position = promoted_measure.order
-        top_position = top_transaction.order
-        self.workbasket_transactions().filter(order__lt=current_position).update(
-            order=F("order") + 1,
-        )
-
-        promoted_measure.order = top_position
-        promoted_measure.save(update_fields=["order"])
+        measure_pks = [measure.pk for measure in self.measures]
+        call_end_measures.apply_async((measure_pks, self.workbasket.pk))
 
 
 class AutoEndDateMeasuresConfirm(DetailView):

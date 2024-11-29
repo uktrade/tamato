@@ -1,12 +1,21 @@
+from datetime import date
+
 from celery import group
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from django.db.models import F
 from django.db.transaction import atomic
 
 from checks.tasks import check_transaction
 from checks.tasks import check_transaction_sync
+from commodities.models.orm import GoodsNomenclature
 from common.celery import app
+from common.models.transactions import Transaction
+from common.util import TaricDateRange
+from common.validators import UpdateType
+from measures.models.tracked_models import Measure
 from workbaskets.models import WorkBasket
+from workbaskets.validators import WorkflowStatus
 
 # Celery logger adds the task id and status and outputs via the worker.
 logger = get_task_logger(__name__)
@@ -64,3 +73,64 @@ def call_check_workbasket_sync(self, workbasket_id: int):
     workbasket: WorkBasket = WorkBasket.objects.get(pk=workbasket_id)
     workbasket.delete_checks()
     check_workbasket_sync(workbasket)
+
+
+def promote_measure_to_top(promoted_measure, workbasket_transactions):
+    """Set the transaction order of `promoted_measure` to be first in the
+    workbasket, demoting the transactions that came before it."""
+
+    top_transaction = workbasket_transactions.first()
+
+    if (
+        not promoted_measure
+        or not top_transaction
+        or promoted_measure == top_transaction
+    ):
+        return
+
+    current_position = promoted_measure.order
+    top_position = top_transaction.order
+    workbasket_transactions.filter(order__lt=current_position).update(
+        order=F("order") + 1,
+    )
+    promoted_measure.order = top_position
+    promoted_measure.save(update_fields=["order"])
+
+
+def end_measures(measures, workbasket):
+    """Iterate through measures on commodities, end-date those which have
+    already began and delete those which have not yet started."""
+    for measure in measures:
+        workbasket_transactions = Transaction.objects.filter(
+            workbasket=workbasket,
+            workbasket__status=WorkflowStatus.EDITING,
+        ).order_by("order")
+
+        commodity = GoodsNomenclature.objects.all().get(
+            pk=measure.goods_nomenclature_id,
+            transaction__workbasket=workbasket,
+        )
+        if measure.valid_between.lower > commodity.valid_between.upper:
+            continue
+        if measure.valid_between.lower > date.today():
+            new_measure_version = measure.new_version(
+                workbasket=workbasket,
+                update_type=UpdateType.DELETE,
+            )
+        else:
+            new_measure_version = measure.new_version(
+                workbasket=workbasket,
+                update_type=UpdateType.UPDATE,
+                valid_between=TaricDateRange(
+                    measure.valid_between.lower,
+                    commodity.valid_between.upper,
+                ),
+            )
+        promote_measure_to_top(new_measure_version.transaction, workbasket_transactions)
+
+
+@app.task
+def call_end_measures(measure_pks, workbasket_pk):
+    workbasket = WorkBasket.objects.all().get(pk=workbasket_pk)
+    measures = Measure.objects.all().filter(pk__in=measure_pks)
+    end_measures(measures, workbasket)

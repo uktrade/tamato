@@ -647,6 +647,9 @@ CELERY_ROUTES = {
     "workbaskets.tasks.check_workbasket": {
         "queue": "rule-check",
     },
+    "workbaskets.tasks.call_end_measures": {
+        "queue": "standard",
+    },
     "workbaskets.tasks.transition": {
         "queue": "standard",
     },
