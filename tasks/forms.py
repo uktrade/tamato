@@ -1,12 +1,22 @@
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
+from django.db.models import TextChoices
+from django.forms import CharField
+from django.forms import Form
+from django.forms import ModelChoiceField
 from django.forms import ModelForm
+from django.forms import Textarea
 
+from common.forms import BindNestedFormMixin
+from common.forms import RadioNested
 from common.forms import delete_form_for
+from common.validators import SymbolValidator
 from tasks.models import Task
 from tasks.models import TaskTemplate
+from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from workbaskets.models import WorkBasket
 
@@ -80,6 +90,76 @@ class SubTaskCreateForm(TaskBaseForm):
 
 
 TaskDeleteForm = delete_form_for(Task)
+
+
+class TaskWorkflowTemplateForm(Form):
+    workflow_template = ModelChoiceField(
+        label="",
+        queryset=TaskWorkflowTemplate.objects.all(),
+        help_text="Select a workflow template.",
+        error_messages={
+            "required": "Select a workflow template",
+        },
+    )
+
+
+class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
+    class CreateType(TextChoices):
+        WITH_TEMPLATE = "WITH_TEMPLATE", "Yes"
+        WITHOUT_TEMPLATE = "WITHOUT_TEMPLATE", "No"
+
+    title = CharField(
+        max_length=255,
+        validators=[SymbolValidator],
+        error_messages={
+            "required": "Enter a title for the workflow",
+        },
+    )
+
+    description = CharField(
+        validators=[SymbolValidator],
+        widget=Textarea(),
+        error_messages={
+            "required": "Enter a description for the workflow",
+        },
+    )
+
+    create_type = RadioNested(
+        label="Do you want to use a workflow template?",
+        choices=CreateType.choices,
+        nested_forms={
+            CreateType.WITH_TEMPLATE.value: [TaskWorkflowTemplateForm],
+            CreateType.WITHOUT_TEMPLATE.value: [],
+        },
+        error_messages={
+            "required": "Select if you want to use a workflow template",
+        },
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.bind_nested_forms(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Fieldset(
+                "title",
+                "description",
+            ),
+            "create_type",
+            Submit(
+                "submit",
+                "Create",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+
+TaskWorkflowDeleteForm = delete_form_for(TaskWorkflow)
 
 
 class TaskWorkflowTemplateBaseForm(ModelForm):

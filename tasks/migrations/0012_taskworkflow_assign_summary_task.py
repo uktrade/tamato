@@ -12,7 +12,7 @@ def assign_new_summary_task_on_workflow(apps, schema_editor):
             title="Workflow summarising task",
             description="Workflow summarising task.",
         )
-        TaskWorkflow.save()
+        task_workflow.save()
 
 
 class Migration(migrations.Migration):

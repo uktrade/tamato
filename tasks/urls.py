@@ -76,6 +76,29 @@ workflow_ui_patterns = [
         "",
         views.TaskWorkflowListView.as_view(),
         name="task-workflow-ui-list",
+        "<int:pk>/",
+        views.TaskWorkflowDetailView.as_view(),
+        name="task-workflow-ui-detail",
+    ),
+    path(
+        "create/",
+        views.TaskWorkflowCreateView.as_view(),
+        name="task-workflow-ui-create",
+    ),
+    path(
+        "<int:pk>/confirm-create/",
+        views.TaskWorkflowConfirmCreateView.as_view(),
+        name="task-workflow-ui-confirm-create",
+    ),
+    path(
+        "<int:pk>/delete/",
+        views.TaskWorkflowDeleteView.as_view(),
+        name="task-workflow-ui-delete",
+    ),
+    path(
+        "<int:pk>/confirm-delete/",
+        views.TaskWorkflowConfirmDeleteView.as_view(),
+        name="task-workflow-ui-confirm-delete",
     ),
 ]
 
