@@ -65,7 +65,7 @@ class QueueItemMetaClass(models.base.ModelBase):
         new_class = super().__new__(cls, name, bases, attrs)
 
         if not new_class._meta.abstract:
-            queue_field_name = attrs.get("queue_field", None)
+            queue_field_name = getattr(new_class, "queue_field", None)
             cls.validate_queue_field(new_class, queue_field_name)
             cls.update_meta_ordering(cls.get_meta(bases, attrs), queue_field_name)
 

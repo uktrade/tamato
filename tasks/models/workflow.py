@@ -42,8 +42,6 @@ class TaskItem(QueueItem):
     """Task item queue management for Task instances (these should always be
     subtasks)."""
 
-    queue_field = "queue"
-
     queue = models.ForeignKey(
         TaskWorkflow,
         related_name="queue_items",
@@ -143,8 +141,6 @@ class TaskWorkflowTemplate(Queue):
 
 class TaskItemTemplate(QueueItem):
     """Queue item management for TaskTemplate instances."""
-
-    queue_field = "queue"
 
     queue = models.ForeignKey(
         TaskWorkflowTemplate,
