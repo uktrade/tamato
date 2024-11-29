@@ -42,9 +42,11 @@ class TaskItem(QueueItem):
     """Task item queue management for Task instances (these should always be
     subtasks)."""
 
-    queue = models.ForeignKey(
+    queue_field = "workflow"
+
+    workflow = models.ForeignKey(
         TaskWorkflow,
-        related_name="queue_items",
+        related_name="workflow_items",
         on_delete=models.CASCADE,
     )
     task = models.OneToOneField(
@@ -142,9 +144,11 @@ class TaskWorkflowTemplate(Queue):
 class TaskItemTemplate(QueueItem):
     """Queue item management for TaskTemplate instances."""
 
-    queue = models.ForeignKey(
+    queue_field = "workflow"
+
+    workflow = models.ForeignKey(
         TaskWorkflowTemplate,
-        related_name="queue_items",
+        related_name="workflow_items",
         on_delete=models.CASCADE,
     )
     task_template = models.OneToOneField(
