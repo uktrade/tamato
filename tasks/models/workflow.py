@@ -32,7 +32,9 @@ class TaskWorkflow(Queue):
         """Get a QuerySet of the Tasks associated through their TaskItem
         instances to this TaskWorkflow, ordered by the position of the
         TaskItem."""
-        return Task.objects.filter(taskitem__queue=self).order_by("taskitem__position")
+        return Task.objects.filter(taskitem__workflow=self).order_by(
+            "taskitem__position",
+        )
 
     def __str__(self):
         return self.title
@@ -88,7 +90,7 @@ class TaskWorkflowTemplate(Queue):
         """Get a QuerySet of the TaskTemplates associated through their
         TaskItemTemplate instances to this TaskWorkflowTemplate, ordered by the
         position of the TaskItemTemplate."""
-        return TaskTemplate.objects.filter(taskitemtemplate__queue=self).order_by(
+        return TaskTemplate.objects.filter(taskitemtemplate__workflow=self).order_by(
             "taskitemtemplate__position",
         )
 
@@ -105,7 +107,7 @@ class TaskWorkflowTemplate(Queue):
 
         task_item_templates = TaskItemTemplate.objects.select_related(
             "task_template",
-        ).filter(queue=self)
+        ).filter(workflow=self)
         for task_item_template in task_item_templates:
             task_template = task_item_template.task_template
             task = Task.objects.create(
@@ -115,7 +117,7 @@ class TaskWorkflowTemplate(Queue):
             )
             TaskItem.objects.create(
                 position=task_item_template.position,
-                queue=task_workflow,
+                workflow=task_workflow,
                 task=task,
             )
 

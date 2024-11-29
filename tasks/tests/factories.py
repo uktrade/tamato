@@ -35,7 +35,7 @@ class TaskItemTemplateFactory(DjangoModelFactory):
     class Meta:
         model = TaskItemTemplate
 
-    queue = SubFactory(TaskWorkflowTemplateFactory)
+    workflow = SubFactory(TaskWorkflowTemplateFactory)
     task_template = SubFactory(TaskTemplateFactory)
 
 
@@ -54,5 +54,5 @@ class TaskItemFactory(DjangoModelFactory):
     class Meta:
         model = TaskItem
 
-    queue = SubFactory(TaskWorkflowFactory)
+    workflow = SubFactory(TaskWorkflowFactory)
     task = SubFactory(TaskFactory)

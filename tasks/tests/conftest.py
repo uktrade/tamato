@@ -67,7 +67,7 @@ def task_workflow_template_single_task_template_item(
 
     task_template = factories.TaskTemplateFactory.create()
     factories.TaskItemTemplateFactory.create(
-        queue=task_workflow_template,
+        workflow=task_workflow_template,
         task_template=task_template,
     )
 
@@ -87,7 +87,7 @@ def task_workflow_template_three_task_template_items(
     for _ in range(3):
         task_template = factories.TaskTemplateFactory.create()
         task_item_template = factories.TaskItemTemplateFactory.create(
-            queue=task_workflow_template,
+            workflow=task_workflow_template,
             task_template=task_template,
         )
         task_item_templates.append(task_item_template)
@@ -95,7 +95,7 @@ def task_workflow_template_three_task_template_items(
     assert task_workflow_template.get_items().count() == 3
     assert (
         TaskItemTemplate.objects.filter(
-            queue=task_workflow_template,
+            workflow=task_workflow_template,
         ).count()
         == 3
     )
@@ -121,7 +121,7 @@ def task_workflow_single_task_item(task_workflow) -> TaskWorkflow:
     associated Task instance."""
 
     task_item = factories.TaskItemFactory.create(
-        queue=task_workflow,
+        workflow=task_workflow,
     )
 
     assert task_workflow.get_items().count() == 1

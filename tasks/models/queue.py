@@ -110,7 +110,8 @@ class QueueItemManager(models.Manager):
         param, and place it in last position."""
 
         with TableLock(self.model, lock=TableLock.EXCLUSIVE):
-            queue = kwargs.pop("queue")
+            queue_field = self.model.queue_field
+            queue = kwargs.pop(queue_field)
             position = kwargs.pop("position", (queue.get_items().count() + 1))
 
             if position <= 0:
@@ -119,8 +120,8 @@ class QueueItemManager(models.Manager):
                 )
 
             return super().create(
-                queue=queue,
                 position=position,
+                **{queue_field: queue},
                 **kwargs,
             )
 
@@ -151,6 +152,14 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
     objects = QueueItemManager()
 
+    def get_queue_field(self) -> str:
+        """Return the queue field name on this instance."""
+        return self.__class__.queue_field
+
+    def get_queue(self) -> type[Queue]:
+        """Return the queue instance related to this instance."""
+        return getattr(self, self.get_queue_field())
+
     @atomic
     def delete(self):
         """Remove and delete instance from its queue, shuffling all successive
@@ -159,7 +168,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         self.__class__.objects.select_for_update(nowait=True).filter(
             position__gt=instance.position,
-            queue=instance.queue,
+            **{self.get_queue_field(): self.get_queue()},
         ).update(position=models.F("position") - 1)
 
         return super().delete()
@@ -180,7 +189,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         item_to_demote = self.__class__.objects.select_for_update(nowait=True).get(
             position=instance.position - 1,
-            queue=instance.queue,
+            **{self.get_queue_field(): self.get_queue()},
         )
         item_to_demote.position += 1
         instance.position -= 1
@@ -200,12 +209,18 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         """
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
 
-        if instance.position == self.queue.max_position:
+        queue_field = self.get_queue_field()
+        queue = self.get_queue()
+        queue_kwarg = {
+            queue_field: queue,
+        }
+
+        if instance.position == queue.max_position:
             return instance
 
         item_to_promote = self.__class__.objects.select_for_update(nowait=True).get(
             position=instance.position + 1,
-            queue=instance.queue,
+            **queue_kwarg,
         )
         item_to_promote.position -= 1
         instance.position += 1
@@ -232,7 +247,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         self.__class__.objects.select_for_update(nowait=True).filter(
             position__lt=instance.position,
-            queue=instance.queue,
+            **{self.get_queue_field(): self.get_queue()},
         ).update(position=models.F("position") + 1)
 
         instance.position = 1
@@ -253,13 +268,19 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         """
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
 
-        last_place = self.queue.max_position
+        queue_field = self.get_queue_field()
+        queue = self.get_queue()
+        queue_kwarg = {
+            queue_field: queue,
+        }
+
+        last_place = queue.max_position
         if instance.position == last_place:
             return instance
 
         self.__class__.objects.select_for_update(nowait=True).filter(
             position__gt=instance.position,
-            queue=instance.queue,
+            **queue_kwarg,
         ).update(position=models.F("position") - 1)
 
         instance.position = last_place

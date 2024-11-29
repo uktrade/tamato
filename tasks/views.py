@@ -294,7 +294,7 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
         task_item_template = get_object_or_404(
             TaskItemTemplate,
             task_template_id=task_template_id,
-            queue=self.task_workflow_template,
+            workflow=self.task_workflow_template,
         )
         try:
             task_item_template.promote()
@@ -305,7 +305,7 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
         task_item_template = get_object_or_404(
             TaskItemTemplate,
             task_template_id=task_template_id,
-            queue=self.task_workflow_template,
+            workflow=self.task_workflow_template,
         )
         try:
             task_item_template.demote()
@@ -316,7 +316,7 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
         task_item_template = get_object_or_404(
             TaskItemTemplate,
             task_template_id=task_template_id,
-            queue=self.task_workflow_template,
+            workflow=self.task_workflow_template,
         )
         try:
             task_item_template.promote_to_first()
@@ -327,7 +327,7 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
         task_item_template = get_object_or_404(
             TaskItemTemplate,
             task_template_id=task_template_id,
-            queue=self.task_workflow_template,
+            workflow=self.task_workflow_template,
         )
         try:
             task_item_template.demote_to_last()
@@ -415,7 +415,7 @@ class TaskTemplateDetailView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        context["task_workflow_template"] = self.get_object().taskitemtemplate.queue
+        context["task_workflow_template"] = self.get_object().taskitemtemplate.workflow
 
         return context
 
@@ -443,7 +443,7 @@ class TaskTemplateCreateView(PermissionRequiredMixin, CreateView):
         with transaction.atomic():
             self.object = form.save()
             TaskItemTemplate.objects.create(
-                queue=self.get_task_workflow_template(),
+                workflow=self.get_task_workflow_template(),
                 task_template=self.object,
             )
 
@@ -464,7 +464,7 @@ class TaskTemplateConfirmCreateView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        context["task_workflow_template"] = self.get_object().taskitemtemplate.queue
+        context["task_workflow_template"] = self.get_object().taskitemtemplate.workflow
 
         return context
 
@@ -479,7 +479,7 @@ class TaskTemplateUpdateView(PermissionRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
 
         context["page_title"] = f"Update task template: {self.get_object().title}"
-        context["task_workflow_template"] = self.get_object().taskitemtemplate.queue
+        context["task_workflow_template"] = self.get_object().taskitemtemplate.workflow
 
         return context
 
@@ -498,7 +498,7 @@ class TaskTemplateConfirmUpdateView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        context["task_workflow_template"] = self.get_object().taskitemtemplate.queue
+        context["task_workflow_template"] = self.get_object().taskitemtemplate.workflow
 
         return context
 
@@ -517,7 +517,7 @@ class TaskTemplateDeleteView(PermissionRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["task_workflow_template"] = self.get_object().taskitemtemplate.queue
+        context["task_workflow_template"] = self.get_object().taskitemtemplate.workflow
 
         return context
 
