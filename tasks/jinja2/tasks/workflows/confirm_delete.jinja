@@ -4,13 +4,13 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Workflow template deleted" %}
+{% set page_title = verbose_name|capitalize ~ " deleted" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,
     [
-      {"text": "Find and view workflow templates", "href": "#TODO"},
+      {"text": "Find and view "~ verbose_name ~ "s", "href": list_url},
       {"text": page_title}
     ],
     False,
@@ -19,24 +19,23 @@
 
 {% block panel %}
   {{ govukPanel({
-    "titleText": "Workflow template ID: " ~ deleted_pk,
-    "text": "Workflow template has been deleted",
+    "titleText": verbose_name|capitalize ~ " ID: " ~ deleted_pk,
+    "text": verbose_name|capitalize ~ " has been deleted",
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}
 
 {% block button_group %}
   {{ govukButton({
-    "text": "Find and view workflow templates",
-    "href": "#TODO",
+    "text": "Find and view " ~ verbose_name ~ "s",
+    "href": list_url,
     "classes": "govuk-button"
   }) }}
   {{ govukButton({
-    "text": "Create a workflow template",
-    "href": url("workflow:task-workflow-template-ui-create"),
+    "text": "Create a " ~ verbose_name,
+    "href": create_url,
     "classes": "govuk-button--secondary"
   }) }}
 {% endblock %}
 
-{% block actions %}
-{% endblock %}
+{% block actions %}{% endblock %}

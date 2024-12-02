@@ -2,6 +2,7 @@ from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
 
+from common.models import User
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
 from tasks.models.task import Task
@@ -28,6 +29,20 @@ class TaskWorkflow(Queue):
     )
     """The template from which this workflow was created, if any."""
 
+    class Meta:
+        verbose_name = "workflow"
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def title(self) -> str:
+        return self.summary_task.title
+
+    @property
+    def description(self) -> str:
+        return self.summary_task.description
+
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
         instances to this TaskWorkflow, ordered by the position of the
@@ -36,8 +51,23 @@ class TaskWorkflow(Queue):
             "taskitem__position",
         )
 
-    def __str__(self):
-        return self.title
+    def get_url(self, action: str = "detail"):
+        if action == "detail":
+            return reverse(
+                "workflow:task-workflow-ui-detail",
+                kwargs={"pk": self.pk},
+            )
+        elif action == "delete":
+            return reverse(
+                "workflow:task-workflow-ui-delete",
+                kwargs={"pk": self.pk},
+            )
+        elif action == "create":
+            return reverse(
+                "workflow:task-workflow-ui-create",
+            )
+
+        return "#NOT-IMPLEMENTED"
 
 
 class TaskItem(QueueItem):
@@ -86,6 +116,12 @@ class TaskWorkflowTemplate(Queue):
     instance generated from a template.
     """
 
+    class Meta:
+        verbose_name = "workflow template"
+
+    def __str__(self):
+        return self.title
+
     def get_task_templates(self) -> models.QuerySet:
         """Get a QuerySet of the TaskTemplates associated through their
         TaskItemTemplate instances to this TaskWorkflowTemplate, ordered by the
@@ -95,11 +131,20 @@ class TaskWorkflowTemplate(Queue):
         )
 
     @atomic
-    def create_task_workflow(self, title: str, description: str) -> "TaskWorkflow":
+    def create_task_workflow(
+        self,
+        title: str,
+        description: str,
+        creator: User,
+    ) -> "TaskWorkflow":
         """Create a workflow and it subtasks, using values from this template
         workflow and its task templates."""
 
-        summary_task = Task.objects.create(title=title, description=description)
+        summary_task = Task.objects.create(
+            title=title,
+            description=description,
+            creator=creator,
+        )
         task_workflow = TaskWorkflow.objects.create(
             summary_task=summary_task,
             creator_template=self,
@@ -139,6 +184,10 @@ class TaskWorkflowTemplate(Queue):
                 "workflow:task-workflow-template-ui-delete",
                 kwargs={"pk": self.pk},
             )
+        elif action == "create":
+            return reverse(
+                "workflow:task-workflow-template-ui-create",
+            )
 
         return "#NOT-IMPLEMENTED"
 
@@ -168,6 +217,14 @@ class TaskTemplate(TaskBase):
             return reverse("workflow:task-template-ui-detail", kwargs={"pk": self.pk})
         elif action == "edit":
             return reverse("workflow:task-template-ui-update", kwargs={"pk": self.pk})
+        elif action == "delete":
+            return reverse(
+                "workflow:task-template-ui-delete",
+                kwargs={
+                    "workflow_template_pk": self.taskitemtemplate.queue.pk,
+                    "pk": self.pk,
+                },
+            )
 
         return "#NOT-IMPLEMENTED"
 

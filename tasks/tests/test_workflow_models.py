@@ -9,16 +9,20 @@ pytestmark = pytest.mark.django_db
 
 
 def test_create_task_workflow_from_task_workflow_template(
+    valid_user,
     task_workflow_template_three_task_template_items,
 ):
     """Test creation of TaskWorkflow instances from TaskWorkflowTemplates using
     its `create_task_workflow()` method."""
+
     title = "Workflow title"
     description = "Workflow description"
+    creator = valid_user
     task_workflow = (
         task_workflow_template_three_task_template_items.create_task_workflow(
             title=title,
             description=description,
+            creator=creator,
         )
     )
 
@@ -29,6 +33,7 @@ def test_create_task_workflow_from_task_workflow_template(
     )
     assert task_workflow.summary_task.title == title
     assert task_workflow.summary_task.description == description
+    assert task_workflow.summary_task.creator == creator
     assert task_workflow.get_items().count() == 3
 
     # Validate that item positions are equivalent.
