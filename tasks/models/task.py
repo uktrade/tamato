@@ -47,23 +47,29 @@ class TaskManager(WithSignalManagerMixin, models.Manager):
 
 class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
     def non_workflow(self):
-        """Return a queryset of standalone Task instances, i.e. instances that
-        are not related via TaskItem instnaces to any TaskWorkflow and are not
-        referenced by TaskWorkflow.summary_task (related_name=taskworkflow)."""
+        """Return a queryset of standalone Task instances that are not part of a
+        workflow and are not subtasks."""
         return self.filter(
-            models.Q(taskitem__isnull=True) & models.Q(taskworkflow__isnull=True),
+            models.Q(parent_task__isnull=True)
+            & models.Q(taskitem__isnull=True)
+            & models.Q(taskworkflow__isnull=True),
         )
 
-    def workflow_summary(self):
-        """Return a queryset of TaskWorkflow summary Task instances, i.e. those
-        with a non-null related_name=taskworkflow."""
+    def workflow_summary(self) -> "TaskQueryset":
+        """
+        Return a queryset of summary Task instances of TaskWorkflows, i.e. those
+        with a non-null related_name=taskworkflow.
+
+        Summary Task instances are never subtasks.
+        """
         return self.filter(
             models.Q(taskworkflow__isnull=False),
         )
 
-    def top_level(self):
+    def top_level(self) -> "TaskQueryset":
         """
-        Return a queryset of Task instances that are either:
+        Return a queryset of Task instances that are not subtasks and are
+        either:
         1. Stand-alone Task instances that are not part of a Workflow tasks
         2. Workflow.summary_task instances.
 
@@ -71,8 +77,14 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         permitting a combined at-a-glance view of Tasks and Workflow instances.
         """
         return self.filter(
-            models.Q(taskitem__isnull=True) | models.Q(taskworkflow__isnull=False),
+            (models.Q(taskitem__isnull=True) | models.Q(taskworkflow__isnull=False))
+            & models.Q(parent_task__isnull=True),
         )
+
+    def subtasks_of(self, parent_task: "Task") -> "TaskQueryset":
+        """Return a queryset of instances that have a non-null `parent_task`
+        i.e. they are subtasks of an instance given by their `parent_task`."""
+        return self.filter(parent_task=parent_task)
 
 
 class TaskBase(TimestampedMixin):

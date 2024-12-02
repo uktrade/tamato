@@ -80,37 +80,62 @@ def test_task_assignee_workbasket_reviewers_queryset(
     assert workbasket_reviewer_assignee in workbasket_reviewers
 
 
-def test_non_workflow_task_queryset(task, task_workflow_single_task_item):
+def test_non_workflow_queryset(task, task_workflow_single_task_item):
     """Test correct behaviour of TaskQueryset.non_workflow()."""
+
+    SubTaskFactory(parent_task=task)
+    SubTaskFactory(parent_task=task_workflow_single_task_item.get_tasks().get())
 
     non_workflow_tasks = Task.objects.non_workflow()
 
-    assert Task.objects.count() == 3
-    assert task == non_workflow_tasks.get()
+    # 1 x standalone task + 1 summary task + 1 x workflow task + 2 x subtasks
+    assert Task.objects.count() == 5
+    assert non_workflow_tasks.get() == task
 
 
-def test_workflow_summary_task_queryset(task, task_workflow_single_task_item):
+def test_workflow_summary_queryset(task, task_workflow_single_task_item):
     """Test correct behaviour of TaskQueryset.workflow_summary()."""
 
     """Return a queryset of TaskWorkflow summary Task instances, i.e. those
     with a non-null related_name=taskworkflow."""
 
-    workflow_tasks = Task.objects.workflow_summary()
+    SubTaskFactory(parent_task=task)
+    SubTaskFactory(parent_task=task_workflow_single_task_item.get_tasks().get())
 
-    assert Task.objects.count() == 3
-    assert task_workflow_single_task_item.summary_task == workflow_tasks.get()
+    workflow_summary_tasks = Task.objects.workflow_summary()
+
+    # 1 x standalone task + 1 summary task + 1 x workflow task + 2 x subtasks
+    assert Task.objects.count() == 5
+    assert workflow_summary_tasks.get() == task_workflow_single_task_item.summary_task
 
 
 def test_top_level_task_queryset(task, task_workflow_single_task_item):
     """Test correct behaviour of TaskQueryset.top_level()."""
 
+    SubTaskFactory(parent_task=task)
+    SubTaskFactory(parent_task=task_workflow_single_task_item.get_tasks().get())
+
     top_level_tasks = Task.objects.top_level()
 
-    assert Task.objects.count() == 3
+    # 1 x standalone task + 1 summary task + 1 x workflow task + 2 x subtasks
+    assert Task.objects.count() == 5
     assert top_level_tasks.count() == 2
     assert task_workflow_single_task_item.summary_task in top_level_tasks
     assert task in top_level_tasks
     assert task_workflow_single_task_item.get_tasks().get() not in top_level_tasks
+
+
+def test_subtasks_of(task, task_workflow_single_task_item):
+    """Test correct behaviour of TaskQueryset.workflow_tasks()."""
+
+    subtask = SubTaskFactory(parent_task=task)
+    SubTaskFactory(parent_task=task_workflow_single_task_item.get_tasks().get())
+
+    subtasks = Task.objects.subtasks_of(task)
+
+    # 1 x standalone task + 1 summary task + 1 x workflow task + 2 x subtasks
+    assert Task.objects.count() == 5
+    assert subtasks.get() == subtask
 
 
 def test_create_task_log_task_assigned():

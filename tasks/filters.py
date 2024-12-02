@@ -27,6 +27,10 @@ class TaskFilter(TamatoFilter):
         model = Task
         fields = ["search", "category", "progress_state"]
 
+    @property
+    def qs(self):
+        return super().qs.non_workflow()
+
 
 class TaskWorkflowFilter(TamatoFilter):
     search_fields = (
@@ -34,7 +38,39 @@ class TaskWorkflowFilter(TamatoFilter):
         "title",
         "description",
     )
-    clear_url = reverse_lazy("workflow:task-ui-list")
+    clear_url = reverse_lazy("workflow:task-workflow-ui-list")
+
+    progress_state = ModelMultipleChoiceFilter(
+        label="Status",
+        help_text="Select all that apply",
+        queryset=ProgressState.objects.all(),
+        widget=CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = Task
+        fields = ["search", "category", "progress_state"]
+
+    @property
+    def qs(self):
+        qs = super().qs
+        return qs.workflow_summary()
+
+
+class TaskAndWorkflowFilter(TamatoFilter):
+    search_fields = (
+        "id",
+        "title",
+        "description",
+    )
+    clear_url = reverse_lazy("workflow:task-and-workflow-ui-list")
+
+    tasks_and_workflows = ModelMultipleChoiceFilter(
+        label="Tasks and Workflows",
+        help_text="Select all that apply",
+        queryset=ProgressState.objects.all(),
+        widget=CheckboxSelectMultiple,
+    )
 
     progress_state = ModelMultipleChoiceFilter(
         label="Status",
