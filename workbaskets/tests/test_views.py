@@ -17,6 +17,7 @@ from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
 from common.inspect_tap_tasks import CeleryTask
 from common.inspect_tap_tasks import TAPTasks
+from common.models.trackedmodel import TrackedModel
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import date_post_data
@@ -28,6 +29,7 @@ from measures.models import Measure
 from tasks.models import Comment
 from tasks.models import UserAssignment
 from workbaskets import models
+from workbaskets.tasks import call_end_measures
 from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views import ui
@@ -2608,7 +2610,9 @@ def test_current_tasks_is_called(valid_user_client):
 
 
 def test_remove_all_workbasket_changes_button_only_shown_to_superusers(
-    client, user_workbasket, superuser
+    client,
+    user_workbasket,
+    superuser,
 ):
     url = reverse(
         "workbaskets:workbasket-ui-changes",
@@ -2626,7 +2630,8 @@ def test_remove_all_workbasket_changes_button_only_shown_to_superusers(
 
 
 def test_remove_all_workbasket_changes_button_not_shown_to_users_without_permision(
-    valid_user_client, user_workbasket
+    valid_user_client,
+    user_workbasket,
 ):
     url = reverse(
         "workbaskets:workbasket-ui-changes",
@@ -2639,3 +2644,95 @@ def test_remove_all_workbasket_changes_button_not_shown_to_users_without_permisi
 
     remove_all_button = page.find("button", value="remove-all")
     assert not remove_all_button
+
+
+@pytest.fixture
+def commodity_with_measures(workbasket, date_ranges):
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end,
+    )
+    measures = factories.MeasureFactory.create_batch(10, goods_nomenclature=commodity)
+    future_measures = factories.MeasureFactory.create_batch(
+        2,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.future,
+    )
+    return commodity
+
+
+def test_auto_end_measures_renders(
+    valid_user_client,
+    user_workbasket,
+    commodity_with_measures,
+    date_ranges,
+):
+    """Test that the list of measures to be ended renders correctly."""
+    commodity_with_measures.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.big,
+    )
+    url = reverse(
+        "workbaskets:workbasket-ui-auto-end-date-measures",
+        kwargs={"wb_pk": user_workbasket.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+    rows = page.find_all("tr", {"class": "govuk-table__row"})
+    text = page.get_text()
+    assert text.count("To be end-dated") == 10
+    assert text.count("To be deleted") == 2
+    assert len(rows) == 13
+
+
+@patch("workbaskets.tasks.call_end_measures.apply_async")
+def test_auto_end_measures_post(
+    call_check_end_measures,
+    valid_user_client,
+    commodity_with_measures,
+    user_workbasket,
+    date_ranges,
+):
+    """Test that posting the auto end measures form results in the end_measures
+    Celery task being called and redirects to the confirmation page."""
+    commodity_with_measures.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.big,
+    )
+    url = reverse(
+        "workbaskets:workbasket-ui-auto-end-date-measures",
+        kwargs={"wb_pk": user_workbasket.pk},
+    )
+    response = valid_user_client.post(url, {"action": "auto-end-date-measures"})
+    confirmation_url = reverse(
+        "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+        kwargs={"pk": user_workbasket.pk},
+    )
+    assert response.status_code == 302
+    assert response.url == confirmation_url
+    assert call_check_end_measures.called
+
+
+def test_auto_end_measures(commodity_with_measures, user_workbasket, date_ranges):
+    """Test that the call_end_measures correctly ends measures and reorders them
+    in the workbasket."""
+    new_commodity = commodity_with_measures.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.big,
+    )
+    measure_pks = [measure.pk for measure in commodity_with_measures.measures.all()]
+    call_end_measures(measure_pks, user_workbasket.pk)
+    measures = user_workbasket.measures
+    assert len(measures) == 12
+    for measure in measures[:10]:
+        assert measure.valid_between.upper == new_commodity.valid_between.upper
+    update_types = [measure.update_type for measure in measures]
+    assert update_types.count(UpdateType.UPDATE) == 10
+    assert update_types.count(UpdateType.DELETE) == 2
+    first_12_items = (
+        TrackedModel.objects.all()
+        .filter(transaction__workbasket=user_workbasket)
+        .order_by("transaction__order")[:12]
+    )
+    for item in first_12_items:
+        assert isinstance(item, Measure)

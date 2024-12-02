@@ -1807,14 +1807,14 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
                 transaction__workbasket=self.workbasket,
                 valid_between__upper_inf=False,
             )
-            .values_list("pk")
+            .values_list("sid")
         )
 
     @property
     def measures(self):
         # Should I only be filtering for measures without an end date?
         return Measure.objects.current().filter(
-            goods_nomenclature__id__in=self.commodities,
+            goods_nomenclature__sid__in=self.commodities,
         )
 
     def workbasket_transactions(self):

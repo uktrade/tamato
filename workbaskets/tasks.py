@@ -105,10 +105,13 @@ def end_measures(measures, workbasket):
             workbasket=workbasket,
             workbasket__status=WorkflowStatus.EDITING,
         ).order_by("order")
-
-        commodity = GoodsNomenclature.objects.all().get(
-            pk=measure.goods_nomenclature_id,
-            transaction__workbasket=workbasket,
+        commodity = (
+            GoodsNomenclature.objects.all()
+            .filter(
+                sid=measure.goods_nomenclature.sid,
+                transaction__workbasket=workbasket,
+            )
+            .last()
         )
         if measure.valid_between.lower > commodity.valid_between.upper:
             continue
