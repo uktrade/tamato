@@ -37,7 +37,6 @@ from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models.constants import ClockType
 from common.models.dc.base import BaseModel
-from common.models.tracked_qs import TrackedModelQuerySet
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.models.transactions import TransactionPartition
@@ -607,6 +606,8 @@ class CommodityTreeSnapshot(CommodityTreeBase):
         indents = [[]]
 
         for commodity in self.commodities:
+            if commodity.item_id == "0202309070":
+                pass
             if self.moment.date:
                 indent_obj = commodity.get_indent_at(self.moment.date)
                 indent = (indent_obj and indent_obj.indent) or commodity.indent
@@ -1579,29 +1580,27 @@ class CommodityCollectionLoader:
 
         NOTE: If the current_only flag is set to True, the loader will only add commodities
         that are based on current versions of GoodsNomenclature objects,
-        and will only select objects with with a validity range that includes today.
+        and will only select objects with a validity range that includes today.
         This is equivalent to getting the current snapshot of the commodity collection
         (see the docs for CommodityCollection for more detail on snapshots.)
         """
 
-        def _apply_filters(qs: TrackedModelQuerySet):
-            if current_only:
-                qs = qs.latest_approved()
-
-            if effective_only:
-                qs = qs.as_at(date.today())
-
-            return qs
-
-        goods_query = _apply_filters(GoodsNomenclature.objects).filter(
+        goods_query = (GoodsNomenclature.objects).filter(
             item_id__startswith=self.prefix,
         )
+        if current_only:
+            goods_query = goods_query.latest_approved()
+
+        if effective_only:
+            goods_query = goods_query.as_at(date.today())
 
         goods_sids = Subquery(goods_query.values("sid"))
+        indent_qs = GoodsNomenclatureIndent.objects
+        if current_only:
+            indent_qs = GoodsNomenclatureIndent.objects.latest_approved()
 
         indents_query = (
-            _apply_filters(GoodsNomenclatureIndent.objects)
-            .with_end_date()
+            indent_qs.with_end_date()
             .filter(indented_goods_nomenclature__sid__in=goods_sids)
             .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
             .order_by("transaction", "validity_start")

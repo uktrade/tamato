@@ -64,9 +64,11 @@ class CommodityCodeExport:
         """
         commodities = (
             ReportGoodsNomenclature.objects.all()
+            .order_by("item_id", "suffix")
             .select_related("parent_trackedmodel_ptr")
             .prefetch_related("description")
         )
+
         id = 0
         with open(self.target_file.name, "wt") as file:
             writer = csv.writer(file)
@@ -87,7 +89,7 @@ class CommodityCodeExport:
                     commodity.sid,
                     commodity.item_id,
                     commodity.suffix,
-                    commodity.last().description.all().first().description,
+                    commodity.description.all().first().description,
                     commodity.valid_between.lower,
                     commodity.valid_between.upper,
                     parent_sid,

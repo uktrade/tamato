@@ -19,7 +19,7 @@ def get_output_filename():
 
 
 @app.task
-def export_and_upload_quotas_csv(local_path: str = None) -> bool:
+def old_export_and_upload_quotas_csv(local_path: str = None) -> bool:
     """
     Generates an export of latest published quota data from the TAP database to
     a CSV file.

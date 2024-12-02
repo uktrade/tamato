@@ -19,7 +19,7 @@ def tree_edge_to_db(tree_edges):
                 trackedmodel_ptr=comm.obj.pk,
             )
             commodity.indent = comm.indent
-            commodity.parent_trackedmodel_ptr = parent_obj_pk
+            commodity.parent_trackedmodel_ptr_id = parent_obj_pk
             commodity.save()
         except ReportGoodsNomenclature.DoesNotExist:
             pass
@@ -44,11 +44,13 @@ def save_commodities_parent(verbose=False):
             print(f"Starting prefix {prefix}")
         commodities_collection = CommodityCollectionLoader(prefix=prefix).load(
             current_only=True,
+            effective_only=True,
         )
         snapshot = CommodityTreeSnapshot(
             commodities=commodities_collection.commodities,
             moment=moment,
         )
+        # snapshot = commodities_collection.get_snapshot(None, date.today())
         tree_edge_to_db(snapshot.edges)
     if verbose:
         print(f"Elapsed time {time.time() - start}")

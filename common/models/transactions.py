@@ -36,6 +36,7 @@ class TransactionPartition(models.IntegerChoices):
     """
 
     SEED_FILE = 1, "Seed"
+
     REVISION = 2, "Revision"
     DRAFT = 3, "Draft"
 

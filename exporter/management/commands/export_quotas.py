@@ -5,7 +5,7 @@ from typing import Optional
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 
-from exporter.quotas.tasks import export_and_upload_quotas_csv
+from exporter.report_exporter.tasks import new_export_and_upload_quotas_csv
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,6 @@ class Command(BaseCommand):
 
         local_path = options["DIRECTORY_PATH"]
         if options["asynchronous"]:
-            export_and_upload_quotas_csv.delay(local_path)
+            new_export_and_upload_quotas_csv.delay(local_path)
         else:
-            export_and_upload_quotas_csv(local_path)
+            new_export_and_upload_quotas_csv(local_path)

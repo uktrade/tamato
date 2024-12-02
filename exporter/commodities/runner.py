@@ -87,7 +87,7 @@ class CommodityCodeExport:
                     commodity.sid,
                     commodity.item_id,
                     commodity.suffix,
-                    commodity.last().description.all().first().description,
+                    commodity.description.all().first().description,
                     commodity.valid_between.lower,
                     commodity.valid_between.upper,
                     parent_sid,

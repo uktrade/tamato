@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from datetime import date
 from os import path
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -19,6 +20,7 @@ class EmptyFileException(Exception):
 
 class ReportExporter:
     s3_storage: ReportsExportS3StorageBase = None
+    file_prefix: str = ""
 
     # To be defined by the different report exporter
     def make_export(self, filename: NamedTemporaryFile):
@@ -30,16 +32,26 @@ class ReportExporter:
             raise Exception(f"Request to save locally, but filename not specified.")
 
         if location:
+            logger.info("Export process targeting local file system.")
             self._location = Path(location).expanduser().resolve()
             logger.info(f"Normalised path `{location}` to `{self._location}`.")
             if not self._location.is_dir():
                 raise Exception(f"Directory does not exist: {location}.")
+
+        else:
+            logger.info("Quota export process targeting S3 file system.")
+        self.csv_file_name = self.get_output_filename()
+        # export_filename = storage.generate_filename(csv_file_name)
 
     def exists(self, name: str) -> bool:
         if self._save_locally:
             return Path(self.path(name)).exists()
         else:
             pass
+
+    def get_output_filename(self):
+        date_str = f"{date.today().strftime('%Y%m%d')}"
+        return f"{self.file_prefix}_export_{date_str}.csv"
 
     def is_valid_export_csv(self, filename: str):
         """
@@ -64,23 +76,28 @@ class ReportExporter:
 
         return True
 
-    def export_csv(self, filename: str):
+    def export_csv(self):
         with NamedTemporaryFile() as named_temp_file:
-            logger.info(f"Saving {filename} to local file system storage.")
             self.make_export(named_temp_file)
             if self.is_valid_export_csv(named_temp_file.name):
-                # Only save to S3 if the CSV file is valid.
-
+                # Only save if the CSV file is valid.
                 if self._save_locally:
-                    destination_file_path = os.path.join(self._location, filename)
+                    logger.info(
+                        f"Saving {self.csv_file_name} to local file system storage.",
+                    )
+                    destination_file_path = os.path.join(
+                        self._location,
+                        self.csv_file_name,
+                    )
                     shutil.copy(named_temp_file.name, destination_file_path)
                 else:
                     self.S3Boto3Storage.save(named_temp_file)
-                    os.unlink(named_temp_file.name)
+                os.unlink(named_temp_file.name)
 
 
 class QuotaReportExporter(ReportExporter):
     s3_storage = QuotasExportS3StorageBase
+    file_prefix = "quotas_"
 
     def make_export(self, filename):
         quota_csv_exporter = runner.QuotaExport(filename)
@@ -88,8 +105,8 @@ class QuotaReportExporter(ReportExporter):
 
 
 class CommoditiesReportExporter(ReportExporter):
-
     s3_storage = QuotasExportS3StorageBase
+    file_prefix = "commodities_"
 
     def make_export(self, filename):
-        CommodityCodeExport(filename.run())
+        CommodityCodeExport(filename).run()
