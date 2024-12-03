@@ -1,4 +1,3 @@
-import decimal
 from typing import OrderedDict
 from unittest import mock
 
@@ -26,8 +25,6 @@ from quotas import validators
 from quotas.forms.base import QuotaSuspensionType
 from quotas.views import DuplicateDefinitionsWizard
 from quotas.views import QuotaList
-from quotas.views.wizards import QuotaDefinitionBulkCreatorWizard
-from quotas.wizard import QuotaDefinitionBulkCreatorSessionStorage
 from quotas.wizard import QuotaDefinitionDuplicatorSessionStorage
 
 pytestmark = pytest.mark.django_db
@@ -2690,187 +2687,38 @@ def test_quota_blocking_delete_form(factory, use_delete_form):
     use_delete_form(factory())
 
 
-def test_quota_definition_bulk_creator_wizard_start(client_with_current_workbasket):
-    url = reverse("quota_definition-ui-bulk-create", kwargs={"step": "start"})
-    response = client_with_current_workbasket.get(url)
-    assert response.status_code == 200
-
-
-def test_quota_definition_bulk_creator_wizard_finish(client_with_current_workbasket):
-    quota = factories.QuotaOrderNumberFactory.create()
-    quota_pk = str(quota.pk)
-    measurement_unit = factories.MeasurementUnitFactory()
-    wizard_data = [
-        (
-            {"quota_definition_bulk_creator_wizard-current_step": "start"},
-            "initial_info",
-        ),
-        (
-            {
-                "quota_definition_bulk_creator_wizard-current_step": "initial_info",
-                "initial_info-instance_count": "5",
-                "initial_info-frequency": "3",
-                "initial_info-quota_order_number": quota_pk,
-            },
-            "definition_period_info",
-        ),
-        (
-            {
-                "quota_definition_bulk_creator_wizard-current_step": "definition_period_info",
-                "definition_period_info-start_date_0": "01",
-                "definition_period_info-start_date_1": "01",
-                "definition_period_info-start_date_2": "2025",
-                "definition_period_info-end_date_0": "31",
-                "definition_period_info-end_date_1": "12",
-                "definition_period_info-end_date_2": "2025",
-                "definition_period_info-volume": "200.000",
-                "definition_period_info-initial_volume": "500.000",
-                "definition_period_info-measurement_unit": measurement_unit.pk,
-                "definition_period_info-measurement_unit_qualifier": "",
-                "definition_period_info-quota_critical_threshold": "90",
-                "definition_period_info-quota_critical": "False",
-            },
-            "review",
-        ),
-        ({"quota_definition_bulk_creator_wizard-current_step": "review"}, "complete"),
-    ]
-
-    for data, next_step in wizard_data:
-        url = reverse(
-            "quota_definition-ui-bulk-create",
-            kwargs={"step": data["quota_definition_bulk_creator_wizard-current_step"]},
-        )
-
-        response = client_with_current_workbasket.get(url)
-        assert response.status_code == 200
-        response = client_with_current_workbasket.post(url, data)
-        print(f"success, {next_step=}")
-        if (
-            data["quota_definition_bulk_creator_wizard-current_step"]
-            == "definition_period_info"
-        ):
-            assert response.status_code == 200
-        else:
-            assert response.status_code == 302
-            assert response.url == reverse(
-                "quota_definition-ui-bulk-create",
-                kwargs={"step": next_step},
-            )
-
-    complete_response = client_with_current_workbasket.get(response.url)
-    assert complete_response.status_code == 302
-
-
-@pytest.fixture
-def quota_order_number(date_ranges) -> models.QuotaOrderNumber:
-    """Provides a main quota order number for use across the fixtures and
-    following tests."""
-    return factories.QuotaOrderNumberFactory(
-        valid_between=date_ranges.normal,
-    )
-
-
-def test_quota_definition_bulk_creator_wizard_creates_definitions(
-    session_request_with_workbasket,
-    quota_order_number,
+def test_quota_definition_update_updates_association(
+    client_with_current_workbasket,
+    date_ranges,
 ):
+    """Test that when updating a quota definition that if related associations
+    exist, they also get updated."""
+    association = factories.QuotaAssociationFactory.create()
+    sub_quota = association.sub_quota
+    url = reverse("quota_definition-ui-edit", kwargs={"sid": sub_quota.sid})
     measurement_unit = factories.MeasurementUnitFactory()
-    staged_definitions = [
-        {
-            "id": "1",
-            "initial_volume": "10000",
-            "volume": "10000",
-            "measurement_unit_code": measurement_unit.code,
-            "threshold": "90",
-            "quota_critical": False,
-            "start_date": "2025-01-01",
-            "end_date": "2025-12-31",
-        },
-        {
-            "id": "2",
-            "initial_volume": "20000",
-            "volume": "20000",
-            "measurement_unit_code": measurement_unit.code,
-            "threshold": "90",
-            "quota_critical": False,
-            "start_date": "2026-01-01",
-            "end_date": "2026-12-31",
-        },
-    ]
 
-    session_request_with_workbasket.session["staged_definition_data"] = (
-        staged_definitions
-    )
-
-    storage = QuotaDefinitionBulkCreatorSessionStorage(
-        request=session_request_with_workbasket,
-        prefix="",
-    )
-    storage._set_current_step("review")
-    wizard = QuotaDefinitionBulkCreatorWizard(
-        request=session_request_with_workbasket,
-        storage=storage,
-    )
-    wizard.form_list = OrderedDict(wizard.form_list)
-    definition_count_before = len(models.QuotaDefinition.objects.all())
-    assert definition_count_before == 0
-    for definition in session_request_with_workbasket.session["staged_definition_data"]:
-        wizard.create_definition(quota_order_number.pk, definition)
-    assert len(models.QuotaDefinition.objects.all()) == len(staged_definitions)
-
-
-def test_quota_definition_bulk_creator_wizard_creates_definitions_done(
-    session_request_with_workbasket,
-    quota_order_number,
-):
-    measurement_unit = factories.MeasurementUnitFactory()
-    recurrance_data = {
-        "quota_order_number_pk": quota_order_number.pk,
-        "instance_count": "2",
-        "frequency": "2",
+    data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "description": "Lorem ipsum.",
+        "volume": "80601000.000",
+        "initial_volume": "80601000.000",
+        "measurement_unit": measurement_unit.pk,
+        "measurement_unit_qualifier": "",
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
     }
-
-    staged_definitions = [
-        {
-            "id": "1",
-            "initial_volume": "10000",
-            "volume": "10000",
-            "measurement_unit_code": measurement_unit.code,
-            "threshold": "90",
-            "quota_critical": False,
-            "start_date": "2025-01-01",
-            "end_date": "2025-12-31",
-        },
-        {
-            "id": "2",
-            "initial_volume": "20000",
-            "volume": "20000",
-            "measurement_unit_code": measurement_unit.code,
-            "threshold": "90",
-            "quota_critical": False,
-            "start_date": "2026-01-01",
-            "end_date": "2026-12-31",
-        },
-    ]
-
-    session_request_with_workbasket.session["staged_definition_data"] = (
-        staged_definitions
+    response = client_with_current_workbasket.post(url, data)
+    assert response.status_code == 302
+    associations = models.QuotaAssociation.objects.all().filter(
+        main_quota__sid=association.main_quota.sid,
+        sub_quota__sid=association.sub_quota.sid,
     )
-    session_request_with_workbasket.session["recurrance_data"] = recurrance_data
-
-    storage = QuotaDefinitionBulkCreatorSessionStorage(
-        request=session_request_with_workbasket,
-        prefix="",
-    )
-    storage._set_current_step("review")
-    wizard = QuotaDefinitionBulkCreatorWizard(
-        request=session_request_with_workbasket,
-        storage=storage,
-    )
-    wizard.form_list = OrderedDict(wizard.form_list)
-    definition_count_before = len(models.QuotaDefinition.objects.all())
-    assert definition_count_before == 0
-    wizard.done(wizard.form_list)
-    assert len(models.QuotaDefinition.objects.all()) == decimal.Decimal(
-        recurrance_data["instance_count"],
-    )
+    assert len(associations) == 2
+    assert associations[0].update_type == UpdateType.CREATE
+    assert associations[1].update_type == UpdateType.UPDATE

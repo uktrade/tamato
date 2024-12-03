@@ -1,4 +1,12 @@
 {% set table_rows = [] %}
+{% set table_head = [
+                {"text": "Order number"},
+                {"text": "Relationship type"},
+                {"text": "Co-efficient"},
+              ] %}
+{% if sub_quota_associations %}
+  {{ table_head.append({"text": "Actions"}) or "" }}
+{% endif %}
 {% for object in sub_quota_associations %}
   {% set sub_quota_link %}
     <a class="govuk-link govuk-!-font-weight-bold"
@@ -7,7 +15,7 @@
     </a>
   {% endset %}
   {% set actions_html %}
-      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
+      <a class="govuk-link" href="{{ object.sub_quota.get_association_edit_url() }}">Edit</a>
       <br/>
       <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
   {% endset %}
@@ -26,17 +34,11 @@
       {{ object.main_quota.order_number }}
     </a>
   {% endset %}
-  {% set actions_html %}
-      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
-      <br/>
-      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
-  {% endset %}
 
   {{ table_rows.append([
     {"html": main_quota_link},
     {"html": object.get_sub_quota_relation_type_display()},
     {"text": object.coefficient},
-    {"text": actions_html }
   ]) or "" }}
 {% endfor %}
 
@@ -51,12 +53,7 @@
           {% endif %}
           {{
             govukTable({
-              "head": [
-                {"text": "Order number"},
-                {"text": "Relationship type"},
-                {"text": "Co-efficient"},
-                {"text": "Actions"}
-              ],
+              "head": table_head,
               "rows": table_rows
             })
           }}

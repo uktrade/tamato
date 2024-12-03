@@ -60,19 +60,19 @@ class DuplicateDefinitionsWizard(
 
     step_metadata = {
         START: {
-            "title": "Duplicate quota definitions",
+            "title": "Create quota associations",
             "link_text": "Start",
         },
         QUOTA_ORDER_NUMBERS: {
-            "title": "Create associations",
+            "title": "Choose quotas to be linked",
             "link_text": "Order numbers",
         },
         SELECT_DEFINITION_PERIODS: {
-            "title": "Select definition periods",
+            "title": "Select definition periods to duplicate",
             "link_text": "Definition periods",
         },
         SELECTED_DEFINITIONS: {
-            "title": "Provide updates and details for duplicated definitions",
+            "title": "Edit duplicated definition periods",
             "link_text": "Selected definitions",
         },
         COMPLETE: {"title": "Finished", "link_text": "Success"},

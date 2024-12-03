@@ -150,7 +150,39 @@ class QuotaDefinitionUpdate(
     QuotaDefinitionUpdateMixin,
     CreateTaricUpdateView,
 ):
-    pass
+
+    @property
+    def sub_quota_associations(self):
+        return models.QuotaAssociation.objects.current().filter(
+            main_quota__sid=self.object.sid,
+        )
+
+    @property
+    def main_quota_associations(self):
+        return models.QuotaAssociation.objects.current().filter(
+            sub_quota__sid=self.object.sid,
+        )
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        """Create an update object for any related association."""
+        definition_instance = super().get_result_object(form)
+        for association in self.sub_quota_associations:
+            association.new_version(
+                workbasket=self.workbasket,
+                update_type=self.update_type,
+                transaction=definition_instance.transaction,
+                main_quota=definition_instance,
+            )
+        for association in self.main_quota_associations:
+            association.new_version(
+                workbasket=self.workbasket,
+                update_type=self.update_type,
+                transaction=definition_instance.transaction,
+                sub_quota=definition_instance,
+            )
+
+        return definition_instance
 
 
 class QuotaDefinitionCreate(QuotaDefinitionUpdateMixin, CreateTaricCreateView):
@@ -290,7 +322,8 @@ class SubQuotaDefinitionAssociationMixin:
 
 class SubQuotaDefinitionAssociationUpdate(
     SubQuotaDefinitionAssociationMixin,
-    QuotaDefinitionUpdate,
+    QuotaDefinitionUpdateMixin,
+    CreateTaricUpdateView,
 ):
 
     @transaction.atomic

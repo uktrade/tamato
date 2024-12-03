@@ -54,7 +54,7 @@ class QuotaOrderNumbersSelectForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 HTML(
-                    '<h2 class="govuk-heading">Enter main and sub-quota order numbers</h2>',
+                    '<h2 class="govuk-heading">Enter main and sub-quota order numbers to link together</h2>',
                 ),
             ),
             Div(

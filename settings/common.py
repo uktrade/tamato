@@ -671,6 +671,9 @@ CELERY_ROUTES = {
     "measures.tasks.bulk_edit_measures": {
         "queue": "bulk-create",
     },
+    re.compile(r"(reference_documents)\.tasks\..*"): {
+        "queue": "standard",
+    },
 }
 
 SQLITE_EXCLUDED_APPS = [
