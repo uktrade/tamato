@@ -12,6 +12,7 @@ from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.serializers import GeographicalAreaSerializer
 from measures.models.tracked_models import MeasurementUnit
+from measures.models.tracked_models import MeasurementUnitQualifier
 from measures.unit_serializers import MeasurementUnitQualifierSerializer
 from measures.unit_serializers import MeasurementUnitSerializer
 from measures.unit_serializers import MonetaryUnitSerializer
@@ -312,14 +313,21 @@ def deserialize_definition_data(self, definition):
 
 def serialize_definition_data(definition):
     # Serializes data and returns a JSON dict that can be saved to session
+    if definition["measurement_unit_qualifier"] is not None:
+        definition["measurement_unit_qualifer"] = definition[
+            "measurement_unit_qualifier"
+        ].pk
+
     definition_data = {
         "id": str(definition["id"]),
         "initial_volume": str(definition["volume"]),
         "volume": str(definition["volume"]),
         "measurement_unit_code": definition["measurement_unit"].code,
         "measurement_unit_abbreviation": definition["measurement_unit"].abbreviation,
+        "measurement_unit_qualifier": definition["measurement_unit_qualifier"],
         "threshold": str(definition["quota_critical_threshold"]),
         "quota_critical": definition["quota_critical"],
+        "description": definition["description"],
         "start_date": serialize_date(definition["valid_between"].lower),
         "end_date": serialize_date(definition["valid_between"].upper),
     }
@@ -334,6 +342,10 @@ def deserialize_bulk_create_definition_data(definition, order_number):
     measurement_unit = MeasurementUnit.objects.get(
         code=definition["measurement_unit_code"],
     )
+    if definition["measurement_unit_qualifier"] is not None:
+        measurement_unit_qualifier = MeasurementUnitQualifier.objects.get(
+            code=definition["measurement_unit_qualifier"],
+        )
     valid_between = TaricDateRange(start_date, end_date)
     order_number_obj = models.QuotaOrderNumber.objects.get(
         pk=order_number,
@@ -342,6 +354,7 @@ def deserialize_bulk_create_definition_data(definition, order_number):
         "volume": vol,
         "initial_volume": initial_volume,
         "measurement_unit": measurement_unit,
+        "measurement_unit_qualifier": measurement_unit_qualifier,
         "order_number": order_number_obj,
         "valid_between": valid_between,
         "update_type": UpdateType.CREATE,

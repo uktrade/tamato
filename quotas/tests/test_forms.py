@@ -1078,14 +1078,14 @@ def quota() -> models.QuotaOrderNumber:
     return factories.QuotaOrderNumberFactory()
 
 
-@pytest.fixture
-def bulk_create_initial_form(
-    session_request,
-) -> forms.BulkQuotaDefinitionCreateInitialInformation:
-    return forms.BulkQuotaDefinitionCreateInitialInformation(
-        request=session_request,
-        prefix="initial_info",
-    )
+# @pytest.fixture
+# def bulk_create_initial_form(
+#     session_request,
+# ) -> forms.BulkQuotaDefinitionCreateInitialInformation:
+#     return forms.BulkQuotaDefinitionCreateInitialInformation(
+#         request=session_request,
+#         prefix="initial_info",
+#     )
 
 
 def test_quota_definition_bulk_create_initial_info_sets_data(

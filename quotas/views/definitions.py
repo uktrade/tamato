@@ -157,6 +157,14 @@ class QuotaDefinitionCreate(QuotaDefinitionUpdateMixin, CreateTaricCreateView):
     template_name = "quota-definitions/create.jinja"
     form_class = forms.QuotaDefinitionCreateForm
 
+    @property
+    def quota_order_number(self):
+        return (
+            models.QuotaOrderNumber.objects.current()
+            .values("order_number")
+            .get(sid=self.kwargs["sid"])
+        )
+
     def form_valid(self, form):
         quota = models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
         form.instance.order_number = quota

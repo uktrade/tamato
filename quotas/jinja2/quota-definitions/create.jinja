@@ -1,6 +1,8 @@
-{% extends "layouts/create.jinja" %}
+{# {% extends "layouts/create.jinja" %} #}
+{% extends 'layouts/form.jinja' %}
 
 {% set page_title = "Create a new quota definition period" %}
+{% set page_subtitle = "Quota order number: "~view.quota_order_number['order_number']%}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
@@ -9,4 +11,20 @@
       {"text": page_title}
     ])
   }}
+{% endblock %}
+{% block content %}
+  <h1 class="govuk-heading-xl">
+        {% block page_title_heading %}
+            {{ page_title }}
+        {% endblock %}
+        <span class="govuk-caption-xl">
+        {% block page_subtitle %}
+            {{ page_subtitle }}
+        {% endblock %}
+        </span>
+    </h1>
+  <p class="govuk-body">You can create one new quota definition period using this form. Alternatively, you can <a class="govuk-link" href="{{ url('quota_definition-ui-bulk-create') }}">create multiple quota definition periods</a> for a chose quota order number.</p>
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
 {% endblock %}

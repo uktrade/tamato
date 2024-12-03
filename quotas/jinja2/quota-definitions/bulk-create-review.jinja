@@ -1,7 +1,21 @@
 {% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
 {% from "components/table/macro.njk" import govukTable %}
+{% from "components/details/macro.njk" import govukDetails %}
+{% from "components/summary-list/macro.njk" import govukSummaryList %}
 
-{% block form %}
+{% set page_subtitle = "Quota order number "~view.quota_order_number %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl">
+        {% block page_title_heading %}
+            {{ page_title }}
+        {% endblock %}
+        <span class="govuk-caption-xl">
+        {% block page_subtitle %}
+            {{ page_subtitle }}
+        {% endblock %}
+        </span>
+    </h1>
     {% set data = view.get_staged_definition_data() %}
     {% set table_rows = [] %}
     {% for definition in data %}
@@ -11,28 +25,65 @@
             <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('quota_definition-ui-bulk-create-edit', args=[definition.id]) }}">Edit</a>
         {%- endset %}
 
+        {% set definition_details_html %}
+            {{
+                govukSummaryList({
+                    "rows": [
+                        {
+                            "key": {"text": "Description"},
+                            "value": {"text": definition.description if definition.description else "-"},
+                            "actions": {"items": []}
+                        },
+                        {
+                            "key": {"text": "Measurement unit"},
+                            "value": {"text": definition.measurement_unit_abbreviation},
+                            "actions": {"items": []}
+                        },
+                        {
+                            "key": {"text": "Critical threshold"},
+                            "value": {"text": definition.threshold ~"%"},
+                            "actions": {"items": []}
+                        },
+                        {
+                            "key": {"text": "Critical state"},
+                            "value": {"text": "Yes" if definition.quota_critical else "No"},
+                            "actions": {"items": []}
+                        },
+                    ]
+                })
+            }}
+        {% endset %}
+        {% set definition_details -%}
+        {{ govukDetails({
+            "summaryText": "Details",
+            "html": definition_details_html
+        }) }}
+        {% endset %}
+
         {{ table_rows.append([
+            {"text": definition_details },
             {"text": formatted_start_date },
             {"text": formatted_end_date },
             {"text": definition.volume },
             {"text": definition.measurement_unit_abbreviation },
-            {"text": definition.threshold ~ "%"},
             {"text": edit_link },
         ]) or ""}}
     {% endfor %}
 
-    <p>Each row represents a Quota definition period to be created. You can edit these by clicking the edit link, or after creation via the edit definition period page.</p>
+    <p class="govuk-inset-text">Each row represents a Quota definition period to be created. These can be edited before being submitted.</p>
     {{ govukTable({
         "head": [
+            {"text": "Details"},
             {"text": "Start date"},
             {"text": "End date"},
             {"text": "Volume"},
             {"text": "Unit"},
-            {"text": "Threshold"},
             {"text": "Edit details"},
         ],
         "rows": table_rows
     }) }}
+    <p class="govuk-body">Selecting 'Submit' will create the new definition periods.</p>
+    <p class="govuk-body">Further edits to the definition periods can be made on the quota order number page through an additional workbasket transaction.</p>
 <div class="govuk-button-group">
   {{ govukButton({
     "text": "Submit",

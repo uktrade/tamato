@@ -373,18 +373,7 @@ class QuotaDefinitionBulkCreatorWizard(
         )
 
     def done(self, form_list, **kwargs):
-        # this will need changing.
-        # Data structure:
-        # {
-        # "order_number": 1234567,
-        # "recurrance_data": {
-        # "count": int
-        # "frequency": int
-        # }
-        # staged_data: [
-        # {} of definition data
-        # ]
-        # }
+
         order_number_pk = self.request.session["recurrance_data"][
             "quota_order_number_pk"
         ]
