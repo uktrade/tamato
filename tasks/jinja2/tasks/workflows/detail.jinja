@@ -1,0 +1,105 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set object_name = object._meta.verbose_name %}
+
+{% set page_title = object_name|capitalize ~ ": " ~ object.title %}
+
+{% if object_name == "workflow" %}
+  {% set task_object_name = "task" %}
+  {% set task_object_create_url = "#TODO" %}
+{% elif object_name == "workflow template" %}
+  {% set task_object_name = "task template" %}
+  {% set task_object_create_url = url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}) %}
+{% endif %}
+
+{% set list_include = "tasks/includes/task_queue.jinja" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and view "~ object_name ~ "s", "href": object.get_url("list")},
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  <h2 class="govuk-heading-m">Details</h2>
+  
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        ID
+      </dt>
+      <dd class="govuk-summary-list__value">
+        {{ object.pk }}
+      </dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        Title
+      </dt>
+      <dd class="govuk-summary-list__value">
+        {{ object.title }}
+      </dd>
+      <dd class="govuk-summary-list__actions">
+        <a class="govuk-link" href="{{ object.get_url("edit") }}">Change<span class="govuk-visually-hidden"> title</span></a>
+      </dd>
+    </div>
+
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        Description
+      </dt>
+      <dd class="govuk-summary-list__value">
+        {{ object.description }}
+      </dd>
+      <dd class="govuk-summary-list__actions">
+        <a class="govuk-link" href="{{ object.get_url("edit") }}">Change<span class="govuk-visually-hidden"> description</span></a>
+      </dd>
+    </div>
+  </dl>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+      <h2 class="govuk-heading-m">{{ task_object_name|capitalize }}s</h2>
+    </div>
+
+    <div class="govuk-grid-column-one-quarter">
+      {{ govukButton({
+        "text": "Create a " ~ task_object_name,
+        "href": task_object_create_url,
+        "classes": "govuk-button align-right"
+      }) }}
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      {% if object_list %}
+        {% include list_include %}
+      {% else %}
+        <p class="govuk-body">There are no {{ task_object_name }}s for this {{ object_name }}.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="govuk-button-group govuk-!-margin-top-6">
+    {{ govukButton({
+      "text": "Delete " ~ object_name,
+      "href": object.get_url("delete"),
+      "classes": "govuk-button--warning"
+    }) }}
+    {{ govukButton({
+      "text": "Find and view " ~ object_name ~ "s",
+      "href": object.get_url("list"),
+      "classes": "govuk-button--secondary"
+    }) }}
+  </div>
+{% endblock %}

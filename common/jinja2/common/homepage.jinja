@@ -144,6 +144,25 @@
       </article>
     {% endif %}
 
+      <article class="masonry-card">
+        <h3 class="govuk-heading-m">Tasks and Workflows - TEST ONLY</h3>
+        <p class="govuk-body">
+          <a href="{{ url('workflow:task-ui-list') }}"
+            class="govuk-link"
+          >Tasks</a>
+        </p>
+        <p class="govuk-body"></p>
+          <a href=#TODO
+            class="govuk-link"
+          >Workflows</a>
+        </p>
+        <p class="govuk-body"></p>
+          <a href=#TODO
+            class="govuk-link"
+          >Workflow templates</a>
+        </p>
+      </article>
+
     <article class="masonry-card">
       <h3 class="govuk-heading-m">Resources</h3>
       <p class="govuk-body">
@@ -160,6 +179,8 @@
           <li>
             <a href="{{ url('taric_parser_import_ui_list') }}" class="govuk-link">Importer V2</a>
           </li>
+            {% endif %}
+      {% if request.user.has_perm('reference_documents.view_referencedocument') %}
           <li>
             <a href="{{ url('reference_documents:index') }}" class="govuk-link">Reference documents</a>
           </li>

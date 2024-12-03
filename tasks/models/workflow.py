@@ -2,44 +2,46 @@ from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
 
+from common.models import User
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
 from tasks.models.task import Task
 from tasks.models.task import TaskBase
-
-# ---------------
-# - Base classes.
-# ---------------
-
-
-class TaskWorkflowBase(Queue):
-    """Abstract model base class containing model fields common to TaskWorkflow
-    and TaskWorkflowTemplate."""
-
-    class Meta:
-        abstract = True
-
-    title = models.CharField(
-        max_length=255,
-    )
-    description = models.TextField(
-        blank=True,
-    )
-
 
 # ----------------------
 # - Workflows and tasks.
 # ----------------------
 
 
-class TaskWorkflow(TaskWorkflowBase):
+class TaskWorkflow(Queue):
     """Workflow of ordered Tasks."""
 
+    summary_task = models.OneToOneField(
+        Task,
+        on_delete=models.PROTECT,
+    )
+    """Provides task-like filtering and display capabilities for this
+    workflow."""
     creator_template = models.ForeignKey(
         "tasks.TaskWorkflowTemplate",
         null=True,
         on_delete=models.SET_NULL,
     )
+    """The template from which this workflow was created, if any."""
+
+    class Meta:
+        verbose_name = "workflow"
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def title(self) -> str:
+        return self.summary_task.title
+
+    @property
+    def description(self) -> str:
+        return self.summary_task.description
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
@@ -47,8 +49,23 @@ class TaskWorkflow(TaskWorkflowBase):
         TaskItem."""
         return Task.objects.filter(taskitem__queue=self).order_by("taskitem__position")
 
-    def __str__(self):
-        return self.title
+    def get_url(self, action: str = "detail"):
+        if action == "detail":
+            return reverse(
+                "workflow:task-workflow-ui-detail",
+                kwargs={"pk": self.pk},
+            )
+        elif action == "delete":
+            return reverse(
+                "workflow:task-workflow-ui-delete",
+                kwargs={"pk": self.pk},
+            )
+        elif action == "create":
+            return reverse(
+                "workflow:task-workflow-ui-create",
+            )
+
+        return "#NOT-IMPLEMENTED"
 
 
 class TaskItem(QueueItem):
@@ -72,8 +89,34 @@ class TaskItem(QueueItem):
 # ----------------------------------------
 
 
-class TaskWorkflowTemplate(TaskWorkflowBase):
+class TaskWorkflowTemplate(Queue):
     """Template used to create TaskWorkflow instance."""
+
+    title = models.CharField(
+        max_length=255,
+    )
+    """
+    A title name for the instance.
+
+    This isn't the same as the title assigned to a TaskWorkflow instance
+    generated from a template.
+    """
+    description = models.TextField(
+        blank=True,
+        help_text="Description of what this workflow template is used for. ",
+    )
+    """
+    Description of what the instance is used for.
+
+    This isn't the same as the description that may be applied to a TaskWorkflow
+    instance generated from a template.
+    """
+
+    class Meta:
+        verbose_name = "workflow template"
+
+    def __str__(self):
+        return self.title
 
     def get_task_templates(self) -> models.QuerySet:
         """Get a QuerySet of the TaskTemplates associated through their
@@ -84,13 +127,22 @@ class TaskWorkflowTemplate(TaskWorkflowBase):
         )
 
     @atomic
-    def create_task_workflow(self) -> "TaskWorkflow":
+    def create_task_workflow(
+        self,
+        title: str,
+        description: str,
+        creator: User,
+    ) -> "TaskWorkflow":
         """Create a workflow and it subtasks, using values from this template
         workflow and its task templates."""
 
+        summary_task = Task.objects.create(
+            title=title,
+            description=description,
+            creator=creator,
+        )
         task_workflow = TaskWorkflow.objects.create(
-            title=self.title,
-            description=self.description,
+            summary_task=summary_task,
             creator_template=self,
         )
 
@@ -128,6 +180,10 @@ class TaskWorkflowTemplate(TaskWorkflowBase):
                 "workflow:task-workflow-template-ui-delete",
                 kwargs={"pk": self.pk},
             )
+        elif action == "create":
+            return reverse(
+                "workflow:task-workflow-template-ui-create",
+            )
 
         return "#NOT-IMPLEMENTED"
 
@@ -155,6 +211,14 @@ class TaskTemplate(TaskBase):
             return reverse("workflow:task-template-ui-detail", kwargs={"pk": self.pk})
         elif action == "edit":
             return reverse("workflow:task-template-ui-update", kwargs={"pk": self.pk})
+        elif action == "delete":
+            return reverse(
+                "workflow:task-template-ui-delete",
+                kwargs={
+                    "workflow_template_pk": self.taskitemtemplate.queue.pk,
+                    "pk": self.pk,
+                },
+            )
 
         return "#NOT-IMPLEMENTED"
 

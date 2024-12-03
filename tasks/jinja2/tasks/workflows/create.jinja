@@ -1,0 +1,16 @@
+{% extends "layouts/create.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Create a " ~ verbose_name  %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {"text": "Find and view workflow templates", "href": "#TODO"},
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}

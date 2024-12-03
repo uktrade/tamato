@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q
 from django.urls import reverse
+from django.utils.timezone import make_aware
 
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
@@ -320,7 +321,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
 
         assignees = self.cleaned_data["assignees"]
         for assignee in assignees:
-            assignee.unassigned_at = datetime.now()
+            assignee.unassigned_at = make_aware(datetime.now())
 
         return TaskAssignee.objects.bulk_update(
             assignees,

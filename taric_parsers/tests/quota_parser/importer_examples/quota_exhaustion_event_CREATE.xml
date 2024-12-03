@@ -193,7 +193,7 @@
                     <oub:update.type>3</oub:update.type>
                     <oub:quota.exhaustion.event>
                         <oub:quota.definition.sid>100</oub:quota.definition.sid>
-                        <oub:occurrence.timestamp>2020-09-25T14:58:58</oub:occurrence.timestamp>
+                        <oub:occurrence.timestamp>2020-09-25T14:58:58Z</oub:occurrence.timestamp>
                         <oub:exhaustion.date>2021-01-01</oub:exhaustion.date>
                     </oub:quota.exhaustion.event>
                 </oub:record>

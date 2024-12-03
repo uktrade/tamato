@@ -5,9 +5,12 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
+from tasks.models import Task
 from tasks.models import TaskAssignee
+from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
+from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.tests import factories
 
@@ -106,3 +109,48 @@ def task_workflow_template_three_task_template_items(
     )
 
     return task_workflow_template
+
+
+@pytest.fixture()
+def task_workflow() -> TaskWorkflow:
+    """Return an empty TaskWorkflow instance (containing no items)."""
+    return factories.TaskWorkflowFactory.create()
+
+
+@pytest.fixture()
+def task_workflow_single_task_item(task_workflow) -> TaskWorkflow:
+    """Return a TaskWorkflow instance containing a single TaskItem instance with
+    associated Task instance."""
+
+    task_item = factories.TaskItemFactory.create(
+        queue=task_workflow,
+    )
+
+    assert task_workflow.get_items().count() == 1
+    assert task_workflow.get_items().get() == task_item
+
+    return task_workflow
+
+
+@pytest.fixture()
+def task_workflow_three_task_items(
+    task_workflow,
+) -> TaskWorkflow:
+    """Return a TaskWorkflow instance containing three TaskItems and related
+    Tasks."""
+
+    expected_count = 3
+
+    task_items = factories.TaskItemFactory.create_batch(
+        expected_count,
+        queue=task_workflow,
+    )
+
+    assert task_workflow.get_items().count() == expected_count
+    assert TaskItem.objects.filter(queue=task_workflow).count() == expected_count
+    assert (
+        Task.objects.filter(taskitem__in=[item.pk for item in task_items]).count()
+        == expected_count
+    )
+
+    return task_workflow
