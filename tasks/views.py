@@ -27,6 +27,7 @@ from tasks.forms import TaskWorkflowDeleteForm
 from tasks.forms import TaskWorkflowTemplateCreateForm
 from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
+from tasks.forms import TaskWorkflowUpdateForm
 from tasks.models import Task
 from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
@@ -383,6 +384,25 @@ class TaskWorkflowConfirmCreateView(PermissionRequiredMixin, DetailView):
     permission_required = "tasks.add_taskworkflow"
 
 
+class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
+    model = TaskWorkflow
+    template_name = "tasks/workflows/edit.jinja"
+    permission_required = "tasks.change_taskworkflow"
+    form_class = TaskWorkflowUpdateForm
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-workflow-ui-confirm-update",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class TaskWorkflowConfirmUpdateView(PermissionRequiredMixin, DetailView):
+    model = TaskWorkflow
+    template_name = "tasks/workflows/confirm_update.jinja"
+    permission_required = "tasks.change_taskworkflow"
+
+
 class TaskWorkflowDeleteView(PermissionRequiredMixin, DeleteView):
     model = TaskWorkflow
     template_name = "tasks/workflows/delete.jinja"
@@ -531,7 +551,7 @@ class TaskWorkflowTemplateConfirmCreateView(PermissionRequiredMixin, DetailView)
 
 class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
     model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/template_edit.jinja"
+    template_name = "tasks/workflows/edit.jinja"
     permission_required = "tasks.change_taskworkflowtemplate"
     form_class = TaskWorkflowTemplateUpdateForm
 
@@ -544,7 +564,7 @@ class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
 
 class TaskWorkflowTemplateConfirmUpdateView(PermissionRequiredMixin, DetailView):
     model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/template_confirm_update.jinja"
+    template_name = "tasks/workflows/confirm_update.jinja"
     permission_required = "tasks.change_taskworkflowtemplate"
 
 
