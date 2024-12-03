@@ -1844,6 +1844,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) == "auto-end-date-measures":
+            self.request.session["count_ended_measures"] = len(self.measures)
             self.end_measures()
         return redirect(
             "workbaskets:workbasket-ui-auto-end-date-measures-confirm",

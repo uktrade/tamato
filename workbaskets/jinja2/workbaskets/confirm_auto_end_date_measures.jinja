@@ -18,12 +18,14 @@
   }) }}
 {% endblock %}
 
+{% set measure_count = request.session['count_ended_measures'] if request.session['count_ended_measures'] else '0'%}
+
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({
-        "titleText": "X measures will be ended",
-        "text": "You have successfully submitted X measures to be end-dated or deleted and they will be added to workbasket " ~ request.user.current_workbasket.id ~ " when complete.",
+        "titleText": measure_count ~ " measure" ~ measure_count|pluralize ~ " will be ended",
+        "text": "You have successfully submitted " ~ measure_count ~ " measure" ~ measure_count|pluralize ~ " to be end-dated or deleted and added to workbasket " ~ request.user.current_workbasket.id ~ " when complete.",
         "classes": "govuk-!-margin-bottom-7"
       }) }}
       <h2 class="govuk-heading-m">Next steps</h2>
