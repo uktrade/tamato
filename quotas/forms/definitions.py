@@ -174,6 +174,7 @@ class QuotaDefinitionCreateForm(
     description = forms.CharField(label="", widget=forms.Textarea(), required=False)
     volume = forms.DecimalField(
         label="Current volume",
+        required=True,
         help_text="The current volume is the starting balance for the quota",
         widget=forms.TextInput(),
         error_messages={
@@ -183,6 +184,7 @@ class QuotaDefinitionCreateForm(
     )
     initial_volume = forms.DecimalField(
         widget=forms.TextInput(),
+        required=True,
         help_text="The initial volume is the legal balance applied to the definition period",
         error_messages={
             "invalid": "Initial volume must be a number",
@@ -191,6 +193,7 @@ class QuotaDefinitionCreateForm(
     )
     measurement_unit = forms.ModelChoiceField(
         queryset=MeasurementUnit.objects.current(),
+        required=True,
         empty_label="Choose measurement unit",
         error_messages={"required": "Select the measurement unit"},
     )
@@ -311,7 +314,7 @@ class QuotaDefinitionCreateForm(
                     '<h3 class="govuk-heading">Description</h3>',
                 ),
                 HTML.p("Adding a description is optional."),
-                "description",
+                Field("description", css_class="govuk-!-width-two-thirds"),
             ),
             HTML(
                 "<br />",

@@ -202,6 +202,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     instance_count = forms.DecimalField(
         label="Total number of definitions to create",
         widget=forms.TextInput(),
+        required=True,
         help_text="You can create up to 20 definition periods at a time per quota order number",
         error_messages={
             "invalid": "Must be a number",
@@ -211,6 +212,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     frequency = forms.ChoiceField(
         widget=forms.RadioSelect,
+        required=True,
         choices=[
             (1, "Every year"),
             (2, "Every 6 months"),
@@ -222,6 +224,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     volume = forms.DecimalField(
         label="Current volume",
         widget=forms.TextInput(),
+        required=True,
         help_text="The current volume is the starting balance for the quota",
         error_messages={
             "invalid": "Volume must be a number",
@@ -230,6 +233,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     )
     initial_volume = forms.DecimalField(
         widget=forms.TextInput(),
+        required=True,
         help_text="The initial volume is the legal balance applied to the definition period",
         error_messages={
             "invalid": "Initial volume must be a number",
@@ -239,6 +243,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     measurement_unit = forms.ModelChoiceField(
         empty_label="Choose measurement unit",
+        required=True,
         queryset=MeasurementUnit.objects.current(),
         error_messages={"required": "Select the measurement unit"},
     )
@@ -504,7 +509,6 @@ class BulkDefinitionUpdateData(
             int(kwargs.pop("pk")) - 1
         ]
         super().__init__(*args, **kwargs)
-        self.init_layout(self.request)
         self.init_fields()
 
     def init_fields(self):
@@ -515,6 +519,7 @@ class BulkDefinitionUpdateData(
         fields["maximum_precision"].initial = 3
         fields["start_date"].initial = deserialize_date(definition_data["start_date"])
         fields["end_date"].initial = deserialize_date(definition_data["end_date"])
+        fields["end_date"].help_text = ""
         fields["initial_volume"].initial = decimal.Decimal(
             definition_data["initial_volume"],
         )
