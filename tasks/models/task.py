@@ -75,6 +75,17 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
             models.Q(taskitem__isnull=True) | models.Q(taskworkflow__isnull=False),
         )
 
+    def parents(self):
+        """Returns a queryset of tasks who do not have subtasks linked to
+        them."""
+        return self.filter(
+            models.Q(parent_task=None),
+        )
+
+    def subtasks(self):
+        """Returns a queryset of tasks who have parent tasks linked to them."""
+        return self.exclude(models.Q(parent_task=None))
+
 
 class TaskBase(TimestampedMixin):
     """Abstract model mixin containing model fields common to TaskTemplate and

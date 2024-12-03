@@ -42,9 +42,9 @@ class SubtaskFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         value = self.value()
         if value == "TRUE":
-            return queryset.exclude(parent_task=None)
+            return queryset.subtasks()
         elif value == "FALSE":
-            return queryset.filter(parent_task=None)
+            return queryset.parents()
 
 
 class TaskAdmin(TaskAdminMixin, admin.ModelAdmin):
