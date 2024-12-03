@@ -1783,6 +1783,7 @@ class RuleCheckQueueView(
             }
 
 
+@method_decorator(require_current_workbasket, name="dispatch")
 class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     model = Measure
     paginate_by = 20
@@ -1794,8 +1795,8 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     }
 
     @property
-    def workbasket(self):
-        return WorkBasket.objects.get(pk=self.kwargs["wb_pk"])
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
 
     @property
     def commodities(self):

@@ -212,7 +212,7 @@ ui_patterns = [
         name="workbasket-ui-comment-delete",
     ),
     path(
-        f"<wb_pk>/auto-end-date-measures/",
+        f"current/auto-end-date-measures/",
         ui_views.AutoEndDateMeasures.as_view(),
         name="workbasket-ui-auto-end-date-measures",
     ),

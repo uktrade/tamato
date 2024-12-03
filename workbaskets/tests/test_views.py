@@ -2647,7 +2647,7 @@ def test_remove_all_workbasket_changes_button_not_shown_to_users_without_permisi
 
 
 @pytest.fixture
-def commodity_with_measures(workbasket, date_ranges):
+def commodity_with_measures(date_ranges):
     commodity = factories.GoodsNomenclatureFactory.create(
         valid_between=date_ranges.no_end,
     )
@@ -2673,7 +2673,6 @@ def test_auto_end_measures_renders(
     )
     url = reverse(
         "workbaskets:workbasket-ui-auto-end-date-measures",
-        kwargs={"wb_pk": user_workbasket.pk},
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -2701,7 +2700,6 @@ def test_auto_end_measures_post(
     )
     url = reverse(
         "workbaskets:workbasket-ui-auto-end-date-measures",
-        kwargs={"wb_pk": user_workbasket.pk},
     )
     response = valid_user_client.post(url, {"action": "auto-end-date-measures"})
     confirmation_url = reverse(

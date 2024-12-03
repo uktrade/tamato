@@ -34,7 +34,7 @@
     ]) or "" }}
   {% endfor %}
 
-  {% set base_url = url('workbaskets:workbasket-ui-auto-end-date-measures', kwargs={"wb_pk": workbasket.id}) %}
+  {% set base_url = url('workbaskets:workbasket-ui-auto-end-date-measures') %}
 
   {% set commodity_code %}
     {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
