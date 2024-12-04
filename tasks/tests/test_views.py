@@ -548,12 +548,14 @@ def test_delete_task_template_view(
     )
 
 
-def test_workflow_template_list_view(valid_user_client):
+def test_workflow_template_list_view(valid_user, client):
     """Test that valid user receives a 200 on GET for TaskWorkflowList view and
     values display in table."""
-    template_instance = TaskWorkflowTemplateFactory.create()
+    template_instance = TaskWorkflowTemplateFactory.create(creator=valid_user)
+
     url = reverse("workflow:task-workflow-template-ui-list")
-    response = valid_user_client.get(url)
+    client.force_login(valid_user)
+    response = client.get(url)
 
     assert response.status_code == 200
 
@@ -564,3 +566,4 @@ def test_workflow_template_list_view(valid_user_client):
     assert template_instance.title in row_text
     assert str(template_instance.id) in row_text
     assert template_instance.description in row_text
+    assert template_instance.creator.get_displayname() in row_text

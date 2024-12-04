@@ -354,6 +354,10 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
     template_name = "tasks/workflows/template_create.jinja"
     form_class = TaskWorkflowTemplateCreateForm
 
+    def form_valid(self, form):
+        self.object = form.save(user=self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
     def get_success_url(self):
         return reverse(
             "workflow:task-workflow-template-ui-confirm-create",

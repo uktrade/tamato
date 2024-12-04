@@ -9,7 +9,7 @@
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and view workflow templates", "href": "#TODO"},
+      {"text": "Find and view workflow templates", "href": url("workflow:task-workflow-template-ui-list")},
       {"text": page_title}
     ],
     with_workbasket=False,

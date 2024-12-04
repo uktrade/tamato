@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
@@ -81,6 +82,12 @@ class TaskWorkflowTemplate(Queue):
     This isn't the same as the description that may be applied to a TaskWorkflow
     instance generated from a template.
     """
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="created_taskworkflowtemplates",
+    )
 
     def get_task_templates(self) -> models.QuerySet:
         """Get a QuerySet of the TaskTemplates associated through their

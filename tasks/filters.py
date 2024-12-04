@@ -34,6 +34,7 @@ class WorkflowTemplateFilter(TamatoFilter):
         "id",
         "title",
         "description",
+        "creator__username",
     )
     clear_url = reverse_lazy("workflow:task-workflow-template-ui-list")
 
