@@ -27,6 +27,8 @@ from tasks.forms import TaskWorkflowDeleteForm
 from tasks.forms import TaskWorkflowTemplateCreateForm
 from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
+from tasks.models import Queue
+from tasks.models import QueueItem
 from tasks.models import Task
 from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
@@ -262,25 +264,98 @@ class SubTaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
-class TaskWorkflowDetailView(PermissionRequiredMixin, DetailView):
-    model = TaskWorkflow
-    template_name = "tasks/workflows/detail.jinja"
-    permission_required = "tasks.view_taskworkflow"
+class QueuedItemManagementMixin:
+    """A view mixin providing helper functions to manage queued items."""
+
+    queued_item_model: type[QueueItem] = None
+    """The model responsible for managing members of a queue."""
+
+    item_lookup_field: str = ""
+    """The lookup field of the instance managed by a queued item."""
+
+    queue_field: str = ""
+    """The name of the ForeignKey field relating a queued item to a queue."""
 
     @cached_property
-    def task_workflow(self) -> TaskWorkflow:
+    def queue(self) -> type[Queue]:
+        """The queue instance that is the object of the view."""
         return self.get_object()
+
+    def promote(self, lookup_id: int) -> None:
+        queued_item = get_object_or_404(
+            self.queued_item_model,
+            **{
+                self.item_lookup_field: lookup_id,
+                self.queue_field: self.queue,
+            },
+        )
+        try:
+            queued_item.promote()
+        except OperationalError:
+            pass
+
+    def demote(self, lookup_id: int) -> None:
+        queued_item = get_object_or_404(
+            self.queued_item_model,
+            **{
+                self.item_lookup_field: lookup_id,
+                self.queue_field: self.queue,
+            },
+        )
+        try:
+            queued_item.demote()
+        except OperationalError:
+            pass
+
+    def promote_to_first(self, lookup_id: int) -> None:
+        queued_item = get_object_or_404(
+            self.queued_item_model,
+            **{
+                self.item_lookup_field: lookup_id,
+                self.queue_field: self.queue,
+            },
+        )
+        try:
+            queued_item.promote_to_first()
+        except OperationalError:
+            pass
+
+    def demote_to_last(self, lookup_id: int) -> None:
+        queued_item = get_object_or_404(
+            self.queued_item_model,
+            **{
+                self.item_lookup_field: lookup_id,
+                self.queue_field: self.queue,
+            },
+        )
+        try:
+            queued_item.demote_to_last()
+        except OperationalError:
+            pass
+
+
+class TaskWorkflowDetailView(
+    PermissionRequiredMixin,
+    QueuedItemManagementMixin,
+    DetailView,
+):
+    template_name = "tasks/workflows/detail.jinja"
+    permission_required = "tasks.view_taskworkflow"
+    model = TaskWorkflow
+    queued_item_model = TaskItem
+    item_lookup_field = "task_id"
+    queue_field = queued_item_model.queue_field
 
     @property
     def view_url(self) -> str:
         return reverse(
             "workflow:task-workflow-ui-detail",
-            kwargs={"pk": self.task_workflow.pk},
+            kwargs={"pk": self.queue.pk},
         )
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["object_list"] = self.task_workflow.get_tasks()
+        context_data["object_list"] = self.queue.get_tasks()
         return context_data
 
     def post(self, request, *args, **kwargs):
@@ -294,50 +369,6 @@ class TaskWorkflowDetailView(PermissionRequiredMixin, DetailView):
             self.demote_to_last(request.POST.get("demote_to_last"))
 
         return HttpResponseRedirect(self.view_url)
-
-    def promote(self, task_id: int) -> None:
-        task_item = get_object_or_404(
-            TaskItem,
-            task_id=task_id,
-            workflow=self.task_workflow,
-        )
-        try:
-            task_item.promote()
-        except OperationalError:
-            pass
-
-    def demote(self, task_id: int) -> None:
-        task_item = get_object_or_404(
-            TaskItem,
-            task_id=task_id,
-            workflow=self.task_workflow,
-        )
-        try:
-            task_item.demote()
-        except OperationalError:
-            pass
-
-    def promote_to_first(self, task_id: int) -> None:
-        task_item = get_object_or_404(
-            TaskItem,
-            task_id=task_id,
-            workflow=self.task_workflow,
-        )
-        try:
-            task_item.promote_to_first()
-        except OperationalError:
-            pass
-
-    def demote_to_last(self, task_id: int) -> None:
-        task_item = get_object_or_404(
-            TaskItem,
-            task_id=task_id,
-            workflow=self.task_workflow,
-        )
-        try:
-            task_item.demote_to_last()
-        except OperationalError:
-            pass
 
 
 class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
@@ -427,25 +458,28 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
-class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
-    model = TaskWorkflowTemplate
+class TaskWorkflowTemplateDetailView(
+    PermissionRequiredMixin,
+    QueuedItemManagementMixin,
+    DetailView,
+):
     template_name = "tasks/workflows/detail.jinja"
     permission_required = "tasks.view_taskworkflowtemplate"
-
-    @cached_property
-    def task_workflow_template(self) -> TaskWorkflowTemplate:
-        return self.get_object()
+    model = TaskWorkflowTemplate
+    queued_item_model = TaskItemTemplate
+    item_lookup_field = "task_template_id"
+    queue_field = queued_item_model.queue_field
 
     @property
     def view_url(self) -> str:
         return reverse(
             "workflow:task-workflow-template-ui-detail",
-            kwargs={"pk": self.task_workflow_template.pk},
+            kwargs={"pk": self.queue.pk},
         )
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["object_list"] = self.task_workflow_template.get_task_templates()
+        context_data["object_list"] = self.queue.get_task_templates()
         return context_data
 
     def post(self, request, *args, **kwargs):
@@ -459,50 +493,6 @@ class TaskWorkflowTemplateDetailView(PermissionRequiredMixin, DetailView):
             self.demote_to_last(request.POST.get("demote_to_last"))
 
         return HttpResponseRedirect(self.view_url)
-
-    def promote(self, task_template_id: int) -> None:
-        task_item_template = get_object_or_404(
-            TaskItemTemplate,
-            task_template_id=task_template_id,
-            workflow_template=self.task_workflow_template,
-        )
-        try:
-            task_item_template.promote()
-        except OperationalError:
-            pass
-
-    def demote(self, task_template_id: int) -> None:
-        task_item_template = get_object_or_404(
-            TaskItemTemplate,
-            task_template_id=task_template_id,
-            workflow_template=self.task_workflow_template,
-        )
-        try:
-            task_item_template.demote()
-        except OperationalError:
-            pass
-
-    def promote_to_first(self, task_template_id: int) -> None:
-        task_item_template = get_object_or_404(
-            TaskItemTemplate,
-            task_template_id=task_template_id,
-            workflow_template=self.task_workflow_template,
-        )
-        try:
-            task_item_template.promote_to_first()
-        except OperationalError:
-            pass
-
-    def demote_to_last(self, task_template_id: int) -> None:
-        task_item_template = get_object_or_404(
-            TaskItemTemplate,
-            task_template_id=task_template_id,
-            workflow_template=self.task_workflow_template,
-        )
-        try:
-            task_item_template.demote_to_last()
-        except OperationalError:
-            pass
 
 
 class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
