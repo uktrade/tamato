@@ -66,27 +66,13 @@ class QueueItemMetaClass(models.base.ModelBase):
         if not new_class._meta.abstract:
             queue_field_name = getattr(new_class, "queue_field", None)
             cls.validate_queue_field(new_class, queue_field_name)
-            cls.update_meta_ordering(new_class, queue_field_name)
 
         return new_class
 
     @staticmethod
-    def update_meta_ordering(new_class: type[Self], queue_field_name: str) -> None:
-        """Ensure the Meta.ordering attribute of `new_class` references the
-        appropriate queue field."""
-        inherited_queue_field = "queue"
-        ordering = new_class._meta.ordering
-        if (
-            inherited_queue_field in ordering
-            and queue_field_name != inherited_queue_field
-        ):
-            index = ordering.index(inherited_queue_field)
-            ordering[index] = queue_field_name
-
-    @staticmethod
     def validate_queue_field(new_class: type[Self], queue_field_name: str) -> None:
-        """Validate that `new_class` has a `queue_field_name` ForeignKey field
-        to a subclass of `Queue` model."""
+        """Validate that concrete subclasses of `QueueItem` have a ForeignKey
+        field to a subclass of `Queue` model."""
         try:
             queue_field = new_class._meta.get_field(queue_field_name)
         except FieldDoesNotExist:
@@ -140,6 +126,9 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
     The value of this attribute can be inherited as is or overridden in
     subclasses to reflect the specific purpose or role of the queue.
+
+    If this value is overridden, the subclass must redefine the `Meta` class
+    to maintain ordering based on the queue field.
     """
 
     position = models.PositiveSmallIntegerField(
