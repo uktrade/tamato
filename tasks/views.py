@@ -15,6 +15,7 @@ from django.views.generic.edit import UpdateView
 from common.views import SortingMixin
 from common.views import WithPaginationListView
 from tasks.filters import TaskFilter
+from tasks.filters import WorkflowTemplateFilter
 from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
@@ -264,6 +265,18 @@ class SubTaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
+class TaskWorkflowTemplateListView(PermissionRequiredMixin, WithPaginationListView):
+    model = TaskWorkflowTemplate
+    template_name = "tasks/workflows/template_list.jinja"
+    permission_required = "tasks.view_taskworkflowtemplate"
+    paginate_by = 20
+    filterset_class = WorkflowTemplateFilter
+
+    def get_queryset(self):
+        queryset = TaskWorkflowTemplate.objects.all()
+        return queryset
+
+
 class QueuedItemManagementMixin:
     """A view mixin providing helper functions to manage queued items."""
 
@@ -379,6 +392,7 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "workflow"
+        context["list_url"] = "#NOT-IMPLEMENTED"
         return context
 
     def form_valid(self, form):
@@ -504,6 +518,7 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "workflow template"
+        context["list_url"] = reverse("workflow:task-workflow-template-ui-list")
         return context
 
     def get_success_url(self):
@@ -573,7 +588,7 @@ class TaskWorkflowTemplateConfirmDeleteView(PermissionRequiredMixin, TemplateVie
                 "verbose_name": "workflow template",
                 "deleted_pk": self.kwargs["pk"],
                 "create_url": reverse("workflow:task-workflow-template-ui-create"),
-                "list_url": "#NOT-IMPLEMENTED",
+                "list_url": reverse("workflow:task-workflow-template-ui-list"),
             },
         )
         return context_data
