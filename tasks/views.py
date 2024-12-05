@@ -392,7 +392,7 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "workflow"
-        context["list_url"] = "NOT-IMPLEMENTED"
+        context["list_url"] = "#NOT-IMPLEMENTED"
         return context
 
     def form_valid(self, form):
