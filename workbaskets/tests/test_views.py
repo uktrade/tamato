@@ -18,6 +18,7 @@ from checks.tests.factories import TrackedModelCheckFactory
 from common.inspect_tap_tasks import CeleryTask
 from common.inspect_tap_tasks import TAPTasks
 from common.models.trackedmodel import TrackedModel
+from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import date_post_data
@@ -31,6 +32,7 @@ from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets.tasks import call_end_measures
 from workbaskets.tasks import check_workbasket_sync
+from workbaskets.util import get_measures_to_end_date
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views import ui
 
@@ -2651,12 +2653,25 @@ def commodity_with_measures(date_ranges):
     commodity = factories.GoodsNomenclatureFactory.create(
         valid_between=date_ranges.no_end,
     )
-    measures = factories.MeasureFactory.create_batch(10, goods_nomenclature=commodity)
-    future_measures = factories.MeasureFactory.create_batch(
+    factories.MeasureFactory.create_batch(
+        5,
+        goods_nomenclature=commodity,
+    )  # Open ended measures should be end-dated
+    factories.MeasureFactory.create_batch(
+        4,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_delta_to_2_months_ahead,
+    )  # Measures ending after the comm code should have their end-date aligned
+    factories.MeasureFactory.create_batch(
+        3,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_with_normal,
+    )  # Measures ending before the comm code should be ignored
+    factories.MeasureFactory.create_batch(
         2,
         goods_nomenclature=commodity,
         valid_between=date_ranges.future,
-    )
+    )  # Measures that have not started yet should be deleted
     return commodity
 
 
@@ -2669,7 +2684,7 @@ def test_auto_end_measures_renders(
     """Test that the list of measures to be ended renders correctly."""
     commodity_with_measures.new_version(
         workbasket=user_workbasket,
-        valid_between=date_ranges.big,
+        valid_between=date_ranges.normal,
     )
     url = reverse(
         "workbaskets:workbasket-ui-auto-end-date-measures",
@@ -2679,9 +2694,9 @@ def test_auto_end_measures_renders(
     page = BeautifulSoup(str(response.content), "html.parser")
     rows = page.find_all("tr", {"class": "govuk-table__row"})
     text = page.get_text()
-    assert text.count("To be end-dated") == 10
+    assert text.count("To be end-dated") == 9
     assert text.count("To be deleted") == 2
-    assert len(rows) == 13
+    assert len(rows) == 12
 
 
 @patch("workbaskets.tasks.call_end_measures.apply_async")
@@ -2716,21 +2731,69 @@ def test_auto_end_measures(commodity_with_measures, user_workbasket, date_ranges
     in the workbasket."""
     new_commodity = commodity_with_measures.new_version(
         workbasket=user_workbasket,
-        valid_between=date_ranges.big,
+        valid_between=date_ranges.normal,
     )
-    measure_pks = [measure.pk for measure in commodity_with_measures.measures.all()]
-    call_end_measures(measure_pks, user_workbasket.pk)
-    measures = user_workbasket.measures
-    assert len(measures) == 12
-    for measure in measures[:10]:
-        assert measure.valid_between.upper == new_commodity.valid_between.upper
-    update_types = [measure.update_type for measure in measures]
-    assert update_types.count(UpdateType.UPDATE) == 10
-    assert update_types.count(UpdateType.DELETE) == 2
-    first_12_items = (
-        TrackedModel.objects.all()
-        .filter(transaction__workbasket=user_workbasket)
-        .order_by("transaction__order")[:12]
+
+    with override_current_transaction(Transaction.objects.last()):
+        measures_to_end = get_measures_to_end_date(user_workbasket)
+        assert len(measures_to_end) == 11
+        measure_pks = [measure.pk for measure in measures_to_end]
+        call_end_measures(measure_pks, user_workbasket.pk)
+        ended_measures = user_workbasket.measures
+        for measure in ended_measures[:9]:
+            assert measure.valid_between.upper == new_commodity.valid_between.upper
+        update_types = [measure.update_type for measure in ended_measures]
+        assert update_types.count(UpdateType.UPDATE) == 9
+        assert update_types.count(UpdateType.DELETE) == 2
+        first_11_items = (
+            TrackedModel.objects.all()
+            .filter(transaction__workbasket=user_workbasket)
+            .order_by("transaction__order")[:10]
+        )
+        for item in first_11_items:
+            assert isinstance(item, Measure)
+
+
+def test_get_measures_to_end_date(user_workbasket, date_ranges):
+    """Test that the utility function correctly gathers measures, not including
+    those which already have an end date before the commodity's."""
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end,
     )
-    for item in first_12_items:
-        assert isinstance(item, Measure)
+
+    open_ended_measure = factories.MeasureFactory.create(
+        sid=11,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.no_end,
+    )
+    measure_ended_before_commodity = factories.MeasureFactory.create(
+        sid=22,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_with_normal,
+    )
+    measure_ended_after_commodity_ends = factories.MeasureFactory.create(
+        sid=33,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_delta_to_2_months_ahead,
+    )
+    measure_to_start_after_commodity_ends = factories.MeasureFactory.create(
+        sid=44,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.future,
+    )
+
+    new_commodity = commodity.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.normal,
+    )
+    with override_current_transaction(Transaction.objects.last()):
+        measures = get_measures_to_end_date(user_workbasket)
+        assert all(
+            measure in measures
+            for measure in [
+                open_ended_measure,
+                measure_ended_after_commodity_ends,
+                measure_to_start_after_commodity_ends,
+            ]
+        )
+        assert measure_ended_before_commodity not in measures

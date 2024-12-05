@@ -39,7 +39,6 @@ from markdownify import markdownify
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
-from commodities.models.orm import GoodsNomenclature
 from common.filters import TamatoFilter
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
@@ -74,6 +73,7 @@ from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.tasks import call_end_measures
+from workbaskets.util import get_measures_to_end_date
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
@@ -1799,24 +1799,8 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
         return WorkBasket.current(self.request)
 
     @property
-    def commodities(self):
-        """Return commodities in the current workbasket which have an end
-        date."""
-        return (
-            GoodsNomenclature.objects.current()
-            .filter(
-                transaction__workbasket=self.workbasket,
-                valid_between__upper_inf=False,
-            )
-            .values_list("sid")
-        )
-
-    @property
     def measures(self):
-        # Should I only be filtering for measures without an end date?
-        return Measure.objects.current().filter(
-            goods_nomenclature__sid__in=self.commodities,
-        )
+        return get_measures_to_end_date(self.workbasket)
 
     def workbasket_transactions(self):
         """Returns the current workbasket's transactions ordered by `order`,

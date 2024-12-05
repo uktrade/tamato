@@ -113,9 +113,10 @@ def end_measures(measures, workbasket):
             )
             .last()
         )
-        if measure.valid_between.lower > commodity.valid_between.upper:
-            continue
-        if measure.valid_between.lower > date.today():
+        if measure.valid_between.lower > min(
+            date.today(),
+            commodity.valid_between.upper,
+        ):
             new_measure_version = measure.new_version(
                 workbasket=workbasket,
                 update_type=UpdateType.DELETE,
