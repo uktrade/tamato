@@ -5,7 +5,7 @@
 
 {% set page_title = "Find and view tasks and workflows" %}
 
-{% set base_url = url("workflow:task-workflow-ui-list") %}
+{% set base_url = url("workflow:task-and-workflow-ui-list") %}
 
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
@@ -19,7 +19,7 @@
   <div class="filter-layout">
     <div class="filter-layout__filters">
       <h2 class="govuk-heading-m govuk-!-margin-top-3">Search and filter</h2>
-      <form method="get" action="{{ url("workflow:task-workflow-ui-list") }}">
+      <form method="get" action="{{ base_url }}">
           {{ crispy(filter.form) }}
       </form>
     </div>
@@ -28,22 +28,29 @@
     {% if paginator.count > 0 %}
       {% include "includes/common/pagination-list-summary.jinja" %}
     {% endif %}
+
     {% if object_list %}
       {% set table_rows = [] %}
 
       {% for object in object_list %}
-
         {%- set task_linked_id -%}
-          <a
-            class="govuk-link"
-            href="#TODO-workflow:task-workflow-ui-detail"
-          >{{ object.taskworkflow.pk }}</a>
+          {% if object.taskworkflow %}
+            <a
+              class="govuk-link"
+              href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskworkflow.pk}) }}"
+            >{{ object.pk }}</a>
+          {% else %}
+            <a
+              class="govuk-link"
+              href="{{ url('workflow:task-ui-detail', kwargs={'pk': object.pk}) }}"
+            >{{ object.pk }}</a>
+          {% endif %}
         {%- endset -%}
 
         {%- set workbasket_linked_id -%}
           <a
             class="govuk-link"
-            href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}"
+            href="{{ url('workbaskets:workbasket-ui-detail', kwargs={'pk': object.workbasket.pk}) }}"
           >{{ object.workbasket.pk }}</a>
         {%- endset -%}
 
