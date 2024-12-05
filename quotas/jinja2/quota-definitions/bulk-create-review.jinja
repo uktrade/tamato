@@ -6,6 +6,7 @@
 {% set page_subtitle = "Quota order number "~view.quota_order_number %}
 
 {% block content %}
+
     <h1 class="govuk-heading-xl">
         {% block page_title_heading %}
             {{ page_title }}
@@ -71,17 +72,19 @@
     {% endfor %}
 
     <p class="govuk-inset-text">Each row represents a Quota definition period to be created. These can be edited before being submitted.</p>
-    {{ govukTable({
-        "head": [
-            {"text": "Details"},
-            {"text": "Start date"},
-            {"text": "End date"},
-            {"text": "Volume"},
-            {"text": "Unit"},
-            {"text": "Edit details"},
-        ],
-        "rows": table_rows
-    }) }}
+    <div class="bulk-create-review quota-definitions">
+        {{ govukTable({
+            "head": [
+                {"text": "Details"},
+                {"text": "Start date"},
+                {"text": "End date"},
+                {"text": "Volume"},
+                {"text": "Unit"},
+                {"text": "Edit details"},
+            ],
+            "rows": table_rows
+        }) }}
+    </div>
     <p class="govuk-body">Selecting 'Submit' will create the new definition periods.</p>
     <p class="govuk-body">Further edits to the definition periods can be made on the quota order number page through an additional workbasket transaction.</p>
 <div class="govuk-button-group">
