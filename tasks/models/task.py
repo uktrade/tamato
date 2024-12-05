@@ -137,6 +137,10 @@ class Task(TaskBase):
     def is_subtask(self) -> bool:
         return bool(self.parent_task)
 
+    @property
+    def is_summary_task(self) -> bool:
+        return hasattr(self, "taskworkflow")
+
     def __str__(self):
         return self.title
 

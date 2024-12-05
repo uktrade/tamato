@@ -9,6 +9,7 @@ from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskLog
+from tasks.tests.factories import TaskWorkflowFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -225,3 +226,16 @@ def test_task_is_subtask_property(task_factory):
     task = task_factory.create()
 
     assert bool(task.parent_task) == task.is_subtask
+
+
+@pytest.mark.parametrize(
+    ("create_task_fn"),
+    (
+        lambda: TaskFactory.create(),
+        lambda: TaskWorkflowFactory.create().summary_task,
+    ),
+    ids=("standalone task test", "summary task test"),
+)
+def test_task_is_subtask_property(create_task_fn):
+    task = create_task_fn()
+    bool(hasattr(task, "taskworkflow")) == task.is_summary_task
