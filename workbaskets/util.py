@@ -2,6 +2,11 @@ import re
 from datetime import date
 
 from django.db import transaction
+from django.db.models import Case
+from django.db.models import DateField
+from django.db.models import F
+from django.db.models import Value
+from django.db.models import When
 from parsec import ParseError
 
 from commodities.validators import ITEM_ID_REGEX
@@ -180,3 +185,35 @@ def serialize_uploaded_data(data):
             serialized.append(row_data)
 
     return serialized
+
+
+def get_measures_to_end_date(workbasket):
+    """Gets a list of measures on end-dated commodities along with the commodity
+    end-dates."""
+    from commodities.models.orm import GoodsNomenclature
+    from measures.models.tracked_models import Measure
+
+    end_dated_commodities = GoodsNomenclature.objects.current().filter(
+        transaction__workbasket=workbasket,
+        valid_between__upper_inf=False,
+    )
+    commodity_dict = {
+        commodity.sid: commodity.valid_between for commodity in end_dated_commodities
+    }
+    measures_on_commodities = Measure.objects.current().filter(
+        goods_nomenclature__sid__in=commodity_dict.keys(),
+    )
+    # TODO:get measures on declarable commodities
+    conditions = [
+        When(goods_nomenclature__sid=commodity_sid, then=Value(commodity_end_date))
+        for commodity_sid, commodity_end_date in commodity_dict.items()
+    ]
+    measures = measures_on_commodities.annotate(
+        commodity_valid_between=Case(
+            *conditions,
+            default=Value(None),
+            output_field=DateField(),
+        ),
+    )
+
+    return measures.exclude(valid_between__not_gt=F("commodity_valid_between"))
