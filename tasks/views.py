@@ -465,7 +465,7 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
                 "verbose_name": "workflow",
                 "deleted_pk": self.kwargs["pk"],
                 "create_url": reverse("workflow:task-workflow-ui-create"),
-                "list_url": reverse("workflow:task-workflow-template-ui-list"),
+                "list_url": "#NOT-IMPLEMENTED",
             },
         )
         return context_data
@@ -513,6 +513,11 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
     permission_required = "tasks.add_taskworkflowtemplate"
     template_name = "tasks/workflows/create.jinja"
     form_class = TaskWorkflowTemplateCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "workflow template"
+        return context
 
     def get_success_url(self):
         return reverse(

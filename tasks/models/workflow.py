@@ -65,10 +65,6 @@ class TaskWorkflow(Queue):
             return reverse(
                 "workflow:task-workflow-ui-create",
             )
-        elif action == "list":
-            return reverse(
-                "workflow:task-workflow-template-ui-list",
-            )
 
         return "#NOT-IMPLEMENTED"
 
@@ -194,6 +190,10 @@ class TaskWorkflowTemplate(Queue):
         elif action == "create":
             return reverse(
                 "workflow:task-workflow-template-ui-create",
+            )
+        elif action == "list":
+            return reverse(
+                "workflow:task-workflow-template-ui-list",
             )
 
         return "#NOT-IMPLEMENTED"
