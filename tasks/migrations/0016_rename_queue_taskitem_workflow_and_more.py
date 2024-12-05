@@ -8,7 +8,7 @@ from django.db import models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("tasks", "0014_remove_taskworkflow_description_and_more"),
+        ("tasks", "0015_alter_taskworkflow_options_and_more"),
     ]
 
     operations = [
@@ -26,18 +26,26 @@ class Migration(migrations.Migration):
                 to="tasks.taskworkflow",
             ),
         ),
+        migrations.AlterModelOptions(
+            name="taskitem",
+            options={"ordering": ["workflow", "position"]},
+        ),
         migrations.RenameField(
             model_name="taskitemtemplate",
             old_name="queue",
-            new_name="workflow",
+            new_name="workflow_template",
         ),
         migrations.AlterField(
             model_name="taskitemtemplate",
-            name="workflow",
+            name="workflow_template",
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name="workflow_items",
+                related_name="workflow_template_items",
                 to="tasks.taskworkflowtemplate",
             ),
+        ),
+        migrations.AlterModelOptions(
+            name="taskitemtemplate",
+            options={"ordering": ["workflow_template", "position"]},
         ),
     ]

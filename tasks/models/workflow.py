@@ -87,6 +87,9 @@ class TaskItem(QueueItem):
     )
     """The Task instance managed by this TaskItem."""
 
+    class Meta:
+        ordering = ["workflow", "position"]
+
 
 # ----------------------------------------
 # - Template workflows and template tasks.
@@ -195,17 +198,20 @@ class TaskWorkflowTemplate(Queue):
 class TaskItemTemplate(QueueItem):
     """Queue item management for TaskTemplate instances."""
 
-    queue_field = "workflow"
+    queue_field = "workflow_template"
 
-    workflow = models.ForeignKey(
+    workflow_template = models.ForeignKey(
         TaskWorkflowTemplate,
-        related_name="workflow_items",
+        related_name="workflow_template_items",
         on_delete=models.CASCADE,
     )
     task_template = models.OneToOneField(
         "tasks.TaskTemplate",
         on_delete=models.CASCADE,
     )
+
+    class Meta:
+        ordering = ["workflow_template", "position"]
 
 
 class TaskTemplate(TaskBase):
