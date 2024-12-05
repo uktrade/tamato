@@ -69,7 +69,7 @@ def task_workflow_template_single_task_template_item(
 
     task_template = factories.TaskTemplateFactory.create()
     factories.TaskItemTemplateFactory.create(
-        workflow=task_workflow_template,
+        workflow_template=task_workflow_template,
         task_template=task_template,
     )
 
@@ -89,7 +89,7 @@ def task_workflow_template_three_task_template_items(
     for _ in range(3):
         task_template = factories.TaskTemplateFactory.create()
         task_item_template = factories.TaskItemTemplateFactory.create(
-            workflow=task_workflow_template,
+            workflow_template=task_workflow_template,
             task_template=task_template,
         )
         task_item_templates.append(task_item_template)
@@ -97,7 +97,7 @@ def task_workflow_template_three_task_template_items(
     assert task_workflow_template.get_items().count() == 3
     assert (
         TaskItemTemplate.objects.filter(
-            workflow=task_workflow_template,
+            workflow_template=task_workflow_template,
         ).count()
         == 3
     )
@@ -143,11 +143,11 @@ def task_workflow_three_task_items(
 
     task_items = factories.TaskItemFactory.create_batch(
         expected_count,
-        queue=task_workflow,
+        workflow=task_workflow,
     )
 
     assert task_workflow.get_items().count() == expected_count
-    assert TaskItem.objects.filter(queue=task_workflow).count() == expected_count
+    assert TaskItem.objects.filter(workflow=task_workflow).count() == expected_count
     assert (
         Task.objects.filter(taskitem__in=[item.pk for item in task_items]).count()
         == expected_count

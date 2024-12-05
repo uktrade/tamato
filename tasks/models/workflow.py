@@ -129,7 +129,9 @@ class TaskWorkflowTemplate(Queue):
         """Get a QuerySet of the TaskTemplates associated through their
         TaskItemTemplate instances to this TaskWorkflowTemplate, ordered by the
         position of the TaskItemTemplate."""
-        return TaskTemplate.objects.filter(taskitemtemplate__workflow=self).order_by(
+        return TaskTemplate.objects.filter(
+            taskitemtemplate__workflow_template=self,
+        ).order_by(
             "taskitemtemplate__position",
         )
 
@@ -155,7 +157,7 @@ class TaskWorkflowTemplate(Queue):
 
         task_item_templates = TaskItemTemplate.objects.select_related(
             "task_template",
-        ).filter(workflow=self)
+        ).filter(workflow_template=self)
         for task_item_template in task_item_templates:
             task_template = task_item_template.task_template
             task = Task.objects.create(
@@ -227,7 +229,7 @@ class TaskTemplate(TaskBase):
             return reverse(
                 "workflow:task-template-ui-delete",
                 kwargs={
-                    "workflow_template_pk": self.taskitemtemplate.queue.pk,
+                    "workflow_template_pk": self.taskitemtemplate.workflow_template.pk,
                     "pk": self.pk,
                 },
             )
