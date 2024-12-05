@@ -188,13 +188,23 @@ class QuotaDefinitionUpdate(
 class QuotaDefinitionCreate(QuotaDefinitionUpdateMixin, CreateTaricCreateView):
     template_name = "quota-definitions/create.jinja"
     form_class = forms.QuotaDefinitionCreateForm
+    # assert 0
+
+    def get_context_data(self, **kwargs):
+        # add quota order number to template context
+
+        return super().get_context_data(
+            quota_order_number=self.quota_order_number,
+            **kwargs,
+        )
 
     @property
     def quota_order_number(self):
+        # assert 0
         return (
             models.QuotaOrderNumber.objects.current()
-            .values("order_number")
             .get(sid=self.kwargs["sid"])
+            .order_number
         )
 
     def form_valid(self, form):

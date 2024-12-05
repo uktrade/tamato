@@ -1,8 +1,9 @@
 {% extends 'layouts/form.jinja' %}
 
 {% set page_title = "Create a new quota definition period" %}
-{% set page_subtitle = "Quota order number: "~view.quota_order_number['order_number']%}
-
+{% set page_subtitle = "Quota order number: "~ quota_order_number %}
+{# ~view.get_quota_order_number() #}
+{# ~view.get_quota_order_number(view.kwargs.sid)  #}
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and edit quotas", "href": url("quota-ui-list")},
