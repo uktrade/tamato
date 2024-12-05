@@ -4,15 +4,16 @@
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Delete workflow template: " ~ object.title %}
+{% set object_name = object._meta.verbose_name %}
+{% set page_title = "Delete " ~ object_name ~ ": " ~ object.title %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,
     [
-      {"text": "Find and view workflow templates", "href": url("workflow:task-workflow-template-ui-list")},
+      {"text": "Find and view "~ object_name ~ "s", "href": object.get_url("list")},
       {
-        "text": "Workflow template: " ~ object.title,
+        "text": object_name|capitalize ~ ": " ~ object.title,
         "href": object.get_url("detail"),
       },
       {"text": page_title}
@@ -23,7 +24,7 @@
 
 {% block form %}
   {{ govukWarningText({
-    "text": "Are you sure you want to delete this workflow template?"
+    "text": "Are you sure you want to delete this " ~ object_name ~ "?",
   }) }}
 
   {% call django_form(action=object.get_url("delete")) %}

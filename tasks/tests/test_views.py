@@ -6,10 +6,14 @@ from django.urls import reverse
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
+from tasks.forms import TaskWorkflowCreateForm
 from tasks.models import ProgressState
+from tasks.models import Task
+from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskLog
 from tasks.models import TaskTemplate
+from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.tests.factories import TaskItemTemplateFactory
 from tasks.tests.factories import TaskWorkflowTemplateFactory
@@ -225,7 +229,7 @@ def test_workflow_template_detail_view_displays_task_templates(valid_user_client
     assert response.status_code == 200
 
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    assert page.find("h1", text=workflow_template.title)
+    assert page.find("h1", text=f"Workflow template: {workflow_template.title}")
     assert page.find("a", text=task_template.title)
 
 
@@ -255,7 +259,7 @@ def test_workflow_template_detail_view_reorder_items(
         access."""
         return position - 1
 
-    items = list(task_workflow_template_three_task_template_items.get_items())
+    items = list(task_workflow_template_three_task_template_items.get_task_templates())
     item_to_move = items[convert_to_index(item_position)]
 
     url = reverse(
@@ -269,7 +273,9 @@ def test_workflow_template_detail_view_reorder_items(
     response = valid_user_client.post(url, form_data)
     assert response.status_code == 302
 
-    reordered_items = task_workflow_template_three_task_template_items.get_items()
+    reordered_items = (
+        task_workflow_template_three_task_template_items.get_task_templates()
+    )
     for i, reordered_item in enumerate(reordered_items):
         expected_position = convert_to_index(expected_item_order[i])
         expected_item = items[expected_position]
@@ -351,7 +357,7 @@ def test_workflow_template_delete_view(
     task_workflow_template_single_task_template_item,
 ):
     """Tests that a workflow template can be deleted (along with related
-    TaskItemPosition and TaskTemplate objects) and that the corresponding
+    TaskItemTemplate and TaskTemplate objects) and that the corresponding
     confirmation view returns a HTTP 200 response."""
 
     task_workflow_template_pk = task_workflow_template_single_task_template_item.pk
@@ -567,3 +573,177 @@ def test_workflow_template_list_view(valid_user, client):
     assert str(template_instance.id) in row_text
     assert template_instance.description in row_text
     assert template_instance.creator.get_displayname() in row_text
+
+
+def test_workflow_detail_view_displays_tasks(
+    valid_user_client,
+    task_workflow_single_task_item,
+):
+    workflow = task_workflow_single_task_item
+    task = task_workflow_single_task_item.get_tasks().get()
+
+    url = reverse(
+        "workflow:task-workflow-ui-detail",
+        kwargs={"pk": workflow.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    assert page.find("h1", text=f"Workflow: {workflow.title}")
+    assert page.find("a", text=task.title)
+
+
+@pytest.mark.parametrize(
+    ("action", "item_position", "expected_item_order"),
+    [
+        ("promote", 1, [1, 2, 3]),
+        ("promote", 2, [2, 1, 3]),
+        ("demote", 2, [1, 3, 2]),
+        ("demote", 3, [1, 2, 3]),
+        ("promote_to_first", 3, [3, 1, 2]),
+        ("demote_to_last", 1, [2, 3, 1]),
+    ],
+)
+def test_workflow_detail_view_reorder_items(
+    action,
+    item_position,
+    expected_item_order,
+    valid_user_client,
+    task_workflow_three_task_items,
+):
+    """Tests that `TaskWorkflowDetailView` handles POST requests to promote or
+    demote tasks."""
+
+    def convert_to_index(position: int) -> int:
+        """Converts a 1-based item position to a 0-based index for items array
+        access."""
+        return position - 1
+
+    items = list(task_workflow_three_task_items.get_tasks())
+    item_to_move = items[convert_to_index(item_position)]
+
+    url = reverse(
+        "workflow:task-workflow-ui-detail",
+        kwargs={"pk": task_workflow_three_task_items.pk},
+    )
+    form_data = {
+        action: item_to_move.id,
+    }
+
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    reordered_items = task_workflow_three_task_items.get_tasks()
+    for i, reordered_item in enumerate(reordered_items):
+        expected_position = convert_to_index(expected_item_order[i])
+        expected_item = items[expected_position]
+        assert reordered_item.id == expected_item.id
+
+
+@pytest.mark.parametrize(
+    "form_data",
+    [
+        {
+            "title": "Test workflow 1",
+            "description": "Workflow created without using template",
+            "create_type": TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE,
+        },
+        {
+            "title": "Test workflow 2",
+            "description": "Workflow created using template",
+            "create_type": TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE,
+        },
+    ],
+    ids=(
+        "without_template",
+        "with_template",
+    ),
+)
+def test_workflow_create_view(
+    form_data,
+    valid_user,
+    valid_user_client,
+    task_workflow_template_single_task_template_item,
+):
+    """Tests that a new workflow can be created (with or without workflow
+    template) and that the corresponding confirmation view returns a HTTP 200
+    response."""
+
+    with_template = (
+        form_data["create_type"] == TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE
+    )
+
+    if with_template:
+        form_data["workflow_template"] = (
+            task_workflow_template_single_task_template_item.pk
+        )
+
+    assert not TaskWorkflow.objects.exists()
+
+    create_url = reverse("workflow:task-workflow-ui-create")
+    create_response = valid_user_client.post(create_url, form_data)
+    assert create_response.status_code == 302
+
+    created_workflow = TaskWorkflow.objects.get(
+        summary_task__title=form_data["title"],
+        summary_task__description=form_data["description"],
+        summary_task__creator=valid_user,
+    )
+
+    if with_template:
+        assert (
+            created_workflow.get_tasks().count()
+            == task_workflow_template_single_task_template_item.get_task_templates().count()
+        )
+    else:
+        assert created_workflow.get_tasks().count() == 0
+
+    confirmation_url = reverse(
+        "workflow:task-workflow-ui-confirm-create",
+        kwargs={"pk": created_workflow.pk},
+    )
+    assert create_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+    assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    assert str(created_workflow) in soup.select("h1.govuk-panel__title")[0].text
+
+
+def test_workflow_delete_view(
+    valid_user_client,
+    task_workflow_single_task_item,
+):
+    """Tests that a workflow can be deleted (along with related TaskItem and
+    Task objects) and that the corresponding confirmation view returns a HTTP
+    200 response."""
+
+    workflow_pk = task_workflow_single_task_item.pk
+    summary_task_pk = task_workflow_single_task_item.summary_task.pk
+    task_pk = task_workflow_single_task_item.get_tasks().get().pk
+
+    delete_url = task_workflow_single_task_item.get_url("delete")
+    delete_response = valid_user_client.post(delete_url)
+    assert delete_response.status_code == 302
+
+    assert not TaskWorkflow.objects.filter(
+        pk=workflow_pk,
+    ).exists()
+    assert not TaskItem.objects.filter(
+        queue_id=workflow_pk,
+    ).exists()
+    assert not Task.objects.filter(pk__in=[summary_task_pk, task_pk]).exists()
+
+    confirmation_url = reverse(
+        "workflow:task-workflow-ui-confirm-delete",
+        kwargs={"pk": workflow_pk},
+    )
+    assert delete_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+    assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    assert f"Workflow ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
