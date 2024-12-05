@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
@@ -118,6 +119,12 @@ class TaskWorkflowTemplate(Queue):
     This isn't the same as the description that may be applied to a TaskWorkflow
     instance generated from a template.
     """
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="created_taskworkflowtemplates",
+    )
 
     class Meta:
         verbose_name = "workflow template"
@@ -192,6 +199,10 @@ class TaskWorkflowTemplate(Queue):
         elif action == "create":
             return reverse(
                 "workflow:task-workflow-template-ui-create",
+            )
+        elif action == "list":
+            return reverse(
+                "workflow:task-workflow-template-ui-list",
             )
 
         return "#NOT-IMPLEMENTED"
