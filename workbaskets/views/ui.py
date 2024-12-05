@@ -1788,10 +1788,11 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     model = Measure
     paginate_by = 20
     template_name = "workbaskets/auto_end_date_measures.jinja"
-    sort_by_fields = ["start_date", "goods_nomenclature"]
+    sort_by_fields = ["start_date", "goods_nomenclature", "sid"]
     custom_sorting = {
         "start_date": "valid_between",
         "goods_nomenclature": "goods_nomenclature__item_id",
+        "sid": "sid",
     }
 
     @property
