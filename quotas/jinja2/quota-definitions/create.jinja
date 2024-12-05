@@ -1,13 +1,11 @@
 {% extends 'layouts/form.jinja' %}
 
 {% set page_title = "Create a new quota definition period" %}
-{% set page_subtitle = "Quota order number: "~ quota_order_number %}
-{# ~view.get_quota_order_number() #}
-{# ~view.get_quota_order_number(view.kwargs.sid)  #}
+{% set page_subtitle = "Quota order number: "~ quota.order_number %}
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and edit quotas", "href": url("quota-ui-list")},
-      {"text": "Quota order number", "href": url("quota-ui-detail", args=[view.kwargs.sid]) ~ "#definitions"},
+      {"text": "Quota order number", "href": url("quota-ui-detail", args=[quota.sid]) ~ "#definitions"},
       {"text": page_title}
     ])
   }}
@@ -28,9 +26,3 @@
     {{ crispy(form) }}
   {% endcall %}
 {% endblock %}
-
-    {# <div class="govuk-button-group">
-    {{ govukButton({
-      "text": "Submit",
-    }) }}
-    </div> #}
