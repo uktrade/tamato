@@ -16,6 +16,7 @@ from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.tests.factories import TaskItemTemplateFactory
+from tasks.tests.factories import TaskWorkflowTemplateFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -218,7 +219,7 @@ def test_delete_subtask_missing_user_permissions(
 def test_workflow_template_detail_view_displays_task_templates(valid_user_client):
     task_item_template = TaskItemTemplateFactory.create()
     task_template = task_item_template.task_template
-    workflow_template = task_item_template.queue
+    workflow_template = task_item_template.workflow_template
 
     url = reverse(
         "workflow:task-workflow-template-ui-detail",
@@ -372,7 +373,7 @@ def test_workflow_template_delete_view(
         pk=task_workflow_template_pk,
     ).exists()
     assert not TaskItemTemplate.objects.filter(
-        queue_id=task_workflow_template_pk,
+        workflow_template_id=task_workflow_template_pk,
     ).exists()
     assert not TaskTemplate.objects.filter(pk=task_template_pk).exists()
 
@@ -551,6 +552,27 @@ def test_delete_task_template_view(
         f"Task template ID: {task_template_pk}"
         in soup.select(".govuk-panel__title")[0].text
     )
+
+
+def test_workflow_template_list_view(valid_user, client):
+    """Test that valid user receives a 200 on GET for TaskWorkflowList view and
+    values display in table."""
+    template_instance = TaskWorkflowTemplateFactory.create(creator=valid_user)
+
+    url = reverse("workflow:task-workflow-template-ui-list")
+    client.force_login(valid_user)
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    soup = BeautifulSoup(str(response.content), "html.parser")
+    table = soup.select("table")[0]
+    row_text = [row.text for row in table.findChildren("td")]
+
+    assert template_instance.title in row_text
+    assert str(template_instance.id) in row_text
+    assert template_instance.description in row_text
+    assert template_instance.creator.get_displayname() in row_text
 
 
 def test_workflow_detail_view_displays_tasks(
@@ -743,7 +765,7 @@ def test_workflow_delete_view(
         pk=workflow_pk,
     ).exists()
     assert not TaskItem.objects.filter(
-        queue_id=workflow_pk,
+        workflow_id=workflow_pk,
     ).exists()
     assert not Task.objects.filter(pk__in=[summary_task_pk, task_pk]).exists()
 

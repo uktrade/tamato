@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
@@ -47,7 +48,9 @@ class TaskWorkflow(Queue):
         """Get a QuerySet of the Tasks associated through their TaskItem
         instances to this TaskWorkflow, ordered by the position of the
         TaskItem."""
-        return Task.objects.filter(taskitem__queue=self).order_by("taskitem__position")
+        return Task.objects.filter(taskitem__workflow=self).order_by(
+            "taskitem__position",
+        )
 
     def get_url(self, action: str = "detail"):
         if action == "detail":
@@ -77,9 +80,11 @@ class TaskItem(QueueItem):
     """Task item queue management for Task instances (these should always be
     subtasks)."""
 
-    queue = models.ForeignKey(
+    queue_field = "workflow"
+
+    workflow = models.ForeignKey(
         TaskWorkflow,
-        related_name="queue_items",
+        related_name="workflow_items",
         on_delete=models.CASCADE,
     )
     task = models.OneToOneField(
@@ -87,6 +92,9 @@ class TaskItem(QueueItem):
         on_delete=models.CASCADE,
     )
     """The Task instance managed by this TaskItem."""
+
+    class Meta:
+        ordering = ["workflow", "position"]
 
 
 # ----------------------------------------
@@ -116,6 +124,12 @@ class TaskWorkflowTemplate(Queue):
     This isn't the same as the description that may be applied to a TaskWorkflow
     instance generated from a template.
     """
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="created_taskworkflowtemplates",
+    )
 
     class Meta:
         verbose_name = "workflow template"
@@ -127,7 +141,9 @@ class TaskWorkflowTemplate(Queue):
         """Get a QuerySet of the TaskTemplates associated through their
         TaskItemTemplate instances to this TaskWorkflowTemplate, ordered by the
         position of the TaskItemTemplate."""
-        return TaskTemplate.objects.filter(taskitemtemplate__queue=self).order_by(
+        return TaskTemplate.objects.filter(
+            taskitemtemplate__workflow_template=self,
+        ).order_by(
             "taskitemtemplate__position",
         )
 
@@ -153,7 +169,7 @@ class TaskWorkflowTemplate(Queue):
 
         task_item_templates = TaskItemTemplate.objects.select_related(
             "task_template",
-        ).filter(queue=self)
+        ).filter(workflow_template=self)
         for task_item_template in task_item_templates:
             task_template = task_item_template.task_template
             task = Task.objects.create(
@@ -163,7 +179,7 @@ class TaskWorkflowTemplate(Queue):
             )
             TaskItem.objects.create(
                 position=task_item_template.position,
-                queue=task_workflow,
+                workflow=task_workflow,
                 task=task,
             )
 
@@ -189,6 +205,10 @@ class TaskWorkflowTemplate(Queue):
             return reverse(
                 "workflow:task-workflow-template-ui-create",
             )
+        elif action == "list":
+            return reverse(
+                "workflow:task-workflow-template-ui-list",
+            )
 
         return "#NOT-IMPLEMENTED"
 
@@ -196,15 +216,20 @@ class TaskWorkflowTemplate(Queue):
 class TaskItemTemplate(QueueItem):
     """Queue item management for TaskTemplate instances."""
 
-    queue = models.ForeignKey(
+    queue_field = "workflow_template"
+
+    workflow_template = models.ForeignKey(
         TaskWorkflowTemplate,
-        related_name="queue_items",
+        related_name="workflow_template_items",
         on_delete=models.CASCADE,
     )
     task_template = models.OneToOneField(
         "tasks.TaskTemplate",
         on_delete=models.CASCADE,
     )
+
+    class Meta:
+        ordering = ["workflow_template", "position"]
 
 
 class TaskTemplate(TaskBase):
@@ -220,7 +245,7 @@ class TaskTemplate(TaskBase):
             return reverse(
                 "workflow:task-template-ui-delete",
                 kwargs={
-                    "workflow_template_pk": self.taskitemtemplate.queue.pk,
+                    "workflow_template_pk": self.taskitemtemplate.workflow_template.pk,
                     "pk": self.pk,
                 },
             )

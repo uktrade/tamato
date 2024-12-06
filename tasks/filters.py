@@ -5,6 +5,7 @@ from django_filters import ModelMultipleChoiceFilter
 from common.filters import TamatoFilter
 from tasks.models import ProgressState
 from tasks.models import Task
+from tasks.models import TaskWorkflowTemplate
 
 
 class TaskFilter(TamatoFilter):
@@ -26,3 +27,17 @@ class TaskFilter(TamatoFilter):
     class Meta:
         model = Task
         fields = ["search", "category", "progress_state"]
+
+
+class WorkflowTemplateFilter(TamatoFilter):
+    search_fields = (
+        "id",
+        "title",
+        "description",
+        "creator__username",
+    )
+    clear_url = reverse_lazy("workflow:task-workflow-template-ui-list")
+
+    class Meta:
+        model = TaskWorkflowTemplate
+        fields = ["search"]

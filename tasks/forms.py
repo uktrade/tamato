@@ -253,6 +253,13 @@ class TaskWorkflowTemplateCreateForm(TaskWorkflowTemplateBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, submit_title="Create", **kwargs)
 
+    def save(self, user, commit=True):
+        instance = super().save(commit=False)
+        instance.creator = user
+        if commit:
+            instance.save()
+        return instance
+
 
 class TaskWorkflowTemplateUpdateForm(TaskWorkflowTemplateBaseForm):
     def __init__(self, *args, **kwargs):
