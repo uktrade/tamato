@@ -1,0 +1,67 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+
+{% set page_title = "Find and view task workflow templates" %}
+
+{% set base_url = url("workflow:task-workflow-template-ui-list") %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <p class="govuk-body">
+    Search for task workflow templates.
+    Alternatively, <a class="govuk-link" href="{{ url("workflow:task-workflow-template-ui-create") }}">create a new task workflow template</a>.
+  </p>
+
+  <div class="filter-layout">
+    <div class="filter-layout__filters">
+      <h2 class="govuk-heading-m govuk-!-margin-top-3">Search and filter</h2>
+      <form method="get" action="{{ url("workflow:task-workflow-template-ui-list") }}">
+          {{ crispy(filter.form) }}
+      </form>
+    </div>
+
+  <div class="filter-layout__content">
+    {% if paginator.count > 0 %}
+      {% include "includes/common/pagination-list-summary.jinja" %}
+    {% endif %}
+    {% if object_list %}
+      {% set table_rows = [] %}
+      {% for object in object_list %}
+        {%- set workflow_template_linked_id -%}
+          <a
+            class="govuk-link"
+            href="{{ url("workflow:task-workflow-template-ui-detail", kwargs={"pk": object.pk}) }}"
+          >{{ object.pk }}</a>
+        {%- endset -%}
+
+        {{ table_rows.append([
+          {"text": workflow_template_linked_id},
+          {"text": object.title},
+          {"text": object.description},
+          {"text": object.creator.get_displayname() if object.creator else "Unknown"}
+        ]) or "" }}
+      {% endfor %}
+
+      {{ govukTable({
+        "head": [
+          {"text": "ID"},
+          {"text": "Title"},
+          {"text": "Description"},
+          {"text":"Created by"}
+        ],
+          "rows": table_rows
+        }) }}
+    {% else %}
+      <p class="govuk-body">There are no results for your search, please:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>check the spelling of your keywords</li>
+        <li>use more general keywords</li>
+        <li>select or deselect different filters</li>
+      </ul>
+    {% endif %}
+    {% include "includes/common/pagination.jinja" %}
+  </div>
+</div>
+{% endblock %}
