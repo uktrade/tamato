@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Self
 
+from django.core.exceptions import FieldDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.transaction import atomic
@@ -18,11 +19,8 @@ class Queue(models.Model):
     """
     A (FIFO) queue.
 
-    Note: This abstract class only supports a single reverse foreign-key relationship
-    to `QueueItem` for each instance. As such, all instance methods in this class use
-    the first-returned related name to access related `QueueItem` objects. This means that
-    if there are multiple relationships, only the first one will be considered when
-    retrieving items from the queue,
+    Note: This abstract class only supports a single, reverse foreign-key relationship
+    to `QueueItem` for each instance (i.e `QueueItem` instances are assumed to belong only to a single `Queue` instance).
     """
 
     class Meta:
@@ -65,17 +63,30 @@ class QueueItemMetaClass(models.base.ModelBase):
     def __new__(cls, name, bases, attrs):
         new_class = super().__new__(cls, name, bases, attrs)
 
-        if (
-            "QueueItem" in [base.__name__ for base in bases]
-            and not new_class._meta.abstract
-        ):
-            queue_field = attrs.get("queue", None)
-            if not queue_field or not isinstance(queue_field, models.ForeignKey):
-                raise RequiredFieldError(
-                    f"{name} must have a 'queue' ForeignKey field.",
-                )
+        if not new_class._meta.abstract:
+            queue_field_name = getattr(new_class, "queue_field", None)
+            cls.validate_queue_field(new_class, queue_field_name)
 
         return new_class
+
+    @staticmethod
+    def validate_queue_field(new_class: type[Self], queue_field_name: str) -> None:
+        """Validate that concrete subclasses of `QueueItem` have a ForeignKey
+        field to a subclass of `Queue` model."""
+        try:
+            queue_field = new_class._meta.get_field(queue_field_name)
+        except FieldDoesNotExist:
+            queue_field = None
+
+        if not queue_field or not isinstance(queue_field, models.ForeignKey):
+            raise RequiredFieldError(
+                f"{new_class.__name__} must have a 'queue' ForeignKey field. The name of the field must match the value given to the 'queue_field' attribute on the model.",
+            )
+
+        if not issubclass(queue_field.remote_field.model, Queue):
+            raise RequiredFieldError(
+                f"{queue_field} must be a ForeignKey field to a subclass of 'Queue' model.",
+            )
 
 
 class QueueItemManager(models.Manager):
@@ -85,7 +96,8 @@ class QueueItemManager(models.Manager):
         param, and place it in last position."""
 
         with TableLock(self.model, lock=TableLock.EXCLUSIVE):
-            queue = kwargs.pop("queue")
+            queue_field = self.model.queue_field
+            queue = kwargs.pop(queue_field)
             position = kwargs.pop("position", (queue.get_items().count() + 1))
 
             if position <= 0:
@@ -94,8 +106,8 @@ class QueueItemManager(models.Manager):
                 )
 
             return super().create(
-                queue=queue,
                 position=position,
+                **{queue_field: queue},
                 **kwargs,
             )
 
@@ -107,6 +119,18 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         abstract = True
         ordering = ["queue", "position"]
 
+    queue_field: str = "queue"
+    """
+    The name of the required ForeignKey field relating this instance to a Queue
+    instance.
+
+    The value of this attribute can be inherited as is or overridden in
+    subclasses to reflect the specific purpose or role of the queue.
+
+    If this value is overridden, the subclass must redefine the `Meta` class
+    to maintain ordering based on the queue field.
+    """
+
     position = models.PositiveSmallIntegerField(
         db_index=True,
         editable=False,
@@ -117,6 +141,14 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
     objects = QueueItemManager()
 
+    def get_queue_field(self) -> str:
+        """Return the queue field name on this instance."""
+        return self.__class__.queue_field
+
+    def get_queue(self) -> type[Queue]:
+        """Return the queue instance related to this instance."""
+        return getattr(self, self.get_queue_field())
+
     @atomic
     def delete(self):
         """Remove and delete instance from its queue, shuffling all successive
@@ -125,7 +157,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         self.__class__.objects.select_for_update(nowait=True).filter(
             position__gt=instance.position,
-            queue=instance.queue,
+            **{self.get_queue_field(): self.get_queue()},
         ).update(position=models.F("position") - 1)
 
         return super().delete()
@@ -146,7 +178,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         item_to_demote = self.__class__.objects.select_for_update(nowait=True).get(
             position=instance.position - 1,
-            queue=instance.queue,
+            **{self.get_queue_field(): self.get_queue()},
         )
         item_to_demote.position += 1
         instance.position -= 1
@@ -166,12 +198,18 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         """
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
 
-        if instance.position == self.queue.max_position:
+        queue_field = self.get_queue_field()
+        queue = self.get_queue()
+        queue_kwarg = {
+            queue_field: queue,
+        }
+
+        if instance.position == queue.max_position:
             return instance
 
         item_to_promote = self.__class__.objects.select_for_update(nowait=True).get(
             position=instance.position + 1,
-            queue=instance.queue,
+            **queue_kwarg,
         )
         item_to_promote.position -= 1
         instance.position += 1
@@ -198,7 +236,7 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
 
         self.__class__.objects.select_for_update(nowait=True).filter(
             position__lt=instance.position,
-            queue=instance.queue,
+            **{self.get_queue_field(): self.get_queue()},
         ).update(position=models.F("position") + 1)
 
         instance.position = 1
@@ -219,13 +257,19 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         """
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
 
-        last_place = self.queue.max_position
+        queue_field = self.get_queue_field()
+        queue = self.get_queue()
+        queue_kwarg = {
+            queue_field: queue,
+        }
+
+        last_place = queue.max_position
         if instance.position == last_place:
             return instance
 
         self.__class__.objects.select_for_update(nowait=True).filter(
             position__gt=instance.position,
-            queue=instance.queue,
+            **queue_kwarg,
         ).update(position=models.F("position") - 1)
 
         instance.position = last_place

@@ -219,7 +219,7 @@ def test_delete_subtask_missing_user_permissions(
 def test_workflow_template_detail_view_displays_task_templates(valid_user_client):
     task_item_template = TaskItemTemplateFactory.create()
     task_template = task_item_template.task_template
-    workflow_template = task_item_template.queue
+    workflow_template = task_item_template.workflow_template
 
     url = reverse(
         "workflow:task-workflow-template-ui-detail",
@@ -373,7 +373,7 @@ def test_workflow_template_delete_view(
         pk=task_workflow_template_pk,
     ).exists()
     assert not TaskItemTemplate.objects.filter(
-        queue_id=task_workflow_template_pk,
+        workflow_template_id=task_workflow_template_pk,
     ).exists()
     assert not TaskTemplate.objects.filter(pk=task_template_pk).exists()
 
@@ -732,7 +732,7 @@ def test_workflow_delete_view(
         pk=workflow_pk,
     ).exists()
     assert not TaskItem.objects.filter(
-        queue_id=workflow_pk,
+        workflow_id=workflow_pk,
     ).exists()
     assert not Task.objects.filter(pk__in=[summary_task_pk, task_pk]).exists()
 
