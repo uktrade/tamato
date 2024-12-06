@@ -796,7 +796,7 @@ def get_related_names(instance, related_model) -> list[str]:
 
     If a reverse foreign-key relationship exists but no related name has been
     defined, a default name in the format `relatedmodel_set` will be returned.
-    If no such relationships exist, an empty list if returned.
+    If no such relationships exist, an empty list is returned.
     """
     related_names = []
     for field in instance._meta.get_fields():

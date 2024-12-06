@@ -1,7 +1,11 @@
 import pytest
+from django.db.models import CASCADE
+from django.db.models import ForeignKey
 from factory import SubFactory
 from factory.django import DjangoModelFactory
 
+from tasks.models import QueueItem
+from tasks.models import RequiredFieldError
 from tasks.tests.test_queue.models import TestQueue
 from tasks.tests.test_queue.models import TestQueueItem
 
@@ -57,6 +61,62 @@ def three_item_queue(queue) -> TestQueue:
     assert queue.get_items().count() == 3
 
     return queue
+
+
+def test_queueitem_metaclass_validation_missing_queue_field():
+    """Tests that a concrete sublass of `QueueItem` must provide a queue field
+    on the model."""
+    with pytest.raises(RequiredFieldError) as error:
+
+        class TestQueueItemSubclass(QueueItem):
+            class Meta:
+                abstract = False
+
+        TestQueueItemSubclass()
+
+    assert (
+        "must have a 'queue' ForeignKey field. The name of the field must match the value given to the 'queue_field' attribute on the model."
+        in str(error.value)
+    )
+
+
+def test_queueitem_metaclass_validation_mismatched_queue_field():
+    """Tests that the `QueueItem.queue_field` attribute on a concrete subclass
+    must match its queue ForeignKey field."""
+    with pytest.raises(RequiredFieldError) as error:
+
+        class TestQueueItemSubclass(QueueItem):
+            class Meta:
+                abstract = False
+
+            queue_field = "test_queue"
+            queue = ForeignKey(TestQueue, on_delete=CASCADE)
+
+        TestQueueItemSubclass()
+
+    assert (
+        "The name of the field must match the value given to the 'queue_field' attribute on the model."
+        in str(error.value)
+    )
+
+
+def test_queueitem_metaclass_validation_invalid_model():
+    """Tests that a concrete subclass of `QueueItem` must have a ForeignKey
+    field to a subclass of `Queue`."""
+    with pytest.raises(RequiredFieldError) as error:
+
+        class TestQueueItemSubclass(QueueItem):
+            class Meta:
+                abstract = False
+
+            queue_field = "test_queue"
+            test_queue = ForeignKey(QueueItem, on_delete=CASCADE)
+
+        TestQueueItemSubclass()
+
+    assert "must be a ForeignKey field to a subclass of 'Queue' model" in str(
+        error.value,
+    )
 
 
 def test_empty_queue(queue):
