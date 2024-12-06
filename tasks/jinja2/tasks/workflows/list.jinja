@@ -11,7 +11,7 @@
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
     Search for workflows. Alternatively,
-    <a class="govuk-link" href="#TODO-workflow:task-workflow-ui-create">create a new workflow</a>
+    <a class="govuk-link" href="{{ url('workflow:task-workflow-ui-create') }}">create a new workflow</a>
   </p>
 
   <div class="filter-layout">
@@ -34,7 +34,7 @@
         {%- set task_linked_id -%}
           <a
             class="govuk-link"
-            href="#TODO-workflow:task-workflow-ui-detail"
+            href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk':  object.taskworkflow.pk}) }}"
           >{{ object.taskworkflow.pk }}</a>
         {%- endset -%}
 
