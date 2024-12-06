@@ -200,8 +200,12 @@ def get_measures_to_end_date(workbasket):
     commodity_dict = {
         commodity.sid: commodity.valid_between for commodity in end_dated_commodities
     }
-    measures_on_commodities = Measure.objects.current().filter(
-        goods_nomenclature__sid__in=commodity_dict.keys(),
+    measures_on_commodities = (
+        Measure.objects.current()
+        .with_effective_valid_between()
+        .filter(
+            goods_nomenclature__sid__in=commodity_dict.keys(),
+        )
     )
     # TODO:get measures on declarable commodities
     conditions = [
@@ -216,4 +220,6 @@ def get_measures_to_end_date(workbasket):
         ),
     )
 
-    return measures.exclude(valid_between__not_gt=F("commodity_valid_between"))
+    return measures.exclude(
+        db_effective_valid_between__not_gt=F("commodity_valid_between"),
+    )

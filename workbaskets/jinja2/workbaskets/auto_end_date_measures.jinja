@@ -30,6 +30,7 @@
       {"html": commodity_link if measure.goods_nomenclature else "-"},
       {"text": "{:%d %b %Y}".format(measure.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper) if measure.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper else "-" },
       {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else '-' },
       {"text": action},
     ]) or "" }}
   {% endfor %}
@@ -56,6 +57,7 @@
         {"text": commodity_code},
         {"text": "Commodity end date"},
         {"text": start_date},
+        {"text": 'Measure end date'},
         {"text": "Action"},
       ],
       "rows": table_rows
