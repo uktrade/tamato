@@ -8,6 +8,7 @@ from common.filters import TamatoFilter
 from common.widgets import RadioSelect
 from tasks.models import ProgressState
 from tasks.models import Task
+from tasks.models import TaskWorkflowTemplate
 
 
 class TaskFilter(TamatoFilter):
@@ -66,7 +67,6 @@ class TasksAndWorkflowsChoices(TextChoices):
 
 
 class TaskAndWorkflowFilter(TamatoFilter):
-
     search_fields = (
         "id",
         "title",
@@ -105,3 +105,17 @@ class TaskAndWorkflowFilter(TamatoFilter):
     @property
     def qs(self):
         return super().qs.top_level()
+
+
+class WorkflowTemplateFilter(TamatoFilter):
+    search_fields = (
+        "id",
+        "title",
+        "description",
+        "creator__username",
+    )
+    clear_url = reverse_lazy("workflow:task-workflow-template-ui-list")
+
+    class Meta:
+        model = TaskWorkflowTemplate
+        fields = ["search"]

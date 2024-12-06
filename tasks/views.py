@@ -18,6 +18,7 @@ from common.views import WithPaginationListView
 from tasks.filters import TaskAndWorkflowFilter
 from tasks.filters import TaskFilter
 from tasks.filters import TaskWorkflowFilter
+from tasks.filters import WorkflowTemplateFilter
 from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
@@ -306,6 +307,17 @@ class TaskAndWorkflowListView(
         if ordering:
             ordering = (ordering,)
             queryset = queryset.order_by(*ordering)
+
+
+class TaskWorkflowTemplateListView(PermissionRequiredMixin, WithPaginationListView):
+    model = TaskWorkflowTemplate
+    template_name = "tasks/workflows/template_list.jinja"
+    permission_required = "tasks.view_taskworkflowtemplate"
+    paginate_by = 20
+    filterset_class = WorkflowTemplateFilter
+
+    def get_queryset(self):
+        queryset = TaskWorkflowTemplate.objects.all()
         return queryset
 
 
@@ -424,6 +436,7 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "workflow"
+        context["list_url"] = "#NOT-IMPLEMENTED"
         return context
 
     def form_valid(self, form):
@@ -549,6 +562,7 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "workflow template"
+        context["list_url"] = reverse("workflow:task-workflow-template-ui-list")
         return context
 
     def get_success_url(self):
@@ -618,7 +632,7 @@ class TaskWorkflowTemplateConfirmDeleteView(PermissionRequiredMixin, TemplateVie
                 "verbose_name": "workflow template",
                 "deleted_pk": self.kwargs["pk"],
                 "create_url": reverse("workflow:task-workflow-template-ui-create"),
-                "list_url": "#NOT-IMPLEMENTED",
+                "list_url": reverse("workflow:task-workflow-template-ui-list"),
             },
         )
         return context_data
