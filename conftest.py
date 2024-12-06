@@ -304,6 +304,7 @@ def policy_group(db) -> Group:
         ("tasks", "add_task"),
         ("tasks", "change_task"),
         ("tasks", "delete_task"),
+        ("tasks", "view_task"),
         ("tasks", "add_taskassignee"),
         ("tasks", "change_taskassignee"),
         ("tasks", "add_comment"),
