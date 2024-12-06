@@ -307,6 +307,7 @@ class TaskAndWorkflowListView(
         if ordering:
             ordering = (ordering,)
             queryset = queryset.order_by(*ordering)
+        return queryset
 
 
 class TaskWorkflowTemplateListView(PermissionRequiredMixin, WithPaginationListView):
