@@ -1,11 +1,12 @@
-{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+{% extends "quota-definitions/bulk-create-step.jinja"%}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/details/macro.njk" import govukDetails %}
 {% from "components/summary-list/macro.njk" import govukSummaryList %}
 
+{% set page_title = "Review quota definition periods"%}
 {% set page_subtitle = "Quota order number "~view.quota_order_number %}
 
-{% block content %}
+{% block form %}
 
     <h1 class="govuk-heading-xl">
         {% block page_title_heading %}

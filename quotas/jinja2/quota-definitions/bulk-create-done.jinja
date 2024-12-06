@@ -6,7 +6,7 @@
 {% set definition_count = request.session['staged_definition_data']|length %}
 
 {% macro panel_title() %}
-  {{ definition_count }} quota definition periods for quota order number {{ request.session['recurrance_data']['quota_order_number']}} have been created
+  {{ definition_count }} quota definition periods have been created and added to quota order number {{ request.session['quota_order_number']}}
 {% endmacro %}
 
 {% block content %}
@@ -19,15 +19,22 @@
       }) }}
       <div class="govuk-button-group">
         {{ govukButton({
-          "text": "Create more definitions",
+          "text": "Create other definition periods",
           "href": url("quota_definition-ui-bulk-create"),
           "classes": "govuk-button--primary"
         }) }}
+        {{ govukButton({
+          "text": "View definition period date for this quota",
+          "href": url("quota_definition-ui-list"),
+          "classes": "govuk-button--secondary"
+        }) }}
       </div>
-        <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("workbaskets:current-workbasket") }}">Go to workbasket summary</a>
       
-      <h2>Next steps</h2>
-      
+      <h2>Further actions</h2>
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ }}">View quota order number</a>
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("workbaskets:current-workbasket") }}">View workbasket summary</a>
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("quota-ui-list") }}">Find and edit quotas</a>
+      {# {{ url("quota-ui-list", kwargs={}) }} #}
       <div class="govuk-button-group">
         {{ govukButton({
           "text": "Create measures",

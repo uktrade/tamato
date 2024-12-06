@@ -294,6 +294,7 @@ def deserialize_definition_data(self, definition):
     measurement_unit = MeasurementUnit.objects.get(
         code=definition["measurement_unit_code"],
     )
+    # measurement_unit_qualifier
     sub_order_number = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)[
         "sub_quota_order_number"
     ]
@@ -324,7 +325,7 @@ def serialize_definition_data(definition):
         "volume": str(definition["volume"]),
         "measurement_unit_code": definition["measurement_unit"].code,
         "measurement_unit_abbreviation": definition["measurement_unit"].abbreviation,
-        "measurement_unit_qualifier": definition["measurement_unit_qualifier"],
+        "measurement_unit_qualifier": str(definition["measurement_unit_qualifier"]),
         "threshold": str(definition["quota_critical_threshold"]),
         "quota_critical": definition["quota_critical"],
         "description": definition["description"],
@@ -342,10 +343,15 @@ def deserialize_bulk_create_definition_data(definition, order_number):
     measurement_unit = MeasurementUnit.objects.get(
         code=definition["measurement_unit_code"],
     )
-    if definition["measurement_unit_qualifier"] is not None:
-        measurement_unit_qualifier = MeasurementUnitQualifier.objects.get(
-            code=definition["measurement_unit_qualifier"],
+    if definition["measurement_unit_qualifier"] != "None":
+        measurement_unit_qualifier_pk = Decimal(
+            definition["measurement_unit_qualifier"],
         )
+        measurement_unit_qualifier = MeasurementUnitQualifier.objects.get(
+            code=measurement_unit_qualifier_pk,
+        )
+    else:
+        measurement_unit_qualifier = None
     valid_between = TaricDateRange(start_date, end_date)
     order_number_obj = models.QuotaOrderNumber.objects.get(
         pk=order_number,

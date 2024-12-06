@@ -204,6 +204,7 @@ class QuotaDefinitionCreateForm(
     )
 
     def __init__(self, *args, **kwargs):
+        self.buttons = kwargs.pop("buttons", None)
         super().__init__(*args, **kwargs)
         self.init_layout()
         self.init_fields()
@@ -303,11 +304,17 @@ class QuotaDefinitionCreateForm(
             HTML(
                 "<br />",
             ),
-            Submit(
-                "submit",
-                "Submit",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
+            Div(
+                Submit(
+                    "submit",
+                    self.buttons["submit"],
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f'<a class="govuk-link">{self.buttons['link_text']}</a>',
+                ),
+                css_class="govuk-button-group",
             ),
         )
 

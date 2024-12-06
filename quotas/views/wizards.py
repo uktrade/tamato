@@ -374,9 +374,7 @@ class QuotaDefinitionBulkCreatorWizard(
 
     def done(self, form_list, **kwargs):
         print("fires")
-        order_number_pk = self.request.session["recurrance_data"][
-            "quota_order_number_pk"
-        ]
+        order_number_pk = self.request.session["quota_order_number_pk"]
         definition_data = self.request.session["staged_definition_data"]
         with transaction.atomic():
             for definition in definition_data:
@@ -396,6 +394,10 @@ class QuotaDefinitionBulkCreatorUpdateDefinitionData(
         kwargs = super().get_form_kwargs()
         kwargs["pk"] = self.kwargs["pk"]
         kwargs["request"] = self.request
+        kwargs["buttons"] = {
+            "submit": "Save and continue",
+            "link_text": "Discard changes",
+        }
         return kwargs
 
     def get_context_data(self, *args, **kwargs):
