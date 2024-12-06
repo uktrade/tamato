@@ -1,20 +1,26 @@
-from crispy_forms_gds.helper import FormHelper
+import decimal
 
-# from crispy_forms_gds.layout import Button
+from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
+from dateutil.relativedelta import relativedelta
 from django import forms
 from django.core.exceptions import ValidationError
 
 from common.fields import AutoCompleteField
 from common.forms import ValidityPeriodForm
+from common.serializers import deserialize_date
+from common.util import TaricDateRange
+from common.widgets import DecimalSuffix
 from measures.models import MeasurementUnit
+from measures.models import MeasurementUnitQualifier
 from quotas import models
-from quotas import validators
+from quotas.forms.definitions import QuotaDefinitionCreateForm
+from quotas.serializers import serialize_definition_data
 from quotas.serializers import serialize_duplicate_data
 from workbaskets.forms import SelectableObjectsForm
 
@@ -130,16 +136,54 @@ class SelectedDefinitionsForm(forms.Form):
 
 
 class BulkQuotaDefinitionCreateStartForm(forms.Form):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
+        super().__init__(*args, **kwargs)
+        self.init_layout(self.request)
+
+    quota_order_number = AutoCompleteField(
+        label="Enter the quota order number",
+        queryset=models.QuotaOrderNumber.objects.all(),
+        required=True,
+    )
+
+    def save_quota_order_number_to_session(self, cleaned_data):
+        self.request.session["quota_order_number_pk"] = cleaned_data[
+            "quota_order_number"
+        ].pk
+        self.request.session["quota_order_number"] = cleaned_data[
+            "quota_order_number"
+        ].order_number
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self.save_quota_order_number_to_session(cleaned_data)
+        return cleaned_data
+
+    def init_layout(self, request):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+
+        self.helper.layout = Layout(
+            Div(
+                HTML(
+                    '<h2 class="govuk-heading">Enter quota order number</h2>',
+                ),
+                "quota_order_number",
+                Submit(
+                    "submit",
+                    "Continue",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+            ),
+        )
 
 
-class BulkQuotaDefinitionCreateIntroductoryPeriod(forms.Form):
-    pass
-
-
-class QuotaDefinitionCreateForm(
+class QuotaDefinitionBulkCreateDefinitionInformation(
     ValidityPeriodForm,
-    forms.ModelForm,
+    forms.Form,
 ):
     class Meta:
         model = models.QuotaDefinition
@@ -155,10 +199,33 @@ class QuotaDefinitionCreateForm(
             "maximum_precision",
         ]
 
-    description = forms.CharField(label="", widget=forms.Textarea(), required=False)
+    instance_count = forms.DecimalField(
+        label="Total number of definitions to create",
+        widget=forms.TextInput(),
+        required=True,
+        help_text="You can create up to 20 definition periods at a time per quota order number",
+        error_messages={
+            "invalid": "Must be a number",
+            "required": "Enter the number of definition periods to create",
+        },
+    )
+
+    frequency = forms.ChoiceField(
+        widget=forms.RadioSelect,
+        required=True,
+        choices=[
+            (1, "Every year"),
+            (2, "Every 6 months"),
+            (3, "Every 3 months"),
+        ],
+        help_text="For non-standard frequencies, pick the closest option and edit it on the review page",
+    )
+
     volume = forms.DecimalField(
         label="Current volume",
         widget=forms.TextInput(),
+        required=True,
+        help_text="The current volume is the starting balance for the quota",
         error_messages={
             "invalid": "Volume must be a number",
             "required": "Enter the volume",
@@ -166,20 +233,25 @@ class QuotaDefinitionCreateForm(
     )
     initial_volume = forms.DecimalField(
         widget=forms.TextInput(),
+        required=True,
+        help_text="The initial volume is the legal balance applied to the definition period",
         error_messages={
             "invalid": "Initial volume must be a number",
             "required": "Enter the initial volume",
         },
     )
+
     measurement_unit = forms.ModelChoiceField(
+        empty_label="Choose measurement unit",
+        required=True,
         queryset=MeasurementUnit.objects.current(),
         error_messages={"required": "Select the measurement unit"},
     )
 
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
+        widget=DecimalSuffix(suffix="%"),
         help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
-        widget=forms.TextInput(),
         error_messages={
             "invalid": "Critical threshold must be a number",
             "required": "Enter the critical threshold",
@@ -196,40 +268,128 @@ class QuotaDefinitionCreateForm(
     maximum_precision = forms.IntegerField(
         widget=forms.HiddenInput(),
     )
+    description = forms.CharField(
+        label="",
+        help_text="Adding a description is optional",
+        widget=forms.Textarea(),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
-        self.init_layout()
+        self.init_layout(self.request)
         self.init_fields()
-
-    def clean(self):
-        validators.validate_quota_volume(self.cleaned_data)
-        return super().clean()
 
     def init_fields(self):
         # This is always set to 3 for current definitions
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
         self.fields["maximum_precision"].initial = 3
-
-        # Set these as the default values
-        self.fields["quota_critical"].initial = False
+        self.fields["end_date"].help_text = ""
+        self.fields["measurement_unit_qualifier"].help_text = (
+            "A measurement unit qualifier is not always required"
+        )
+        self.fields["measurement_unit_qualifier"].empty_label = (
+            "Choose measurement unit qualifier"
+        )
         self.fields["quota_critical_threshold"].initial = 90
+        self.fields["quota_critical"].initial = False
 
-        self.fields["measurement_unit"].queryset = self.fields[
-            "measurement_unit"
-        ].queryset.order_by("code")
-        self.fields["measurement_unit"].label_from_instance = (
-            lambda obj: f"{obj.code} - {obj.description}"
-        )
+    def save_definition_data_to_session(self, cleaned_data):
 
-        self.fields["measurement_unit_qualifier"].queryset = self.fields[
-            "measurement_unit_qualifier"
-        ].queryset.order_by("code")
-        self.fields["measurement_unit_qualifier"].label_from_instance = (
-            lambda obj: f"{obj.code} - {obj.description}"
-        )
+        instance_count = decimal.Decimal(cleaned_data["instance_count"])
+        frequency = decimal.Decimal(cleaned_data["frequency"])
+        # a dictionary of the data required to make a QuotaDefinition, along with an index
+        definition_data = {
+            "id": 1,
+            "initial_volume": cleaned_data["initial_volume"],
+            "volume": cleaned_data["volume"],
+            "measurement_unit": cleaned_data["measurement_unit"],
+            "measurement_unit_qualifier": cleaned_data["measurement_unit_qualifier"],
+            "quota_critical_threshold": cleaned_data["quota_critical_threshold"],
+            "quota_critical": cleaned_data["quota_critical"],
+            "valid_between": cleaned_data["valid_between"],
+            "description": cleaned_data["description"],
+        }
+        staged_definitions = []
 
-    def init_layout(self):
+        serialize_first_definition = serialize_definition_data(definition_data)
+        staged_definitions.append(serialize_first_definition)
+
+        while len(staged_definitions) < instance_count:
+            id = decimal.Decimal(definition_data["id"]) + 1
+            definition_data.update(
+                {"id": id},
+            )
+            """
+            There are currently three options for the frequency with which
+            definition periods repeat, selected in
+            BulkQuotaDefinitionCreateInitialInformation
+            1. Annually
+            2. Every 6 months
+            3. Quarterly
+            """
+            if frequency == 1:
+                # Repeats annualy
+                new_start_date = definition_data["valid_between"].lower + relativedelta(
+                    years=1,
+                )
+                new_end_date = definition_data["valid_between"].upper + relativedelta(
+                    years=1,
+                )
+                new_date_range = TaricDateRange(
+                    new_start_date,
+                    new_end_date,
+                )
+                definition_data.update(
+                    {
+                        "valid_between": new_date_range,
+                    },
+                )
+
+            if frequency == 2:
+                # Repeats every 6 months
+                new_start_date = definition_data["valid_between"].upper + relativedelta(
+                    days=1,
+                )
+                new_end_date = new_start_date + relativedelta(
+                    months=6,
+                    days=-1,
+                )
+                new_date_range = TaricDateRange(
+                    new_start_date,
+                    new_end_date,
+                )
+                definition_data.update(
+                    {"valid_between": new_date_range},
+                )
+            if frequency == 3:
+                # repeats quarterly
+                new_start_date = definition_data["valid_between.upper"] + relativedelta(
+                    days=1,
+                )
+                new_end_date = new_start_date + relativedelta(
+                    months=3,
+                    days=-1,
+                )
+                new_date_range = TaricDateRange(
+                    new_start_date,
+                    new_end_date,
+                )
+                definition_data.update(
+                    {"valid_between": new_date_range},
+                )
+            serialized_definition_data = serialize_definition_data(definition_data)
+            staged_definitions.append(serialized_definition_data)
+
+        self.request.session["staged_definition_data"] = staged_definitions
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self.save_definition_data_to_session(cleaned_data)
+        return cleaned_data
+
+    def init_layout(self, request):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -237,73 +397,168 @@ class QuotaDefinitionCreateForm(
         self.helper.layout = Layout(
             Div(
                 HTML(
-                    '<h3 class="govuk-heading">Definitions count</h3>',
+                    '<h2 class="govuk-heading">First definition period</h2>',
                 ),
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Div(
+                Div(
+                    HTML(
+                        '<p class="govuk-body">Enter the dates for the first definition period you are creating. Subsequent definition period dates will be calculated based on the dates entered for this first period</p>',
+                    ),
+                    "start_date",
+                    "end_date",
+                ),
+                Div(
+                    HTML(
+                        '<h2 class="govuk-heading">Subsequent definition periods</h2>',
+                    ),
+                ),
+                Div(
+                    HTML(
+                        '<p class="govuk-body">Select the frequency at which the subsequent definition periods should be duplicated</p>',
+                    ),
+                    "frequency",
+                    Field(
+                        "instance_count",
+                        css_class="govuk-input govuk-input--width-2",
+                    ),
+                ),
                 HTML(
-                    '<h3 class="govuk-heading">Description</h3>',
+                    '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
                 ),
-                HTML.p("Adding a description is optional."),
-                "description",
-                "order_number",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Div(
+                Div(
+                    HTML(
+                        '<h3 class="govuk-heading">Measurements</h3>',
+                    ),
+                    Field("measurement_unit", css_class="govuk-!-width-two-thirds"),
+                    Field(
+                        "measurement_unit_qualifier",
+                        css_class="govuk-!-width-two-thirds",
+                    ),
+                ),
                 HTML(
-                    '<h3 class="govuk-heading">Validity period</h3>',
+                    "<br />",
                 ),
-                "start_date",
-                "end_date",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Div(
+                Div(
+                    HTML(
+                        '<h3 class="govuk-heading">Volume</h3>',
+                    ),
+                    Field("initial_volume", css_class="govuk-!-width-one-third"),
+                    Field("volume", css_class="govuk-!-width-one-third"),
+                    "maximum_precision",
+                ),
                 HTML(
-                    '<h3 class="govuk-heading">Measurements</h3>',
+                    "<br />",
                 ),
-                HTML.p("A measurement unit qualifier is not always required."),
-                Field("measurement_unit", css_class="govuk-!-width-full"),
-                Field("measurement_unit_qualifier", css_class="govuk-!-width-full"),
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Div(
+                Div(
+                    HTML(
+                        '<h3 class="govuk-heading">Criticality</h3>',
+                    ),
+                    Field(
+                        "quota_critical_threshold",
+                        css_class="govuk-!-width-two-thirds",
+                    ),
+                    "quota_critical",
+                ),
                 HTML(
-                    '<h3 class="govuk-heading">Volume</h3>',
+                    "<br />",
                 ),
-                HTML.p(
-                    "The initial volume is the legal balance applied to the definition period.<br><br>The current volume is the starting balance for the quota.",
+                Div(
+                    HTML(
+                        '<h3 class="govuk-heading">Description</h3>',
+                    ),
+                    Field("description", css_class="govuk-!-width-two-thirds"),
                 ),
-                "initial_volume",
-                "volume",
-                "maximum_precision",
-            ),
-            HTML(
-                '<hr class="govuk-section-break govuk-section-break--s govuk-section-break--visible">',
-            ),
-            Div(
-                HTML(
-                    '<h3 class="govuk-heading">Criticality</h3>',
+                Submit(
+                    "submit",
+                    "Save and continue",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
                 ),
-                "quota_critical_threshold",
-                "quota_critical",
-            ),
-            Submit(
-                "submit",
-                "Save",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
             ),
         )
 
 
-class BulkQuotaDefinitionCreateSummaryForm:
-    pass
+class BulkQuotaDefinitionCreateReviewForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
+        super().__init__(*args, **kwargs)
+
+    # def clean(self):
+    #     # cleaned_data = super().clean()
+    #     print('clean fires')
+
+
+class BulkDefinitionUpdateData(
+    QuotaDefinitionCreateForm,
+    forms.Form,
+):
+    """This is broadly similar to the QuotaDefinitionCreateForm."""
+
+    class Meta:
+        model = models.QuotaDefinition
+        fields = [
+            "valid_between",
+            "description",
+            "volume",
+            "initial_volume",
+            "measurement_unit",
+            "measurement_unit_qualifier",
+            "quota_critical_threshold",
+            "quota_critical",
+            "maximum_precision",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request")
+        self.definition_data = self.request.session["staged_definition_data"][
+            int(kwargs.pop("pk")) - 1
+        ]
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+
+    def init_fields(self):
+        fields = self.fields
+        definition_data = self.definition_data
+        # This is always set to 3 for current definitions
+        # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
+        fields["maximum_precision"].initial = 3
+        fields["start_date"].initial = deserialize_date(definition_data["start_date"])
+        fields["end_date"].initial = deserialize_date(definition_data["end_date"])
+        fields["end_date"].help_text = ""
+        fields["initial_volume"].initial = decimal.Decimal(
+            definition_data["initial_volume"],
+        )
+        fields["volume"].initial = decimal.Decimal(definition_data["volume"])
+        fields["measurement_unit"].initial = MeasurementUnit.objects.get(
+            code=definition_data["measurement_unit_code"],
+        )
+        if definition_data["measurement_unit_qualifier"]:
+            fields["measurement_unit_qualifier"].initial = (
+                MeasurementUnitQualifier.objects.get(
+                    code=definition_data["measurement_unit_qualifier"],
+                )
+            )
+        fields["quota_critical_threshold"].initial = decimal.Decimal(
+            definition_data["threshold"],
+        )
+        fields["quota_critical"].initial = definition_data["quota_critical"]
+        self.fields["measurement_unit_qualifier"].help_text = (
+            "A measurement unit qualifier is not always required."
+        )
+        self.fields["measurement_unit_qualifier"].empty_label = (
+            "Choose measurement unit qualifier."
+        )
+
+    def update_definition_data_in_session(self, cleaned_data):
+        cleaned_data.update(
+            {
+                "id": self.definition_data["id"],
+            },
+        )
+        serialized_clean_data = serialize_definition_data(cleaned_data)
+        self.request.session["staged_definition_data"][
+            int(serialized_clean_data["id"]) - 1
+        ].update(serialized_clean_data)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self.update_definition_data_in_session(cleaned_data)

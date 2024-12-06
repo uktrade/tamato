@@ -2249,7 +2249,6 @@ def test_definition_duplicator_creates_definition_and_association(
     wizard.form_list = OrderedDict(wizard.form_list)
 
     association_table_before = models.QuotaAssociation.objects.all()
-    # assert 0
     assert len(association_table_before) == 0
     for definition in session_request_with_workbasket.session["staged_definition_data"]:
         wizard.create_definition(definition)

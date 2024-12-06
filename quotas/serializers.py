@@ -12,6 +12,7 @@ from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.serializers import GeographicalAreaSerializer
 from measures.models.tracked_models import MeasurementUnit
+from measures.models.tracked_models import MeasurementUnitQualifier
 from measures.unit_serializers import MeasurementUnitQualifierSerializer
 from measures.unit_serializers import MeasurementUnitSerializer
 from measures.unit_serializers import MonetaryUnitSerializer
@@ -271,7 +272,8 @@ class QuotaEventSerializer(TrackedModelSerializerMixin):
 
 
 def serialize_duplicate_data(selected_definition):
-    # returns a JSON dictionary of serialized definition data
+    # returns a JSON dictionary of serialized definition data from a
+    # QuotaDefinition object
     duplicate_data = {
         "initial_volume": str(selected_definition.initial_volume),
         "volume": str(selected_definition.volume),
@@ -292,6 +294,7 @@ def deserialize_definition_data(self, definition):
     measurement_unit = MeasurementUnit.objects.get(
         code=definition["measurement_unit_code"],
     )
+    # measurement_unit_qualifier
     sub_order_number = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)[
         "sub_quota_order_number"
     ]
@@ -301,6 +304,64 @@ def deserialize_definition_data(self, definition):
         "initial_volume": initial_volume,
         "measurement_unit": measurement_unit,
         "order_number": sub_order_number,
+        "valid_between": valid_between,
+        "update_type": UpdateType.CREATE,
+        "maximum_precision": 3,
+        "quota_critical_threshold": 90,
+    }
+    return staged_data
+
+
+def serialize_definition_data(definition):
+    # Serializes data and returns a JSON dict that can be saved to session
+    if definition["measurement_unit_qualifier"] is not None:
+        definition["measurement_unit_qualifer"] = definition[
+            "measurement_unit_qualifier"
+        ].pk
+
+    definition_data = {
+        "id": str(definition["id"]),
+        "initial_volume": str(definition["volume"]),
+        "volume": str(definition["volume"]),
+        "measurement_unit_code": definition["measurement_unit"].code,
+        "measurement_unit_abbreviation": definition["measurement_unit"].abbreviation,
+        "measurement_unit_qualifier": str(definition["measurement_unit_qualifier"]),
+        "threshold": str(definition["quota_critical_threshold"]),
+        "quota_critical": definition["quota_critical"],
+        "description": definition["description"],
+        "start_date": serialize_date(definition["valid_between"].lower),
+        "end_date": serialize_date(definition["valid_between"].upper),
+    }
+    return definition_data
+
+
+def deserialize_bulk_create_definition_data(definition, order_number):
+    start_date = deserialize_date(definition["start_date"])
+    end_date = deserialize_date(definition["end_date"])
+    initial_volume = Decimal(definition["initial_volume"])
+    vol = Decimal(definition["volume"])
+    measurement_unit = MeasurementUnit.objects.get(
+        code=definition["measurement_unit_code"],
+    )
+    if definition["measurement_unit_qualifier"] != "None":
+        measurement_unit_qualifier_pk = Decimal(
+            definition["measurement_unit_qualifier"],
+        )
+        measurement_unit_qualifier = MeasurementUnitQualifier.objects.get(
+            code=measurement_unit_qualifier_pk,
+        )
+    else:
+        measurement_unit_qualifier = None
+    valid_between = TaricDateRange(start_date, end_date)
+    order_number_obj = models.QuotaOrderNumber.objects.get(
+        pk=order_number,
+    )
+    staged_data = {
+        "volume": vol,
+        "initial_volume": initial_volume,
+        "measurement_unit": measurement_unit,
+        "measurement_unit_qualifier": measurement_unit_qualifier,
+        "order_number": order_number_obj,
         "valid_between": valid_between,
         "update_type": UpdateType.CREATE,
         "maximum_precision": 3,

@@ -185,13 +185,46 @@ class QuotaDefinitionUpdate(
         return definition_instance
 
 
-class QuotaDefinitionCreate(QuotaDefinitionUpdateMixin, CreateTaricCreateView):
+class QuotaDefinitionCreate(CreateTaricCreateView):
     template_name = "quota-definitions/create.jinja"
     form_class = forms.QuotaDefinitionCreateForm
+    permission_required = ["common.change_trackedmodel"]
+    model = models.QuotaOrderNumber
+
+    validate_business_rules = (
+        business_rules.QD7,
+        business_rules.QD8,
+        business_rules.QD10,
+        business_rules.QD11,
+        UniqueIdentifyingFields,
+        UpdateValidity,
+    )
+
+    @property
+    def quota(self):
+        return models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
+
+    @transaction.atomic
+    def get_result_object(self, form):
+        object = super().get_result_object(form)
+        return object
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            quota=self.quota,
+            **kwargs,
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["buttons"] = {
+            "submit": "Submit",
+            "link_text": "Cancel",
+        }
+        return kwargs
 
     def form_valid(self, form):
-        quota = models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
-        form.instance.order_number = quota
+        form.instance.order_number = self.quota
         return super().form_valid(form)
 
 

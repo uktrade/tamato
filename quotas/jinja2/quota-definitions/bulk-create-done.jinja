@@ -1,0 +1,52 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+{% set page_title = "Definitions created" %}
+
+{% set definition_count = request.session['staged_definition_data']|length %}
+
+{% macro panel_title() %}
+  {{ definition_count }} quota definition periods have been created and added to quota order number {{ request.session['quota_order_number']}}
+{% endmacro %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        "titleText": panel_title(),
+        "classes": "govuk-!-margin-bottom-7"
+      }) }}
+      <div class="govuk-button-group">
+        {{ govukButton({
+          "text": "Create other definition periods",
+          "href": url("quota_definition-ui-bulk-create"),
+          "classes": "govuk-button--primary"
+        }) }}
+        {{ govukButton({
+          "text": "View definition period date for this quota",
+          "href": url("quota_definition-ui-list"),
+          "classes": "govuk-button--secondary"
+        }) }}
+      </div>
+      
+      <h2>Further actions</h2>
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ }}">View quota order number</a>
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("workbaskets:current-workbasket") }}">View workbasket summary</a>
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("quota-ui-list") }}">Find and edit quotas</a>
+      {# {{ url("quota-ui-list", kwargs={}) }} #}
+      <div class="govuk-button-group">
+        {{ govukButton({
+          "text": "Create measures",
+          "href": url('measure-ui-create', kwargs={"step": "start"}),
+          "classes": "govuk-button--primary"
+        }) }}
+        {{ govukButton({
+          "text": "Homepage",
+          "href": url("home"),
+          "classes": "govuk-button--secondary"
+        }) }}
+      </div>
+    </div>
+  </div>
+{% endblock %}
