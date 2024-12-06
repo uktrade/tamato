@@ -521,6 +521,10 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
         context["list_url"] = reverse("workflow:task-workflow-template-ui-list")
         return context
 
+    def form_valid(self, form):
+        self.object = form.save(user=self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
     def get_success_url(self):
         return reverse(
             "workflow:task-workflow-template-ui-confirm-create",
