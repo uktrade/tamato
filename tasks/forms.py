@@ -3,6 +3,7 @@ from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
+from django.db import transaction
 from django.db.models import TextChoices
 from django.forms import CharField
 from django.forms import Form
@@ -160,6 +161,60 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
 
 
 TaskWorkflowDeleteForm = delete_form_for(TaskWorkflow)
+
+
+class TaskWorkflowUpdateForm(ModelForm):
+    title = CharField(
+        max_length=255,
+        validators=[SymbolValidator],
+        error_messages={
+            "required": "Enter a title",
+        },
+    )
+    description = CharField(
+        validators=[SymbolValidator],
+        widget=Textarea(),
+        error_messages={
+            "required": "Enter a description",
+        },
+    )
+
+    class Meta:
+        model = TaskWorkflow
+        fields = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.init_layout()
+
+    def init_fields(self):
+        self.fields["title"].initial = self.instance.summary_task.title
+        self.fields["description"].initial = self.instance.summary_task.description
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "title",
+            "description",
+            Submit(
+                "submit",
+                "Update",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    @transaction.atomic
+    def save(self, commit=True):
+        summary_task = self.instance.summary_task
+        summary_task.title = self.cleaned_data["title"]
+        summary_task.description = self.cleaned_data["description"]
+        if commit:
+            summary_task.save()
+        return self.instance
 
 
 class TaskWorkflowTemplateBaseForm(ModelForm):
