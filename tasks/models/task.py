@@ -81,11 +81,6 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
             & models.Q(parent_task__isnull=True),
         )
 
-    def subtasks_of(self, parent_task: "Task") -> "TaskQueryset":
-        """Return a queryset of instances that have a non-null `parent_task`
-        i.e. they are subtasks of an instance given by their `parent_task`."""
-        return self.filter(parent_task=parent_task)
-
 
 class TaskBase(TimestampedMixin):
     """Abstract model mixin containing model fields common to TaskTemplate and

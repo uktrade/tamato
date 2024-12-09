@@ -126,19 +126,6 @@ def test_top_level_task_queryset(task, task_workflow_single_task_item):
     assert task_workflow_single_task_item.get_tasks().get() not in top_level_tasks
 
 
-def test_subtasks_of(task, task_workflow_single_task_item):
-    """Test correct behaviour of TaskQueryset.workflow_tasks()."""
-
-    subtask = SubTaskFactory(parent_task=task)
-    SubTaskFactory(parent_task=task_workflow_single_task_item.get_tasks().get())
-
-    subtasks = Task.objects.subtasks_of(task)
-
-    # 1 x standalone task + 1 summary task + 1 x workflow task + 2 x subtasks
-    assert Task.objects.count() == 5
-    assert subtasks.get() == subtask
-
-
 def test_create_task_log_task_assigned():
     task = TaskFactory.create()
     instigator = task.creator
