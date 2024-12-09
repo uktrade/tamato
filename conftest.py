@@ -1777,15 +1777,15 @@ def percent_or_amount() -> DutyExpression:
 
 
 @pytest.fixture
-def plus_percent_or_amount() -> DutyExpression:
-    return factories.DutyExpressionFactory(
-        sid=4,
-        prefix="+",
-        description=f"+ % or amount",
-        duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
-        measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
-        monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
-    )
+def plus_percent_or_amount() -> list[DutyExpression]:
+    kwargs = {
+        "prefix": "+",
+        "description": f"+ % or amount",
+        "duty_amount_applicability_code": ApplicabilityCode.MANDATORY,
+        "measurement_unit_applicability_code": ApplicabilityCode.PERMITTED,
+        "monetary_unit_applicability_code": ApplicabilityCode.PERMITTED,
+    }
+    return [factories.DutyExpressionFactory(sid=sid, **kwargs) for sid in [4, 19, 20]]
 
 
 @pytest.fixture
@@ -1798,6 +1798,18 @@ def plus_agri_component() -> DutyExpression:
         measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
     )
+
+
+@pytest.fixture
+def maximum() -> list[DutyExpression]:
+    kwargs = {
+        "prefix": "MAX",
+        "description": "Maximum",
+        "duty_amount_applicability_code": ApplicabilityCode.MANDATORY,
+        "measurement_unit_applicability_code": ApplicabilityCode.PERMITTED,
+        "monetary_unit_applicability_code": ApplicabilityCode.PERMITTED,
+    }
+    return [factories.DutyExpressionFactory(sid=sid, **kwargs) for sid in [17, 35]]
 
 
 @pytest.fixture
@@ -1838,39 +1850,26 @@ def supplementary_unit() -> DutyExpression:
 
 @pytest.fixture
 def duty_expressions(
-    percent_or_amount: DutyExpression,
-    plus_percent_or_amount: DutyExpression,
-    plus_agri_component: DutyExpression,
-    plus_amount_only: DutyExpression,
-    supplementary_unit: DutyExpression,
-    nothing: DutyExpression,
+    duty_expressions_list: list[DutyExpression],
 ) -> Dict[int, DutyExpression]:
-    return {
-        d.sid: d
-        for d in [
-            percent_or_amount,
-            plus_percent_or_amount,
-            plus_agri_component,
-            plus_amount_only,
-            supplementary_unit,
-            nothing,
-        ]
-    }
+    return {d.sid: d for d in duty_expressions_list}
 
 
 @pytest.fixture
 def duty_expressions_list(
     percent_or_amount: DutyExpression,
-    plus_percent_or_amount: DutyExpression,
+    plus_percent_or_amount: list[DutyExpression],
     plus_agri_component: DutyExpression,
+    maximum: list[DutyExpression],
     plus_amount_only: DutyExpression,
     supplementary_unit: DutyExpression,
     nothing: DutyExpression,
 ) -> Sequence[DutyExpression]:
     return [
         percent_or_amount,
-        plus_percent_or_amount,
+        *plus_percent_or_amount,
         plus_agri_component,
+        *maximum,
         plus_amount_only,
         supplementary_unit,
         nothing,
