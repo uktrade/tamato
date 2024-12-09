@@ -223,6 +223,6 @@ def test_task_is_subtask_property(task_factory):
     ),
     ids=("standalone task test", "summary task test"),
 )
-def test_task_is_subtask_property(create_task_fn):
+def test_task_is_summary_task_property(create_task_fn):
     task = create_task_fn()
-    bool(hasattr(task, "taskworkflow")) == task.is_summary_task
+    assert bool(hasattr(task, "taskworkflow")) == task.is_summary_task
