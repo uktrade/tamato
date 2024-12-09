@@ -279,6 +279,7 @@ class Transaction(TimestampedMixin):
     # The default order ("partition", "order") gives global ordering.
     order = models.IntegerField()
 
+    # Originally containing order, partition and workbasket pk / envelope id. Now a random unique string to avoid duplicate values when reordering / deleting transactions.
     composite_key = models.CharField(max_length=16, unique=True)
 
     objects = TransactionManager.from_queryset(TransactionQueryset)()
