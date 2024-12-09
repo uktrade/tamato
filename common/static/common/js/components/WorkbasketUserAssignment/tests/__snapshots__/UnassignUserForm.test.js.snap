@@ -16,20 +16,20 @@ exports[`UnassignUserForm renders form 1`] = `
   >
     <label
       className="govuk-label"
-      htmlFor="assignments-select"
+      htmlFor="assignees-select"
     >
       Unassign user
     </label>
     <div
       className="govuk-hint"
-      id="assignments-hint"
+      id="assignees-hint"
     >
       Select a user to unassign
     </div>
     <select
       data-testid="unassign-user-select"
-      id="assignments-select"
-      name="assignments"
+      id="assignees-select"
+      name="assignees"
       required={true}
     >
       <option
