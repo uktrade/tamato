@@ -881,6 +881,9 @@ WEBPACK_LOADER = {
 
 TRANSACTION_SCHEMA = os.getenv("TRANSACTION_SCHEMA", "workbaskets.models.SEED_FIRST")
 
+# TAP's default maximum number of items to display in a paginated list view.
+DEFAULT_PAGINATOR_PER_PAGE_MAX = 20
+
 # Default max number of objects that will be accurately counted by LimitedPaginator.
 LIMITED_PAGINATOR_MAX_COUNT = 200
 # Default max number of objects that will be accurately counted by MeasurePaginator.

@@ -9,6 +9,7 @@ from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskLog
+from tasks.tests.factories import TaskWorkflowFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -80,33 +81,45 @@ def test_task_assignee_workbasket_reviewers_queryset(
     assert workbasket_reviewer_assignee in workbasket_reviewers
 
 
-def test_non_workflow_task_queryset(task, task_workflow_single_task_item):
+def test_non_workflow_queryset(task, task_workflow_single_task_item):
     """Test correct behaviour of TaskQueryset.non_workflow()."""
+
+    SubTaskFactory(parent_task=task)
+    SubTaskFactory(parent_task=task_workflow_single_task_item.get_tasks().get())
 
     non_workflow_tasks = Task.objects.non_workflow()
 
-    assert Task.objects.count() == 3
-    assert task == non_workflow_tasks.get()
+    # 1 x standalone task + 1 summary task + 1 x workflow task + 2 x subtasks
+    assert Task.objects.count() == 5
+    assert non_workflow_tasks.get() == task
 
 
-def test_workflow_summary_task_queryset(task, task_workflow_single_task_item):
+def test_workflow_summary_queryset(task, task_workflow_single_task_item):
     """Test correct behaviour of TaskQueryset.workflow_summary()."""
 
     """Return a queryset of TaskWorkflow summary Task instances, i.e. those
     with a non-null related_name=taskworkflow."""
 
-    workflow_tasks = Task.objects.workflow_summary()
+    SubTaskFactory(parent_task=task)
+    SubTaskFactory(parent_task=task_workflow_single_task_item.get_tasks().get())
 
-    assert Task.objects.count() == 3
-    assert task_workflow_single_task_item.summary_task == workflow_tasks.get()
+    workflow_summary_tasks = Task.objects.workflow_summary()
+
+    # 1 x standalone task + 1 summary task + 1 x workflow task + 2 x subtasks
+    assert Task.objects.count() == 5
+    assert workflow_summary_tasks.get() == task_workflow_single_task_item.summary_task
 
 
 def test_top_level_task_queryset(task, task_workflow_single_task_item):
     """Test correct behaviour of TaskQueryset.top_level()."""
 
+    SubTaskFactory(parent_task=task)
+    SubTaskFactory(parent_task=task_workflow_single_task_item.get_tasks().get())
+
     top_level_tasks = Task.objects.top_level()
 
-    assert Task.objects.count() == 3
+    # 1 x standalone task + 1 summary task + 1 x workflow task + 2 x subtasks
+    assert Task.objects.count() == 5
     assert top_level_tasks.count() == 2
     assert task_workflow_single_task_item.summary_task in top_level_tasks
     assert task in top_level_tasks
@@ -200,3 +213,16 @@ def test_task_is_subtask_property(task_factory):
     task = task_factory.create()
 
     assert bool(task.parent_task) == task.is_subtask
+
+
+@pytest.mark.parametrize(
+    ("create_task_fn"),
+    (
+        lambda: TaskFactory.create(),
+        lambda: TaskWorkflowFactory.create().summary_task,
+    ),
+    ids=("standalone task test", "summary task test"),
+)
+def test_task_is_summary_task_property(create_task_fn):
+    task = create_task_fn()
+    assert bool(hasattr(task, "taskworkflow")) == task.is_summary_task
