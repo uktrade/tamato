@@ -46,7 +46,7 @@ class TaskManager(WithSignalManagerMixin, models.Manager):
 
 
 class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
-    def non_workflow(self):
+    def non_workflow(self) -> "TaskQueryset":
         """Return a queryset of standalone Task instances that are not part of a
         workflow and are not subtasks."""
         return self.filter(
