@@ -265,15 +265,24 @@ class SubTaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
-class TaskWorkflowTemplateListView(PermissionRequiredMixin, WithPaginationListView):
+class TaskWorkflowTemplateListView(
+    PermissionRequiredMixin,
+    WithPaginationListView,
+    SortingMixin,
+):
     model = TaskWorkflowTemplate
     template_name = "tasks/workflows/template_list.jinja"
     permission_required = "tasks.view_taskworkflowtemplate"
     paginate_by = 20
     filterset_class = WorkflowTemplateFilter
+    sort_by_fields = ["created_at", "updated_at"]
 
     def get_queryset(self):
         queryset = TaskWorkflowTemplate.objects.all()
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
         return queryset
 
 
