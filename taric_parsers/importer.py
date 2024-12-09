@@ -1,3 +1,4 @@
+from os import urandom
 from typing import Generator
 from typing import List
 from typing import Optional
@@ -344,14 +345,14 @@ class TaricImporter:
             None
         """
 
-        envelope = Envelope.new_envelope()
+        Envelope.new_envelope()
 
         transaction_order = 1
 
         for parsed_transaction in self.parsed_transactions:
             # create transaction
             transaction_inst = Transaction.objects.create(
-                composite_key=f"{envelope.envelope_id}{transaction_order}",
+                composite_key=urandom(8).hex(),
                 workbasket=self.workbasket,
                 order=transaction_order,
             )
