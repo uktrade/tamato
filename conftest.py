@@ -1801,7 +1801,7 @@ def plus_agri_component() -> DutyExpression:
 
 
 @pytest.fixture
-def maximum() -> list[DutyExpression]:
+def maximum_clause_expression() -> list[DutyExpression]:
     kwargs = {
         "prefix": "MAX",
         "description": "Maximum",
@@ -1860,7 +1860,7 @@ def duty_expressions_list(
     percent_or_amount: DutyExpression,
     plus_percent_or_amount: list[DutyExpression],
     plus_agri_component: DutyExpression,
-    maximum: list[DutyExpression],
+    maximum_clause_expression: list[DutyExpression],
     plus_amount_only: DutyExpression,
     supplementary_unit: DutyExpression,
     nothing: DutyExpression,
@@ -1869,7 +1869,7 @@ def duty_expressions_list(
         percent_or_amount,
         *plus_percent_or_amount,
         plus_agri_component,
-        *maximum,
+        *maximum_clause_expression,
         plus_amount_only,
         supplementary_unit,
         nothing,

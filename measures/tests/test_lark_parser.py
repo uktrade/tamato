@@ -22,7 +22,7 @@ PERCENT_OR_AMOUNT_FIXTURE_NAME = "percent_or_amount"
 PLUS_PERCENT_OR_AMOUNT_SID = (4, 19, 20)
 SUPPLEMENTARY_UNIT_FIXTURE_NAME = "supplementary_unit"
 PLUS_AGRI_COMPONENT_FIXTURE_NAME = "plus_agri_component"
-MAXIMUM_SID = (17, 35)
+MAXIMUM_CLAUSE_SID = (17, 35)
 NOTHING_FIXTURE_NAME = "nothing"
 BRITISH_POUND_FIXTURE_NAME = "british_pound"
 EURO_FIXTURE_NAME = "euro"
@@ -61,7 +61,7 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
                     "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
                 },
                 {
-                    "duty_expression_sid": MAXIMUM_SID[0],
+                    "duty_expression_sid": MAXIMUM_CLAUSE_SID[0],
                     "duty_amount": 1.0,
                 },
                 {
