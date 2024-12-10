@@ -81,6 +81,7 @@ module.exports = {
                   "regulations/static/regulations/scss",
                   "workbaskets/static/workbaskets/scss",
                   "reference_documents/static/reference_documents/scss",
+                  "tasks/static/tasks/scss",
                 ],
               },
             },
