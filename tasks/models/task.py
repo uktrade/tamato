@@ -128,6 +128,10 @@ class Task(TaskBase):
 
     objects = TaskManager.from_queryset(TaskQueryset)()
 
+    class Meta(TaskBase.Meta):
+        abstract = False
+        ordering = ["id"]
+
     @property
     def is_subtask(self) -> bool:
         return bool(self.parent_task)

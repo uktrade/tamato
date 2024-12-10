@@ -21,5 +21,4 @@ class Migration(migrations.Migration):
         ("tasks", "0011_taskworkflow_summary_task"),
     ]
 
-    operations = []
     operations = [migrations.RunPython(assign_new_summary_task_on_workflow)]
