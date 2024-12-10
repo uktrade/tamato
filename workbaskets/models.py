@@ -558,8 +558,12 @@ class WorkBasket(TimestampedMixin):
             )
 
         if "composite_key" not in kwargs:
-            # Generating a random 16 digit hexadecimal composite key to avoid duplicates
-            kwargs["composite_key"] = urandom(8).hex()
+            # Forms a composite key of workbasket id and a randomly generated hexadecimal 12 character string.
+            # The probability of a collision is miniscule unless workbasket transactions are in the millions. It becomes likely (>50%) around 20 million.
+            composite_key = f"{self.pk}{urandom(6).hex()}"
+            kwargs["composite_key"] = composite_key[
+                :16
+            ]  # Ensure maximum 16 characters should workbasket ids go over 9999
 
         # Get Transaction model via transactions.model to avoid circular import.
         return self.transactions.model.objects.create(workbasket=self, **kwargs)
