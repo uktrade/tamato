@@ -70,6 +70,32 @@ urlpatterns = [
         name="quota_definition-ui-create",
     ),
     path(
+        f"quotas/quota_definitions/bulk_create/<step>",
+        views.QuotaDefinitionBulkCreatorWizard.as_view(
+            url_name="quota_definition-ui-bulk-create",
+            done_step_name="complete",
+        ),
+        name="quota_definition-ui-bulk-create",
+    ),
+    path(
+        f"quotas/quota_definitions/bulk_create/",
+        views.QuotaDefinitionBulkCreatorWizard.as_view(
+            url_name="quota_definition-ui-bulk-create",
+            done_step_name="complete",
+        ),
+        name="quota_definition-ui-bulk-create",
+    ),
+    path(
+        f"quotas/quota_definitions/bulk_create/<pk>/edit",
+        views.QuotaDefinitionBulkCreatorUpdateDefinitionData.as_view(),
+        name="quota_definition-ui-bulk-create-edit",
+    ),
+    path(
+        f"quotas/bulk_create_success",
+        views.QuotaDefinitionBulkCreateSuccess.as_view(),
+        name="quota_definition-ui-bulk-create-success",
+    ),
+    path(
         f"quotas/duplicate_quota_definitions/<step>",
         views.DuplicateDefinitionsWizard.as_view(
             url_name="sub_quota_definitions-ui-create",

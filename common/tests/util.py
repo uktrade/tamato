@@ -427,6 +427,7 @@ def assert_model_view_renders(
     assert factory is not None, f"Factory not found: factories.{factory_class_name}"
 
     instance = factory.create()
+
     if isinstance(instance, GoodsNomenclature):
         requests_mock.get(
             url=f"{Endpoints.COMMODITIES.value}{instance.item_id}",
