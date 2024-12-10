@@ -1,0 +1,22 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set object_name = object._meta.verbose_name %}
+
+{% set page_title = "Edit " ~ object_name ~ " details" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and view " ~ object_name ~ "s", "href": object.get_url("list")},
+      {"text": object_name|capitalize ~ ": " ~ object.title, "href": object.get_url("detail")},
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  )}}
+{% endblock %}
+
+{% block form %}
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

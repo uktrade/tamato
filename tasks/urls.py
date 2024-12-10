@@ -88,6 +88,16 @@ workflow_ui_patterns = [
         name="task-workflow-ui-confirm-create",
     ),
     path(
+        "<int:pk>/update/",
+        views.TaskWorkflowUpdateView.as_view(),
+        name="task-workflow-ui-update",
+    ),
+    path(
+        "<int:pk>/confirm-update/",
+        views.TaskWorkflowConfirmUpdateView.as_view(),
+        name="task-workflow-ui-confirm-update",
+    ),
+    path(
         "<int:pk>/delete/",
         views.TaskWorkflowDeleteView.as_view(),
         name="task-workflow-ui-delete",
