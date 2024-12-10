@@ -220,6 +220,7 @@ class QuotaDefinitionCreate(CreateTaricCreateView):
         kwargs["buttons"] = {
             "submit": "Submit",
             "link_text": "Cancel",
+            "link": "/workbaskets/current",
         }
         return kwargs
 

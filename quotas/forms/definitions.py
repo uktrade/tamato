@@ -248,7 +248,8 @@ class QuotaDefinitionCreateForm(
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
-
+        link_text = self.buttons["link_text"]
+        link = self.buttons["link"]
         self.helper.layout = Layout(
             Div(
                 HTML(
@@ -312,7 +313,7 @@ class QuotaDefinitionCreateForm(
                     data_prevent_double_click="true",
                 ),
                 HTML(
-                    f'<a class="govuk-link">{self.buttons['link_text']}</a>',
+                    f'<a class="govuk-link" href={link}>{link_text}</a>',
                 ),
                 css_class="govuk-button-group",
             ),

@@ -397,6 +397,7 @@ class QuotaDefinitionBulkCreatorUpdateDefinitionData(
         kwargs["buttons"] = {
             "submit": "Save and continue",
             "link_text": "Discard changes",
+            "link": "/quotas/quota_definitions/bulk_create/review",
         }
         return kwargs
 
