@@ -72,6 +72,10 @@ class TaskWorkflow(Queue):
             return reverse(
                 "workflow:task-workflow-ui-create",
             )
+        elif action == "list":
+            return reverse(
+                "workflow:task-workflow-ui-list",
+            )
 
         return "#NOT-IMPLEMENTED"
 

@@ -780,3 +780,34 @@ def test_workflow_delete_view(
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert f"Workflow ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
+
+
+def test_workflow_list_view(valid_user_client, task_workflow):
+    response = valid_user_client.get(reverse("workflow:task-workflow-ui-list"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    table = page.select("table")[0]
+
+    assert len(table.select("tbody tr")) == 1
+    assert table.select("tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)")[
+        0
+    ].text == str(task_workflow.pk)
+
+
+def test_task_and_workflow_list_view(valid_user_client, task, task_workflow):
+    response = valid_user_client.get(reverse("workflow:task-and-workflow-ui-list"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    table = page.select("table")[0]
+
+    assert len(table.select("tbody tr")) == 2
+    assert table.select("tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)")[
+        0
+    ].text == str(task.pk)
+    assert table.select("tr:nth-child(2) > td:nth-child(1) > a:nth-child(1)")[
+        0
+    ].text == str(task_workflow.summary_task.pk)
