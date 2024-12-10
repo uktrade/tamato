@@ -93,9 +93,10 @@
     "text": "Submit",
   }) }}
   {{ govukButton({
-    "text": "Start again",
+    "text": "Back",
     "classes": "govuk-button--secondary",
-    "href": url('quota_definition-ui-bulk-create', args={'step': 'start'}),
+    "href": '/quotas/quota_definitions/bulk_create/definition_period_info',
   }) }}
   </div>
+  <a href="/workbaskets/current">Cancel</a>
 {% endblock %}

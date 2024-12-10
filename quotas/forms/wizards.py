@@ -157,6 +157,9 @@ class BulkQuotaDefinitionCreateStartForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        if cleaned_data == {}:
+            raise ValidationError("A quota order number must be selected")
+
         self.save_quota_order_number_to_session(cleaned_data)
         return cleaned_data
 
@@ -171,11 +174,17 @@ class BulkQuotaDefinitionCreateStartForm(forms.Form):
                     '<h2 class="govuk-heading">Enter quota order number</h2>',
                 ),
                 "quota_order_number",
-                Submit(
-                    "submit",
-                    "Continue",
-                    data_module="govuk-button",
-                    data_prevent_double_click="true",
+                Div(
+                    Submit(
+                        "submit",
+                        "Continue",
+                        data_module="govuk-button",
+                        data_prevent_double_click="true",
+                    ),
+                    HTML(
+                        '<a class="govuk-link" href="/workbaskets/current">Cancel</a>',
+                    ),
+                    css_class="govuk-button-group",
                 ),
             ),
         )
@@ -189,7 +198,6 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         model = models.QuotaDefinition
         fields = [
             "valid_between",
-            "description",
             "volume",
             "initial_volume",
             "measurement_unit",
@@ -199,10 +207,16 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
             "maximum_precision",
         ]
 
+    required_fields = [
+        "instance_count",
+        "volume",
+        "initial_volume",
+        "measurement_unit",
+    ]
+    # this needs additional validation to prevent empty. required=True does not work
     instance_count = forms.DecimalField(
-        label="Total number of definitions to create",
-        widget=forms.TextInput(),
         required=True,
+        label="Total number of definitions to create",
         help_text="You can create up to 20 definition periods at a time per quota order number",
         error_messages={
             "invalid": "Must be a number",
@@ -211,8 +225,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     )
 
     frequency = forms.ChoiceField(
-        widget=forms.RadioSelect,
-        required=True,
+        widget=forms.RadioSelect(attrs={"required": "required"}),
         choices=[
             (1, "Every year"),
             (2, "Every 6 months"),
@@ -223,8 +236,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     volume = forms.DecimalField(
         label="Current volume",
-        widget=forms.TextInput(),
-        required=True,
+        widget=forms.TextInput(attrs={"required": "required"}),
         help_text="The current volume is the starting balance for the quota",
         error_messages={
             "invalid": "Volume must be a number",
@@ -232,8 +244,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         },
     )
     initial_volume = forms.DecimalField(
-        widget=forms.TextInput(),
-        required=True,
+        widget=forms.TextInput(attrs={"required": "required"}),
         help_text="The initial volume is the legal balance applied to the definition period",
         error_messages={
             "invalid": "Initial volume must be a number",
@@ -243,7 +254,6 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     measurement_unit = forms.ModelChoiceField(
         empty_label="Choose measurement unit",
-        required=True,
         queryset=MeasurementUnit.objects.current(),
         error_messages={"required": "Select the measurement unit"},
     )
@@ -272,7 +282,6 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         label="",
         help_text="Adding a description is optional",
         widget=forms.Textarea(),
-        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -294,12 +303,14 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         )
         self.fields["quota_critical_threshold"].initial = 90
         self.fields["quota_critical"].initial = False
+        self.fields["description"].required = False
 
     def save_definition_data_to_session(self, cleaned_data):
-
         instance_count = decimal.Decimal(cleaned_data["instance_count"])
         frequency = decimal.Decimal(cleaned_data["frequency"])
         # a dictionary of the data required to make a QuotaDefinition, along with an index
+        if "description" not in cleaned_data:
+            cleaned_data["description"] = ""
         definition_data = {
             "id": 1,
             "initial_volume": cleaned_data["initial_volume"],
@@ -386,6 +397,9 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     def clean(self):
         cleaned_data = super().clean()
+        for field in self.required_fields:
+            if field not in cleaned_data:
+                raise ValidationError(f"A value for {field} must be provided")
         self.save_definition_data_to_session(cleaned_data)
         return cleaned_data
 
@@ -467,12 +481,21 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                     ),
                     Field("description", css_class="govuk-!-width-two-thirds"),
                 ),
-                Submit(
-                    "submit",
-                    "Save and continue",
-                    data_module="govuk-button",
-                    data_prevent_double_click="true",
+                Div(
+                    Submit(
+                        "submit",
+                        "Save and continue",
+                        data_module="govuk-button",
+                        data_prevent_double_click="true",
+                    ),
+                    HTML(
+                        f"<a class='govuk-button govuk-button--secondary' href='/quotas/quota_definitions/bulk_create/start'>Back</a>",
+                    ),
+                    css_class="govuk-button-group",
                 ),
+            ),
+            HTML(
+                '<a class="govuk-link" href="/workbaskets/current">Cancel</a>',
             ),
         )
 
@@ -481,10 +504,6 @@ class BulkQuotaDefinitionCreateReviewForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
-
-    # def clean(self):
-    #     # cleaned_data = super().clean()
-    #     print('clean fires')
 
 
 class BulkDefinitionUpdateData(
@@ -521,6 +540,7 @@ class BulkDefinitionUpdateData(
         # This is always set to 3 for current definitions
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
         fields["maximum_precision"].initial = 3
+        # The following populate from the data saved in session
         fields["start_date"].initial = deserialize_date(definition_data["start_date"])
         fields["end_date"].initial = deserialize_date(definition_data["end_date"])
         fields["end_date"].help_text = ""
@@ -531,11 +551,15 @@ class BulkDefinitionUpdateData(
         fields["measurement_unit"].initial = MeasurementUnit.objects.get(
             code=definition_data["measurement_unit_code"],
         )
-        if definition_data["measurement_unit_qualifier"]:
+        if definition_data["measurement_unit_qualifier"] != "None":
             fields["measurement_unit_qualifier"].initial = (
                 MeasurementUnitQualifier.objects.get(
                     code=definition_data["measurement_unit_qualifier"],
                 )
+            )
+        else:
+            self.fields["measurement_unit_qualifier"].empty_label = (
+                "Choose measurement unit qualifier."
             )
         fields["quota_critical_threshold"].initial = decimal.Decimal(
             definition_data["threshold"],
@@ -543,9 +567,6 @@ class BulkDefinitionUpdateData(
         fields["quota_critical"].initial = definition_data["quota_critical"]
         self.fields["measurement_unit_qualifier"].help_text = (
             "A measurement unit qualifier is not always required."
-        )
-        self.fields["measurement_unit_qualifier"].empty_label = (
-            "Choose measurement unit qualifier."
         )
 
     def update_definition_data_in_session(self, cleaned_data):
