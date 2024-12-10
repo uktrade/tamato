@@ -11,7 +11,7 @@
                     <oub:update.type>1</oub:update.type>
                     <oub:quota.closed.and.transferred.event>
                         <oub:quota.definition.sid>100</oub:quota.definition.sid>
-                        <oub:occurrence.timestamp>2020-09-25T14:58:58</oub:occurrence.timestamp>
+                        <oub:occurrence.timestamp>2020-09-25T14:58:58Z</oub:occurrence.timestamp>
                         <oub:transfer.date>2021-01-01</oub:transfer.date>
                         <oub:quota.closed>ZZZ</oub:quota.closed>
                         <oub:transferred.amount>123.77</oub:transferred.amount>

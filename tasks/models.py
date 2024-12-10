@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.db import models
+from django.utils.timezone import make_aware
 
 from common.models.mixins import TimestampedMixin
 from workbaskets.models import WorkBasket
@@ -87,7 +88,7 @@ class UserAssignment(TimestampedMixin):
             assignment = cls.objects.get(user=user, task=task)
             if assignment.unassigned_at:
                 return False
-            assignment.unassigned_at = datetime.now()
+            assignment.unassigned_at = make_aware(datetime.now())
             assignment.save(update_fields=["unassigned_at"])
             return True
         except cls.DoesNotExist:

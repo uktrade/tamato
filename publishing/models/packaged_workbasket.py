@@ -20,6 +20,7 @@ from django.db.models import URLField
 from django.db.models import Value
 from django.db.models.functions import Coalesce
 from django.db.transaction import atomic
+from django.utils.timezone import make_aware
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -470,7 +471,7 @@ class PackagedWorkBasket(TimestampedMixin):
         operation upon successful transitions.
         """
         PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
-        self.processing_started_at = datetime.now()
+        self.processing_started_at = make_aware(datetime.now())
         self.save()
 
     @create_envelope_on_completed_processing

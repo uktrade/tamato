@@ -80,7 +80,6 @@ force_single_line = true
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "settings.test"
 norecursedirs = [
-    "allure-results",
     "csv",
     "dist",
     "docs",

@@ -5,6 +5,7 @@ from django.db.models import DateTimeField
 from django.db.models import Manager
 from django.db.models import QuerySet
 from django.db.transaction import atomic
+from django.utils.timezone import make_aware
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -138,7 +139,7 @@ class CrownDependenciesEnvelope(TimestampedMixin):
     def publishing_succeeded(self):
         """Publishing a `CrownDependenciesEnvelope` to the Tariff API completed
         with a successful outcome."""
-        self.published = datetime.now()
+        self.published = make_aware(datetime.now())
         self.notify_publishing_success()
 
     @save_after
