@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import OperationalError
 from django.db import transaction
@@ -14,7 +15,9 @@ from django.views.generic.edit import UpdateView
 
 from common.views import SortingMixin
 from common.views import WithPaginationListView
+from tasks.filters import TaskAndWorkflowFilter
 from tasks.filters import TaskFilter
+from tasks.filters import TaskWorkflowFilter
 from tasks.filters import WorkflowTemplateFilter
 from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
@@ -28,6 +31,7 @@ from tasks.forms import TaskWorkflowDeleteForm
 from tasks.forms import TaskWorkflowTemplateCreateForm
 from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
+from tasks.forms import TaskWorkflowUpdateForm
 from tasks.models import Queue
 from tasks.models import QueueItem
 from tasks.models import Task
@@ -265,6 +269,48 @@ class SubTaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
+class TaskWorkflowListView(
+    PermissionRequiredMixin,
+    SortingMixin,
+    WithPaginationListView,
+):
+    model = Task
+    template_name = "tasks/workflows/list.jinja"
+    permission_required = "tasks.view_task"
+    paginate_by = settings.DEFAULT_PAGINATOR_PER_PAGE_MAX
+    filterset_class = TaskWorkflowFilter
+    sort_by_fields = ["created_at"]
+
+    def get_queryset(self):
+        queryset = Task.objects.all()
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
+
+
+class TaskAndWorkflowListView(
+    PermissionRequiredMixin,
+    SortingMixin,
+    WithPaginationListView,
+):
+    model = Task
+    template_name = "tasks/workflows/task-and-workflow-list.jinja"
+    permission_required = "tasks.view_task"
+    paginate_by = settings.DEFAULT_PAGINATOR_PER_PAGE_MAX
+    filterset_class = TaskAndWorkflowFilter
+    sort_by_fields = ["created_at"]
+
+    def get_queryset(self):
+        queryset = Task.objects.all()
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
+
+
 class TaskWorkflowTemplateListView(
     PermissionRequiredMixin,
     SortingMixin,
@@ -437,6 +483,25 @@ class TaskWorkflowConfirmCreateView(PermissionRequiredMixin, DetailView):
     permission_required = "tasks.add_taskworkflow"
 
 
+class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
+    model = TaskWorkflow
+    template_name = "tasks/workflows/edit.jinja"
+    permission_required = "tasks.change_taskworkflow"
+    form_class = TaskWorkflowUpdateForm
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-workflow-ui-confirm-update",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class TaskWorkflowConfirmUpdateView(PermissionRequiredMixin, DetailView):
+    model = TaskWorkflow
+    template_name = "tasks/workflows/confirm_update.jinja"
+    permission_required = "tasks.change_taskworkflow"
+
+
 class TaskWorkflowDeleteView(PermissionRequiredMixin, DeleteView):
     model = TaskWorkflow
     template_name = "tasks/workflows/delete.jinja"
@@ -549,7 +614,7 @@ class TaskWorkflowTemplateConfirmCreateView(PermissionRequiredMixin, DetailView)
 
 class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
     model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/template_edit.jinja"
+    template_name = "tasks/workflows/edit.jinja"
     permission_required = "tasks.change_taskworkflowtemplate"
     form_class = TaskWorkflowTemplateUpdateForm
 
@@ -562,7 +627,7 @@ class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
 
 class TaskWorkflowTemplateConfirmUpdateView(PermissionRequiredMixin, DetailView):
     model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/template_confirm_update.jinja"
+    template_name = "tasks/workflows/confirm_update.jinja"
     permission_required = "tasks.change_taskworkflowtemplate"
 
 

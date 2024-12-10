@@ -714,6 +714,39 @@ def test_workflow_create_view(
     assert str(created_workflow) in soup.select("h1.govuk-panel__title")[0].text
 
 
+def test_workflow_update_view(
+    valid_user_client,
+    task_workflow,
+):
+    """Tests that a workflow can be updated and that the corresponding
+    confirmation view returns a HTTP 200 response."""
+
+    form_data = {
+        "title": "Updated workflow title",
+        "description": "Updated workflow description",
+    }
+    update_url = task_workflow.get_url("edit")
+
+    update_response = valid_user_client.post(update_url, form_data)
+    assert update_response.status_code == 302
+
+    task_workflow.refresh_from_db()
+    assert task_workflow.summary_task.title == form_data["title"]
+    assert task_workflow.summary_task.description == form_data["description"]
+
+    confirmation_url = reverse(
+        "workflow:task-workflow-ui-confirm-update",
+        kwargs={"pk": task_workflow.pk},
+    )
+    assert update_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+    assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    assert str(task_workflow) in soup.select("h1.govuk-panel__title")[0].text
+
+
 def test_workflow_delete_view(
     valid_user_client,
     task_workflow_single_task_item,
@@ -749,3 +782,34 @@ def test_workflow_delete_view(
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert f"Workflow ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
+
+
+def test_workflow_list_view(valid_user_client, task_workflow):
+    response = valid_user_client.get(reverse("workflow:task-workflow-ui-list"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    table = page.select("table")[0]
+
+    assert len(table.select("tbody tr")) == 1
+    assert table.select("tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)")[
+        0
+    ].text == str(task_workflow.pk)
+
+
+def test_task_and_workflow_list_view(valid_user_client, task, task_workflow):
+    response = valid_user_client.get(reverse("workflow:task-and-workflow-ui-list"))
+
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    table = page.select("table")[0]
+
+    assert len(table.select("tbody tr")) == 2
+    assert table.select("tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)")[
+        0
+    ].text == str(task.pk)
+    assert table.select("tr:nth-child(2) > td:nth-child(1) > a:nth-child(1)")[
+        0
+    ].text == str(task_workflow.summary_task.pk)

@@ -100,3 +100,19 @@ def test_workflow_create_form_invalid_data(form_data, field, error_message):
     form = forms.TaskWorkflowCreateForm(form_data)
     assert not form.is_valid()
     assert error_message in form.errors[field]
+
+
+def test_workflow_update_form_save(task_workflow):
+    """Tests that the details of `TaskWorkflow.summary_task` are updated when
+    calling form.save()."""
+    form_data = {
+        "title": "Updated workflow title",
+        "description": "Updated workflow description",
+    }
+
+    form = forms.TaskWorkflowUpdateForm(data=form_data, instance=task_workflow)
+    assert form.is_valid()
+
+    workflow = form.save()
+    assert workflow.summary_task.title == form_data["title"]
+    assert workflow.summary_task.description == form_data["description"]

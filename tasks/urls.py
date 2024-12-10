@@ -70,8 +70,12 @@ task_ui_patterns = [
     ),
 ]
 
-
 workflow_ui_patterns = [
+    path(
+        "",
+        views.TaskWorkflowListView.as_view(),
+        name="task-workflow-ui-list",
+    ),
     path(
         "<int:pk>/",
         views.TaskWorkflowDetailView.as_view(),
@@ -88,6 +92,16 @@ workflow_ui_patterns = [
         name="task-workflow-ui-confirm-create",
     ),
     path(
+        "<int:pk>/update/",
+        views.TaskWorkflowUpdateView.as_view(),
+        name="task-workflow-ui-update",
+    ),
+    path(
+        "<int:pk>/confirm-update/",
+        views.TaskWorkflowConfirmUpdateView.as_view(),
+        name="task-workflow-ui-confirm-update",
+    ),
+    path(
         "<int:pk>/delete/",
         views.TaskWorkflowDeleteView.as_view(),
         name="task-workflow-ui-delete",
@@ -96,6 +110,14 @@ workflow_ui_patterns = [
         "<int:pk>/confirm-delete/",
         views.TaskWorkflowConfirmDeleteView.as_view(),
         name="task-workflow-ui-confirm-delete",
+    ),
+]
+
+task_and_workflow_ui_patterns = [
+    path(
+        "",
+        views.TaskAndWorkflowListView.as_view(),
+        name="task-and-workflow-ui-list",
     ),
 ]
 
@@ -180,5 +202,6 @@ workflow_template_ui_patterns = [
 urlpatterns = [
     path("tasks/", include(task_ui_patterns)),
     path("workflows/", include(workflow_ui_patterns)),
+    path("tasks-and-workflows/", include(task_and_workflow_ui_patterns)),
     path("workflow-templates/", include(workflow_template_ui_patterns)),
 ]
