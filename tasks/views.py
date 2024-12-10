@@ -267,8 +267,8 @@ class SubTaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
 
 class TaskWorkflowTemplateListView(
     PermissionRequiredMixin,
-    WithPaginationListView,
     SortingMixin,
+    WithPaginationListView,
 ):
     model = TaskWorkflowTemplate
     template_name = "tasks/workflows/template_list.jinja"

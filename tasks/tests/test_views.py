@@ -573,6 +573,8 @@ def test_workflow_template_list_view(valid_user, client):
     assert str(template_instance.id) in row_text
     assert template_instance.description in row_text
     assert template_instance.creator.get_displayname() in row_text
+    assert f"{template_instance.created_at:%d %b %Y}" in row_text
+    assert f"{template_instance.updated_at:%d %b %Y}" in row_text
 
 
 def test_workflow_detail_view_displays_tasks(
