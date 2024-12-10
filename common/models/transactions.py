@@ -280,6 +280,17 @@ class Transaction(TimestampedMixin):
     order = models.IntegerField()
 
     composite_key = models.CharField(max_length=16, unique=True)
+    """
+    Originally containing workbasket pk, order and partition for user created
+    transactions.
+
+    Now a random unique string to avoid duplicate values when reordering /
+    deleting transactions.
+
+    It is not clear what the purpose of composite_key is other than as an
+    application level unique ID for a transaction. It is not used anywhere in
+    the app.
+    """
 
     objects = TransactionManager.from_queryset(TransactionQueryset)()
 

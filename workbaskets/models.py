@@ -4,6 +4,7 @@ import importlib
 import logging
 from abc import ABCMeta
 from abc import abstractmethod
+from os import urandom
 from typing import Optional
 from typing import Tuple
 
@@ -557,9 +558,12 @@ class WorkBasket(TimestampedMixin):
             )
 
         if "composite_key" not in kwargs:
-            kwargs["composite_key"] = (
-                f"{self.pk}-{kwargs['order']}-{kwargs['partition']}"
-            )
+            # Forms a composite key of workbasket id and a randomly generated hexadecimal 12 character string.
+            # The probability of a collision is miniscule unless workbasket transactions are in the millions. It becomes likely (>50%) around 20 million.
+            composite_key = f"{self.pk}{urandom(6).hex()}"
+            kwargs["composite_key"] = composite_key[
+                :16
+            ]  # Ensure maximum 16 characters should workbasket ids go over 9999
 
         # Get Transaction model via transactions.model to avoid circular import.
         return self.transactions.model.objects.create(workbasket=self, **kwargs)
