@@ -10,8 +10,7 @@
   {{ govukBreadcrumbs({
     "items": [
       {"text": "Home", "href": url("home")},
-      {"text": "Workbasket " ~ request.user.current_workbasket.id },
-      {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " checks", "href": url("workbaskets:workbasket-checks")},
+      {"text": "Workbasket " ~ request.user.current_workbasket.id, "href": url("workbaskets:edit-workbasket")},
       {"text": "Workbasket " ~ request.user.current_workbasket.id ~ " auto end date measures"},
       {"text": page_title}
     ]
