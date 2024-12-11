@@ -560,11 +560,12 @@ class WorkBasket(TimestampedMixin):
         if "composite_key" not in kwargs:
             # Forms a composite key of a zero-padded 5 digit workbasket id + a randomly generated hexadecimal 11 character string.
             # The probability of a collision is miniscule. It becomes 1% around 600,000 transactions and likely (>50%) at around 5 million.
-            workbasket_pk = str(self.pk).zfill(5)
-            if len(workbasket_pk) > 5:
+            if len(str(self.pk)) > 5:
                 raise ValueError(
                     "Workbasket PK cannot be bigger than 5 digits for composite_key generation.",
                 )
+            workbasket_pk = str(self.pk).zfill(5)
+
             hex_string_11_digit = f"{urandom(6).hex()}"[:11]
             kwargs["composite_key"] = f"{workbasket_pk}{hex_string_11_digit}"
 
