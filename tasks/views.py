@@ -537,6 +537,14 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
+class TaskWorkflowTaskCreateView(CreateView):
+    pass
+
+
+class TaskWorkflowTaskConfirmCreateView(DetailView):
+    pass
+
+
 class TaskWorkflowTemplateDetailView(
     PermissionRequiredMixin,
     QueuedItemManagementMixin,
