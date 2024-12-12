@@ -207,10 +207,9 @@ def get_measures_to_end_date(workbasket):
             goods_nomenclature__sid__in=commodity_dict.keys(),
         )
     )
-    # TODO:get measures on declarable commodities
     conditions = [
-        When(goods_nomenclature__sid=commodity_sid, then=Value(commodity_end_date))
-        for commodity_sid, commodity_end_date in commodity_dict.items()
+        When(goods_nomenclature__sid=commodity_sid, then=Value(commodity_valid_between))
+        for commodity_sid, commodity_valid_between in commodity_dict.items()
     ]
     measures = measures_on_commodities.annotate(
         commodity_valid_between=Case(

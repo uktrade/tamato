@@ -2651,6 +2651,8 @@ def test_remove_all_workbasket_changes_button_not_shown_to_users_without_permisi
 
 @pytest.fixture
 def commodity_with_measures(date_ranges):
+    """Fixture used for texting the automatic end-dating of measures on an end-
+    dated commodity code."""
     commodity = factories.GoodsNomenclatureFactory.create(
         valid_between=date_ranges.no_end,
     )

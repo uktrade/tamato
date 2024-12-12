@@ -1803,15 +1803,6 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     def measures(self):
         return get_measures_to_end_date(self.workbasket)
 
-    def workbasket_transactions(self):
-        """Returns the current workbasket's transactions ordered by `order`,
-        while guarding against non-editing status on workbasket to minimise
-        chances of mishap."""
-        return Transaction.objects.filter(
-            workbasket=self.workbasket,
-            workbasket__status=WorkflowStatus.EDITING,
-        ).order_by("order")
-
     def get_queryset(self):
         ordering = self.get_ordering()
         queryset = self.measures
@@ -1829,12 +1820,12 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", None) == "auto-end-date-measures":
-            self.request.session["count_ended_measures"] = len(self.measures)
             self.end_measures()
-        return redirect(
-            "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
-            self.workbasket.pk,
-        )
+            self.request.session["count_ended_measures"] = len(self.measures)
+            return redirect(
+                "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+                self.workbasket.pk,
+            )
 
     @atomic
     def end_measures(self):
@@ -1845,4 +1836,3 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 class AutoEndDateMeasuresConfirm(DetailView):
     template_name = "workbaskets/confirm_auto_end_date_measures.jinja"
     model = WorkBasket
-    queryset = WorkBasket.objects.all()
