@@ -308,20 +308,23 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     def save_definition_data_to_session(self, cleaned_data):
         instance_count = decimal.Decimal(cleaned_data["instance_count"])
         frequency = decimal.Decimal(cleaned_data["frequency"])
-        # a dictionary of the data required to make a QuotaDefinition, along with an index
-        if "description" not in cleaned_data:
-            cleaned_data["description"] = ""
         definition_data = {
             "id": 1,
             "initial_volume": cleaned_data["initial_volume"],
             "volume": cleaned_data["volume"],
             "measurement_unit": cleaned_data["measurement_unit"],
-            "measurement_unit_qualifier": cleaned_data["measurement_unit_qualifier"],
             "quota_critical_threshold": cleaned_data["quota_critical_threshold"],
             "quota_critical": cleaned_data["quota_critical"],
             "valid_between": cleaned_data["valid_between"],
-            "description": cleaned_data["description"],
         }
+        # optional fields
+        if "description" in cleaned_data:
+            definition_data["description"] = cleaned_data["description"]
+        if "measurement_unit_qualifier" in cleaned_data:
+            definition_data["measurement_unit_qualifier"] = cleaned_data[
+                "measurement_unit_qualifier"
+            ]
+
         staged_definitions = []
 
         serialize_first_definition = serialize_definition_data(definition_data)
@@ -376,7 +379,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                 )
             if frequency == 3:
                 # repeats quarterly
-                new_start_date = definition_data["valid_between.upper"] + relativedelta(
+                new_start_date = definition_data["valid_between"].upper + relativedelta(
                     days=1,
                 )
                 new_end_date = new_start_date + relativedelta(
@@ -551,7 +554,10 @@ class BulkDefinitionUpdateData(
         fields["measurement_unit"].initial = MeasurementUnit.objects.get(
             code=definition_data["measurement_unit_code"],
         )
-        if definition_data["measurement_unit_qualifier"] != "None":
+        if "description" in definition_data:
+            fields["description"].initial = definition_data["description"]
+
+        if "measurement_unit_qualifier" in definition_data:
             fields["measurement_unit_qualifier"].initial = (
                 MeasurementUnitQualifier.objects.get(
                     code=definition_data["measurement_unit_qualifier"],

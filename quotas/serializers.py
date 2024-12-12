@@ -314,24 +314,26 @@ def deserialize_definition_data(self, definition):
 
 def serialize_definition_data(definition):
     # Serializes data and returns a JSON dict that can be saved to session
-    if definition["measurement_unit_qualifier"] is not None:
-        definition["measurement_unit_qualifer"] = definition[
-            "measurement_unit_qualifier"
-        ].pk
 
     definition_data = {
         "id": str(definition["id"]),
-        "initial_volume": str(definition["volume"]),
+        "initial_volume": str(definition["initial_volume"]),
         "volume": str(definition["volume"]),
         "measurement_unit_code": definition["measurement_unit"].code,
         "measurement_unit_abbreviation": definition["measurement_unit"].abbreviation,
-        "measurement_unit_qualifier": str(definition["measurement_unit_qualifier"]),
         "threshold": str(definition["quota_critical_threshold"]),
         "quota_critical": definition["quota_critical"],
-        "description": definition["description"],
         "start_date": serialize_date(definition["valid_between"].lower),
         "end_date": serialize_date(definition["valid_between"].upper),
     }
+    if "measurement_unit_qualifier" in definition:
+        # import pdb; pdb.set_trace()
+        definition_data["measurement_unit_qualifier"] = str(
+            definition["measurement_unit_qualifier"].pk,
+        )
+
+    if "description" in definition:
+        definition_data["description"] = definition["description"]
     return definition_data
 
 
@@ -343,6 +345,9 @@ def deserialize_bulk_create_definition_data(definition, order_number):
     measurement_unit = MeasurementUnit.objects.get(
         code=definition["measurement_unit_code"],
     )
+    if "description" in definition:
+        description = definition["description"]
+    # TODO: double check this still works after changing pk to code (it should)
     if definition["measurement_unit_qualifier"] != "None":
         measurement_unit_qualifier_pk = Decimal(
             definition["measurement_unit_qualifier"],
@@ -366,5 +371,6 @@ def deserialize_bulk_create_definition_data(definition, order_number):
         "update_type": UpdateType.CREATE,
         "maximum_precision": 3,
         "quota_critical_threshold": 90,
+        "description": description,
     }
     return staged_data
