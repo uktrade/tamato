@@ -9,6 +9,7 @@ import factory
 import pytest
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
+from django.db import IntegrityError
 from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils.timezone import localtime
@@ -2797,3 +2798,37 @@ def test_get_measures_to_end_date(user_workbasket, date_ranges):
             ]
         )
         assert measure_ended_before_commodity not in measures
+
+
+def test_reordering_transactions_bug(valid_user_client, user_workbasket):
+    """Test that a user can reorder transactions, delete one and still be able
+    to add new objects to the workbasket."""
+    additional_code1, additional_code2, additional_code3 = (
+        factories.AdditionalCodeFactory.create_batch(3)
+    )
+    new_add_code1 = additional_code1.new_version(workbasket=user_workbasket)
+    new_add_code2 = additional_code2.new_version(workbasket=user_workbasket)
+    new_add_code3 = additional_code3.new_version(workbasket=user_workbasket)
+
+    url = reverse(
+        "workbaskets:workbasket-ui-transaction-order",
+        kwargs={"pk": user_workbasket.pk},
+    )
+    # Move the last transaction to the top
+    valid_user_client.post(
+        url,
+        {"form-action": f"promote-transaction-top__{new_add_code3.transaction.pk}"},
+    )
+    # Delete the now last (by order) transaction
+    last_transaction = user_workbasket.transactions.last()
+    last_transaction.tracked_models.all().delete()
+    last_transaction.delete()
+
+    # Try and add something new to the workbasket
+    try:
+        additional_code1.new_version(workbasket=user_workbasket)
+    except IntegrityError:
+        pytest.fail(
+            "IntegrityError - New trackedmodel cannot be created after reordering then deleting transactions.",
+        )
+
