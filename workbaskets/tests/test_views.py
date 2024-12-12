@@ -2831,4 +2831,3 @@ def test_reordering_transactions_bug(valid_user_client, user_workbasket):
         pytest.fail(
             "IntegrityError - New trackedmodel cannot be created after reordering then deleting transactions.",
         )
-
