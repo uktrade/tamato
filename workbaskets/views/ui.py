@@ -38,6 +38,7 @@ from markdownify import markdownify
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
+from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
 from common.inspect_tap_tasks import TAPTasks
@@ -69,7 +70,6 @@ from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
-from workbaskets.models import MissingMeasureCommCode
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
@@ -1079,12 +1079,12 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
 
     def get_queryset(self):
         self.queryset = MissingMeasureCommCode.objects.filter(
-            commodity__transaction__workbasket=self.workbasket,
+            missing_measures_check__workbasket=self.workbasket,
         )
         return super().get_queryset()
 
     @atomic
-    def run_missing_measure_checks(self, pks):
+    def run_missing_measures_check(self, pks):
         """Remove old checks, start new checks via a Celery task and save the
         newly created task's ID on the workbasket."""
         workbasket = self.workbasket
@@ -1102,16 +1102,32 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
         workbasket.save()
 
     def form_valid(self, form):
-        objects = get_comm_codes_affected_by_workbasket_changes(self.workbasket)
-        self.run_missing_measure_checks(objects)
+        form_action = self.request.POST.get("form-action")
+        if form_action == "start-check":
+            objects = get_comm_codes_affected_by_workbasket_changes(self.workbasket)
+            self.run_missing_measures_check(objects)
+        if form_action == "stop-check":
+            self.workbasket.terminate_missing_measures_check()
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(
-            workbasket=self.workbasket,
-            selected_tab="measures-check",
-            **kwargs,
+        context = super().get_context_data(**kwargs)
+
+        context["workbasket"] = self.workbasket
+        context["missing_measures_check"] = getattr(
+            self.workbasket,
+            "missing_measures_check",
+            None,
         )
+        context["selected_tab"] = "measures-check"
+
+        if self.workbasket.missing_measures_check_task_id:
+            result = AsyncResult(self.workbasket.missing_measures_check_task_id)
+            if result.status != "SUCCESS":
+                context["missing_measures_check_in_progress"] = True
+            else:
+                context["missing_measures_check_in_progress"] = False
+        return context
 
 
 class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
@@ -1293,6 +1309,17 @@ class WorkBasketChecksView(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["selected_tab"] = "rules-check"
+        missing_measures_check = getattr(
+            self.workbasket,
+            "missing_measures_check",
+            None,
+        )
+        if missing_measures_check is not None:
+            context["missing_measures_check_successful"] = (
+                missing_measures_check.successful
+            )
+        else:
+            context["missing_measures_check_successful"] = False
         # set to true if there is an associated goods import batch with an unsent notification
         try:
             import_batch = self.workbasket.importbatch

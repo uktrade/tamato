@@ -25,6 +25,7 @@ from django.db.models import When
 from django_fsm import FSMField
 from django_fsm import transition
 
+from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
 from checks.models import TransactionCheck
 from common.models.mixins import TimestampedMixin
@@ -373,6 +374,40 @@ class WorkBasket(TimestampedMixin):
             f"Terminated rule check for WorkBasket pk={self.pk}.",
         )
 
+    def terminate_missing_measures_check(self):
+        """Terminate any task associated with the WorkBasket's missing measures
+        checking, as identified by its missing_measures_check_task_id."""
+
+        logger.info(
+            f"Attempting missing measures check termination for WorkBasket "
+            f"pk={self.pk}.",
+        )
+        if not self.missing_measures_check_task_id:
+            logger.info(
+                f"Unable to terminate missing measures check for WorkBasket "
+                f"pk={self.pk} - "
+                f"empty missing_measures_check_task_id.",
+            )
+            return
+
+        task_result = AsyncResult(self.missing_measures_check_task_id)
+        if not task_result:
+            logger.info(
+                f"Unable to terminate missing measures check for WorkBasket "
+                f"pk={self.pk}, "
+                f"missing_measures_check_task_id={self.missing_measures_check_task_id} - "
+                f"task result is unavailable.",
+            )
+            return
+
+        task_result.revoke()
+        self.delete_missing_measure_comm_codes()
+        self.missing_measures_check_task_id = None
+        self.save()
+        logger.info(
+            f"Terminated missing measures check for WorkBasket pk={self.pk}.",
+        )
+
     @property
     def rule_check_task_status(self):
         """Return the status of the WorkBasket's rule check task if it is
@@ -633,11 +668,11 @@ class WorkBasket(TimestampedMixin):
             transaction__workbasket=self,
         ).delete()
 
-    def delete_missing_measure_checks(self):
+    def delete_missing_measure_comm_codes(self):
         """Delete all MissingMeasureCommCode instances related to the
         WorkBasket."""
         MissingMeasureCommCode.objects.filter(
-            commodity__transaction__workbasket=self,
+            missing_measures_check__workbasket=self,
         ).delete()
 
     @property
@@ -779,11 +814,4 @@ class DataRow(ValidityMixin, models.Model):
         max_length=255,
         null=True,
         blank=True,
-    )
-
-
-class MissingMeasureCommCode(TimestampedMixin, models.Model):
-    commodity = models.ForeignKey(
-        "commodities.GoodsNomenclature",
-        on_delete=models.CASCADE,
     )

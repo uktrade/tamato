@@ -8,77 +8,121 @@
 
 {% set page_title %}Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Commodity code check results {% endset %}
 
+{% macro run_button(text="Run") %}
+<form method="post">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+  <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+  {{ govukButton({
+    "text": text ~ " missing measures check",
+    "classes": "",
+    "name": "form-action",
+    "value": "start-check",
+    "preventDoubleClick": true,
+  }) }}
+</form>
+{% endmacro %}
+
+{% set stop_button %}
+<form
+  style="float:right"
+  method="post"
+  class="govuk-!-display-inline-block govuk-!-margin-left-5"
+>
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+  <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+  {{ govukButton({
+    "text": "Stop missing measures check",
+    "classes": "govuk-button--warning govuk-!-margin-0",
+    "name": "form-action",
+    "value": "stop-check",
+    "preventDoubleClick": true,
+  }) }}
+</form>
+{% endset %}
+
 {% block tab_content %}
   <h2 class="govuk-heading-s">Missing measures check</h2>
-  {% if not object_list %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <p class="govuk-body">No missing measures check has been performed yet</p>
+  {% if missing_measures_check_in_progress %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <p class="govuk-body">Missing measures check is in progress. Come back later or refresh to see results</p>
+      </div>
+      <div class="govuk-grid-column-one-third">
+        {{ stop_button }}
+      </div>
     </div>
-    <div class="govuk-grid-column-one-third">
-      <form
-        style="float:right"
-        method="post"
-        class="govuk-!-display-inline-block govuk-!-margin-left-5"
-      >
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-        <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
-        {{ govukButton({
-          "text": "Run missing measures check",
-          "classes": "",
-          "name": "form-action",
-          "value": "submit",
-          "preventDoubleClick": true,
-        }) }}
-      </form>
-    </div>
-  </div>
-
   {% else %}
-
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <p class="govuk-body">The following commodity codes are missing a type 103 measure</p>
+    {% if not missing_measures_check %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <p class="govuk-body">No missing measures check has been performed yet</p>
+      </div>
+      <div class="govuk-grid-column-one-third">
+        {{ run_button() }}
+      </div>
     </div>
-    <div class="govuk-grid-column-one-third">
-      <form
-        method="post"
-      >
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-        <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
-        {{ govukButton({
-          "text": "Re-run missing measures check",
-          "classes": "",
-          "name": "form-action",
-          "value": "submit",
-          "preventDoubleClick": true,
+
+    {% else %}
+
+      {% if missing_measures_check.successful %}
+        <p class="govuk-body">Missing measures check finished.</p>
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-two-thirds">
+            <p class="govuk-body">No missing type 103 measures were identified.</p>
+          </div>
+          <div class="govuk-grid-column-one-third">
+          <p class="govuk-body govuk-!-font-weight-bold align-right">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
+          </div>
+        </div>
+        {{ run_button(text="Re-run") }}
+
+      {# check was not successful #}
+      {% else %}
+
+
+        <p class="govuk-body">Missing measures check finished.</p>
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-two-thirds">
+            {{ govukWarningText({
+              "text": "The following commodity codes are missing a 103 measure type:",
+              "iconFallbackText": "Warning"
+            }) }}
+          </div>
+          <div class="govuk-grid-column-one-third">
+          <p class="govuk-body govuk-!-font-weight-bold align-right">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
+          </div>
+        </div>
+
+        {% set base_url = url("workbaskets:workbasket-ui-comm-code-checks") %}
+
+        {% set commodity_code %}
+          {{ create_sortable_anchor(request, "commodity", "Commodity code", base_url) }}
+        {% endset %}
+
+        {% set table_rows = [] %}
+        {% for check in object_list %}
+          {% set link -%}
+            <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', kwargs={'sid': check.commodity.sid}) }}">{{ check.commodity.item_id }}</a>
+          {%- endset %}
+          {{ table_rows.append([
+            {"html": link},
+            {"text": check.commodity.get_description().description if check.commodity.get_description().description else "—"},
+            {"text": "Measure type 103 missing"},
+          ]) or "" }}
+        {% endfor %}
+        {{ govukTable({
+          "head": [
+            {"text": commodity_code},
+            {"text": "Description"},
+            {"text": "Issue"},
+          ],
+          "rows": table_rows
         }) }}
-      </form>
-    </div>
-  </div>
 
-  {% set base_url = url("workbaskets:workbasket-ui-comm-code-checks") %}
+        {{ run_button(text="Re-run") }}
 
-  {% set commodity_code %}
-    {{ create_sortable_anchor(request, "commodity", "Commodity code", base_url) }}
-  {% endset %}
+      {% endif %}
 
-  {% set table_rows = [] %}
-  {% for check in object_list %}
-    {% set link -%}
-      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', kwargs={'sid': check.commodity.sid}) }}">{{ check.commodity.item_id }}</a>
-    {%- endset %}
-    {{ table_rows.append([
-      {"html": link},
-      {"text": check.commodity.get_description().description if check.commodity.get_description().description else "—"},
-    ]) or "" }}
-  {% endfor %}
-  {{ govukTable({
-    "head": [
-      {"text": commodity_code},
-      {"text": "Description"},
-    ],
-    "rows": table_rows
-  }) }}
+    {% endif %}
   {% endif %}
 {% endblock %}
