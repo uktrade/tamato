@@ -1618,8 +1618,13 @@ class built by <code class="docutils literal notranslate"><span class="pre">crea
 <dl class="py attribute">
 <dt class="sig sig-object py" id="common.models.Transaction.composite_key">
 <span class="sig-name descname"><span class="pre">composite_key</span></span><a class="headerlink" href="#common.models.Transaction.composite_key" title="Permalink to this definition">¶</a></dt>
-<dd><p>A wrapper for a deferred-loading field. When the value is read from this
-object the first time, the query is executed.</p>
+<dd><p>Originally containing workbasket pk, order and partition for user created
+transactions.</p>
+<p>Now a random unique string to avoid duplicate values when reordering /
+deleting transactions.</p>
+<p>It is not clear what the purpose of composite_key is other than as an
+application level unique ID for a transaction. It is not used anywhere in
+the app.</p>
 </dd></dl>
 
 <dl class="py attribute">

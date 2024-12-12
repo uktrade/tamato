@@ -409,6 +409,17 @@
     <span class="n">order</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
 
     <span class="n">composite_key</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Originally containing workbasket pk, order and partition for user created</span>
+<span class="sd">    transactions.</span>
+
+<span class="sd">    Now a random unique string to avoid duplicate values when reordering /</span>
+<span class="sd">    deleting transactions.</span>
+
+<span class="sd">    It is not clear what the purpose of composite_key is other than as an</span>
+<span class="sd">    application level unique ID for a transaction. It is not used anywhere in</span>
+<span class="sd">    the app.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">objects</span> <span class="o">=</span> <span class="n">TransactionManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span><span class="n">TransactionQueryset</span><span class="p">)()</span>
 
