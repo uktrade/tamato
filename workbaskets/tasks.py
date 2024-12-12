@@ -5,6 +5,8 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from django.db.transaction import atomic
 
+from checks.models import MissingMeasureCommCode
+from checks.models import MissingMeasuresCheck
 from checks.tasks import check_transaction
 from checks.tasks import check_transaction_sync
 from commodities.helpers import get_measures_on_declarable_commodities
@@ -12,7 +14,6 @@ from commodities.models.orm import GoodsNomenclature
 from common.celery import app
 from common.models import Transaction
 from geo_areas.models import GeographicalArea
-from workbaskets.models import MissingMeasureCommCode
 from workbaskets.models import WorkBasket
 
 # Celery logger adds the task id and status and outputs via the worker.
@@ -132,9 +133,20 @@ def check_workbasket_for_missing_measures(
     logger.info(
         f"Deleting previous missing measure checks from workbasket {workbasket_id}",
     )
-    workbasket.delete_missing_measure_checks()
+    workbasket.delete_missing_measure_comm_codes()
+
+    missing_measures_check = getattr(workbasket, "missing_measures_check", None)
+    if missing_measures_check is None:
+        missing_measures_check = MissingMeasuresCheck.objects.create(
+            workbasket=workbasket,
+        )
+
+    missing_measures_check.successful = not bool(commodities)
 
     for commodity in commodities:
         MissingMeasureCommCode.objects.create(
             commodity=commodity,
+            missing_measures_check=missing_measures_check,
         )
+
+    missing_measures_check.save()

@@ -87,3 +87,19 @@ class TrackedModelCheckFactory(factory.django.DjangoModelFactory):
     check_name = factories.string_sequence()
     successful = True
     message = factory.Faker("text", max_nb_chars=50)
+
+
+class MissingMeasuresCheckFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = models.MissingMeasuresCheck
+
+    workbasket = factory.SubFactory(factories.WorkBasketFactory)
+    successful = True
+
+
+class MissingMeasureCommCodeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = models.MissingMeasureCommCode
+
+    commodity = factory.SubFactory(factories.SimpleGoodsNomenclatureFactory)
+    missing_measures_check = factory.SubFactory(MissingMeasuresCheckFactory)
