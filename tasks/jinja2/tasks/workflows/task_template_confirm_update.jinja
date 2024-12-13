@@ -9,7 +9,10 @@
   {{ breadcrumbs(
     request,
     [
-      {"text": "Find and view workflow templates", "href": "#TODO"},
+      {
+        "text": "Find and view workflow templates",
+        "href": url("workflow:task-workflow-template-ui-list"),
+      },
       {
         "text": "Workflow template: " ~ task_workflow_template.title,
         "href": url(
@@ -45,5 +48,5 @@
 {% endblock %}
 
 {% block actions %}
-  <li><a href="TODO" class="govuk-link">Find and edit workflow templates</a></li>
+  <li><a href="{{ url('workflow:task-workflow-template-ui-list') }}" class="govuk-link">Find and edit workflow templates</a></li>
 {% endblock %}
