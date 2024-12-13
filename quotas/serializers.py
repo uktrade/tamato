@@ -325,9 +325,12 @@ def serialize_definition_data(definition):
         "quota_critical": definition["quota_critical"],
         "start_date": serialize_date(definition["valid_between"].lower),
         "end_date": serialize_date(definition["valid_between"].upper),
+        "maximum_precision": str(definition["maximum_precision"]),
     }
-    if "measurement_unit_qualifier" in definition:
-        # import pdb; pdb.set_trace()
+    if (
+        "measurement_unit_qualifier" in definition
+        and definition["measurement_unit_qualifier"] is not None
+    ):
         definition_data["measurement_unit_qualifier"] = str(
             definition["measurement_unit_qualifier"].pk,
         )
@@ -347,7 +350,6 @@ def deserialize_bulk_create_definition_data(definition, order_number):
     )
     if "description" in definition:
         description = definition["description"]
-    # TODO: double check this still works after changing pk to code (it should)
     if definition["measurement_unit_qualifier"] != "None":
         measurement_unit_qualifier_pk = Decimal(
             definition["measurement_unit_qualifier"],
@@ -361,6 +363,7 @@ def deserialize_bulk_create_definition_data(definition, order_number):
     order_number_obj = models.QuotaOrderNumber.objects.get(
         pk=order_number,
     )
+    maximum_precision = Decimal(definition["maximum_precision"])
     staged_data = {
         "volume": vol,
         "initial_volume": initial_volume,
@@ -369,7 +372,7 @@ def deserialize_bulk_create_definition_data(definition, order_number):
         "order_number": order_number_obj,
         "valid_between": valid_between,
         "update_type": UpdateType.CREATE,
-        "maximum_precision": 3,
+        "maximum_precision": maximum_precision,
         "quota_critical_threshold": 90,
         "description": description,
     }

@@ -1162,6 +1162,7 @@ def test_quota_definition_bulk_create_definition_info_frequencies(
         "quota_order_number": quota,
     }
     form_data = {
+        "maximum_precision": 3,
         "valid_between": TaricDateRange(
             datetime.date(2025, 1, 1),
             datetime.date(2025, 12, 31),
@@ -1272,6 +1273,7 @@ def test_bulk_create_update_definition_data_populates_parent_data(
         "quota_order_number": quota,
     }
     form_data = {
+        "maximum_precision": 3,
         "valid_between": TaricDateRange(
             datetime.date(2025, 1, 1),
             datetime.date(2025, 12, 31),
@@ -1314,17 +1316,12 @@ def test_bulk_create_update_definition_data_updates_data(
     bulk_create_start_form,
     bulk_create_definition_form,
 ):
-    # definition_form = forms.QuotaDefinitionBulkCreateDefinitionInformation(
-    #     request=session_request,
-    #     prefix="review"
-    # )
-    # Set up the main definition, saving additional data to session
     measurement_unit = factories.MeasurementUnitFactory()
-    # measurement_unit_qualifier = factories.MeasurementUnitQualifierFactory.create()
     initial_data = {
         "quota_order_number": quota,
     }
     definition_data = {
+        "maximum_precision": 3,
         "valid_between": TaricDateRange(
             datetime.date(2025, 1, 1),
             datetime.date(2025, 12, 31),
@@ -1344,6 +1341,7 @@ def test_bulk_create_update_definition_data_updates_data(
 
     update_form_data = {
         "id": 1,
+        "maximum_precision": 3,
         "valid_between": TaricDateRange(
             datetime.date(2025, 1, 1),
             datetime.date(2025, 12, 31),
@@ -1377,3 +1375,48 @@ def test_bulk_create_update_definition_data_updates_data(
         session_request.session["staged_definition_data"][1]["description"]
         == update_form_data["description"]
     )
+
+
+def test_quota_definition_bulk_create_definition_is_valid(
+    session_request_with_workbasket,
+    date_ranges,
+):
+    measurement_unit = factories.MeasurementUnitFactory()
+    measurement_unit_qualifier = factories.MeasurementUnitQualifierFactory()
+
+    form_data = {
+        "maximum_precision": 3,
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "volume": "600.000",
+        "initial_volume": "500.000",
+        "measurement_unit": measurement_unit,
+        "measurement_unit_qualifier": measurement_unit_qualifier,
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
+        "frequency": 1,
+    }
+
+    form = forms.QuotaDefinitionBulkCreateDefinitionInformation(
+        data=form_data,
+        request=session_request_with_workbasket,
+    )
+    with override_current_transaction(Transaction.objects.last()):
+        assert not form.is_valid()
+        assert (
+            form.errors["__all__"][0] == "A value for instance_count must be provided"
+        )
+
+    form_data["instance_count"] = 3
+
+    form = forms.QuotaDefinitionBulkCreateDefinitionInformation(
+        data=form_data,
+        request=session_request_with_workbasket,
+    )
+
+    with override_current_transaction(Transaction.objects.last()):
+        assert form.is_valid()

@@ -310,6 +310,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         frequency = decimal.Decimal(cleaned_data["frequency"])
         definition_data = {
             "id": 1,
+            "maximum_precision": cleaned_data["maximum_precision"],
             "initial_volume": cleaned_data["initial_volume"],
             "volume": cleaned_data["volume"],
             "measurement_unit": cleaned_data["measurement_unit"],
@@ -544,6 +545,7 @@ class BulkDefinitionUpdateData(
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
         fields["maximum_precision"].initial = 3
         # The following populate from the data saved in session
+
         fields["start_date"].initial = deserialize_date(definition_data["start_date"])
         fields["end_date"].initial = deserialize_date(definition_data["end_date"])
         fields["end_date"].help_text = ""
@@ -557,7 +559,10 @@ class BulkDefinitionUpdateData(
         if "description" in definition_data:
             fields["description"].initial = definition_data["description"]
 
-        if "measurement_unit_qualifier" in definition_data:
+        if (
+            "measurement_unit_qualifier" in definition_data
+            and definition_data["measurement_unit_qualifier"] != "None"
+        ):
             fields["measurement_unit_qualifier"].initial = (
                 MeasurementUnitQualifier.objects.get(
                     code=definition_data["measurement_unit_qualifier"],
