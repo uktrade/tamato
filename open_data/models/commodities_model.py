@@ -2,8 +2,6 @@ from django.db import models
 
 from commodities.models import FootnoteAssociationGoodsNomenclature
 from commodities.models import GoodsNomenclature
-from commodities.models import GoodsNomenclatureDescription
-from commodities.models import GoodsNomenclatureIndent
 from commodities.models import GoodsNomenclatureOrigin
 from commodities.models import GoodsNomenclatureSuccessor
 from commodities.models.code import CommodityCode
@@ -25,6 +23,7 @@ class ReportGoodsNomenclature(ReportModel):
     statistical = models.BooleanField()
 
     indent = models.IntegerField(null=True)
+    description = models.TextField(blank=True, null=True)
     parent_trackedmodel_ptr = models.ForeignKey(
         "self",
         models.DO_NOTHING,
@@ -40,48 +39,27 @@ class ReportGoodsNomenclature(ReportModel):
         db_table = ReportModel.create_table_name(GoodsNomenclature)
 
 
-class ReportGoodsNomenclatureIndent(ReportModel):
-    shadowed_model = GoodsNomenclatureIndent
-
-    trackedmodel_ptr = models.IntegerField(
-        primary_key=True,
-        db_column="trackedmodel_ptr_id",
-    )
-    sid = models.IntegerField()
-    indent = models.IntegerField()
-    indented_goods_nomenclature = models.ForeignKey(
-        ReportGoodsNomenclature,
-        models.DO_NOTHING,
-    )
-    validity_start = models.DateField()
-
-    class Meta:
-        db_table = ReportModel.create_table_name(GoodsNomenclatureIndent)
-
-    @classmethod
-    def extra_queries(cls):
-        # If there are several indents defined for the same commodities, keep only
-        # the latest one by date
-        query_list = []
-
-        query_list.append(
-            f"""
-            DELETE 
-            FROM \"{cls._meta.db_table}\"
-            WHERE trackedmodel_ptr_id in
-                (SELECT trackedmodel_ptr_id 
-                    FROM 
-                        (SELECT trackedmodel_ptr_id,
-                        ROW_NUMBER() OVER (
-                                      PARTITION BY indented_goods_nomenclature_id
-                                      ORDER BY validity_start DESC
-                                    ) as DupRank                            
-                        FROM \"{cls._meta.db_table}\") AS T
-                        WHERE t.DupRank > 1 )
-        """,
-        )
-
-        return query_list
+# class ReportGoodsNomenclatureIndent(ReportModel):
+#     shadowed_model = GoodsNomenclatureIndent
+#
+#     trackedmodel_ptr = models.IntegerField(
+#         primary_key=True,
+#         db_column="trackedmodel_ptr_id",
+#     )
+#     sid = models.IntegerField()
+#     indent = models.IntegerField()
+#     indented_goods_nomenclature = models.ForeignKey(
+#         ReportGoodsNomenclature,
+#         models.DO_NOTHING,
+#     )
+#     validity_start = models.DateField()
+#
+#     remove_obsolete = True
+#     partition_field = "indented_goods_nomenclature"
+#
+#     class Meta:
+#         db_table = ReportModel.create_table_name(GoodsNomenclatureIndent)
+#
 
 
 class ReportGoodsNomenclatureSuccessor(ReportModel):
@@ -125,57 +103,58 @@ class ReportGoodsNomenclatureOrigin(ReportModel):
         db_table = ReportModel.create_table_name(GoodsNomenclatureOrigin)
 
 
-class ReportGoodsNomenclatureDescription(ReportModel):
-    shadowed_model = GoodsNomenclatureDescription
-
-    trackedmodel_ptr = models.IntegerField(
-        primary_key=True,
-        db_column="trackedmodel_ptr_id",
-    )
-    sid = models.IntegerField()
-    description = models.TextField(blank=True, null=True)
-    described_goods_nomenclature = models.ForeignKey(
-        ReportGoodsNomenclature,
-        models.DO_NOTHING,
-        related_name="description",
-    )
-    validity_start = models.DateField()
-
-    class Meta:
-        db_table = ReportModel.create_table_name(GoodsNomenclatureDescription)
-
-    @classmethod
-    def extra_queries(cls):
-        # If there are several descriptions defined for the same commodities, keep only
-        # the latest one
-        query_list = []
-
-        query_list.append(
-            f"""
-            DELETE 
-            FROM \"{cls._meta.db_table}\"
-            WHERE trackedmodel_ptr_id in
-                (SELECT trackedmodel_ptr_id 
-                    FROM 
-                        (SELECT trackedmodel_ptr_id,
-                        ROW_NUMBER() OVER (
-                                      PARTITION BY described_goods_nomenclature_id
-                                      ORDER BY validity_start DESC
-                                    ) as DupRank                            
-                        FROM \"{cls._meta.db_table}\") AS T
-                        WHERE t.DupRank > 1 )
-        """,
-        )
-
-        # query_list.append(f"""
-        #     DELETE
-        #     FROM \"{cls._meta.db_table}\"
-        #     where trackedmodel_ptr_id not in
-        #     (select MAX(trackedmodel_ptr_id)
-        #         FROM \"{cls._meta.db_table}\"
-        #         group by described_goods_nomenclature_id);
-        # """)
-        return query_list
+# class ReportGoodsNomenclatureDescription(ReportModel):
+#     shadowed_model = GoodsNomenclatureDescription
+#
+#     trackedmodel_ptr = models.IntegerField(
+#         primary_key=True,
+#         db_column="trackedmodel_ptr_id",
+#     )
+#     sid = models.IntegerField()
+#     description = models.TextField(blank=True, null=True)
+#     described_goods_nomenclature = models.ForeignKey(
+#         ReportGoodsNomenclature,
+#         models.DO_NOTHING,
+#         related_name="description",
+#     )
+#     validity_start = models.DateField()
+#
+#     class Meta:
+#         db_table = ReportModel.create_table_name(GoodsNomenclatureDescription)
+#
+#     @classmethod
+#     def extra_queries(cls):
+#         # If there are several items defined for the same object, keep only
+#         # the latest one
+#         query_list = []
+#
+#         query_list.append(
+#             f"""
+#             DELETE
+#             FROM \"{cls._meta.db_table}\"
+#             WHERE trackedmodel_ptr_id in
+#                 (SELECT trackedmodel_ptr_id
+#                     FROM
+#                         (SELECT trackedmodel_ptr_id,
+#                         ROW_NUMBER() OVER (
+#                                       PARTITION BY described_goods_nomenclature_id
+#                                       ORDER BY validity_start DESC
+#                                     ) as DupRank
+#                         FROM \"{cls._meta.db_table}\") AS T
+#                         WHERE t.DupRank > 1 )
+#         """,
+#         )
+#
+#         # query_list.append(f"""
+#         #     DELETE
+#         #     FROM \"{cls._meta.db_table}\"
+#         #     where trackedmodel_ptr_id not in
+#         #     (select MAX(trackedmodel_ptr_id)
+#         #         FROM \"{cls._meta.db_table}\"
+#         #         group by described_goods_nomenclature_id);
+#         # """)
+#         return query_list
+#
 
 
 class ReportFootnoteAssociationGoodsNomenclature(ReportModel):

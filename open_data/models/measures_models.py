@@ -69,6 +69,10 @@ class ReportFootnoteAssociationMeasure(ReportModel):
     class Meta:
         db_table = ReportModel.create_table_name(FootnoteAssociationMeasure)
 
+    @classmethod
+    def ignore_fk_list(cls):
+        return ["footnoted_measure"]
+
 
 class ReportMeasure(ReportModel):
     shadowed_model = Measure
@@ -169,7 +173,6 @@ class ReportMeasureConditionComponent(ReportModel):
 
 class ReportMeasureCondition(ReportModel):
     shadowed_model = MeasureCondition
-
     trackedmodel_ptr = models.IntegerField(
         primary_key=True,
         db_column="trackedmodel_ptr_id",
@@ -211,6 +214,10 @@ class ReportMeasureCondition(ReportModel):
         blank=True,
         null=True,
     )
+
+    @classmethod
+    def ignore_fk_list(cls):
+        return ["dependent_measure"]
 
     class Meta:
         db_table = ReportModel.create_table_name(MeasureCondition)

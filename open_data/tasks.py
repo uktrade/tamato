@@ -11,12 +11,19 @@ from open_data.models.utils import ReportModel
 
 def update_model(model, cursor):
     cursor.execute(f'TRUNCATE TABLE "{model._meta.db_table}"')
-    # print(model.create_update_query())
-    cursor.execute(model.create_update_query())
-    fk_query_list = model.create_update_fk_queries()
+    # print(model.update_query())
+    cursor.execute(model.update_query())
+    fk_query_list = model.update_fk_queries()
+    # The foreign keys are updated from TAP database,
+    # not from the reporting area, so they can be updated at any time
     if fk_query_list:
         for query in fk_query_list:
             cursor.execute(query)
+
+    if model.remove_obsolete:
+        # print(model.create_remove_obsolete_row_query())
+        cursor.execute(model.remove_obsolete_row_query())
+
     extra_query_list = model.extra_queries()
 
     if extra_query_list:
@@ -41,6 +48,8 @@ def update_all_tables(verbose=False):
                     print(
                         f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',
                     )
+    # The following are changes specific to different table.
+    # They update fields using Django routines, created specifically for the task.
 
     save_commodities_parent(verbose)
 

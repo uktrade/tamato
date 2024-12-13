@@ -8,8 +8,6 @@ from open_data.models.commodities_model import (
     ReportFootnoteAssociationGoodsNomenclature,
 )
 from open_data.models.commodities_model import ReportGoodsNomenclature
-from open_data.models.commodities_model import ReportGoodsNomenclatureDescription
-from open_data.models.commodities_model import ReportGoodsNomenclatureIndent
 from open_data.models.commodities_model import ReportGoodsNomenclatureOrigin
 from open_data.models.commodities_model import ReportGoodsNomenclatureSuccessor
 from open_data.models.footnotes_models import ReportFootnote
@@ -58,10 +56,8 @@ __all__ = [
     "ReportCertificate",
     "ReportCertificateDescription",
     "ReportGoodsNomenclature",
-    "ReportGoodsNomenclatureIndent",
     "ReportGoodsNomenclatureSuccessor",
     "ReportGoodsNomenclatureOrigin",
-    "ReportGoodsNomenclatureDescription",
     "ReportFootnoteAssociationGoodsNomenclature",
     "ReportFootnoteType",
     "ReportFootnote",

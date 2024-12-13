@@ -9,7 +9,6 @@ from django.db.models import Q
 
 from commodities.models import GoodsNomenclatureDescription
 from measures.models import Measure
-from open_data.models import ReportGoodsNomenclatureDescription
 from open_data.models import ReportMeasure
 from open_data.models import ReportQuotaDefinition
 from open_data.models import ReportQuotaOrderNumberOrigin
@@ -34,7 +33,7 @@ def normalise_loglevel(loglevel):
         return loglevel
 
 
-class ChangedQuotaExport:
+class QuotaExport:
     """Runs the export command against TAP data to extract quota CSV data."""
 
     def __init__(self, target_file: NamedTemporaryFile):
@@ -98,6 +97,11 @@ class ChangedQuotaExport:
                 goods_nomenclature_headings = self.get_goods_nomenclature_headings(
                     item_ids,
                 )
+                if geographical_areas == "":
+                    geographical_areas = "EMPTY"
+                if goods_nomenclature_headings == "":
+                    goods_nomenclature_headings = "EMPTY"
+
                 if geographical_areas != "" and goods_nomenclature_headings != "":
                     quota_data = [
                         quota.sid,
@@ -291,7 +295,10 @@ class ChangedQuotaExport:
         """
         item_ids = []
         for measure in self.get_associated_measures(quota):
-            item_ids.append(measure.goods_nomenclature.item_id)
+            try:
+                item_ids.append(measure.goods_nomenclature.item_id)
+            except:
+                logger.info(f"Measure {measure} has no commodity code")
 
         return item_ids
 
@@ -337,18 +344,19 @@ class ChangedQuotaExport:
         Returns:
             str: the current description for the item_id
         """
-        description = (
-            ReportGoodsNomenclatureDescription.objects.all()
-            .filter(described_goods_nomenclature__item_id=item_id)
-            .order_by("-validity_start")
-            .first()
-        )
+        # description = (
+        #     ReportGoodsNomenclature.objects.all()
+        #     .filter(described_goods_nomenclature__item_id=item_id)
+        #     .order_by("-validity_start")
+        #     .first()
+        # )
+        #
+        # return description.description
 
-        return description.description
 
-
-class QuotaExport:
-    """Runs the export command against TAP data to extract quota CSV data."""
+class OriginalQuotaExport:
+    """Runs the export command against TAP open data to extract quota CSV
+    data."""
 
     def __init__(self, target_file: NamedTemporaryFile):
         # self.rows = []
@@ -404,6 +412,7 @@ class QuotaExport:
             writer = csv.writer(file)
             writer.writerow(self.csv_headers())
             for quota in quotas:
+                print(f"Processing {quota.sid}")
                 item_ids = self.get_goods_nomenclature_item_ids(quota)
                 geographical_areas, geographical_area_exclusions = (
                     self.get_geographical_areas_and_exclusions(quota)

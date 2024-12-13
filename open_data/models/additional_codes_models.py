@@ -50,6 +50,8 @@ class ReportAdditionalCodeDescription(ReportModel):
         models.DO_NOTHING,
     )
     validity_start = models.DateField()
+    remove_obsolete = True
+    partition_field = "described_additionalcode"
 
     class Meta:
         db_table = ReportModel.create_table_name(AdditionalCodeDescription)

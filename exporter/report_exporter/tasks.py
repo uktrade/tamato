@@ -12,7 +12,7 @@ def export_and_upload_quotas_csv(local_path: str = None) -> bool:
     exporters.QuotaReportExporter(local_path).export_csv()
 
 
-def new_export_and_upload_quotas_csv(local_path: str = None) -> bool:
+def export_and_upload_commodities_csv(local_path: str = None) -> bool:
     logger.info("Starting...")
     start_time = time.time()
     exporters.CommoditiesReportExporter(local_path).export_csv()

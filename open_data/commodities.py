@@ -19,6 +19,7 @@ def tree_edge_to_db(tree_edges):
                 trackedmodel_ptr=comm.obj.pk,
             )
             commodity.indent = comm.indent
+            commodity.description = comm.description
             commodity.parent_trackedmodel_ptr_id = parent_obj_pk
             commodity.save()
         except ReportGoodsNomenclature.DoesNotExist:
