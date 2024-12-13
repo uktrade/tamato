@@ -1063,7 +1063,7 @@ class WorkBasketViolationDetail(DetailView):
 
 
 class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
-    success_url = reverse_lazy("workbaskets:workbasket-ui-comm-code-checks")
+    success_url = reverse_lazy("workbaskets:workbasket-ui-missing-measures-check")
     template_name = "workbaskets/checks/missing_measures.jinja"
     form_class = forms.WorkbasketMeasuresCheckForm
 
