@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Iterable
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import factory
 import pytest
 from django.conf import settings
 from django.utils.timezone import make_aware
@@ -491,3 +493,42 @@ def test_workbasket_user_assignments_queryset():
     assert worker_assignment in queryset
     assert reviewer_assignment in queryset
     assert len(queryset) == 2
+
+
+def test_terminate_missing_measures_check_no_id():
+    workbasket = factories.WorkBasketFactory.create(
+        missing_measures_check_task_id=None,
+    )
+    assert workbasket.terminate_missing_measures_check() is None
+
+
+def test_terminate_missing_measures_check_no_task_result():
+    workbasket = factories.WorkBasketFactory.create(
+        missing_measures_check_task_id="12345",
+    )
+    # sanity check
+    assert workbasket.missing_measures_check_task_id == "12345"
+
+    with patch(
+        "workbaskets.models.check_workbasket_for_missing_measures.delay",
+        return_value=None,
+    ):
+        assert workbasket.terminate_missing_measures_check() is None
+
+    assert workbasket.missing_measures_check_task_id == "12345"
+
+
+def test_terminate_missing_measures_check():
+    workbasket = factories.WorkBasketFactory.create(
+        missing_measures_check_task_id="12345",
+    )
+    # sanity check
+    assert workbasket.missing_measures_check_task_id == "12345"
+
+    with patch(
+        "workbaskets.tasks.check_workbasket_for_missing_measures.delay",
+        return_value=MagicMock(id=factory.Faker("uuid4")),
+    ):
+        workbasket.terminate_missing_measures_check()
+
+    assert workbasket.missing_measures_check_task_id is None
