@@ -2,7 +2,6 @@ from django.db import models
 
 from common.fields import TaricDateRangeField
 from geo_areas.models import GeographicalArea
-from geo_areas.models import GeographicalAreaDescription
 from geo_areas.models import GeographicalMembership
 from open_data.models.utils import ReportModel
 
@@ -51,20 +50,20 @@ class ReportGeographicalMembership(ReportModel):
         db_table = ReportModel.create_table_name(GeographicalMembership)
 
 
-class ReportGeographicalAreaDescription(ReportModel):
-    shadowed_model = GeographicalAreaDescription
-    trackedmodel_ptr = models.IntegerField(
-        primary_key=True,
-        db_column="trackedmodel_ptr_id",
-    )
-    description = models.CharField(max_length=500, blank=True, null=True)
-    sid = models.IntegerField()
-    described_geographicalarea = models.ForeignKey(
-        ReportGeographicalArea,
-        models.DO_NOTHING,
-        related_name="descriptions",
-    )
-    validity_start = models.DateField()
-
-    class Meta:
-        db_table = ReportModel.create_table_name(GeographicalAreaDescription)
+# class ReportGeographicalAreaDescription(ReportModel):
+#     shadowed_model = GeographicalAreaDescription
+#     trackedmodel_ptr = models.IntegerField(
+#         primary_key=True,
+#         db_column="trackedmodel_ptr_id",
+#     )
+#     description = models.CharField(max_length=500, blank=True, null=True)
+#     sid = models.IntegerField()
+#     described_geographicalarea = models.ForeignKey(
+#         ReportGeographicalArea,
+#         models.DO_NOTHING,
+#         related_name="descriptions",
+#     )
+#     validity_start = models.DateField()
+#
+#     class Meta:
+#         db_table = ReportModel.create_table_name(GeographicalAreaDescription)

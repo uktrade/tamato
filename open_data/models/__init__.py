@@ -14,7 +14,6 @@ from open_data.models.footnotes_models import ReportFootnote
 from open_data.models.footnotes_models import ReportFootnoteDescription
 from open_data.models.footnotes_models import ReportFootnoteType
 from open_data.models.geo_areas_models import ReportGeographicalArea
-from open_data.models.geo_areas_models import ReportGeographicalAreaDescription
 from open_data.models.geo_areas_models import ReportGeographicalMembership
 from open_data.models.measures_models import ReportAdditionalCodeTypeMeasureType
 from open_data.models.measures_models import ReportDutyExpression
@@ -63,7 +62,6 @@ __all__ = [
     "ReportFootnote",
     "ReportFootnoteDescription",
     "ReportGeographicalArea",
-    "ReportGeographicalAreaDescription",
     "ReportGeographicalMembership",
     "ReportAdditionalCodeTypeMeasureType",
     "ReportDutyExpression",

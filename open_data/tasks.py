@@ -5,6 +5,7 @@ from django.db import connection
 
 from open_data.apps import APP_LABEL
 from open_data.commodities import save_commodities_parent
+from open_data.geo_areas import save_geo_areas
 from open_data.models.utils import LOOK_UP_VIEW
 from open_data.models.utils import ReportModel
 
@@ -52,6 +53,7 @@ def update_all_tables(verbose=False):
     # They update fields using Django routines, created specifically for the task.
 
     save_commodities_parent(verbose)
+    save_geo_areas()
 
 
 def update_single_model(model):
