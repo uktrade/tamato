@@ -431,6 +431,7 @@ class PackagedWorkBasket(TimestampedMixin):
         """Django FSM condition: Instance must be at position 1 in order to
         complete the begin_processing transition to CURRENTLY_PROCESSING."""
 
+        self.refresh_from_db(fields=["position"])
         return self.position == 1
 
     def begin_processing_condition_no_instances_currently_processing(self) -> bool:
@@ -470,9 +471,11 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
-        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
-        self.processing_started_at = make_aware(datetime.now())
-        self.save()
+        instance = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            pk=self.pk,
+        )
+        instance.processing_started_at = make_aware(datetime.now())
+        instance.save()
 
     @create_envelope_on_completed_processing
     @save_after
