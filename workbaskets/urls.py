@@ -62,9 +62,9 @@ ui_patterns = [
         name="workbasket-ui-violations",
     ),
     path(
-        f"current/comm-code-checks/",
+        f"current/missing-measures-check/",
         ui_views.WorkBasketCommCodeChecks.as_view(),
-        name="workbasket-ui-comm-code-checks",
+        name="workbasket-ui-missing-measures-check",
     ),
     path(
         f"current/worksheet-check/",
