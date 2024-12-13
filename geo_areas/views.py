@@ -88,6 +88,10 @@ class GeoAreaList(
     filterset_class.search_fields = ["area_id", "description"]
 
     def get_queryset(self):
+        qs = GeographicalArea.objects.current().with_current_descriptions()
+        for q in qs:
+            print("1")
+
         return GeographicalArea.objects.current().with_current_descriptions()
 
 
