@@ -439,11 +439,11 @@ class SubQuotaDefinitionsUpdatesForm(
                 )
             if not business_rules.check_QA5_equivalent_volumes(
                 self.original_definition,
-                volume=cleaned_data["volume"],
+                initial_volume=cleaned_data["initial_volume"],
             ):
                 raise ValidationError(
                     "Whenever a sub-quota is defined with the 'equivalent' "
-                    "type, it must have the same volume as the ones associated"
+                    "type, it must have the same volume as other sub-quotas associated"
                     " with the parent quota",
                 )
 
