@@ -373,7 +373,6 @@ class QuotaDefinitionBulkCreatorWizard(
         )
 
     def done(self, form_list, **kwargs):
-        print("fires")
         order_number_pk = self.request.session["quota_order_number_pk"]
         definition_data = self.request.session["staged_definition_data"]
         with transaction.atomic():
