@@ -52,5 +52,8 @@ class ReportCertificateDescription(ReportModel):
     )
     validity_start = models.DateField()
 
+    remove_obsolete = True
+    partition_field = "described_certificate"
+
     class Meta:
         db_table = ReportModel.create_table_name(CertificateDescription)
