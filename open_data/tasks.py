@@ -3,11 +3,28 @@ import time
 import django.apps
 from django.db import connection
 
+from common.models.mixins.description import DescribedMixin
 from open_data.apps import APP_LABEL
 from open_data.commodities import save_commodities_parent
 from open_data.geo_areas import save_geo_areas
 from open_data.models.utils import LOOK_UP_VIEW
 from open_data.models.utils import ReportModel
+
+
+def add_description(model, verbose=True):
+    if issubclass(model.shadowed_model, DescribedMixin):
+        queryset = model.objects.select_related(
+            "trackedmodel_ptr",
+        ).all()
+        start = time.time()
+        for row in queryset:
+            description = model.shadowed_model.objects.get(
+                pk=row.trackedmodel_ptr_id,
+            ).get_description()
+            row.description = description
+            row.save()
+        if verbose:
+            print(f"Elapsed time {time.time() - start}")
 
 
 def update_model(model, cursor):
@@ -51,9 +68,10 @@ def update_all_tables(verbose=False):
                     )
     # The following are changes specific to different table.
     # They update fields using Django routines, created specifically for the task.
-
+    for model in config.get_models():
+        add_description(model)
     save_commodities_parent(verbose)
-    save_geo_areas()
+    save_geo_areas(verbose)
 
 
 def update_single_model(model):
@@ -65,3 +83,4 @@ def update_single_model(model):
     print(
         f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',
     )
+    add_description(model)

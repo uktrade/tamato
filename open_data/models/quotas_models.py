@@ -15,10 +15,13 @@ from quotas.models import QuotaSuspension
 class ReportQuotaAssociation(ReportModel):
     shadowed_model = QuotaAssociation
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     sub_quota_relation_type = models.CharField(max_length=2)
     coefficient = models.DecimalField(max_digits=16, decimal_places=5)
     main_quota = models.ForeignKey("ReportQuotaDefinition", models.DO_NOTHING)
@@ -35,10 +38,13 @@ class ReportQuotaAssociation(ReportModel):
 class ReportQuotaDefinition(ReportModel):
     shadowed_model = QuotaDefinition
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     volume = models.DecimalField(max_digits=14, decimal_places=3)
@@ -74,10 +80,13 @@ class ReportQuotaDefinition(ReportModel):
 class ReportQuotaOrderNumber(ReportModel):
     shadowed_model = QuotaOrderNumber
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     order_number = models.CharField(max_length=6)
@@ -91,10 +100,13 @@ class ReportQuotaOrderNumber(ReportModel):
 class ReportQuotaOrderNumberOrigin(ReportModel):
     shadowed_model = QuotaOrderNumberOrigin
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     geographical_area = models.ForeignKey("ReportGeographicalArea", models.DO_NOTHING)
@@ -107,10 +119,13 @@ class ReportQuotaOrderNumberOrigin(ReportModel):
 class ReportQuotaSuspension(ReportModel):
     shadowed_model = QuotaSuspension
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
@@ -123,10 +138,13 @@ class ReportQuotaSuspension(ReportModel):
 class ReportQuotaOrderNumberOriginExclusion(ReportModel):
     shadowed_model = QuotaOrderNumberOriginExclusion
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     excluded_geographical_area = models.ForeignKey(
         "ReportGeographicalArea",
         models.DO_NOTHING,
@@ -140,10 +158,13 @@ class ReportQuotaOrderNumberOriginExclusion(ReportModel):
 class ReportQuotaEvent(ReportModel):
     shadowed_model = QuotaEvent
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     subrecord_code = models.CharField(max_length=2)
     occurrence_timestamp = models.DateTimeField()
     data = models.JSONField()
@@ -156,10 +177,13 @@ class ReportQuotaEvent(ReportModel):
 class ReportQuotaBlocking(ReportModel):
     shadowed_model = QuotaBlocking
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     blocking_period_type = models.SmallIntegerField()

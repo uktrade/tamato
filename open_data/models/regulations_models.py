@@ -12,10 +12,13 @@ from regulations.models import Suspension
 class ReportAmendment(ReportModel):
     shadowed_model = Amendment
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     enacting_regulation = models.ForeignKey("ReportRegulation", models.DO_NOTHING)
     target_regulation = models.ForeignKey(
         "ReportRegulation",
@@ -30,10 +33,13 @@ class ReportAmendment(ReportModel):
 class ReportGroup(ReportModel):
     shadowed_model = Group
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     group_id = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
@@ -45,10 +51,13 @@ class ReportGroup(ReportModel):
 class ReportRegulation(ReportModel):
     shadowed_model = Regulation
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     role_type = models.IntegerField()
     regulation_id = models.CharField(max_length=8)
     official_journal_number = models.CharField(max_length=5, blank=True, null=True)
@@ -80,10 +89,13 @@ class ReportRegulation(ReportModel):
 class ReportSuspension(ReportModel):
     shadowed_model = Suspension
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     effective_end_date = models.DateField(blank=True, null=True)
     enacting_regulation = models.ForeignKey(ReportRegulation, models.DO_NOTHING)
     target_regulation = models.ForeignKey(
@@ -99,10 +111,13 @@ class ReportSuspension(ReportModel):
 class ReportReplacement(ReportModel):
     shadowed_model = Replacement
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.OneToOneField(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     measure_type_id = models.CharField(max_length=6, blank=True, null=True)
     geographical_area_id = models.CharField(max_length=4, blank=True, null=True)
     chapter_heading = models.CharField(max_length=2, blank=True, null=True)

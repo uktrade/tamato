@@ -1,8 +1,6 @@
 from open_data.models.additional_codes_models import ReportAdditionalCode
-from open_data.models.additional_codes_models import ReportAdditionalCodeDescription
 from open_data.models.additional_codes_models import ReportAdditionalCodeType
 from open_data.models.certificates_models import ReportCertificate
-from open_data.models.certificates_models import ReportCertificateDescription
 from open_data.models.certificates_models import ReportCertificateType
 from open_data.models.commodities_model import (
     ReportFootnoteAssociationGoodsNomenclature,
@@ -11,7 +9,6 @@ from open_data.models.commodities_model import ReportGoodsNomenclature
 from open_data.models.commodities_model import ReportGoodsNomenclatureOrigin
 from open_data.models.commodities_model import ReportGoodsNomenclatureSuccessor
 from open_data.models.footnotes_models import ReportFootnote
-from open_data.models.footnotes_models import ReportFootnoteDescription
 from open_data.models.footnotes_models import ReportFootnoteType
 from open_data.models.geo_areas_models import ReportGeographicalArea
 from open_data.models.geo_areas_models import ReportGeographicalMembership
@@ -47,20 +44,16 @@ from open_data.models.regulations_models import ReportSuspension
 
 __all__ = [
     "ReportAdditionalCode",
-    "ReportAdditionalCodeDescription",
     "ReportAdditionalCodeType",
     "ReportAdditionalCode",
-    "ReportAdditionalCodeDescription",
     "ReportCertificateType",
     "ReportCertificate",
-    "ReportCertificateDescription",
     "ReportGoodsNomenclature",
     "ReportGoodsNomenclatureSuccessor",
     "ReportGoodsNomenclatureOrigin",
     "ReportFootnoteAssociationGoodsNomenclature",
     "ReportFootnoteType",
     "ReportFootnote",
-    "ReportFootnoteDescription",
     "ReportGeographicalArea",
     "ReportGeographicalMembership",
     "ReportAdditionalCodeTypeMeasureType",

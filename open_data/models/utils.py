@@ -97,6 +97,7 @@ class ReportModel(models.Model):
                 if (
                     type(f) is models.fields.related.ForeignKey
                     and not f.name in ignore_list
+                    and not f.primary_key
                 ):
                     query_list.append(
                         f'UPDATE "{cls._meta.db_table}" '

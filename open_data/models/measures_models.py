@@ -22,10 +22,13 @@ from open_data.models.utils import ReportModel
 
 class ReportAdditionalCodeTypeMeasureType(ReportModel):
     shadowed_model = AdditionalCodeTypeMeasureType
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     additional_code_type = models.ForeignKey(
         "ReportAdditionalCodeType",
@@ -40,10 +43,13 @@ class ReportAdditionalCodeTypeMeasureType(ReportModel):
 class ReportDutyExpression(ReportModel):
     shadowed_model = DutyExpression
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     prefix = models.CharField(max_length=14)
@@ -59,10 +65,13 @@ class ReportDutyExpression(ReportModel):
 class ReportFootnoteAssociationMeasure(ReportModel):
     shadowed_model = FootnoteAssociationMeasure
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     associated_footnote = models.ForeignKey("ReportFootnote", models.DO_NOTHING)
     footnoted_measure = models.ForeignKey("ReportMeasure", models.DO_NOTHING)
 
@@ -76,10 +85,13 @@ class ReportFootnoteAssociationMeasure(ReportModel):
 
 class ReportMeasure(ReportModel):
     shadowed_model = Measure
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     dead_additional_code = models.CharField(max_length=16, blank=True, null=True)
@@ -126,10 +138,13 @@ class ReportMeasure(ReportModel):
 class ReportMeasureAction(ReportModel):
     shadowed_model = MeasureAction
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     code = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
@@ -142,10 +157,13 @@ class ReportMeasureAction(ReportModel):
 class ReportMeasureConditionComponent(ReportModel):
     shadowed_model = MeasureConditionComponent
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     duty_amount = models.DecimalField(
         max_digits=10,
         decimal_places=3,
@@ -173,10 +191,13 @@ class ReportMeasureConditionComponent(ReportModel):
 
 class ReportMeasureCondition(ReportModel):
     shadowed_model = MeasureCondition
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     sid = models.IntegerField()
     component_sequence_number = models.SmallIntegerField()
     duty_amount = models.DecimalField(
@@ -226,10 +247,13 @@ class ReportMeasureCondition(ReportModel):
 class ReportMeasureConditionCode(ReportModel):
     shadowed_model = MeasureConditionCode
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     code = models.CharField(max_length=2)
     description = models.CharField(max_length=500, blank=True, null=True)
@@ -243,10 +267,13 @@ class ReportMeasureConditionCode(ReportModel):
 class ReportMeasurementUnit(ReportModel):
     shadowed_model = MeasurementUnit
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     code = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
@@ -259,10 +286,13 @@ class ReportMeasurementUnit(ReportModel):
 class ReportMeasurementUnitQualifier(ReportModel):
     shadowed_model = MeasurementUnitQualifier
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     code = models.CharField(max_length=1)
     description = models.CharField(max_length=500, blank=True, null=True)
@@ -275,10 +305,13 @@ class ReportMeasurementUnitQualifier(ReportModel):
 class ReportMeasureTypeSeries(ReportModel):
     shadowed_model = MeasureTypeSeries
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.CharField(max_length=2)
     measure_type_combination = models.SmallIntegerField()
@@ -291,10 +324,13 @@ class ReportMeasureTypeSeries(ReportModel):
 class ReportMonetaryUnit(ReportModel):
     shadowed_model = MonetaryUnit
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     code = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
@@ -306,10 +342,13 @@ class ReportMonetaryUnit(ReportModel):
 class ReportMeasureType(ReportModel):
     shadowed_model = MeasureType
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.CharField(max_length=6)
     trade_movement_code = models.SmallIntegerField()
@@ -331,10 +370,13 @@ class ReportMeasureType(ReportModel):
 class ReportMeasurement(ReportModel):
     shadowed_model = Measurement
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     valid_between = TaricDateRangeField(db_index=True)
     measurement_unit = models.ForeignKey(ReportMeasurementUnit, models.DO_NOTHING)
     measurement_unit_qualifier = models.ForeignKey(
@@ -351,10 +393,13 @@ class ReportMeasurement(ReportModel):
 class ReportMeasureExcludedGeographicalArea(ReportModel):
     shadowed_model = MeasureExcludedGeographicalArea
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     excluded_geographical_area = models.ForeignKey(
         "ReportGeographicalArea",
         models.DO_NOTHING,
@@ -372,10 +417,13 @@ class ReportMeasureExcludedGeographicalArea(ReportModel):
 class ReportMeasureComponent(ReportModel):
     shadowed_model = MeasureComponent
 
-    trackedmodel_ptr = models.IntegerField(
+    trackedmodel_ptr = models.ForeignKey(
+        shadowed_model,
+        models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
     )
+
     duty_amount = models.DecimalField(
         max_digits=10,
         decimal_places=3,
