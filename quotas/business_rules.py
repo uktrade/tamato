@@ -497,7 +497,9 @@ def check_QA5_equivalent_coefficient(coefficient):
 
 
 def check_QA5_equivalent_volumes(original_definition, initial_volume=None):
-    existing_initial_volumes = original_definition.sub_quotas.values("initial_volume")
+    existing_initial_volumes = original_definition.sub_quotas.current().values(
+        "initial_volume",
+    )
     if (
         existing_initial_volumes.distinct("initial_volume").count() == 1
     ) and initial_volume is not None:
