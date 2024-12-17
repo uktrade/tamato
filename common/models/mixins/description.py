@@ -153,9 +153,6 @@ class DescribedMixin:
         return query.current()
 
     def get_description(self):
-        import pdb
-
-        pdb.set_trace()
         return self.get_descriptions().last()
 
     @property

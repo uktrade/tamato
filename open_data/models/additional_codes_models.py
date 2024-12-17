@@ -8,7 +8,7 @@ from open_data.models.utils import ReportModel
 
 class ReportAdditionalCodeType(ReportModel):
     shadowed_model = AdditionalCodeType
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -26,7 +26,8 @@ class ReportAdditionalCodeType(ReportModel):
 
 class ReportAdditionalCode(ReportModel):
     shadowed_model = AdditionalCode
-    trackedmodel_ptr = models.ForeignKey(
+    update_description = True
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,

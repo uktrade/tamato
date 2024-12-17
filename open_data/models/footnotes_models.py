@@ -9,7 +9,7 @@ from open_data.models.utils import ReportModel
 class ReportFootnoteType(ReportModel):
     shadowed_model = FootnoteType
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -27,8 +27,8 @@ class ReportFootnoteType(ReportModel):
 
 class ReportFootnote(ReportModel):
     shadowed_model = Footnote
-
-    trackedmodel_ptr = models.ForeignKey(
+    update_description = True
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,

@@ -4,32 +4,34 @@ import django.apps
 from django.db import connection
 
 from common.models.mixins.description import DescribedMixin
+from common.models.transactions import Transaction
+from common.models.utils import override_current_transaction
 from open_data.apps import APP_LABEL
 from open_data.commodities import save_commodities_parent
 from open_data.geo_areas import save_geo_areas
-from open_data.models.utils import LOOK_UP_VIEW
-from open_data.models.utils import ReportModel
 
 
 def add_description(model, verbose=True):
-    if issubclass(model.shadowed_model, DescribedMixin):
-        queryset = model.objects.select_related(
-            "trackedmodel_ptr",
-        ).all()
-        start = time.time()
-        for row in queryset:
-            description = model.shadowed_model.objects.get(
-                pk=row.trackedmodel_ptr_id,
-            ).get_description()
-            row.description = description
-            row.save()
-        if verbose:
-            print(f"Elapsed time {time.time() - start}")
+    if model.update_description:
+        if issubclass(model.shadowed_model, DescribedMixin):
+            queryset = model.objects.select_related(
+                "trackedmodel_ptr",
+            ).all()
+            start = time.time()
+            for row in queryset:
+                description = model.shadowed_model.objects.get(
+                    pk=row.trackedmodel_ptr_id,
+                ).get_description()
+                row.description = description.description
+                row.save()
+            if verbose:
+                print(f"Elapsed time {model._meta.db_table} {time.time() - start}")
 
 
 def update_model(model, cursor):
     cursor.execute(f'TRUNCATE TABLE "{model._meta.db_table}"')
     # print(model.update_query())
+
     cursor.execute(model.update_query())
     fk_query_list = model.update_fk_queries()
     # The foreign keys are updated from TAP database,
@@ -53,25 +55,29 @@ def update_model(model, cursor):
 def update_all_tables(verbose=False):
     config = django.apps.apps.get_app_config(APP_LABEL)
 
-    with connection.cursor() as cursor:
-        cursor.execute(f"REFRESH MATERIALIZED VIEW {LOOK_UP_VIEW};")
+    # with connection.cursor() as cursor:
+    #     cursor.execute(f"REFRESH MATERIALIZED VIEW {LOOK_UP_VIEW};")
+    #     for model in config.get_models():
+    #         if issubclass(model, ReportModel):
+    #             if verbose:
+    #                 print(f'Starting update of "{model._meta.db_table}"')
+    #                 start_time = time.time()
+    #             update_model(model, cursor)
+    #             if verbose:
+    #                 elapsed_time = time.time() - start_time
+    #                 print(
+    #                     f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',
+    #                 )
+    # # The following are changes specific to different table.
+    # # They update fields using Django routines, created specifically for the task.
+    # """Unless there is a current transaction, reading the latest description will fail in a misterious way
+    # Because this is called in a command, there is no transaction set"""
+    tx = Transaction.objects.last()
+    with override_current_transaction(tx):
         for model in config.get_models():
-            if issubclass(model, ReportModel):
-                if verbose:
-                    print(f'Starting update of "{model._meta.db_table}"')
-                    start_time = time.time()
-                update_model(model, cursor)
-                if verbose:
-                    elapsed_time = time.time() - start_time
-                    print(
-                        f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',
-                    )
-    # The following are changes specific to different table.
-    # They update fields using Django routines, created specifically for the task.
-    for model in config.get_models():
-        add_description(model)
-    save_commodities_parent(verbose)
-    save_geo_areas(verbose)
+            add_description(model)
+        save_commodities_parent(verbose)
+        save_geo_areas(verbose)
 
 
 def update_single_model(model):

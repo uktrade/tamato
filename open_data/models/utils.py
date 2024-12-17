@@ -26,6 +26,7 @@ class ReportModel(models.Model):
     # The field to use for aggregation has to be specified
     remove_obsolete = False
     patch_fk = True
+    update_description = False
 
     def contain_all_fields(self):
         # This function will check that there are no new field in the shadowed table

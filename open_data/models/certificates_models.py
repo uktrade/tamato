@@ -8,7 +8,7 @@ from open_data.models.utils import ReportModel
 
 class ReportCertificateType(ReportModel):
     shadowed_model = CertificateType
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -25,8 +25,8 @@ class ReportCertificateType(ReportModel):
 
 class ReportCertificate(ReportModel):
     shadowed_model = Certificate
-
-    trackedmodel_ptr = models.ForeignKey(
+    update_description = True
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,

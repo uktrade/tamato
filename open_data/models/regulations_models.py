@@ -12,7 +12,7 @@ from regulations.models import Suspension
 class ReportAmendment(ReportModel):
     shadowed_model = Amendment
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -33,7 +33,7 @@ class ReportAmendment(ReportModel):
 class ReportGroup(ReportModel):
     shadowed_model = Group
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -51,7 +51,7 @@ class ReportGroup(ReportModel):
 class ReportRegulation(ReportModel):
     shadowed_model = Regulation
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -89,7 +89,7 @@ class ReportRegulation(ReportModel):
 class ReportSuspension(ReportModel):
     shadowed_model = Suspension
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
