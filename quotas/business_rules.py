@@ -507,10 +507,10 @@ def check_QA5_equivalent_volumes(original_definition, initial_volume=None):
         "initial_volume",
     )
     if (
-        existing_initial_volumes.distinct("initial_volume").count() == 1
+        existing_initial_volumes.distinct().count() == 1
     ) and initial_volume is not None:
         return existing_initial_volumes[0]["initial_volume"] == initial_volume
-    elif existing_initial_volumes.distinct("initial_volume").count() <= 1:
+    elif existing_initial_volumes.distinct().count() <= 1:
         return True
 
     return False
