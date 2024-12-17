@@ -600,7 +600,13 @@
                         <span class="s2">&quot;coefficient not equal to 1&quot;</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">check_QA5_equivalent_volumes</span><span class="p">(</span><span class="n">association</span><span class="o">.</span><span class="n">main_quota</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">association</span><span class="o">.</span><span class="n">main_quota</span><span class="o">.</span><span class="n">sub_quotas</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="o">&gt;</span> <span class="mi">1</span>
+            <span class="p">):</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
                     <span class="n">model</span><span class="o">=</span><span class="n">association</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
@@ -625,14 +631,16 @@
     <span class="k">return</span> <span class="n">coefficient</span> <span class="o">!=</span> <span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;1.000&quot;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">check_QA5_equivalent_volumes</span><span class="p">(</span><span class="n">original_definition</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="n">original_definition</span><span class="o">.</span><span class="n">sub_quotas</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">count</span><span class="p">()</span>
-        <span class="o">&lt;=</span> <span class="mi">1</span>
+<span class="k">def</span> <span class="nf">check_QA5_equivalent_volumes</span><span class="p">(</span><span class="n">original_definition</span><span class="p">,</span> <span class="n">initial_volume</span><span class="p">):</span>
+    <span class="n">existing_initial_volumes</span> <span class="o">=</span> <span class="n">original_definition</span><span class="o">.</span><span class="n">sub_quotas</span><span class="o">.</span><span class="n">current</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">(</span>
+        <span class="s2">&quot;initial_volume&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="k">if</span> <span class="n">existing_initial_volumes</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">existing_initial_volumes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;initial_volume&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">initial_volume</span>
+    <span class="k">elif</span> <span class="n">existing_initial_volumes</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="kc">False</span>
 
 
 <span class="k">def</span> <span class="nf">check_QA5_normal_coefficient</span><span class="p">(</span><span class="n">coefficient</span><span class="p">):</span>
