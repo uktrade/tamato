@@ -481,11 +481,11 @@ class SubQuotaDefinitionsUpdatesForm(
                 )
             if not business_rules.check_QA5_equivalent_volumes(
                 self.original_definition,
-                volume=cleaned_data["volume"],
+                initial_volume=cleaned_data["initial_volume"],
             ):
                 raise ValidationError(
                     "Whenever a sub-quota is defined with the 'equivalent' "
-                    "type, it must have the same volume as the ones associated"
+                    "type, it must have the same volume as other sub-quotas associated"
                     " with the parent quota",
                 )
 
@@ -595,6 +595,68 @@ class SubQuotaDefinitionAssociationUpdateForm(SubQuotaDefinitionsUpdatesForm):
             self.fields["initial_volume"].disabled = True
             self.fields["volume"].disabled = True
             self.fields["measurement_unit"].disabled = True
+
+    def clean(self):
+        cleaned_data = ValidityPeriodForm.clean(self)
+        """
+        Carrying out business rule checks here to prevent erroneous
+        associations, see:
+
+        https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quota-associations.html#validation-rules
+
+        This does not include QA5 and QA6 checks which compare data against other sub-quotas so as not to block users from editing sub-quotas one by one.
+        Any errors here will be caught in the business rule check.
+        """
+        original_definition = self.original_definition
+        if cleaned_data["valid_between"].upper is None:
+            raise ValidationError("An end date must be supplied")
+
+        if not business_rules.check_QA2_dict(
+            sub_definition_valid_between=cleaned_data["valid_between"],
+            main_definition_valid_between=original_definition.valid_between,
+        ):
+            raise ValidationError(
+                "QA2: Validity period for sub-quota must be within the "
+                "validity period of the main quota",
+            )
+
+        if not business_rules.check_QA3_dict(
+            main_definition_unit=self.original_definition.measurement_unit,
+            sub_definition_unit=cleaned_data["measurement_unit"],
+            main_definition_volume=original_definition.volume,
+            sub_definition_volume=cleaned_data["volume"],
+            main_initial_volume=original_definition.initial_volume,
+            sub_initial_volume=cleaned_data["initial_volume"],
+        ):
+            raise ValidationError(
+                "QA3: When converted to the measurement unit of the main "
+                "quota, the volume of a sub-quota must always be lower than "
+                "or equal to the volume of the main quota",
+            )
+
+        if not business_rules.check_QA4_dict(cleaned_data["coefficient"]):
+            raise ValidationError(
+                "QA4: A coefficient must be a positive decimal number",
+            )
+
+        if cleaned_data["relationship_type"] == "NM":
+            if not business_rules.check_QA5_normal_coefficient(
+                cleaned_data["coefficient"],
+            ):
+                raise ValidationError(
+                    "QA5: Where the relationship type is Normal, the "
+                    "coefficient value must be 1",
+                )
+        elif cleaned_data["relationship_type"] == "EQ":
+            if not business_rules.check_QA5_equivalent_coefficient(
+                cleaned_data["coefficient"],
+            ):
+                raise ValidationError(
+                    "QA5: Where the relationship type is Equivalent, the "
+                    "coefficient value must be something other than 1",
+                )
+
+        return cleaned_data
 
 
 class QuotaAssociationUpdateForm(forms.ModelForm):
