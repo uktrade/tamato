@@ -502,15 +502,13 @@ def check_QA5_equivalent_coefficient(coefficient):
     return coefficient != Decimal("1.000")
 
 
-def check_QA5_equivalent_volumes(original_definition, initial_volume=None):
+def check_QA5_equivalent_volumes(original_definition, initial_volume):
     existing_initial_volumes = original_definition.sub_quotas.current().values(
         "initial_volume",
     )
-    if (
-        existing_initial_volumes.distinct().count() == 1
-    ) and initial_volume is not None:
+    if existing_initial_volumes.distinct().count() == 1:
         return existing_initial_volumes[0]["initial_volume"] == initial_volume
-    elif existing_initial_volumes.distinct().count() <= 1:
+    elif existing_initial_volumes.distinct().count() < 1:
         return True
 
     return False
