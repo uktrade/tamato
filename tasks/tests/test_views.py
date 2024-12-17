@@ -555,27 +555,28 @@ def test_delete_task_template_view(
     )
 
 
-def test_workflow_template_list_view(valid_user, client):
+def test_workflow_template_list_view(valid_user_client, valid_user):
     """Test that valid user receives a 200 on GET for TaskWorkflowList view and
     values display in table."""
-    template_instance = TaskWorkflowTemplateFactory.create(creator=valid_user)
 
-    url = reverse("workflow:task-workflow-template-ui-list")
-    client.force_login(valid_user)
-    response = client.get(url)
+    template_instance = TaskWorkflowTemplateFactory.create(creator=valid_user)
+    response = valid_user_client.get(reverse("workflow:task-workflow-template-ui-list"))
 
     assert response.status_code == 200
 
     soup = BeautifulSoup(str(response.content), "html.parser")
-    table = soup.select("table")[0]
-    row_text = [row.text for row in table.findChildren("td")]
+    row_text = [td.text for td in soup.select("table tr:nth-child(1) > td")]
 
-    assert template_instance.title in row_text
     assert str(template_instance.id) in row_text
+    assert template_instance.title in row_text
     assert template_instance.description in row_text
     assert template_instance.creator.get_displayname() in row_text
-    assert f"{template_instance.strftime(settings.DATETIME_FORMAT)}" in row_text
-    assert f"{template_instance.strftime(settings.DATETIME_FORMAT)}" in row_text
+    assert (
+        f"{template_instance.updated_at.strftime(settings.DATETIME_FORMAT)}" in row_text
+    )
+    assert (
+        f"{template_instance.created_at.strftime(settings.DATETIME_FORMAT)}" in row_text
+    )
 
 
 def test_workflow_detail_view_displays_tasks(
