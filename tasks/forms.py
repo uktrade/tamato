@@ -25,6 +25,13 @@ from workbaskets.models import WorkBasket
 class TaskBaseForm(ModelForm):
     class Meta:
         model = Task
+        include = [
+            "title",
+            "description",
+            "progress_state",
+            "category",
+            "workbasket",
+        ]
         exclude = ["parent_task", "creator"]
 
         error_messages = {

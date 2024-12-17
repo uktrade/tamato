@@ -819,6 +819,8 @@ def test_create_workflow_task_view(valid_user_client, task_workflow):
 
     assert task_workflow.get_tasks().count() == 0
 
+    progress_state = ProgressStateFactory.create()
+
     create_url = reverse(
         "workflow:task-workflow-task-ui-create",
         kwargs={"task_workflow_pk": task_workflow.pk},
@@ -827,6 +829,7 @@ def test_create_workflow_task_view(valid_user_client, task_workflow):
     form_data = {
         "title": factory.Faker("sentence"),
         "description": factory.Faker("sentence"),
+        "progress_state": progress_state.pk,
     }
     create_response = valid_user_client.post(create_url, form_data)
     created_workflow_task = task_workflow.get_tasks().get()
@@ -845,3 +848,41 @@ def test_create_workflow_task_view(valid_user_client, task_workflow):
 
     assert confirmation_response.status_code == 200
     assert created_workflow_task.title in soup.select("h1.govuk-panel__title")[0].text
+
+
+def test_workflow_delete_view_deletes_related_tasks(
+    valid_user_client,
+    task_workflow_single_task_item,
+):
+    """Tests that a workflow can be deleted (along with related Task and
+    TaskItem objects) and that the corresponding confirmation view returns a
+    HTTP 200 response."""
+
+    task_workflow_pk = task_workflow_single_task_item.pk
+    task_pk = task_workflow_single_task_item.get_tasks().get().pk
+
+    delete_url = task_workflow_single_task_item.get_url("delete")
+    delete_response = valid_user_client.post(delete_url)
+    assert delete_response.status_code == 302
+
+    assert not TaskWorkflow.objects.filter(
+        pk=task_workflow_pk,
+    ).exists()
+    assert not TaskItem.objects.filter(
+        workflow_id=task_workflow_pk,
+    ).exists()
+    assert not Task.objects.filter(pk=task_pk).exists()
+
+    confirmation_url = reverse(
+        "workflow:task-workflow-ui-confirm-delete",
+        kwargs={"pk": task_workflow_pk},
+    )
+    assert delete_response.url == confirmation_url
+
+    confirmation_response = valid_user_client.get(confirmation_url)
+    assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    assert (
+        f"Workflow ID: {task_workflow_pk}" in soup.select(".govuk-panel__title")[0].text
+    )
