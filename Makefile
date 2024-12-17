@@ -91,7 +91,7 @@ test-fast:
 test:
 	@echo
 	@echo "> Running tests..."
-	@${PYTHON} -m pytest -n=auto --dist=loadfile --alluredir=allure-results --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
+	@${PYTHON} -m pytest -n=auto --dist=loadfile --nomigrations --cov --cov-report html:htmlcov --cov-report=term --cov-report=xml
 
 ## docker-build: Build docker image
 docker-build:
@@ -111,8 +111,8 @@ docker-test:
 	@echo "> Running tests in Docker..."
 	@${COMPOSE_LOCAL} ${DOCKER_RUN} \
 		${PROJECT} ${PYTHON} -m pytest -n=auto --dist=loadfile \
-		--alluredir=allure-results --nomigrations --cov --cov-report \
-		 html:htmlcov --cov-report=term --cov-report=xml
+		--nomigrations --cov --cov-report \
+		html:htmlcov --cov-report=term --cov-report=xml
 
 docker-test-fast:
 	@echo
