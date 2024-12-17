@@ -317,7 +317,7 @@ class QuotaDefinition(TrackedModel, ValidityMixin):
         "self",
         through="QuotaAssociation",
         through_fields=("main_quota", "sub_quota"),
-    )  # Make sure to use this with .current() to filter out deleted objects
+    )
 
     indirect_business_rules = (
         business_rules.QA2,
