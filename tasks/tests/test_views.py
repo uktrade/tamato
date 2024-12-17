@@ -3,6 +3,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
+import settings
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
@@ -573,6 +574,8 @@ def test_workflow_template_list_view(valid_user, client):
     assert str(template_instance.id) in row_text
     assert template_instance.description in row_text
     assert template_instance.creator.get_displayname() in row_text
+    assert f"{template_instance.strftime(settings.DATETIME_FORMAT)}" in row_text
+    assert f"{template_instance.strftime(settings.DATETIME_FORMAT)}" in row_text
 
 
 def test_workflow_detail_view_displays_tasks(

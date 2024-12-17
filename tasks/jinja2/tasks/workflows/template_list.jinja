@@ -40,7 +40,9 @@
           {"text": workflow_template_linked_id},
           {"text": object.title},
           {"text": object.description},
-          {"text": object.creator.get_displayname() if object.creator else "Unknown"}
+          {"text": object.creator.get_displayname() if object.creator else "Unknown"},
+          {"text": object.created_at.strftime(datetime_format)},
+          {"text": object.updated_at.strftime(datetime_format)},
         ]) or "" }}
       {% endfor %}
 
@@ -49,7 +51,9 @@
           {"text": "ID"},
           {"text": "Title"},
           {"text": "Description"},
-          {"text":"Created by"}
+          {"text": "Created by"},
+          {"text": create_sortable_anchor(request, "created_at", "Created", base_url)},
+          {"text": create_sortable_anchor(request, "updated_at", "Last Updated", base_url)},
         ],
           "rows": table_rows
         }) }}

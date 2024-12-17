@@ -311,15 +311,28 @@ class TaskAndWorkflowListView(
         return queryset
 
 
-class TaskWorkflowTemplateListView(PermissionRequiredMixin, WithPaginationListView):
+class TaskWorkflowTemplateListView(
+    PermissionRequiredMixin,
+    SortingMixin,
+    WithPaginationListView,
+):
     model = TaskWorkflowTemplate
     template_name = "tasks/workflows/template_list.jinja"
     permission_required = "tasks.view_taskworkflowtemplate"
     paginate_by = 20
     filterset_class = WorkflowTemplateFilter
+    sort_by_fields = ["created_at", "updated_at"]
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["datetime_format"] = settings.DATETIME_FORMAT
 
     def get_queryset(self):
         queryset = TaskWorkflowTemplate.objects.all()
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
         return queryset
 
 

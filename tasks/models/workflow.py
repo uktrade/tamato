@@ -4,6 +4,7 @@ from django.db.transaction import atomic
 from django.urls import reverse
 
 from common.models import User
+from common.models.mixins import TimestampedMixin
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
 from tasks.models.task import Task
@@ -109,7 +110,7 @@ class TaskItem(QueueItem):
 # ----------------------------------------
 
 
-class TaskWorkflowTemplate(Queue):
+class TaskWorkflowTemplate(Queue, TimestampedMixin):
     """Template used to create TaskWorkflow instance."""
 
     title = models.CharField(
