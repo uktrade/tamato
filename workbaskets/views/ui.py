@@ -73,7 +73,6 @@ from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.tasks import call_end_measures
-from workbaskets.util import get_measures_to_end_date
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
 from workbaskets.views.mixins import WithCurrentWorkBasket
@@ -1801,7 +1800,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     @property
     def measures(self):
-        return get_measures_to_end_date(self.workbasket)
+        return self.workbasket.get_measures_to_end_date()
 
     def get_queryset(self):
         ordering = self.get_ordering()
@@ -1827,7 +1826,6 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
                 self.workbasket.pk,
             )
 
-    @atomic
     def end_measures(self):
         measure_pks = [measure.pk for measure in self.measures]
         call_end_measures.apply_async((measure_pks, self.workbasket.pk))

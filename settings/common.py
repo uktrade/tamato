@@ -647,9 +647,6 @@ CELERY_ROUTES = {
     "workbaskets.tasks.check_workbasket": {
         "queue": "rule-check",
     },
-    "workbaskets.tasks.call_end_measures": {
-        "queue": "standard",
-    },
     "workbaskets.tasks.transition": {
         "queue": "standard",
     },
@@ -672,6 +669,9 @@ CELERY_ROUTES = {
         "queue": "bulk-create",
     },
     "measures.tasks.bulk_edit_measures": {
+        "queue": "bulk-create",
+    },
+    "workbaskets.tasks.call_end_measures": {
         "queue": "bulk-create",
     },
     re.compile(r"(reference_documents)\.tasks\..*"): {

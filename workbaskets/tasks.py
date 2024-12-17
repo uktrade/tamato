@@ -97,6 +97,7 @@ def promote_measure_to_top(promoted_measure, workbasket_transactions):
     promoted_measure.save(update_fields=["order"])
 
 
+@atomic
 def end_measures(measures, workbasket):
     """Iterate through measures on commodities, end-date those which have
     already began and delete those which have not yet started."""

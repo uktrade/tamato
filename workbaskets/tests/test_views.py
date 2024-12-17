@@ -33,7 +33,6 @@ from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets.tasks import call_end_measures
 from workbaskets.tasks import check_workbasket_sync
-from workbaskets.util import get_measures_to_end_date
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views import ui
 
@@ -2738,7 +2737,7 @@ def test_auto_end_measures(commodity_with_measures, user_workbasket, date_ranges
     )
 
     with override_current_transaction(Transaction.objects.last()):
-        measures_to_end = get_measures_to_end_date(user_workbasket)
+        measures_to_end = user_workbasket.get_measures_to_end_date()
         assert len(measures_to_end) == 11
         measure_pks = [measure.pk for measure in measures_to_end]
         call_end_measures(measure_pks, user_workbasket.pk)
@@ -2790,7 +2789,7 @@ def test_get_measures_to_end_date(user_workbasket, date_ranges):
         valid_between=date_ranges.normal,
     )
     with override_current_transaction(Transaction.objects.last()):
-        measures = get_measures_to_end_date(user_workbasket)
+        measures = user_workbasket.get_measures_to_end_date()
         assert all(
             measure in measures
             for measure in [
