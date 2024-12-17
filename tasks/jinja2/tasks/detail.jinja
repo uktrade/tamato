@@ -99,7 +99,7 @@
       Created by
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ object.creator.get_displayname() }}
+      {{ object.creator.get_displayname() if object.creator else "-" }}
     </dd>
   </div>
 </dl>

@@ -31,7 +31,9 @@ class TaskWorkflow(Queue):
     )
     """The template from which this workflow was created, if any."""
 
-    class Meta:
+    class Meta(Queue.Meta):
+        abstract = False
+        ordering = ["id"]
         verbose_name = "workflow"
 
     def __str__(self):
@@ -98,7 +100,8 @@ class TaskItem(QueueItem):
     )
     """The Task instance managed by this TaskItem."""
 
-    class Meta:
+    class Meta(QueueItem.Meta):
+        abstract = False
         ordering = ["workflow", "position"]
 
 
@@ -136,7 +139,9 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
         related_name="created_taskworkflowtemplates",
     )
 
-    class Meta:
+    class Meta(Queue.Meta):
+        abstract = False
+        ordering = ["id"]
         verbose_name = "workflow template"
 
     def __str__(self):
@@ -233,7 +238,8 @@ class TaskItemTemplate(QueueItem):
         on_delete=models.CASCADE,
     )
 
-    class Meta:
+    class Meta(QueueItem.Meta):
+        abstract = False
         ordering = ["workflow_template", "position"]
 
 
@@ -256,6 +262,10 @@ class TaskTemplate(TaskBase):
             )
 
         return "#NOT-IMPLEMENTED"
+
+    class Meta(TaskBase.Meta):
+        abstract = False
+        ordering = ["id"]
 
     def __str__(self):
         return self.title
