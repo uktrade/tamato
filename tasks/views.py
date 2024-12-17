@@ -323,9 +323,12 @@ class TaskWorkflowTemplateListView(
     filterset_class = WorkflowTemplateFilter
     sort_by_fields = ["created_at", "updated_at"]
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> dict:
         context_data = super().get_context_data(**kwargs)
+
         context_data["datetime_format"] = settings.DATETIME_FORMAT
+
+        return context_data
 
     def get_queryset(self):
         queryset = TaskWorkflowTemplate.objects.all()
