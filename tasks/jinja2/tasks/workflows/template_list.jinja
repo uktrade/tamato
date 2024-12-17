@@ -41,8 +41,8 @@
           {"text": object.title},
           {"text": object.description},
           {"text": object.creator.get_displayname() if object.creator else "Unknown"},
-          {"text": "{:%d %b %Y}".format(object.created_at)},
-          {"text": "{:%d %b %Y}".format(object.updated_at)},
+          {"text": "{%d %b %Y}".format(object.created_at)},
+          {"text": "{%d %b %Y}".format(object.updated_at)},
         ]) or "" }}
       {% endfor %}
 
