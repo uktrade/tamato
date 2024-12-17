@@ -471,7 +471,13 @@ class QA5(BusinessRule):
                         "coefficient not equal to 1"
                     ),
                 )
-            if not check_QA5_equivalent_volumes(association.main_quota):
+            if (
+                association.main_quota.sub_quotas.values("volume")
+                .order_by("volume")
+                .distinct("volume")
+                .count()
+                > 1
+            ):
                 raise self.violation(
                     model=association,
                     message=(
@@ -496,14 +502,16 @@ def check_QA5_equivalent_coefficient(coefficient):
     return coefficient != Decimal("1.000")
 
 
-def check_QA5_equivalent_volumes(original_definition, volume=None):
-    return (
-        original_definition.sub_quotas.values("volume")
-        .order_by("volume")
-        .distinct("volume")
-        .count()
-        <= 1
+def check_QA5_equivalent_volumes(original_definition, initial_volume):
+    existing_initial_volumes = original_definition.sub_quotas.current().values(
+        "initial_volume",
     )
+    if existing_initial_volumes.distinct().count() == 1:
+        return existing_initial_volumes[0]["initial_volume"] == initial_volume
+    elif existing_initial_volumes.distinct().count() < 1:
+        return True
+
+    return False
 
 
 def check_QA5_normal_coefficient(coefficient):
