@@ -539,7 +539,7 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
 
 class TaskWorkflowTaskCreateView(PermissionRequiredMixin, CreateView):
     model = Task
-    template_name = "tasks/workflows/workflow_task_create.jinja"
+    template_name = "layouts/create.jinja"
     permission_required = "tasks.add_task"
     form_class = TaskCreateForm
 
@@ -553,7 +553,7 @@ class TaskWorkflowTaskCreateView(PermissionRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
 
         context["page_title"] = "Create a task"
-        context["task_workflow"] = self.get_task_workflow()
+        # context["task_workflow"] = self.get_task_workflow()
         return context
 
     def form_valid(self, form) -> HttpResponseRedirect:
@@ -574,13 +574,13 @@ class TaskWorkflowTaskCreateView(PermissionRequiredMixin, CreateView):
 
 class TaskWorkflowTaskConfirmCreateView(PermissionRequiredMixin, DetailView):
     model = Task
-    template_name = "tasks/workflows/workflow_task_confirm_create.jinja"
+    template_name = "tasks/confirm_create.jinja"
     permission_required = "tasks.add_task"
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-
-        context["task_workflow"] = self.get_object().taskitem.workflow
+        context["verbose_name"] = "task"
+        # context["task_workflow"] = self.get_object().taskitem.workflow
         return context
 
 
