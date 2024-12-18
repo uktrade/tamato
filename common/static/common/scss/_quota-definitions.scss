@@ -29,3 +29,9 @@
 .definition-original {
     color: $govuk-secondary-text-colour;
 }
+
+.bulk-create-review {
+    details.govuk-details[open] {
+        height: 420px !important;
+    }
+}
