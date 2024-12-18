@@ -17,7 +17,7 @@
   {% set actions_html %}
       <a class="govuk-link" href="{{ object.sub_quota.get_association_edit_url() }}">Edit</a>
       <br/>
-      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
+      <a class="govuk-link" href="{{ object.get_url('delete') }}">Delete</a>
   {% endset %}
   {{ table_rows.append([
     {"html": sub_quota_link},
