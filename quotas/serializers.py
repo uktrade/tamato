@@ -294,7 +294,6 @@ def deserialize_definition_data(self, definition):
     measurement_unit = MeasurementUnit.objects.get(
         code=definition["measurement_unit_code"],
     )
-    # measurement_unit_qualifier
     sub_order_number = self.get_cleaned_data_for_step(self.QUOTA_ORDER_NUMBERS)[
         "sub_quota_order_number"
     ]

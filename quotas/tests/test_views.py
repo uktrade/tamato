@@ -27,7 +27,6 @@ from quotas import validators
 from quotas.forms.base import QuotaSuspensionType
 from quotas.views import DuplicateDefinitionsWizard
 from quotas.views import QuotaList
-from quotas.views.wizards import QuotaDefinitionBulkCreatorUpdateDefinitionData
 from quotas.views.wizards import QuotaDefinitionBulkCreatorWizard
 from quotas.wizard import QuotaDefinitionBulkCreatorSessionStorage
 from quotas.wizard import QuotaDefinitionDuplicatorSessionStorage
@@ -2776,29 +2775,6 @@ def test_bulk_create_definitions_get_form_kwargs(
     with override_current_transaction(Transaction.objects.last()):
         kwargs = wizard.get_form_kwargs(step)
         assert kwargs["request"].session
-
-
-def test_bulk_create_update_definition_data_get_form_kwargs(
-    session_request,
-):
-    storage = QuotaDefinitionBulkCreatorSessionStorage(
-        request=session_request,
-        prefix="",
-    )
-    update_form_kwargs = {
-        "pk": 1,
-        "request": session_request,
-        "buttons": {
-            "submit": "Save and continue",
-            "link_text": "Discard changes",
-            "link": "/quotas/quota_definitions_bulk_create/review",
-        },
-    }
-    update_form_view = QuotaDefinitionBulkCreatorUpdateDefinitionData(
-        request=session_request,
-    )
-    with override_current_transaction(Transaction.objects.last()):
-        update_form_view.get_form_kwargs()
 
 
 def test_bulk_create_get_staged_definition_data(

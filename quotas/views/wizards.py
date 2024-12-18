@@ -354,8 +354,6 @@ class QuotaDefinitionBulkCreatorWizard(
     def format_date(self, date_str):
         """Parses and converts a date string from that used for storing data to
         the one used in the TAP UI."""
-        # TODO: factor this out to a helper function/into the other formatters
-        # it's identical to the one used in the duplicator
         if date_str:
             date_object = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
             return date_object.strftime(DATE_FORMAT)
