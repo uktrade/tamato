@@ -11,3 +11,8 @@
 .align-right {
     text-align: right;
 }
+
+.success-summary {
+    @extend .govuk-error-summary;
+    border-color: govuk-colour("green");
+}

@@ -66,12 +66,14 @@
 
       {% if missing_measures_check.successful %}
         <p class="govuk-body">Missing measures check finished.</p>
-        <div class="govuk-grid-row">
-          <div class="govuk-grid-column-two-thirds">
-            <p class="govuk-body">No missing type 103 measures were identified.</p>
-          </div>
-          <div class="govuk-grid-column-one-third">
-          <p class="govuk-body govuk-!-font-weight-bold align-right">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
+        <div class="success-summary">
+          <div class="govuk-grid-row">
+            <div class="govuk-grid-column-two-thirds">
+              <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-0">There are no missing 103 measures.</p>
+            </div>
+            <div class="govuk-grid-column-one-third">
+            <p class="govuk-body govuk-!-font-weight-bold align-right govuk-!-margin-bottom-0">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
+            </div>
           </div>
         </div>
         {{ run_button(text="Re-run") }}
@@ -81,15 +83,18 @@
 
 
         <p class="govuk-body">Missing measures check finished.</p>
-        <div class="govuk-grid-row">
-          <div class="govuk-grid-column-two-thirds">
-            {{ govukWarningText({
-              "text": "The following commodity codes are missing a 103 measure type:",
-              "iconFallbackText": "Warning"
-            }) }}
-          </div>
-          <div class="govuk-grid-column-one-third">
-          <p class="govuk-body govuk-!-font-weight-bold align-right">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
+        <div class="govuk-error-summary">
+          <div class="govuk-grid-row">
+            <div class="govuk-grid-column-two-thirds">
+              {{ govukWarningText({
+                "text": "The following commodity codes are missing a 103 measure type:",
+                "iconFallbackText": "Warning",
+                "classes": "govuk-!-margin-bottom-0",
+              }) }}
+            </div>
+            <div class="govuk-grid-column-one-third">
+              <p class="govuk-body govuk-!-font-weight-bold align-right">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
+            </div>
           </div>
         </div>
 
