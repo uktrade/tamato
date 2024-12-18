@@ -1367,7 +1367,6 @@ def test_create_new_quota_definition_business_rule_violation(
     }
 
     url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
-    # assert 0
     try:
         with transaction.atomic():
             response = client_with_current_workbasket.post(url, form_data)
@@ -2799,7 +2798,6 @@ def test_bulk_create_update_definition_data_get_form_kwargs(
         request=session_request,
     )
     with override_current_transaction(Transaction.objects.last()):
-        assert 0
         update_form_view.get_form_kwargs()
 
 
@@ -2832,11 +2830,8 @@ def test_bulk_create_get_staged_definition_data(
         "measurement_unit_qualifier": "",
         "quota_critical_threshold": "90",
         "quota_critical": "False",
-        "frequency": 2,
-        "instance_count": 5,
     }
     session_request.session["staged_definition_data"] = staged_data
-    # storage.set_step_data('definition_period_info', definition_info_data)
     wizard = QuotaDefinitionBulkCreatorWizard(
         request=session_request,
         storage=storage,
@@ -2860,7 +2855,7 @@ def test_bulk_create_format_date(session_request):
     assert formatted_date == "01 Jan 2021"
 
 
-def test_bulk_create_create_definition(
+def test_bulk_create_creates_definition(
     session_request_with_workbasket,
     date_ranges,
 ):
@@ -2886,8 +2881,6 @@ def test_bulk_create_create_definition(
         "quota_critical_threshold": "90",
         "quota_critical": "False",
         "maximum_precision": "3",
-        "frequency": 2,
-        "instance_count": 5,
     }
     session_request_with_workbasket.session["staged_definition_data"] = staged_data
     assert len(models.QuotaDefinition.objects.all()) == 0
@@ -2961,25 +2954,3 @@ def test_bulk_create_done(
     with override_current_transaction(Transaction.objects.last()):
         wizard.done(wizard.form_list)
         assert len(models.QuotaDefinition.objects.all()) == 3
-
-
-# def test_bulk_create_definitions_quota_order_number(
-#     session_request,
-# ):
-#     quota_order_number = factories.QuotaOrderNumberFactory.create()
-#     start_form_data = {
-#         "quota_definition-ui-bulk-create": "start",
-#         "start-quota_order_number": quota_order_number,
-#     }
-#     storage = QuotaDefinitionBulkCreatorSessionStorage(
-#         request=session_request,
-#         prefix="",
-#     )
-#     storage.set_step_data("start", start_form_data)
-#     storage._set_current_step("definition_period_info")
-#     wizard = QuotaDefinitionBulkCreatorWizard(
-#         request=session_request,
-#         storage=storage,
-#     )
-#     wizard.form_list = OrderedDict(wizard.form_list)
-# assert wizard.quota_order_number == quota_order_number
