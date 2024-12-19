@@ -595,7 +595,6 @@ class TaskWorkflowTaskConfirmCreateView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "task"
-        # context["task_workflow"] = self.get_object().taskitem.workflow
         return context
 
 
