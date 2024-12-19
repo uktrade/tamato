@@ -706,6 +706,7 @@ class Dates:
         "normal_first_half": (relativedelta(), relativedelta(days=+14)),
         "starts_1_month_ago_to_delta": (relativedelta(months=-1), relativedelta()),
         "starts_delta_to_1_month_ahead": (relativedelta(), relativedelta(months=1)),
+        "starts_delta_to_2_months_ahead": (relativedelta(), relativedelta(months=2)),
         "starts_1_month_ago_to_1_month_ahead": (
             relativedelta(months=-1),
             relativedelta(months=1),
