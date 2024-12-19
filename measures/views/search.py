@@ -241,6 +241,7 @@ class MeasureList(
                     page.paginator.num_pages,
                 ),
                 "selected_filter_lists": self.selected_filter_formatter(),
+                "workbasket": self.workbasket,
             },
         )
         if context["has_previous_page"]:
