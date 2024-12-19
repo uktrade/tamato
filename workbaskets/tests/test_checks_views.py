@@ -44,7 +44,7 @@ def test_check_missing_measures_success(valid_user_client, user_workbasket):
     response = valid_user_client.get(url)
     soup = BeautifulSoup(str(response.content), "html.parser")
     assert (
-        "No missing type 103 measures were identified."
+        "There are no missing 103 measures."
         in soup.select_one(".govuk-tabs__panel").text
     )
 
