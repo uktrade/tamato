@@ -8,7 +8,7 @@
 
 {% if object_name == "workflow" %}
   {% set task_object_name = "task" %}
-  {% set task_object_create_url = "#TODO" %}
+  {% set task_object_create_url = url("workflow:task-workflow-task-ui-create", kwargs={"task_workflow_pk": object.pk}) %}
 {% elif object_name == "workflow template" %}
   {% set task_object_name = "task template" %}
   {% set task_object_create_url = url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}) %}
