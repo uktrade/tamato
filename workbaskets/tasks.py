@@ -75,6 +75,7 @@ def call_check_workbasket_sync(self, workbasket_id: int):
     check_workbasket_sync(workbasket)
 
 
+@atomic
 def promote_measure_to_top(promoted_measure, workbasket_transactions):
     """Set the transaction order of `promoted_measure` to be first in the
     workbasket, demoting the transactions that came before it."""
