@@ -569,7 +569,6 @@ class TaskWorkflowTaskCreateView(PermissionRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
 
         context["page_title"] = "Create a task"
-        # context["task_workflow"] = self.get_task_workflow()
         return context
 
     def form_valid(self, form) -> HttpResponseRedirect:
