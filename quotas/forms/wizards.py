@@ -173,7 +173,10 @@ class BulkQuotaDefinitionCreateStartForm(forms.Form):
                 HTML(
                     '<h2 class="govuk-heading">Enter quota order number</h2>',
                 ),
-                "quota_order_number",
+                Div(
+                    "quota_order_number",
+                    css_class="govuk-!-width-one-third",
+                ),
                 Div(
                     Submit(
                         "submit",
@@ -213,7 +216,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         "initial_volume",
         "measurement_unit",
     ]
-    # this needs additional validation to prevent empty. required=True does not work
+
     instance_count = forms.DecimalField(
         required=True,
         label="Total number of definitions to create",

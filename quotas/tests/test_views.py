@@ -27,6 +27,7 @@ from quotas import validators
 from quotas.forms.base import QuotaSuspensionType
 from quotas.views import DuplicateDefinitionsWizard
 from quotas.views import QuotaList
+from quotas.views.wizards import QuotaDefinitionBulkCreatorUpdateDefinitionData
 from quotas.views.wizards import QuotaDefinitionBulkCreatorWizard
 from quotas.wizard import QuotaDefinitionBulkCreatorSessionStorage
 from quotas.wizard import QuotaDefinitionDuplicatorSessionStorage
@@ -2837,6 +2838,7 @@ def test_bulk_create_creates_definition(
 ):
     quota_order_number = factories.QuotaOrderNumberFactory.create()
     measurement_unit = factories.MeasurementUnitFactory.create()
+    measurement_unit_qualifier = factories.MeasurementUnitQualifierFactory.create()
     storage = QuotaDefinitionBulkCreatorSessionStorage(
         request=session_request_with_workbasket,
         prefix="",
@@ -2853,7 +2855,7 @@ def test_bulk_create_creates_definition(
         "volume": "80601000.000",
         "initial_volume": "80601000.000",
         "measurement_unit_code": measurement_unit.code,
-        "measurement_unit_qualifier": "None",
+        "measurement_unit_qualifier": measurement_unit_qualifier.pk,
         "quota_critical_threshold": "90",
         "quota_critical": "False",
         "maximum_precision": "3",
@@ -2891,7 +2893,6 @@ def test_bulk_create_done(
             "volume": "80601000.000",
             "initial_volume": "80601000.000",
             "measurement_unit_code": measurement_unit.code,
-            "measurement_unit_qualifier": "None",
             "quota_critical_threshold": "90",
             "quota_critical": "False",
             "maximum_precision": "3",
@@ -2903,7 +2904,6 @@ def test_bulk_create_done(
             "volume": "80601000.000",
             "initial_volume": "80601000.000",
             "measurement_unit_code": measurement_unit.code,
-            "measurement_unit_qualifier": "None",
             "quota_critical_threshold": "90",
             "quota_critical": "False",
             "maximum_precision": "3",
@@ -2915,7 +2915,6 @@ def test_bulk_create_done(
             "volume": "80601000.000",
             "initial_volume": "80601000.000",
             "measurement_unit_code": measurement_unit.code,
-            "measurement_unit_qualifier": "None",
             "quota_critical_threshold": "90",
             "quota_critical": "False",
             "maximum_precision": "3",
@@ -2930,3 +2929,26 @@ def test_bulk_create_done(
     with override_current_transaction(Transaction.objects.last()):
         wizard.done(wizard.form_list)
         assert len(models.QuotaDefinition.objects.all()) == 3
+
+
+def test_bulk_create_update_definition_get_form_kwargs(
+    session_request,
+):
+    request = session_request.post("quota_definition-ui-bulk-create-edit", args=1)
+    view = QuotaDefinitionBulkCreatorUpdateDefinitionData(
+        request=request,
+        kwargs={
+            "pk": 1,
+            "request": request,
+            "buttons": {
+                "submit": "Save and continue",
+                "link_text": "Discard changes",
+                "link": "/quotas/quota_definitions/bulk_create/review",
+            },
+        },
+    )
+    with override_current_transaction(Transaction.objects.last()):
+        kwargs = view.get_form_kwargs()
+        assert kwargs["pk"]
+        assert kwargs["request"]
+        assert kwargs["buttons"]

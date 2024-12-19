@@ -325,12 +325,6 @@ class QuotaDefinitionBulkCreatorWizard(
     def workbasket(self) -> WorkBasket:
         return WorkBasket.current(self.request)
 
-    @property
-    def quota_order_number(self) -> models.QuotaOrderNumber:
-        cleaned_data = self.get_cleaned_data_for_step(self.START)
-        quota_order_number = cleaned_data.get("quota_order_number")
-        return quota_order_number
-
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
         context["step_metadata"] = self.step_metadata
@@ -409,3 +403,10 @@ class QuotaDefinitionBulkCreatorUpdateDefinitionData(
 
 class QuotaDefinitionBulkCreateSuccess(TemplateView):
     template_name = "quota-definitions/bulk-create-done.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["quota_order_number"] = models.QuotaOrderNumber.objects.current().get(
+            pk=self.request.session["quota_order_number_pk"],
+        )
+        return context

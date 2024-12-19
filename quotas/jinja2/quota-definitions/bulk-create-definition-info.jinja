@@ -1,6 +1,6 @@
 {% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
 
-{% set page_subtitle = "Quota order number "~view.quota_order_number %}
+{% set page_subtitle = "Quota order number "~request.session.quota_order_number %}
 
 {% block content %}
     <h1 class="govuk-heading-xl">

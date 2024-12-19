@@ -349,12 +349,12 @@ def deserialize_bulk_create_definition_data(definition, order_number):
     )
     if "description" in definition:
         description = definition["description"]
-    if definition["measurement_unit_qualifier"] != "None":
+    if "measurement_unit_qualifier" in definition:
         measurement_unit_qualifier_pk = Decimal(
             definition["measurement_unit_qualifier"],
         )
         measurement_unit_qualifier = MeasurementUnitQualifier.objects.get(
-            code=measurement_unit_qualifier_pk,
+            pk=measurement_unit_qualifier_pk,
         )
     else:
         measurement_unit_qualifier = None

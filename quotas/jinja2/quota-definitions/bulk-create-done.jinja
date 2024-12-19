@@ -17,6 +17,7 @@
         "titleText": panel_title(),
         "classes": "govuk-!-margin-bottom-7"
       }) }}
+      <h2>Next steps</h2>
       <div class="govuk-button-group">
         {{ govukButton({
           "text": "Create other definition periods",
@@ -24,29 +25,18 @@
           "classes": "govuk-button--primary"
         }) }}
         {{ govukButton({
-          "text": "View definition period date for this quota",
-          "href": url("quota_definition-ui-list"),
+          "text": "View definition period data for this quota",
+          "href": url("quota_definition-ui-list", args=[request.session['quota_order_number']]),
           "classes": "govuk-button--secondary"
         }) }}
       </div>
       
       <h2>Further actions</h2>
-      <a class="govuk-link govuk-!-font-weight-bold" href="{{ }}">View quota order number</a>
-      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("workbaskets:current-workbasket") }}">View workbasket summary</a>
-      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url("quota-ui-list") }}">Find and edit quotas</a>
-      {# {{ url("quota-ui-list", kwargs={}) }} #}
-      <div class="govuk-button-group">
-        {{ govukButton({
-          "text": "Create measures",
-          "href": url('measure-ui-create', kwargs={"step": "start"}),
-          "classes": "govuk-button--primary"
-        }) }}
-        {{ govukButton({
-          "text": "Homepage",
-          "href": url("home"),
-          "classes": "govuk-button--secondary"
-        }) }}
-      </div>
+      <ul class="govuk-list">
+        <li><a class="govuk-link govuk-!-font-weight-bold" href={{quota_order_number.get_url()}}>View quota order number</a></li><br/>
+        <li><a class="govuk-link govuk-!-font-weight-bold" href="{{ url("workbaskets:current-workbasket") }}">View workbasket summary</a></li><br/>
+        <li><a class="govuk-link govuk-!-font-weight-bold" href="{{ url("quota-ui-list") }}">Find and edit quotas</a></li><br/>
+      </ul>
     </div>
   </div>
 {% endblock %}
