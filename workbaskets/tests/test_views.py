@@ -18,6 +18,8 @@ from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
 from common.inspect_tap_tasks import CeleryTask
 from common.inspect_tap_tasks import TAPTasks
+from common.models.trackedmodel import TrackedModel
+from common.models.transactions import Transaction
 from common.models.utils import override_current_transaction
 from common.tests import factories
 from common.tests.util import date_post_data
@@ -29,6 +31,7 @@ from measures.models import Measure
 from tasks.models import Comment
 from tasks.models import UserAssignment
 from workbaskets import models
+from workbaskets.tasks import call_end_measures
 from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views import ui
@@ -2643,6 +2646,159 @@ def test_remove_all_workbasket_changes_button_not_shown_to_users_without_permisi
 
     remove_all_button = page.find("button", value="remove-all")
     assert not remove_all_button
+
+
+@pytest.fixture
+def commodity_with_measures(date_ranges):
+    """Fixture used for texting the automatic end-dating of measures on an end-
+    dated commodity code."""
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end,
+    )
+    factories.MeasureFactory.create_batch(
+        5,
+        goods_nomenclature=commodity,
+    )  # Open ended measures should be end-dated
+    factories.MeasureFactory.create_batch(
+        4,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_delta_to_2_months_ahead,
+    )  # Measures ending after the comm code should have their end-date aligned
+    factories.MeasureFactory.create_batch(
+        3,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_with_normal,
+    )  # Measures ending before the comm code should be ignored
+    factories.MeasureFactory.create_batch(
+        2,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.future,
+    )  # Measures that have not started yet should be deleted
+    return commodity
+
+
+def test_auto_end_measures_renders(
+    valid_user_client,
+    user_workbasket,
+    commodity_with_measures,
+    date_ranges,
+):
+    """Test that the list of measures to be ended renders correctly."""
+    commodity_with_measures.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.normal,
+    )
+    url = reverse(
+        "workbaskets:workbasket-ui-auto-end-date-measures",
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    page = BeautifulSoup(str(response.content), "html.parser")
+    rows = page.find_all("tr", {"class": "govuk-table__row"})
+    text = page.get_text()
+    assert text.count("To be end-dated") == 9
+    assert text.count("To be deleted") == 2
+    assert len(rows) == 12
+
+
+@patch("workbaskets.tasks.call_end_measures.apply_async")
+def test_auto_end_measures_post(
+    call_check_end_measures,
+    valid_user_client,
+    commodity_with_measures,
+    user_workbasket,
+    date_ranges,
+):
+    """Test that posting the auto end measures form results in the end_measures
+    Celery task being called and redirects to the confirmation page."""
+    commodity_with_measures.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.big,
+    )
+    url = reverse(
+        "workbaskets:workbasket-ui-auto-end-date-measures",
+    )
+    response = valid_user_client.post(url, {"action": "auto-end-date-measures"})
+    confirmation_url = reverse(
+        "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+        kwargs={"pk": user_workbasket.pk},
+    )
+    assert response.status_code == 302
+    assert response.url == confirmation_url
+    assert call_check_end_measures.called
+
+
+def test_auto_end_measures(commodity_with_measures, user_workbasket, date_ranges):
+    """Test that the call_end_measures correctly ends measures and reorders them
+    in the workbasket."""
+    new_commodity = commodity_with_measures.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.normal,
+    )
+
+    with override_current_transaction(Transaction.objects.last()):
+        measures_to_end = user_workbasket.get_measures_to_end_date()
+        assert len(measures_to_end) == 11
+        measure_pks = [measure.pk for measure in measures_to_end]
+        call_end_measures(measure_pks, user_workbasket.pk)
+        ended_measures = user_workbasket.measures
+        for measure in ended_measures[:9]:
+            assert measure.valid_between.upper == new_commodity.valid_between.upper
+        update_types = [measure.update_type for measure in ended_measures]
+        assert update_types.count(UpdateType.UPDATE) == 9
+        assert update_types.count(UpdateType.DELETE) == 2
+        first_11_items = (
+            TrackedModel.objects.all()
+            .filter(transaction__workbasket=user_workbasket)
+            .order_by("transaction__order")[:10]
+        )
+        for item in first_11_items:
+            assert isinstance(item, Measure)
+
+
+def test_get_measures_to_end_date(user_workbasket, date_ranges):
+    """Test that the utility function correctly gathers measures, not including
+    those which already have an end date before the commodity's."""
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end,
+    )
+
+    open_ended_measure = factories.MeasureFactory.create(
+        sid=11,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.no_end,
+    )
+    measure_ended_before_commodity = factories.MeasureFactory.create(
+        sid=22,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_with_normal,
+    )
+    measure_ended_after_commodity_ends = factories.MeasureFactory.create(
+        sid=33,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_delta_to_2_months_ahead,
+    )
+    measure_to_start_after_commodity_ends = factories.MeasureFactory.create(
+        sid=44,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.future,
+    )
+
+    new_commodity = commodity.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.normal,
+    )
+    with override_current_transaction(Transaction.objects.last()):
+        measures = user_workbasket.get_measures_to_end_date()
+        assert all(
+            measure in measures
+            for measure in [
+                open_ended_measure,
+                measure_ended_after_commodity_ends,
+                measure_to_start_after_commodity_ends,
+            ]
+        )
+        assert measure_ended_before_commodity not in measures
 
 
 def test_reordering_transactions_bug(valid_user_client, user_workbasket):

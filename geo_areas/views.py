@@ -141,7 +141,7 @@ class GeoAreaDetailMemberships(GeoAreaDetail):
 
 class GeoAreaDetailMeasures(SortingMixin, WithPaginationListMixin, ListView):
     """Displays a paginated list of measures for a geo area as a simulated tab
-    on regulation detail view."""
+    on geo area detail view."""
 
     model = Measure
     template_name = "includes/geo_areas/tabs/measures.jinja"
