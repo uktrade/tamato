@@ -16,7 +16,7 @@ from common.util import xml_fromstring
 from common.views import HealthCheckView
 from common.views import handler403
 from common.views import handler500
-from tasks.models import UserAssignment
+from tasks.models import TaskAssignee
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -281,9 +281,9 @@ def test_homepage_cards_contain_expected_links(superuser_client):
 def test_homepage_card_currently_working_on(status, valid_user, valid_user_client):
     test_reason = "test reason"
     workbasket = factories.WorkBasketFactory.create(status=status, reason=test_reason)
-    factories.UserAssignmentFactory.create(
+    factories.TaskAssigneeFactory.create(
         user=valid_user,
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
         task__workbasket=workbasket,
     )
     TrackedModelCheckFactory.create(

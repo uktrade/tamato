@@ -1,0 +1,61 @@
+{% extends "common/confirm_create.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set object_name = object._meta.verbose_name %}
+{% set page_title = object_name ~ " created" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {
+        "text": "Find and view workflow templates",
+        "href": object.get_url("list")},
+      {
+        "text": "Create a " ~ object_name,
+        "href": object.get_url("create"),
+      },
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": object_name|capitalize ~ ": " ~ object,
+    "text": "You have created a new " ~ object_name,
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block button_group %}
+  {{ govukButton({
+    "text": "View " ~ object_name,
+    "href": object.get_url("detail"),
+    "classes": "govuk-button"
+  }) }}
+
+  {% if object_name == "workflow" %}
+    {{ govukButton({
+      "text": "Create a task",
+      "href": "#TODO",
+      "classes": "govuk-button--secondary"
+    }) }}
+  {% elif object_name == "workflow template" %}
+    {{ govukButton({
+      "text": "Create a task template",
+      "href": url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}),
+      "classes": "govuk-button--secondary"
+    }) }}
+  {% endif %}
+{% endblock %}
+
+{% block actions %}
+  <li>
+    <a href={{ object.get_url("list") }} class="govuk-link">Find and view {{object_name}}s</a>
+  </li>
+{% endblock %}
