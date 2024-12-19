@@ -20,6 +20,7 @@ from django.db.models import Subquery
 from django_fsm import FSMField
 from django_fsm import transition
 
+from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
 from checks.models import TransactionCheck
 from common.models.mixins import TimestampedMixin
@@ -326,6 +327,12 @@ class WorkBasket(TimestampedMixin):
         blank=True,
         unique=True,
     )
+    missing_measures_check_task_id = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        unique=True,
+    )
 
     transactions: TransactionQueryset
 
@@ -360,6 +367,40 @@ class WorkBasket(TimestampedMixin):
         self.save()
         logger.info(
             f"Terminated rule check for WorkBasket pk={self.pk}.",
+        )
+
+    def terminate_missing_measures_check(self):
+        """Terminate any task associated with the WorkBasket's missing measures
+        checking, as identified by its missing_measures_check_task_id."""
+
+        logger.info(
+            f"Attempting missing measures check termination for WorkBasket "
+            f"pk={self.pk}.",
+        )
+        if not self.missing_measures_check_task_id:
+            logger.info(
+                f"Unable to terminate missing measures check for WorkBasket "
+                f"pk={self.pk} - "
+                f"empty missing_measures_check_task_id.",
+            )
+            return
+
+        task_result = AsyncResult(self.missing_measures_check_task_id)
+        if not task_result:
+            logger.info(
+                f"Unable to terminate missing measures check for WorkBasket "
+                f"pk={self.pk}, "
+                f"missing_measures_check_task_id={self.missing_measures_check_task_id} - "
+                f"task result is unavailable.",
+            )
+            return
+
+        task_result.revoke()
+        self.delete_missing_measure_comm_codes()
+        self.missing_measures_check_task_id = None
+        self.save()
+        logger.info(
+            f"Terminated missing measures check for WorkBasket pk={self.pk}.",
         )
 
     @property
@@ -620,6 +661,13 @@ class WorkBasket(TimestampedMixin):
         ).delete()
         TransactionCheck.objects.filter(
             transaction__workbasket=self,
+        ).delete()
+
+    def delete_missing_measure_comm_codes(self):
+        """Delete all MissingMeasureCommCode instances related to the
+        WorkBasket."""
+        MissingMeasureCommCode.objects.filter(
+            missing_measures_check__workbasket=self,
         ).delete()
 
     @property

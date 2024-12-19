@@ -491,3 +491,10 @@ def test_workbasket_user_assignments_queryset():
     assert worker_assignment in queryset
     assert reviewer_assignment in queryset
     assert len(queryset) == 2
+
+
+def test_terminate_missing_measures_check_no_id():
+    workbasket = factories.WorkBasketFactory.create(
+        missing_measures_check_task_id=None,
+    )
+    assert workbasket.terminate_missing_measures_check() is None
