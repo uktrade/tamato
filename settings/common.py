@@ -671,6 +671,9 @@ CELERY_ROUTES = {
     "measures.tasks.bulk_edit_measures": {
         "queue": "bulk-create",
     },
+    "workbaskets.tasks.call_end_measures": {
+        "queue": "bulk-create",
+    },
     re.compile(r"(reference_documents)\.tasks\..*"): {
         "queue": "standard",
     },
