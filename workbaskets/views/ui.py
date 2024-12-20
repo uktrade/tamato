@@ -41,6 +41,7 @@ from certificates.models import Certificate
 from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
+from common.forms import DummyForm
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
@@ -1065,7 +1066,7 @@ class WorkBasketViolationDetail(DetailView):
 class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
     success_url = reverse_lazy("workbaskets:workbasket-ui-missing-measures-check")
     template_name = "workbaskets/checks/missing_measures.jinja"
-    form_class = forms.WorkbasketMeasuresCheckForm
+    form_class = DummyForm
 
     model = MissingMeasureCommCode
     sort_by_fields = ["commodity"]
