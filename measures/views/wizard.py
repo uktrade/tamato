@@ -1,18 +1,15 @@
 import logging
-from typing import Dict
-from typing import List
 
 from crispy_forms_gds.helper import FormHelper
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
-from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from formtools.wizard.views import NamedUrlSessionWizardView
 
+from common.forms import DummyForm
 from geo_areas import constants
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
@@ -177,7 +174,9 @@ class MeasureEditWizard(
         wizard forms."""
 
         measures_editor = MeasuresEditor(
-            self.workbasket, selected_measures, cleaned_data
+            self.workbasket,
+            selected_measures,
+            cleaned_data,
         )
         return measures_editor.edit_measures()
 
@@ -205,7 +204,9 @@ class MeasureEditWizard(
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class MeasureCreateWizard(
-    PermissionRequiredMixin, NamedUrlSessionWizardView, MeasureSerializableWizardMixin
+    PermissionRequiredMixin,
+    NamedUrlSessionWizardView,
+    MeasureSerializableWizardMixin,
 ):
     """
     Multipart form wizard for creating a single measure.
@@ -244,7 +245,7 @@ class MeasureCreateWizard(
     """Forms in this wizard's steps that collect user data."""
 
     form_list = [
-        (START, forms.MeasureCreateStartForm),
+        (START, DummyForm),
         *data_form_list,
         (SUMMARY, forms.MeasureReviewForm),
     ]
@@ -613,7 +614,8 @@ class MeasureCreateWizard(
 
 
 class MeasuresWizardAsyncConfirm(TemplateView):
-    """A success view that serves both the bulk create and bulk edit asynchronous pathways."""
+    """A success view that serves both the bulk create and bulk edit
+    asynchronous pathways."""
 
     template_name = "measures/confirm-create-multiple-async.jinja"
 
@@ -624,13 +626,14 @@ class MeasuresWizardAsyncConfirm(TemplateView):
 
 
 class MeasuresWizardSyncConfirm(TemplateView):
-    """A success view that serves both the bulk create and bulk edit synchronous pathways."""
+    """A success view that serves both the bulk create and bulk edit synchronous
+    pathways."""
 
     template_name = "measures/confirm-edit-multiple.jinja"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["edited_or_created_measures_count"] = self.kwargs.get(
-            "edited_or_created_measures_count"
+            "edited_or_created_measures_count",
         )
         return context

@@ -19,10 +19,6 @@ from quotas.serializers import serialize_duplicate_data
 from workbaskets.forms import SelectableObjectsForm
 
 
-class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):
-    pass
-
-
 class QuotaOrderNumbersSelectForm(forms.Form):
     main_quota_order_number = AutoCompleteField(
         label="Main quota order number",
@@ -127,14 +123,6 @@ class SelectedDefinitionsForm(forms.Form):
                     "Each definition period must have a specified relationship and co-efficient value",
                 )
         return cleaned_data
-
-
-class BulkQuotaDefinitionCreateStartForm(forms.Form):
-    pass
-
-
-class BulkQuotaDefinitionCreateIntroductoryPeriod(forms.Form):
-    pass
 
 
 class QuotaDefinitionCreateForm(

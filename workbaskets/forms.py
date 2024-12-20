@@ -425,7 +425,3 @@ class WorkBasketCommentDeleteForm(forms.ModelForm):
                 css_class="govuk-button-group",
             ),
         )
-
-
-class WorkbasketMeasuresCheckForm(forms.Form):
-    pass
