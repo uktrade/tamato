@@ -144,6 +144,7 @@ class QuotaDefinitionCreateForm(
     class Meta:
         model = models.QuotaDefinition
         fields = [
+            "order_number",
             "valid_between",
             "description",
             "volume",
@@ -155,10 +156,13 @@ class QuotaDefinitionCreateForm(
             "maximum_precision",
         ]
 
+    order_number = forms.ModelChoiceField(
+        queryset=models.QuotaOrderNumber.objects.current(),
+        widget=forms.HiddenInput(),
+    )
     description = forms.CharField(label="", widget=forms.Textarea(), required=False)
     volume = forms.DecimalField(
         label="Current volume",
-        required=True,
         help_text="The current volume is the starting balance for the quota",
         widget=forms.TextInput(),
         error_messages={
@@ -168,7 +172,6 @@ class QuotaDefinitionCreateForm(
     )
     initial_volume = forms.DecimalField(
         widget=forms.TextInput(),
-        required=True,
         help_text="The initial volume is the legal balance applied to the definition period",
         error_messages={
             "invalid": "Initial volume must be a number",
@@ -177,7 +180,6 @@ class QuotaDefinitionCreateForm(
     )
     measurement_unit = forms.ModelChoiceField(
         queryset=MeasurementUnit.objects.current(),
-        required=True,
         empty_label="Choose measurement unit",
         error_messages={"required": "Select the measurement unit"},
     )
@@ -205,6 +207,7 @@ class QuotaDefinitionCreateForm(
 
     def __init__(self, *args, **kwargs):
         self.buttons = kwargs.pop("buttons", None)
+        self.order_number = kwargs.pop("order_number", None)
         super().__init__(*args, **kwargs)
         self.init_layout()
         self.init_fields()
@@ -217,6 +220,8 @@ class QuotaDefinitionCreateForm(
         # This is always set to 3 for current definitions
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
         self.fields["maximum_precision"].initial = 3
+
+        self.fields["order_number"].initial = self.order_number
 
         # Set these as the default values
         self.fields["quota_critical"].initial = False

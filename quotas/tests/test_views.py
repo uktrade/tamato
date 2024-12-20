@@ -4,8 +4,6 @@ from unittest import mock
 import pytest
 from bs4 import BeautifulSoup
 from django.contrib.humanize.templatetags.humanize import intcomma
-from django.db import IntegrityError
-from django.db import transaction
 from django.urls import reverse
 
 from common.models.transactions import Transaction
@@ -1367,24 +1365,21 @@ def test_create_new_quota_definition_business_rule_violation(
     }
 
     url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
-    try:
-        with transaction.atomic():
-            response = client_with_current_workbasket.post(url, form_data)
+    response = client_with_current_workbasket.post(
+        f"{url}?order_number={quota.order_number}",
+        form_data,
+    )
 
-        assert response.status_code == 200
+    assert response.status_code == 200
 
-        soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
-        assert soup.select(".govuk-error-summary")
-        errors = [
-            el.text.strip() for el in soup.select(".govuk-error-summary__list li")
-        ]
-        assert (
-            "The validity period of the quota definition must be spanned by one of the validity periods of the referenced quota order number."
-            in errors
-        )
-    except IntegrityError:
-        pass
+    assert soup.select(".govuk-error-summary")
+    errors = [el.text.strip() for el in soup.select(".govuk-error-summary__list li")]
+    assert (
+        "The validity period of the quota definition must be spanned by one of the validity periods of the referenced quota order number."
+        in errors
+    )
 
 
 @pytest.mark.django_db

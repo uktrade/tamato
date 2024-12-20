@@ -204,29 +204,22 @@ class QuotaDefinitionCreate(CreateTaricCreateView):
     def quota(self):
         return models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
 
-    @transaction.atomic
-    def get_result_object(self, form):
-        object = super().get_result_object(form)
-        return object
-
     def get_context_data(self, **kwargs):
         return super().get_context_data(
-            quota=self.quota,
+            quota_order_number=self.request.GET["order_number"],
+            quota_sid=self.kwargs["sid"],
             **kwargs,
         )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        kwargs["order_number"] = self.quota
         kwargs["buttons"] = {
             "submit": "Submit",
             "link_text": "Cancel",
             "link": "/workbaskets/current",
         }
         return kwargs
-
-    def form_valid(self, form):
-        form.instance.order_number = self.quota
-        return super().form_valid(form)
 
 
 class QuotaDefinitionConfirmCreate(
