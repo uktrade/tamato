@@ -92,6 +92,10 @@ class ReportMeasure(ReportModel):
         db_column="trackedmodel_ptr_id",
     )
 
+    extra_where = (
+        " AND (upper(valid_between) > CURRENT_DATE or upper(valid_between) is NULL) "
+    )
+
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.IntegerField()
     dead_additional_code = models.CharField(max_length=16, blank=True, null=True)
@@ -191,6 +195,8 @@ class ReportMeasureConditionComponent(ReportModel):
 
 class ReportMeasureCondition(ReportModel):
     shadowed_model = MeasureCondition
+    update_table = False
+
     trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
@@ -235,6 +241,8 @@ class ReportMeasureCondition(ReportModel):
         blank=True,
         null=True,
     )
+    # Calculated by the ORM
+    duty_sentence = models.TextField(null=True, blank=True)
 
     @classmethod
     def ignore_fk_list(cls):

@@ -66,6 +66,7 @@ class TrackedModelQuerySet(
         (see ``set_current_transaction()`` and ``override_current_transaction()``
         in ``common.models.utils``).
         """
+        # Raise error if no current transaction is set
         return self.approved_up_to_transaction(
             LazyTransaction(get_value=get_current_transaction),
         )

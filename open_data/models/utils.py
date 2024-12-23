@@ -27,6 +27,7 @@ class ReportModel(models.Model):
     remove_obsolete = False
     patch_fk = True
     update_description = False
+    update_table = True
 
     def contain_all_fields(self):
         # This function will check that there are no new field in the shadowed table
@@ -74,6 +75,7 @@ class ReportModel(models.Model):
                 # Remove the table name from the field definition
                 update_field += field.split(".")[1]
         # return update_field + read_field + query_from_and_where + ";"
+        print(f"{cls.extra_where=}")
         return (
             f"{update_field} {read_field}  {query_from_and_where} {cls.extra_where} ;"
         )

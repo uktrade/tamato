@@ -62,10 +62,8 @@ class CommodityCodeExport:
         Returns:
             None: Operations performed and stored within the NamedTemporaryFile
         """
-        commodities = (
-            ReportGoodsNomenclature.objects.all()
-            .select_related("parent_trackedmodel_ptr")
-            .prefetch_related("description")
+        commodities = ReportGoodsNomenclature.objects.all().select_related(
+            "parent_trackedmodel_ptr",
         )
         id = 0
         with open(self.target_file.name, "wt") as file:
@@ -87,7 +85,7 @@ class CommodityCodeExport:
                     commodity.sid,
                     commodity.item_id,
                     commodity.suffix,
-                    commodity.description.all().first().description,
+                    commodity.description,
                     commodity.valid_between.lower,
                     commodity.valid_between.upper,
                     parent_sid,
