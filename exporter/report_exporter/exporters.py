@@ -6,6 +6,7 @@ from os import path
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from exporter.measures.runner import MeasureExport
 from exporter.quotas import runner
 from exporter.report_exporter.commodities_runner import CommodityCodeExport
 from exporter.report_exporter.storage import QuotasExportS3StorageBase
@@ -110,3 +111,11 @@ class CommoditiesReportExporter(ReportExporter):
 
     def make_export(self, filename):
         CommodityCodeExport(filename).run()
+
+
+class MeasuresReportExporter(ReportExporter):
+    s3_storage = QuotasExportS3StorageBase
+    file_prefix = "measures_"
+
+    def make_export(self, filename):
+        MeasureExport(filename).run()
