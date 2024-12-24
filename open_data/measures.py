@@ -45,9 +45,33 @@ def update_measure_components(verbose):
                         dependent_measure_id=measure.trackedmodel_ptr_id,
                         monetary_unit_id=component.monetary_unit_id,
                         required_certificate_id=component.required_certificate_id,
-                        duty_sentence=component.reference_price_string,
+                        reference_price=component.reference_price_string,
                     ),
                 )
         ReportMeasureCondition.objects.bulk_create(component_list)
+    if verbose:
+        print(f"Elapsed time {time.time() - start}")
+
+
+def update_measure(verbose):
+    # Unless there is a current transaction, reading the latest description will fail in a misterious way
+    # Because this is called in a command, there is no transaction set"""
+    tx = Transaction.objects.last()
+    start = time.time()
+    if verbose:
+        print("Updating measure")
+
+    with override_current_transaction(tx):
+        measures_qs = (
+            ReportMeasure.objects.filter(sid__gte=20000000)
+            .only("trackedmodel_ptr", "duty_sentence")
+            .select_related("trackedmodel_ptr")
+        )
+        for measure in measures_qs:
+            duty_sentence = measure.trackedmodel_ptr.duty_sentence
+            if duty_sentence:
+                measure.duty_sentence = duty_sentence
+                measure.save()
+
     if verbose:
         print(f"Elapsed time {time.time() - start}")

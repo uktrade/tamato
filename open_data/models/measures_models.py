@@ -135,6 +135,9 @@ class ReportMeasure(ReportModel):
         null=True,
     )
 
+    # ORM derived
+    duty_sentence = models.TextField(null=True, blank=True)
+
     class Meta:
         db_table = ReportModel.create_table_name(Measure)
 
@@ -242,7 +245,7 @@ class ReportMeasureCondition(ReportModel):
         null=True,
     )
     # Calculated by the ORM
-    duty_sentence = models.TextField(null=True, blank=True)
+    reference_price = models.TextField(blank=True, null=True)
 
     @classmethod
     def ignore_fk_list(cls):
