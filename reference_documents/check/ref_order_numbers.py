@@ -19,16 +19,16 @@ class OrderNumberChecks(BaseOrderNumberCheck):
         """
         # handle incomplete order number dates (from import)
         if self.ref_order_number.valid_between is None:
-            message = f"order number {self.ref_order_number.order_number} cant be checked, no validity date range"
+            message = f"order number {self.ref_order_number.order_number} cant be checked, no validity date range provided on reference document data"
             print("FAIL", message)
             return AlignmentReportCheckStatus.FAIL, message
         # Verify that the order number exists in TAP
         elif not self.tap_order_number():
             message = (
-                f"order number not found matching {self.ref_order_number.order_number}"
+                f"order number not found matching {self.ref_order_number.order_number} validity {self.ref_order_number.valid_between}"
             )
             print("FAIL", message)
             return AlignmentReportCheckStatus.FAIL, message
         else:
-            print(f"PASS - order number {self.tap_order_number()} found")
+            print(f"PASS - order number {self.tap_order_number()} with validity {self.ref_order_number.valid_between} matched")
             return AlignmentReportCheckStatus.PASS, ""

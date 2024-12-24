@@ -9,7 +9,7 @@ from factory.fuzzy import FuzzyDecimal
 from factory.fuzzy import FuzzyText
 
 from common.util import TaricDateRange
-from reference_documents.models import AlignmentReportCheckStatus
+from reference_documents.models import AlignmentReportCheckStatus, ReferenceDocumentCsvUploadStatus
 from reference_documents.models import AlignmentReportStatus
 from reference_documents.models import ReferenceDocumentVersionStatus
 
@@ -288,3 +288,26 @@ class AlignmentReportCheckFactory(factory.django.DjangoModelFactory):
     status = AlignmentReportCheckStatus.PASS
     message = FuzzyText(length=10)
     ref_rate = None
+    target_start_date = datetime.now() + timedelta(days=-1)
+
+
+class CSVUploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "reference_documents.CSVUpload"
+
+    error_details = ""
+    status = ReferenceDocumentCsvUploadStatus.PENDING
+    preferential_rates_csv_data = ''
+    order_number_csv_data = ''
+    quota_definition_csv_data = ''
+
+    class Params:
+        errored = factory.Trait(
+            status=ReferenceDocumentCsvUploadStatus.ERRORED,
+        )
+        complete = factory.Trait(
+            status=ReferenceDocumentCsvUploadStatus.COMPLETE,
+        )
+        processing = factory.Trait(
+            status=ReferenceDocumentCsvUploadStatus.PROCESSING,
+        )

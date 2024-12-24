@@ -11,7 +11,7 @@ from commodities.models.dc import CommodityTreeSnapshot
 from commodities.models.dc import SnapshotMoment
 from common.models import Transaction
 from common.util import TaricDateRange
-from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalArea, GeographicalMembership
 from geo_areas.models import GeographicalAreaDescription
 from measures.models import Measure
 from quotas.models import QuotaAssociation
@@ -69,6 +69,77 @@ class BaseCheck(abc.ABC):
         that the class represents.
         """
 
+    @abc.abstractmethod
+    def get_area_id(self) -> (AlignmentReportCheckStatus, str):
+        """
+        Abstract method, required to be implemented on inheriting classes.
+
+        gets the area_id for the object being checked.
+        """
+
+    @abc.abstractmethod
+    def get_validity(self) -> (AlignmentReportCheckStatus, str):
+        """
+        Abstract method, required to be implemented on inheriting classes.
+
+        gets validity for the object being checked.
+        """
+
+    def tap_geo_areas(self):
+        """
+        Finds the geo areas / geo area groups in TAP for a given preferential quota using data from
+        the associated reference document.
+
+        returns:
+            [GeographicalAreas] or None
+        """
+        geo_areas_to_search = []
+
+        try:
+            # get geo area
+            geo_area = GeographicalArea.objects.latest_approved().get(
+                area_id=self.get_area_id(),
+                valid_between__contains=self.get_validity().lower,
+            )
+
+            geo_areas_to_search.append(geo_area)
+
+            if geo_area.is_group():
+                # if it's a group collect members
+                members = list(x.member for x in geo_area.members.latest_approved().all())
+            else:
+                # if not a group - get single member
+                members = [geo_area]
+
+            # find all groups matching the validity range
+            query = (Q(
+                valid_between__contains=self.get_validity().lower,
+            ))
+
+            # filter groups by ends with - if available
+            if self.get_validity().upper:
+                query = query & Q(valid_between__contains=self.get_validity().upper)
+
+            geo_area_groups = GeographicalArea.objects.latest_approved().filter(query)
+
+            # filter the groups by members in group / single member
+            if len(members) > 0:
+                for geo_area_group in geo_area_groups:
+                    match = True
+                    for member in members:
+                        if not geo_area_group.members.all().filter(member=member).exists():
+                            match = False
+                            break
+
+                    if match:
+                        geo_areas_to_search.append(geo_area_group)
+
+            # return results
+            return geo_areas_to_search
+
+        except GeographicalArea.DoesNotExist:
+            return []
+
 
 class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
     """
@@ -97,6 +168,20 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         )
         self.reference_document = self.reference_document_version.reference_document
 
+    def get_area_id(self) -> (AlignmentReportCheckStatus, str):
+        """
+        returns the related area id from the reference_document
+        """
+
+        return self.reference_document.area_id
+
+    def get_validity(self) -> (AlignmentReportCheckStatus, str):
+        """
+        gets validity for the object being checked.
+        """
+
+        return self.ref_quota_definition.valid_between
+
     def tap_order_number(self, order_number: str = None):
         """
         Finds order number in TAP for a given preferential quota.
@@ -112,23 +197,6 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
 
         return super().tap_order_number(order_number)
 
-    def geo_area(self):
-        """
-        Finds the geo area in TAP for a given preferential quota using data from
-        the associated reference document.
-
-        returns:
-            GeographicalArea
-        """
-        geo_area = (
-            GeographicalArea.objects.latest_approved()
-            .filter(
-                area_id=self.reference_document_version.reference_document.area_id,
-            )
-            .first()
-        )
-        return geo_area
-
     def geo_area_description(self):
         """
         Gets the geo area description for a given preferential quota.
@@ -138,7 +206,7 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         """
         geo_area_desc = (
             GeographicalAreaDescription.objects.latest_approved()
-            .filter(described_geographicalarea=self.geo_area())
+            .filter(described_geographicalarea__area_id=self.reference_document.area_id)
             .last()
         )
         return geo_area_desc.description
@@ -205,7 +273,7 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
                 valid_between__endswith__gte=self.ref_quota_definition.valid_between.lower,
                 order_number=self.tap_order_number(),
                 goods_nomenclature=self.commodity_code(),
-                geographical_area=self.geo_area(),
+                geographical_area__in=self.tap_geo_areas(),
                 measure_type__sid=143,
             )
             .order_by("valid_between")
@@ -389,6 +457,21 @@ class BaseOrderNumberCheck(BaseCheck, abc.ABC):
         """
         super().__init__()
         self.ref_order_number = ref_order_number
+        self.reference_document = ref_order_number.reference_document_version.reference_document
+
+    def get_area_id(self) -> (AlignmentReportCheckStatus, str):
+        """
+        returns the related area id from the reference_document
+        """
+
+        return self.reference_document.area_id
+
+    def get_validity(self) -> (AlignmentReportCheckStatus, str):
+        """
+        gets validity for the object being checked.
+        """
+
+        return self.ref_order_number.valid_between
 
     def tap_order_number(self, order_number: str = None):
         """
@@ -425,6 +508,21 @@ class BaseQuotaSuspensionCheck(BaseCheck, abc.ABC):
         """
         super().__init__()
         self.ref_quota_suspension = ref_quota_suspension
+        self.reference_document = ref_quota_suspension.ref_quota_definition.ref_order_number.reference_document_version.reference_document
+
+    def get_area_id(self) -> (AlignmentReportCheckStatus, str):
+        """
+        returns the related area id from the reference_document
+        """
+
+        return self.reference_document.area_id
+
+    def get_validity(self) -> (AlignmentReportCheckStatus, str):
+        """
+        gets validity for the object being checked.
+        """
+
+        return self.ref_quota_suspension.valid_between
 
     def tap_quota_definition(self):
         """
@@ -504,6 +602,21 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         """
         super().__init__()
         self.ref_rate = ref_rate
+        self.reference_document = ref_rate.reference_document_version.reference_document
+
+    def get_area_id(self) -> (AlignmentReportCheckStatus, str):
+        """
+        returns the related area id from the reference_document
+        """
+
+        return self.reference_document.area_id
+
+    def get_validity(self) -> (AlignmentReportCheckStatus, str):
+        """
+        gets validity for the object being checked.
+        """
+
+        return self.ref_rate.valid_between
 
     def get_snapshot(self, comm_code=None) -> Optional[CommodityTreeSnapshot]:
         """
@@ -527,14 +640,17 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         else:
             return None
 
+        # removes pairs of zeros until it's just the comm code, no trailing zeros
+        # e.g. 0101010000 > 010101
+        # this is required for CommodityCollectionLoader
         while item_id[-2:] == "00":
-            item_id = item_id[0 : len(item_id) - 2]
+            item_id = item_id[0: len(item_id) - 2]
 
         commodities_collection = CommodityCollectionLoader(
             prefix=item_id,
         ).load(current_only=True)
 
-        latest_transaction = Transaction.objects.order_by("created_at").last()
+        latest_transaction = Transaction.objects.filter(workbasket__status='PUBLISHED').order_by("created_at").last()
 
         snapshot = CommodityTreeSnapshot(
             commodities=commodities_collection.commodities,
@@ -555,34 +671,18 @@ class BaseRateCheck(BaseCheck, abc.ABC):
             return None
 
         goods = GoodsNomenclature.objects.latest_approved().filter(
-            (
-                Q(valid_between__contains=self.ref_rate.valid_between.lower)
-                & Q(valid_between__contains=self.ref_rate.valid_between.upper)
-            ),
+            valid_between__contains=self.ref_rate.valid_between.lower,
             item_id=self.ref_rate.commodity_code,
             suffix=80,
         )
+
+        if self.ref_rate.valid_between.upper:
+            goods = goods.filter(valid_between__contains=self.ref_rate.valid_between.upper)
 
         if len(goods) == 0:
             return None
 
         return goods.first()
-
-    def tap_geo_area(self):
-        """
-        Finds the latest approved version of a geographical area in TAP for a
-        given a preferential rate.
-
-        returns:
-            GeographicalArea or None
-        """
-        try:
-            return GeographicalArea.objects.latest_approved().get(
-                area_id=self.ref_rate.reference_document_version.reference_document.area_id,
-            )
-
-        except GeographicalArea.DoesNotExist:
-            return None
 
     def tap_geo_area_description(self) -> Optional[str]:
         """
@@ -592,14 +692,19 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         returns:
             string (the description of a geographical area) or None
         """
-        geo_area = (
-            GeographicalAreaDescription.objects.latest_approved()
-            .filter(described_geographicalarea=self.tap_geo_area())
-            .last()
-        )
+        try:
+            geo_area_description = (
+                GeographicalAreaDescription.objects.latest_approved()
+                .filter(described_geographicalarea__area_id=self.reference_document.area_id)
+                .last()
+            )
+        except GeographicalAreaDescription.DoesNotExist:
+            return None
+        except AttributeError:
+            return None
 
-        if geo_area:
-            return geo_area.description
+        if geo_area_description:
+            return geo_area_description.description
         else:
             return None
 
@@ -632,70 +737,71 @@ class BaseRateCheck(BaseCheck, abc.ABC):
             depending on query results
         """
         if comm_code_item_id:
-            good = GoodsNomenclature.objects.latest_approved().filter(
+            query = (Q(
                 (
                     Q(
                         valid_between__contains=self.ref_rate.valid_between.lower,
                     )
-                    & Q(
-                        valid_between__contains=self.ref_rate.valid_between.upper,
-                    )
                 ),
                 item_id=comm_code_item_id,
                 suffix=80,
-            )
+            ))
+
+            if self.ref_rate.valid_between.upper:
+                query = query & Q(valid_between__contains=self.ref_rate.valid_between.upper)
+
+            good = GoodsNomenclature.objects.latest_approved().filter(query)
 
             if len(good) == 1:
+                query = (Q(
+                    valid_between__contains=self.ref_rate.valid_between.lower,
+                    geographical_area__in=self.tap_geo_areas(),
+                    measure_type__sid__in=[
+                        142,
+                    ],
+                ))
+
+                if self.ref_rate.valid_between.upper:
+                    query = query & Q(valid_between__contains=self.ref_rate.valid_between.upper)
+
                 return (
                     good.first()
                     .measures.latest_approved()
-                    .filter(
-                        (
-                            Q(
-                                valid_between__contains=self.ref_rate.valid_between.lower,
-                            )
-                            & Q(
-                                valid_between__contains=self.ref_rate.valid_between.upper,
-                            )
-                        ),
-                        geographical_area=self.tap_geo_area(),
-                        measure_type__sid__in=[
-                            142,
-                        ],  # note : these are the measure types used to identify preferential tariffs
-                    )
+                    .filter(query)
                 )
             else:
                 return []
+
         else:
             tap_comm_code = self.tap_comm_code()
 
             if tap_comm_code:
+                query = (Q(
+                    valid_between__contains=self.ref_rate.valid_between.lower,
+                    geographical_area__in=self.tap_geo_areas(),
+                    measure_type__sid__in=[
+                        142,
+                    ],
+                ))
+
+                if self.ref_rate.valid_between.upper:
+                    query = query & Q(valid_between__contains=self.ref_rate.valid_between.upper)
+
                 return (
                     self.tap_comm_code()
                     .measures.latest_approved()
-                    .filter(
-                        (
-                            Q(
-                                valid_between__contains=self.ref_rate.valid_between.lower,
-                            )
-                            & Q(
-                                valid_between__contains=self.ref_rate.valid_between.upper,
-                            )
-                        ),
-                        geographical_area=self.tap_geo_area(),
-                        measure_type__sid__in=[
-                            142,
-                        ],  # note : these are the measure types used to identify preferential tariffs
-                    )
+                    .filter(query)
                 )
             else:
                 return []
 
+
     def tap_recursive_comm_code_check(
-        self,
-        snapshot: CommodityTreeSnapshot,
-        parent_item_id: str,
-        level: int = 1,
+            self,
+            snapshot: CommodityTreeSnapshot,
+            parent_item_id: str,
+            parent_item_suffix: str,
+            level: int = 1,
     ):
         """
         This function checks the coverage for a rate against children of a comm
@@ -710,6 +816,7 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         Args:
             snapshot: CommodityTreeSnapshot, A snapshot from self.ref_rate.comm_code and children
             parent_item_id: str, The parent comm code item_id to check
+            parent_item_suffix: int, The parent comm code suffix to check
             level: int, the numeric level below the parent comm code that
             is currently being performed at
 
@@ -719,9 +826,18 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         # find comm code from snapshot
         child_commodities = []
         for commodity in snapshot.commodities:
-            if commodity.item_id == parent_item_id and commodity.suffix == "80":
-                child_commodities = snapshot.get_children(commodity)
-                break
+            if commodity.item_id == parent_item_id and commodity.suffix == parent_item_suffix:
+                # check validity
+
+                if commodity.valid_between.contains(self.ref_rate.valid_between):
+
+                    tmp_child_commodities = snapshot.get_children(commodity)
+                    # strange bug in get_children - sometimes it returns the parent.
+                    for child_comm in tmp_child_commodities:
+                        if child_comm.item_id == parent_item_id and child_comm.suffix == parent_item_suffix:
+                            continue
+                        else:
+                            child_commodities.append(child_comm)
 
         if len(child_commodities) == 0:
             print(f'{"-" * level} no more children')
@@ -732,11 +848,12 @@ class BaseRateCheck(BaseCheck, abc.ABC):
             related_measures = self.tap_related_measures(child_commodity.item_id)
 
             if len(related_measures) == 0:
-                print(f'{"-" * level} FAIL : {child_commodity.item_id}')
+                print(f'{"-" * level} FAIL : {child_commodity.item_id} : {child_commodity.suffix}')
                 results.append(
                     self.tap_recursive_comm_code_check(
                         snapshot,
                         child_commodity.item_id,
+                        child_commodity.suffix,
                         level + 1,
                     ),
                 )

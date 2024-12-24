@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework import routers
 
-from reference_documents.views.alignment_report_views import AlignmentReportDetails
+from reference_documents.views.alignment_report_views import AlignmentReportDetails, AlignmentReportRerunCheckDetails
 from reference_documents.views.order_number_views import RefOrderNumberCreate
 from reference_documents.views.order_number_views import RefOrderNumberDelete
 from reference_documents.views.order_number_views import RefOrderNumberEdit
@@ -36,6 +36,7 @@ from reference_documents.views.rate_views import RefRateBulkCreate
 from reference_documents.views.rate_views import RefRateCreate
 from reference_documents.views.rate_views import RefRateDelete
 from reference_documents.views.rate_views import RefRateEdit
+from reference_documents.views.reference_document_csv_upload import ReferenceDocumentCsvUploadCreate, ReferenceDocumentCsvUploadCreateSuccess, ReferenceDocumentCsvUploadList, ReferenceDocumentCsvUploadDetails
 from reference_documents.views.reference_document_version_views import (
     ReferenceDocumentVersionAlignmentCheck,
 )
@@ -103,6 +104,29 @@ urlpatterns = [
         "reference_documents/create/",
         ReferenceDocumentCreate.as_view(),
         name="create",
+    ),
+    # reference document data CSV Upload
+    path(
+        "reference_documents/csv_uploads/",
+        ReferenceDocumentCsvUploadList.as_view(),
+        name="reference-document-csv-index",
+    ),
+
+    path(
+        "reference_documents/csv_uploads/<pk>",
+        ReferenceDocumentCsvUploadDetails.as_view(),
+        name="reference-document-csv-upload-details",
+    ),
+    path(
+        "reference_documents/csv_upload/",
+        ReferenceDocumentCsvUploadCreate.as_view(),
+        name="reference-document-csv-upload",
+    ),
+    # reference document data CSV Upload
+    path(
+        "reference_documents/csv_upload_succeeded/",
+        ReferenceDocumentCsvUploadCreateSuccess.as_view(),
+        name="reference-document-csv-upload-success",
     ),
     path(
         "reference_documents/<pk>/",
@@ -317,4 +341,11 @@ urlpatterns = [
         AlignmentReportDetails.as_view(),
         name="alignment-report-details",
     ),
+
+    path(
+        "reference_document_versions/<version_pk>/alignment-reports/<ar_pk>/re-run-check/<pk>/",
+        AlignmentReportRerunCheckDetails.as_view(),
+        name="alignment-report-rerun-check",
+    ),
+
 ]

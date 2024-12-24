@@ -1,3 +1,6 @@
+import datetime
+from datetime import timedelta
+
 import django_fsm
 import pytest
 
@@ -91,7 +94,7 @@ class TestAlignmentReport:
 
     def test_unique_check_names_default(self):
         target = factories.AlignmentReportFactory()
-        assert list(target.unique_check_names()) == []
+        assert list(target.unique_check_names(datetime.date.today().year)) == []
 
     def test_unique_check_names_populated(self):
         target = factories.AlignmentReportFactory()
@@ -99,10 +102,12 @@ class TestAlignmentReport:
             check_name="test1",
             alignment_report=target,
             status=AlignmentReportCheckStatus.PASS,
+            target_start_date=datetime.date.today(),
         )
-        AlignmentReportCheckFactory(check_name="test2", alignment_report=target)
-        AlignmentReportCheckFactory(check_name="test3", alignment_report=target)
-        assert list(target.unique_check_names()) == ["test1", "test2", "test3"]
+        AlignmentReportCheckFactory(check_name="test2", alignment_report=target, target_start_date=datetime.date.today())
+        AlignmentReportCheckFactory(check_name="test3", alignment_report=target, target_start_date=datetime.date.today() + timedelta(days=365))
+        AlignmentReportCheckFactory(check_name="test4", alignment_report=target, target_start_date=datetime.date.today())
+        assert list(target.unique_check_names(datetime.date.today().year)) == ["test1", "test2", "test4"]
 
     def test_check_stats_default(self):
         target = factories.AlignmentReportFactory()
@@ -129,17 +134,18 @@ class TestAlignmentReport:
             check_name="test1",
             alignment_report=target,
             status=AlignmentReportCheckStatus.SKIPPED,
+            target_start_date=datetime.date.today()
         )
-        AlignmentReportCheckFactory(check_name="test2", alignment_report=target)
-        AlignmentReportCheckFactory(check_name="test3", alignment_report=target)
+        AlignmentReportCheckFactory(check_name="test2", alignment_report=target, target_start_date=datetime.date.today())
+        AlignmentReportCheckFactory(check_name="test3", alignment_report=target, target_start_date=datetime.date.today())
         stats = target.check_stats()
-        assert stats["test1"]["total"] == 4
-        assert stats["test1"]["failed"] == 1
-        assert stats["test1"]["passed"] == 1
-        assert stats["test1"]["warning"] == 1
-        assert stats["test1"]["skipped"] == 1
-        assert stats["test2"]["total"] == 1
-        assert stats["test3"]["total"] == 1
+        assert stats["test1 2024"]["total"] == 4
+        assert stats["test1 2024"]["failed"] == 1
+        assert stats["test1 2024"]["passed"] == 1
+        assert stats["test1 2024"]["warning"] == 1
+        assert stats["test1 2024"]["skipped"] == 1
+        assert stats["test2 2024"]["total"] == 1
+        assert stats["test3 2024"]["total"] == 1
 
     def test_error_count(self):
         target = factories.AlignmentReportFactory()
@@ -192,3 +198,17 @@ class TestAlignmentReport:
         AlignmentReportCheckFactory(check_name="test2", alignment_report=target)
         AlignmentReportCheckFactory(check_name="test3", alignment_report=target)
         assert target.warning_count() == 1
+
+    def test_target_start_date_years(self):
+        target = factories.AlignmentReportFactory()
+
+        for i in range(20):
+            factories.AlignmentReportCheckFactory.create(
+                alignment_report=target,
+                status=AlignmentReportCheckStatus.PASS,
+                target_start_date=datetime.date(datetime.date.today().year + (i - 5), 1, 1)
+            )
+
+        assert datetime.date.today().year - 5 in target.target_start_date_years()
+        assert datetime.date.today().year + 14 in target.target_start_date_years()
+        assert len(target.target_start_date_years()) == 20
