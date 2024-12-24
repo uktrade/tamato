@@ -171,6 +171,7 @@ class TestChecks:
             RateChecks(ref_rate),
             ref_rate=ref_rate,
             parent_has_failed_or_skipped_result=True,
+            target_start_date=date.today()
         )
         assert result == AlignmentReportCheckStatus.SKIPPED
 

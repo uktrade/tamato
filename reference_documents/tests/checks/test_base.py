@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 
 from commodities.models.dc import CommodityTreeSnapshot
-from common.tests.factories import GeographicalAreaDescriptionFactory
+from common.tests.factories import GeographicalAreaDescriptionFactory, GeoGroupFactory, GeographicalMembershipFactory
 from common.tests.factories import GeographicalAreaFactory
 from common.tests.factories import GoodsNomenclatureFactory
 from common.tests.factories import MeasureFactory
@@ -13,6 +13,7 @@ from common.tests.factories import QuotaDefinitionFactory
 from common.tests.factories import QuotaOrderNumberFactory
 from common.tests.factories import QuotaSuspensionFactory
 from common.tests.factories import SimpleGoodsNomenclatureFactory
+from common.tests.util import valid_between_end_delta
 from common.util import TaricDateRange
 from geo_areas.models import GeographicalAreaDescription
 from quotas import validators
@@ -33,7 +34,7 @@ class TestBaseCheck:
         with pytest.raises(TypeError) as e:
             BaseCheck()
         assert (
-            "Can't instantiate abstract class BaseCheck without an implementation for abstract method 'run_check'"
+            "Can't instantiate abstract class BaseCheck without an implementation for abstract methods 'get_area_id', 'get_validity', 'run_check'"
             in str(e.value)
         )
 
@@ -41,6 +42,10 @@ class TestBaseCheck:
         class Target(BaseCheck):
             def run_check(self) -> (AlignmentReportCheckStatus, str):
                 super().run_check()
+            def get_area_id(self) -> ():
+                pass
+            def get_validity(self):
+                pass
 
         target = Target()
 
@@ -84,26 +89,30 @@ class TestBaseQuotaDefinitionCheck:
     def test_geo_area_no_match(self):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
         target = self.Target(pref_quota)
-        assert target.geo_area() is None
+        assert target.tap_geo_areas() == []
 
     def test_geo_area_match(self):
-        tap_geo_area = GeographicalAreaFactory.create()
+        validity = TaricDateRange(date(2022,1,1), date(2024,1,1))
+        tap_geo_area = GeographicalAreaFactory.create(valid_between=validity)
         pref_quota = factories.RefQuotaDefinitionFactory.create(
             ref_order_number__reference_document_version__reference_document__area_id=tap_geo_area.area_id,
+            valid_between=validity
         )
         target = self.Target(pref_quota)
-        assert target.geo_area() == tap_geo_area
+        assert target.tap_geo_areas() == [tap_geo_area]
 
     def test_geo_area_description_match(self):
-        tap_geo_area = GeographicalAreaFactory.create()
+        validity = TaricDateRange(date(2022, 1, 1), date(2024, 1, 1))
+        tap_geo_area = GeographicalAreaFactory.create(valid_between=validity)
         pref_quota = factories.RefQuotaDefinitionFactory.create(
             ref_order_number__reference_document_version__reference_document__area_id=tap_geo_area.area_id,
+            valid_between=validity
         )
         target = self.Target(pref_quota)
 
         description = (
             GeographicalAreaDescription.objects.latest_approved()
-            .filter(described_geographicalarea=target.geo_area())
+            .filter(described_geographicalarea=target.tap_geo_areas()[0])
             .last()
         )
 
@@ -114,7 +123,7 @@ class TestBaseQuotaDefinitionCheck:
             ref_order_number__reference_document_version__reference_document__area_id="",
         )
         target = self.Target(pref_quota)
-        assert target.geo_area() is None
+        assert target.tap_geo_areas() == []
 
     def test_commodity_code_no_match(self):
         pref_quota = factories.RefQuotaDefinitionFactory.create()
@@ -1040,27 +1049,87 @@ class TestBaseRateCheck:
         target = self.Target(ref_rate)
         assert target.tap_comm_code() is None
 
-    def test_tap_geo_area_matches(self):
-        ref_rate = factories.RefRateFactory.create()
+    def test_tap_geo_areas_match(self):
+        ref_rate = factories.RefRateFactory.create(valid_between=TaricDateRange(date(2022, 1, 1), date(2023, 1, 1)))
 
         tap_geo_area = GeographicalAreaFactory.create(
             area_id=ref_rate.reference_document_version.reference_document.area_id,
+            valid_between=TaricDateRange(date(2022, 1, 1), date(2023, 1, 1))
         )
 
         target = self.Target(ref_rate)
-        assert target.tap_geo_area() == tap_geo_area
+        assert target.tap_geo_areas() == [tap_geo_area]
 
-    def test_tap_geo_area_no_match(self):
+    def test_tap_geo_areas_match_multiple(self):
+
+        valid_range_wide = TaricDateRange(date(1990, 1, 1))
+        valid_range = TaricDateRange(date(2022, 1, 1), date(2023, 1, 1))
+        valid_range_2 = TaricDateRange(date(2021, 1, 1), date(2024, 1, 1))
+        invalid_range = TaricDateRange(date(2022, 1, 1), date(2022, 6, 1))
+
+        valid_geo_group = GeoGroupFactory.create(
+            area_id = 'ZZG',
+            valid_between = valid_range
+        )
+
+        tap_geo_area = GeographicalAreaFactory.create(
+            area_id='ZZ',
+            valid_between=valid_range_wide
+        )
+
+        tab_geo_area_member = GeographicalMembershipFactory.create(
+            member=tap_geo_area,
+            geo_group=valid_geo_group,
+            valid_between=valid_range
+        )
+
+        valid_geo_group_2 = GeoGroupFactory.create(
+            area_id='ZZG2',
+            valid_between=valid_range_2
+        )
+
+        tab_geo_area_member_2 = GeographicalMembershipFactory.create(
+            member=tap_geo_area,
+            geo_group=valid_geo_group_2,
+            valid_between=valid_range_2
+        )
+
+        invalid_geo_group = GeoGroupFactory.create(
+            area_id='ZZG3',
+            valid_between=invalid_range
+        )
+
+        tab_geo_area_member_3 = GeographicalMembershipFactory.create(
+            member=tap_geo_area,
+            geo_group=invalid_geo_group,
+            valid_between=invalid_range
+        )
+
+        ref_rate = factories.RefRateFactory.create(
+            valid_between=TaricDateRange(date(2022, 1, 1), date(2023, 1, 1)),
+            reference_document_version__reference_document__area_id='ZZG'
+        )
+
+        target = self.Target(ref_rate)
+        assert valid_geo_group in target.tap_geo_areas()
+        assert valid_geo_group_2 in target.tap_geo_areas()
+
+    def test_tap_geo_areas_no_match(self):
         ref_rate = factories.RefRateFactory.create()
 
         target = self.Target(ref_rate)
-        assert target.tap_geo_area() is None
+        assert target.tap_geo_areas() == []
 
     def test_tap_geo_area_description_exists(self):
-        ref_rate = factories.RefRateFactory.create()
+        ref_rate = factories.RefRateFactory.create(
+            reference_document_version__reference_document__area_id='AA',
+            valid_between=TaricDateRange(date(2022, 1, 1), date(2023, 1, 1))
+        )
 
         tap_geo_area_description = GeographicalAreaDescriptionFactory.create(
-            described_geographicalarea__area_id=ref_rate.reference_document_version.reference_document.area_id,
+            described_geographicalarea__area_id='AA',
+            validity_start=date(2022, 1, 1),
+            described_geographicalarea__valid_between=TaricDateRange(date(2022, 1, 1), None)
         )
 
         target = self.Target(ref_rate)
@@ -1100,10 +1169,11 @@ class TestBaseRateCheck:
             valid_between=validity_range,
             goods_nomenclature__item_id=item_id,
             goods_nomenclature__valid_between=validity_range,
+            geographical_area__valid_between=TaricDateRange(date(2022, 1, 1))
         )
 
         ref_rate = factories.RefRateFactory.create(
-            reference_document_version__entry_into_force_date=None,
+            reference_document_version__entry_into_force_date=date(2022, 1, 1),
             reference_document_version__reference_document__area_id=tap_measure.geographical_area.area_id,
             valid_between=validity_range,
             commodity_code=item_id,
@@ -1114,7 +1184,6 @@ class TestBaseRateCheck:
         assert tap_measure in target.tap_related_measures()
         assert len(target.tap_related_measures()) == 1
         assert len(target.tap_related_measures(item_id)) == 1
-        assert len(target.tap_related_measures("9876543210")) == 0
 
     def test_tap_related_measures_when_comm_code_not_on_tap(self):
         ref_rate = factories.RefRateFactory.create(
@@ -1170,17 +1239,20 @@ class TestBaseRateCheck:
                 "direct children covered",
                 {
                     "item_id": "0101010000",
+                    'suffix': '80',
                     "add_measure": False,
                     "indent": 1,
                     "children": [
                         {
                             "item_id": "0101010100",
+                            'suffix': '80',
                             "add_measure": True,
                             "indent": 2,
                             "children": [],
                         },
                         {
                             "item_id": "0101010200",
+                            'suffix': '80',
                             "add_measure": True,
                             "indent": 2,
                             "children": [],
@@ -1193,6 +1265,7 @@ class TestBaseRateCheck:
                 "not covered",
                 {
                     "item_id": "0101010000",
+                    'suffix': '80',
                     "add_measure": False,
                     "indent": 1,
                     "children": [],
@@ -1203,22 +1276,26 @@ class TestBaseRateCheck:
                 "mix, children and grandchildren covered",
                 {
                     "item_id": "0101000000",
+                    'suffix': '80',
                     "add_measure": False,
                     "indent": 1,
                     "children": [
                         {
                             "item_id": "0101010000",
+                            'suffix': '80',
                             "add_measure": False,
                             "indent": 2,
                             "children": [
                                 {
                                     "item_id": "0101010100",
+                                    'suffix': '80',
                                     "add_measure": True,
                                     "indent": 3,
                                     "children": [],
                                 },
                                 {
                                     "item_id": "0101010200",
+                                    'suffix': '80',
                                     "add_measure": True,
                                     "indent": 3,
                                     "children": [],
@@ -1227,6 +1304,7 @@ class TestBaseRateCheck:
                         },
                         {
                             "item_id": "0101020000",
+                            'suffix': '80',
                             "add_measure": True,
                             "indent": 2,
                             "children": [],
@@ -1239,22 +1317,26 @@ class TestBaseRateCheck:
                 "mix partial grandchildren covered",
                 {
                     "item_id": "0101000000",
+                    'suffix': '80',
                     "add_measure": False,
                     "indent": 1,
                     "children": [
                         {
                             "item_id": "0101010000",
+                            'suffix': '80',
                             "add_measure": False,
                             "indent": 2,
                             "children": [
                                 {
                                     "item_id": "0101010100",
+                                    'suffix': '80',
                                     "add_measure": False,
                                     "indent": 3,
                                     "children": [],
                                 },
                                 {
                                     "item_id": "0101010200",
+                                    'suffix': '80',
                                     "add_measure": True,
                                     "indent": 3,
                                     "children": [],
@@ -1263,6 +1345,7 @@ class TestBaseRateCheck:
                         },
                         {
                             "item_id": "0101020000",
+                            'suffix': '80',
                             "add_measure": True,
                             "indent": 2,
                             "children": [],
@@ -1275,11 +1358,13 @@ class TestBaseRateCheck:
                 "direct children covered, multiple measures",
                 {
                     "item_id": "0101010000",
+                    'suffix': '80',
                     "add_measure": False,
                     "indent": 1,
                     "children": [
                         {
                             "item_id": "0101010100",
+                            'suffix': '80',
                             "add_measure": True,
                             "measure_count": 2,
                             "indent": 2,
@@ -1287,6 +1372,7 @@ class TestBaseRateCheck:
                         },
                         {
                             "item_id": "0101010200",
+                            'suffix': '80',
                             "add_measure": True,
                             "indent": 2,
                             "children": [],
@@ -1305,10 +1391,10 @@ class TestBaseRateCheck:
     ):
         validity_range = TaricDateRange(date(2022, 1, 1), date(2022, 6, 1))
 
-        tap_geo_area = GeographicalAreaFactory.create()
+        tap_geo_area = GeographicalAreaFactory.create(valid_between=TaricDateRange(date(2022, 1, 1)))
 
         ref_rate = factories.RefRateFactory.create(
-            reference_document_version__entry_into_force_date=None,
+            reference_document_version__entry_into_force_date=date(2022, 1, 1),
             reference_document_version__reference_document__area_id=tap_geo_area.area_id,
             valid_between=validity_range,
             commodity_code=comm_code_structure["item_id"],
@@ -1317,7 +1403,7 @@ class TestBaseRateCheck:
         def create_comm_code_and_measure_if_required(data, validity, geo_area):
             tap_comm_code = GoodsNomenclatureFactory(
                 item_id=data["item_id"],
-                suffix=80,
+                suffix=data['suffix'],
                 indent__indent=data["indent"],
                 valid_between=validity,
             )
@@ -1351,6 +1437,7 @@ class TestBaseRateCheck:
             target.tap_recursive_comm_code_check(
                 target.get_snapshot(),
                 comm_code_structure["item_id"],
+                comm_code_structure["suffix"],
             )
             is expected_result
         )

@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 from unittest import mock
@@ -11,6 +12,7 @@ from common.tests import factories
 from common.tests import models
 from common.tests.util import Dates
 from common.tests.util import wrap_numbers_over_max_digits
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
@@ -23,57 +25,57 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.parametrize(
     "environment_key, expected_result",
     (
-        (
-            {
-                "engine": "engine",
-                "username": "username",
-                "password": "password",
-                "host": "host",
-                "port": 1234,
-                "dbname": "dbname",
-            },
-            "engine://username:password@host:1234/dbname",  # /PS-IGNORE
-        ),
-        (
-            {
-                "engine": "engine",
-                "username": "username",
-                "host": "host",
-                "dbname": "dbname",
-            },
-            "engine://username@host/dbname",
-        ),
-        (
-            {
-                "engine": "engine",
-                "host": "host",
-                "dbname": "dbname",
-            },
-            "engine://host/dbname",
-        ),
-        (
-            {
-                "engine": "engine",
-                "password": "password",
-                "port": 1234,
-                "dbname": "dbname",
-            },
-            "engine:///dbname",
-        ),
-        (
-            {
-                "engine": "engine",
-                "dbname": "dbname",
-            },
-            "engine:///dbname",
-        ),
+            (
+                    {
+                        "engine": "engine",
+                        "username": "username",
+                        "password": "password",
+                        "host": "host",
+                        "port": 1234,
+                        "dbname": "dbname",
+                    },
+                    "engine://username:password@host:1234/dbname",  # /PS-IGNORE
+            ),
+            (
+                    {
+                        "engine": "engine",
+                        "username": "username",
+                        "host": "host",
+                        "dbname": "dbname",
+                    },
+                    "engine://username@host/dbname",
+            ),
+            (
+                    {
+                        "engine": "engine",
+                        "host": "host",
+                        "dbname": "dbname",
+                    },
+                    "engine://host/dbname",
+            ),
+            (
+                    {
+                        "engine": "engine",
+                        "password": "password",
+                        "port": 1234,
+                        "dbname": "dbname",
+                    },
+                    "engine:///dbname",
+            ),
+            (
+                    {
+                        "engine": "engine",
+                        "dbname": "dbname",
+                    },
+                    "engine:///dbname",
+            ),
     ),
 )
 def test_database_url_from_env(environment_key, expected_result):
     with mock.patch.dict(
-        os.environ,
-        {"DATABASE_CREDENTIALS": json.dumps(environment_key)},
-        clear=True,
+            os.environ,
+            {"DATABASE_CREDENTIALS": json.dumps(environment_key)},
+            clear=True,
     ):
         assert util.database_url_from_env("DATABASE_CREDENTIALS") == expected_result
 
@@ -154,59 +156,59 @@ def test_maybe_max(values, expected):
     "overall,contained,expected",
     [
         (
-            "big",
-            "normal",
-            True,
+                "big",
+                "normal",
+                True,
         ),
         (
-            "normal",
-            "starts_with_normal",
-            True,
+                "normal",
+                "starts_with_normal",
+                True,
         ),
         (
-            "normal",
-            "ends_with_normal",
-            True,
+                "normal",
+                "ends_with_normal",
+                True,
         ),
         (
-            "normal",
-            "overlap_normal",
-            False,
+                "normal",
+                "overlap_normal",
+                False,
         ),
         (
-            "normal",
-            "overlap_normal_earlier",
-            False,
+                "normal",
+                "overlap_normal_earlier",
+                False,
         ),
         (
-            "normal",
-            "adjacent_earlier",
-            False,
+                "normal",
+                "adjacent_earlier",
+                False,
         ),
         (
-            "normal",
-            "adjacent_later",
-            False,
+                "normal",
+                "adjacent_later",
+                False,
         ),
         (
-            "normal",
-            "big",
-            False,
+                "normal",
+                "big",
+                False,
         ),
         (
-            "normal",
-            "earlier",
-            False,
+                "normal",
+                "earlier",
+                False,
         ),
         (
-            "normal",
-            "later",
-            False,
+                "normal",
+                "later",
+                False,
         ),
         (
-            "normal",
-            "normal",
-            True,
+                "normal",
+                "normal",
+                True,
         ),
     ],
 )
@@ -256,11 +258,11 @@ def test_date_ranges_overlap(date_ranges, a, b, expected):
     ],
 )
 def test_contained_date_range(
-    date_ranges,
-    date_range,
-    containing_range,
-    expected_lower,
-    expected_upper,
+        date_ranges,
+        date_range,
+        containing_range,
+        expected_lower,
+        expected_upper,
 ):
     dr = getattr(date_ranges, date_range)
     dr_containing = getattr(date_ranges, containing_range)
@@ -278,10 +280,10 @@ def test_contained_date_range(
 @pytest.mark.parametrize(
     "model_data, field, expected",
     (
-        ({"sid": 123}, "sid", 123),
-        ({"linked_model__sid": 456}, "linked_model__sid", 456),
-        ({"linked_model": None}, "linked_model", None),
-        ({"linked_model": None}, "linked_model__sid", None),
+            ({"sid": 123}, "sid", 123),
+            ({"linked_model__sid": 456}, "linked_model__sid", 456),
+            ({"linked_model": None}, "linked_model", None),
+            ({"linked_model": None}, "linked_model__sid", None),
     ),
 )
 def test_get_field_tuple(model_data, field, expected):
@@ -318,16 +320,16 @@ def test_get_next_id_handles_empty_queryset():
 @pytest.mark.parametrize(
     "number, max_digits, expected",
     (
-        (0, 2, 0),
-        (-9, 2, -9),
-        (-10, 2, 0),
-        (99, 2, 99),
-        (100, 2, 0),
-        (0, 3, 0),
-        (-99, 3, -99),
-        (-100, 3, 0),
-        (999, 3, 999),
-        (1000, 3, 0),
+            (0, 2, 0),
+            (-9, 2, -9),
+            (-10, 2, 0),
+            (99, 2, 99),
+            (100, 2, 0),
+            (0, 3, 0),
+            (-99, 3, -99),
+            (-100, 3, 0),
+            (999, 3, 999),
+            (1000, 3, 0),
     ),
 )
 def test_wrap_numbers_over_max_digits(number, max_digits, expected):
@@ -423,17 +425,17 @@ def test_make_real_edit_create(date_ranges):
     assert workbasket.tracked_models.count() == 2
     assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
     assert (
-        workbasket.tracked_models.instance_of(GeographicalAreaDescription).count() == 1
+            workbasket.tracked_models.instance_of(GeographicalAreaDescription).count() == 1
     )
     assert (
-        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
-        == UpdateType.CREATE
+            workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+            == UpdateType.CREATE
     )
     assert (
-        workbasket.tracked_models.instance_of(GeographicalAreaDescription)
-        .first()
-        .update_type
-        == UpdateType.CREATE
+            workbasket.tracked_models.instance_of(GeographicalAreaDescription)
+            .first()
+            .update_type
+            == UpdateType.CREATE
     )
 
 
@@ -464,8 +466,8 @@ def test_make_real_edit_update_edit():
     assert workbasket.tracked_models.count() == 1
     assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
     assert (
-        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
-        == UpdateType.UPDATE
+            workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+            == UpdateType.UPDATE
     )
 
     # edit again
@@ -486,8 +488,8 @@ def test_make_real_edit_update_edit():
     assert workbasket.tracked_models.count() == 1
     assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
     assert (
-        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
-        == UpdateType.UPDATE
+            workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+            == UpdateType.UPDATE
     )
 
 
@@ -518,8 +520,8 @@ def test_make_real_edit_update_delete():
     assert workbasket.tracked_models.count() == 1
     assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
     assert (
-        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
-        == UpdateType.UPDATE
+            workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+            == UpdateType.UPDATE
     )
 
     tx2 = workbasket.new_transaction()
@@ -537,8 +539,8 @@ def test_make_real_edit_update_delete():
     assert workbasket.tracked_models.count() == 1
     assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
     assert (
-        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
-        == UpdateType.DELETE
+            workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+            == UpdateType.DELETE
     )
 
 
@@ -555,17 +557,17 @@ def test_make_real_edit_create_delete():
     assert workbasket.tracked_models.count() == 2
     assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
     assert (
-        workbasket.tracked_models.instance_of(GeographicalAreaDescription).count() == 1
+            workbasket.tracked_models.instance_of(GeographicalAreaDescription).count() == 1
     )
     assert (
-        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
-        == UpdateType.CREATE
+            workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+            == UpdateType.CREATE
     )
     assert (
-        workbasket.tracked_models.instance_of(GeographicalAreaDescription)
-        .first()
-        .update_type
-        == UpdateType.CREATE
+            workbasket.tracked_models.instance_of(GeographicalAreaDescription)
+            .first()
+            .update_type
+            == UpdateType.CREATE
     )
 
     tx2 = workbasket.new_transaction()
@@ -582,3 +584,47 @@ def test_make_real_edit_create_delete():
     # since the FK to geo area on description has on_delete=models.CASCADE this will delete the description as well
     assert deleted_geo_area == None
     assert workbasket.tracked_models.count() == 0
+
+
+@pytest.mark.parametrize(
+    "date_range,compared_date_range,expected",
+    (
+            (
+                    TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+                    TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+                    True
+            ),
+            (
+                    TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+                    TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 1)),
+                    True
+            ),
+            (
+                    TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 1)),
+                    TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+                    False
+            ),
+            (
+                    TaricDateRange(datetime.date(2020, 1, 1)),
+                    TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+                    True
+            ),
+            (
+                    TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 1)),
+                    TaricDateRange(datetime.date(2020, 1, 1)),
+                    False
+            ),
+            (
+                    TaricDateRange(datetime.date(2020, 1, 1)),
+                    TaricDateRange(datetime.date(2020, 1, 1)),
+                    True
+            ),
+            (
+                    TaricDateRange(datetime.date(2020, 1, 2)),
+                    TaricDateRange(datetime.date(2020, 1, 1)),
+                    False
+            ),
+    )
+)
+def test_contains(date_range, compared_date_range, expected):
+    assert date_range.contains(compared_date_range) == expected
