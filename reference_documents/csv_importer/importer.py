@@ -25,7 +25,11 @@ class ReferenceDocumentCSVImporter:
         self.csv_upload = csv_upload
 
     def run(self):
+        """
+        runs the import process
 
+        Executes the parsing and database population from the provided CSVUpload object
+        """
         if (
             not self.csv_upload.preferential_rates_csv_data
             and not self.csv_upload.order_number_csv_data
@@ -118,6 +122,15 @@ class ReferenceDocumentCSVImporter:
 
     @staticmethod
     def verify_area_id_exists(area_id):
+        """
+        Verifies that an area id exists in the database
+
+        Args:
+            area_id: the area id, e.g. 'JP'
+
+        Returns:
+            None or raises exception
+        """
         if (
             not GeographicalArea.objects.latest_approved()
             .filter(area_id=area_id)
@@ -126,6 +139,15 @@ class ReferenceDocumentCSVImporter:
             raise ValueError(f"Area ID does not exist in TAP data: {area_id}")
 
     def verify_comm_code(self, comm_code):
+        """
+        Verifies that a comm code exists in the database
+
+        Args:
+            comm_code: the comm code as a string
+
+        Returns:
+            None or raises exception
+        """
         if not bool(re.match("^[0123456789]+$", comm_code)):
             raise ValueError(
                 f"{comm_code} is not a valid comm code, it can only contain numbers",
@@ -137,6 +159,12 @@ class ReferenceDocumentCSVImporter:
             )
 
     def import_preferential_rates_csv_data(self):
+        """
+        Imports preferential rates data from CSV files
+
+        Returns:
+            None or raises exception
+        """
         logger.info(f" -- IMPORTING PREFERENTIAL RATES")
         data = self.get_dictionary_from_csv_data(
             self.csv_upload.preferential_rates_csv_data,
@@ -197,6 +225,15 @@ class ReferenceDocumentCSVImporter:
         logger.info(f" -- COMPLETED IMPORTING PREFERENTIAL RATES : count: {len(data)}")
 
     def get_or_create_reference_document_version(self, row):
+        """
+        Gets or creates the reference document version based on the CSV row
+
+        Args:
+            row: dict, key value pairs of data from the CSV row
+
+        Returns:
+            ReferenceDocumentVersion or raises exception
+        """
         # check if reference document exists
         if self.find_reference_document(row["area_id"]):
             # use existing reference document
@@ -231,6 +268,12 @@ class ReferenceDocumentCSVImporter:
         return reference_document_version
 
     def import_order_number_csv_data(self):
+        """
+        Imports order numbers data from CSV files
+
+        Returns:
+            None or raises exception
+        """
         data = self.get_dictionary_from_csv_data(self.csv_upload.order_number_csv_data)
         logger.info(f" -- IMPORTING ORDER NUMBERS")
 
@@ -266,6 +309,15 @@ class ReferenceDocumentCSVImporter:
         logger.info(f" -- COMPLETED IMPORTING ORDER NUMBERS : count: {len(data)}")
 
     def process_order_number(self, row):
+        """
+        Processes order numbers data from CSV files
+
+        Args:
+            row: dict, key value pairs of data from the CSV row
+
+        Returns:
+            None or raises exception
+        """
         reference_document_version = self.get_or_create_reference_document_version(row)
         start_date = datetime(
             *[int(x) for x in row["validity_start"].split("-")],
@@ -322,6 +374,12 @@ class ReferenceDocumentCSVImporter:
             )
 
     def import_quota_definition_csv_data(self):
+        """
+        Imports quota definition data from CSV files
+
+        Returns:
+            None or raises exception
+        """
         data = self.get_dictionary_from_csv_data(
             self.csv_upload.quota_definition_csv_data,
         )
@@ -397,6 +455,12 @@ class ReferenceDocumentCSVImporter:
         logger.info(f" -- COMPLETED IMPORTING QUOTA DEFINITIONS : count: {len(data)}")
 
     def get_dictionary_from_csv_data(self, string):
+        """
+            Returns a dictionary from CSV string
+
+            Returns:
+                dictionary or raises exception
+        """
         csv_string_io = StringIO(string)
         csv_reader = csv.DictReader(csv_string_io)
         data = [row for row in csv_reader]
