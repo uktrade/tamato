@@ -27,7 +27,10 @@ class RateChecks(BaseRateCheck):
 
         # this is ok - there is a single measure matching the expected query
         if len(measures) == 1:
-            return AlignmentReportCheckStatus.PASS, f"{self.tap_comm_code()} {self.ref_rate.valid_between}: rate for commodity code matched"
+            return (
+                AlignmentReportCheckStatus.PASS,
+                f"{self.tap_comm_code()} {self.ref_rate.valid_between}: rate for commodity code matched",
+            )
 
         # this is not inline with expected measures presence - check comm code children
         elif len(measures) == 0:
@@ -39,7 +42,10 @@ class RateChecks(BaseRateCheck):
             match_children = False
 
             for commodity in parent_snapshot.commodities:
-                if commodity.item_id == self.ref_rate.commodity_code and commodity.suffix == '80':
+                if (
+                    commodity.item_id == self.ref_rate.commodity_code
+                    and commodity.suffix == "80"
+                ):
                     child_commodity = commodity
                     break
 
@@ -55,7 +61,11 @@ class RateChecks(BaseRateCheck):
                     if len(related_measures) > 0:
                         match_parents = True
                         break
-                    if next_parent.item_id == self.ref_rate.commodity_code[0:4] + '000000' and next_parent.suffix == '80':
+                    if (
+                        next_parent.item_id
+                        == self.ref_rate.commodity_code[0:4] + "000000"
+                        and next_parent.suffix == "80"
+                    ):
                         break
 
             if not match_parents:
@@ -63,7 +73,7 @@ class RateChecks(BaseRateCheck):
                 match_children = self.tap_recursive_comm_code_check(
                     self.get_snapshot(),
                     self.ref_rate.commodity_code,
-                    '80',
+                    "80",
                     1,
                 )
 

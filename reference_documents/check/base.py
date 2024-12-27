@@ -11,7 +11,7 @@ from commodities.models.dc import CommodityTreeSnapshot
 from commodities.models.dc import SnapshotMoment
 from common.models import Transaction
 from common.util import TaricDateRange
-from geo_areas.models import GeographicalArea, GeographicalMembership
+from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
 from measures.models import Measure
 from quotas.models import QuotaAssociation
@@ -87,8 +87,8 @@ class BaseCheck(abc.ABC):
 
     def tap_geo_areas(self):
         """
-        Finds the geo areas / geo area groups in TAP for a given preferential quota using data from
-        the associated reference document.
+        Finds the geo areas / geo area groups in TAP for a given preferential
+        quota using data from the associated reference document.
 
         returns:
             [GeographicalAreas] or None
@@ -106,15 +106,17 @@ class BaseCheck(abc.ABC):
 
             if geo_area.is_group():
                 # if it's a group collect members
-                members = list(x.member for x in geo_area.members.latest_approved().all())
+                members = list(
+                    x.member for x in geo_area.members.latest_approved().all()
+                )
             else:
                 # if not a group - get single member
                 members = [geo_area]
 
             # find all groups matching the validity range
-            query = (Q(
+            query = Q(
                 valid_between__contains=self.get_validity().lower,
-            ))
+            )
 
             # filter groups by ends with - if available
             if self.get_validity().upper:
@@ -127,7 +129,11 @@ class BaseCheck(abc.ABC):
                 for geo_area_group in geo_area_groups:
                     match = True
                     for member in members:
-                        if not geo_area_group.members.all().filter(member=member).exists():
+                        if (
+                            not geo_area_group.members.all()
+                            .filter(member=member)
+                            .exists()
+                        ):
                             match = False
                             break
 
@@ -169,16 +175,12 @@ class BaseQuotaDefinitionCheck(BaseCheck, abc.ABC):
         self.reference_document = self.reference_document_version.reference_document
 
     def get_area_id(self) -> (AlignmentReportCheckStatus, str):
-        """
-        returns the related area id from the reference_document
-        """
+        """Returns the related area id from the reference_document."""
 
         return self.reference_document.area_id
 
     def get_validity(self) -> (AlignmentReportCheckStatus, str):
-        """
-        gets validity for the object being checked.
-        """
+        """Gets validity for the object being checked."""
 
         return self.ref_quota_definition.valid_between
 
@@ -457,19 +459,17 @@ class BaseOrderNumberCheck(BaseCheck, abc.ABC):
         """
         super().__init__()
         self.ref_order_number = ref_order_number
-        self.reference_document = ref_order_number.reference_document_version.reference_document
+        self.reference_document = (
+            ref_order_number.reference_document_version.reference_document
+        )
 
     def get_area_id(self) -> (AlignmentReportCheckStatus, str):
-        """
-        returns the related area id from the reference_document
-        """
+        """Returns the related area id from the reference_document."""
 
         return self.reference_document.area_id
 
     def get_validity(self) -> (AlignmentReportCheckStatus, str):
-        """
-        gets validity for the object being checked.
-        """
+        """Gets validity for the object being checked."""
 
         return self.ref_order_number.valid_between
 
@@ -508,19 +508,17 @@ class BaseQuotaSuspensionCheck(BaseCheck, abc.ABC):
         """
         super().__init__()
         self.ref_quota_suspension = ref_quota_suspension
-        self.reference_document = ref_quota_suspension.ref_quota_definition.ref_order_number.reference_document_version.reference_document
+        self.reference_document = (
+            ref_quota_suspension.ref_quota_definition.ref_order_number.reference_document_version.reference_document
+        )
 
     def get_area_id(self) -> (AlignmentReportCheckStatus, str):
-        """
-        returns the related area id from the reference_document
-        """
+        """Returns the related area id from the reference_document."""
 
         return self.reference_document.area_id
 
     def get_validity(self) -> (AlignmentReportCheckStatus, str):
-        """
-        gets validity for the object being checked.
-        """
+        """Gets validity for the object being checked."""
 
         return self.ref_quota_suspension.valid_between
 
@@ -605,16 +603,12 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         self.reference_document = ref_rate.reference_document_version.reference_document
 
     def get_area_id(self) -> (AlignmentReportCheckStatus, str):
-        """
-        returns the related area id from the reference_document
-        """
+        """Returns the related area id from the reference_document."""
 
         return self.reference_document.area_id
 
     def get_validity(self) -> (AlignmentReportCheckStatus, str):
-        """
-        gets validity for the object being checked.
-        """
+        """Gets validity for the object being checked."""
 
         return self.ref_rate.valid_between
 
@@ -644,13 +638,17 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         # e.g. 0101010000 > 010101
         # this is required for CommodityCollectionLoader
         while item_id[-2:] == "00":
-            item_id = item_id[0: len(item_id) - 2]
+            item_id = item_id[0 : len(item_id) - 2]
 
         commodities_collection = CommodityCollectionLoader(
             prefix=item_id,
         ).load(current_only=True)
 
-        latest_transaction = Transaction.objects.filter(workbasket__status='PUBLISHED').order_by("created_at").last()
+        latest_transaction = (
+            Transaction.objects.filter(workbasket__status="PUBLISHED")
+            .order_by("created_at")
+            .last()
+        )
 
         snapshot = CommodityTreeSnapshot(
             commodities=commodities_collection.commodities,
@@ -677,7 +675,9 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         )
 
         if self.ref_rate.valid_between.upper:
-            goods = goods.filter(valid_between__contains=self.ref_rate.valid_between.upper)
+            goods = goods.filter(
+                valid_between__contains=self.ref_rate.valid_between.upper,
+            )
 
         if len(goods) == 0:
             return None
@@ -695,7 +695,9 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         try:
             geo_area_description = (
                 GeographicalAreaDescription.objects.latest_approved()
-                .filter(described_geographicalarea__area_id=self.reference_document.area_id)
+                .filter(
+                    described_geographicalarea__area_id=self.reference_document.area_id,
+                )
                 .last()
             )
         except GeographicalAreaDescription.DoesNotExist:
@@ -737,7 +739,7 @@ class BaseRateCheck(BaseCheck, abc.ABC):
             depending on query results
         """
         if comm_code_item_id:
-            query = (Q(
+            query = Q(
                 (
                     Q(
                         valid_between__contains=self.ref_rate.valid_between.lower,
@@ -745,30 +747,30 @@ class BaseRateCheck(BaseCheck, abc.ABC):
                 ),
                 item_id=comm_code_item_id,
                 suffix=80,
-            ))
+            )
 
             if self.ref_rate.valid_between.upper:
-                query = query & Q(valid_between__contains=self.ref_rate.valid_between.upper)
+                query = query & Q(
+                    valid_between__contains=self.ref_rate.valid_between.upper,
+                )
 
             good = GoodsNomenclature.objects.latest_approved().filter(query)
 
             if len(good) == 1:
-                query = (Q(
+                query = Q(
                     valid_between__contains=self.ref_rate.valid_between.lower,
                     geographical_area__in=self.tap_geo_areas(),
                     measure_type__sid__in=[
                         142,
                     ],
-                ))
+                )
 
                 if self.ref_rate.valid_between.upper:
-                    query = query & Q(valid_between__contains=self.ref_rate.valid_between.upper)
+                    query = query & Q(
+                        valid_between__contains=self.ref_rate.valid_between.upper,
+                    )
 
-                return (
-                    good.first()
-                    .measures.latest_approved()
-                    .filter(query)
-                )
+                return good.first().measures.latest_approved().filter(query)
             else:
                 return []
 
@@ -776,32 +778,29 @@ class BaseRateCheck(BaseCheck, abc.ABC):
             tap_comm_code = self.tap_comm_code()
 
             if tap_comm_code:
-                query = (Q(
+                query = Q(
                     valid_between__contains=self.ref_rate.valid_between.lower,
                     geographical_area__in=self.tap_geo_areas(),
                     measure_type__sid__in=[
                         142,
                     ],
-                ))
+                )
 
                 if self.ref_rate.valid_between.upper:
-                    query = query & Q(valid_between__contains=self.ref_rate.valid_between.upper)
+                    query = query & Q(
+                        valid_between__contains=self.ref_rate.valid_between.upper,
+                    )
 
-                return (
-                    self.tap_comm_code()
-                    .measures.latest_approved()
-                    .filter(query)
-                )
+                return self.tap_comm_code().measures.latest_approved().filter(query)
             else:
                 return []
 
-
     def tap_recursive_comm_code_check(
-            self,
-            snapshot: CommodityTreeSnapshot,
-            parent_item_id: str,
-            parent_item_suffix: str,
-            level: int = 1,
+        self,
+        snapshot: CommodityTreeSnapshot,
+        parent_item_id: str,
+        parent_item_suffix: str,
+        level: int = 1,
     ):
         """
         This function checks the coverage for a rate against children of a comm
@@ -826,7 +825,10 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         # find comm code from snapshot
         child_commodities = []
         for commodity in snapshot.commodities:
-            if commodity.item_id == parent_item_id and commodity.suffix == parent_item_suffix:
+            if (
+                commodity.item_id == parent_item_id
+                and commodity.suffix == parent_item_suffix
+            ):
                 # check validity
 
                 if commodity.valid_between.contains(self.ref_rate.valid_between):
@@ -834,7 +836,10 @@ class BaseRateCheck(BaseCheck, abc.ABC):
                     tmp_child_commodities = snapshot.get_children(commodity)
                     # strange bug in get_children - sometimes it returns the parent.
                     for child_comm in tmp_child_commodities:
-                        if child_comm.item_id == parent_item_id and child_comm.suffix == parent_item_suffix:
+                        if (
+                            child_comm.item_id == parent_item_id
+                            and child_comm.suffix == parent_item_suffix
+                        ):
                             continue
                         else:
                             child_commodities.append(child_comm)
@@ -848,7 +853,9 @@ class BaseRateCheck(BaseCheck, abc.ABC):
             related_measures = self.tap_related_measures(child_commodity.item_id)
 
             if len(related_measures) == 0:
-                print(f'{"-" * level} FAIL : {child_commodity.item_id} : {child_commodity.suffix}')
+                print(
+                    f'{"-" * level} FAIL : {child_commodity.item_id} : {child_commodity.suffix}',
+                )
                 results.append(
                     self.tap_recursive_comm_code_check(
                         snapshot,

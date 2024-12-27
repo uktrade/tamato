@@ -2,15 +2,13 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
 from django.views.generic import DetailView
 
-from reference_documents.check.check_runner import Checks
-from reference_documents.models import AlignmentReport, AlignmentReportCheck
-
 # Need these loaded to find the correct check when rerunning checks
-from reference_documents.check.base import BaseCheck # noqa
-from reference_documents.check.base import BaseOrderNumberCheck # noqa
-from reference_documents.check.base import BaseQuotaDefinitionCheck # noqa
-from reference_documents.check.base import BaseQuotaSuspensionCheck # noqa
-from reference_documents.check.base import BaseRateCheck # noqa
+from reference_documents.check.base import BaseCheck  # noqa
+from reference_documents.check.base import BaseOrderNumberCheck  # noqa
+from reference_documents.check.base import BaseQuotaDefinitionCheck  # noqa
+from reference_documents.check.base import BaseQuotaSuspensionCheck  # noqa
+from reference_documents.check.base import BaseRateCheck  # noqa
+from reference_documents.check.check_runner import Checks
 from reference_documents.check.ref_order_numbers import OrderNumberChecks  # noqa
 from reference_documents.check.ref_quota_definitions import (  # noqa
     QuotaDefinitionChecks,
@@ -19,6 +17,8 @@ from reference_documents.check.ref_quota_suspensions import (  # noqa
     QuotaSuspensionChecks,
 )
 from reference_documents.check.ref_rates import RateChecks  # noqa
+from reference_documents.models import AlignmentReport
+from reference_documents.models import AlignmentReportCheck
 
 
 class AlignmentReportContext:
@@ -38,10 +38,14 @@ class AlignmentReportContext:
     def rows(self):
         rows = []
 
-        for alignment_report_check in self.alignment_report.alignment_report_checks.all().order_by('target_start_date'):
+        for (
+            alignment_report_check
+        ) in self.alignment_report.alignment_report_checks.all().order_by(
+            "target_start_date",
+        ):
             actions = (
                 f'<a href="/reference_document_versions/{self.alignment_report.reference_document_version.id}/'
-                f'alignment-reports/{self.alignment_report.id}/re-run-check/'
+                f"alignment-reports/{self.alignment_report.id}/re-run-check/"
                 f'{alignment_report_check.id}">Rerun check</a><br>'
             )
 
@@ -62,7 +66,7 @@ class AlignmentReportContext:
                     "text": alignment_report_check.status,
                 },
                 {
-                    "html": actions
+                    "html": actions,
                 },
             ]
             rows.append(row_data)
@@ -91,6 +95,7 @@ class AlignmentReportDetails(PermissionRequiredMixin, DetailView):
         context["alignment_check_table_rows"] = alignment_report_ctx.rows()
         return context
 
+
 class AlignmentReportRerunCheckDetails(PermissionRequiredMixin, DetailView):
     template_name = "reference_documents/alignment_reports/rerun_check.jinja"
     permission_required = "reference_documents.view_view_alignmentreport"
@@ -104,16 +109,16 @@ class AlignmentReportRerunCheckDetails(PermissionRequiredMixin, DetailView):
         check_class = self.get_check_class_by_name(self.object.check_name)
         args = {}
         if self.object.ref_rate:
-            args['ref_rate'] = self.object.ref_rate
+            args["ref_rate"] = self.object.ref_rate
 
         if self.object.ref_order_number:
-            args['ref_order_number'] = self.object.ref_order_number
+            args["ref_order_number"] = self.object.ref_order_number
 
         if self.object.ref_quota_definition:
-            args['ref_quota_definition'] = self.object.ref_quota_definition
+            args["ref_quota_definition"] = self.object.ref_quota_definition
 
         if self.object.ref_quota_suspension:
-            args['ref_quota_suspension'] = self.object.ref_quota_suspension
+            args["ref_quota_suspension"] = self.object.ref_quota_suspension
 
         check = check_class(**args)
 
@@ -123,7 +128,11 @@ class AlignmentReportRerunCheckDetails(PermissionRequiredMixin, DetailView):
         self.object.message = message
         self.object.save()
 
-        return redirect("reference_documents:alignment-report-details", version_pk=self.object.alignment_report.reference_document_version.pk, pk=self.object.alignment_report.pk)
+        return redirect(
+            "reference_documents:alignment-report-details",
+            version_pk=self.object.alignment_report.reference_document_version.pk,
+            pk=self.object.alignment_report.pk,
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super(AlignmentReportRerunCheckDetails, self).get_context_data(
@@ -147,13 +156,13 @@ class AlignmentReportRerunCheckDetails(PermissionRequiredMixin, DetailView):
                 return order_number_check
 
         for quota_definition_check in Checks.get_checks_for(
-                BaseQuotaDefinitionCheck,
+            BaseQuotaDefinitionCheck,
         ):
             if quota_definition_check.name == name:
                 return quota_definition_check
 
         for quota_suspension_check in Checks.get_checks_for(
-                BaseQuotaSuspensionCheck,
+            BaseQuotaSuspensionCheck,
         ):
             if quota_suspension_check.name == name:
                 return quota_suspension_check

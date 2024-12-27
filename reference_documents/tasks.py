@@ -1,10 +1,10 @@
-import string
 from logging import getLogger
 
 from common.celery import app
 from reference_documents.check.check_runner import Checks
 from reference_documents.csv_importer.importer import ReferenceDocumentCSVImporter
-from reference_documents.models import ReferenceDocumentVersion, CSVUpload
+from reference_documents.models import CSVUpload
+from reference_documents.models import ReferenceDocumentVersion
 
 logger = getLogger(__name__)
 
@@ -42,7 +42,6 @@ def run_alignment_check(
     )
 
 
-
 @app.task
 def import_reference_document_data(
     csv_upload_id: int,
@@ -62,15 +61,15 @@ def import_reference_document_data(
 
     uploaded_data_types = []
     if csv_upload.preferential_rates_csv_data:
-        uploaded_data_types.append('preferential rates')
+        uploaded_data_types.append("preferential rates")
     if csv_upload.order_number_csv_data:
-        uploaded_data_types.append('Order Numbers')
+        uploaded_data_types.append("Order Numbers")
     if csv_upload.quota_definition_csv_data:
-        uploaded_data_types.append('Quota Definitions')
+        uploaded_data_types.append("Quota Definitions")
 
     logger.info(
         f"Reference Document CSV upload details:\n"
-        + f" - Upload includes the following : {', '.join(uploaded_data_types)}"
+        + f" - Upload includes the following : {', '.join(uploaded_data_types)}",
     )
 
     csv_importer = ReferenceDocumentCSVImporter(csv_upload)

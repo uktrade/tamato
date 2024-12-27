@@ -26,9 +26,7 @@ class QuotaDefinitionChecks(BaseQuotaDefinitionCheck):
             return AlignmentReportCheckStatus.FAIL, message
 
         elif not self.measures():
-            message = (
-                f"FAIL - measure(s) spanning whole quota definition period not found for quota definition with order number {self.ref_order_number.order_number} and validity {self.ref_quota_definition.valid_between} "
-            )
+            message = f"FAIL - measure(s) spanning whole quota definition period not found for quota definition with order number {self.ref_order_number.order_number} and validity {self.ref_quota_definition.valid_between} "
             return AlignmentReportCheckStatus.FAIL, message
 
         elif not self.duty_rate_matches():

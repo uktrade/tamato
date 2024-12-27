@@ -62,7 +62,10 @@ class TestRateExists:
         )
 
         target = RateChecks(ref_rate=ref_rate)
-        assert target.run_check() == (AlignmentReportCheckStatus.PASS, f"{ref_rate.commodity_code} {valid_between}: rate for commodity code matched")
+        assert target.run_check() == (
+            AlignmentReportCheckStatus.PASS,
+            f"{ref_rate.commodity_code} {valid_between}: rate for commodity code matched",
+        )
 
     def test_run_check_fail_no_comm_code(self):
         valid_between = TaricDateRange(date(2020, 1, 1), date(2020, 12, 31))
@@ -271,7 +274,7 @@ class TestRateExists:
 
         tap_geo_area = GeographicalAreaFactory.create(
             area_id=area_id,
-            valid_between=TaricDateRange(date(2010, 1, 1))
+            valid_between=TaricDateRange(date(2010, 1, 1)),
         )
 
         tap_measure = MeasureFactory.create(
@@ -326,28 +329,26 @@ class TestRateExists:
 
         ref_rate = RefRateFactory.create(
             duty_rate="12%",
-            commodity_code='0101010000',
+            commodity_code="0101010000",
             reference_document_version=ref_doc_ver,
             valid_between=valid_between,
         )
 
         tap_goods_nomenclature = GoodsNomenclatureFactory.create(
-            item_id='0101010000',
+            item_id="0101010000",
             valid_between=valid_between,
-            indent__indent=2
+            indent__indent=2,
         )
 
         tap_goods_nomenclature_parent = GoodsNomenclatureFactory.create(
-            item_id='0101000000',
+            item_id="0101000000",
             valid_between=valid_between,
-            indent__indent=1
+            indent__indent=1,
         )
-
-
 
         tap_geo_area = GeographicalAreaFactory.create(
             area_id=area_id,
-            valid_between=TaricDateRange(date(2010, 1, 1))
+            valid_between=TaricDateRange(date(2010, 1, 1)),
         )
 
         tap_measure = MeasureFactory.create(

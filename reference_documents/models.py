@@ -1,8 +1,8 @@
 from datetime import date
 
-from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.db.models import fields, Count
+from django.db.models import Count
+from django.db.models import fields
 from django.db.models.functions import TruncYear
 from django_fsm import FSMField
 from django_fsm import transition
@@ -52,6 +52,7 @@ class AlignmentReportStatus(models.TextChoices):
 
 class ReferenceDocumentCsvUploadStatus(models.TextChoices):
     """Choices for alignment report state."""
+
     # The check has not started and is queued
     PENDING = "PENDING", "Pending"
     # the check is in progress, and currently running
@@ -108,7 +109,7 @@ class ReferenceDocument(TimestampedMixin):
                     ReferenceDocumentVersionStatus.PUBLISHED,
                 ],
             ).count()
-                > 0
+            > 0
         )
 
     def get_area_name_by_area_id(self):
@@ -300,7 +301,7 @@ class ReferenceDocumentVersion(TimestampedMixin):
         )
 
         for quota_definition_range in RefQuotaDefinitionRange.objects.all().filter(
-                ref_order_number__reference_document_version=self,
+            ref_order_number__reference_document_version=self,
         ):
             quota_count += len(quota_definition_range.dynamic_quota_definitions())
 
@@ -322,7 +323,7 @@ class ReferenceDocumentVersion(TimestampedMixin):
         )
 
         for quota_suspension_range in RefQuotaSuspensionRange.objects.all().filter(
-                ref_quota_definition_range__ref_order_number__reference_document_version=self,
+            ref_quota_definition_range__ref_order_number__reference_document_version=self,
         ):
             suspension_count += len(quota_suspension_range.dynamic_quota_suspensions())
 
@@ -489,7 +490,7 @@ class RefQuotaSuspension(models.Model):
             None
         """
         if (
-                self.ref_quota_definition.ref_order_number.reference_document_version.editable()
+            self.ref_quota_definition.ref_order_number.reference_document_version.editable()
         ):
             super(RefQuotaSuspension, self).save(*args, **kwargs)
 
@@ -714,7 +715,7 @@ class RefQuotaSuspensionRange(models.Model):
             None
         """
         if (
-                not self.ref_quota_definition_range.ref_order_number.reference_document_version.editable()
+            not self.ref_quota_definition_range.ref_order_number.reference_document_version.editable()
         ):
             return
         super(RefQuotaSuspensionRange, self).save(*args, **kwargs)
@@ -811,24 +812,33 @@ class AlignmentReport(TimestampedMixin):
 
     def target_start_date_years(self):
         years = []
-        years_query = self.alignment_report_checks.annotate(
-            year=TruncYear('target_start_date')
-        ).values('year').annotate(count=Count('id')).values('year', 'count')
+        years_query = (
+            self.alignment_report_checks.annotate(
+                year=TruncYear("target_start_date"),
+            )
+            .values("year")
+            .annotate(count=Count("id"))
+            .values("year", "count")
+        )
         for year in years_query:
-            if year['year'] not in years:
-                years.append(year['year'].year)
+            if year["year"] not in years:
+                years.append(year["year"].year)
         return sorted(years)
 
-    def unique_check_names(self, year:int):
+    def unique_check_names(self, year: int):
         """
         Collect all unique check names associated with the AlignmentReport.
 
         Returns:
             list(str): a list of unique check names
         """
-        return self.alignment_report_checks.filter(target_start_date__year=year).distinct("check_name").values_list(
-            "check_name",
-            flat=True,
+        return (
+            self.alignment_report_checks.filter(target_start_date__year=year)
+            .distinct("check_name")
+            .values_list(
+                "check_name",
+                flat=True,
+            )
         )
 
     def check_stats(self):
@@ -842,7 +852,7 @@ class AlignmentReport(TimestampedMixin):
 
         for year in self.target_start_date_years():
             for check_name in self.unique_check_names(year):
-                stats[check_name + ' ' + str(year)] = {
+                stats[check_name + " " + str(year)] = {
                     "total": self.alignment_report_checks.filter(
                         check_name=check_name,
                         target_start_date__year=year,
@@ -967,6 +977,7 @@ class AlignmentReportCheck(TimestampedMixin):
 
     target_start_date = models.DateTimeField(blank=False, null=False)
 
+
 class CSVUpload(TimestampedMixin):
     status = FSMField(
         default=ReferenceDocumentCsvUploadStatus.PENDING,
@@ -984,18 +995,20 @@ class CSVUpload(TimestampedMixin):
     def csv_content_types(self):
         csv_upload_content = []
         if self.preferential_rates_csv_data:
-            csv_upload_content.append('Preferential rates')
+            csv_upload_content.append("Preferential rates")
         if self.order_number_csv_data:
-            csv_upload_content.append('Order numbers')
+            csv_upload_content.append("Order numbers")
         if self.quota_definition_csv_data:
-            csv_upload_content.append('Quota definitions')
-        return ', '.join(csv_upload_content)
+            csv_upload_content.append("Quota definitions")
+        return ", ".join(csv_upload_content)
 
     @transition(
         field=status,
         source=ReferenceDocumentCsvUploadStatus.PROCESSING,
         target=ReferenceDocumentCsvUploadStatus.ERRORED,
-        custom={"label": "Mark the reference document CSV import as failed with errors."},
+        custom={
+            "label": "Mark the reference document CSV import as failed with errors.",
+        },
     )
     def errored(self):
         """The reference document csv import has errored during execution."""
