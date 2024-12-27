@@ -26,9 +26,10 @@ class ReferenceDocumentCSVImporter:
 
     def run(self):
         """
-        runs the import process
+        Runs the import process.
 
-        Executes the parsing and database population from the provided CSVUpload object
+        Executes the parsing and database population from the provided CSVUpload
+        object
         """
         if (
             not self.csv_upload.preferential_rates_csv_data
@@ -123,7 +124,7 @@ class ReferenceDocumentCSVImporter:
     @staticmethod
     def verify_area_id_exists(area_id):
         """
-        Verifies that an area id exists in the database
+        Verifies that an area id exists in the database.
 
         Args:
             area_id: the area id, e.g. 'JP'
@@ -140,7 +141,7 @@ class ReferenceDocumentCSVImporter:
 
     def verify_comm_code(self, comm_code):
         """
-        Verifies that a comm code exists in the database
+        Verifies that a comm code exists in the database.
 
         Args:
             comm_code: the comm code as a string
@@ -160,7 +161,7 @@ class ReferenceDocumentCSVImporter:
 
     def import_preferential_rates_csv_data(self):
         """
-        Imports preferential rates data from CSV files
+        Imports preferential rates data from CSV files.
 
         Returns:
             None or raises exception
@@ -226,7 +227,7 @@ class ReferenceDocumentCSVImporter:
 
     def get_or_create_reference_document_version(self, row):
         """
-        Gets or creates the reference document version based on the CSV row
+        Gets or creates the reference document version based on the CSV row.
 
         Args:
             row: dict, key value pairs of data from the CSV row
@@ -269,7 +270,7 @@ class ReferenceDocumentCSVImporter:
 
     def import_order_number_csv_data(self):
         """
-        Imports order numbers data from CSV files
+        Imports order numbers data from CSV files.
 
         Returns:
             None or raises exception
@@ -310,7 +311,7 @@ class ReferenceDocumentCSVImporter:
 
     def process_order_number(self, row):
         """
-        Processes order numbers data from CSV files
+        Processes order numbers data from CSV files.
 
         Args:
             row: dict, key value pairs of data from the CSV row
@@ -375,7 +376,7 @@ class ReferenceDocumentCSVImporter:
 
     def import_quota_definition_csv_data(self):
         """
-        Imports quota definition data from CSV files
+        Imports quota definition data from CSV files.
 
         Returns:
             None or raises exception
@@ -456,10 +457,10 @@ class ReferenceDocumentCSVImporter:
 
     def get_dictionary_from_csv_data(self, string):
         """
-            Returns a dictionary from CSV string
+        Returns a dictionary from CSV string.
 
-            Returns:
-                dictionary or raises exception
+        Returns:
+            dictionary or raises exception
         """
         csv_string_io = StringIO(string)
         csv_reader = csv.DictReader(csv_string_io)
