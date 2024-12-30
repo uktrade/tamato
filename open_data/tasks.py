@@ -9,6 +9,8 @@ from common.models.utils import override_current_transaction
 from open_data.apps import APP_LABEL
 from open_data.commodities import save_commodities_parent
 from open_data.geo_areas import save_geo_areas
+from open_data.measures import update_measure
+from open_data.measures import update_measure_components
 from open_data.models.utils import LOOK_UP_VIEW
 from open_data.models.utils import ReportModel
 
@@ -83,6 +85,8 @@ def update_all_tables(verbose=False):
             add_description(model)
         save_commodities_parent(verbose)
         save_geo_areas(verbose)
+        update_measure(verbose)
+        update_measure_components(verbose)
 
 
 def update_single_model(model):

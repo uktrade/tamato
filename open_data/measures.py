@@ -71,7 +71,7 @@ def update_measure(verbose):
             duty_sentence = measure.trackedmodel_ptr.duty_sentence
             if duty_sentence:
                 measure.duty_sentence = duty_sentence
-                # measure.save()
+                measure.save()
 
     if verbose:
         print(f"Elapsed time {time.time() - start}")
