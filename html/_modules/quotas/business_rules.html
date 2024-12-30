@@ -591,6 +591,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="QA5.validate"><a class="viewcode-back" href="../../business_rules/quotas.html#quotas.business_rules.QA5.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">association</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">quotas.models</span> <span class="kn">import</span> <span class="n">QuotaAssociation</span>
+
         <span class="k">if</span> <span class="n">association</span><span class="o">.</span><span class="n">sub_quota_relation_type</span> <span class="o">==</span> <span class="n">SubQuotaType</span><span class="o">.</span><span class="n">EQUIVALENT</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">check_QA5_equivalent_coefficient</span><span class="p">(</span><span class="n">association</span><span class="o">.</span><span class="n">coefficient</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
@@ -600,13 +602,16 @@
                         <span class="s2">&quot;coefficient not equal to 1&quot;</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">association</span><span class="o">.</span><span class="n">main_quota</span><span class="o">.</span><span class="n">sub_quotas</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s2">&quot;volume&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">count</span><span class="p">()</span>
-                <span class="o">&gt;</span> <span class="mi">1</span>
-            <span class="p">):</span>
+
+            <span class="n">quota_associations</span> <span class="o">=</span> <span class="n">QuotaAssociation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span>
+                <span class="n">association</span><span class="o">.</span><span class="n">transaction</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">main_quota</span><span class="o">=</span><span class="n">association</span><span class="o">.</span><span class="n">main_quota</span><span class="p">)</span>
+            <span class="n">volumes</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">association</span> <span class="ow">in</span> <span class="n">quota_associations</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">association</span><span class="o">.</span><span class="n">sub_quota</span><span class="o">.</span><span class="n">volume</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">volumes</span><span class="p">:</span>
+                    <span class="n">volumes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">association</span><span class="o">.</span><span class="n">sub_quota</span><span class="o">.</span><span class="n">volume</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">volumes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span>
                     <span class="n">model</span><span class="o">=</span><span class="n">association</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
