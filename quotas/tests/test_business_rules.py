@@ -34,9 +34,9 @@ def test_ON1(assert_handles_duplicates):
 @pytest.mark.parametrize(
     ("existing_range", "new_range", "ranges_overlap"),
     (
-            ("normal", "overlap_normal", True),
-            ("big", "normal", True),
-            ("normal", "later", False),
+        ("normal", "overlap_normal", True),
+        ("big", "normal", True),
+        ("normal", "later", False),
     ),
 )
 def test_ON2(date_ranges, existing_range, new_range, ranges_overlap):
@@ -399,23 +399,23 @@ def test_QD15():
 @pytest.mark.parametrize(
     ("date_range", "error_expected"),
     (
-            ("future", False),
-            ("earlier", True),
+        ("future", False),
+        ("earlier", True),
     ),
 )
 @pytest.mark.parametrize(
     ("update_type"),
     (
-            UpdateType.UPDATE,
-            UpdateType.DELETE,
+        UpdateType.UPDATE,
+        UpdateType.DELETE,
     ),
 )
 def test_prevent_quota_definition_deletion(
-        unapproved_transaction,
-        date_ranges,
-        date_range,
-        update_type,
-        error_expected,
+    unapproved_transaction,
+    date_ranges,
+    date_range,
+    update_type,
+    error_expected,
 ):
     """
     QAM does not like handling deletions of active Quota Definitions.
@@ -444,27 +444,27 @@ def test_prevent_quota_definition_deletion(
     "factory,business_rule,quota_attr",
     [
         (
-                factories.QuotaAssociationFactory,
-                business_rules.QuotaAssociationMustReferToANonDeletedSubQuota,
-                "sub_quota",
+            factories.QuotaAssociationFactory,
+            business_rules.QuotaAssociationMustReferToANonDeletedSubQuota,
+            "sub_quota",
         ),
         (
-                factories.QuotaSuspensionFactory,
-                business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition,
-                "quota_definition",
+            factories.QuotaSuspensionFactory,
+            business_rules.QuotaSuspensionMustReferToANonDeletedQuotaDefinition,
+            "quota_definition",
         ),
         (
-                factories.QuotaBlockingFactory,
-                business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition,
-                "quota_definition",
+            factories.QuotaBlockingFactory,
+            business_rules.QuotaBlockingPeriodMustReferToANonDeletedQuotaDefinition,
+            "quota_definition",
         ),
     ],
 )
 def test_linking_models_must_refer_to_a_non_deleted_sub_quota(
-        unapproved_transaction,
-        factory,
-        business_rule,
-        quota_attr,
+    unapproved_transaction,
+    factory,
+    business_rule,
+    quota_attr,
 ):
     """Ensure a Quota Definition cannot be deleted if referred to by another
     linking quota model."""
@@ -510,9 +510,9 @@ def test_overlapping_quota_definition(date_ranges):
 
 @pytest.mark.business_rules
 def test_overlapping_quota_definition_on_deleted_records(
-        date_ranges,
-        delete_record,
-        approved_transaction,
+    date_ranges,
+    delete_record,
+    approved_transaction,
 ):
     order_number = factories.QuotaOrderNumberFactory.create()
 
@@ -534,12 +534,12 @@ def test_overlapping_quota_definition_on_deleted_records(
     )
 
     assert (
-            business_rules.OverlappingQuotaDefinition(
-                overlapping_definition.transaction,
-            ).validate(
-                overlapping_definition,
-            )
-            is None
+        business_rules.OverlappingQuotaDefinition(
+            overlapping_definition.transaction,
+        ).validate(
+            overlapping_definition,
+        )
+        is None
     )
 
 
@@ -560,14 +560,14 @@ def test_volume_and_initial_volume_must_match(date_ranges):
         )
 
     assert (
-            "Unless it is the main quota in a quota association, a definition's volume and initial_volume values should always be the same."
-            in str(violation)
+        "Unless it is the main quota in a quota association, a definition's volume and initial_volume values should always be the same."
+        in str(violation)
     )
 
 
 @pytest.mark.business_rules
 def test_volume_and_initial_volume_can_differ_if_in_current_or_historical_period(
-        date_ranges,
+    date_ranges,
 ):
     """Unless it is the main quota in a quota association, a definition's volume
     and initial_volume values should always be the same."""
@@ -644,8 +644,8 @@ def test_volume_and_initial_volume_must_match_sub_quota():
         )
 
     assert (
-            "Unless it is the main quota in a quota association, a definition's volume and initial_volume values should always be the same."
-            in str(violation)
+        "Unless it is the main quota in a quota association, a definition's volume and initial_volume values should always be the same."
+        in str(violation)
     )
 
 
@@ -677,35 +677,35 @@ def test_QA2(date_ranges):
     "sub_definition_valid_between, main_definition_valid_between, expected_response",
     [
         (
-                TaricDateRange(date(2019, 1, 1), date(2020, 2, 2)),
-                TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
-                False,
+            TaricDateRange(date(2019, 1, 1), date(2020, 2, 2)),
+            TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
+            False,
         ),
         (
-                TaricDateRange(date(2021, 1, 1), date(2050, 2, 2)),
-                TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
-                False,
+            TaricDateRange(date(2021, 1, 1), date(2050, 2, 2)),
+            TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
+            False,
         ),
         (
-                TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
-                TaricDateRange(date(2020, 1, 1), date(2023, 12, 1)),
-                True,
+            TaricDateRange(date(2021, 1, 1), date(2021, 12, 1)),
+            TaricDateRange(date(2020, 1, 1), date(2023, 12, 1)),
+            True,
         ),
     ],
 )
 def test_QA2_dict(
-        sub_definition_valid_between,
-        main_definition_valid_between,
-        expected_response,
+    sub_definition_valid_between,
+    main_definition_valid_between,
+    expected_response,
 ):
     """As above, but checking between a definition and a dict with date
     ranges."""
     assert (
-            business_rules.check_QA2_dict(
-                sub_definition_valid_between,
-                main_definition_valid_between,
-            )
-            == expected_response
+        business_rules.check_QA2_dict(
+            sub_definition_valid_between,
+            main_definition_valid_between,
+        )
+        == expected_response
     )
 
 
@@ -724,13 +724,13 @@ def test_QA2_dict(
     ],
 )
 def test_QA3(
-        main_volume,
-        main_unit,
-        sub_volume,
-        sub_unit,
-        main_init_volume,
-        sub_init_volume,
-        expect_error,
+    main_volume,
+    main_unit,
+    sub_volume,
+    sub_unit,
+    main_init_volume,
+    sub_init_volume,
+    expect_error,
 ):
     """When converted to the measurement unit of the main quota, the volume of a
     sub-quota must always be lower than or equal to the volume of the main
@@ -766,26 +766,26 @@ def test_QA3(
     ],
 )
 def test_QA3_dict(
-        main_volume,
-        main_unit,
-        sub_volume,
-        sub_unit,
-        main_init_volume,
-        sub_init_volume,
-        expected_response,
+    main_volume,
+    main_unit,
+    sub_volume,
+    sub_unit,
+    main_init_volume,
+    sub_init_volume,
+    expected_response,
 ):
     """As above, but checking between a definition and a dict."""
 
     assert (
-            business_rules.check_QA3_dict(
-                main_definition_volume=main_volume,
-                main_definition_unit=main_unit,
-                sub_definition_volume=sub_volume,
-                sub_definition_unit=sub_unit,
-                sub_initial_volume=sub_init_volume,
-                main_initial_volume=main_init_volume,
-            )
-            == expected_response
+        business_rules.check_QA3_dict(
+            main_definition_volume=main_volume,
+            main_definition_unit=main_unit,
+            sub_definition_volume=sub_volume,
+            sub_definition_unit=sub_unit,
+            sub_initial_volume=sub_init_volume,
+            main_initial_volume=main_init_volume,
+        )
+        == expected_response
     )
 
 
@@ -837,12 +837,12 @@ def test_QA4_dict(coefficient, expected_response):
 @pytest.mark.parametrize(
     ("existing_volume", "new_volume", "coeff", "type", "error_expected"),
     (
-            ("1000.0", "1000.0", "1.200", SubQuotaType.EQUIVALENT, False),
-            ("1000.0", "1000.0", "1.000", SubQuotaType.EQUIVALENT, True),
-            ("1000.0", "2000.0", "1.200", SubQuotaType.EQUIVALENT, True),
-            ("2000.0", "1000.0", "1.000", SubQuotaType.NORMAL, False),
-            ("1000.0", "1000.0", "1.000", SubQuotaType.NORMAL, False),
-            ("2000.0", "1000.0", "1.200", SubQuotaType.NORMAL, True),
+        ("1000.0", "1000.0", "1.200", SubQuotaType.EQUIVALENT, False),
+        ("1000.0", "1000.0", "1.000", SubQuotaType.EQUIVALENT, True),
+        ("1000.0", "2000.0", "1.200", SubQuotaType.EQUIVALENT, True),
+        ("2000.0", "1000.0", "1.000", SubQuotaType.NORMAL, False),
+        ("1000.0", "1000.0", "1.000", SubQuotaType.NORMAL, False),
+        ("2000.0", "1000.0", "1.200", SubQuotaType.NORMAL, True),
     ),
 )
 def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
@@ -884,8 +884,8 @@ def test_QA5_deleted_association():
         main_quota=existing.main_quota,
         sub_quota__volume=Decimal("2000"),
         sub_quota_relation_type=SubQuotaType.EQUIVALENT,
-        coefficient=Decimal('1.200'),
-        update_type=UpdateType.DELETE.value
+        coefficient=Decimal("1.200"),
+        update_type=UpdateType.DELETE.value,
     )
 
     with raises_if(BusinessRuleViolation, False):
@@ -896,10 +896,10 @@ def test_QA5_deleted_association():
 @pytest.mark.parametrize(
     ("existing_relation", "new_relation", "error_expected"),
     (
-            (SubQuotaType.NORMAL, SubQuotaType.NORMAL, False),
-            (SubQuotaType.EQUIVALENT, SubQuotaType.EQUIVALENT, False),
-            (SubQuotaType.NORMAL, SubQuotaType.EQUIVALENT, True),
-            (SubQuotaType.EQUIVALENT, SubQuotaType.NORMAL, True),
+        (SubQuotaType.NORMAL, SubQuotaType.NORMAL, False),
+        (SubQuotaType.EQUIVALENT, SubQuotaType.EQUIVALENT, False),
+        (SubQuotaType.NORMAL, SubQuotaType.EQUIVALENT, True),
+        (SubQuotaType.EQUIVALENT, SubQuotaType.NORMAL, True),
     ),
 )
 def test_QA6(existing_relation, new_relation, error_expected):
@@ -956,8 +956,8 @@ def test_same_main_and_sub_quota():
 @pytest.mark.parametrize(
     ("mechanism", "error_expected"),
     (
-            (AdministrationMechanism.LICENSED, True),
-            (AdministrationMechanism.FCFS, False),
+        (AdministrationMechanism.LICENSED, True),
+        (AdministrationMechanism.FCFS, False),
     ),
 )
 def test_blocking_of_fcfs_quotas_only(mechanism, error_expected):
@@ -996,8 +996,8 @@ def test_QBP3(date_ranges):
 @pytest.mark.parametrize(
     ("mechanism", "error_expected"),
     (
-            (AdministrationMechanism.LICENSED, True),
-            (AdministrationMechanism.FCFS, False),
+        (AdministrationMechanism.LICENSED, True),
+        (AdministrationMechanism.FCFS, False),
     ),
 )
 def test_suspension_of_fcfs_quotas_only(mechanism, error_expected):

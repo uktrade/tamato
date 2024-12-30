@@ -15,6 +15,7 @@ pytestmark = pytest.mark.django_db
 
 # Additional Code Type
 
+
 @pytest.mark.business_rules
 @pytest.mark.xfail(reason="CT1 disabled")
 def test_CT1(assert_handles_duplicates):
@@ -52,6 +53,7 @@ def test_CT4(date_ranges):
 
 # Additional Code
 
+
 @pytest.mark.business_rules
 def test_ACN1(assert_handles_duplicates):
     """The combination of additional code type + additional code + start date
@@ -70,8 +72,8 @@ def test_ACN2_type_must_exist(reference_nonexistent_record):
 
     with pytest.raises(models.AdditionalCodeType.DoesNotExist):
         with reference_nonexistent_record(
-                factories.AdditionalCodeFactory,
-                "type",
+            factories.AdditionalCodeFactory,
+            "type",
         ) as ac:
             assert ac.type is None
 
@@ -225,6 +227,7 @@ def test_ACN11():
 
 
 # Additional Code Description and Description Periods
+
 
 @pytest.mark.business_rules
 def test_ACN5_one_description_mandatory():

@@ -36,7 +36,7 @@ class PreventDeletingLinkedQuotaDefinitions(BusinessRule):
         if quota_definition.update_type == UpdateType.DELETE:
             kwargs = {f"{self.sid_prefix}sid": quota_definition.sid}
             if related_model.objects.approved_up_to_transaction(
-                    transaction=quota_definition.transaction,
+                transaction=quota_definition.transaction,
             ).filter(**kwargs):
                 raise self.violation(quota_definition)
 
@@ -53,14 +53,14 @@ class ON2(BusinessRule):
 
     def validate(self, order_number):
         if (
-                type(order_number)
-                        .objects.approved_up_to_transaction(order_number.transaction)
-                        .filter(
-                    order_number=order_number.order_number,
-                    valid_between__overlap=order_number.valid_between,
-                )
-                        .exclude(sid=order_number.sid)
-                        .exists()
+            type(order_number)
+            .objects.approved_up_to_transaction(order_number.transaction)
+            .filter(
+                order_number=order_number.order_number,
+                valid_between__overlap=order_number.valid_between,
+            )
+            .exclude(sid=order_number.sid)
+            .exists()
         ):
             raise self.violation(order_number)
 
@@ -74,10 +74,10 @@ class ON4(BusinessRule):
         origin_exists = False
         for order_number_version in order_number_versions:
             if (
-                    order_number_version.origins.approved_up_to_transaction(
-                        order_number.transaction,
-                    ).count()
-                    > 0
+                order_number_version.origins.approved_up_to_transaction(
+                    order_number.transaction,
+                ).count()
+                > 0
             ):
                 origin_exists = True
                 break
@@ -92,15 +92,15 @@ class ON5(BusinessRule):
 
     def validate(self, origin):
         if (
-                type(origin)
-                        .objects.approved_up_to_transaction(origin.transaction)
-                        .filter(
-                    order_number__sid=origin.order_number.sid,
-                    geographical_area__sid=origin.geographical_area.sid,
-                    valid_between__overlap=origin.valid_between,
-                )
-                        .exclude(sid=origin.sid)
-                        .exists()
+            type(origin)
+            .objects.approved_up_to_transaction(origin.transaction)
+            .filter(
+                order_number__sid=origin.order_number.sid,
+                geographical_area__sid=origin.geographical_area.sid,
+                valid_between__overlap=origin.valid_between,
+            )
+            .exclude(sid=origin.sid)
+            .exists()
         ):
             raise self.violation(
                 model=origin,
@@ -339,8 +339,8 @@ class OverlappingQuotaDefinition(BusinessRule):
         if potential_quota_definition_matches.exists():
             for potential_quota_definition in potential_quota_definition_matches:
                 if (
-                        potential_quota_definition
-                        == potential_quota_definition.current_version
+                    potential_quota_definition
+                    == potential_quota_definition.current_version
                 ):
                     raise self.violation(quota_definition)
 
@@ -359,7 +359,7 @@ class VolumeAndInitialVolumeMustMatch(BusinessRule):
             return True
 
         if quota_definition.sub_quota_associations.approved_up_to_transaction(
-                self.transaction,
+            self.transaction,
         ).exists():
             return True
 
@@ -383,9 +383,9 @@ def check_QA2_dict(sub_definition_valid_between, main_definition_valid_between):
     """Confirms data is compliant with QA2."""
     if main_definition_valid_between.upper:
         return (
-                sub_definition_valid_between.lower >= main_definition_valid_between.lower
+            sub_definition_valid_between.lower >= main_definition_valid_between.lower
         ) and (
-                sub_definition_valid_between.upper <= main_definition_valid_between.upper
+            sub_definition_valid_between.upper <= main_definition_valid_between.upper
         )
     else:
         return sub_definition_valid_between.lower >= main_definition_valid_between.lower
@@ -408,30 +408,30 @@ class QA3(BusinessRule):
         main = association.main_quota
         sub = association.sub_quota
         if not check_QA3_dict(
-                main_definition_unit=main.measurement_unit,
-                sub_definition_unit=sub.measurement_unit,
-                main_definition_volume=main.volume,
-                sub_definition_volume=sub.volume,
-                main_initial_volume=main.initial_volume,
-                sub_initial_volume=sub.initial_volume,
+            main_definition_unit=main.measurement_unit,
+            sub_definition_unit=sub.measurement_unit,
+            main_definition_volume=main.volume,
+            sub_definition_volume=sub.volume,
+            main_initial_volume=main.initial_volume,
+            sub_initial_volume=sub.initial_volume,
         ):
             raise self.violation(association)
 
 
 def check_QA3_dict(
-        main_definition_unit,
-        sub_definition_unit,
-        main_definition_volume,
-        sub_definition_volume,
-        sub_initial_volume,
-        main_initial_volume,
+    main_definition_unit,
+    sub_definition_unit,
+    main_definition_volume,
+    sub_definition_volume,
+    sub_initial_volume,
+    main_initial_volume,
 ):
     """Confirms data is compliant with QA3 See note above about changing the
     unit types."""
     return (
-            main_definition_unit == sub_definition_unit
-            and sub_definition_volume <= main_definition_volume
-            and sub_initial_volume <= main_initial_volume
+        main_definition_unit == sub_definition_unit
+        and sub_definition_volume <= main_definition_volume
+        and sub_initial_volume <= main_initial_volume
     )
 
 
@@ -476,9 +476,7 @@ class QA5(BusinessRule):
 
             quota_associations = QuotaAssociation.objects.approved_up_to_transaction(
                 association.transaction
-            ).filter(
-                main_quota=association.main_quota
-            )
+            ).filter(main_quota=association.main_quota)
             volumes = []
             for association in quota_associations:
                 if association.sub_quota.volume not in volumes:
@@ -531,9 +529,9 @@ class QA6(BusinessRule):
 
     def validate(self, association):
         if not check_QA6_dict(
-                association.main_quota,
-                association.sub_quota_relation_type,
-                association.transaction,
+            association.main_quota,
+            association.sub_quota_relation_type,
+            association.transaction,
         ):
             raise self.violation(association)
 
@@ -577,8 +575,8 @@ class BlockingOnlyOfFCFSQuotas(BusinessRule):
 
     def validate(self, blocking):
         if (
-                blocking.quota_definition.order_number.mechanism
-                != AdministrationMechanism.FCFS
+            blocking.quota_definition.order_number.mechanism
+            != AdministrationMechanism.FCFS
         ):
             raise self.violation(blocking)
 
@@ -598,8 +596,8 @@ class SuspensionsOnlyToFCFSQuotas(BusinessRule):
 
     def validate(self, suspension):
         if (
-                suspension.quota_definition.order_number.mechanism
-                != AdministrationMechanism.FCFS
+            suspension.quota_definition.order_number.mechanism
+            != AdministrationMechanism.FCFS
         ):
             raise self.violation(suspension)
 
