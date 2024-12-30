@@ -462,6 +462,8 @@ class QA5(BusinessRule):
     """
 
     def validate(self, association):
+        from quotas.models import QuotaAssociation
+
         if association.sub_quota_relation_type == SubQuotaType.EQUIVALENT:
             if not check_QA5_equivalent_coefficient(association.coefficient):
                 raise self.violation(
@@ -471,13 +473,16 @@ class QA5(BusinessRule):
                         "coefficient not equal to 1"
                     ),
                 )
-            if (
-                association.main_quota.sub_quotas.values("volume")
-                .order_by("volume")
-                .distinct("volume")
-                .count()
-                > 1
-            ):
+
+            quota_associations = QuotaAssociation.objects.approved_up_to_transaction(
+                association.transaction
+            ).filter(main_quota=association.main_quota)
+            volumes = []
+            for association in quota_associations:
+                if association.sub_quota.volume not in volumes:
+                    volumes.append(association.sub_quota.volume)
+
+            if len(volumes) > 1:
                 raise self.violation(
                     model=association,
                     message=(
