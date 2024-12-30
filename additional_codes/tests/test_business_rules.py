@@ -15,7 +15,7 @@ pytestmark = pytest.mark.django_db
 
 # Additional Code Type
 
-
+@pytest.mark.business_rules
 @pytest.mark.xfail(reason="CT1 disabled")
 def test_CT1(assert_handles_duplicates):
     """The additional code type must be unique."""
@@ -26,6 +26,7 @@ def test_CT1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 @requires_meursing_tables
 def test_CT2():
     """The Meursing table plan can only be entered if the additional code type
@@ -34,6 +35,7 @@ def test_CT2():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_meursing_tables
 def test_CT3():
     """The Meursing table plan must exist."""
@@ -41,6 +43,7 @@ def test_CT3():
     assert False
 
 
+@pytest.mark.business_rules
 def test_CT4(date_ranges):
     """The start date must be less than or equal to the end date."""
     with pytest.raises(DataError):
@@ -49,7 +52,7 @@ def test_CT4(date_ranges):
 
 # Additional Code
 
-
+@pytest.mark.business_rules
 def test_ACN1(assert_handles_duplicates):
     """The combination of additional code type + additional code + start date
     must be unique."""
@@ -61,17 +64,19 @@ def test_ACN1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_ACN2_type_must_exist(reference_nonexistent_record):
     """The referenced additional code type must exist."""
 
     with pytest.raises(models.AdditionalCodeType.DoesNotExist):
         with reference_nonexistent_record(
-            factories.AdditionalCodeFactory,
-            "type",
+                factories.AdditionalCodeFactory,
+                "type",
         ) as ac:
             assert ac.type is None
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "app_code, expect_error",
     [
@@ -92,6 +97,7 @@ def test_ACN2_allowed_application_codes(app_code, expect_error):
         business_rules.ACN2(additional_code.transaction).validate(additional_code)
 
 
+@pytest.mark.business_rules
 def test_ACN3(date_ranges):
     """The start date of the additional code must be less than or equal to the
     end date."""
@@ -100,6 +106,7 @@ def test_ACN3(date_ranges):
         factories.AdditionalCodeFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 def test_ACN4(date_ranges):
     """The validity period of the additional code must not overlap any other
     additional code with the same additional code type + additional code + start
@@ -119,6 +126,7 @@ def test_ACN4(date_ranges):
         business_rules.ACN4(duplicate.transaction).validate(duplicate)
 
 
+@pytest.mark.business_rules
 @requires_meursing_tables
 def text_ACN12():
     """When the additional code is used to represent an additional code line
@@ -128,6 +136,7 @@ def text_ACN12():
     assert False
 
 
+@pytest.mark.business_rules
 def test_ACN13(assert_spanning_enforced):
     """When an additional code is used in an additional code nomenclature
     measure then the validity period of the additional code must span the
@@ -144,6 +153,7 @@ def test_ACN13(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ACN17(assert_spanning_enforced):
     """The validity period of the additional code type must span the validity
     period of the additional code."""
@@ -160,6 +170,7 @@ def test_ACN17(assert_spanning_enforced):
 footnote_association = pytest.mark.skip(reason="Footnote association is not required.")
 
 
+@pytest.mark.business_rules
 @footnote_association
 def test_ACN6():
     """The footnotes that are referenced must exist."""
@@ -167,6 +178,7 @@ def test_ACN6():
     assert False
 
 
+@pytest.mark.business_rules
 @footnote_association
 def test_ACN7():
     """The start date of the footnote association must be less than or equal to
@@ -175,6 +187,7 @@ def test_ACN7():
     assert False
 
 
+@pytest.mark.business_rules
 @footnote_association
 def test_ACN8():
     """The period of the association with a footnote must be within (inclusive)
@@ -183,6 +196,7 @@ def test_ACN8():
     assert False
 
 
+@pytest.mark.business_rules
 @footnote_association
 def test_ACN9():
     """The period of the association with a footnote must be within (inclusive)
@@ -191,6 +205,7 @@ def test_ACN9():
     assert False
 
 
+@pytest.mark.business_rules
 @footnote_association
 def test_ACN10():
     """When the same footnote is associated more than once with the same
@@ -200,6 +215,7 @@ def test_ACN10():
     assert False
 
 
+@pytest.mark.business_rules
 @footnote_association
 def test_ACN11():
     """The referenced footnote must have a footnote type with application type =
@@ -210,7 +226,7 @@ def test_ACN11():
 
 # Additional Code Description and Description Periods
 
-
+@pytest.mark.business_rules
 def test_ACN5_one_description_mandatory():
     """At least one description is mandatory."""
     additional_code = factories.AdditionalCodeFactory.create()
@@ -219,6 +235,7 @@ def test_ACN5_one_description_mandatory():
             business_rules.ACN5(additional_code.transaction).validate(additional_code)
 
 
+@pytest.mark.business_rules
 def test_ACN5_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the additional code."""
@@ -234,6 +251,7 @@ def test_ACN5_first_description_must_have_same_start_date(date_ranges):
             )
 
 
+@pytest.mark.business_rules
 def test_ACN5_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
@@ -249,6 +267,7 @@ def test_ACN5_start_dates_cannot_match():
             )
 
 
+@pytest.mark.business_rules
 def test_ACN5_description_start_before_additional_code_end(date_ranges):
     """The start date must be less than or equal to the end date of the
     additional code."""
@@ -268,6 +287,7 @@ def test_ACN5_description_start_before_additional_code_end(date_ranges):
             )
 
 
+@pytest.mark.business_rules
 def test_ACN14(delete_record):
     """An additional code cannot be deleted if it is used in an additional code
     nomenclature measure."""
@@ -288,6 +308,7 @@ def test_ACN14(delete_record):
         )
 
 
+@pytest.mark.business_rules
 @requires_meursing_tables
 def test_ACN15():
     """An additional code cannot be deleted if it is used in an additional code

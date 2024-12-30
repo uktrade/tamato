@@ -9,6 +9,7 @@ from common.validators import UpdateType
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.business_rules
 def test_NIG5_origin_raises_violation_when_only_origin_is_deleted(workbasket):
     """
     When deleting an origin there must still be an origin for the goods,
@@ -68,6 +69,7 @@ def test_NIG5_origin_raises_violation_when_only_origin_is_deleted(workbasket):
         business_rules.NIG5_origin(editable_transaction).validate(origin_delete)
 
 
+@pytest.mark.business_rules
 def test_NIG5_origin_does_not_raise_violation_when_origin_still_exists(workbasket):
     """
     When deleting an origin there must still be an origin for the goods,
@@ -140,6 +142,7 @@ def test_NIG5_origin_does_not_raise_violation_when_origin_still_exists(workbaske
     business_rules.NIG5_origin(editable_transaction).validate(origin_delete)
 
 
+@pytest.mark.business_rules
 def test_NIG5_origin_does_not_raise_violation_when_both_origin_and_goods_nomenclature_are_deleted(
     workbasket,
 ):
