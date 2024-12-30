@@ -37,52 +37,6 @@ def normalise_loglevel(loglevel):
         return loglevel
 
 
-def subquery_test():
-    subquery1 = ReportMeasureCondition.objects.values(
-        "dependent_measure_id",
-    ).annotate(
-        condition_display=StringAgg(
-            expression=Concat(
-                Value("condition:"),
-                "condition_code__code",
-                Case(
-                    When(
-                        Q(required_certificate__isnull=True),
-                        then=Value(""),
-                    ),
-                    default=Concat(
-                        Value("certificate"),
-                        F("required_certificate__certificate_type__sid"),
-                        F("required_certificate__certificate_type__sid"),
-                        F("required_certificate__sid"),
-                    ),
-                ),
-                Value("action:"),
-                "action__code",
-                output_field=TextField(),
-            ),
-            delimiter="|",
-            ordering=("condition_code__code", "component_sequence_number"),
-        ),
-    )
-    return subquery1
-
-    # subquery = ReportMeasureCondition.objects.filter(
-    #     dependent_measure_id=OuterRef("pk")
-    # ).values(
-    #     'dependent_measure_id').annotate(
-    #     condition_display=StringAgg(
-    #         expression=Concat(
-    #             Value("condition:"), "condition_code__code",
-    #             Value("Certificate"),
-    #             Value("action:"), "action__code",
-    #             output_field=TextField()),
-    #         delimiter="|",
-    #         ordering=("condition_code__code", "component_sequence_number"),
-    #     ))
-    # return subquery
-
-
 class MeasureExport:
     """Runs the export command against TAP data to extract Measure CSV data."""
 
@@ -175,7 +129,7 @@ class MeasureExport:
         return geographical_area_ids_str, geographical_area_descriptions_str
 
     def run(self):
-        subquery = (
+        footnote_subquery = (
             ReportFootnoteAssociationMeasure.objects.filter(
                 footnoted_measure=OuterRef("pk"),
             )
@@ -195,6 +149,39 @@ class MeasureExport:
             )
         )
 
+        condition_subquery = (
+            ReportMeasureCondition.objects.filter(
+                dependent_measure_id=OuterRef("pk"),
+            )
+            .values(
+                "dependent_measure_id",
+            )
+            .annotate(
+                condition_display=StringAgg(
+                    expression=Concat(
+                        Value("condition:"),
+                        "condition_code__code",
+                        Case(
+                            When(
+                                Q(required_certificate__isnull=True),
+                                then=Value(""),
+                            ),
+                            default=Concat(
+                                Value(",certificate:"),
+                                F("required_certificate__certificate_type__sid"),
+                                F("required_certificate__sid"),
+                            ),
+                        ),
+                        Value(",action:"),
+                        "action__code",
+                        output_field=TextField(),
+                    ),
+                    delimiter="|",
+                    ordering=("condition_code__code", "component_sequence_number"),
+                ),
+            )
+        )
+
         measures = (
             ReportMeasure.objects.filter(sid__gte=20000000)
             .select_related(
@@ -207,7 +194,10 @@ class MeasureExport:
                 "additional_code",
                 "additional_code__type",
             )
-            .annotate(footnotes_id=Subquery(subquery.values("footnotes_id")))
+            .annotate(footnotes_id=Subquery(footnote_subquery.values("footnotes_id")))
+            .annotate(
+                conditions=Subquery(condition_subquery.values("condition_display")),
+            )
         )
 
         # Add order by
@@ -220,7 +210,6 @@ class MeasureExport:
                 print(id)
                 if id > 2000:
                     return
-                conditions = "conditions to be done"
                 if measure.additional_code:
                     additional_code__code = f"{measure.additional_code.type.sid}{measure.additional_code.code}"
                     additional_code__description = measure.additional_code.description
@@ -253,7 +242,7 @@ class MeasureExport:
                     measure.valid_between.upper,
                     measure.reduction,
                     measure.footnotes_id,
-                    conditions,
+                    measure.conditions,
                     measure.geographical_area.sid,
                     measure.geographical_area.area_id,
                     measure.geographical_area.description,
@@ -265,12 +254,3 @@ class MeasureExport:
                 ]
 
                 writer.writerow(measure_data)
-
-
-# qs = ReportFootnoteAssociationMeasure.objects.annotate(
-# fname =  Concat("associated_footnote__footnote_type__footnote_type_id",
-# "associated_footnote__footnote_id",  output_field=CharField()))
-
-# qs = ReportFootnoteAssociationMeasure.objects.annotate(
-# fname = S Concat("associated_footnote__footnote_type__footnote_type_id",
-# "associated_footnote__footnote_id",  output_field=CharField()))
