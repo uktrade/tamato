@@ -228,9 +228,9 @@ class TestQuotaLocalStorage:
 
         patch("exporter.quotas.make_export", mocked_make_export)
         with pytest.raises(Exception) as e:
-            self.get_target('zzz')
+            self.get_target("zzz")
 
-        assert str(e.value) == 'Directory does not exist: zzz.'
+        assert str(e.value) == "Directory does not exist: zzz."
 
     def test_init_good_location(self):
         target = self.get_target()
@@ -239,26 +239,26 @@ class TestQuotaLocalStorage:
 
     def test_path(self):
         target = self.get_target()
-        target_path = target.path('a.csv')
-        expected_path = str(Path(self.target_class_location).expanduser().resolve()) + '/a.csv'
+        target_path = target.path("a.csv")
+        expected_path = (
+            str(Path(self.target_class_location).expanduser().resolve()) + "/a.csv"
+        )
         assert target_path == expected_path
 
     def test_exists(self):
         target = self.get_target()
-        target_exists = target.exists('valid.csv')
+        target_exists = target.exists("valid.csv")
         assert target_exists
 
-        target_exists = target.exists('zzz.csv')
+        target_exists = target.exists("zzz.csv")
         assert not target_exists
-
-
 
     def test_export_csv(self):
         def mocked_make_export(named_temp_file):
-            with open(named_temp_file.name, 'wt') as file:
+            with open(named_temp_file.name, "wt") as file:
                 writer = csv.writer(file)
-                writer.writerow(['header1', 'header2', 'header3'])
-                writer.writerow(['data1', 'data2', 'data3'])
+                writer.writerow(["header1", "header2", "header3"])
+                writer.writerow(["data1", "data2", "data3"])
 
         patch("exporter.quotas.make_export", mocked_make_export)
         target = self.get_target()
@@ -392,21 +392,27 @@ class TestQuotaS3Storage:
 
         patch("exporter.quotas.make_export", mocked_make_export)
         target = self.get_target()
-        target.export_csv('some.csv')
-        assert os.path.exists(os.path.join(target._location, 'some.csv'))
+        target.export_csv("some.csv")
+        assert os.path.exists(os.path.join(target._location, "some.csv"))
 
 
 @pytest.mark.exporter
 class TestSQLiteS3VFSStorage:
-    target_class=SQLiteS3VFSStorage
+    target_class = SQLiteS3VFSStorage
 
     def get_target(self):
         return self.target_class()
 
-    @patch('exporter.storages.SQLiteS3VFSStorage.listdir', return_value=([],['xxx'],))
+    @patch(
+        "exporter.storages.SQLiteS3VFSStorage.listdir",
+        return_value=(
+            [],
+            ["xxx"],
+        ),
+    )
     def test_exists(self, mocked_list_dir):
         target = self.get_target()
-        assert target.exists('xxx')
+        assert target.exists("xxx")
         mocked_list_dir.assert_called_once()
 
     def test_vfs(self):
@@ -424,17 +430,16 @@ class TestSQLiteS3VFSStorage:
             mocked_connection.return_value = FakeConnection()
             target = self.get_target()
             target._bucket = fake_bucket
-            target.export_database('valid.file')
+            target.export_database("valid.file")
             patched_make_export.assert_called_once()
 
 
 @pytest.mark.exporter
 class TestSQLiteS3Storage:
-    target_class=SQLiteS3Storage
+    target_class = SQLiteS3Storage
 
     def get_target(self):
         return self.target_class()
-
 
     @patch("exporter.sqlite.make_export", return_value=mock_make_export)
     @patch("exporter.storages.is_valid_sqlite", return_value=True)
@@ -448,7 +453,7 @@ class TestSQLiteS3Storage:
             mocked_connection.return_value = FakeConnection()
             target = self.get_target()
             target._bucket = fake_bucket
-            target.export_database('valid.file')
+            target.export_database("valid.file")
             patched_make_export.assert_called_once()
 
     @patch("exporter.sqlite.make_export", return_value=mock_make_export)
@@ -463,24 +468,27 @@ class TestSQLiteS3Storage:
             target = self.get_target()
             target._bucket = fake_bucket
             with pytest.raises(EmptyFileException) as e:
-                target.export_database('valid.file')
+                target.export_database("valid.file")
 
             patched_make_export.assert_called_once()
+
 
 @pytest.mark.exporter
 class TestSQLiteLocalStorage:
     target_class = SQLiteLocalStorage
 
     def get_target(self):
-        return self.target_class('exporter/tests/test_files')
+        return self.target_class("exporter/tests/test_files")
 
     def test_path(self):
         target = self.get_target()
-        assert str(target.path('some_file.type')) == str(target._location.joinpath('some_file.type'))
+        assert str(target.path("some_file.type")) == str(
+            target._location.joinpath("some_file.type")
+        )
 
     def test_exists(self):
         target = self.get_target()
-        assert not target.exists('dfsgdfg')
+        assert not target.exists("dfsgdfg")
 
     @patch("exporter.sqlite.make_export", return_value=mock_make_export)
     def test_export_database(self, patched_make_export):
@@ -493,8 +501,9 @@ class TestSQLiteLocalStorage:
             mocked_connection.return_value = FakeConnection()
             target = self.get_target()
             target._bucket = fake_bucket
-            target.export_database('valid.file')
+            target.export_database("valid.file")
             patched_make_export.assert_called_once()
+
 
 @pytest.mark.exporter
 class TestQuotaS3Storage:
@@ -506,16 +515,16 @@ class TestQuotaS3Storage:
     @patch("exporter.storages.is_valid_quotas_csv", return_value=True)
     def test_export_csv(self, patched_is_valid_quotas_csv):
         def mocked_make_export(named_temp_file):
-            with open(named_temp_file.name, 'wt') as file:
+            with open(named_temp_file.name, "wt") as file:
                 writer = csv.writer(file)
-                writer.writerow(['header1', 'header2', 'header3'])
-                writer.writerow(['data1', 'data2', 'data3'])
+                writer.writerow(["header1", "header2", "header3"])
+                writer.writerow(["data1", "data2", "data3"])
 
         patch("exporter.quotas.make_export", mocked_make_export)
         target = self.get_target()
-        with patch.object(target, 'save') as mock_save:
+        with patch.object(target, "save") as mock_save:
             mock_save.return_value = None
-            target.export_csv('valid.file')
+            target.export_csv("valid.file")
         patched_is_valid_quotas_csv.assert_called_once()
         mock_save.assert_called_once()
 
@@ -531,4 +540,3 @@ class TestQuotaS3Storage:
             with pytest.raises(EmptyFileException) as e:
                 target.export_csv("valid.file")
             assert "has zero size." in str(e.value)
-
