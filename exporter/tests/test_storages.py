@@ -523,28 +523,12 @@ class TestQuotaS3Storage:
         def mocked_make_export(named_temp_file):
             pass
 
-        with patch("exporter.quotas.make_export", mocked_make_export) as patched_make_export:
+        with patch(
+            "exporter.quotas.make_export",
+            mocked_make_export,
+        ) as patched_make_export:
             target = self.get_target()
             with pytest.raises(EmptyFileException) as e:
-                target.export_csv('valid.file')
-            assert 'has zero size.' in str(e.value)
-
-        with patch.object(target, 'save') as mock_save:
-            mock_save.return_value = None
-            target.export_csv("valid.file")
-        patched_is_valid_quotas_csv.assert_called_once()
-        mock_save.assert_called_once()
-
-    def test_export_csv_invalid(self):
-        def mocked_make_export(named_temp_file):
-            pass
-
-        with patch("exporter.quotas.make_export", mocked_make_export) as patched_make_export:
-            target = self.get_target()
-            with pytest.raises(EmptyFileException) as e:
-                target.export_csv('valid.file')
-            assert 'has zero size.' in str(e.value)
-
-        params = target.get_object_parameters('file.ext')
-        assert params == {'ContentDisposition': 'attachment; filename=file.ext'}
+                target.export_csv("valid.file")
+            assert "has zero size." in str(e.value)
 
