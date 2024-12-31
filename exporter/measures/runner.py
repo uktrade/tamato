@@ -53,6 +53,7 @@ class MeasureExport:
         """
         measure_headers = [
             "id",
+            "trackedmodel_ptr_id",
             "commodity__sid",
             "commodity__code",
             "commodity__indent",
@@ -83,19 +84,18 @@ class MeasureExport:
     @staticmethod
     def get_excluded_geographical_areas(measure):
         """
-        Returns a tuple of geographical areas and exclusions associated with a
-        Quota.
+        Returns a tuple of geographical areas  exclusions associated with a
+        measure.
 
         Args:
             measure: the measure to be queried
 
         Returns:
-            tuple(str, str) : geographical areas and exclusions
+            tuple(str, str) : geographical exclusions ID and description
         """
         geographical_area_ids = []
         geographical_area_descriptions = []
 
-        # get all geographical areas that are / were / will be enabled on the end date of the measure
         for geo_area in (
             ReportMeasureExcludedGeographicalArea.objects.filter(
                 modified_measure=measure.trackedmodel_ptr_id,
@@ -198,18 +198,21 @@ class MeasureExport:
             .annotate(
                 conditions=Subquery(condition_subquery.values("condition_display")),
             )
+            .order_by(
+                "goods_nomenclature__item_id",
+                "measure_type__sid",
+                "geographical_area__area_id",
+            )
         )
 
-        # Add order by
         id = 0
         with open(self.target_file.name, "wt") as file:
             writer = csv.writer(file)
             writer.writerow(self.csv_headers())
             for measure in measures:
                 id += 1
-                print(id)
-                if id > 2000:
-                    return
+                if id % 1000 == 0:
+                    print(id)
                 if measure.additional_code:
                     additional_code__code = f"{measure.additional_code.type.sid}{measure.additional_code.code}"
                     additional_code__description = measure.additional_code.description
@@ -228,6 +231,7 @@ class MeasureExport:
 
                 measure_data = [
                     id,
+                    measure.trackedmodel_ptr_id,
                     measure.goods_nomenclature.sid,
                     measure.goods_nomenclature.item_id,
                     measure.goods_nomenclature.indent,
