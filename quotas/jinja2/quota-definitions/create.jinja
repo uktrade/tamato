@@ -21,7 +21,7 @@
         {% endblock %}
         </span>
     </h1>
-  <p class="govuk-body">You can create one new quota definition period using this form. Alternatively, you can <a class="govuk-link" href="{{ url('quota_definition-ui-bulk-create') }}">create multiple quota definition periods</a> for a chose quota order number.</p>
+  <p class="govuk-body">You can create one new quota definition period using this form. Alternatively, you can <a class="govuk-link" href="{{ url('quota_definition-ui-bulk-create') }}">create multiple quota definition periods</a> for a chosen quota order number.</p>
   {% call django_form() %}
     {{ crispy(form) }}
   {% endcall %}
