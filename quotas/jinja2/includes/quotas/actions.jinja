@@ -14,7 +14,6 @@
           <br>
           <strong class="govuk-heading-xs">Create quota data</strong>
             <li><a class="govuk-link" href="{{ url('quota_definition-ui-create', args=[object.sid]) }}?order_number={{object.order_number}}">Create definition period</a></li>
-            <li><a class="govuk-link" href="{{ url('quota_definition-ui-bulk-create', args=[object.sid]) }}">The bulk creator</a></li>
             <li><a class="govuk-link" href="{{ url('sub_quota_definitions-ui-create') }}">Create quota associations</a></li>
             <li><a class="govuk-link" href="{{ url('quota_suspension_or_blocking-ui-create', args=[object.sid]) }}">Create suspension or blocking period</a></li>
           <br>

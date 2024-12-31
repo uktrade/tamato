@@ -18,6 +18,7 @@
         "classes": "govuk-!-margin-bottom-7"
       }) }}
       <h2>Next steps</h2>
+
       <div class="govuk-button-group">
         {{ govukButton({
           "text": "Create other definition periods",
@@ -26,7 +27,7 @@
         }) }}
         {{ govukButton({
           "text": "View definition period data for this quota",
-          "href": url("quota_definition-ui-list", args=[request.session['quota_order_number']]),
+          "href": url("quota_definition-ui-list", args=[quota_order_number.sid]),
           "classes": "govuk-button--secondary"
         }) }}
       </div>
