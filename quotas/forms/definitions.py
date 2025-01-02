@@ -2,8 +2,6 @@ from datetime import date
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
-from crispy_forms_gds.layout import Accordion
-from crispy_forms_gds.layout import AccordionSection
 from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Layout
@@ -14,6 +12,7 @@ from django.core.exceptions import ValidationError
 
 from common.forms import ValidityPeriodForm
 from common.serializers import deserialize_date
+from common.widgets import DecimalSuffix
 from measures.models import MeasurementUnit
 from quotas import business_rules
 from quotas import models
@@ -145,6 +144,7 @@ class QuotaDefinitionCreateForm(
     class Meta:
         model = models.QuotaDefinition
         fields = [
+            "order_number",
             "valid_between",
             "description",
             "volume",
@@ -156,9 +156,14 @@ class QuotaDefinitionCreateForm(
             "maximum_precision",
         ]
 
+    order_number = forms.ModelChoiceField(
+        queryset=models.QuotaOrderNumber.objects.current(),
+        widget=forms.HiddenInput(),
+    )
     description = forms.CharField(label="", widget=forms.Textarea(), required=False)
     volume = forms.DecimalField(
         label="Current volume",
+        help_text="The current volume is the starting balance for the quota",
         widget=forms.TextInput(),
         error_messages={
             "invalid": "Volume must be a number",
@@ -167,6 +172,7 @@ class QuotaDefinitionCreateForm(
     )
     initial_volume = forms.DecimalField(
         widget=forms.TextInput(),
+        help_text="The initial volume is the legal balance applied to the definition period",
         error_messages={
             "invalid": "Initial volume must be a number",
             "required": "Enter the initial volume",
@@ -174,13 +180,14 @@ class QuotaDefinitionCreateForm(
     )
     measurement_unit = forms.ModelChoiceField(
         queryset=MeasurementUnit.objects.current(),
+        empty_label="Choose measurement unit",
         error_messages={"required": "Select the measurement unit"},
     )
 
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
+        widget=DecimalSuffix(suffix="%"),
         help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
-        widget=forms.TextInput(),
         error_messages={
             "invalid": "Critical threshold must be a number",
             "required": "Enter the critical threshold",
@@ -199,13 +206,21 @@ class QuotaDefinitionCreateForm(
     )
 
     def __init__(self, *args, **kwargs):
+        self.buttons = kwargs.pop("buttons", None)
+        self.order_number = kwargs.pop("order_number", None)
         super().__init__(*args, **kwargs)
         self.init_layout()
         self.init_fields()
 
     def clean(self):
+        cleaned_data = super().clean()
+        """The "order_number" field is hidden, but is not correctly populated by
+        .initial when creating a single QuotaDefinitionPeriod."""
+        if "order_number" in self.errors:
+            self.cleaned_data["order_number"] = self.order_number
+            self.errors.pop("order_number")
         validators.validate_quota_volume(self.cleaned_data)
-        return super().clean()
+        return cleaned_data
 
     def init_fields(self):
         # This is always set to 3 for current definitions
@@ -230,50 +245,87 @@ class QuotaDefinitionCreateForm(
             lambda obj: f"{obj.code} - {obj.description}"
         )
 
-    def init_layout(self):
+        self.fields["end_date"].help_text = ""
+        self.fields["end_date"].required = True
+        self.fields["measurement_unit_qualifier"].help_text = (
+            "A measurement unit qualifier is not always required."
+        )
+        self.fields["measurement_unit_qualifier"].empty_label = (
+            "Choose measurement unit qualifier."
+        )
+
+    def init_layout(self, *args, **kwargs):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
-
+        link_text = self.buttons["link_text"]
+        link = self.buttons["link"]
         self.helper.layout = Layout(
-            Accordion(
-                AccordionSection(
-                    "Description",
-                    HTML.p("Adding a description is optional."),
-                    "description",
-                    "order_number",
+            Div(
+                HTML(
+                    '<h3 class="govuk-heading">Validity period</h3>',
                 ),
-                AccordionSection(
-                    "Validity period",
-                    "start_date",
-                    "end_date",
+                "start_date",
+                "end_date",
+            ),
+            HTML(
+                "<br />",
+            ),
+            Div(
+                HTML(
+                    '<h3 class="govuk-heading">Measurements</h3>',
                 ),
-                AccordionSection(
-                    "Measurements",
-                    HTML.p("A measurement unit qualifier is not always required."),
-                    Field("measurement_unit", css_class="govuk-!-width-full"),
-                    Field("measurement_unit_qualifier", css_class="govuk-!-width-full"),
-                ),
-                AccordionSection(
-                    "Volume",
-                    HTML.p(
-                        "The initial volume is the legal balance applied to the definition period.<br><br>The current volume is the starting balance for the quota.",
-                    ),
-                    "initial_volume",
-                    "volume",
-                    "maximum_precision",
-                ),
-                AccordionSection(
-                    "Criticality",
-                    "quota_critical_threshold",
-                    "quota_critical",
+                Field("measurement_unit", css_class="govuk-!-width-two-thirds"),
+                Field(
+                    "measurement_unit_qualifier",
+                    css_class="govuk-!-width-two-thirds",
                 ),
             ),
-            Submit(
-                "submit",
-                "Save",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
+            HTML(
+                "<br />",
+            ),
+            Div(
+                HTML(
+                    '<h3 class="govuk-heading">Volume</h3>',
+                ),
+                Field("initial_volume", css_class="govuk-!-width-one-third"),
+                Field("volume", css_class="govuk-!-width-one-third"),
+                "maximum_precision",
+            ),
+            HTML(
+                "<br />",
+            ),
+            Div(
+                HTML(
+                    '<h3 class="govuk-heading">Criticality</h3>',
+                ),
+                "quota_critical_threshold",
+                "quota_critical",
+            ),
+            HTML(
+                "<br />",
+            ),
+            Div(
+                HTML(
+                    '<h3 class="govuk-heading">Description</h3>',
+                ),
+                HTML.p("Adding a description is optional."),
+                Field("description", css_class="govuk-!-width-two-thirds"),
+            ),
+            HTML(
+                "<br />",
+            ),
+            Div(
+                Submit(
+                    "submit",
+                    self.buttons["submit"],
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f'<a class="govuk-link" href={link}>{link_text}</a>',
+                ),
+                css_class="govuk-button-group",
             ),
         )
 

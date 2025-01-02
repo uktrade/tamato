@@ -1,0 +1,23 @@
+{% extends "quota-definitions/sub-quota-duplicate-definitions-step.jinja"%}
+
+{% block content %}
+    <h1 class="govuk-heading-xl">
+        {% block page_title_heading %}
+            {{ page_title }}
+        {% endblock %}
+    </h1>
+    <p class="govuk-body">
+      You can create up to 20 quota definition periods for the same quota order number.
+      Subsequent periods will be calculated from the first date range entered and the data will be duplicated across all definition periods.
+    </p>
+    <p>
+      Changes can be made to individual definition periods on the review page before submission
+    </p>
+    
+
+    {% call django_form(action=view.get_step_url(wizard.steps.current)) %}
+        {{ wizard.management_form }}
+        {% block form %}{{ crispy(form) }}{% endblock %}
+    {% endcall %}
+
+{% endblock %}

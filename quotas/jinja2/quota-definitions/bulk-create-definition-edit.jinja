@@ -1,0 +1,19 @@
+{% extends "layouts/form.jinja" %}
+
+{% set page_title = "Edit quota definition period" %}
+{% set page_subtitle = "Quota order number: "~request.session.quota_order_number%}
+{% block content %}
+  <h1 class="govuk-heading-xl">
+        {% block page_title_heading %}
+            {{ page_title }}
+        {% endblock %}
+        <span class="govuk-caption-xl">
+        {% block page_subtitle %}
+            {{ page_subtitle }}
+        {% endblock %}
+        </span>
+    </h1>
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}
