@@ -395,6 +395,10 @@ class QuotaDefinitionBulkCreatorUpdateDefinitionData(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["page_title"] = "Update definition details"
+        quota_order_number = models.QuotaOrderNumber.objects.current().get(
+            pk=self.request.session["quota_order_number_pk"],
+        )
+        context["form"].fields["order_number"].initial = quota_order_number
         return context
 
     def form_valid(self, form):

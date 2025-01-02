@@ -548,7 +548,6 @@ class BulkDefinitionUpdateData(
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
         fields["maximum_precision"].initial = 3
         # The following populate from the data saved in session
-
         fields["start_date"].initial = deserialize_date(definition_data["start_date"])
         fields["end_date"].initial = deserialize_date(definition_data["end_date"])
         fields["end_date"].help_text = ""

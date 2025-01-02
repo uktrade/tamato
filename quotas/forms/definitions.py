@@ -213,15 +213,19 @@ class QuotaDefinitionCreateForm(
         self.init_fields()
 
     def clean(self):
+        cleaned_data = super().clean()
+        """The "order_number" field is hidden, but is not correctly populated by
+        .initial when creating a single QuotaDefinitionPeriod."""
+        if "order_number" in self.errors:
+            self.cleaned_data["order_number"] = self.order_number
+            self.errors.pop("order_number")
         validators.validate_quota_volume(self.cleaned_data)
-        return super().clean()
+        return cleaned_data
 
     def init_fields(self):
         # This is always set to 3 for current definitions
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
         self.fields["maximum_precision"].initial = 3
-
-        self.fields["order_number"].initial = self.order_number
 
         # Set these as the default values
         self.fields["quota_critical"].initial = False
@@ -242,6 +246,7 @@ class QuotaDefinitionCreateForm(
         )
 
         self.fields["end_date"].help_text = ""
+        self.fields["end_date"].required = True
         self.fields["measurement_unit_qualifier"].help_text = (
             "A measurement unit qualifier is not always required."
         )
