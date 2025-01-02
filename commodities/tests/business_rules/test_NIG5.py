@@ -9,6 +9,7 @@ from common.validators import UpdateType
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.business_rules
 def test_NIG5(workbasket):
     """
     When creating a goods nomenclature code, an origin must exist.
@@ -36,6 +37,7 @@ def test_NIG5(workbasket):
     business_rules.NIG5(good_good.transaction).validate(good_good)
 
 
+@pytest.mark.business_rules
 def test_NIG5_allow_origin_create():
     """
     When creating a goods nomenclature code, an origin must exist.

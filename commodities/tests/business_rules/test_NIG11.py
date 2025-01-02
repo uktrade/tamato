@@ -8,6 +8,7 @@ from common.validators import UpdateType
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.business_rules
 def test_NIG11_one_indent_mandatory():
     """At least one indent record is mandatory."""
 
@@ -16,6 +17,7 @@ def test_NIG11_one_indent_mandatory():
         business_rules.NIG11(good.transaction).validate(good)
 
 
+@pytest.mark.business_rules
 def test_NIG11_first_indent_must_have_same_start_date(date_ranges):
     """The start date of the first indentation must be equal to the start date
     of the nomenclature."""
@@ -31,6 +33,7 @@ def test_NIG11_first_indent_must_have_same_start_date(date_ranges):
         )
 
 
+@pytest.mark.business_rules
 def test_NIG11_no_overlapping_indents():
     """No two associated indentations may have the same start date."""
 
@@ -45,6 +48,7 @@ def test_NIG11_no_overlapping_indents():
         )
 
 
+@pytest.mark.business_rules
 def test_NIG11_start_date_less_than_end_date(date_ranges):
     """The start date must be less than or equal to the end date of the
     nomenclature."""
@@ -60,6 +64,7 @@ def test_NIG11_start_date_less_than_end_date(date_ranges):
         )
 
 
+@pytest.mark.business_rules
 def test_NIG11_skips_when_goods_deleted(date_ranges):
     """Example failure,"""
 

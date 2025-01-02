@@ -12,6 +12,7 @@ from geo_areas.validators import AreaCode
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.business_rules
 @pytest.fixture()
 def child():
     return factories.GeographicalAreaFactory.create(
@@ -20,6 +21,7 @@ def child():
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.xfail(reason="GA1 disabled")
 def test_GA1(assert_handles_duplicates):
     """The combination of geographical area id + validity start date must be
@@ -32,6 +34,7 @@ def test_GA1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_GA2(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -39,6 +42,7 @@ def test_GA2(date_ranges):
         factories.GeographicalAreaFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 @only_applicable_after("1998-02-01")
 def test_description_not_empty():
     """The area must have a description."""
@@ -49,6 +53,7 @@ def test_description_not_empty():
         )
 
 
+@pytest.mark.business_rules
 @pytest.mark.xfail(reason="GA3 disabled")
 def test_GA3_one_description_mandatory():
     """At least one description record is mandatory."""
@@ -57,6 +62,7 @@ def test_GA3_one_description_mandatory():
         business_rules.GA3(area.transaction).validate(area)
 
 
+@pytest.mark.business_rules
 def test_GA3_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the geographical_area."""
@@ -68,6 +74,7 @@ def test_GA3_first_description_must_have_same_start_date(date_ranges):
             business_rules.GA3(area.transaction).validate(area)
 
 
+@pytest.mark.business_rules
 def test_GA3_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
@@ -83,6 +90,7 @@ def test_GA3_start_dates_cannot_match():
             )
 
 
+@pytest.mark.business_rules
 def test_GA3_description_start_before_geographical_area_end(date_ranges):
     """The start date must be less than or equal to the end date of the
     geographical_area."""
@@ -98,6 +106,7 @@ def test_GA3_description_start_before_geographical_area_end(date_ranges):
             )
 
 
+@pytest.mark.business_rules
 def test_GA4():
     """A parent geographical area must be a group."""
 
@@ -107,6 +116,7 @@ def test_GA4():
         business_rules.GA4(child.transaction).validate(child)
 
 
+@pytest.mark.business_rules
 def test_GA5(assert_spanning_enforced):
     """A parent geographical areas validity period must span a childs validity
     period."""
@@ -118,6 +128,7 @@ def test_GA5(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_GA6():
     """Parent-child relationships cannot loop."""
     g1 = factories.GeoGroupFactory.create()
@@ -130,6 +141,7 @@ def test_GA6():
         business_rules.GA6(g3.transaction).validate(g1)
 
 
+@pytest.mark.business_rules
 @pytest.mark.xfail(reason="GA7 disabled")
 def test_GA7(date_ranges):
     """Geographic Areas with the same area id must not overlap."""
@@ -145,6 +157,7 @@ def test_GA7(date_ranges):
         business_rules.GA7(duplicate.transaction).validate(duplicate)
 
 
+@pytest.mark.business_rules
 def test_GA10(assert_spanning_enforced):
     """If referenced in a measure the geographical area validity range must span
     the measure validity range."""
@@ -159,6 +172,7 @@ def test_GA10(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_GA11(assert_spanning_enforced):
     """If an area is excluded in a measure then the areas validity must span the
     measure."""
@@ -173,6 +187,7 @@ def test_GA11(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_GA12(reference_nonexistent_record):
     """The referenced geographical area id (member) must exist."""
 
@@ -184,6 +199,7 @@ def test_GA12(reference_nonexistent_record):
             business_rules.GA12(membership.transaction).validate(membership)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "area_code, expect_error",
     [
@@ -204,6 +220,7 @@ def test_GA13(area_code, expect_error):
         business_rules.GA13(membership.transaction).validate(membership)
 
 
+@pytest.mark.business_rules
 def test_GA14(reference_nonexistent_record):
     """The referenced geographical area group id must exist."""
 
@@ -215,6 +232,7 @@ def test_GA14(reference_nonexistent_record):
             business_rules.GA14(membership.transaction).validate(membership)
 
 
+@pytest.mark.business_rules
 def test_GA15(date_ranges):
     """The membership start date must be less than or equal to the membership
     end date."""
@@ -224,6 +242,7 @@ def test_GA15(date_ranges):
         )
 
 
+@pytest.mark.business_rules
 def test_GA16(assert_spanning_enforced):
     """The validity period of the geographical area group must span all
     membership periods of its members."""
@@ -234,6 +253,7 @@ def test_GA16(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_GA17(assert_spanning_enforced):
     """The validity range of the geographical area group must span all
     membership ranges of its members."""
@@ -244,6 +264,7 @@ def test_GA17(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_GA18(date_ranges):
     """When a geographical area is more than once member of the same group then
     there may be no overlap in their membership periods."""
@@ -261,6 +282,7 @@ def test_GA18(date_ranges):
 
 
 # https://uktrade.atlassian.net/browse/TP2000-469
+@pytest.mark.business_rules
 def test_GA18_multiple_versions(date_ranges):
     """Test that GA18 fires for overlapping memberships when one membership is
     created with a later version of the member area."""
@@ -277,6 +299,7 @@ def test_GA18_multiple_versions(date_ranges):
         business_rules.GA18(duplicate.transaction).validate(duplicate)
 
 
+@pytest.mark.business_rules
 def test_GA19():
     """If the group has a parent the members must also be members of the
     parent."""
@@ -304,6 +327,7 @@ def test_GA19():
     business_rules.GA19(membership.transaction).validate(membership)
 
 
+@pytest.mark.business_rules
 def test_GA20(date_ranges):
     """If the associated geographical area group has a parent geographical area
     group then the membership period of each member of the parent group must
@@ -328,6 +352,7 @@ def test_GA20(date_ranges):
         )
 
 
+@pytest.mark.business_rules
 def test_GA21(delete_record):
     """If a geographical area is referenced in a measure then it may not be
     deleted."""
@@ -342,6 +367,7 @@ def test_GA21(delete_record):
         )
 
 
+@pytest.mark.business_rules
 def test_GA22(delete_record):
     """A geographical area cannot be deleted if it is referenced as a parent
     geographical area group."""
@@ -352,6 +378,7 @@ def test_GA22(delete_record):
         business_rules.GA22(deleted.transaction).validate(deleted)
 
 
+@pytest.mark.business_rules
 def test_GA23(delete_record):
     """If a geographical area is referenced as an excluded geographical area in
     a measure, the membership association with the measure geographical area

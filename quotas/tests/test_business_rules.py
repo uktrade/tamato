@@ -19,6 +19,7 @@ from quotas.validators import SubQuotaType
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.business_rules
 def test_ON1(assert_handles_duplicates):
     """Quota order number id + start date must be unique."""
 
@@ -29,6 +30,7 @@ def test_ON1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("existing_range", "new_range", "ranges_overlap"),
     (
@@ -54,6 +56,7 @@ def test_ON2(date_ranges, existing_range, new_range, ranges_overlap):
         business_rules.ON2(order_number.transaction).validate(order_number)
 
 
+@pytest.mark.business_rules
 def test_ON5(date_ranges, approved_transaction, unapproved_transaction):
     """There may be no overlap in time of two quota order number origins with
     the same quota order number SID and geographical area id."""
@@ -79,6 +82,7 @@ def test_ON5(date_ranges, approved_transaction, unapproved_transaction):
         business_rules.ON5(origin.transaction).validate(origin)
 
 
+@pytest.mark.business_rules
 @only_applicable_after("2006-12-31")
 def test_ON6(date_ranges):
     """
@@ -105,6 +109,7 @@ def test_ON6(date_ranges):
         business_rules.ON6(origin.transaction).validate(origin)
 
 
+@pytest.mark.business_rules
 def test_ON7(assert_spanning_enforced):
     """The validity period of the quota order number must span the validity
     period of the quota order number origin."""
@@ -115,6 +120,7 @@ def test_ON7(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ON8(assert_spanning_enforced):
     """The validity period of the quota order number must span the validity
     period of the referencing quota definition."""
@@ -125,6 +131,7 @@ def test_ON8(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 @only_applicable_after("2007-12-31")
 def test_ON9(date_ranges):
     """
@@ -146,6 +153,7 @@ def test_ON9(date_ranges):
         business_rules.ON9(measure.transaction).validate(order_number)
 
 
+@pytest.mark.business_rules
 @only_applicable_after("2007-12-31")
 def test_ON11(delete_record):
     """
@@ -160,6 +168,7 @@ def test_ON11(delete_record):
         business_rules.ON11(deleted.transaction).validate(deleted)
 
 
+@pytest.mark.business_rules
 @only_applicable_after("2007-12-31")
 def test_ON12(delete_record):
     """
@@ -175,6 +184,7 @@ def test_ON12(delete_record):
         business_rules.ON12(deleted.transaction).validate(deleted)
 
 
+@pytest.mark.business_rules
 def test_ON12_does_not_raise(delete_record):
     """
     The quota order number origin cannot be deleted if it is used in a measure.
@@ -196,6 +206,7 @@ def test_ON12_does_not_raise(delete_record):
     business_rules.ON12(deleted.transaction).validate(deleted)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "area_code, expect_error",
     [
@@ -217,6 +228,7 @@ def test_ON13(area_code, expect_error):
         business_rules.ON13(exclusion.transaction).validate(exclusion)
 
 
+@pytest.mark.business_rules
 def test_ON14():
     """The excluded geographical area must be a member of the geographical area
     group."""
@@ -249,6 +261,7 @@ def test_ON14():
         business_rules.ON14(deleted.transaction).validate(exclusion)
 
 
+@pytest.mark.business_rules
 def test_CertificatesMustExist():
     """The referenced certificates must exist."""
     quota_order_number = factories.QuotaOrderNumberFactory.create(
@@ -264,6 +277,7 @@ def test_CertificatesMustExist():
         )
 
 
+@pytest.mark.business_rules
 def test_CertificateValidityPeriodMustSpanQuotaOrderNumber(assert_spanning_enforced):
     """The validity period of the required certificates must span the validity
     period of the quota order number."""
@@ -274,6 +288,7 @@ def test_CertificateValidityPeriodMustSpanQuotaOrderNumber(assert_spanning_enfor
     )
 
 
+@pytest.mark.business_rules
 def test_QD1(assert_handles_duplicates):
     """Quota order number id + start date must be unique."""
 
@@ -284,6 +299,7 @@ def test_QD1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_QD2(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -291,6 +307,7 @@ def test_QD2(date_ranges):
         factories.QuotaDefinitionFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 def test_QD7(date_ranges):
     """The validity period of the quota definition must be spanned by one of the
     validity periods of the referenced quota order number."""
@@ -305,6 +322,7 @@ def test_QD7(date_ranges):
         business_rules.QD7(definition.transaction).validate(definition)
 
 
+@pytest.mark.business_rules
 def test_QD8(assert_spanning_enforced):
     """The validity period of the monetary unit code must span the validity
     period of the quota definition."""
@@ -317,6 +335,7 @@ def test_QD8(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Using GBP, not EUR")
 def test_QD9():
     """The monetary unit code must always be the Euro ISO code (or Ecu for quota
@@ -325,6 +344,7 @@ def test_QD9():
     assert False
 
 
+@pytest.mark.business_rules
 def test_QD10(assert_spanning_enforced):
     """The validity period of the measurement unit code must span the validity
     period of the quota definition."""
@@ -335,6 +355,7 @@ def test_QD10(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_QD11(assert_spanning_enforced):
     """The validity period of the measurement unit qualifier code must span the
     validity period of the quota definition."""
@@ -345,24 +366,28 @@ def test_QD11(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip("Quota events are not supported")
 def test_QD12():
     """If quota events exist for a quota definition, the start date of the quota
     definition cannot be brought forward."""
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip("Quota events are not supported")
 def test_QD13():
     """If quota events exist for a quota definition, the start date can only be
     postponed up to the date of the first quota event."""
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip("Quota events are not supported")
 def test_QD14():
     """If quota events exist for a quota definition, the end date of the quota
     definition can be postponed."""
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip("Quota events are not supported")
 def test_QD15():
     """If quota events exist for a quota definition, the end date can only be
@@ -370,6 +395,7 @@ def test_QD15():
     definition."""
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("date_range", "error_expected"),
     (
@@ -413,6 +439,7 @@ def test_prevent_quota_definition_deletion(
         )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "factory,business_rule,quota_attr",
     [
@@ -463,6 +490,7 @@ def test_linking_models_must_refer_to_a_non_deleted_sub_quota(
     business_rule(deleted.transaction).validate(deleted)
 
 
+@pytest.mark.business_rules
 def test_overlapping_quota_definition(date_ranges):
     order_number = factories.QuotaOrderNumberFactory.create()
     factories.QuotaDefinitionFactory.create(
@@ -480,6 +508,7 @@ def test_overlapping_quota_definition(date_ranges):
         ).validate(overlapping_definition)
 
 
+@pytest.mark.business_rules
 def test_overlapping_quota_definition_on_deleted_records(
     date_ranges,
     delete_record,
@@ -514,6 +543,7 @@ def test_overlapping_quota_definition_on_deleted_records(
     )
 
 
+@pytest.mark.business_rules
 def test_volume_and_initial_volume_must_match(date_ranges):
     """Unless it is the main quota in a quota association, a definition's volume
     and initial_volume values should always be the same."""
@@ -535,6 +565,7 @@ def test_volume_and_initial_volume_must_match(date_ranges):
     )
 
 
+@pytest.mark.business_rules
 def test_volume_and_initial_volume_can_differ_if_in_current_or_historical_period(
     date_ranges,
 ):
@@ -568,6 +599,7 @@ def test_volume_and_initial_volume_can_differ_if_in_current_or_historical_period
     assert result_current
 
 
+@pytest.mark.business_rules
 def test_volume_and_initial_volume_must_match_main_quota():
     """Test that VolumeAndInitialVolumeMustMatch does not raise a violation when
     definition with different volume and initial_volume values is used as parent
@@ -588,6 +620,7 @@ def test_volume_and_initial_volume_must_match_main_quota():
     )
 
 
+@pytest.mark.business_rules
 def test_volume_and_initial_volume_must_match_sub_quota():
     """Test that VolumeAndInitialVolumeMustMatch raises a violation when
     definition with different volume and initial_volume values is used as child
@@ -616,6 +649,7 @@ def test_volume_and_initial_volume_must_match_sub_quota():
     )
 
 
+@pytest.mark.business_rules
 def test_QA1(assert_handles_duplicates):
     """The association between two quota definitions must be unique."""
 
@@ -625,6 +659,7 @@ def test_QA1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_QA2(date_ranges):
     """The sub-quota’s validity period must be entirely enclosed within the
     validity period of the main quota."""
@@ -637,6 +672,7 @@ def test_QA2(date_ranges):
         business_rules.QA2(association.transaction).validate(association)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "sub_definition_valid_between, main_definition_valid_between, expected_response",
     [
@@ -673,6 +709,7 @@ def test_QA2_dict(
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "main_volume, main_unit, sub_volume, sub_unit, main_init_volume, sub_init_volume, expect_error",
     [
@@ -714,6 +751,7 @@ def test_QA3(
         business_rules.QA3(assoc.transaction).validate(assoc)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "main_volume, main_unit, sub_volume, sub_unit, main_init_volume, sub_init_volume, expected_response",
     [
@@ -751,6 +789,7 @@ def test_QA3_dict(
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "coefficient, expect_error",
     [
@@ -779,6 +818,7 @@ def test_QA4(coefficient, expect_error):
         business_rules.QA4(assoc.transaction).validate(assoc)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "coefficient, expected_response",
     [
@@ -793,6 +833,7 @@ def test_QA4_dict(coefficient, expected_response):
     assert business_rules.check_QA4_dict(coefficient) == expected_response
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("existing_volume", "new_volume", "coeff", "type", "error_expected"),
     (
@@ -831,6 +872,27 @@ def test_QA5(existing_volume, new_volume, coeff, type, error_expected):
         business_rules.QA5(assoc.transaction).validate(assoc)
 
 
+@pytest.mark.business_rules
+def test_QA5_deleted_association():
+
+    existing = factories.QuotaAssociationFactory.create(
+        sub_quota__volume=Decimal("1000"),
+        sub_quota_relation_type=SubQuotaType.EQUIVALENT,
+    )
+
+    assoc = factories.QuotaAssociationFactory.create(
+        main_quota=existing.main_quota,
+        sub_quota__volume=Decimal("2000"),
+        sub_quota_relation_type=SubQuotaType.EQUIVALENT,
+        coefficient=Decimal("1.200"),
+        update_type=UpdateType.DELETE.value,
+    )
+
+    with raises_if(BusinessRuleViolation, False):
+        business_rules.QA5(assoc.transaction).validate(assoc)
+
+
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("existing_relation", "new_relation", "error_expected"),
     (
@@ -857,6 +919,7 @@ def test_QA6(existing_relation, new_relation, error_expected):
 
 
 # https://uktrade.atlassian.net/browse/TP2000-434
+@pytest.mark.business_rules
 def test_QA6_new_association_version():
     """Tests that previous versions of an association are not compared when
     looking for sub-quotas associated with the same main quota."""
@@ -872,6 +935,7 @@ def test_QA6_new_association_version():
     business_rules.QA6(later_version.transaction).validate(later_version)
 
 
+@pytest.mark.business_rules
 def test_same_main_and_sub_quota():
     """A quota association may only exist between two distinct quota
     definitions."""
@@ -888,6 +952,7 @@ def test_same_main_and_sub_quota():
         )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("mechanism", "error_expected"),
     (
@@ -905,6 +970,7 @@ def test_blocking_of_fcfs_quotas_only(mechanism, error_expected):
         business_rules.BlockingOnlyOfFCFSQuotas(blocking.transaction).validate(blocking)
 
 
+@pytest.mark.business_rules
 def test_QBP2(date_ranges):
     """The start date of the quota blocking period must be later than or equal
     to the start date of the quota validity period."""
@@ -917,6 +983,7 @@ def test_QBP2(date_ranges):
         business_rules.QBP2(blocking.transaction).validate(blocking)
 
 
+@pytest.mark.business_rules
 def test_QBP3(date_ranges):
     """The end date of the quota blocking period must be later than the start
     date of the quota blocking period."""
@@ -925,6 +992,7 @@ def test_QBP3(date_ranges):
         factories.QuotaBlockingFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("mechanism", "error_expected"),
     (
@@ -945,6 +1013,7 @@ def test_suspension_of_fcfs_quotas_only(mechanism, error_expected):
         )
 
 
+@pytest.mark.business_rules
 def test_QSP2(assert_spanning_enforced):
     """The validity period of the quota must span the quota suspension
     period."""
