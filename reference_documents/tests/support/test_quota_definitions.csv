@@ -1,0 +1,4 @@
+order_number,comm_code,duty_rate,initial_volume,measurement,validity_start,validity_end,area_id,document_version
+059001,0100000000,0.00%,200,tonnes,2023-01-01,2023-12-31,NZ,1.0
+059001,0100000000,0.00%,400,tonnes,2024-01-01,2024-12-31,NZ,1.0
+059001,0100000000,0.00%,400,tonnes,2025-01-01,,NZ,1.0

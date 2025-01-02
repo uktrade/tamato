@@ -18,17 +18,15 @@ class QuotaDefinitionChecks(BaseQuotaDefinitionCheck):
             string: corresponding message for the status.
         """
         if not self.commodity_code():
-            message = f"FAIL - commodity code not found"
+            message = f"FAIL - commodity code {self.ref_quota_definition.commodity_code} not found"
             return AlignmentReportCheckStatus.FAIL, message
 
         elif not self.quota_definition():
-            message = f"FAIL - quota definition not found"
+            message = f"FAIL - quota definition for order number {self.ref_order_number.order_number} and validity {self.ref_quota_definition.valid_between} not found"
             return AlignmentReportCheckStatus.FAIL, message
 
         elif not self.measures():
-            message = (
-                f"FAIL - measure(s) spanning whole quota definition period not found"
-            )
+            message = f"FAIL - measure(s) spanning whole quota definition period not found for quota definition with order number {self.ref_order_number.order_number} and validity {self.ref_quota_definition.valid_between} "
             return AlignmentReportCheckStatus.FAIL, message
 
         elif not self.duty_rate_matches():
@@ -44,7 +42,7 @@ class QuotaDefinitionChecks(BaseQuotaDefinitionCheck):
                 if condition.duty_sentence != "":
                     duty_sentences.append(condition.duty_sentence)
 
-            message = f"FAIL - duty rate does not match, expected {self.ref_quota_definition.duty_rate} to be in ({' or '.join(duty_sentences)})"
+            message = f"FAIL - duty rate does not match, expected {self.ref_quota_definition.duty_rate} to be in ({' or '.join(duty_sentences)}) for quota definition with order number {self.ref_order_number.order_number} and validity {self.ref_quota_definition.valid_between} "
             return AlignmentReportCheckStatus.FAIL, message
         else:
             return AlignmentReportCheckStatus.PASS, ""

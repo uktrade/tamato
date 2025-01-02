@@ -1,0 +1,20 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Reference Document Data Uploaded" %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Import Reference Document Data", "href": url('reference_documents:reference-document-csv-upload')},
+    {"text": page_title}]
+  }) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        Reference document CSV data uploaded
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">Data Uploaded, it will be processed in the background and imported.</span>
+{% endblock %}

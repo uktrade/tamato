@@ -62,7 +62,7 @@ class TestOrderNumberExists:
         target = OrderNumberChecks(ref_order_number=ref_order_number)
         assert target.run_check() == (
             AlignmentReportCheckStatus.FAIL,
-            f"order number {tap_order_number.order_number} cant be checked, no validity date range",
+            f"order number {tap_order_number.order_number} cant be checked, no validity date range provided on reference document data",
         )
 
     def test_run_check_fail_order_number_does_not_exist(self):
@@ -83,5 +83,5 @@ class TestOrderNumberExists:
         target = OrderNumberChecks(ref_order_number=ref_order_number)
         assert target.run_check() == (
             AlignmentReportCheckStatus.FAIL,
-            f"order number not found matching {ref_order_number.order_number}",
+            f"order number not found matching {ref_order_number.order_number} validity {valid_between}",
         )

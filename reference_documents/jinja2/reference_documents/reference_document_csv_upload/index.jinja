@@ -2,7 +2,7 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
-{% set page_title = 'Reference documents index' %}
+{% set page_title = 'CSV upload index' %}
 {% set create_url = "create" %}
 
 {% block breadcrumb %}
@@ -19,20 +19,15 @@
     <span class="govuk-caption-xl govuk-!-margin-bottom-9">You will find a list of reference documents below that can be viewed.</span>
     <p class="govuk-body">
         {% if request.user.has_perm('reference_documents.add_referencedocument') %}
-            <a class="govuk-link" href="{{ create_url }}">
-                Create a new reference document
-            </a>
-        {% endif %}
-
-        {% if request.user.has_perm('reference_documents.add_referencedocument') %}
-            <a class="govuk-link" href="{{ url('reference_documents:reference-document-csv-index') }}">
-                Upload Data
+            <a class="govuk-link" href="{{ url('reference_documents:reference-document-csv-upload') }}">
+                Upload reference document CSV data
             </a>
         {% endif %}
     </p>
     <div>
         {{ govukTable({ "head": reference_document_headers, "rows": reference_documents }) }}
     </div>
+    {% include "includes/common/pagination.jinja" %}
 {% endblock %}
 
 

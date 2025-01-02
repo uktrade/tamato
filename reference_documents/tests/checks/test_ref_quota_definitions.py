@@ -60,6 +60,7 @@ class TestQuotaDefinitionExists:
             goods_nomenclature=tap_goods_nomenclature,
             order_number=tap_quota_definition.order_number,
             geographical_area__area_id=area_id,
+            geographical_area__valid_between=valid_between,
             transaction=tap_approved_transaction,
         )
 
@@ -142,7 +143,9 @@ class TestQuotaDefinitionExists:
         target = QuotaDefinitionChecks(ref_quota_definition=ref_quota_definition)
         assert target.run_check() == (
             AlignmentReportCheckStatus.FAIL,
-            "FAIL - measure(s) spanning whole quota definition period not found",
+            f"FAIL - measure(s) spanning whole quota definition period not found "
+            f"for quota definition with order number {ref_quota_definition.ref_order_number.order_number} "
+            f"and validity {valid_between} ",
         )
 
     def test_run_check_fails_no_quota_definition(self):
@@ -169,7 +172,7 @@ class TestQuotaDefinitionExists:
         target = QuotaDefinitionChecks(ref_quota_definition=ref_quota_definition)
         assert target.run_check() == (
             AlignmentReportCheckStatus.FAIL,
-            "FAIL - quota definition not found",
+            f"FAIL - quota definition for order number {ref_quota_definition.ref_order_number.order_number} and validity {valid_between} not found",
         )
 
     def test_run_check_fails_no_goods_nomenclature(self):
@@ -191,7 +194,7 @@ class TestQuotaDefinitionExists:
         target = QuotaDefinitionChecks(ref_quota_definition=ref_quota_definition)
         assert target.run_check() == (
             AlignmentReportCheckStatus.FAIL,
-            "FAIL - commodity code not found",
+            f"FAIL - commodity code {ref_quota_definition.commodity_code} not found",
         )
 
     def test_run_check_fail_duty_sentence(self):
@@ -231,11 +234,14 @@ class TestQuotaDefinitionExists:
             goods_nomenclature=tap_goods_nomenclature,
             order_number=tap_quota_definition.order_number,
             geographical_area__area_id=area_id,
+            geographical_area__valid_between=valid_between,
             transaction=tap_approved_transaction,
         )
 
         target = QuotaDefinitionChecks(ref_quota_definition=ref_quota_definition)
         assert target.run_check() == (
             AlignmentReportCheckStatus.FAIL,
-            "FAIL - duty rate does not match, expected wonky duty rate to be in ()",
+            f"FAIL - duty rate does not match, expected wonky duty rate to be in () for quota "
+            f"definition with order number {ref_quota_definition.ref_order_number.order_number} "
+            f"and validity {valid_between} ",
         )

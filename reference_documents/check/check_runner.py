@@ -102,7 +102,11 @@ class Checks:
             logger.info(f"starting checks for rate {ref_rate.commodity_code}")
             for ref_rate_check in Checks.get_checks_for(BaseRateCheck):
                 logger.info(f"starting run: check {ref_rate_check.__class__.__name__}")
-                self.capture_check_result(ref_rate_check(ref_rate), ref_rate=ref_rate)
+                self.capture_check_result(
+                    ref_rate_check(ref_rate),
+                    ref_rate=ref_rate,
+                    target_start_date=ref_rate.valid_between.lower,
+                )
 
         # Order number checks
         for ref_order_number in self.reference_document_version.ref_order_numbers.all():
@@ -118,6 +122,7 @@ class Checks:
                     self.capture_check_result(
                         order_number_check(ref_order_number),
                         ref_order_number=ref_order_number,
+                        target_start_date=ref_order_number.valid_between.lower,
                     ),
                 )
 
@@ -142,6 +147,7 @@ class Checks:
                                 parent_has_failed_or_skipped_result=self.status_contains_failed_or_skipped(
                                     order_number_check_statuses,
                                 ),
+                                target_start_date=ref_quota_definition.valid_between.lower,
                             ),
                         )
 
@@ -164,6 +170,7 @@ class Checks:
                                     parent_has_failed_or_skipped_result=self.status_contains_failed_or_skipped(
                                         pref_quota_check_statuses,
                                     ),
+                                    target_start_date=ref_quota_suspension.valid_between.lower,
                                 )
                 # Quota definition checks (range)
                 for (
@@ -183,6 +190,7 @@ class Checks:
                                     parent_has_failed_or_skipped_result=self.status_contains_failed_or_skipped(
                                         order_number_check_statuses,
                                     ),
+                                    target_start_date=ref_quota_definition.valid_between.lower,
                                 ),
                             )
 
@@ -206,6 +214,7 @@ class Checks:
                                             parent_has_failed_or_skipped_result=self.status_contains_failed_or_skipped(
                                                 pref_quota_check_statuses,
                                             ),
+                                            target_start_date=pref_suspension.valid_between.lower,
                                         )
         self.alignment_report.complete()
         self.alignment_report.save()
@@ -221,6 +230,7 @@ class Checks:
         ref_quota_suspension=None,
         ref_quota_suspension_range=None,
         parent_has_failed_or_skipped_result=None,
+        target_start_date=None,
     ) -> AlignmentReportCheckStatus:
         """
         Captures the result if a single check and stores it in the database as a
@@ -235,6 +245,7 @@ class Checks:
             ref_quota_suspension: RefQuotaSuspension if available or None
             ref_quota_suspension_range: RefQuotaSuspensionRange if available or None
             parent_has_failed_or_skipped_result: boolean
+            target_start_date: datetime
 
         Returns:
             AlignmentReportCheckStatus: the status of the check
@@ -256,6 +267,7 @@ class Checks:
             "ref_quota_suspension_range": ref_quota_suspension_range,
             "status": status,
             "message": message,
+            "target_start_date": target_start_date,
         }
 
         AlignmentReportCheck.objects.create(**kwargs)
