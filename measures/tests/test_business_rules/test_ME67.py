@@ -12,6 +12,7 @@ from measures import business_rules
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.business_rules
 def test_ME67(spanning_dates):
     """The membership period of the excluded geographical area must span the
     validity period of the measure."""
@@ -29,6 +30,7 @@ def test_ME67(spanning_dates):
         business_rules.ME67(exclusion.transaction).validate(exclusion)
 
 
+@pytest.mark.business_rules
 def test_ME67_multiple_member_periods():
     """This test verifies that when a member is added and removed multiple
     times, that the rule performs correctly."""
@@ -183,6 +185,7 @@ def test_ME67_multiple_member_periods():
         assert str(e) == "<ExceptionInfo for raises contextmanager>"
 
 
+@pytest.mark.business_rules
 def test_ME67_with_end_dates_in_range():
     """This test verifies that when queried, null values for end dates are not
     an issue."""
@@ -225,6 +228,7 @@ def test_ME67_with_end_dates_in_range():
     )
 
 
+@pytest.mark.business_rules
 def test_ME67_works_when_measures_are_deleted():
     """
     When checking against exclusions, the rule check historically looked at the
@@ -278,6 +282,7 @@ def test_ME67_works_when_measures_are_deleted():
     )
 
 
+@pytest.mark.business_rules
 def test_ME67_gets_latest_version_of_measure():
     """
     When checking against exclusions, the rule check historically looked at the

@@ -194,6 +194,7 @@ def related_measure_data(
     return full_data, error_expected
 
 
+@pytest.mark.business_rules
 def test_ME32(related_measure_data):
     """
     There may be no overlap in time with other measure occurrences with a goods
@@ -212,6 +213,7 @@ def test_ME32(related_measure_data):
         business_rules.ME32(related.transaction).validate(related)
 
 
+@pytest.mark.business_rules
 def test_ME32_compile_query(measure_data_for_compile_query):
     """Test that the compile_query method does check against  measure type, geo
     area, order number, additional code and reduction indicator."""
@@ -246,6 +248,7 @@ def test_ME32_compile_query(measure_data_for_compile_query):
             assert f"'additional_code__isnull', True" in target
 
 
+@pytest.mark.business_rules
 def test_ME32_works_with_wonky_archived_measure(seed_database_with_indented_goods):
     # setup data with archived workbasket and published workbasket
     goods = GoodsNomenclature.objects.all().get(item_id="2903691900")

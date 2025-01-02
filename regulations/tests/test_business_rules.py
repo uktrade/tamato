@@ -11,6 +11,7 @@ from regulations.validators import RoleType
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.business_rules
 def test_ROIMB1(assert_handles_duplicates):
     """The (regulation id + role id) must be unique."""
     # Effectively this means that the regulation ID needs to be unique as we are always
@@ -22,6 +23,7 @@ def test_ROIMB1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_ROIMB3(date_ranges):
     """The start date must be less than or equal to the end date."""
     # In the UK, legislation will be rarely end-dated.
@@ -30,6 +32,7 @@ def test_ROIMB3(date_ranges):
         factories.BaseRegulationFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 def test_ROIMB4(reference_nonexistent_record):
     """The referenced regulation group must exist."""
 
@@ -41,6 +44,7 @@ def test_ROIMB4(reference_nonexistent_record):
             business_rules.ROIMB4(regulation.transaction).validate(regulation)
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Not using regulation replacement functionality")
 def test_ROIMB5():
     """If the regulation is replaced, completely or partially, modification is
@@ -49,6 +53,7 @@ def test_ROIMB5():
     assert False
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Not using regulation abrogation functionality")
 def test_ROIMB6():
     """If the regulation is abrogated, completely or explicitly, modification is
@@ -57,6 +62,7 @@ def test_ROIMB6():
     assert False
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Not using regulation prorogation functionality")
 def test_ROIMB7():
     """If the regulation is prorogated, modification is allowed only on the
@@ -65,6 +71,7 @@ def test_ROIMB7():
     assert False
 
 
+@pytest.mark.business_rules
 @only_applicable_after("2003-12-31")
 def test_ROIMB8(date_ranges):
     """
@@ -86,6 +93,7 @@ def test_ROIMB8(date_ranges):
         )
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Not using effective end date")
 def test_ROIMB48():
     """If the regulation has not been abrogated, the effective end date must be
@@ -93,6 +101,7 @@ def test_ROIMB48():
     assert False
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "id, approved, change_flag, expect_error",
     [
@@ -140,6 +149,7 @@ def test_ROIMB44(id, approved, change_flag, expect_error):
         business_rules.ROIMB44(regulation.transaction).validate(regulation)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("regulation_id", "role_type", "expect_error"),
     (
@@ -172,6 +182,7 @@ def test_ROIMB46(regulation_id, role_type, expect_error, delete_record):
         business_rules.ROIMB46(deleted.transaction).validate(deleted)
 
 
+@pytest.mark.business_rules
 def test_ROIMB47(assert_spanning_enforced):
     """The validity period of the regulation group id must span the validity
     period of the base regulation."""

@@ -107,6 +107,7 @@ def related_measure_dates(request, date_ranges):
     return get_measure_factory_properties(date_ranges), date_overlap
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("existing_code", "overlapping_code", "error_expected"),
     (
@@ -239,6 +240,7 @@ def related_measure_data(
     return full_data, error_expected
 
 
+@pytest.mark.business_rules
 def test_ME16_part_2(related_measure_data):
     """
     Tests that another measure within the chapter with matching properties :
@@ -255,6 +257,7 @@ def test_ME16_part_2(related_measure_data):
         business_rules.ME16(related.transaction).validate(related)
 
 
+@pytest.mark.business_rules
 def test_ME16_query_similar_measures(measure_instance_for_compile_query):
     """Test that the query_similar_measures method does check against  measure
     type, geo area, order number, additional code and reduction indicator."""
@@ -284,6 +287,7 @@ def test_ME16_query_similar_measures(measure_instance_for_compile_query):
         assert f"'additional_code__isnull', False" in target
 
 
+@pytest.mark.business_rules
 def test_ME16_works_and_ignores_archived_measure_data(
     seed_database_with_indented_goods,
 ):

@@ -13,6 +13,7 @@ from footnotes.validators import ApplicationCode
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.business_rules
 @pytest.mark.xfail(reason="NIG1 disabled")
 def test_NIG1(date_ranges):
     """The validity period of the goods nomenclature must not overlap any other
@@ -36,6 +37,7 @@ def test_NIG1(date_ranges):
         business_rules.NIG1(duplicate.transaction).validate(duplicate)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("parent_validity", "self_validity", "child_validity", "expect_error"),
     (
@@ -92,6 +94,7 @@ def test_NIG2(
         business_rules.NIG2(type(child.transaction).objects.last()).validate(self)
 
 
+@pytest.mark.business_rules
 def test_NIG2_only_checks_future_dates_of_parent(date_ranges):
     """
     The validity period o f the goods nomenclature must be within the validity
@@ -126,6 +129,7 @@ def test_NIG2_only_checks_future_dates_of_parent(date_ranges):
 # add failing test where a parents parents children > child item id and has an allowable date range but is not considered
 
 
+@pytest.mark.business_rules
 def test_NIG2_is_valid_with_multiple_parents_spanning_child_valid_period(date_ranges):
     grand_parent = factories.GoodsNomenclatureIndentFactory.create(
         indented_goods_nomenclature__valid_between=getattr(
@@ -185,6 +189,7 @@ def test_NIG2_is_valid_with_multiple_parents_spanning_child_valid_period(date_ra
         business_rules.NIG2(type(child.transaction).objects.last()).validate(child)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("parent_validities", "child_validity", "expected"),
     (
@@ -278,6 +283,7 @@ def test_NIG2_parents_span_child_valid(
     assert target(parents, child) == expected
 
 
+@pytest.mark.business_rules
 def test_NIG4(date_ranges):
     """The start date of the goods nomenclature must be less than or equal to
     the end date."""
@@ -286,6 +292,7 @@ def test_NIG4(date_ranges):
         factories.GoodsNomenclatureFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "valid_between, expect_error",
     [
@@ -312,6 +319,7 @@ def test_NIG7(date_ranges, valid_between, expect_error):
         business_rules.NIG7(origin.transaction).validate(origin)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("valid_between", "expect_error"),
     [
@@ -339,6 +347,7 @@ def test_NIG10(date_ranges, update_type, valid_between, expect_error):
         business_rules.NIG10(successor.transaction).validate(successor)
 
 
+@pytest.mark.business_rules
 def test_NIG12_one_description_mandatory():
     """At least one description record is mandatory."""
     good = factories.GoodsNomenclatureFactory.create(description=None)
@@ -347,6 +356,7 @@ def test_NIG12_one_description_mandatory():
             business_rules.NIG12(good.transaction).validate(good)
 
 
+@pytest.mark.business_rules
 def test_NIG12_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the nomenclature."""
@@ -358,6 +368,7 @@ def test_NIG12_first_description_must_have_same_start_date(date_ranges):
             business_rules.NIG12(good.transaction).validate(good)
 
 
+@pytest.mark.business_rules
 def test_NIG12_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
@@ -371,6 +382,7 @@ def test_NIG12_start_dates_cannot_match():
             business_rules.NIG12(duplicate.transaction).validate(goods_nomenclature)
 
 
+@pytest.mark.business_rules
 def test_NIG12_description_start_before_nomenclature_end(
     date_ranges,
     unapproved_transaction,
@@ -394,6 +406,7 @@ def test_NIG12_description_start_before_nomenclature_end(
             )
 
 
+@pytest.mark.business_rules
 def test_NIG12_direct_rule_called_for_goods():
     good = factories.GoodsNomenclatureFactory.create(description=None)
     check_transaction_sync(good.transaction)
@@ -407,6 +420,7 @@ def test_NIG12_direct_rule_called_for_goods():
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("application_code", "item_id", "error_expected"),
     (
@@ -436,6 +450,7 @@ def test_NIG18_NIG19(application_code, item_id, error_expected):
         business_rules.NIG18(assoc.transaction).validate(assoc)
 
 
+@pytest.mark.business_rules
 def test_NIG21(date_ranges):
     """The start date of the association with a footnote must be less than or
     equal to the end date of the association."""
@@ -446,6 +461,7 @@ def test_NIG21(date_ranges):
         )
 
 
+@pytest.mark.business_rules
 def test_NIG22(date_ranges):
     """The period of the association with a footnote must be within the validity
     period of the nomenclature."""
@@ -457,6 +473,7 @@ def test_NIG22(date_ranges):
         business_rules.NIG22(association.transaction).validate(association)
 
 
+@pytest.mark.business_rules
 def test_NIG23(date_ranges):
     """The period of the association with a footnote must be within the validity
     period of the footnote."""
@@ -468,6 +485,7 @@ def test_NIG23(date_ranges):
         business_rules.NIG23(association.transaction).validate(association)
 
 
+@pytest.mark.business_rules
 @pytest.mark.xfail(reason="NIG24 disabled")
 @pytest.mark.parametrize(
     "valid_between, expect_error",
@@ -493,6 +511,7 @@ def test_NIG24(date_ranges, valid_between, expect_error):
         business_rules.NIG24(association.transaction).validate(association)
 
 
+@pytest.mark.business_rules
 def test_NIG30(assert_spanning_enforced):
     """When a goods nomenclature is used in a goods measure then the validity
     period of the goods nomenclature must span the validity period of the goods
@@ -507,6 +526,7 @@ def test_NIG30(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_NIG31(assert_spanning_enforced):
     """When a goods nomenclature is used in an additional nomenclature measure
     then the validity period of the goods nomenclature must span the validity
@@ -521,6 +541,7 @@ def test_NIG31(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_NIG34(delete_record):
     """A goods nomenclature cannot be deleted if it is used in a goods
     measure."""
@@ -531,6 +552,7 @@ def test_NIG34(delete_record):
         business_rules.NIG34(deleted_record.transaction).validate(deleted_record)
 
 
+@pytest.mark.business_rules
 def test_NIG35(delete_record):
     """A goods nomenclature cannot be deleted if it is used in an additional
     nomenclature measure."""
@@ -541,6 +563,7 @@ def test_NIG35(delete_record):
         business_rules.NIG35(deleted_record.transaction).validate(deleted_record)
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Not using export refunds")
 def test_NIG36():
     """A goods nomenclature cannot be deleted if it is used in an Export refund

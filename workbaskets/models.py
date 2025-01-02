@@ -717,12 +717,8 @@ class WorkBasket(TimestampedMixin):
             commodity.sid: commodity.valid_between
             for commodity in end_dated_commodities
         }
-        measures_on_commodities = (
-            Measure.objects.current()
-            .with_effective_valid_between()
-            .filter(
-                goods_nomenclature__sid__in=commodity_dict.keys(),
-            )
+        measures_on_commodities = Measure.objects.current().filter(
+            goods_nomenclature__sid__in=commodity_dict.keys(),
         )
         conditions = [
             When(
@@ -738,7 +734,7 @@ class WorkBasket(TimestampedMixin):
             ),
         )
 
-        return measures.exclude(
+        return measures.with_effective_valid_between().exclude(
             db_effective_valid_between__not_gt=F("commodity_valid_between"),
         )
 
