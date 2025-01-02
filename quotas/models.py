@@ -465,6 +465,33 @@ class QuotaAssociation(TrackedModel):
         business_rules.SameMainAndSubQuota,
     )
 
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """
+        Generate a URL to a representation of the model in the webapp.
+
+        Custom for quota associations as they do not have a detail view or
+        typical list/edit views.
+        """
+        if action == "edit":
+            url = self.sub_quota.get_association_edit_url()
+            return url
+        try:
+            if action == "create":
+                url = reverse("sub_quota_definitions-ui-create")
+            elif action == "delete":
+                url = reverse("quota_association-ui-delete", kwargs={"pk": self.pk})
+            else:
+                url = reverse(
+                    "quota_definition-ui-list-filter",
+                    kwargs={
+                        "sid": self.main_quota.order_number.sid,
+                        "quota_type": "quota_associations",
+                    },
+                )
+            return url
+        except NoReverseMatch:
+            return None
+
 
 class QuotaSuspension(TrackedModel, ValidityMixin):
     """Defines a suspension period for a quota."""

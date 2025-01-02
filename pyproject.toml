@@ -97,5 +97,6 @@ norecursedirs = [
 ]
 markers = [
     "importer_v2",
-    "reference_documents"
+    "reference_documents",
+    "business_rules"
 ]
