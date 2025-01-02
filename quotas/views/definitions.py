@@ -205,11 +205,11 @@ class QuotaDefinitionCreate(CreateTaricCreateView):
         return models.QuotaOrderNumber.objects.current().get(sid=self.kwargs["sid"])
 
     def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context["quota_order_number"] = self.request.GET["order_number"]
-        context["quota_sid"] = self.kwargs["sid"]
-        context["form"].fields["order_number"].initial = self.quota
-        return context
+        return super().get_context_data(
+            quota_order_number=self.request.GET["order_number"],
+            quota_sid=self.kwargs["sid"],
+            **kwargs,
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

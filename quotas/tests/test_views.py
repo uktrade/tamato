@@ -1296,6 +1296,9 @@ def test_create_new_quota_definition(
         "start_date_0": date_ranges.later.lower.day,
         "start_date_1": date_ranges.later.lower.month,
         "start_date_2": date_ranges.later.lower.year,
+        "end_date_0": date_ranges.later.lower.day,
+        "end_date_1": date_ranges.later.lower.month,
+        "end_date_2": date_ranges.later.lower.year,
         "description": "Lorem ipsum",
         "volume": "1000000",
         "initial_volume": "1000000",
@@ -1308,12 +1311,15 @@ def test_create_new_quota_definition(
 
     # sanity check
     assert not models.QuotaDefinition.objects.all()
-
     url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
-    response = client_with_current_workbasket.post(url, form_data)
-    assert response.status_code == 302
+    response = client_with_current_workbasket.post(
+        f"{url}?order_number={quota.order_number}",
+        form_data,
+    )
 
+    assert response.status_code == 302
     created_definition = models.QuotaDefinition.objects.last()
+
     assert response.url == reverse(
         "quota_definition-ui-confirm-create",
         kwargs={"sid": created_definition.sid},
@@ -1354,6 +1360,9 @@ def test_create_new_quota_definition_business_rule_violation(
         "start_date_0": date_ranges.earlier.lower.day,
         "start_date_1": date_ranges.earlier.lower.month,
         "start_date_2": date_ranges.earlier.lower.year,
+        "end_date_0": date_ranges.later.lower.day,
+        "end_date_1": date_ranges.later.lower.month,
+        "end_date_2": date_ranges.later.lower.year,
         "description": "Lorem ipsum",
         "volume": "1000000",
         "initial_volume": "1000000",
