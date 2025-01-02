@@ -7,6 +7,8 @@ from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskLog
+from tasks.models import TaskTemplate
+from tasks.models import TaskWorkflowTemplate
 
 
 class TaskAdminMixin:
@@ -114,6 +116,41 @@ class TaskLogAdmin(admin.ModelAdmin):
     ]
 
 
+class TaskWorkflowTemplateAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "title",
+        "description",
+        "creator",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class TaskTemplateAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "title",
+        "description",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 admin.site.register(Task, TaskAdmin)
 
 admin.site.register(Category, CategoryAdmin)
@@ -123,3 +160,7 @@ admin.site.register(ProgressState, ProgressStateAdmin)
 admin.site.register(TaskAssignee, TaskAssigneeAdmin)
 
 admin.site.register(TaskLog, TaskLogAdmin)
+
+admin.site.register(TaskWorkflowTemplate, TaskWorkflowTemplateAdmin)
+
+admin.site.register(TaskTemplate, TaskTemplateAdmin)
