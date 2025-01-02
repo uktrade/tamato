@@ -425,7 +425,7 @@ def measure_conditions_form_data(
         },
         "kwargs": {
             "form_kwargs": {
-                "measure_start_date": datetime.date(2025, 1, 1),
+                "measure_start_date": date_ranges.normal,
                 "measure_type": factories.MeasureTypeFactory.create(
                     valid_between=date_ranges.normal,
                 ),
@@ -451,7 +451,7 @@ def measure_footnotes_form_data():
 
 
 @pytest.fixture()
-def measure_commodities_and_duties_form_data():
+def measure_commodities_and_duties_form_data(date_ranges):
     commodity_1 = factories.GoodsNomenclatureFactory.create()
     commodity_2 = factories.GoodsNomenclatureFactory.create()
 
@@ -464,7 +464,7 @@ def measure_commodities_and_duties_form_data():
         },
         "kwargs": {
             "min_commodity_count": 1,
-            "measure_start_date": datetime.date(2025, 1, 1),
+            "measure_start_date": date_ranges.normal,
             "form_kwargs": {
                 "measure_type": None,
             },
