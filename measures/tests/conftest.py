@@ -425,7 +425,7 @@ def measure_conditions_form_data(
         },
         "kwargs": {
             "form_kwargs": {
-                "measure_start_date": date_ranges.normal,
+                "measure_start_date": date_ranges.normal.lower,
                 "measure_type": factories.MeasureTypeFactory.create(
                     valid_between=date_ranges.normal,
                 ),
@@ -464,7 +464,7 @@ def measure_commodities_and_duties_form_data(date_ranges):
         },
         "kwargs": {
             "min_commodity_count": 1,
-            "measure_start_date": date_ranges.normal,
+            "measure_start_date": date_ranges.normal.lower,
             "form_kwargs": {
                 "measure_type": None,
             },
