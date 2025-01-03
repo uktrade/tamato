@@ -144,7 +144,10 @@ class MeasureExport:
                         output_field=CharField(),
                     ),
                     delimiter="|",
-                    ordering="associated_footnote_id",
+                    ordering=(
+                        "associated_footnote__footnote_type__footnote_type_id",
+                        "associated_footnote__footnote_id",
+                    ),
                 ),
             )
         )
