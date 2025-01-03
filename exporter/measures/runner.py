@@ -230,7 +230,7 @@ class MeasureExport:
                 if measure.order_number:
                     order_number = measure.order_number.order_number
                 else:
-                    order_number = ""
+                    order_number = measure.dead_order_number
 
                 measure_data = [
                     id,
