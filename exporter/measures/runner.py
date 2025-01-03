@@ -103,7 +103,7 @@ class MeasureExport:
             .select_related(
                 "excluded_geographical_area",
             )
-            .order_by("excluded_geographical_area_id")
+            .order_by("excluded_geographical_area__area_id")
         ):
             if geo_area.excluded_geographical_area.area_id:
                 geographical_area_ids.append(

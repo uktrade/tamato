@@ -426,9 +426,9 @@ class ReportMeasureExcludedGeographicalArea(ReportModel):
     )
     modified_measure = models.ForeignKey(ReportMeasure, models.DO_NOTHING)
 
-    @classmethod
-    def ignore_fk_list(cls):
-        return ["modified_measure"]
+    # @classmethod
+    # def ignore_fk_list(cls):
+    #     return ["modified_measure"]
 
     class Meta:
         db_table = ReportModel.create_table_name(MeasureExcludedGeographicalArea)
