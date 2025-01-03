@@ -6,7 +6,7 @@ from open_data.models import ReportMeasure
 from open_data.models import ReportMeasureCondition
 
 
-def update_measure_components(verbose):
+def update_measure_components(cursor, verbose):
     # Unless there is a current transaction, reading the latest description will fail in a misterious way
     # Because this is called in a command, there is no transaction set"""
     counter = 0
@@ -29,13 +29,13 @@ def update_measure_components(verbose):
             for (
                 component
             ) in (
-                measure.trackedmodel_ptr.conditions.current().with_reference_price_string()
+                measure.trackedmodel_ptr.conditions.latest_approved().with_reference_price_string()
             ):
                 comp_counter += 1
                 print(f"    Condition count {comp_counter}")
                 component_list.append(
                     ReportMeasureCondition(
-                        trackedmodel_ptr_id=component.latest,
+                        trackedmodel_ptr_id=component.trackedmodel_ptr_id,
                         sid=component.sid,
                         component_sequence_number=component.component_sequence_number,
                         duty_amount=component.duty_amount,
@@ -49,6 +49,14 @@ def update_measure_components(verbose):
                     ),
                 )
         ReportMeasureCondition.objects.bulk_create(component_list)
+        #     The required_certificate_id is not updated when the certificate is updated
+        #     In the UI it works because the certificate is selected using the SID and
+        #     'approved to last Transaction'. In data workspace works because when a
+        #     certificate is updated, only the validity is changed so even if the data is not read from the latest,
+        #     the SID is correct. I am not sure what is the best way to fix this!!!
+        #     I'll try patching the required_certificate_id and hope for the best
+        cursor.execute(ReportMeasureCondition.update_fk_queries())
+
     if verbose:
         print(f"Elapsed time {time.time() - start}")
 

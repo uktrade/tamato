@@ -16,7 +16,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         logger.info(f"Starting the update of all the tables in the database")
         update_all_tables(True)
-
         self.stdout.write(
             self.style.SUCCESS("Successfully updated the reporting tables."),
         )

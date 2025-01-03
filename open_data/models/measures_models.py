@@ -199,7 +199,7 @@ class ReportMeasureConditionComponent(ReportModel):
 class ReportMeasureCondition(ReportModel):
     shadowed_model = MeasureCondition
     update_table = False
-
+    # This table is populated using the ORM
     trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
@@ -249,7 +249,16 @@ class ReportMeasureCondition(ReportModel):
 
     @classmethod
     def ignore_fk_list(cls):
-        return ["dependent_measure"]
+        """The ORM used to populate this table does not return the latest
+        required_certificate To fix it, I am using the function update_fk,
+        excluding all the other FK."""
+        return [
+            "dependent_measure",
+            "action",
+            "condition_code",
+            "condition_measurement",
+            "monetary_unit",
+        ]
 
     class Meta:
         db_table = ReportModel.create_table_name(MeasureCondition)
