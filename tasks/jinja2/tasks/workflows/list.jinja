@@ -53,7 +53,7 @@
           {{ table_rows.append([
             {"text": task_linked_id},
             {"text": object.title},
-            {"text": object.category},
+            {"text": object.category or "-"},
             {"text": object.progress_state},
             {"text": workbasket_linked_id},
             {"text": "{:%d %b %Y}".format(object.created_at)},
