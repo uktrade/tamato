@@ -8,6 +8,7 @@ from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskLog
 from tasks.models import TaskTemplate
+from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 
 
@@ -168,6 +169,16 @@ class TaskTemplateAdmin(admin.ModelAdmin):
         return False
 
 
+class TaskWorflowAdmin(admin.ModelAdmin):
+    search_fields = ["summary_task__title"]
+    list_display = [
+        "id",
+        "title",
+        "description",
+        "creator_template",
+    ]
+
+
 admin.site.register(Task, TaskAdmin)
 
 admin.site.register(Category, CategoryAdmin)
@@ -181,3 +192,4 @@ admin.site.register(TaskLog, TaskLogAdmin)
 admin.site.register(TaskWorkflowTemplate, TaskWorkflowTemplateAdmin)
 
 admin.site.register(TaskTemplate, TaskTemplateAdmin)
+admin.site.register(TaskWorkflow, TaskWorflowAdmin)
