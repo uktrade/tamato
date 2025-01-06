@@ -139,7 +139,24 @@ class TaskTemplateAdmin(admin.ModelAdmin):
         "id",
         "title",
         "description",
+        "taskworkflowtemplate_id",
     )
+
+    @admin.display(description="Task Workflow Template")
+    def taskworkflowtemplate_id(self, obj):
+        if not obj.taskitemtemplate:
+            return "-"
+        return self.link_to_task_workflow_template(obj.taskitemtemplate)
+
+    def link_to_task_workflow_template(self, task_item_template):
+        workflow_template_pk = task_item_template.workflow_template.pk
+        task_workflow_template_url = reverse(
+            "admin:tasks_taskworkflowtemplate_change",
+            args=(workflow_template_pk,),
+        )
+        return mark_safe(
+            f'<a href="{task_workflow_template_url}">{workflow_template_pk}</a>',
+        )
 
     def has_add_permission(self, request):
         return False
