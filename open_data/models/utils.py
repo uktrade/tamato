@@ -136,5 +136,14 @@ class ReportModel(models.Model):
         """
         return query
 
+    @classmethod
+    def referenced_models(cls):
+        """Returns a dictionary of the FK fields and the model they piont to."""
+        referenced = {}
+        for f in cls._meta.get_fields():
+            if type(f) is models.fields.related.ForeignKey and not f.primary_key:
+                referenced[f.column] = f.related_model
+        return referenced
+
     class Meta:
         abstract = True

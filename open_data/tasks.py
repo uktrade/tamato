@@ -2,6 +2,7 @@ import time
 
 import django.apps
 from django.db import connection
+from django.db.models import Subquery
 
 from common.models.mixins.description import DescribedMixin
 from common.models.transactions import Transaction
@@ -99,3 +100,57 @@ def update_single_model(model):
         f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',
     )
     add_description(model)
+
+
+def orphan_fk_queryset(model, fk_list):
+    queryset = model.objects.all()
+    for fk in fk_list:
+        filter = f"{fk[1]}__isnull"
+        subquery = fk[0].objects.exclude(**{filter: True}).values(fk[1])
+        queryset = queryset.exclude(trackedmodel_ptr__in=Subquery(subquery))
+    return queryset
+
+
+def find_relations():
+    """
+    Creates a dictionary of tables and fk pointing to it.
+
+    It uses the dictionary to find orphaned records, ie records that are in the
+    table, but are not used by any fk. The queries generated are very, very
+    slow, and I am not sure we need to delete the orphaned records. I am leaving
+    the code in, just in case.
+    """
+    config = django.apps.apps.get_app_config(APP_LABEL)
+    relations = {}
+    inverse_relations = {}
+    for model in config.get_models():
+        if issubclass(model, ReportModel):
+            references = model.referenced_models()
+            if references:
+                relations[model] = references
+                for field, referenced_model in references.items():
+                    fk = (model, field)
+                    if referenced_model in inverse_relations:
+                        inverse_relations[referenced_model].append(fk)
+                    else:
+                        inverse_relations[referenced_model] = [fk]
+
+    # print("=====Relations===")
+    # rel = relations
+    # for x in rel:
+    #     print(x)
+    #     print(rel[x])
+    #
+    # print("=====inverse_relations===")
+    # rel = inverse_relations
+    # for x in rel:
+    #     print(f"{x} {len(rel[x])}")
+    #     for n in rel[x]:
+    #         print(f"\t{n}")
+
+    for referenced_model, fk_list in inverse_relations.items():
+        qs = orphan_fk_queryset(referenced_model, fk_list)
+        print(f"{referenced_model}, {fk_list}")
+        print(qs.count())
+        print(qs.query)
+    # return relations, inverse_relations
