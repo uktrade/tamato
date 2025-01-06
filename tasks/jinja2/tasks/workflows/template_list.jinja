@@ -3,15 +3,15 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 
-{% set page_title = "Find and view task workflow templates" %}
+{% set page_title = "Find and view workflow templates" %}
 
 {% set base_url = url("workflow:task-workflow-template-ui-list") %}
 
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
-    Search for task workflow templates.
-    Alternatively, <a class="govuk-link" href="{{ url("workflow:task-workflow-template-ui-create") }}">create a new task workflow template</a>.
+    Search for workflow templates.
+    Alternatively, <a class="govuk-link" href="{{ url("workflow:task-workflow-template-ui-create") }}">create a new workflow template</a>.
   </p>
 
   <div class="filter-layout">
