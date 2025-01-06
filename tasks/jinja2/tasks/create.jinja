@@ -1,0 +1,22 @@
+{% extends 'layouts/form.jinja' %}
+
+{% block breadcrumb %}
+  {% if parent_task %}
+    {{ breadcrumbs(request, [
+      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
+      {"text": "Task: " ~ parent_task.title, "href": parent_task.get_url("detail")},
+      {"text": page_title}
+    ])}}
+  {% else %}
+    {{ breadcrumbs(request, [
+      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
+      {"text": page_title}
+    ])}}
+  {% endif %}
+{% endblock %}
+
+{% block form %}
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}
