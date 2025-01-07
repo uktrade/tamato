@@ -312,7 +312,8 @@ def deserialize_definition_data(self, definition):
 
 
 def serialize_definition_data(definition):
-    # Serializes data and returns a JSON dict that can be saved to session
+    """Returns a JSON dictionary of serialized definition data, that can be
+    saved to session."""
 
     definition_data = {
         "id": str(definition["id"]),

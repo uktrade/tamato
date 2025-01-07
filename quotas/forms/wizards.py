@@ -44,9 +44,9 @@ class QuotaOrderNumbersSelectForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
-        self.init_layout(self.request)
+        self.init_layout()
 
-    def init_layout(self, request):
+    def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
@@ -210,13 +210,6 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
             "maximum_precision",
         ]
 
-    required_fields = [
-        "instance_count",
-        "volume",
-        "initial_volume",
-        "measurement_unit",
-    ]
-
     instance_count = forms.DecimalField(
         required=True,
         label="Total number of definitions to create",
@@ -290,7 +283,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
-        self.init_layout(self.request)
+        self.init_layout()
         self.init_fields()
 
     def init_fields(self):
@@ -298,6 +291,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         # see https://uktrade.github.io/tariff-data-manual/documentation/data-structures/quotas.html#the-quota-definition-table
         self.fields["maximum_precision"].initial = 3
         self.fields["end_date"].help_text = ""
+        self.fields["end_date"].required = True
         self.fields["measurement_unit_qualifier"].help_text = (
             "A measurement unit qualifier is not always required"
         )
@@ -404,13 +398,11 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     def clean(self):
         cleaned_data = super().clean()
-        for field in self.required_fields:
-            if field not in cleaned_data:
-                raise ValidationError(f"A value for {field} must be provided")
-        self.save_definition_data_to_session(cleaned_data)
+        if self.is_valid():
+            self.save_definition_data_to_session(cleaned_data)
         return cleaned_data
 
-    def init_layout(self, request):
+    def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
