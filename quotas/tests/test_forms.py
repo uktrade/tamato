@@ -1408,7 +1408,8 @@ def test_quota_definition_bulk_create_definition_is_valid(
     with override_current_transaction(Transaction.objects.last()):
         assert not form.is_valid()
         assert (
-            form.errors["__all__"][0] == "A value for instance_count must be provided"
+            form.errors["instance_count"][0]
+            == "Enter the number of definition periods to create"
         )
 
     form_data["instance_count"] = 3
