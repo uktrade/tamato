@@ -87,7 +87,7 @@ def update_all_tables(verbose=False):
         save_commodities_parent(verbose)
         save_geo_areas(verbose)
         update_measure(verbose)
-        update_measure_components(cursor, verbose)
+        update_measure_components(verbose)
 
 
 def update_single_model(model):
