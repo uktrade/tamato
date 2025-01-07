@@ -67,16 +67,16 @@ class TestRefQuotaDefinitionRangeCreateUpdateForm:
             ("zz", "Enter a whole number."),
             (
                 0,
-                "Start year is not valid, it must be a 4 digit year greater than 2010 and less than 2124",
+                f"Start year is not valid, it must be a 4 digit year greater than 2010 and less than {date.today().year + 100}",
             ),
             (
                 1980,
-                "Start year is not valid, it must be a 4 digit year greater than 2010 and less than 2124",
+                f"Start year is not valid, it must be a 4 digit year greater than 2010 and less than {date.today().year + 100}",
             ),
             (date.today().year + 2, None),
             (
                 date.today().year + 101,
-                "Start year is not valid, it must be a 4 digit year greater than 2010 and less than 2124",
+                f"Start year is not valid, it must be a 4 digit year greater than 2010 and less than {date.today().year + 100}",
             ),
         ],
     )
@@ -139,17 +139,17 @@ class TestRefQuotaDefinitionRangeCreateUpdateForm:
             (
                 0,
                 "start_year",
-                "Start year is not valid, it must be a 4 digit year greater than 2010 and less than 2124",
+                f"Start year is not valid, it must be a 4 digit year greater than 2010 and less than {date.today().year + 100}",
             ),
             (
                 1980,
                 "start_year",
-                "Start year is not valid, it must be a 4 digit year greater than 2010 and less than 2124",
+                f"Start year is not valid, it must be a 4 digit year greater than 2010 and less than {date.today().year + 100}",
             ),
             (
                 date.today().year + 101,
                 "start_year",
-                "Start year is not valid, it must be a 4 digit year greater than 2010 and less than 2124",
+                f"Start year is not valid, it must be a 4 digit year greater than 2010 and less than {date.today().year + 100}",
             ),
             (date.today().year + 2, "start_year", None),
             # end year

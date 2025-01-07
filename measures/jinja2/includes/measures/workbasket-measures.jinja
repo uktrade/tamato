@@ -17,8 +17,8 @@
     {"html": create_link(url("additional_code-ui-detail", kwargs={"sid": measure.additional_code.sid}), measure.additional_code.type.sid ~ measure.additional_code.code) if measure.additional_code else '-'},
     {"html": create_link(url("geo_area-ui-detail", kwargs={"sid": measure.geographical_area.sid}), measure.geographical_area.area_id ~ " - " ~ measure.geographical_area.get_description().description) if measure.geographical_area else '-'},
     {"text": create_link(measure.order_number.get_url(), measure.order_number.order_number) if measure.order_number else '-'},
-    {"text": footnotes_display(measure.footnoteassociationmeasure_set.current())},
-    {"text": conditions_list(measure) if measure.conditions.current() else "-"},
+    {"text": footnotes_display(measure.footnoteassociationmeasure_set.approved_up_to_transaction(workbasket.transactions.last()))},
+    {"text": conditions_list(measure, workbasket) if measure.conditions.approved_up_to_transaction(workbasket.transactions.last()) else "-"},
   ]) or "" }}
 {% endfor %}
 
