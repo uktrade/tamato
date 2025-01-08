@@ -97,7 +97,7 @@ class ReferenceDocumentCSVImporter:
         """
 
         Args:
-            reference_document_version: the version of the reference document as a string
+            reference_document_version: float, the version of the reference document
             reference_document: The reference document as a ReferenceDocument
             status: Optional, the status of the reference document from the choices available from ReferenceDocumentVersionStatus.choices
 

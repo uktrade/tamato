@@ -815,7 +815,7 @@ class BaseRateCheck(BaseCheck, abc.ABC):
         Args:
             snapshot: CommodityTreeSnapshot, A snapshot from self.ref_rate.comm_code and children
             parent_item_id: str, The parent comm code item_id to check
-            parent_item_suffix: int, The parent comm code suffix to check
+            parent_item_suffix: str, The parent comm code suffix to check
             level: int, the numeric level below the parent comm code that
             is currently being performed at
 
