@@ -170,9 +170,6 @@ class BulkQuotaDefinitionCreateStartForm(forms.Form):
 
         self.helper.layout = Layout(
             Div(
-                HTML(
-                    '<h2 class="govuk-heading">Enter quota order number</h2>',
-                ),
                 Div(
                     "quota_order_number",
                     css_class="govuk-!-width-one-third",
@@ -292,6 +289,12 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         self.fields["maximum_precision"].initial = 3
         self.fields["end_date"].help_text = ""
         self.fields["end_date"].required = True
+        self.fields["measurement_unit"].queryset = self.fields[
+            "measurement_unit"
+        ].queryset.order_by("code")
+        self.fields["measurement_unit"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
         self.fields["measurement_unit_qualifier"].help_text = (
             "A measurement unit qualifier is not always required"
         )
@@ -413,8 +416,11 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                     '<h2 class="govuk-heading">First definition period</h2>',
                 ),
                 Div(
-                    HTML(
-                        '<p class="govuk-body">Enter the dates for the first definition period you are creating. Subsequent definition period dates will be calculated based on the dates entered for this first period</p>',
+                    Div(
+                        HTML(
+                            '<p class="govuk-body">Enter the dates for the first definition period you are creating. Subsequent definition period dates will be calculated based on the dates entered for this first period.</p>',
+                        ),
+                        css_class="govuk-!-width-two-thirds",
                     ),
                     "start_date",
                     "end_date",
@@ -426,7 +432,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                 ),
                 Div(
                     HTML(
-                        '<p class="govuk-body">Select the frequency at which the subsequent definition periods should be duplicated</p>',
+                        '<p class="govuk-body">Select the frequency at which the subsequent definition periods should be duplicated.</p>',
                     ),
                     "frequency",
                     Field(
