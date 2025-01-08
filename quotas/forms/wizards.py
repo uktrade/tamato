@@ -254,7 +254,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
         widget=DecimalSuffix(suffix="%"),
-        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
+        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume",
         error_messages={
             "invalid": "Critical threshold must be a number",
             "required": "Enter the critical threshold",
@@ -262,7 +262,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     )
     quota_critical = forms.TypedChoiceField(
         label="Is the quota definition period in a critical state?",
-        help_text="This determines if a trader needs to pay securities when utilising the quota.",
+        help_text="This determines if a trader needs to pay securities when utilising the quota",
         coerce=lambda value: value == "True",
         choices=((True, "Yes"), (False, "No")),
         widget=forms.RadioSelect(),
@@ -553,8 +553,14 @@ class BulkDefinitionUpdateData(
             definition_data["initial_volume"],
         )
         fields["volume"].initial = decimal.Decimal(definition_data["volume"])
+        self.fields["measurement_unit"].queryset = self.fields[
+            "measurement_unit"
+        ].queryset.order_by("code")
         fields["measurement_unit"].initial = MeasurementUnit.objects.get(
             code=definition_data["measurement_unit_code"],
+        )
+        self.fields["measurement_unit"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
         )
         if "description" in definition_data:
             fields["description"].initial = definition_data["description"]
@@ -570,14 +576,14 @@ class BulkDefinitionUpdateData(
             )
         else:
             self.fields["measurement_unit_qualifier"].empty_label = (
-                "Choose measurement unit qualifier."
+                "Choose measurement unit qualifier"
             )
         fields["quota_critical_threshold"].initial = decimal.Decimal(
             definition_data["threshold"],
         )
         fields["quota_critical"].initial = definition_data["quota_critical"]
         self.fields["measurement_unit_qualifier"].help_text = (
-            "A measurement unit qualifier is not always required."
+            "A measurement unit qualifier is not always required"
         )
 
     def update_definition_data_in_session(self, cleaned_data):
