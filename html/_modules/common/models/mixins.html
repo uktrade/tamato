@@ -129,16 +129,16 @@
   <h1>Source code for common.models.mixins</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Mixins for models.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
 
 
-<div class="viewcode-block" id="TimestampedMixin"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TimestampedMixin">[docs]</a><span class="k">class</span> <span class="nc">TimestampedMixin</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<div class="viewcode-block" id="TimestampedMixin"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TimestampedMixin">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">TimestampedMixin</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin adding timestamps for creation and last update.&quot;&quot;&quot;</span>
 
     <span class="n">created_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">updated_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TimestampedMixin.Meta"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TimestampedMixin.Meta">[docs]</a>    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+<div class="viewcode-block" id="TimestampedMixin.Meta"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TimestampedMixin.Meta">[docs]</a>    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div></div>
 </pre></div>
 

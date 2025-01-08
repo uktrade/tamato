@@ -129,27 +129,27 @@
   <h1>Source code for common.models.transactions</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Transaction model and manager.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">getLogger</span>
 
-<span class="kn">from</span> <span class="nn">django.core.serializers.json</span> <span class="kn">import</span> <span class="n">DjangoJSONEncoder</span>
-<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
-<span class="kn">from</span> <span class="nn">django_fsm</span> <span class="kn">import</span> <span class="n">FSMIntegerField</span>
-<span class="kn">from</span> <span class="nn">django_fsm</span> <span class="kn">import</span> <span class="n">transition</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.serializers.json</span><span class="w"> </span><span class="kn">import</span> <span class="n">DjangoJSONEncoder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">atomic</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_fsm</span><span class="w"> </span><span class="kn">import</span> <span class="n">FSMIntegerField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_fsm</span><span class="w"> </span><span class="kn">import</span> <span class="n">transition</span>
 
-<span class="kn">from</span> <span class="nn">common.models.mixins</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
-<span class="kn">from</span> <span class="nn">common.models.utils</span> <span class="kn">import</span> <span class="n">lazy_string</span>
-<span class="kn">from</span> <span class="nn">common.renderers</span> <span class="kn">import</span> <span class="n">counter_generator</span>
-<span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimestampedMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">lazy_string</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">counter_generator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">workbaskets.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowStatus</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">PREEMPTIVE_TRANSACTION_SEED</span> <span class="o">=</span> <span class="o">-</span><span class="mi">100000</span>
 
 
-<span class="k">class</span> <span class="nc">TransactionPartition</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerChoices</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransactionPartition</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerChoices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Transactions are partitioned into global groupings based on type.</span>
 
@@ -169,7 +169,7 @@
     <span class="n">DRAFT</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Draft&quot;</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">get_highest_approved_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_highest_approved_partition</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the highest approved partition, this is used by</span>
 <span class="sd">        TransactionQuerySet.approved() to filter approved partitions using a</span>
 <span class="sd">        comparison operator as opposed to &quot;in&quot;.&quot;&quot;&quot;</span>
@@ -177,37 +177,37 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">REVISION</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">approved_partitions</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">approved_partitions</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">SEED_FILE</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">REVISION</span><span class="p">]</span>
 
 
-<span class="k">class</span> <span class="nc">TransactionManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransactionManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="k">class</span> <span class="nc">ApprovedTransactionManager</span><span class="p">(</span><span class="n">TransactionManager</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ApprovedTransactionManager</span><span class="p">(</span><span class="n">TransactionManager</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span><span class="o">.</span><span class="n">approved</span><span class="p">()</span>
 
 
-<span class="k">class</span> <span class="nc">TransactionsAlreadyApproved</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransactionsAlreadyApproved</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="k">class</span> <span class="nc">TransactionsAlreadyInDraft</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransactionsAlreadyInDraft</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="k">class</span> <span class="nc">TransactionQueryset</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransactionQueryset</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tracked_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns all tracked models referenced by transactions in this</span>
 <span class="sd">        queryset.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">rel</span><span class="o">.</span><span class="n">related_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">transaction__in</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">published</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionQueryset</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">published</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionQueryset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a queryset of Transactions that have been both approved (are</span>
 <span class="sd">        in the SEED_FILE or REVISION partitions) and are associated with</span>
 <span class="sd">        Workbaskets whose status is PUBLISHED.&quot;&quot;&quot;</span>
@@ -215,19 +215,19 @@
             <span class="n">workbasket__status</span><span class="o">=</span><span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">PUBLISHED</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">approved</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">approved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">approved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Currently approved Transactions are SEED_FILE and REVISION this can</span>
 <span class="sd">        be.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">partition__lte</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">get_highest_approved_partition</span><span class="p">(),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">unapproved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unapproved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
             <span class="n">partition__lte</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">get_highest_approved_partition</span><span class="p">(),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">preorder_negative_transactions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preorder_negative_transactions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Makes all order numbers negative if there is even one negative order</span>
 <span class="sd">        number.</span>
@@ -245,7 +245,7 @@
             <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_update</span><span class="p">(</span><span class="n">transactions</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;order&quot;</span><span class="p">])</span>
 
     <span class="nd">@atomic</span>
-    <span class="k">def</span> <span class="nf">move_to_end_of_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">move_to_end_of_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update Transaction partition and order fields to place them at the end</span>
 <span class="sd">        of the specified partition.</span>
@@ -285,7 +285,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_update</span><span class="p">(</span><span class="n">transactions</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;partition&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">])</span>
 
     <span class="nd">@atomic</span>
-    <span class="k">def</span> <span class="nf">save_drafts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_drafts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save draft transactions as either SEED_FILE or REVISION transactions.</span>
 
@@ -323,7 +323,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">move_to_end_of_partition</span><span class="p">(</span><span class="n">approved_partition</span><span class="p">)</span>
 
     <span class="nd">@atomic</span>
-    <span class="k">def</span> <span class="nf">revert_current_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">revert_current_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set current_version to previous version or None on a basket&#39;s tracked</span>
 <span class="sd">        model version groups.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracked_models</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-pk&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;version_group&quot;</span><span class="p">):</span>
@@ -340,7 +340,7 @@
             <span class="n">version_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
     <span class="nd">@atomic</span>
-    <span class="k">def</span> <span class="nf">move_to_draft</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">move_to_draft</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save SEED_FILE or REVISION transactions as DRAFT.</span>
 
@@ -366,7 +366,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">move_to_end_of_partition</span><span class="p">(</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">DRAFT</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction">[docs]</a><span class="k">class</span> <span class="nc">Transaction</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="Transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">Transaction</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Contains a group of one or more TrackedModel instances that must be applied</span>
 <span class="sd">    atomically.</span>
@@ -384,7 +384,7 @@
 <span class="sd">    Transactions in SEED_FILE or REVISION partitions should not be modified.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="c1"># See TransactionPartition for information on workbasket_status order.</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;partition&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">)</span>
         <span class="n">indexes</span> <span class="o">=</span> <span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;partition&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">)),)</span>
@@ -430,7 +430,7 @@
         <span class="n">source</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">DRAFT</span><span class="p">,</span>
         <span class="n">target</span><span class="o">=</span><span class="n">TransactionPartition</span><span class="o">.</span><span class="n">REVISION</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">def</span> <span class="nf">save_draft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_draft</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partition_scheme</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Finalise a single DRAFT transaction as a REVISION.</span>
 
@@ -441,7 +441,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="Transaction.to_json"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Transaction.to_json"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.to_json">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Serialize to JSON.</span>
 
@@ -453,25 +453,25 @@
             <span class="bp">cls</span><span class="o">=</span><span class="n">DjangoJSONEncoder</span><span class="p">,</span>
         <span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">models</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">pre_save</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">add_to_transaction</span><span class="p">,</span> <span class="n">dispatch_uid</span><span class="o">=</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">exc</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">exc</span><span class="p">):</span>
         <span class="n">models</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">pre_save</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_to_transaction</span><span class="p">,</span>
             <span class="n">dispatch_uid</span><span class="o">=</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;Transaction pk=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">, order=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="si">}</span><span class="s2">, partition=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
 
-<div class="viewcode-block" id="Transaction.add_to_transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.add_to_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">add_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Transaction.add_to_transaction"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.Transaction.add_to_transaction">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_to_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;transaction&quot;</span><span class="p">):</span>
             <span class="n">instance</span><span class="o">.</span><span class="n">transaction</span> <span class="o">=</span> <span class="bp">self</span></div>
 
     <span class="nd">@lazy_string</span>
-    <span class="k">def</span> <span class="nf">_get_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return a short summary of the transaction.</span>
 
@@ -487,7 +487,7 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return a short summary of the transaction.</span>
 
@@ -502,7 +502,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_summary</span><span class="p">()</span></div>
 
 
-<span class="k">class</span> <span class="nc">TransactionGroup</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransactionGroup</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An ordered group of Transactions.</span>
 

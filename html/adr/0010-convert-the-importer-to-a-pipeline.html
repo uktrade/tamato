@@ -343,22 +343,22 @@ handler uses that data later on.</p>
 <section id="code-example">
 <h5>Code example<a class="headerlink" href="#code-example" title="Permalink to this headline">¶</a></h5>
 <p>A basic set of XML Parser classes may look like:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">ENVELOPE</span>
-<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">Tag</span>
-<span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ElementParser</span>
-<span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">TextElement</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">importer.namespaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">ENVELOPE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importer.namespaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importer.parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElementParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importer.parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextElement</span>
 
-<span class="k">class</span> <span class="nc">Record</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Record</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;record&quot;</span><span class="p">)</span>
     <span class="n">transaction_id</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;transaction.id&quot;</span><span class="p">))</span>
 
 
-<span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Message</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;app.message&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">ENVELOPE</span><span class="p">)</span>
     <span class="n">record</span> <span class="o">=</span> <span class="n">Record</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">Transaction</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Transaction</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;transaction&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">ENVELOPE</span><span class="p">)</span>
     <span class="n">message</span> <span class="o">=</span> <span class="n">Message</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>

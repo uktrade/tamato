@@ -473,7 +473,7 @@ implementation). The 2 query method uses the following queries:</p>
 library which makes use of an MTI mechanism already natively to Django.
 This library is django-polymorphic.</p>
 <p>The models classes as a result are quite simple, looking like so:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TrackedModel</span><span class="p">(</span><span class="n">PolymorphicModel</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TrackedModel</span><span class="p">(</span><span class="n">PolymorphicModel</span><span class="p">):</span>
     <span class="n">workbasket</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;workbaskets.WorkBasket&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
     <span class="n">draft</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">live</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -485,7 +485,7 @@ This library is django-polymorphic.</p>
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;successor&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-<span class="k">class</span> <span class="nc">FootnoteType</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">,</span> <span class="n">ValidityMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FootnoteType</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">,</span> <span class="n">ValidityMixin</span><span class="p">):</span>
    <span class="n">footnote_type_id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
        <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">validators</span><span class="o">.</span><span class="n">valid_footnote_type_id</span><span class="p">]</span>
    <span class="p">)</span>

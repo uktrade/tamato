@@ -222,20 +222,20 @@ argument and execute the query at render-time. In this case, we want to construc
 queryset that retrieves the current transaction at execution time and not at
 initialisation. To ensure we fetch the current transaction ID value at query execution
 time, we can use a dynamic <a class="reference external" href="https://docs.djangoproject.com/en/dev/ref/models/expressions/#value-expressions"><code class="docutils literal notranslate"><span class="pre">Value</span></code></a> object, for example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">crum</span> <span class="kn">import</span> <span class="n">get_current_request</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">IntegerField</span><span class="p">,</span> <span class="n">Value</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">crum</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_current_request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerField</span><span class="p">,</span> <span class="n">Value</span>
 
-<span class="kn">from</span> <span class="nn">workbaskets.models</span> <span class="kn">import</span> <span class="n">WorkBasket</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">workbaskets.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkBasket</span>
 
 
-<span class="k">class</span> <span class="nc">CurrentTransactionId</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CurrentTransactionId</span><span class="p">(</span><span class="n">Value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;output_field&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">()</span>
         <span class="c1"># skip Value constructor which assigns to self.value</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Value</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">get_current_request</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">request</span><span class="p">:</span>
             <span class="n">transaction</span> <span class="o">=</span> <span class="n">WorkBasket</span><span class="o">.</span><span class="n">get_current_transaction</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
@@ -252,7 +252,7 @@ execution time:</p>
 </div>
 <p>Using these dynamic <code class="docutils literal notranslate"><span class="pre">Value</span></code> objects, we can refactor <code class="docutils literal notranslate"><span class="pre">latest_approved</span></code> and
 <code class="docutils literal notranslate"><span class="pre">approved_up_to_transaction</span></code> as follows:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">latest_approved</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">latest_approved</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">transaction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Transaction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>

@@ -171,7 +171,7 @@ specific custom demands.</p>
 <p>Simple object, no dependencies or links.</p>
 <p>For very simple objects there should be almost no work to do, assuming the data comes in clean without
 any need for editing. In this case it should be enough to simply define a handler like so:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SimpleObjectHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SimpleObjectHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
     <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">SimpleObjectSerializer</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">parsers</span><span class="o">.</span><span class="n">SimpleObjectParser</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span>
 </pre></div>
@@ -180,13 +180,13 @@ any need for editing. In this case it should be enough to simply define a handle
 or links, there should be nothing it needs to wait on.</p>
 <p><strong>Example 2</strong></p>
 <p>An object with dependencies:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">DependentModelAHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DependentModelAHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
     <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">DependentModelSerializer</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">DependentModelAParser</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span>
 
 
 <span class="nd">@DependentModelAHandler</span><span class="o">.</span><span class="n">register_dependant</span>
-<span class="k">class</span> <span class="nc">DependentModelBHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DependentModelBHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
     <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">DependentModelAHandler</span><span class="p">]</span>
     <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">DependentModelSerializer</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">DependentModelBParser</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span>
@@ -210,7 +210,7 @@ the nursery to collect all the data. If all the data is found the object is disp
 and the nursery removes the relevant data from the cache.</p>
 <p><strong>Example 3</strong></p>
 <p>An object with Foreign Key links.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">LinkedObjectHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">LinkedObjectHandler</span><span class="p">(</span><span class="n">BaseHandler</span><span class="p">):</span>
     <span class="n">links</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">{</span>
             <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">LinkToModelA</span><span class="p">,</span>
@@ -225,7 +225,7 @@ and the nursery removes the relevant data from the cache.</p>
         <span class="p">},</span>
     <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_link_to_model_b_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_link_to_model_b_link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
         <span class="n">other_model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SomeOtherModel</span><span class="p">(</span><span class="n">field2</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">some_other_model_id</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_latest_version</span><span class="p">(</span><span class="n">other_model</span><span class="o">=</span><span class="n">other_model</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">)</span>
 </pre></div>

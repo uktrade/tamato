@@ -271,7 +271,7 @@ sequence numbers for envelopes and transactions. Envelope files should be
 generated to wholly contain the passed workbaskets and this might require
 multiple files, and hence multiple envelope IDs. An example signature of a
 function to do this might be:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">generate_envelopes</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">generate_envelopes</span><span class="p">(</span>
     <span class="n">envelope_counter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">int</span><span class="p">],</span>
     <span class="n">transaction_counter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">int</span><span class="p">],</span>
     <span class="o">*</span><span class="n">workbaskets</span><span class="p">:</span> <span class="n">WorkBasket</span>

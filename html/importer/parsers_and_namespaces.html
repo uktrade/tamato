@@ -209,22 +209,22 @@ specified in the constructor will be put back into the XML.</p>
 parsers to their output JSON field name.</p>
 <p>This allows 2 options for adding child elements to a Parent element.</p>
 <p>Option 1:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ChildElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ChildElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;child&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;ns&quot;</span><span class="p">)</span>
     <span class="n">field</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="s2">&quot;field&quot;</span><span class="p">)</span>
 
-<span class="k">class</span> <span class="nc">ParentElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParentElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;parent&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;ns&quot;</span><span class="p">)</span>
     <span class="n">child</span> <span class="o">=</span> <span class="n">ChildElement</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Option 2:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ParentElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ParentElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;parent&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;ns&quot;</span><span class="p">)</span>
 
 
 <span class="nd">@ParentElement</span><span class="o">.</span><span class="n">register_child</span><span class="p">(</span><span class="s2">&quot;child&quot;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">ChildElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChildElement</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;child&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;ns&quot;</span><span class="p">)</span>
     <span class="n">some_field</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="s2">&quot;field&quot;</span><span class="p">)</span>
 </pre></div>

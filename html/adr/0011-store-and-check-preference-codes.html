@@ -243,7 +243,7 @@ must always be linked to a regulation in the correct group.</p>
 <h2>Decision<a class="headerlink" href="#decision" title="Permalink to this headline">¶</a></h2>
 <p>Tables of the current preference code correlation data will be stored in TaMaTo
 using the following schema:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PreferenceCode</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">,</span> <span class="n">ValidityMixin</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PreferenceCode</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">,</span> <span class="n">ValidityMixin</span><span class="p">):</span>
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,)</span>
 
     <span class="n">sid</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
@@ -264,7 +264,7 @@ using the following schema:</p>
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">PreferenceCodeMapping</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">,</span> <span class="n">ValidityMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PreferenceCodeMapping</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">,</span> <span class="n">ValidityMixin</span><span class="p">):</span>
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sid&quot;</span><span class="p">,)</span>
 
     <span class="n">sid</span> <span class="o">=</span> <span class="n">SignedIntSID</span><span class="p">()</span>
@@ -301,7 +301,7 @@ using the following schema:</p>
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">PreferenceCodeMappingMeasureType</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PreferenceCodeMappingMeasureType</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">):</span>
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mapping__id&quot;</span><span class="p">,</span> <span class="s2">&quot;measure_type__sid&quot;</span><span class="p">)</span>
 
     <span class="n">mapping</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
@@ -315,7 +315,7 @@ using the following schema:</p>
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">PreferenceCodeMappingRegulationGroup</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PreferenceCodeMappingRegulationGroup</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">):</span>
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mapping__id&quot;</span><span class="p">,</span> <span class="s2">&quot;regulation_group__group_id&quot;</span><span class="p">)</span>
 
     <span class="n">mapping</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
@@ -329,7 +329,7 @@ using the following schema:</p>
     <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">PreferenceCodeMappingConditionCode</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PreferenceCodeMappingConditionCode</span><span class="p">(</span><span class="n">TrackedModel</span><span class="p">):</span>
     <span class="n">identifying_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mapping__id&quot;</span><span class="p">,</span> <span class="s2">&quot;condition_code__code&quot;</span><span class="p">)</span>
 
     <span class="n">mapping</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>

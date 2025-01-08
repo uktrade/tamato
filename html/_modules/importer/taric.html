@@ -129,42 +129,42 @@
   <h1>Source code for importer.taric</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Parsers for TARIC envelope entities.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">etree</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Mapping</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xml.etree.ElementTree</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">etree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
-<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">get_user_model</span>
-<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
-<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">IntegrityError</span>
-<span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegrityError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">atomic</span>
 
-<span class="kn">from</span> <span class="nn">commodities.models.dc</span> <span class="kn">import</span> <span class="n">CommodityChangeRecordLoader</span>
-<span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_record_code</span>
-<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
-<span class="kn">from</span> <span class="nn">common.xml.namespaces</span> <span class="kn">import</span> <span class="n">ENVELOPE</span>
-<span class="kn">from</span> <span class="nn">common.xml.namespaces</span> <span class="kn">import</span> <span class="n">nsmap</span>
-<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">TARIC_RECORD_GROUPS</span>
-<span class="kn">from</span> <span class="nn">importer.namespaces</span> <span class="kn">import</span> <span class="n">Tag</span>
-<span class="kn">from</span> <span class="nn">importer.nursery</span> <span class="kn">import</span> <span class="n">get_nursery</span>
-<span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ElementParser</span>
-<span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">ParserError</span>
-<span class="kn">from</span> <span class="nn">importer.parsers</span> <span class="kn">import</span> <span class="n">TextElement</span>
-<span class="kn">from</span> <span class="nn">taric.models</span> <span class="kn">import</span> <span class="n">Envelope</span>
-<span class="kn">from</span> <span class="nn">taric.models</span> <span class="kn">import</span> <span class="n">EnvelopeTransaction</span>
-<span class="kn">from</span> <span class="nn">workbaskets.models</span> <span class="kn">import</span> <span class="n">TransactionPartitionScheme</span>
-<span class="kn">from</span> <span class="nn">workbaskets.models</span> <span class="kn">import</span> <span class="n">WorkBasket</span>
-<span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">commodities.models.dc</span><span class="w"> </span><span class="kn">import</span> <span class="n">CommodityChangeRecordLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_record_code</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">UpdateType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.xml.namespaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">ENVELOPE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.xml.namespaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">nsmap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importer.namespaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">TARIC_RECORD_GROUPS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importer.namespaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importer.nursery</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_nursery</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importer.parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElementParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importer.parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParserError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importer.parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextElement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">taric.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Envelope</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">taric.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnvelopeTransaction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">workbaskets.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransactionPartitionScheme</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">workbaskets.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkBasket</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">workbaskets.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowStatus</span>
 
 <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">SENTRY_ENABLED</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">sentry_sdk</span> <span class="kn">import</span> <span class="n">capture_exception</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sentry_sdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">capture_exception</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -173,7 +173,7 @@
 <span class="n">START_TRANSACTION</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;STARTING_TRANSACTION&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="RecordParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.RecordParser">[docs]</a><span class="k">class</span> <span class="nc">RecordParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<div class="viewcode-block" id="RecordParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.RecordParser">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">RecordParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser for TARIC3 `record` element.&quot;&quot;&quot;</span>
 
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;record&quot;</span><span class="p">)</span>
@@ -183,7 +183,7 @@
     <span class="n">sequence_number</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;record.sequence.number&quot;</span><span class="p">))</span>
     <span class="n">update_type</span> <span class="o">=</span> <span class="n">TextElement</span><span class="p">(</span><span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;update.type&quot;</span><span class="p">))</span>
 
-<div class="viewcode-block" id="RecordParser.save"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.RecordParser.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<div class="viewcode-block" id="RecordParser.save"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.RecordParser.save">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the Record to the database.</span>
 
@@ -203,13 +203,13 @@
                 <span class="nb">getattr</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">method_name</span><span class="p">)(</span><span class="n">record_data</span><span class="p">,</span> <span class="n">transaction_id</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="MessageParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.MessageParser">[docs]</a><span class="k">class</span> <span class="nc">MessageParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<div class="viewcode-block" id="MessageParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.MessageParser">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">MessageParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser for TARIC3 `message` element.&quot;&quot;&quot;</span>
 
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;app.message&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">ENVELOPE</span><span class="p">)</span>
     <span class="n">record</span> <span class="o">=</span> <span class="n">RecordParser</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<div class="viewcode-block" id="MessageParser.save"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.MessageParser.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<div class="viewcode-block" id="MessageParser.save"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.MessageParser.save">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">transaction_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the contained records to the database.</span>
 
@@ -222,7 +222,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">record_data</span><span class="p">,</span> <span class="n">transaction_id</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="TransactionParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.TransactionParser">[docs]</a><span class="k">class</span> <span class="nc">TransactionParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<div class="viewcode-block" id="TransactionParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.TransactionParser">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">TransactionParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser for TARIC3 `transaction` element.&quot;&quot;&quot;</span>
 
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;transaction&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">ENVELOPE</span><span class="p">)</span>
@@ -231,7 +231,7 @@
     <span class="n">workbasket_status</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">tamato_username</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="TransactionParser.save"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.TransactionParser.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span>
+<div class="viewcode-block" id="TransactionParser.save"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.TransactionParser.save">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">envelope</span><span class="p">:</span> <span class="n">Envelope</span><span class="p">,</span>
@@ -309,7 +309,7 @@
             <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">SENTRY_ENABLED</span><span class="p">:</span>
                 <span class="n">capture_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving import </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -328,7 +328,7 @@
                 <span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">_has_commodity_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_commodity_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Checking for commodity changes in transaction </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="p">)</span>
@@ -346,15 +346,15 @@
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">matching_codes</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span></div>
 
 
-<div class="viewcode-block" id="EnvelopeError"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.EnvelopeError">[docs]</a><span class="k">class</span> <span class="nc">EnvelopeError</span><span class="p">(</span><span class="n">ParserError</span><span class="p">):</span>
+<div class="viewcode-block" id="EnvelopeError"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.EnvelopeError">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">EnvelopeError</span><span class="p">(</span><span class="n">ParserError</span><span class="p">):</span>
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="EnvelopeParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.EnvelopeParser">[docs]</a><span class="k">class</span> <span class="nc">EnvelopeParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
+<div class="viewcode-block" id="EnvelopeParser"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.EnvelopeParser">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">EnvelopeParser</span><span class="p">(</span><span class="n">ElementParser</span><span class="p">):</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">&quot;envelope&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">ENVELOPE</span><span class="p">)</span>
     <span class="n">transaction</span> <span class="o">=</span> <span class="n">TransactionParser</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">workbasket_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">workbasket_status</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -375,7 +375,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">workbasket</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">WorkBasket</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">partition_scheme</span> <span class="o">=</span> <span class="n">partition_scheme</span>
 
-<div class="viewcode-block" id="EnvelopeParser.start"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.EnvelopeParser.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">ElementParser</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="EnvelopeParser.start"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.EnvelopeParser.start">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">etree</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">ElementParser</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">:</span>
@@ -396,7 +396,7 @@
                 <span class="n">envelope_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">envelope_id</span><span class="p">,</span>
             <span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">end</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">:</span>
@@ -406,7 +406,7 @@
 
 
 <div class="viewcode-block" id="process_taric_xml_stream"><a class="viewcode-back" href="../../importer/taric.html#importer.taric.process_taric_xml_stream">[docs]</a><span class="nd">@atomic</span>
-<span class="k">def</span> <span class="nf">process_taric_xml_stream</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_taric_xml_stream</span><span class="p">(</span>
     <span class="n">taric_stream</span><span class="p">,</span>
     <span class="n">workbasket_id</span><span class="p">,</span>
     <span class="n">workbasket_status</span><span class="p">,</span>

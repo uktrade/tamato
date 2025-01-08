@@ -127,26 +127,26 @@
 
             
   <h1>Source code for exporter.models</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">uuid</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
 
-<span class="kn">from</span> <span class="nn">exporter.storages</span> <span class="kn">import</span> <span class="n">HMRCStorage</span>
-<span class="kn">from</span> <span class="nn">hmrc_sdes.api_client</span> <span class="kn">import</span> <span class="n">HmrcSdesClient</span>
-<span class="kn">from</span> <span class="nn">taric.models</span> <span class="kn">import</span> <span class="n">Envelope</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">exporter.storages</span><span class="w"> </span><span class="kn">import</span> <span class="n">HMRCStorage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hmrc_sdes.api_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">HmrcSdesClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">taric.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Envelope</span>
 
 
-<span class="k">def</span> <span class="nf">to_hmrc</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="s2">&quot;Upload&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_hmrc</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="s2">&quot;Upload&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the filepath to upload to HMRC.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">HMRC_STORAGE_DIRECTORY</span><span class="p">)</span> <span class="o">/</span> <span class="n">filename</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Upload"><a class="viewcode-back" href="../../exporter/celery-tasks.html#exporter.models.Upload">[docs]</a><span class="k">class</span> <span class="nc">Upload</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<div class="viewcode-block" id="Upload"><a class="viewcode-back" href="../../exporter/celery-tasks.html#exporter.models.Upload">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">Upload</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a TARIC differential update file upload to HMRC.&quot;&quot;&quot;</span>
 
     <span class="n">file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">storage</span><span class="o">=</span><span class="n">HMRCStorage</span><span class="p">,</span> <span class="n">upload_to</span><span class="o">=</span><span class="n">to_hmrc</span><span class="p">)</span>
@@ -159,7 +159,7 @@
     <span class="c1"># Max size is 50 megabytes</span>
     <span class="n">MAX_FILE_SIZE</span> <span class="o">=</span> <span class="mi">50</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span>
 
-    <span class="k">def</span> <span class="nf">notify_hmrc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">notify_hmrc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param now: datetime to set notification_sent to, defaults to now.</span>
 
@@ -174,11 +174,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;DIT</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">envelope</span><span class="o">.</span><span class="n">envelope_id</span><span class="p">)</span><span class="si">}</span><span class="s2">.xml&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">notification_payload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">notification_payload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;informationType&quot;</span><span class="p">:</span> <span class="s2">&quot;EDM&quot;</span><span class="p">,</span>
             <span class="s2">&quot;correlationID&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correlation_id</span><span class="p">),</span>

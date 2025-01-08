@@ -127,49 +127,49 @@
 
             
   <h1>Source code for common.models.trackedmodel</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Set</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
 
-<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">F</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Field</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Q</span>
-<span class="kn">from</span> <span class="nn">django.db.models.expressions</span> <span class="kn">import</span> <span class="n">Expression</span>
-<span class="kn">from</span> <span class="nn">django.db.models.options</span> <span class="kn">import</span> <span class="n">Options</span>
-<span class="kn">from</span> <span class="nn">django.db.models.query</span> <span class="kn">import</span> <span class="n">QuerySet</span>
-<span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">atomic</span>
-<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">NoReverseMatch</span>
-<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
-<span class="kn">from</span> <span class="nn">polymorphic.models</span> <span class="kn">import</span> <span class="n">PolymorphicModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.expressions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Expression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.options</span><span class="w"> </span><span class="kn">import</span> <span class="n">Options</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.query</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuerySet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">atomic</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoReverseMatch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">polymorphic.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolymorphicModel</span>
 
-<span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">validators</span>
-<span class="kn">from</span> <span class="nn">common.exceptions</span> <span class="kn">import</span> <span class="n">IllegalSaveError</span>
-<span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">NumericSID</span>
-<span class="kn">from</span> <span class="nn">common.fields</span> <span class="kn">import</span> <span class="n">SignedIntSID</span>
-<span class="kn">from</span> <span class="nn">common.models</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
-<span class="kn">from</span> <span class="nn">common.models.managers</span> <span class="kn">import</span> <span class="n">CurrentTrackedModelManager</span>
-<span class="kn">from</span> <span class="nn">common.models.managers</span> <span class="kn">import</span> <span class="n">TrackedModelManager</span>
-<span class="kn">from</span> <span class="nn">common.models.mixins</span> <span class="kn">import</span> <span class="n">TimestampedMixin</span>
-<span class="kn">from</span> <span class="nn">common.models.tracked_qs</span> <span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
-<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_deferred_set_fields</span>
-<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_models_linked_to</span>
-<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_relations</span>
-<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_subrecord_relations</span>
-<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">classproperty</span>
-<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_accessor</span>
-<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_field_tuple</span>
-<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
-<span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common</span><span class="w"> </span><span class="kn">import</span> <span class="n">validators</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">IllegalSaveError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericSID</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">SignedIntSID</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimestampedMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.managers</span><span class="w"> </span><span class="kn">import</span> <span class="n">CurrentTrackedModelManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.managers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrackedModelManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimestampedMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.tracked_qs</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.tracked_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_deferred_set_fields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.tracked_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_models_linked_to</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.tracked_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_relations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.tracked_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_subrecord_relations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">classproperty</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_accessor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_field_tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">UpdateType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">workbaskets.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowStatus</span>
 
 
-<div class="viewcode-block" id="VersionGroup"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.VersionGroup">[docs]</a><span class="k">class</span> <span class="nc">VersionGroup</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="VersionGroup"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.VersionGroup">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">VersionGroup</span><span class="p">(</span><span class="n">TimestampedMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A group that contains all versions of the same TrackedModel.&quot;&quot;&quot;</span>
 
     <span class="n">current_version</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
@@ -185,7 +185,7 @@
 <span class="n">Cls</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Cls&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;TrackedModel&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="TrackedModel"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel">[docs]</a><span class="k">class</span> <span class="nc">TrackedModel</span><span class="p">(</span><span class="n">PolymorphicModel</span><span class="p">,</span> <span class="n">TimestampedMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="TrackedModel"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">TrackedModel</span><span class="p">(</span><span class="n">PolymorphicModel</span><span class="p">,</span> <span class="n">TimestampedMixin</span><span class="p">):</span>
     <span class="n">transaction</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="s2">&quot;common.Transaction&quot;</span><span class="p">,</span>
         <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
@@ -282,7 +282,7 @@
 <span class="sd">    /measures/12345678/#conditions</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="TrackedModel.new_version"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.new_version">[docs]</a>    <span class="k">def</span> <span class="nf">new_version</span><span class="p">(</span>
+<div class="viewcode-block" id="TrackedModel.new_version"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.new_version">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">new_version</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span>
         <span class="n">workbasket</span><span class="p">,</span>
         <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -344,7 +344,7 @@
 
         <span class="k">return</span> <span class="n">new_object</span></div>
 
-<div class="viewcode-block" id="TrackedModel.get_versions"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_versions">[docs]</a>    <span class="k">def</span> <span class="nf">get_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="TrackedModel.get_versions"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_versions">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find all versions of this model.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;version_group&quot;</span><span class="p">):</span>
             <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="n">version_group_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">version_group_id</span><span class="p">)</span>
@@ -352,7 +352,7 @@
             <span class="n">query</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">())</span>
         <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">query</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">_get_version_group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VersionGroup</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_version_group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VersionGroup</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_type</span> <span class="o">==</span> <span class="n">validators</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">VersionGroup</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
@@ -380,13 +380,13 @@
 
         <span class="k">return</span> <span class="n">latest_version</span><span class="o">.</span><span class="n">version_group</span>
 
-    <span class="k">def</span> <span class="nf">_can_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_can_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pk</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">WorkflowStatus</span><span class="o">.</span><span class="n">approved_statuses</span><span class="p">()</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="TrackedModel.get_identifying_fields"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_identifying_fields">[docs]</a>    <span class="k">def</span> <span class="nf">get_identifying_fields</span><span class="p">(</span>
+<div class="viewcode-block" id="TrackedModel.get_identifying_fields"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_identifying_fields">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_identifying_fields</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -406,7 +406,7 @@
 
         <span class="k">return</span> <span class="n">fields</span></div>
 
-<div class="viewcode-block" id="TrackedModel.identifying_fields_to_string"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.identifying_fields_to_string">[docs]</a>    <span class="k">def</span> <span class="nf">identifying_fields_to_string</span><span class="p">(</span>
+<div class="viewcode-block" id="TrackedModel.identifying_fields_to_string"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.identifying_fields_to_string">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">identifying_fields_to_string</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -427,7 +427,7 @@
         <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">field_list</span><span class="p">)</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">structure_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">structure_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A string used to describe the model instance.</span>
 
@@ -437,7 +437,7 @@
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">structure_description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">structure_description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The current description of the model, if it has related description</span>
 <span class="sd">        models or a description field.</span>
@@ -455,24 +455,24 @@
         <span class="k">return</span> <span class="n">description</span> <span class="ow">or</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">record_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the record identifier as defined in TARIC3 records</span>
 <span class="sd">        specification.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">record_code</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">subrecord_code</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">update_type_str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_type_str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">choices</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">update_type</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">current_version</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">current_version</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The current version of this model.&quot;&quot;&quot;</span>
         <span class="n">current_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span>
         <span class="k">if</span> <span class="n">current_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">(</span><span class="s2">&quot;Object has no current version&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">current_version</span>
 
-<div class="viewcode-block" id="TrackedModel.version_at"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.version_at">[docs]</a>    <span class="k">def</span> <span class="nf">version_at</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span> <span class="n">transaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
+<div class="viewcode-block" id="TrackedModel.version_at"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.version_at">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">version_at</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span> <span class="n">transaction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cls</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The latest version of this model that was approved as of the given</span>
 <span class="sd">        transaction.</span>
@@ -483,7 +483,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
 
     <span class="nd">@classproperty</span>
-    <span class="k">def</span> <span class="nf">copyable_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copyable_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the set of fields that can have their values copied from one</span>
 <span class="sd">        model to another. This is anything that is:</span>
@@ -501,7 +501,7 @@
     <span class="n">_meta</span><span class="p">:</span> <span class="n">Options</span>
 
     <span class="nd">@classproperty</span>
-    <span class="k">def</span> <span class="nf">auto_value_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="n">Field</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">auto_value_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="n">Field</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the set of fields on this model that should have their value</span>
 <span class="sd">        set automatically on save, excluding any primary keys.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
@@ -525,7 +525,7 @@
         <span class="s2">&quot;updated_at&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
-<div class="viewcode-block" id="TrackedModel.copy"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span>
+<div class="viewcode-block" id="TrackedModel.copy"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.copy">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">Cls</span><span class="p">,</span>
         <span class="n">transaction</span><span class="p">,</span>
         <span class="o">**</span><span class="n">overrides</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -645,7 +645,7 @@
 
         <span class="k">return</span> <span class="n">new_object</span></div>
 
-<div class="viewcode-block" id="TrackedModel.in_use_by"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.in_use_by">[docs]</a>    <span class="k">def</span> <span class="nf">in_use_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">via_relation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]:</span>
+<div class="viewcode-block" id="TrackedModel.in_use_by"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.in_use_by">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">in_use_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">via_relation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns all of the models that are referencing this one via the</span>
 <span class="sd">        specified relation and exist as of the passed transaction.</span>
@@ -664,7 +664,7 @@
             <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">remote_field_name</span><span class="si">}</span><span class="s2">__version_group&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_group</span><span class="p">},</span>
         <span class="p">)</span><span class="o">.</span><span class="n">approved_up_to_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="TrackedModel.in_use"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.in_use">[docs]</a>    <span class="k">def</span> <span class="nf">in_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">relations</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="TrackedModel.in_use"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.in_use">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">in_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">relations</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns True if there are any models that are using this one as of the</span>
 <span class="sd">        specified transaction.</span>
@@ -715,7 +715,7 @@
         <span class="k">return</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="TrackedModel.save"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.save">[docs]</a>    <span class="nd">@atomic</span>
-    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">force_write</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">force_write</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the model to the database.</span>
 
@@ -752,13 +752,13 @@
 
         <span class="k">return</span> <span class="n">return_value</span></div>
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields_to_string</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TrackedModel.get_url"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_url">[docs]</a>    <span class="k">def</span> <span class="nf">get_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;detail&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<div class="viewcode-block" id="TrackedModel.get_url"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_url">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;detail&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a URL to a representation of the model in the webapp.</span>
 
@@ -792,7 +792,7 @@
             <span class="k">return</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="TrackedModel.get_url_pattern_name_prefix"><a class="viewcode-back" href="../../../api/common/common.models.html#common.models.TrackedModel.get_url_pattern_name_prefix">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">get_url_pattern_name_prefix</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_url_pattern_name_prefix</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the prefix string for a view name for this model.</span>
 

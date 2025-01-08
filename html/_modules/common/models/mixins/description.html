@@ -127,31 +127,31 @@
 
             
   <h1>Source code for common.models.mixins.description</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Type</span>
 
-<span class="kn">from</span> <span class="nn">django.db.models.fields</span> <span class="kn">import</span> <span class="n">Field</span>
-<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">NoReverseMatch</span>
-<span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoReverseMatch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
 
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">NoBlankDescription</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UpdateValidity</span>
-<span class="kn">from</span> <span class="nn">common.exceptions</span> <span class="kn">import</span> <span class="n">NoDescriptionError</span>
-<span class="kn">from</span> <span class="nn">common.models.managers</span> <span class="kn">import</span> <span class="n">TrackedModelManager</span>
-<span class="kn">from</span> <span class="nn">common.models.mixins.validity</span> <span class="kn">import</span> <span class="n">ValidityStartMixin</span>
-<span class="kn">from</span> <span class="nn">common.models.mixins.validity</span> <span class="kn">import</span> <span class="n">ValidityStartQueryset</span>
-<span class="kn">from</span> <span class="nn">common.models.tracked_qs</span> <span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
-<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_relations</span>
-<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">classproperty</span>
-<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
-<span class="kn">from</span> <span class="nn">workbaskets.validators</span> <span class="kn">import</span> <span class="n">WorkflowStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.business_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoBlankDescription</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.business_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.business_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">UpdateValidity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoDescriptionError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.managers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrackedModelManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.mixins.validity</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidityStartMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.mixins.validity</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidityStartQueryset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.tracked_qs</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrackedModelQuerySet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.tracked_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_relations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">classproperty</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">UpdateType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">workbaskets.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowStatus</span>
 
 
-<span class="k">class</span> <span class="nc">DescriptionQueryset</span><span class="p">(</span><span class="n">ValidityStartQueryset</span><span class="p">,</span> <span class="n">TrackedModelQuerySet</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DescriptionQueryset</span><span class="p">(</span><span class="n">ValidityStartQueryset</span><span class="p">,</span> <span class="n">TrackedModelQuerySet</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<div class="viewcode-block" id="DescriptionMixin"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.DescriptionMixin">[docs]</a><span class="k">class</span> <span class="nc">DescriptionMixin</span><span class="p">(</span><span class="n">ValidityStartMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="DescriptionMixin"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.DescriptionMixin">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">DescriptionMixin</span><span class="p">(</span><span class="n">ValidityStartMixin</span><span class="p">):</span>
     <span class="n">objects</span> <span class="o">=</span> <span class="n">TrackedModelManager</span><span class="o">.</span><span class="n">from_queryset</span><span class="p">(</span><span class="n">DescriptionQueryset</span><span class="p">)()</span>
 
     <span class="n">business_rules</span> <span class="o">=</span> <span class="p">(</span>
@@ -161,20 +161,20 @@
     <span class="p">)</span>
 
     <span class="nd">@classproperty</span>
-    <span class="k">def</span> <span class="nf">described_object_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Field</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">described_object_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Field</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">get_relations</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">rel</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;described_&quot;</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">rel</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2"> should have a described field.&quot;</span><span class="p">)</span>
 
     <span class="nd">@classproperty</span>
-    <span class="k">def</span> <span class="nf">validity_over</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validity_over</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">described_object_field</span><span class="o">.</span><span class="n">name</span>
 
-<div class="viewcode-block" id="DescriptionMixin.get_described_object"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.DescriptionMixin.get_described_object">[docs]</a>    <span class="k">def</span> <span class="nf">get_described_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="DescriptionMixin.get_described_object"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.DescriptionMixin.get_described_object">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_described_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">described_object_field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DescriptionMixin.get_url"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.DescriptionMixin.get_url">[docs]</a>    <span class="k">def</span> <span class="nf">get_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;detail&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="DescriptionMixin.get_url"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.DescriptionMixin.get_url">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;detail&quot;</span><span class="p">):</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">action</span> <span class="o">!=</span> <span class="s2">&quot;list&quot;</span><span class="p">:</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_identifying_fields</span><span class="p">()</span>
@@ -206,7 +206,7 @@
         <span class="k">except</span> <span class="n">NoReverseMatch</span><span class="p">:</span>
             <span class="k">return</span></div>
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifying_fields_to_string</span><span class="p">(</span>
             <span class="n">identifying_fields</span><span class="o">=</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">described_object_field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -214,20 +214,20 @@
             <span class="p">),</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="DescriptionMixin.Meta"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.DescriptionMixin.Meta">[docs]</a>    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+<div class="viewcode-block" id="DescriptionMixin.Meta"><a class="viewcode-back" href="../../../../api/common/common.models.html#common.models.DescriptionMixin.Meta">[docs]</a>    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span></div></div>
 
 
-<span class="k">class</span> <span class="nc">DescribedMixin</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DescribedMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin adding convenience methods for TrackedModels with associated</span>
 <span class="sd">    Descriptions.&quot;&quot;&quot;</span>
 
     <span class="nd">@classproperty</span>
-    <span class="k">def</span> <span class="nf">description_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">DescriptionMixin</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">DescriptionMixin</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s2">&quot;descriptions&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">remote_field</span><span class="o">.</span><span class="n">model</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">update_type</span><span class="o">=</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">described</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
             <span class="n">update_type</span><span class="o">=</span><span class="n">update_type</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -243,7 +243,7 @@
 
         <span class="k">return</span> <span class="n">described</span>
 
-    <span class="k">def</span> <span class="nf">get_descriptions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_descriptions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrackedModelQuerySet</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the latest descriptions related to this instance of the Tracked</span>
 <span class="sd">        Model.</span>
@@ -258,7 +258,7 @@
         <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NoDescriptionError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has no descriptions relation.&quot;</span><span class="p">,</span>
-            <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
         <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">get_relations</span><span class="p">(</span><span class="n">descriptions_model</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
@@ -281,11 +281,11 @@
 
         <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">get_description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">()</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">autocomplete_label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">autocomplete_label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">description</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_description</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">description</span><span class="p">:</span>
             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&quot;</span>

@@ -129,34 +129,34 @@
   <h1>Source code for regulations.business_rules</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Business rules for regulations.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">BusinessRule</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">MustExist</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
-<span class="kn">from</span> <span class="nn">common.business_rules</span> <span class="kn">import</span> <span class="n">only_applicable_after</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.business_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">BusinessRule</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.business_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">MustExist</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.business_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreventDeleteIfInUse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.business_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">UniqueIdentifyingFields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.business_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidityPeriodContained</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.business_rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">only_applicable_after</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="ROIMB1"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB1">[docs]</a><span class="k">class</span> <span class="nc">ROIMB1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
+<div class="viewcode-block" id="ROIMB1"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB1">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ROIMB1</span><span class="p">(</span><span class="n">UniqueIdentifyingFields</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The regulation id + role id must be unique.&quot;&quot;&quot;</span></div>
 
 
-<div class="viewcode-block" id="ROIMB4"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB4">[docs]</a><span class="k">class</span> <span class="nc">ROIMB4</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
+<div class="viewcode-block" id="ROIMB4"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB4">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ROIMB4</span><span class="p">(</span><span class="n">MustExist</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The referenced regulation group must exist.&quot;&quot;&quot;</span>
 
     <span class="n">reference_field_name</span> <span class="o">=</span> <span class="s2">&quot;regulation_group&quot;</span></div>
 
 
 <div class="viewcode-block" id="ROIMB8"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB8">[docs]</a><span class="nd">@only_applicable_after</span><span class="p">(</span><span class="s2">&quot;2003-12-31&quot;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">ROIMB8</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ROIMB8</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Explicit dates of related measures must be within the validity period of</span>
 <span class="sd">    the base regulation.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ROIMB8.validate"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB8.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regulation</span><span class="p">):</span>
+<div class="viewcode-block" id="ROIMB8.validate"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB8.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regulation</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">regulation</span><span class="o">.</span><span class="n">measure_set</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">generating_regulation__regulation_id</span><span class="o">=</span><span class="n">regulation</span><span class="o">.</span><span class="n">regulation_id</span><span class="p">,</span>
@@ -171,7 +171,7 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">regulation</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ROIMB44"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB44">[docs]</a><span class="k">class</span> <span class="nc">ROIMB44</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="ROIMB44"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB44">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ROIMB44</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The &quot;Regulation Approved Flag&quot; indicates for a draft regulation whether the</span>
 <span class="sd">    draft is approved, i.e. the regulation is definitive apart from its</span>
@@ -187,7 +187,7 @@
     <span class="c1"># We need to work on the draft –&gt; live status however, as we have not yet worked</span>
     <span class="c1"># this through</span>
 
-<div class="viewcode-block" id="ROIMB44.validate"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB44.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regulation</span><span class="p">):</span>
+<div class="viewcode-block" id="ROIMB44.validate"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB44.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regulation</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">regulation</span><span class="o">.</span><span class="n">is_draft_regulation</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">regulation</span><span class="o">.</span><span class="n">approved</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="nb">type</span><span class="p">(</span><span class="n">regulation</span><span class="p">)</span>
@@ -216,7 +216,7 @@
             <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ROIMB46"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB46">[docs]</a><span class="k">class</span> <span class="nc">ROIMB46</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
+<div class="viewcode-block" id="ROIMB46"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB46">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ROIMB46</span><span class="p">(</span><span class="n">PreventDeleteIfInUse</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A base regulation cannot be deleted if it is used as a justification</span>
 <span class="sd">    regulation, except for ‘C’ regulations used only in measures as both</span>
 <span class="sd">    measure-generating regulation and justification regulation.&quot;&quot;&quot;</span>
@@ -230,7 +230,7 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ROIMB47"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB47">[docs]</a><span class="k">class</span> <span class="nc">ROIMB47</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
+<div class="viewcode-block" id="ROIMB47"><a class="viewcode-back" href="../../business_rules/regulations.html#regulations.business_rules.ROIMB47">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ROIMB47</span><span class="p">(</span><span class="n">ValidityPeriodContained</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The validity period of the regulation group id must span the validity</span>
 <span class="sd">    period of the base regulation.&quot;&quot;&quot;</span>
 

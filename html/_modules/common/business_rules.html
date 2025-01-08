@@ -129,39 +129,39 @@
   <h1>Source code for common.business_rules</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Base classes for business rules and violations.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Mapping</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Set</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Type</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">QuerySet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuerySet</span>
 
-<span class="kn">from</span> <span class="nn">common.models.mixins.validity</span> <span class="kn">import</span> <span class="n">ValidityMixin</span>
-<span class="kn">from</span> <span class="nn">common.models.tracked_utils</span> <span class="kn">import</span> <span class="n">get_relations</span>
-<span class="kn">from</span> <span class="nn">common.models.trackedmodel</span> <span class="kn">import</span> <span class="n">TrackedModel</span>
-<span class="kn">from</span> <span class="nn">common.models.utils</span> <span class="kn">import</span> <span class="n">override_current_transaction</span>
-<span class="kn">from</span> <span class="nn">common.util</span> <span class="kn">import</span> <span class="n">get_field_tuple</span>
-<span class="kn">from</span> <span class="nn">common.validators</span> <span class="kn">import</span> <span class="n">UpdateType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.mixins.validity</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidityMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.tracked_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_relations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.trackedmodel</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrackedModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.models.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">override_current_transaction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_field_tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">UpdateType</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="BusinessRuleViolation"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRuleViolation">[docs]</a><span class="k">class</span> <span class="nc">BusinessRuleViolation</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="BusinessRuleViolation"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRuleViolation">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">BusinessRuleViolation</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for business rule violations.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="BusinessRuleViolation.default_message"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRuleViolation.default_message">[docs]</a>    <span class="k">def</span> <span class="nf">default_message</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<div class="viewcode-block" id="BusinessRuleViolation.default_message"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRuleViolation.default_message">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">default_message</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the first paragraph of the class docstring (if it exists) to use as</span>
 <span class="sd">        the error message.</span>
@@ -178,7 +178,7 @@
 
         <span class="k">return</span> <span class="kc">None</span></div>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">message</span><span class="p">:</span>
@@ -190,7 +190,7 @@
 <span class="n">ALL_RULES</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="BusinessRuleBase"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRuleBase">[docs]</a><span class="k">class</span> <span class="nc">BusinessRuleBase</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+<div class="viewcode-block" id="BusinessRuleBase"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRuleBase">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">BusinessRuleBase</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Metaclass for all BusinessRules.</span>
 
@@ -201,7 +201,7 @@
 
     <span class="n">Violation</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRuleViolation</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">parents</span> <span class="o">=</span> <span class="p">[</span><span class="n">parent</span> <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">bases</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">BusinessRuleBase</span><span class="p">)]</span>
 
         <span class="c1"># do not initialize base class</span>
@@ -241,16 +241,16 @@
         <span class="k">return</span> <span class="n">new_class</span></div>
 
 
-<div class="viewcode-block" id="BusinessRule"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRule">[docs]</a><span class="k">class</span> <span class="nc">BusinessRule</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">BusinessRuleBase</span><span class="p">):</span>
+<div class="viewcode-block" id="BusinessRule"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRule">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">BusinessRule</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">BusinessRuleBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a TARIC business rule.&quot;&quot;&quot;</span>
 
     <span class="n">Violation</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRuleViolation</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span> <span class="o">=</span> <span class="n">transaction</span>
 
 <div class="viewcode-block" id="BusinessRule.get_linked_models"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRule.get_linked_models">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">get_linked_models</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_linked_models</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">],</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">,</span>
         <span class="n">transaction</span><span class="p">,</span>
@@ -284,7 +284,7 @@
                         <span class="c1"># skip running business rules against deleted things.</span>
                         <span class="k">continue</span></div>
 
-<div class="viewcode-block" id="BusinessRule.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRule.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="BusinessRule.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRule.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform business rule validation.</span>
 
@@ -292,7 +292,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="BusinessRule.violation"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRule.violation">[docs]</a>    <span class="k">def</span> <span class="nf">violation</span><span class="p">(</span>
+<div class="viewcode-block" id="BusinessRule.violation"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.BusinessRule.violation">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">violation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -314,7 +314,7 @@
         <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="only_applicable_after"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.only_applicable_after">[docs]</a><span class="k">def</span> <span class="nf">only_applicable_after</span><span class="p">(</span><span class="n">cutoff</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
+<div class="viewcode-block" id="only_applicable_after"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.only_applicable_after">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">only_applicable_after</span><span class="p">(</span><span class="n">cutoff</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Decorate BusinessRules to make them only applicable after a given date.</span>
 
@@ -328,7 +328,7 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cutoff</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
         <span class="n">cutoff</span> <span class="o">=</span> <span class="n">cutoff</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Keep a copy of the wrapped model&#39;s original validation method and only</span>
 <span class="sd">        call it if the model&#39;s validity start date is after the given date.</span>
@@ -340,7 +340,7 @@
         <span class="n">_original_validate</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span>
 
         <span class="nd">@wraps</span><span class="p">(</span><span class="n">_original_validate</span><span class="p">)</span>
-        <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
             <span class="n">rule_should_apply</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;valid_between&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">valid_between</span><span class="o">.</span><span class="n">lower</span> <span class="o">&gt;</span> <span class="n">cutoff</span>
             <span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;validity_start&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">validity_start</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">)</span>
@@ -356,7 +356,7 @@
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 
-<div class="viewcode-block" id="skip_when_update_type"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.skip_when_update_type">[docs]</a><span class="k">def</span> <span class="nf">skip_when_update_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">],</span> <span class="n">update_types</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">UpdateType</span><span class="p">]):</span>
+<div class="viewcode-block" id="skip_when_update_type"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.skip_when_update_type">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">skip_when_update_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">],</span> <span class="n">update_types</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">UpdateType</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Skip business rule validation for given update types.</span>
 
@@ -368,7 +368,7 @@
     <span class="n">_original_validate</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">_original_validate</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">update_type</span> <span class="ow">in</span> <span class="n">update_types</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Skipping </span><span class="si">%s</span><span class="s2">: update_type is </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">update_type</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -378,7 +378,7 @@
     <span class="k">return</span> <span class="bp">cls</span></div>
 
 
-<div class="viewcode-block" id="skip_when_deleted"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.skip_when_deleted">[docs]</a><span class="k">def</span> <span class="nf">skip_when_deleted</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">]):</span>
+<div class="viewcode-block" id="skip_when_deleted"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.skip_when_deleted">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">skip_when_deleted</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Skip business rule when the model is being deleted.</span>
 
@@ -387,7 +387,7 @@
     <span class="k">return</span> <span class="n">skip_when_update_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="p">(</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">DELETE</span><span class="p">,))</span></div>
 
 
-<div class="viewcode-block" id="skip_when_not_deleted"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.skip_when_not_deleted">[docs]</a><span class="k">def</span> <span class="nf">skip_when_not_deleted</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">]):</span>
+<div class="viewcode-block" id="skip_when_not_deleted"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.skip_when_not_deleted">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">skip_when_not_deleted</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BusinessRule</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Skip business rule when the model is not being deleted.</span>
 
@@ -396,12 +396,12 @@
     <span class="k">return</span> <span class="n">skip_when_update_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="p">(</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">CREATE</span><span class="p">,</span> <span class="n">UpdateType</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="UniqueIdentifyingFields"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.UniqueIdentifyingFields">[docs]</a><span class="k">class</span> <span class="nc">UniqueIdentifyingFields</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="UniqueIdentifyingFields"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.UniqueIdentifyingFields">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">UniqueIdentifyingFields</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Rule enforcing identifying fields are unique.&quot;&quot;&quot;</span>
 
     <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="UniqueIdentifyingFields.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.UniqueIdentifyingFields.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="UniqueIdentifyingFields.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.UniqueIdentifyingFields.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check no other model has the same identifying fields, except other</span>
 <span class="sd">        versions of the same model.</span>
@@ -422,13 +422,13 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="NoOverlapping"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.NoOverlapping">[docs]</a><span class="k">class</span> <span class="nc">NoOverlapping</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="NoOverlapping"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.NoOverlapping">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">NoOverlapping</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Rule enforcing no overlapping validity periods of instances of a</span>
 <span class="sd">    model.&quot;&quot;&quot;</span>
 
     <span class="n">identifying_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="NoOverlapping.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.NoOverlapping.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="NoOverlapping.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.NoOverlapping.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check other models with the same identifying fields do not have</span>
 <span class="sd">        overlapping validity periods, except other versions of the same model.</span>
@@ -450,13 +450,13 @@
 
 
 <div class="viewcode-block" id="PreventDeleteIfInUse"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.PreventDeleteIfInUse">[docs]</a><span class="nd">@skip_when_not_deleted</span>
-<span class="k">class</span> <span class="nc">PreventDeleteIfInUse</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PreventDeleteIfInUse</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Rule preventing deleting an in-use model.&quot;&quot;&quot;</span>
 
     <span class="n">in_use_check</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;in_use&quot;</span>
     <span class="n">via_relation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="PreventDeleteIfInUse.has_violation"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.PreventDeleteIfInUse.has_violation">[docs]</a>    <span class="k">def</span> <span class="nf">has_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="PreventDeleteIfInUse.has_violation"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.PreventDeleteIfInUse.has_violation">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">has_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return True if the given model instance is &quot;in use&quot; - determined by calling the</span>
 <span class="sd">        method on the model instance named in ``self.in_use_check``.</span>
@@ -467,7 +467,7 @@
         <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">via_relation</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">via_relation</span> <span class="k">else</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_use_check</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">,</span> <span class="o">*</span><span class="n">names</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="PreventDeleteIfInUse.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.PreventDeleteIfInUse.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="PreventDeleteIfInUse.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.PreventDeleteIfInUse.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check whether the specified model violates this business rule.</span>
 
@@ -481,7 +481,7 @@
         <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Passed </span><span class="si">%s</span><span class="s2">: Not in use&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ValidityPeriodContained"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContained">[docs]</a><span class="k">class</span> <span class="nc">ValidityPeriodContained</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="ValidityPeriodContained"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContained">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ValidityPeriodContained</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Rule enforcing validity period of a container object completely contains the</span>
 <span class="sd">    validity period of one more contained objects.</span>
@@ -535,7 +535,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Any extra filters that should be applied to filter the contained</span>
 <span class="sd">    objects.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">violating_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">ValidityMixin</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">violating_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">TrackedModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">ValidityMixin</span><span class="p">]:</span>
         <span class="n">current</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
 
         <span class="c1"># Resolve our way to the contained models. The output from `follow_path`</span>
@@ -567,13 +567,13 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="ValidityPeriodContained.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContained.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="ValidityPeriodContained.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityPeriodContained.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">override_current_transaction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">violating_models</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="MustExist"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExist">[docs]</a><span class="k">class</span> <span class="nc">MustExist</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="MustExist"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExist">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">MustExist</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Rule enforcing a referenced record exists.&quot;&quot;&quot;</span>
 
     <span class="c1"># TODO does this need to verify that the referenced record&#39;s validity period is</span>
@@ -581,7 +581,7 @@
 
     <span class="n">reference_field_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="MustExist.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExist.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="MustExist.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExist.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_field_name</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
@@ -594,13 +594,13 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="MustExistNotNull"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExistNotNull">[docs]</a><span class="k">class</span> <span class="nc">MustExistNotNull</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="MustExistNotNull"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExistNotNull">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">MustExistNotNull</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Rule enforcing a referenced record exists, Null values raise</span>
 <span class="sd">    violation.&quot;&quot;&quot;</span>
 
     <span class="n">reference_field_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="MustExistNotNull.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExistNotNull.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="MustExistNotNull.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.MustExistNotNull.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_field_name</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
@@ -608,7 +608,7 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ValidityStartDateRules"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityStartDateRules">[docs]</a><span class="k">class</span> <span class="nc">ValidityStartDateRules</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="ValidityStartDateRules"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityStartDateRules">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ValidityStartDateRules</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Repeated rule pattern for descriptions.&quot;&quot;&quot;</span>
 
     <span class="n">messages</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -620,7 +620,7 @@
     <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span>
 
-    <span class="k">def</span> <span class="nf">generate_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">message_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_violation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">message_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">[</span><span class="n">message_key</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
             <span class="n">item</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">item_name</span><span class="p">,</span>
@@ -628,10 +628,10 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclass should implement get_objects&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ValidityStartDateRules.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityStartDateRules.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="ValidityStartDateRules.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ValidityStartDateRules.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="n">objects</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_objects</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;validity_start&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -654,24 +654,24 @@
 
 
 <div class="viewcode-block" id="DescriptionsRules"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.DescriptionsRules">[docs]</a><span class="nd">@skip_when_deleted</span>
-<span class="k">class</span> <span class="nc">DescriptionsRules</span><span class="p">(</span><span class="n">ValidityStartDateRules</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DescriptionsRules</span><span class="p">(</span><span class="n">ValidityStartDateRules</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Repeated rule pattern for descriptions.&quot;&quot;&quot;</span>
 
     <span class="n">item_name</span> <span class="o">=</span> <span class="s2">&quot;description&quot;</span>
 
-    <span class="k">def</span> <span class="nf">get_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_descriptions</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="NoBlankDescription"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.NoBlankDescription">[docs]</a><span class="k">class</span> <span class="nc">NoBlankDescription</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="NoBlankDescription"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.NoBlankDescription">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">NoBlankDescription</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Descriptions should not be blank.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="NoBlankDescription.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.NoBlankDescription.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="NoBlankDescription.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.NoBlankDescription.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">description</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="FootnoteApplicability"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.FootnoteApplicability">[docs]</a><span class="k">class</span> <span class="nc">FootnoteApplicability</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="FootnoteApplicability"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.FootnoteApplicability">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">FootnoteApplicability</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check that a footnote type can be applied to a certain model, based on</span>
 <span class="sd">    the set of :class:`~footnote.validators.ApplicationCode` that the model</span>
 <span class="sd">    reports is valid for itself.&quot;&quot;&quot;</span>
@@ -687,7 +687,7 @@
     <span class="n">footnote_type_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;associated_footnote__footnote_type&quot;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The field containing a footnote type to check for applicability.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="FootnoteApplicability.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.FootnoteApplicability.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="FootnoteApplicability.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.FootnoteApplicability.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="n">applicable_model</span> <span class="o">=</span> <span class="n">get_field_tuple</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">applicable_field</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">footnote_type</span> <span class="o">=</span> <span class="n">get_field_tuple</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">footnote_type_field</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
 
@@ -698,14 +698,14 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ExclusionMembership"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ExclusionMembership">[docs]</a><span class="k">class</span> <span class="nc">ExclusionMembership</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="ExclusionMembership"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ExclusionMembership">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ExclusionMembership</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The excluded geographical area must be a member of the geographical area</span>
 <span class="sd">    group.&quot;&quot;&quot;</span>
 
     <span class="n">excluded_from</span><span class="p">:</span> <span class="nb">str</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The object that the geographical area is excluded from.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ExclusionMembership.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ExclusionMembership.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
+<div class="viewcode-block" id="ExclusionMembership.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.ExclusionMembership.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclusion</span><span class="p">):</span>
         <span class="n">geo_group</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exclusion</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">excluded_from</span><span class="p">)</span><span class="o">.</span><span class="n">geographical_area</span>
         <span class="n">Membership</span> <span class="o">=</span> <span class="n">geo_group</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s2">&quot;members&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">related_model</span>
 
@@ -720,7 +720,7 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">violation</span><span class="p">(</span><span class="n">exclusion</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="UpdateValidity"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.UpdateValidity">[docs]</a><span class="k">class</span> <span class="nc">UpdateValidity</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
+<div class="viewcode-block" id="UpdateValidity"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.UpdateValidity">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">UpdateValidity</span><span class="p">(</span><span class="n">BusinessRule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The update type of this object must be valid.</span>
 
@@ -730,7 +730,7 @@
 <span class="sd">    transaction.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="UpdateValidity.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.UpdateValidity.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="UpdateValidity.validate"><a class="viewcode-back" href="../../business_rules/common.html#common.business_rules.UpdateValidity.validate">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="n">existing_objects</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">version_group</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">version_group</span><span class="p">,</span>
