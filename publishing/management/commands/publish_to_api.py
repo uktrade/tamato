@@ -53,7 +53,7 @@ class Command(BaseCommand):
             for i, crowndependencies in enumerate(incomplete, start=1):
                 self.print_envelope_details(
                     position=i,
-                    envelope=crowndependencies.packagedworkbaskets.last(),
+                    envelope=crowndependencies.packagedworkbaskets.last().envelope,
                 )
         if unpublished:
             self.stdout.write(
