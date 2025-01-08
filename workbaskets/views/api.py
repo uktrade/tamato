@@ -1,3 +1,4 @@
+from rest_framework import permissions
 from rest_framework import renderers
 from rest_framework import viewsets
 
@@ -16,6 +17,10 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
         renderers.JSONRenderer,
         renderers.BrowsableAPIRenderer,
         TaricXMLRenderer,
+    ]
+    permission_classes = [
+        permissions.IsAuthenticated,
+        permissions.DjangoModelPermissions,
     ]
     search_fields = ["title"]
 
