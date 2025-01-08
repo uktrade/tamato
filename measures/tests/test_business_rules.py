@@ -34,6 +34,7 @@ pytestmark = pytest.mark.django_db
 # 140 - MEASURE TYPE SERIES
 
 
+@pytest.mark.business_rules
 def test_MTS1(assert_handles_duplicates):
     """The measure type series must be unique."""
     assert_handles_duplicates(
@@ -42,6 +43,7 @@ def test_MTS1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_MTS2(delete_record):
     """The measure type series cannot be deleted if it is associated with a
     measure type."""
@@ -53,6 +55,7 @@ def test_MTS2(delete_record):
         business_rules.MTS2(deleted.transaction).validate(deleted)
 
 
+@pytest.mark.business_rules
 def test_MTS3(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -63,6 +66,7 @@ def test_MTS3(date_ranges):
 # 235 - MEASURE TYPE
 
 
+@pytest.mark.business_rules
 def test_MT1(assert_handles_duplicates):
     """The measure type code must be unique."""
     assert_handles_duplicates(
@@ -71,6 +75,7 @@ def test_MT1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_MT2(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -78,6 +83,7 @@ def test_MT2(date_ranges):
         factories.MeasureTypeFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 def test_MT3(assert_spanning_enforced):
     """When a measure type is used in a measure then the validity period of the
     measure type must span the validity period of the measure."""
@@ -91,6 +97,7 @@ def test_MT3(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_MT4(reference_nonexistent_record):
     """The referenced measure type series must exist."""
 
@@ -102,6 +109,7 @@ def test_MT4(reference_nonexistent_record):
             business_rules.MT4(measure_type.transaction).validate(measure_type)
 
 
+@pytest.mark.business_rules
 def test_MT7(delete_record):
     """A measure type can not be deleted if it is used in a measure."""
 
@@ -111,6 +119,7 @@ def test_MT7(delete_record):
         business_rules.MT7(deleted.transaction).validate(deleted)
 
 
+@pytest.mark.business_rules
 def test_MT10(assert_spanning_enforced):
     """The validity period of the measure type series must span the validity
     period of the measure type."""
@@ -124,6 +133,7 @@ def test_MT10(assert_spanning_enforced):
 # 350 - MEASURE CONDITION CODE
 
 
+@pytest.mark.business_rules
 def test_MC1(assert_handles_duplicates):
     """The code of the measure condition code must be unique."""
     assert_handles_duplicates(
@@ -132,6 +142,7 @@ def test_MC1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_MC2(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -141,6 +152,7 @@ def test_MC2(date_ranges):
         )
 
 
+@pytest.mark.business_rules
 def test_MC3(assert_spanning_enforced):
     """If a measure condition code is used in a measure then the validity period
     of the measure condition code must span the validity period of the
@@ -151,6 +163,7 @@ def test_MC3(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_MC4(delete_record):
     """The measure condition code cannot be deleted if it is used in a measure
     condition component."""
@@ -164,6 +177,7 @@ def test_MC4(delete_record):
 # 355 - MEASURE ACTION
 
 
+@pytest.mark.business_rules
 def test_MA1(assert_handles_duplicates):
     """The code of the measure action must be unique."""
     assert_handles_duplicates(
@@ -172,6 +186,7 @@ def test_MA1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_MA2(delete_record):
     """The measure action can not be deleted if it is used in a measure
     condition component."""
@@ -183,6 +198,7 @@ def test_MA2(delete_record):
         business_rules.MA2(deleted.transaction).validate(deleted)
 
 
+@pytest.mark.business_rules
 def test_MA3(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -190,6 +206,7 @@ def test_MA3(date_ranges):
         factories.MeasureActionFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 def test_MA4(assert_spanning_enforced):
     """If a measure action is used in a measure then the validity period of the
     measure action must span the validity period of the measure."""
@@ -202,6 +219,7 @@ def test_MA4(assert_spanning_enforced):
 # 430 - MEASURE
 
 
+@pytest.mark.business_rules
 def test_ME1(assert_handles_duplicates):
     """
     The combination of measure type + geographical area + goods nomenclature
@@ -225,6 +243,7 @@ def test_ME1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_ME2(reference_nonexistent_record):
     """The measure type must exist."""
 
@@ -236,6 +255,7 @@ def test_ME2(reference_nonexistent_record):
             business_rules.ME2(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME3(assert_spanning_enforced):
     """The validity period of the measure type must span the validity period of
     the measure."""
@@ -245,6 +265,7 @@ def test_ME3(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ME4(reference_nonexistent_record):
     """The geographical area must exist."""
 
@@ -256,6 +277,7 @@ def test_ME4(reference_nonexistent_record):
             business_rules.ME4(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME5(assert_spanning_enforced):
     """The validity period of the geographical area must span the validity
     period of the measure."""
@@ -265,6 +287,7 @@ def test_ME5(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ME6(reference_nonexistent_record):
     """The goods code must exist."""
 
@@ -285,12 +308,14 @@ def test_ME6(reference_nonexistent_record):
             business_rules.ME6(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME6_happy(reference_nonexistent_record):
     measure = factories.MeasureFactory.create()
 
     assert business_rules.ME6(measure.transaction).validate(measure) is None
 
 
+@pytest.mark.business_rules
 def test_ME6_null_goods(reference_nonexistent_record):
     measure = factories.MeasureFactory.create(
         goods_nomenclature__suffix="00",
@@ -301,6 +326,7 @@ def test_ME6_null_goods(reference_nonexistent_record):
         business_rules.ME6(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME7():
     """The goods nomenclature code must be a product code; that is, it may not
     be an intermediate line."""
@@ -313,6 +339,7 @@ def test_ME7():
     business_rules.ME7(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME8(assert_spanning_enforced):
     """The validity period of the goods code must span the validity period of
     the measure."""
@@ -322,6 +349,7 @@ def test_ME8(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ME88():
     """The level of the goods code, if present, cannot exceed the explosion
     level of the measure type."""
@@ -337,6 +365,7 @@ def test_ME88():
         business_rules.ME88(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME115(assert_spanning_enforced):
     """The validity period of the referenced additional code must span the
     validity period of the measure."""
@@ -346,6 +375,7 @@ def test_ME115(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("measure_dates", "regulation_dates", "regulation_effective_end", "error_expected"),
     (
@@ -382,6 +412,7 @@ def test_ME25(
         business_rules.ME25(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME10():
     """
     The order number must be specified if the "order number flag" (specified in
@@ -407,6 +438,7 @@ def test_ME10():
         business_rules.ME10(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @only_applicable_after("2007-12-31")
 def test_ME116(date_ranges):
     """
@@ -424,6 +456,7 @@ def test_ME116(date_ranges):
         business_rules.ME116(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @only_applicable_after("2007-12-31")
 def test_ME117():
     """
@@ -455,6 +488,7 @@ def test_ME117():
     business_rules.ME117(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Duplicate of ME116")
 def test_ME118():
     """
@@ -467,6 +501,7 @@ def test_ME118():
     assert False
 
 
+@pytest.mark.business_rules
 @only_applicable_after("2007-12-31")
 def test_ME119(date_ranges):
     """
@@ -486,6 +521,7 @@ def test_ME119(date_ranges):
 
 
 # https://uktrade.atlassian.net/browse/TP2000-411
+@pytest.mark.business_rules
 def test_ME119_multiple_valid_origins():
     """Tests that it is possible to create two measures with the same quota
     order number for non-overlapping periods both covered by separate quota
@@ -510,6 +546,7 @@ def test_ME119_multiple_valid_origins():
     business_rules.ME119(later_measure.transaction).validate(later_measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.s
 def test_ME119_skipped_when_deleted(capfd):
     measure = factories.MeasureFactory.create(update_type=UpdateType.DELETE)
@@ -518,6 +555,7 @@ def test_ME119_skipped_when_deleted(capfd):
     assert "Skipping ME119: update_type is 2" in capfd.readouterr().err
 
 
+@pytest.mark.business_rules
 def test_quota_origin_matching_area():
     origin = factories.QuotaOrderNumberOriginFactory.create(
         geographical_area__sid="666",
@@ -534,6 +572,7 @@ def test_quota_origin_matching_area():
 # -- Relation with additional codes
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "additional_code, goods_nomenclature, expect_error",
     [
@@ -573,6 +612,7 @@ def test_ME9(additional_code, goods_nomenclature, expect_error):
         business_rules.ME9(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME12():
     """If the additional code is specified then the additional code type must
     have a relationship with the measure type."""
@@ -594,6 +634,7 @@ def test_ME12():
     business_rules.ME12(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME12_after_measure_type_updated():
     additional_code = factories.AdditionalCodeFactory.create()
     measure_type = factories.MeasureTypeFactory.create()
@@ -610,6 +651,7 @@ def test_ME12_after_measure_type_updated():
     business_rules.ME12(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @requires_meursing_tables
 def test_ME13():
     """If the additional code type is related to a Meursing table plan then only
@@ -618,6 +660,7 @@ def test_ME13():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_meursing_tables
 def test_ME14():
     """If the additional code type is related to a Meursing table plan then the
@@ -625,6 +668,7 @@ def test_ME14():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_meursing_tables
 def test_ME15():
     """If the additional code type is related to a Meursing table plan then the
@@ -633,6 +677,7 @@ def test_ME15():
     assert False
 
 
+@pytest.mark.business_rules
 def test_ME17(reference_nonexistent_record):
     """
     If the additional code type has as application "non-Meursing" then the
@@ -650,6 +695,7 @@ def test_ME17(reference_nonexistent_record):
             business_rules.ME17(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="No meursing, so duplicate of ME115")
 def test_ME18():
     """If the additional code type has as application "non-Meursing" then the
@@ -660,6 +706,7 @@ def test_ME18():
 # -- Export Refund nomenclature measures
 
 
+@pytest.mark.business_rules
 @requires_export_refund_nomenclature
 def test_ME19():
     """If the additional code type has as application "ERN" then the goods code
@@ -667,6 +714,7 @@ def test_ME19():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_export_refund_nomenclature
 def test_ME21():
     """If the additional code type has as application "ERN" then the combination
@@ -678,6 +726,7 @@ def test_ME21():
 # -- Export Refund for Processed Agricultural Goods measures
 
 
+@pytest.mark.business_rules
 @requires_export_refund_nomenclature
 def test_ME112():
     """If the additional code type has as application "Export Refund for
@@ -686,6 +735,7 @@ def test_ME112():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_export_refund_nomenclature
 def test_ME113():
     """If the additional code type has as application "Export Refund for
@@ -694,6 +744,7 @@ def test_ME113():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_export_refund_nomenclature
 def test_ME114():
     """If the additional code type has as application "Export Refund for
@@ -706,6 +757,7 @@ def test_ME114():
 # -- Relation with regulations
 
 
+@pytest.mark.business_rules
 def test_ME24(reference_nonexistent_record):
     """
     The role + regulation id must exist.
@@ -722,6 +774,7 @@ def test_ME24(reference_nonexistent_record):
             business_rules.ME24(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="All UK tariff regulations are Base regulations")
 def test_ME86():
     """The role of the entered regulation must be a Base, a Modification, a
@@ -729,6 +782,7 @@ def test_ME86():
     assert False
 
 
+@pytest.mark.business_rules
 def test_ME87(date_ranges):
     """
     The validity period of the measure (implicit or explicit) must reside within
@@ -771,6 +825,7 @@ def test_ME87(date_ranges):
         business_rules.ME87(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(
     reason="Abrogation, modification and replacement regulations are not used",
 )
@@ -778,6 +833,7 @@ def test_ME26():
     """The entered regulation may not be completely abrogated."""
 
 
+@pytest.mark.business_rules
 def test_ME27(spanning_dates):
     """The entered regulation may not be fully replaced."""
     replacement_dates, regulation_dates, fully_spanned = spanning_dates
@@ -793,6 +849,7 @@ def test_ME27(spanning_dates):
         business_rules.ME27(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(
     reason="Abrogation, modification and replacement regulations are not used",
 )
@@ -802,6 +859,7 @@ def test_ME28():
     the measure."""
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(
     reason="Abrogation, modification and replacement regulations are not used",
 )
@@ -810,6 +868,7 @@ def test_ME29():
     regulation may not be completely abrogated."""
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("terminating_regulation", "error_expected"),
     (
@@ -840,6 +899,7 @@ def test_ME33(terminating_regulation, date_ranges, error_expected):
         business_rules.ME33(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("terminating_regulation", "error_expected"),
     (
@@ -873,6 +933,7 @@ def test_ME34(terminating_regulation, date_ranges, error_expected):
 # -- Measure component
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("applicability_code", "component", "condition_component", "error_expected"),
     [
@@ -927,6 +988,7 @@ def test_ME40(applicability_code, component, condition_component, error_expected
         ).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.s
 def test_ME40_skipped_when_deleted(capfd):
     measure = factories.MeasureFactory.create(update_type=UpdateType.DELETE)
@@ -935,6 +997,7 @@ def test_ME40_skipped_when_deleted(capfd):
     assert "Skipping ME40: update_type is 2" in capfd.readouterr().err
 
 
+@pytest.mark.business_rules
 def test_ME41(reference_nonexistent_record):
     """The referenced duty expression must exist."""
 
@@ -946,6 +1009,7 @@ def test_ME41(reference_nonexistent_record):
             business_rules.ME41(component.transaction).validate(component)
 
 
+@pytest.mark.business_rules
 def test_ME42(assert_spanning_enforced):
     """The validity period of the duty expression must span the validity period
     of the measure."""
@@ -955,6 +1019,7 @@ def test_ME42(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ME43():
     """
     The same duty expression can only be used once with the same measure.
@@ -974,6 +1039,7 @@ def test_ME43():
         business_rules.ME43(component.transaction).validate(component)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "applicability_code, amount",
     [
@@ -1000,6 +1066,7 @@ def test_ME45(applicability_code, amount):
         business_rules.ME45(component.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "applicability_code, monetary_unit",
     [
@@ -1029,6 +1096,7 @@ def test_ME46(applicability_code, monetary_unit):
         business_rules.ME46(component.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "applicability_code, measurement",
     [
@@ -1058,6 +1126,7 @@ def test_ME47(applicability_code, measurement):
         business_rules.ME47(component.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_ME48(reference_nonexistent_record):
     """The referenced monetary unit must exist."""
 
@@ -1069,6 +1138,7 @@ def test_ME48(reference_nonexistent_record):
             business_rules.ME48(component.transaction).validate(component)
 
 
+@pytest.mark.business_rules
 def test_ME49(assert_spanning_enforced):
     """The validity period of the referenced monetary unit must span the
     validity period of the measure."""
@@ -1078,6 +1148,7 @@ def test_ME49(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ME50(reference_nonexistent_record):
     """The combination of measurement unit and measurement unit qualifier must
     exist."""
@@ -1090,6 +1161,7 @@ def test_ME50(reference_nonexistent_record):
             business_rules.ME50(component.transaction).validate(component)
 
 
+@pytest.mark.business_rules
 def test_ME51(assert_spanning_enforced):
     """The validity period of the measurement unit must span the validity period
     of the measure."""
@@ -1099,6 +1171,7 @@ def test_ME51(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ME52(assert_spanning_enforced):
     """The validity period of the measurement unit qualifier must span the
     validity period of the measure."""
@@ -1111,6 +1184,7 @@ def test_ME52(assert_spanning_enforced):
 # -- Measure condition and Measure condition component
 
 
+@pytest.mark.business_rules
 def test_ME53(reference_nonexistent_record):
     """The referenced measure condition must exist."""
 
@@ -1122,6 +1196,7 @@ def test_ME53(reference_nonexistent_record):
             business_rules.ME53(component.transaction).validate(component)
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Erroneous business rule")
 def test_ME54():
     """
@@ -1136,6 +1211,7 @@ def test_ME54():
     """
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Erroneous business rule")
 def test_ME55():
     """
@@ -1147,6 +1223,7 @@ def test_ME55():
     """
 
 
+@pytest.mark.business_rules
 def test_ME56(reference_nonexistent_record):
     """The referenced certificate must exist."""
 
@@ -1164,6 +1241,7 @@ def test_ME56(reference_nonexistent_record):
             business_rules.ME56(condition.transaction).validate(condition)
 
 
+@pytest.mark.business_rules
 def test_ME57(assert_spanning_enforced):
     """The validity period of the referenced certificate must span the validity
     period of the measure."""
@@ -1173,6 +1251,7 @@ def test_ME57(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize("existing_cert", (True, False))
 @pytest.mark.parametrize("existing_volume", (True, False))
 @pytest.mark.parametrize("existing_unit", (True, False))
@@ -1240,6 +1319,7 @@ def test_ME58(
         business_rules.ME58(duplicate.transaction).validate(duplicate)
 
 
+@pytest.mark.business_rules
 def test_ME59(reference_nonexistent_record):
     """The referenced action code must exist."""
 
@@ -1251,6 +1331,7 @@ def test_ME59(reference_nonexistent_record):
             business_rules.ME59(condition.transaction).validate(condition)
 
 
+@pytest.mark.business_rules
 def test_ME60(reference_nonexistent_record):
     """The referenced monetary unit must exist."""
 
@@ -1262,6 +1343,7 @@ def test_ME60(reference_nonexistent_record):
             business_rules.ME60(condition.transaction).validate(condition)
 
 
+@pytest.mark.business_rules
 def test_ME61(assert_spanning_enforced):
     """The validity period of the referenced monetary unit must span the
     validity period of the measure."""
@@ -1271,6 +1353,7 @@ def test_ME61(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ME62(reference_nonexistent_record):
     """The combination of measurement unit and measurement unit qualifier must
     exist."""
@@ -1283,6 +1366,7 @@ def test_ME62(reference_nonexistent_record):
             business_rules.ME62(condition.transaction).validate(condition)
 
 
+@pytest.mark.business_rules
 def test_ME63(assert_spanning_enforced):
     """The validity period of the measurement unit must span the validity period
     of the measure."""
@@ -1292,6 +1376,7 @@ def test_ME63(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ME64(assert_spanning_enforced):
     """The validity period of the measurement unit qualifier must span the
     validity period of the measure."""
@@ -1301,6 +1386,7 @@ def test_ME64(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_ME105(reference_nonexistent_record):
     """The referenced duty expression must exist."""
 
@@ -1312,6 +1398,7 @@ def test_ME105(reference_nonexistent_record):
             business_rules.ME105(component.transaction).validate(component)
 
 
+@pytest.mark.business_rules
 def test_ME106(assert_spanning_enforced):
     """The validity period of the duty expression must span the validity period
     of the measure."""
@@ -1321,6 +1408,7 @@ def test_ME106(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "expression, same_condition, expect_error",
     [
@@ -1359,6 +1447,7 @@ def test_ME108(expression, same_condition, expect_error):
 
 # Even if a ConditionCode can accept either a certificate or a price,
 # a Condition should not be able to accept both at once
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "accepts_certificate, accepts_price",
     [
@@ -1388,6 +1477,7 @@ def test_ConditionCodeAcceptance_certificate_and_price(
         )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "accepts_certificate, accepts_price, expect_error",
     [
@@ -1420,6 +1510,7 @@ def test_ConditionCodeAcceptance_certificate(
         )
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "accepts_certificate, accepts_price, expect_error",
     [
@@ -1450,6 +1541,7 @@ def test_ConditionCodeAcceptance_price(
 
 
 # This is possible for Condition codes (e.g. 'W') that accept neither certificates nor price
+@pytest.mark.business_rules
 def test_ConditionCodeAcceptance_nothing_added():
     code = factories.MeasureConditionCodeFactory.create()
     condition = factories.MeasureConditionFactory.create(
@@ -1459,6 +1551,7 @@ def test_ConditionCodeAcceptance_nothing_added():
     business_rules.ConditionCodeAcceptance(condition.transaction).validate(condition)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     "requires_duty, duty_amount, expect_error",
     [
@@ -1486,6 +1579,7 @@ def test_ActionRequiresDuty(requires_duty, duty_amount, expect_error):
         business_rules.ActionRequiresDuty(condition.transaction).validate(condition)
 
 
+@pytest.mark.business_rules
 def test_ActionRequiresDuty_ignores_outdated_components():
     condition = factories.MeasureConditionFactory.create(action__requires_duty=True)
     component = factories.MeasureConditionComponentFactory.create(
@@ -1504,6 +1598,7 @@ def test_ActionRequiresDuty_ignores_outdated_components():
 
 
 # https://uktrade.atlassian.net/browse/TP2000-369  /PS-IGNORE
+@pytest.mark.business_rules
 def test_ActionRequiresDuty_accepts_0_percent_duty():
     condition = factories.MeasureConditionFactory.create(action__requires_duty=True)
     factories.MeasureConditionComponentFactory.create(
@@ -1515,6 +1610,7 @@ def test_ActionRequiresDuty_accepts_0_percent_duty():
     business_rules.ActionRequiresDuty(condition.transaction).validate(condition)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("applicability_code", "amount", "error_expected"),
     [
@@ -1545,6 +1641,7 @@ def test_ME109(applicability_code, amount, error_expected):
         business_rules.ME109(condition.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("applicability_code", "monetary_unit", "error_expected"),
     [
@@ -1577,6 +1674,7 @@ def test_ME110(applicability_code, monetary_unit, error_expected):
         business_rules.ME110(condition.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("applicability_code", "measurement", "error_expected"),
     [
@@ -1613,6 +1711,7 @@ def test_ME111(applicability_code, measurement, error_expected):
 # -- Measure excluded geographical area
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("area_code", "error_expected"),
     (
@@ -1633,6 +1732,7 @@ def test_ME65(area_code, error_expected):
         business_rules.ME65(exclusion.transaction).validate(exclusion)
 
 
+@pytest.mark.business_rules
 def test_ME66():
     """The excluded geographical area must be a member of the geographical area
     group."""
@@ -1666,6 +1766,7 @@ def test_ME66():
         business_rules.ME66(exclusion.transaction).validate(exclusion)
 
 
+@pytest.mark.business_rules
 def test_ME68():
     """The same geographical area can only be excluded once by the same
     measure."""
@@ -1684,6 +1785,7 @@ def test_ME68():
 # -- Footnote association
 
 
+@pytest.mark.business_rules
 def test_ME69(reference_nonexistent_record):
     """The associated footnote must exist."""
 
@@ -1695,6 +1797,7 @@ def test_ME69(reference_nonexistent_record):
             business_rules.ME69(assoc.transaction).validate(assoc)
 
 
+@pytest.mark.business_rules
 def test_ME70():
     """The same footnote can only be associated once with the same measure."""
 
@@ -1710,6 +1813,7 @@ def test_ME70():
         business_rules.ME70(assoc.transaction).validate(assoc)
 
 
+@pytest.mark.business_rules
 @pytest.mark.parametrize(
     ("application_code", "item_id", "error_expected"),
     (
@@ -1740,6 +1844,7 @@ def test_ME71_ME72(application_code, item_id, error_expected):
         business_rules.ME71(assoc.transaction).validate(assoc)
 
 
+@pytest.mark.business_rules
 def test_ME73(assert_spanning_enforced):
     """The validity period of the associated footnote must span the validity
     period of the measure."""
@@ -1750,6 +1855,7 @@ def test_ME73(assert_spanning_enforced):
 
 
 # -- Partial temporary stop
+@pytest.mark.business_rules
 @requires_partial_temporary_stop
 def test_ME39():
     """The validity period of the measure must span the validity period of all
@@ -1757,12 +1863,14 @@ def test_ME39():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_partial_temporary_stop
 def test_ME74():
     """The start date of the PTS must be less than or equal to the end date."""
     assert False
 
 
+@pytest.mark.business_rules
 @requires_partial_temporary_stop
 def test_ME75():
     """The PTS regulation and abrogation regulation must be the same if the
@@ -1770,6 +1878,7 @@ def test_ME75():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_partial_temporary_stop
 def test_ME76():
     """The abrogation regulation may not be entered if the PTS end date is not
@@ -1777,6 +1886,7 @@ def test_ME76():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_partial_temporary_stop
 def test_ME77():
     """The abrogation regulation must be entered if the PTS end date is filled
@@ -1784,6 +1894,7 @@ def test_ME77():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_partial_temporary_stop
 def test_ME78():
     """The abrogation regulation must be different from the PTS regulation if
@@ -1791,6 +1902,7 @@ def test_ME78():
     assert False
 
 
+@pytest.mark.business_rules
 @requires_partial_temporary_stop
 def test_ME79():
     """There may be no overlap between different PTS periods."""
@@ -1800,6 +1912,7 @@ def test_ME79():
 # -- Justification regulation
 
 
+@pytest.mark.business_rules
 @pytest.mark.xfail(reason="confirm rule is needed")
 def test_ME104(date_ranges, unapproved_transaction):
     """
@@ -1837,12 +1950,14 @@ def test_ME104(date_ranges, unapproved_transaction):
         business_rules.ME104(measure.transaction).validate(measure)
 
 
+@pytest.mark.business_rules
 def test_measurement_unit_qualifier_is_optional():
     """In TARIC measurement unit qualifiers do not have to be used on every
     measure."""
     factories.MeasurementFactory.create(measurement_unit_qualifier=None)
 
 
+@pytest.mark.business_rules
 def test_unique_identifying_fields(assert_handles_duplicates):
     assert_handles_duplicates(
         factories.MeasureFactory,
