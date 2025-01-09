@@ -117,14 +117,7 @@ class TaskLogAdmin(admin.ModelAdmin):
     ]
 
 
-class TaskWorkflowTemplateAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "title",
-        "description",
-        "creator",
-    )
-
+class ReadOnlyAdminMixin:
     def has_add_permission(self, request):
         return False
 
@@ -135,7 +128,16 @@ class TaskWorkflowTemplateAdmin(admin.ModelAdmin):
         return False
 
 
-class TaskTemplateAdmin(admin.ModelAdmin):
+class TaskWorkflowTemplateAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
+    list_display = (
+        "id",
+        "title",
+        "description",
+        "creator",
+    )
+
+
+class TaskTemplateAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "title",
@@ -158,15 +160,6 @@ class TaskTemplateAdmin(admin.ModelAdmin):
         return mark_safe(
             f'<a href="{task_workflow_template_url}">{workflow_template_pk}</a>',
         )
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 class TaskWorflowAdmin(admin.ModelAdmin):
