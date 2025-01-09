@@ -68,7 +68,7 @@ class QuotaDefinitionUpdateForm(
         },
     )
     measurement_unit = forms.ModelChoiceField(
-        queryset=MeasurementUnit.objects.current(),
+        queryset=MeasurementUnit.objects.current().order_by("code"),
         error_messages={"required": "Select the measurement unit"},
     )
     quota_critical_threshold = forms.DecimalField(
@@ -99,9 +99,6 @@ class QuotaDefinitionUpdateForm(
         return super().clean()
 
     def init_fields(self):
-        self.fields["measurement_unit"].queryset = self.fields[
-            "measurement_unit"
-        ].queryset.order_by("code")
         self.fields["measurement_unit"].label_from_instance = (
             lambda obj: f"{obj.code} - {obj.description}"
         )
