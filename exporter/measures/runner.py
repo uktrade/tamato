@@ -1,4 +1,5 @@
 import csv
+import datetime
 import logging
 from tempfile import NamedTemporaryFile
 
@@ -40,8 +41,13 @@ def normalise_loglevel(loglevel):
 class MeasureExport:
     """Runs the export command against TAP data to extract Measure CSV data."""
 
-    def __init__(self, target_file: NamedTemporaryFile):
+    def __init__(
+        self,
+        target_file: NamedTemporaryFile,
+        include_future_measure: bool = False,
+    ):
         self.target_file = target_file
+        self.include_future_measure = include_future_measure
 
     @staticmethod
     def csv_headers():
@@ -184,10 +190,14 @@ class MeasureExport:
                 ),
             )
         )
+        # hard coded date for testing
+        filter_date = datetime.date(2025, 1, 7)
+        measure_base = ReportMeasure.objects.filter(sid__gte=20000000)
+        if not self.include_future_measure:
+            measure_base = measure_base.filter(valid_between__contains=filter_date)
 
         measures = (
-            ReportMeasure.objects.filter(sid__gte=20000000)
-            .select_related(
+            measure_base.select_related(
                 "trackedmodel_ptr",
                 "goods_nomenclature",
                 "order_number",
@@ -216,45 +226,78 @@ class MeasureExport:
                 id += 1
                 if id % 1000 == 0:
                     print(id)
-                if measure.additional_code:
-                    additional_code__code = f"{measure.additional_code.type.sid}{measure.additional_code.code}"
-                    additional_code__description = measure.additional_code.description
-                else:
-                    additional_code__code = ""
-                    additional_code__description = ""
 
                 (
-                    excluded_geographical_areas__ids,
-                    excluded_geographical_areas__descriptions,
+                    excluded_geographical_areas_ids,
+                    excluded_geographical_areas_descriptions,
                 ) = self.get_excluded_geographical_areas(measure)
+
+                if measure.additional_code:
+                    additional_code_code = f"{measure.additional_code.type.sid}{measure.additional_code.code}"
+                    additional_code_description = measure.additional_code.description
+                else:
+                    additional_code_code = ""
+                    additional_code_description = ""
+
                 if measure.order_number:
                     order_number = measure.order_number.order_number
                 else:
                     order_number = measure.dead_order_number
 
+                if measure.goods_nomenclature:
+                    goods_nomenclature_sid = measure.goods_nomenclature.sid
+                    goods_nomenclature_item_id = measure.goods_nomenclature.item_id
+                    goods_nomenclature_indent = measure.goods_nomenclature.indent
+                    goods_nomenclature_description = (
+                        measure.goods_nomenclature.description
+                    )
+                else:
+                    goods_nomenclature_sid = ""
+                    goods_nomenclature_item_id = ""
+                    goods_nomenclature_indent = ""
+                    goods_nomenclature_description = ""
+
+                if measure.geographical_area:
+                    geographical_area_sid = measure.geographical_area.sid
+                    geographical_area_area_id = measure.geographical_area.area_id
+                    geographical_area_description = (
+                        measure.geographical_area.description
+                    )
+                else:
+                    geographical_area_sid = ""
+                    geographical_area_area_id = ""
+                    geographical_area_description = ""
+
+                if measure.measure_type:
+                    measure_type_sid = measure.measure_type.sid
+                    measure_type_description = measure.measure_type.description
+                else:
+                    measure_type_sid = ""
+                    measure_type_description = ""
+
                 measure_data = [
                     id,
                     measure.trackedmodel_ptr_id,
-                    measure.goods_nomenclature.sid,
-                    measure.goods_nomenclature.item_id,
-                    measure.goods_nomenclature.indent,
-                    measure.goods_nomenclature.description,
+                    goods_nomenclature_sid,
+                    goods_nomenclature_item_id,
+                    goods_nomenclature_indent,
+                    goods_nomenclature_description,
                     measure.sid,
-                    measure.measure_type.sid,
-                    measure.measure_type.description,
-                    additional_code__code,
-                    additional_code__description,
+                    measure_type_sid,
+                    measure_type_description,
+                    additional_code_code,
+                    additional_code_description,
                     measure.duty_sentence,
                     measure.valid_between.lower,
                     measure.valid_between.upper,
                     measure.reduction,
                     measure.footnotes_id,
                     measure.conditions,
-                    measure.geographical_area.sid,
-                    measure.geographical_area.area_id,
-                    measure.geographical_area.description,
-                    excluded_geographical_areas__ids,
-                    excluded_geographical_areas__descriptions,
+                    geographical_area_sid,
+                    geographical_area_area_id,
+                    geographical_area_description,
+                    excluded_geographical_areas_ids,
+                    excluded_geographical_areas_descriptions,
                     order_number,
                     measure.generating_regulation.public_identifier,
                     measure.generating_regulation.url,
