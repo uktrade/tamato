@@ -5,8 +5,6 @@
 
 {% set page_title = "Find and view workflow templates" %}
 
-{% set base_url = url("workflow:task-workflow-template-ui-list") %}
-
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
@@ -52,8 +50,8 @@
           {"text": "Title"},
           {"text": "Description"},
           {"text": "Created by"},
-          {"text": create_sortable_anchor(request, "created_at", "Created", base_url)},
-          {"text": create_sortable_anchor(request, "updated_at", "Last updated", base_url)},
+          {"text": create_sortable_anchor(request, "created_at", "Created", base_url, query_params=True)},
+          {"text": create_sortable_anchor(request, "updated_at", "Last updated", base_url, query_params=True)},
         ],
           "rows": table_rows
         }) }}

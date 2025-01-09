@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.db.models import Model
 from django.db.models import QuerySet
 from django.http import Http404
+from django.http import QueryDict
 
 from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
@@ -162,3 +163,11 @@ class SortingMixin:
 
         else:
             return None
+
+    def clean_query_params(self) -> QueryDict:
+        """Returns a cleaned copy of query parameters having removed 'sort_by'
+        and 'ordered'."""
+        query_params = self.request.GET.copy()
+        query_params.pop("sort_by", None)
+        query_params.pop("ordered", None)
+        return query_params

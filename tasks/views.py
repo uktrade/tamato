@@ -59,6 +59,13 @@ class TaskListView(PermissionRequiredMixin, SortingMixin, WithPaginationListView
             queryset = queryset.order_by(*ordering)
         return queryset
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=object_list, **kwargs)
+        context["base_url"] = (
+            f"{reverse("workflow:task-ui-list")}?{self.clean_query_params().urlencode()}"
+        )
+        return context
+
 
 class TaskDetailView(PermissionRequiredMixin, DetailView):
     model = Task
@@ -298,6 +305,13 @@ class TaskWorkflowListView(
             queryset = queryset.order_by(*ordering)
         return queryset
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=object_list, **kwargs)
+        context["base_url"] = (
+            f"{reverse("workflow:task-workflow-ui-list")}?{self.clean_query_params().urlencode()}"
+        )
+        return context
+
 
 class TaskAndWorkflowListView(
     PermissionRequiredMixin,
@@ -319,6 +333,13 @@ class TaskAndWorkflowListView(
             queryset = queryset.order_by(*ordering)
         return queryset
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=object_list, **kwargs)
+        context["base_url"] = (
+            f"{reverse("workflow:task-and-workflow-ui-list")}?{self.clean_query_params().urlencode()}"
+        )
+        return context
+
 
 class TaskWorkflowTemplateListView(
     PermissionRequiredMixin,
@@ -334,9 +355,10 @@ class TaskWorkflowTemplateListView(
 
     def get_context_data(self, **kwargs) -> dict:
         context_data = super().get_context_data(**kwargs)
-
         context_data["datetime_format"] = settings.DATETIME_FORMAT
-
+        context_data["base_url"] = (
+            f"{reverse("workflow:task-workflow-template-ui-list")}?{self.clean_query_params().urlencode()}"
+        )
         return context_data
 
     def get_queryset(self):
