@@ -146,20 +146,48 @@ class TaricDateTimeRangeField(DateTimeRangeField):
 
 
 class AutoCompleteField(ModelChoiceField):
-    def __init__(self, *args, **kwargs):
-        qs = kwargs["queryset"]
-        prefix = getattr(qs.model, "url_pattern_name_prefix", None)
-        if not prefix:
-            prefix = qs.model._meta.model_name
+    """
+    A form field that provides an AutoComplete widget for selecting a model
+    instance.
+
+    Args:
+    - queryset (QuerySet): A queryset of model instances that will populate the valid choices for the field.
+    - label (str): (Optional) A label for the field.
+    - help_text (str): (Optional) Help text for the field.
+    - url_pattern_name (str): (Optional) A custom pattern name to use for resolving the API source URL of AutoCompleteWidget.
+    - attrs (dict): (Optional) Additional attributes to pass to AutoCompleteWidget, e.g  {"min-length": 2}.
+    """
+
+    def __init__(self, queryset, url_pattern_name=None, *args, **kwargs):
         self.widget = AutocompleteWidget(
             attrs={
                 "label": kwargs.get("label", ""),
                 "help_text": kwargs.get("help_text", ""),
-                "source_url": reverse_lazy(f"{prefix}-list"),
+                "source_url": reverse_lazy(
+                    self.get_url_pattern_name(queryset, url_pattern_name),
+                ),
                 **kwargs.pop("attrs", {}),
             },
         )
-        super().__init__(*args, **kwargs)
+        super().__init__(queryset=queryset, *args, **kwargs)
+
+    def get_url_pattern_name(self, queryset, url_pattern_name: str | None) -> str:
+        """
+        Determines the URL pattern name to use for resolving the API source URL
+        of AutocompleteWidget.
+
+        If a custom name isn't provided, the name will be based on the
+        attributes of the model derived from the queryset.
+        """
+
+        if url_pattern_name is not None:
+            return url_pattern_name
+
+        prefix = getattr(queryset.model, "url_pattern_name_prefix", None)
+        if not prefix:
+            prefix = queryset.model._meta.model_name
+
+        return f"{prefix}-list"
 
     def prepare_value(self, value):
         return self.to_python(value)
