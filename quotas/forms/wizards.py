@@ -247,7 +247,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     measurement_unit = forms.ModelChoiceField(
         empty_label="Choose measurement unit",
-        queryset=MeasurementUnit.objects.current(),
+        queryset=MeasurementUnit.objects.current().order_by("code"),
         error_messages={"required": "Select the measurement unit"},
     )
 
@@ -289,9 +289,6 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         self.fields["maximum_precision"].initial = 3
         self.fields["end_date"].help_text = ""
         self.fields["end_date"].required = True
-        self.fields["measurement_unit"].queryset = self.fields[
-            "measurement_unit"
-        ].queryset.order_by("code")
         self.fields["measurement_unit"].label_from_instance = (
             lambda obj: f"{obj.code} - {obj.description}"
         )
@@ -553,9 +550,6 @@ class BulkDefinitionUpdateData(
             definition_data["initial_volume"],
         )
         fields["volume"].initial = decimal.Decimal(definition_data["volume"])
-        self.fields["measurement_unit"].queryset = self.fields[
-            "measurement_unit"
-        ].queryset.order_by("code")
         fields["measurement_unit"].initial = MeasurementUnit.objects.get(
             code=definition_data["measurement_unit_code"],
         )
