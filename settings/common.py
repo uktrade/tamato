@@ -122,6 +122,7 @@ DOMAIN_APPS = [
     "footnotes.apps.FootnotesConfig",
     "geo_areas.apps.GeoAreasConfig",
     "measures.apps.MeasuresConfig",
+    "open_data.apps.OpenDataConfig",
     "quotas.apps.QuotasConfig",
     "reports.apps.ReportsConfig",
     "regulations.apps.RegulationsConfig",
