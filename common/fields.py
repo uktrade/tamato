@@ -5,6 +5,7 @@ from typing import Union
 from dateutil.relativedelta import relativedelta
 from django.contrib.postgres.fields import DateRangeField
 from django.contrib.postgres.fields import DateTimeRangeField
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.expressions import RawSQL
 from django.forms import ModelChoiceField
@@ -190,4 +191,7 @@ class AutoCompleteField(ModelChoiceField):
         return f"{prefix}-list"
 
     def prepare_value(self, value):
-        return self.to_python(value)
+        try:
+            return self.to_python(value)
+        except ValidationError:
+            return None
