@@ -20,11 +20,11 @@ def test_publish_to_api_lists_unpublished_envelopes(
     packaged_work_baskets = PackagedWorkBasket.objects.get_unpublished_to_api()
 
     out = StringIO()
-    call_command("publish_to_api", "--list", stdout=out)
+    call_command("publish_to_api", stdout=out)
     output = out.getvalue()
 
     for packaged_work_basket in packaged_work_baskets:
-        assert str(packaged_work_basket.envelope) in output
+        assert f"envelope_id={packaged_work_basket.envelope.envelope_id}" in output
 
 
 def test_publish_to_api_lists_no_envelopes(
@@ -34,7 +34,7 @@ def test_publish_to_api_lists_no_envelopes(
     settings.ENABLE_PACKAGING_NOTIFICATIONS = False
 
     out = StringIO()
-    call_command("publish_to_api", "--list", stdout=out)
+    call_command("publish_to_api", stdout=out)
     output = out.getvalue()
 
     assert not output
@@ -46,7 +46,7 @@ def test_publish_to_api_exits_no_unpublished_envelopes():
     assert CrownDependenciesEnvelope.objects.unpublished().count() == 0
 
     with pytest.raises(SystemExit):
-        call_command("publish_to_api")
+        call_command("publish_to_api", "--publish-async")
 
 
 def test_publish_to_api_publishes_envelopes(successful_envelope_factory, settings):
@@ -57,6 +57,6 @@ def test_publish_to_api_publishes_envelopes(successful_envelope_factory, setting
 
     assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 1
 
-    call_command("publish_to_api")
+    call_command("publish_to_api", "--publish-async")
 
     assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 0

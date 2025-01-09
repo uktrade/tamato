@@ -633,7 +633,7 @@ if ENABLE_CROWN_DEPENDENCIES_PUBLISHING:
     CROWN_DEPENDENCIES_API_CRON = (
         crontab(os.environ.get("CROWN_DEPENDENCIES_API_CRON"))
         if os.environ.get("CROWN_DEPENDENCIES_API_CRON")
-        else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
+        else crontab(minute="0", hour="*/2")
     )
     CELERY_BEAT_SCHEDULE["crown_dependencies_api_publish"] = {
         "task": "publishing.tasks.publish_to_api",
