@@ -10,6 +10,17 @@
   {% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
 {% endif%}
 
+{% set workbasket_linked_id %}
+  {% if object.workbasket -%}
+    <a
+      class="govuk-link"
+      href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}"
+    >{{ object.workbasket.pk }}</a>
+  {% else %}
+    -
+  {% endif -%}
+{% endset %}
+
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
@@ -79,6 +90,18 @@
     </dt>
     <dd class="govuk-summary-list__value">
       {{ object.progress_state }}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Workbasket
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ workbasket_linked_id }}
     </dd>
     <dd class="govuk-summary-list__actions">
       <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
