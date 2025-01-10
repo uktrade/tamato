@@ -143,7 +143,10 @@ class TaskTemplateAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
         "title",
         "description",
         "taskworkflowtemplate_id",
+        "created_at",
     )
+    search_fields = ["id", "title", "description"]
+    list_filter = ["category"]
 
     @admin.display(description="Task Workflow Template")
     def taskworkflowtemplate_id(self, obj):
@@ -185,4 +188,5 @@ admin.site.register(TaskLog, TaskLogAdmin)
 admin.site.register(TaskWorkflowTemplate, TaskWorkflowTemplateAdmin)
 
 admin.site.register(TaskTemplate, TaskTemplateAdmin)
+
 admin.site.register(TaskWorkflow, TaskWorflowAdmin)
