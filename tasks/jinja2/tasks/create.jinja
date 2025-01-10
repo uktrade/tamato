@@ -3,15 +3,19 @@
 {% block breadcrumb %}
   {% if parent_task %}
     {{ breadcrumbs(request, [
-      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
-      {"text": "Task: " ~ parent_task.title, "href": parent_task.get_url("detail")},
-      {"text": page_title}
-    ])}}
+        {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
+        {"text": "Task: " ~ parent_task.title, "href": parent_task.get_url("detail")},
+        {"text": page_title}
+      ],
+      with_workbasket=False,
+    ) }}
   {% else %}
     {{ breadcrumbs(request, [
-      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
-      {"text": page_title}
-    ])}}
+        {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
+        {"text": page_title}
+      ],
+      with_workbasket=False,
+    ) }}
   {% endif %}
 {% endblock %}
 

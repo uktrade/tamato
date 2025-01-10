@@ -5,6 +5,14 @@
 
 {% set page_title = "Find and view tasks and workflows" %}
 
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">

@@ -39,7 +39,8 @@
   {{ breadcrumbs(request, [
       {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
       {"text": page_title}
-    ]
+    ],
+    with_workbasket=False,
   ) }}
 {% endblock %}
 

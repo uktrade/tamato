@@ -7,8 +7,9 @@
       {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
       {"text": "Task: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk})},
       {"text": page_title}
-    ])
-  }}
+    ],
+    with_workbasket=False,
+  ) }}
 {% endblock %}
 
 {% block form %}
