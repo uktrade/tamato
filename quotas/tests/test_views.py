@@ -25,6 +25,9 @@ from quotas import validators
 from quotas.forms.base import QuotaSuspensionType
 from quotas.views import DuplicateDefinitionsWizard
 from quotas.views import QuotaList
+from quotas.views.wizards import QuotaDefinitionBulkCreatorUpdateDefinitionData
+from quotas.views.wizards import QuotaDefinitionBulkCreatorWizard
+from quotas.wizard import QuotaDefinitionBulkCreatorSessionStorage
 from quotas.wizard import QuotaDefinitionDuplicatorSessionStorage
 
 pytestmark = pytest.mark.django_db
@@ -1293,6 +1296,9 @@ def test_create_new_quota_definition(
         "start_date_0": date_ranges.later.lower.day,
         "start_date_1": date_ranges.later.lower.month,
         "start_date_2": date_ranges.later.lower.year,
+        "end_date_0": date_ranges.later.lower.day,
+        "end_date_1": date_ranges.later.lower.month,
+        "end_date_2": date_ranges.later.lower.year,
         "description": "Lorem ipsum",
         "volume": "1000000",
         "initial_volume": "1000000",
@@ -1305,12 +1311,15 @@ def test_create_new_quota_definition(
 
     # sanity check
     assert not models.QuotaDefinition.objects.all()
-
     url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
-    response = client_with_current_workbasket.post(url, form_data)
-    assert response.status_code == 302
+    response = client_with_current_workbasket.post(
+        f"{url}?order_number={quota.order_number}",
+        form_data,
+    )
 
+    assert response.status_code == 302
     created_definition = models.QuotaDefinition.objects.last()
+
     assert response.url == reverse(
         "quota_definition-ui-confirm-create",
         kwargs={"sid": created_definition.sid},
@@ -1351,6 +1360,9 @@ def test_create_new_quota_definition_business_rule_violation(
         "start_date_0": date_ranges.earlier.lower.day,
         "start_date_1": date_ranges.earlier.lower.month,
         "start_date_2": date_ranges.earlier.lower.year,
+        "end_date_0": date_ranges.later.lower.day,
+        "end_date_1": date_ranges.later.lower.month,
+        "end_date_2": date_ranges.later.lower.year,
         "description": "Lorem ipsum",
         "volume": "1000000",
         "initial_volume": "1000000",
@@ -1362,7 +1374,10 @@ def test_create_new_quota_definition_business_rule_violation(
     }
 
     url = reverse("quota_definition-ui-create", kwargs={"sid": quota.sid})
-    response = client_with_current_workbasket.post(url, form_data)
+    response = client_with_current_workbasket.post(
+        f"{url}?order_number={quota.order_number}",
+        form_data,
+    )
 
     assert response.status_code == 200
 
@@ -2249,7 +2264,6 @@ def test_definition_duplicator_creates_definition_and_association(
     wizard.form_list = OrderedDict(wizard.form_list)
 
     association_table_before = models.QuotaAssociation.objects.all()
-    # assert 0
     assert len(association_table_before) == 0
     for definition in session_request_with_workbasket.session["staged_definition_data"]:
         wizard.create_definition(definition)
@@ -2723,3 +2737,222 @@ def test_quota_definition_update_updates_association(
     assert len(associations) == 2
     assert associations[0].update_type == UpdateType.CREATE
     assert associations[1].update_type == UpdateType.UPDATE
+
+
+def test_definition_bulk_create_form_wizard_start(client_with_current_workbasket):
+    url = reverse("quota_definition-ui-bulk-create", kwargs={"step": "start"})
+    response = client_with_current_workbasket.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    ("step"),
+    [
+        ("start"),
+        ("definition_period_info"),
+        ("review"),
+    ],
+)
+def test_bulk_create_definitions_get_form_kwargs(
+    session_request,
+    step,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory.create()
+    start_form_data = {
+        "quota_definition-ui-bulk-create": "start",
+        "start-quota_order_number": quota_order_number,
+    }
+
+    definition_info_data = {}
+    storage = QuotaDefinitionBulkCreatorSessionStorage(
+        request=session_request,
+        prefix="",
+    )
+    storage.set_step_data("start", start_form_data)
+    storage.set_step_data("definition_period_info", definition_info_data)
+    storage._set_current_step("review")
+
+    wizard = QuotaDefinitionBulkCreatorWizard(
+        request=session_request,
+        storage=storage,
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    with override_current_transaction(Transaction.objects.last()):
+        kwargs = wizard.get_form_kwargs(step)
+        assert kwargs["request"].session
+
+
+def test_bulk_create_get_staged_definition_data(
+    session_request,
+    date_ranges,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory.create()
+    measurement_unit = factories.MeasurementUnitFactory()
+    start_form_data = {
+        "quota_definition-ui-bulk-create": "start",
+        "start-quota_order_number": quota_order_number,
+    }
+    storage = QuotaDefinitionBulkCreatorSessionStorage(
+        request=session_request,
+        prefix="",
+    )
+    storage.set_step_data("start", start_form_data)
+    staged_data = {
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "description": "Lorem ipsum.",
+        "volume": "80601000.000",
+        "initial_volume": "80601000.000",
+        "measurement_unit": measurement_unit.pk,
+        "measurement_unit_qualifier": "",
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
+    }
+    session_request.session["staged_definition_data"] = staged_data
+    wizard = QuotaDefinitionBulkCreatorWizard(
+        request=session_request,
+        storage=storage,
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+
+    assert wizard.get_staged_definition_data() == staged_data
+
+
+def test_bulk_create_format_date(session_request):
+    storage = QuotaDefinitionBulkCreatorSessionStorage(
+        request=session_request,
+        prefix="",
+    )
+    wizard = QuotaDefinitionBulkCreatorWizard(
+        request=session_request,
+        storage=storage,
+    )
+    date_str = "2021-01-01"
+    formatted_date = wizard.format_date(date_str)
+    assert formatted_date == "01 Jan 2021"
+
+
+def test_bulk_create_creates_definition(
+    session_request_with_workbasket,
+    date_ranges,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory.create()
+    measurement_unit = factories.MeasurementUnitFactory.create()
+    measurement_unit_qualifier = factories.MeasurementUnitQualifierFactory.create()
+    storage = QuotaDefinitionBulkCreatorSessionStorage(
+        request=session_request_with_workbasket,
+        prefix="",
+    )
+    wizard = QuotaDefinitionBulkCreatorWizard(
+        request=session_request_with_workbasket,
+        storage=storage,
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    staged_data = {
+        "start_date": serialize_date(date_ranges.normal.lower),
+        "end_date": serialize_date(date_ranges.normal.upper),
+        "description": "Lorem ipsum.",
+        "volume": "80601000.000",
+        "initial_volume": "80601000.000",
+        "measurement_unit_code": measurement_unit.code,
+        "measurement_unit_qualifier": measurement_unit_qualifier.pk,
+        "quota_critical_threshold": "90",
+        "quota_critical": "False",
+        "maximum_precision": "3",
+    }
+    session_request_with_workbasket.session["staged_definition_data"] = staged_data
+    assert len(models.QuotaDefinition.objects.all()) == 0
+    with override_current_transaction(Transaction.objects.last()):
+        wizard.create_definition(
+            order_number=quota_order_number.pk,
+            definition=staged_data,
+        )
+        assert len(models.QuotaDefinition.objects.all()) == 1
+
+
+def test_bulk_create_done(
+    session_request_with_workbasket,
+    date_ranges,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory.create()
+    measurement_unit = factories.MeasurementUnitFactory.create()
+    storage = QuotaDefinitionBulkCreatorSessionStorage(
+        request=session_request_with_workbasket,
+        prefix="",
+    )
+    wizard = QuotaDefinitionBulkCreatorWizard(
+        request=session_request_with_workbasket,
+        storage=storage,
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    staged_data = [
+        {
+            "start_date": serialize_date(date_ranges.normal.lower),
+            "end_date": serialize_date(date_ranges.normal.upper),
+            "description": "Lorem ipsum.",
+            "volume": "80601000.000",
+            "initial_volume": "80601000.000",
+            "measurement_unit_code": measurement_unit.code,
+            "quota_critical_threshold": "90",
+            "quota_critical": "False",
+            "maximum_precision": "3",
+        },
+        {
+            "start_date": serialize_date(date_ranges.normal.lower),
+            "end_date": serialize_date(date_ranges.normal.upper),
+            "description": "Lorem ipsum.",
+            "volume": "80601000.000",
+            "initial_volume": "80601000.000",
+            "measurement_unit_code": measurement_unit.code,
+            "quota_critical_threshold": "90",
+            "quota_critical": "False",
+            "maximum_precision": "3",
+        },
+        {
+            "start_date": serialize_date(date_ranges.normal.lower),
+            "end_date": serialize_date(date_ranges.normal.upper),
+            "description": "Lorem ipsum.",
+            "volume": "80601000.000",
+            "initial_volume": "80601000.000",
+            "measurement_unit_code": measurement_unit.code,
+            "quota_critical_threshold": "90",
+            "quota_critical": "False",
+            "maximum_precision": "3",
+        },
+    ]
+
+    session_request_with_workbasket.session["quota_order_number_pk"] = (
+        quota_order_number.pk
+    )
+    session_request_with_workbasket.session["staged_definition_data"] = staged_data
+    assert len(models.QuotaDefinition.objects.all()) == 0
+    with override_current_transaction(Transaction.objects.last()):
+        wizard.done(wizard.form_list)
+        assert len(models.QuotaDefinition.objects.all()) == 3
+
+
+def test_bulk_create_update_definition_get_form_kwargs(
+    session_request,
+):
+    request = session_request.post("quota_definition-ui-bulk-create-edit", args=1)
+    view = QuotaDefinitionBulkCreatorUpdateDefinitionData(
+        request=request,
+        kwargs={
+            "pk": 1,
+            "request": request,
+            "buttons": {
+                "submit": "Save and continue",
+                "link_text": "Discard changes",
+                "link": "/quotas/quota_definitions/bulk_create/review",
+            },
+        },
+    )
+    with override_current_transaction(Transaction.objects.last()):
+        kwargs = view.get_form_kwargs()
+        assert kwargs["pk"]
+        assert kwargs["request"]
+        assert kwargs["buttons"]
