@@ -68,12 +68,12 @@ class QuotaDefinitionUpdateForm(
         },
     )
     measurement_unit = forms.ModelChoiceField(
-        queryset=MeasurementUnit.objects.current(),
+        queryset=MeasurementUnit.objects.current().order_by("code"),
         error_messages={"required": "Select the measurement unit"},
     )
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
-        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
+        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume",
         widget=forms.TextInput(),
         error_messages={
             "invalid": "Critical threshold must be a number",
@@ -82,7 +82,7 @@ class QuotaDefinitionUpdateForm(
     )
     quota_critical = forms.TypedChoiceField(
         label="Is the quota definition period in a critical state?",
-        help_text="This determines if a trader needs to pay securities when utilising the quota.",
+        help_text="This determines if a trader needs to pay securities when utilising the quota",
         coerce=lambda value: value == "True",
         choices=((True, "Yes"), (False, "No")),
         widget=forms.RadioSelect(),
@@ -99,9 +99,6 @@ class QuotaDefinitionUpdateForm(
         return super().clean()
 
     def init_fields(self):
-        self.fields["measurement_unit"].queryset = self.fields[
-            "measurement_unit"
-        ].queryset.order_by("code")
         self.fields["measurement_unit"].label_from_instance = (
             lambda obj: f"{obj.code} - {obj.description}"
         )
@@ -179,7 +176,7 @@ class QuotaDefinitionCreateForm(
         },
     )
     measurement_unit = forms.ModelChoiceField(
-        queryset=MeasurementUnit.objects.current(),
+        queryset=MeasurementUnit.objects.current().order_by("code"),
         empty_label="Choose measurement unit",
         error_messages={"required": "Select the measurement unit"},
     )
@@ -187,7 +184,7 @@ class QuotaDefinitionCreateForm(
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
         widget=DecimalSuffix(suffix="%"),
-        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
+        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume",
         error_messages={
             "invalid": "Critical threshold must be a number",
             "required": "Enter the critical threshold",
@@ -195,7 +192,7 @@ class QuotaDefinitionCreateForm(
     )
     quota_critical = forms.TypedChoiceField(
         label="Is the quota definition period in a critical state?",
-        help_text="This determines if a trader needs to pay securities when utilising the quota.",
+        help_text="This determines if a trader needs to pay securities when utilising the quota",
         coerce=lambda value: value == "True",
         choices=((True, "Yes"), (False, "No")),
         widget=forms.RadioSelect(),
@@ -231,9 +228,6 @@ class QuotaDefinitionCreateForm(
         self.fields["quota_critical"].initial = False
         self.fields["quota_critical_threshold"].initial = 90
 
-        self.fields["measurement_unit"].queryset = self.fields[
-            "measurement_unit"
-        ].queryset.order_by("code")
         self.fields["measurement_unit"].label_from_instance = (
             lambda obj: f"{obj.code} - {obj.description}"
         )
@@ -248,10 +242,10 @@ class QuotaDefinitionCreateForm(
         self.fields["end_date"].help_text = ""
         self.fields["end_date"].required = True
         self.fields["measurement_unit_qualifier"].help_text = (
-            "A measurement unit qualifier is not always required."
+            "A measurement unit qualifier is not always required"
         )
         self.fields["measurement_unit_qualifier"].empty_label = (
-            "Choose measurement unit qualifier."
+            "Choose measurement unit qualifier"
         )
 
     def init_layout(self, *args, **kwargs):
@@ -309,7 +303,7 @@ class QuotaDefinitionCreateForm(
                 HTML(
                     '<h3 class="govuk-heading">Description</h3>',
                 ),
-                HTML.p("Adding a description is optional."),
+                HTML.p("Adding a description is optional"),
                 Field("description", css_class="govuk-!-width-two-thirds"),
             ),
             HTML(
