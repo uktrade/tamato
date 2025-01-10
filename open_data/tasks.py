@@ -33,10 +33,10 @@ def add_description(model, verbose=True):
                 print(f"Elapsed time {model._meta.db_table} {time.time() - start}")
 
 
-def update_model(model, cursor):
+def update_model(model, cursor, verbose=True):
     cursor.execute(f'TRUNCATE TABLE "{model._meta.db_table}"')
-    print("Delete data")
-    print(f"{model.update_table=}")
+    if verbose:
+        print("Deleted data")
     if model.update_table:
         cursor.execute(model.update_query())
         fk_query_list = model.update_fk_queries()
@@ -70,7 +70,7 @@ def update_all_tables(verbose=False):
                 if verbose:
                     print(f'Starting update of "{model._meta.db_table}"')
                     start_time = time.time()
-                update_model(model, cursor)
+                update_model(model, cursor, verbose)
                 if verbose:
                     elapsed_time = time.time() - start_time
                     print(
@@ -94,7 +94,7 @@ def update_single_model(model):
     print(f'Starting update of "{model._meta.db_table}"')
     start_time = time.time()
     with connection.cursor() as cursor:
-        update_model(model, cursor)
+        update_model(model, cursor, False)
     elapsed_time = time.time() - start_time
     print(
         f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',

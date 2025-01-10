@@ -14,6 +14,13 @@ from measures.models import Measure
 pytestmark = pytest.mark.django_db
 
 
+def test_CommodityCollectionLoader(seed_database_with_indented_goods):
+    commodities_collection = CommodityCollectionLoader(prefix="2903").load(
+        effective_only=True,
+    )
+    assert len(commodities_collection.commodities) == 6
+
+
 def test_get_dependent_measures_ignores_archived_measures(
     seed_database_with_indented_goods,
 ):
