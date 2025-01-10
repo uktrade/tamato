@@ -11,6 +11,7 @@ from django.forms import ModelChoiceField
 from django.forms import ModelForm
 from django.forms import Textarea
 
+from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import RadioNested
 from common.forms import delete_form_for
@@ -39,6 +40,21 @@ class TaskBaseForm(ModelForm):
             },
         }
 
+    workbasket = AutoCompleteField(
+        label="Workbasket",
+        help_text=(
+            "Search for a workbasket by typing in the workbasket's ID, TOPS/Jira number or description. "
+            "A dropdown list will appear after a few seconds. You can then select the correct workbasket from the dropdown list."
+        ),
+        queryset=WorkBasket.objects.editable(),
+        url_pattern_name="workbaskets:workbasket-autocomplete-list",
+        attrs={"min_length": 2},
+        error_messages={
+            "invalid_choice": "Select a workbasket that is in the editing state",
+        },
+        required=False,
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.init_fields()
@@ -46,7 +62,6 @@ class TaskBaseForm(ModelForm):
 
     def init_fields(self):
         self.fields["progress_state"].label = "Status"
-        self.fields["workbasket"].queryset = WorkBasket.objects.editable()
 
     def init_layout(self):
         self.helper = FormHelper(self)

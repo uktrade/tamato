@@ -40,6 +40,24 @@ from workbaskets.views import ui
 pytestmark = pytest.mark.django_db
 
 
+def test_workbasket_autocomplete_api_endpoint(valid_user_api_client):
+    """Tests that workbasket autocomplete API endpoint allows searching for
+    workbaskets."""
+    factories.WorkBasketFactory.create(reason="irrelevant_workbasket")
+    workbasket = factories.WorkBasketFactory.create(reason="test")
+
+    autocomplete_api_url = reverse("workbaskets:workbasket-autocomplete-list")
+    response = valid_user_api_client.get(
+        path=autocomplete_api_url,
+        data={"search": "test"},
+    )
+
+    assert response.status_code == 200
+    assert response.data["count"] == 1
+    assert response.data["results"][0]["value"] == workbasket.pk
+    assert response.data["results"][0]["label"] == workbasket.autocomplete_label
+
+
 def test_workbasket_create_form_creates_workbasket_object(
     valid_user_api_client,
 ):

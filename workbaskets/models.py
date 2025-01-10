@@ -403,6 +403,10 @@ class WorkBasket(TimestampedMixin):
     def approved(self):
         return self.status in WorkflowStatus.approved_statuses()
 
+    @property
+    def autocomplete_label(self):
+        return f"({self.pk})  {self.title} - {self.reason}"
+
     def __str__(self):
         return f"({self.pk}) [{self.status}]"
 
