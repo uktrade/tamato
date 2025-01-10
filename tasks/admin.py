@@ -6,10 +6,23 @@ from tasks.models import Category
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
+from tasks.models import TaskItem
+from tasks.models import TaskItemTemplate
 from tasks.models import TaskLog
 from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
+
+
+class ReadOnlyAdminMixin:
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class TaskAdminMixin:
@@ -50,7 +63,7 @@ class SubtaskFilter(admin.SimpleListFilter):
             return queryset.parents()
 
 
-class TaskAdmin(TaskAdminMixin, admin.ModelAdmin):
+class TaskAdmin(ReadOnlyAdminMixin, TaskAdminMixin, admin.ModelAdmin):
     list_display = [
         "id",
         "title",
@@ -88,7 +101,7 @@ class ProgressStateAdmin(admin.ModelAdmin):
     search_fields = ["name"]
 
 
-class TaskAssigneeAdmin(TaskAdminMixin, admin.ModelAdmin):
+class TaskAssigneeAdmin(ReadOnlyAdminMixin, TaskAdminMixin, admin.ModelAdmin):
     list_display = ["id", "assignee", "assignment_type", "task_id", "unassigned_at"]
     search_fields = ["user__username", "assignment_type", "task__id"]
 
@@ -104,7 +117,7 @@ class TaskAssigneeAdmin(TaskAdminMixin, admin.ModelAdmin):
         return self.link_to_task(obj.task)
 
 
-class TaskLogAdmin(admin.ModelAdmin):
+class TaskLogAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     list_display = ["task", "action", "created_at"]
     list_filter = ["action"]
     readonly_fields = [
@@ -117,15 +130,13 @@ class TaskLogAdmin(admin.ModelAdmin):
     ]
 
 
-class ReadOnlyAdminMixin:
-    def has_add_permission(self, request):
-        return False
+class TaskItemTemplateInline(admin.TabularInline):
+    model = TaskItemTemplate
+    readonly_fields = ("task_template_description", "position")
 
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
+    @admin.display(description="Description")
+    def task_template_description(self, obj):
+        return obj.task_template.description
 
 
 class TaskWorkflowTemplateAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
@@ -133,8 +144,15 @@ class TaskWorkflowTemplateAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
         "id",
         "title",
         "description",
+        "task_templates_count",
         "creator",
     )
+    search_fields = ("title", "description")
+    inlines = [TaskItemTemplateInline]
+
+    @admin.display(description="Task templates")
+    def task_templates_count(self, obj):
+        return obj.get_task_templates().count()
 
 
 class TaskTemplateAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
@@ -165,14 +183,29 @@ class TaskTemplateAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
         )
 
 
-class TaskWorflowAdmin(admin.ModelAdmin):
+class TaskItemInline(admin.TabularInline):
+    model = TaskItem
+    readonly_fields = ("task_description", "position")
+
+    @admin.display(description="Description")
+    def task_description(self, obj):
+        return obj.task.description
+
+
+class TaskWorflowAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     search_fields = ["summary_task__title"]
     list_display = [
         "id",
         "title",
         "description",
+        "task_count",
         "creator_template",
     ]
+    inlines = [TaskItemInline]
+
+    @admin.display(description="Tasks")
+    def task_count(self, obj):
+        return obj.get_tasks().count()
 
 
 admin.site.register(Task, TaskAdmin)
