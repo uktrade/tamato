@@ -407,6 +407,10 @@ class PackagedWorkBasket(TimestampedMixin):
         """
 
         previous_id = PackagedWorkBasket.objects.last_published_envelope_id()
+        # envelope_id format: YYCCCC where YY is the last two digits of the current year
+
+        # if previous_id[:2] is not the last two digits of the current year:
+
         if self.envelope.envelope_id[2:] == settings.HMRC_PACKAGING_SEED_ENVELOPE_ID:
             # NOTE:
             # Code in this conditional block, and therefore this function,
