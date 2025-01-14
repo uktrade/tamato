@@ -163,13 +163,13 @@ class TestAlignmentReport:
             target_start_date=datetime.date.today(),
         )
         stats = target.check_stats()
-        assert stats["test1 2024"]["total"] == 4
-        assert stats["test1 2024"]["failed"] == 1
-        assert stats["test1 2024"]["passed"] == 1
-        assert stats["test1 2024"]["warning"] == 1
-        assert stats["test1 2024"]["skipped"] == 1
-        assert stats["test2 2024"]["total"] == 1
-        assert stats["test3 2024"]["total"] == 1
+        assert stats[f"test1 {datetime.date.today().year}"]["total"] == 4
+        assert stats[f"test1 {datetime.date.today().year}"]["failed"] == 1
+        assert stats[f"test1 {datetime.date.today().year}"]["passed"] == 1
+        assert stats[f"test1 {datetime.date.today().year}"]["warning"] == 1
+        assert stats[f"test1 {datetime.date.today().year}"]["skipped"] == 1
+        assert stats[f"test2 {datetime.date.today().year}"]["total"] == 1
+        assert stats[f"test3 {datetime.date.today().year}"]["total"] == 1
 
     def test_error_count(self):
         target = factories.AlignmentReportFactory()
