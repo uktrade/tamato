@@ -244,12 +244,9 @@ class PackagedWorkBasketQuerySet(QuerySet):
         ).order_by("envelope__envelope_id")
         return unpublished
 
-    def last_unpublished_envelope_id(self) -> "publishing_models.EnvelopeId":
-        """Join PackagedWorkBasket with Envelope and CrownDependenciesEnvelope
-        model selecting objects Where an Envelope model exists and the
-        published_to_tariffs_api field is not null Or Where a
-        CrownDependenciesEnvelope is not null Then select the max value for ther
-        envelope_id field in the Envelope instance."""
+    def last_published_envelope_id(self) -> "publishing_models.EnvelopeId":
+        """Get the envelope_id of the last Envelope successfully published to
+        the Tariffs API service."""
 
         return (
             self.select_related(
@@ -410,20 +407,29 @@ class PackagedWorkBasket(TimestampedMixin):
         (this means the envelope is the first to be published to the API)
         """
 
-        previous_id = PackagedWorkBasket.objects.last_unpublished_envelope_id()
+        previous_id = PackagedWorkBasket.objects.last_published_envelope_id()
         if self.envelope.envelope_id[2:] == settings.HMRC_PACKAGING_SEED_ENVELOPE_ID:
-            year = int(self.envelope.envelope_id[:2])
-            last_envelope = publishing_models.Envelope.objects.for_year(
-                year=year - 1,
-            ).last()
-            # uses None if first envelope (no previous ones)
-            expected_previous_id = last_envelope.envelope_id if last_envelope else None
-        else:
-            expected_previous_id = str(
-                int(self.envelope.envelope_id) - 1,
+            # NOTE:
+            # Code in this conditional block, and therefore this function,
+            # wrongly assumes a new year has passed since the last envelope was
+            # successfully published to tariffs-api.
+            # See Jira ticket TP2000-1646 for details of the issue.
+
+            current_envelope_year = int(self.envelope.envelope_id[:2])
+            last_envelope_last_year = (
+                publishing_models.Envelope.objects.last_envelope_for_year(
+                    year=current_envelope_year - 1,
+                )
             )
+            expected_previous_id = (
+                last_envelope_last_year.envelope_id if last_envelope_last_year else None
+            )
+        else:
+            expected_previous_id = str(int(self.envelope.envelope_id) - 1)
+
         if previous_id and previous_id != expected_previous_id:
             return False
+
         return True
 
     # processing_state transition management.
