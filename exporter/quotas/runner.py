@@ -94,6 +94,7 @@ class QuotaExport:
                 goods_nomenclature_headings = self.get_goods_nomenclature_headings(
                     item_ids,
                 )
+
                 if geographical_areas != "" and goods_nomenclature_headings != "":
                     quota_data = [
                         quota.sid,
@@ -272,7 +273,7 @@ class QuotaExport:
             )
             .filter(
                 Q(
-                    valid_between__endswith__gte=quota.valid_between.upper,
+                    valid_between__endswith__gte=quota.valid_between.lower,
                 )
                 | Q(
                     valid_between__endswith=None,
