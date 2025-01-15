@@ -18,7 +18,7 @@ class QuotaSuspensionChecks(BaseQuotaSuspensionCheck):
             string: corresponding message for the status.
         """
         if not self.tap_suspension():
-            message = f"FAIL - quota suspension not found"
+            message = f"FAIL - quota suspension not found for quota linked to order number {self.ref_quota_suspension.ref_quota_definition.ref_order_number.order_number} and quota validity {self.ref_quota_suspension.ref_quota_definition.valid_between} "
             print(message)
             return AlignmentReportCheckStatus.FAIL, message
         else:
