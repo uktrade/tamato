@@ -251,8 +251,8 @@ class QuotaSuspensionOrBlockingCreateForm(
         self.fields["quota_definition"].queryset = (
             models.QuotaDefinition.objects.current()
             .as_at_today_and_beyond()
-            .filter(order_number=self.quota_order_number)
-            .order_by("-sid")
+            .filter(order_number__sid=self.quota_order_number.sid)
+            .order_by("valid_between")
         )
         self.fields["quota_definition"].label_from_instance = (
             lambda obj: f"{obj.sid} ({obj.valid_between.lower} - {obj.valid_between.upper})"

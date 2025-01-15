@@ -92,7 +92,8 @@ class TestRefQuotaDefinitionRange:
 
         rqdr_date_ranges = target.date_ranges()
 
-        assert len(rqdr_date_ranges) == 8
+        # date_ranges() adds three years to the current date to calculate target.end_year if None
+        assert len(rqdr_date_ranges) == (date.today().year + 4) - target.start_year
         assert rqdr_date_ranges[0] == TaricDateRange(
             date(2020, 1, 1),
             date(2020, 12, 31),

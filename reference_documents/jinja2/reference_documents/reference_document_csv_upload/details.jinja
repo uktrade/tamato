@@ -1,0 +1,34 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Reference documents Upload Details" %}
+
+{% block breadcrumb %}
+    {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")}],
+  }) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        {{ page_title }}
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">Here are details fo the selected reference document CSV upload.</span>
+    <p class="govuk-body">
+        <b>Created at</b> : {{ object.created_at.strftime("%Y/%m/%d, %H:%M:%S") }}
+    </p>
+    <p>
+        <b>Status</b> : {{ object.status }}
+    </p>
+    <p>
+        <b>Content</b> : {{ object.csv_content_types() }}
+    </p>
+    <p>
+        <b>Error details</b> : {{ object.error_details }}
+    </p>
+{% endblock %}
+
+
+

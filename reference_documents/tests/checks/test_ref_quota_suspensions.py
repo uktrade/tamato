@@ -112,7 +112,8 @@ class TestQuotaSuspensionExists:
         target = QuotaSuspensionChecks(ref_quota_suspension=ref_quota_suspension)
         assert target.run_check() == (
             AlignmentReportCheckStatus.FAIL,
-            "FAIL - quota suspension not found",
+            f"FAIL - quota suspension not found for quota linked to order number {ref_quota_definition.ref_order_number.order_number} "
+            f"and quota validity {valid_between} ",
         )
 
     def test_run_check_failed_suspension_valid_between_different(self):
@@ -169,5 +170,6 @@ class TestQuotaSuspensionExists:
         target = QuotaSuspensionChecks(ref_quota_suspension=ref_quota_suspension)
         assert target.run_check() == (
             AlignmentReportCheckStatus.FAIL,
-            "FAIL - quota suspension not found",
+            f"FAIL - quota suspension not found for quota linked to order number {ref_quota_definition.ref_order_number.order_number}"
+            f" and quota validity {valid_between} ",
         )
