@@ -1,14 +1,13 @@
-{% extends "layouts/layout.jinja" %}
+{% extends "workbaskets/auto_end_objects.jinja" %}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/button/macro.njk" import govukButton %}
-
 
 {% set page_title %}
   Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Auto end-date footnote associations
 {% endset %}
 
-{% block content %}
-    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+{% block tab_content %}
+    <h2 class="govuk-heading-l">{{ page_title }}</h2>
 
  {% set table_rows = [] %}
   {% for association in object_list %}

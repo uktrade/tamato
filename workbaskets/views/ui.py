@@ -1816,6 +1816,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["workbasket"] = self.workbasket
         context["today"] = date.today()
+        context["selected_tab"] = "measures"
         return context
 
     def post(self, request, *args, **kwargs):
@@ -1858,6 +1859,7 @@ class AutoEndDateFootnoteAssociations(ListView):
         context = super().get_context_data(**kwargs)
         context["workbasket"] = self.workbasket
         context["today"] = date.today()
+        context["selected_tab"] = "associations"
         return context
 
     def post(self, request, *args, **kwargs):
