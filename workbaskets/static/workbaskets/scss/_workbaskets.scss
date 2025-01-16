@@ -1,8 +1,3 @@
-#workbasket-review-tabs .govuk-tabs__list-item, 
-#workbasket-review-tabs .govuk-tabs__list-item--selected {
-  font-size: 1rem;
-}
-
 nav#workbasket-items {
   display: grid;
   align-content: center;
@@ -44,8 +39,8 @@ table.workbasket-transactions tbody {
     vertical-align: middle;
   }
 
-  .transaction-start:last-child{
-    #transaction-order-actions{
+  .transaction-start:last-child {
+    #transaction-order-actions {
       float: right;
       margin-right: govuk-spacing(3);
     }
@@ -65,7 +60,7 @@ table.workbasket-transactions tbody {
   width: 70%;
   float: right;
 
-  header > p{
+  header>p {
     display: inline;
   }
 }
@@ -80,7 +75,8 @@ ul.comment-actions {
     padding-right: govuk-spacing(2);
     margin-right: govuk-spacing(2);
   }
-  li:last-child{
+
+  li:last-child {
     border-right: 0;
     margin-right: 0;
   }
@@ -98,11 +94,11 @@ ul.comment-actions {
   h3 {
     @extend .govuk-heading-s;
   }
-  
+
   p {
     @extend .govuk-body;
   }
-  
+
   blockquote {
     @extend .govuk-inset-text;
   }
@@ -129,7 +125,7 @@ ul.comment-actions {
   table {
     @extend .govuk-table;
   }
-  
+
   th {
     @extend .govuk-table__header;
   }
