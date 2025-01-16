@@ -4,7 +4,10 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Measures submitted to be ended" %}
+{% set object = request.session['object'] if request.session['object'] else 'Nothing'%}
+{% set object_count = request.session['object_count'] if request.session['object_count'] else ''%}
+
+{% set page_title = object|capitalize ~ object_count|pluralize ~ " submitted to be ended" %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -17,14 +20,12 @@
   }) }}
 {% endblock %}
 
-{% set measure_count = request.session['count_ended_measures'] if request.session['count_ended_measures'] else '0'%}
-
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({
-        "titleText": measure_count ~ " measure" ~ measure_count|pluralize ~ " will be ended",
-        "text": "You have successfully submitted " ~ measure_count ~ " measure" ~ measure_count|pluralize ~ " to be end-dated or deleted and added to workbasket " ~ request.user.current_workbasket.id ~ " when complete.",
+        "titleText": object_count ~ " " ~ object ~ object_count|pluralize ~ " will be ended",
+        "text": "You have successfully submitted " ~ object_count ~ " " ~ object ~ object_count|pluralize ~ " to be end-dated or deleted and added to workbasket " ~ request.user.current_workbasket.id ~ " when complete.",
         "classes": "govuk-!-margin-bottom-7"
       }) }}
       <h2 class="govuk-heading-m">Next steps</h2>

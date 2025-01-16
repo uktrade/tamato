@@ -731,6 +731,44 @@ class WorkBasket(TimestampedMixin):
             db_effective_valid_between__not_gt=F("commodity_valid_between"),
         )
 
+    def get_footnote_associations_to_end_date(self):
+        """Queries all end-dated commodites in a workbasket and finds related
+        footnote associations so they can be end-dated too."""
+        from commodities.models.orm import FootnoteAssociationGoodsNomenclature
+        from commodities.models.orm import GoodsNomenclature
+
+        end_dated_commodities = GoodsNomenclature.objects.current().filter(
+            transaction__workbasket=self,
+            valid_between__upper_inf=False,
+        )
+        commodity_dict = {
+            commodity.sid: commodity.valid_between
+            for commodity in end_dated_commodities
+        }
+
+        footnote_associations = (
+            FootnoteAssociationGoodsNomenclature.objects.current().filter(
+                goods_nomenclature__sid__in=commodity_dict.keys(),
+            )
+        )
+        conditions = [
+            When(
+                goods_nomenclature__sid=commodity_sid,
+                then=Value(commodity_valid_between),
+            )
+            for commodity_sid, commodity_valid_between in commodity_dict.items()
+        ]
+        footnote_associations = footnote_associations.annotate(
+            commodity_valid_between=Case(
+                *conditions,
+                output_field=DateField(),
+            ),
+        )
+
+        return footnote_associations.exclude(
+            valid_between__not_gt=F("commodity_valid_between"),
+        )
+
     class Meta:
         verbose_name = "workbasket"
         verbose_name_plural = "workbaskets"
