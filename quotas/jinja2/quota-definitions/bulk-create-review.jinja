@@ -12,7 +12,7 @@
         {% block page_title_heading %}
             {{ page_title }}
         {% endblock %}
-        <span class="govuk-caption-xl">
+        <span class="govuk-caption-xl govuk-!-padding-top-2">
         {% block page_subtitle %}
             {{ page_subtitle }}
         {% endblock %}
@@ -72,7 +72,7 @@
         ]) or ""}}
     {% endfor %}
 
-    <p class="govuk-inset-text">Each row represents a Quota definition period to be created. These can be edited before being submitted.</p>
+    <p class="govuk-inset-text">Each row represents a quota definition period to be created. These can be edited before being submitted.</p>
     <div class="bulk-create-review quota-definitions">
         {{ govukTable({
             "head": [
@@ -87,7 +87,7 @@
         }) }}
     </div>
     <p class="govuk-body">Selecting 'Submit' will create the new definition periods.</p>
-    <p class="govuk-body">Further edits to the definition periods can be made on the quota order number page through an additional workbasket transaction.</p>
+    <p class="govuk-body">Further edits to the definition periods can be made on the quota order number page.</p>
 <div class="govuk-button-group">
   {{ govukButton({
     "text": "Submit",

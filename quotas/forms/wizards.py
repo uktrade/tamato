@@ -166,9 +166,6 @@ class BulkQuotaDefinitionCreateStartForm(forms.Form):
 
         self.helper.layout = Layout(
             Div(
-                HTML(
-                    '<h2 class="govuk-heading">Enter quota order number</h2>',
-                ),
                 Div(
                     "quota_order_number",
                     css_class="govuk-!-width-one-third",
@@ -246,14 +243,14 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     measurement_unit = forms.ModelChoiceField(
         empty_label="Choose measurement unit",
-        queryset=MeasurementUnit.objects.current(),
+        queryset=MeasurementUnit.objects.current().order_by("code"),
         error_messages={"required": "Select the measurement unit"},
     )
 
     quota_critical_threshold = forms.DecimalField(
         label="Threshold",
         widget=DecimalSuffix(suffix="%"),
-        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume.",
+        help_text="The point at which this quota definition period becomes critical, as a percentage of the total volume",
         error_messages={
             "invalid": "Critical threshold must be a number",
             "required": "Enter the critical threshold",
@@ -261,7 +258,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     )
     quota_critical = forms.TypedChoiceField(
         label="Is the quota definition period in a critical state?",
-        help_text="This determines if a trader needs to pay securities when utilising the quota.",
+        help_text="This determines if a trader needs to pay securities when utilising the quota",
         coerce=lambda value: value == "True",
         choices=((True, "Yes"), (False, "No")),
         widget=forms.RadioSelect(),
@@ -288,6 +285,15 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         self.fields["maximum_precision"].initial = 3
         self.fields["end_date"].help_text = ""
         self.fields["end_date"].required = True
+        self.fields["measurement_unit"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
+        self.fields["measurement_unit_qualifier"].queryset = self.fields[
+            "measurement_unit_qualifier"
+        ].queryset.order_by("code")
+        self.fields["measurement_unit_qualifier"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
         self.fields["measurement_unit_qualifier"].help_text = (
             "A measurement unit qualifier is not always required"
         )
@@ -409,8 +415,11 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                     '<h2 class="govuk-heading">First definition period</h2>',
                 ),
                 Div(
-                    HTML(
-                        '<p class="govuk-body">Enter the dates for the first definition period you are creating. Subsequent definition period dates will be calculated based on the dates entered for this first period</p>',
+                    Div(
+                        HTML(
+                            '<p class="govuk-body">Enter the dates for the first definition period you are creating. Subsequent definition period dates will be calculated based on the dates entered for this first period.</p>',
+                        ),
+                        css_class="govuk-!-width-two-thirds",
                     ),
                     "start_date",
                     "end_date",
@@ -422,7 +431,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                 ),
                 Div(
                     HTML(
-                        '<p class="govuk-body">Select the frequency at which the subsequent definition periods should be duplicated</p>',
+                        '<p class="govuk-body">Select the frequency at which the subsequent definition periods should be duplicated.</p>',
                     ),
                     "frequency",
                     Field(
@@ -546,9 +555,21 @@ class BulkDefinitionUpdateData(
         fields["measurement_unit"].initial = MeasurementUnit.objects.get(
             code=definition_data["measurement_unit_code"],
         )
+        self.fields["measurement_unit"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
         if "description" in definition_data:
             fields["description"].initial = definition_data["description"]
 
+        self.fields["measurement_unit_qualifier"].help_text = (
+            "A measurement unit qualifier is not always required"
+        )
+        self.fields["measurement_unit_qualifier"].queryset = self.fields[
+            "measurement_unit_qualifier"
+        ].queryset.order_by("code")
+        self.fields["measurement_unit_qualifier"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
         if (
             "measurement_unit_qualifier" in definition_data
             and definition_data["measurement_unit_qualifier"] != "None"
@@ -560,15 +581,12 @@ class BulkDefinitionUpdateData(
             )
         else:
             self.fields["measurement_unit_qualifier"].empty_label = (
-                "Choose measurement unit qualifier."
+                "Choose measurement unit qualifier"
             )
         fields["quota_critical_threshold"].initial = decimal.Decimal(
             definition_data["threshold"],
         )
         fields["quota_critical"].initial = definition_data["quota_critical"]
-        self.fields["measurement_unit_qualifier"].help_text = (
-            "A measurement unit qualifier is not always required."
-        )
 
     def update_definition_data_in_session(self, cleaned_data):
         cleaned_data.update(
