@@ -68,5 +68,10 @@
 
       "classes": "govuk-button--warning"
   }) }}
+  {{ govukButton({
+    "text": "Return to workflow template",
+    "href": url("workflow:task-workflow-template-ui-detail", kwargs={"pk": task_workflow_template.pk}),
+    "classes": "govuk-button--secondary"
+  }) }}
   </div>
 {% endblock %}
