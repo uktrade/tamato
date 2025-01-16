@@ -1085,7 +1085,7 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
         return super().get_queryset()
 
     @atomic
-    def run_missing_measures_check(self, pks):
+    def run_missing_measures_check(self, comm_code_pks):
         """Remove old checks, start new checks via a Celery task and save the
         newly created task's ID on the workbasket."""
         workbasket = self.workbasket
@@ -1093,7 +1093,7 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
         task = check_workbasket_for_missing_measures.delay(
             workbasket.pk,
             last_tx.pk,
-            pks,
+            comm_code_pks,
         )
         logger.info(
             f"Started missing measures check against workbasket.id={workbasket.pk} "
@@ -1105,8 +1105,10 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
     def form_valid(self, form):
         form_action = self.request.POST.get("form-action")
         if form_action == "start-check":
-            objects = get_comm_codes_affected_by_workbasket_changes(self.workbasket)
-            self.run_missing_measures_check(objects)
+            comm_code_pks = get_comm_codes_affected_by_workbasket_changes(
+                self.workbasket,
+            )
+            self.run_missing_measures_check(comm_code_pks)
         if form_action == "stop-check":
             self.workbasket.terminate_missing_measures_check()
         return super().form_valid(form)
