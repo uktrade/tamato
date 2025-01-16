@@ -191,7 +191,7 @@ class MeasureExport:
             )
         )
         # hard coded date for testing
-        filter_date = datetime.date(2025, 1, 7)
+        filter_date = datetime.date(2025, 1, 13)
         measure_base = ReportMeasure.objects.filter(sid__gte=20000000)
         if not self.include_future_measure:
             measure_base = measure_base.filter(valid_between__contains=filter_date)
