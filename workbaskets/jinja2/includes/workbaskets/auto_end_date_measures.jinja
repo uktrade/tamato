@@ -2,11 +2,6 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/button/macro.njk" import govukButton %}
 
-
-{% set page_title %}
-  Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Auto end-date measures
-{% endset %}
-
 {% block tab_content %}
     <h2 class="govuk-heading-l">{{ page_title }}</h2>
 

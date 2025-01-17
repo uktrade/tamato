@@ -6,6 +6,10 @@
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 
+{% set page_title %}
+  Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Auto end-date measures
+{% endset %}
+
 {% set measures_tab %}{% include "includes/workbaskets/auto_end_date_measures.jinja" %}{% endset %}
 {% set footnote_associations_tab %}{% include "includes/workbaskets/auto_end_date_footnote_associations.jinja" %}{% endset %}
 
@@ -38,12 +42,10 @@
     ]
   }%}
 
-{# {%- include "layouts/detail.jinja" -%} #}
-
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">Auto end objects</h1>
+      <h1 class="govuk-heading-xl">Auto end measures</h1>
     </div>
   </div>
       {{ govukTabs(tabs) }}

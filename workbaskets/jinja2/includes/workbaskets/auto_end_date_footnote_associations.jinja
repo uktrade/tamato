@@ -1,10 +1,6 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title %}
-  Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Auto end-date footnote associations
-{% endset %}
-
 {% block tab_content %}
     <h2 class="govuk-heading-l">{{ page_title }}</h2>
 
@@ -32,7 +28,7 @@
     ]) or "" }}
   {% endfor %}
 
-  {% if object_list %}
+  {% if footnote_associations %}
     <p>The following footnote associations are linked to commodity codes that have been end-dated in your workbasket. Click submit to automatically end-date or delete these associations.</p>
     {{ govukTable({
       "head": [
