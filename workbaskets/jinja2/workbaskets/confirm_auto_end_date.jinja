@@ -4,10 +4,7 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set object = request.session['object'] if request.session['object'] else 'Nothing'%}
-{% set object_count = request.session['object_count'] if request.session['object_count'] else ''%}
-
-{% set page_title = object|capitalize ~ object_count|pluralize ~ " submitted to be ended" %}
+{% set page_title = "Measures and/or footnote associations submitted to be ended" %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -24,8 +21,8 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ govukPanel({
-        "titleText": object_count ~ " " ~ object ~ object_count|pluralize ~ " will be ended",
-        "text": "You have successfully submitted " ~ object_count ~ " " ~ object ~ object_count|pluralize ~ " to be end-dated or deleted and added to workbasket " ~ request.user.current_workbasket.id ~ " when complete.",
+        "titleText": "Measures and/or footnote associations submitted to be ended",
+        "text": "You have successfully submitted measures and/or footnote associations to be end-dated or deleted and added to workbasket " ~ request.user.current_workbasket.id ~ " when complete.",
         "classes": "govuk-!-margin-bottom-7"
       }) }}
       <h2 class="govuk-heading-m">Next steps</h2>
