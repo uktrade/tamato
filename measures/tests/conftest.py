@@ -199,14 +199,6 @@ def certificates():
 
 
 @pytest.fixture
-def erga_omnes():
-    return factories.GeographicalAreaFactory.create(
-        area_code=AreaCode.GROUP,
-        area_id="1011",
-    )
-
-
-@pytest.fixture
 def measure_form_data():
     measure = factories.MeasureFactory.create()
     data = model_to_dict(measure)

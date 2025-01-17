@@ -10,6 +10,7 @@ from django.views.generic import FormView
 from django.views.generic import TemplateView
 from formtools.wizard.views import NamedUrlSessionWizardView
 
+from common.forms import DummyForm
 from common.serializers import serialize_date
 from common.validators import UpdateType
 from common.views import BusinessRulesMixin
@@ -44,7 +45,7 @@ class DuplicateDefinitionsWizard(
     COMPLETE = "complete"
 
     form_list = [
-        (START, forms.DuplicateQuotaDefinitionPeriodStartForm),
+        (START, DummyForm),
         (QUOTA_ORDER_NUMBERS, forms.QuotaOrderNumbersSelectForm),
         (SELECT_DEFINITION_PERIODS, forms.SelectSubQuotaDefinitionsForm),
         (SELECTED_DEFINITIONS, forms.SelectedDefinitionsForm),

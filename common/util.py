@@ -205,7 +205,13 @@ class TaricDateRange(DateRange):
             bool: True if the date range is fully contained within a provided date range, else False.
         """
         lower_contained = self.lower <= compared_date_range.lower
-        upper_contained = self.upper_inf or self.upper >= compared_date_range.upper
+        if compared_date_range.upper_inf:
+            if self.upper_inf:
+                upper_contained = True
+            else:
+                upper_contained = False
+        else:
+            upper_contained = self.upper_inf or self.upper >= compared_date_range.upper
 
         return lower_contained and upper_contained
 
