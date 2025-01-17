@@ -15,7 +15,7 @@
     {% endset %}
 
     {% set action %}
-      {% if association.valid_between.lower > today %}To be deleted{% else %}To be end-dated{% endif %}
+      {% if association.valid_between.lower > [today, association.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper]|min %}To be deleted{% else %}To be end-dated{% endif %}
     {% endset %}
 
     {{ table_rows.append([
