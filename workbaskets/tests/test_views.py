@@ -2718,9 +2718,9 @@ def test_auto_end_measures_post(
     url = reverse(
         "workbaskets:workbasket-ui-auto-end-date-measures",
     )
-    response = valid_user_client.post(url, {"action": "auto-end-date-measures"})
+    response = valid_user_client.post(url, {"action": "auto-end-date"})
     confirmation_url = reverse(
-        "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+        "workbaskets:workbasket-ui-auto-end-date-confirm",
         kwargs={"pk": user_workbasket.pk},
     )
     assert response.status_code == 302
@@ -2738,9 +2738,10 @@ def test_auto_end_measures(commodity_with_measures, user_workbasket, date_ranges
 
     with override_current_transaction(Transaction.objects.last()):
         measures_to_end = user_workbasket.get_measures_to_end_date()
+        footnotes_to_end = user_workbasket.get_footnote_associations_to_end_date()
         assert len(measures_to_end) == 11
         measure_pks = [measure.pk for measure in measures_to_end]
-        call_end_measures(measure_pks, user_workbasket.pk)
+        call_end_measures(measure_pks, footnotes_to_end, user_workbasket.pk)
         ended_measures = user_workbasket.measures
         for measure in ended_measures[:9]:
             assert measure.valid_between.upper == new_commodity.valid_between.upper
