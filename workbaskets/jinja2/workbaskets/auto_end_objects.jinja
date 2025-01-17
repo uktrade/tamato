@@ -1,9 +1,13 @@
 {% extends "layouts/detail.jinja" %}
 
-{% from "macros/fake_tabs.jinja" import fake_tabs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/tabs/macro.njk" import govukTabs %}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
+
+{% set measures_tab %}{% include "includes/workbaskets/auto_end_date_measures.jinja" %}{% endset %}
+{% set footnote_associations_tab %}{% include "includes/workbaskets/auto_end_date_footnote_associations.jinja" %}{% endset %}
 
 {% block breadcrumb %}
   {{ govukBreadcrumbs({
@@ -15,19 +19,26 @@
   }) }}
 {% endblock %}
 
-{% set links = [
-    {
-      "text": "Auto end-date measures",
-      "href": url('workbaskets:workbasket-ui-auto-end-date-measures'),
-      "selected": selected_tab == "measures"
-    },
-    {
-      "text": "Auto end-date footnote associations",
-      "href": url('workbaskets:workbasket-ui-auto-end-date-footnote-associations'),
-      "selected": selected_tab == "associations",
-    },
-  ]
-%}
+{% set tabs = {
+    "items": [
+      {
+        "label": "Auto end measures",
+        "id": "measures",
+        "panel": {
+          "html": measures_tab
+        }
+      },
+      {
+        "label": "Auto end footnote associations",
+        "id": "footnote-associations",
+        "panel": {
+          "html": footnote_associations_tab
+        }
+      },
+    ]
+  }%}
+
+{# {%- include "layouts/detail.jinja" -%} #}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -35,10 +46,17 @@
       <h1 class="govuk-heading-xl">Auto end objects</h1>
     </div>
   </div>
-  {{ fake_tabs(links) }}
-  <div class="govuk-tabs__panel {% block content_class %}{% endblock %}">
-    {% block tab_content %}
-      {% include "workbaskets/auto_end_date_measures.jinja" %}
-    {% endblock %}
-  </div>
+      {{ govukTabs(tabs) }}
+<form
+    method="post"
+  >
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+    {{ govukButton({
+        'text': "Submit",
+        'preventDoubleClick': true,
+        "name": "action",
+        "value": "auto-end-date",
+}) }}
+  </form>
 {% endblock %}

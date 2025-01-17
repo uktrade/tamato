@@ -1,4 +1,3 @@
-{% extends "workbaskets/auto_end_objects.jinja" %}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/button/macro.njk" import govukButton %}
 
@@ -10,7 +9,7 @@
     <h2 class="govuk-heading-l">{{ page_title }}</h2>
 
  {% set table_rows = [] %}
-  {% for association in object_list %}
+  {% for association in footnote_associations %}
     {% set footnote_link %}
       <a class="govuk-link govuk-!-font-weight-bold" href="{{ association.associated_footnote.get_url() }}">{{ association.associated_footnote }}</a>
     {% endset %}
@@ -47,21 +46,6 @@
       "rows": table_rows
     }) }}
     
-    <form
-    method="post"
-  >
-    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-    <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
-    {{ govukButton({
-        'text': "Submit",
-        'preventDoubleClick': true,
-        "name": "action",
-        "value": "auto-end-date-associations",
-}) }}
-  </form>
-
-
-
   {% else %}
     <p class="govuk-body">No associations to end-date have been found. </p>
     <p class="govuk-body">There are either no active footnote associations related to commodity codes updated in this workbasket or the associations already have end-dates in line with their respective commodities.</p>

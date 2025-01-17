@@ -1,4 +1,3 @@
-{% extends "workbaskets/auto_end_objects.jinja" %}
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/button/macro.njk" import govukButton %}
@@ -62,21 +61,6 @@
       ],
       "rows": table_rows
     }) }}
-    
-    <form
-    method="post"
-  >
-    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-    <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
-    {{ govukButton({
-        'text': "Submit",
-        'preventDoubleClick': true,
-        "name": "action",
-        "value": "auto-end-date-measures",
-}) }}
-  </form>
-
-
 
   {% else %}
     <p class="govuk-body">No measures to end-date have been found. </p>

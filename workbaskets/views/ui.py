@@ -39,7 +39,6 @@ from markdownify import markdownify
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import TrackedModelCheck
-from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from common.filters import TamatoFilter
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
@@ -1787,7 +1786,7 @@ class RuleCheckQueueView(
 class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     model = Measure
     paginate_by = 20
-    template_name = "workbaskets/auto_end_date_measures.jinja"
+    template_name = "workbaskets/auto_end_objects.jinja"
     sort_by_fields = ["start_date", "goods_nomenclature", "sid"]
     custom_sorting = {
         "start_date": "valid_between",
@@ -1803,6 +1802,10 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     def measures(self):
         return self.workbasket.get_measures_to_end_date()
 
+    @property
+    def footnote_associations(self):
+        return self.workbasket.get_footnote_associations_to_end_date()
+
     def get_queryset(self):
         ordering = self.get_ordering()
         queryset = self.measures
@@ -1817,64 +1820,23 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
         context["workbasket"] = self.workbasket
         context["today"] = date.today()
         context["selected_tab"] = "measures"
+        context["footnote_associations"] = self.footnote_associations
         return context
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("action", None) == "auto-end-date-measures":
-            self.end_measures()
+        if request.POST.get("action", None) == "auto-end-date":
+            self.auto_end_date()
             self.request.session["object_count"] = len(self.measures)
             self.request.session["object"] = "measure"
             return redirect(
-                "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+                "workbaskets:workbasket-ui-auto-end-date-confirm",
                 self.workbasket.pk,
             )
 
-    def end_measures(self):
+    def auto_end_date(self):
         measure_pks = [measure.pk for measure in self.measures]
-        call_end_measures.apply_async((measure_pks, self.workbasket.pk))
-
-
-class AutoEndDateConfirm(DetailView):
-    template_name = "workbaskets/confirm_auto_end_date_measures.jinja"
-    model = WorkBasket
-
-
-@method_decorator(require_current_workbasket, name="dispatch")
-class AutoEndDateFootnoteAssociations(ListView):
-    model = FootnoteAssociationGoodsNomenclature
-    template_name = "workbaskets/auto_end_date_footnote_associations.jinja"
-
-    @property
-    def workbasket(self) -> WorkBasket:
-        return WorkBasket.current(self.request)
-
-    @property
-    def footnote_associations(self):
-        return self.workbasket.get_footnote_associations_to_end_date()
-
-    def get_queryset(self):
-        return self.footnote_associations
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["workbasket"] = self.workbasket
-        context["today"] = date.today()
-        context["selected_tab"] = "associations"
-        return context
-
-    def post(self, request, *args, **kwargs):
-        if request.POST.get("action", None) == "auto-end-date-associations":
-            self.end_associations()
-            self.request.session["object_count"] = len(self.footnote_associations)
-            self.request.session["object"] = "footnote association"
-            return redirect(
-                "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
-                self.workbasket.pk,
-            )
-
-    def end_associations(self):
         [footnote_association.pk for footnote_association in self.footnote_associations]
-        # call_end_measures.apply_async((footnote_associations_pks, self.workbasket.pk))
+        call_end_measures.apply_async((measure_pks, self.workbasket.pk))
 
 
 class AutoEndDateConfirm(DetailView):
