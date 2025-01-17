@@ -1835,8 +1835,13 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     def auto_end_date(self):
         measure_pks = [measure.pk for measure in self.measures]
-        [footnote_association.pk for footnote_association in self.footnote_associations]
-        call_end_measures.apply_async((measure_pks, self.workbasket.pk))
+        footnote_association_pks = [
+            footnote_association.pk
+            for footnote_association in self.footnote_associations
+        ]
+        call_end_measures.apply_async(
+            (measure_pks, footnote_association_pks, self.workbasket.pk),
+        )
 
 
 class AutoEndDateConfirm(DetailView):

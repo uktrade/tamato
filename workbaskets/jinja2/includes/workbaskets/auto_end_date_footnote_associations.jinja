@@ -2,7 +2,7 @@
 {% from "components/button/macro.njk" import govukButton %}
 
 {% block tab_content %}
-    <h2 class="govuk-heading-l">{{ page_title }}</h2>
+    <h2 class="govuk-heading-l">Workbasket {{workbasket.pk}} - Auto end footnote associations </h2>
 
  {% set table_rows = [] %}
   {% for association in footnote_associations %}

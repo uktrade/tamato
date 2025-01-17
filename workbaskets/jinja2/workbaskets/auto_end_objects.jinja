@@ -7,7 +7,7 @@
 
 
 {% set page_title %}
-  Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Auto end-date measures
+  Workbasket {{ workbasket.pk }} - Auto end measures
 {% endset %}
 
 {% set measures_tab %}{% include "includes/workbaskets/auto_end_date_measures.jinja" %}{% endset %}
@@ -49,6 +49,7 @@
     </div>
   </div>
       {{ govukTabs(tabs) }}
+{% if object_list or footnote_associations %}
 <form
     method="post"
   >
@@ -61,4 +62,5 @@
         "value": "auto-end-date",
 }) }}
   </form>
+  {% endif %}
 {% endblock %}
