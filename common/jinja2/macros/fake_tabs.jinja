@@ -1,8 +1,8 @@
-{% macro fake_tabs(links_list, is_nested) -%}
+{% macro fake_tabs(links_list, is_nested, font_size="medium") -%}
   <ul class="govuk-tabs__list {% if is_nested %}govuk-!-margin-top-4{% endif %}">
   {% for link in links_list %}
     <li class="govuk-tabs__list-item {% if link.selected %}govuk-tabs__list-item--selected{% endif %}">
-      <a class="govuk-tabs__tab" href="{{ link.href }}">{{ link.text }}</a>
+      <a class="govuk-tabs__tab {% if font_size == 'small' %}govuk-!-font-size-16{% endif %} " href="{{ link.href }}">{{ link.text }}</a>
     </li>
   {% endfor %}
   </ul>
