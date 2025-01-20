@@ -1873,7 +1873,7 @@ class RuleCheckQueueView(
 class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     model = Measure
     paginate_by = 20
-    template_name = "workbaskets/auto_end_date_measures.jinja"
+    template_name = "workbaskets/auto_end_objects.jinja"
     sort_by_fields = ["start_date", "goods_nomenclature", "sid"]
     custom_sorting = {
         "start_date": "valid_between",
@@ -1889,6 +1889,10 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     def measures(self):
         return self.workbasket.get_measures_to_end_date()
 
+    @property
+    def footnote_associations(self):
+        return self.workbasket.get_footnote_associations_to_end_date()
+
     def get_queryset(self):
         ordering = self.get_ordering()
         queryset = self.measures
@@ -1902,22 +1906,28 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["workbasket"] = self.workbasket
         context["today"] = date.today()
+        context["footnote_associations"] = self.footnote_associations
         return context
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("action", None) == "auto-end-date-measures":
-            self.end_measures()
-            self.request.session["count_ended_measures"] = len(self.measures)
+        if request.POST.get("action", None) == "auto-end-date":
+            self.auto_end_date()
             return redirect(
-                "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+                "workbaskets:workbasket-ui-auto-end-date-confirm",
                 self.workbasket.pk,
             )
 
-    def end_measures(self):
+    def auto_end_date(self):
         measure_pks = [measure.pk for measure in self.measures]
-        call_end_measures.apply_async((measure_pks, self.workbasket.pk))
+        footnote_association_pks = [
+            footnote_association.pk
+            for footnote_association in self.footnote_associations
+        ]
+        call_end_measures.apply_async(
+            (measure_pks, footnote_association_pks, self.workbasket.pk),
+        )
 
 
-class AutoEndDateMeasuresConfirm(DetailView):
-    template_name = "workbaskets/confirm_auto_end_date_measures.jinja"
+class AutoEndDateConfirm(DetailView):
+    template_name = "workbaskets/confirm_auto_end_date.jinja"
     model = WorkBasket
