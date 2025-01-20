@@ -58,9 +58,9 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture()
 def mocked_diff_components():
-    """Mocks `diff_components()` inside `update_measure_components()` that is called in
-    `MeasureEditWizard` to prevent parsing errors where test measures lack a
-    duty sentence."""
+    """Mocks `diff_components()` inside `update_measure_components()` that is
+    called in `MeasureEditWizard` to prevent parsing errors where test measures
+    lack a duty sentence."""
     with patch(
         "measures.editors.update_measure_components",
     ) as update_measure_components:

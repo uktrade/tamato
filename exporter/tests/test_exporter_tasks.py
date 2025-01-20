@@ -21,6 +21,7 @@ class SentinelError(Exception):
     pass
 
 
+@pytest.mark.exporter
 def test_upload_workbaskets_uploads_queued_workbasket_to_s3(
     approved_transaction,
     hmrc_storage,
@@ -83,6 +84,7 @@ def test_upload_workbaskets_uploads_queued_workbasket_to_s3(
         SentinelError(),
     ],
 )
+@pytest.mark.exporter
 def test_upload_workbaskets_retries(mock_save, settings):
     """Verify if HMRCStorage.save raises a boto.ConnectionError the task
     upload_workflow task retries based on
@@ -112,6 +114,7 @@ def test_upload_workbaskets_retries(mock_save, settings):
         SentinelError(),
     ],
 )
+@pytest.mark.exporter
 def test_notify_hmrc_retries(mock_post, settings, hmrc_storage, responses):
     """Verify if HMRCStorage.save raises a boto.ConnectionError the task
     upload_workflow task retries based on

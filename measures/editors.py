@@ -4,15 +4,15 @@ from typing import Type
 
 from django.db.transaction import atomic
 
-from workbaskets import models as workbasket_models
-from measures import models as measure_models
+from common.models.utils import override_current_transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
-from common.models.utils import override_current_transaction
+from measures import models as measure_models
 from measures.util import update_measure_components
 from measures.util import update_measure_condition_components
 from measures.util import update_measure_excluded_geographical_areas
 from measures.util import update_measure_footnote_associations
+from workbaskets import models as workbasket_models
 
 
 class MeasuresEditor:
@@ -23,7 +23,7 @@ class MeasuresEditor:
     """The workbasket with which created measures will be associated."""
 
     selected_measures: List
-    """ The measures in which the edits will apply to."""
+    """The measures in which the edits will apply to."""
 
     data: Dict
     """Validated, cleaned and accumulated data created by the Form instances of
