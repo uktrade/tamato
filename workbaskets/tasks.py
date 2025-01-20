@@ -140,6 +140,7 @@ def end_objects(objects, workbasket):
 
 @app.task
 def call_end_measures(measure_pks, footnote_association_pks, workbasket_pk):
+    """Calls end_objects for measures and footnote associations."""
     workbasket = WorkBasket.objects.all().get(pk=workbasket_pk)
     measures = Measure.objects.all().filter(pk__in=measure_pks)
     footnote_associations = FootnoteAssociationGoodsNomenclature.objects.all().filter(

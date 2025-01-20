@@ -1906,7 +1906,6 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["workbasket"] = self.workbasket
         context["today"] = date.today()
-        context["selected_tab"] = "measures"
         context["footnote_associations"] = self.footnote_associations
         return context
 

@@ -16,6 +16,7 @@ from django.utils.timezone import localtime
 
 from checks.models import TrackedModelCheck
 from checks.tests.factories import TrackedModelCheckFactory
+from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from common.inspect_tap_tasks import CeleryTask
 from common.inspect_tap_tasks import TAPTasks
 from common.models.trackedmodel import TrackedModel
@@ -2677,19 +2678,62 @@ def commodity_with_measures(date_ranges):
     return commodity
 
 
+@pytest.fixture
+def commodity_with_associations(date_ranges):
+    """Fixture used for texting the automatic end-dating of footnote
+    associations on an end- dated commodity code."""
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end,
+    )
+    factories.FootnoteAssociationGoodsNomenclatureFactory.create_batch(
+        5,
+        goods_nomenclature=commodity,
+    )  # Open ended associations should be end-dated
+    factories.FootnoteAssociationGoodsNomenclatureFactory.create_batch(
+        4,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_delta_to_2_months_ahead,
+    )  # Associations ending after the comm code should have their end-date aligned
+    factories.FootnoteAssociationGoodsNomenclatureFactory.create_batch(
+        3,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_with_normal,
+    )  # Associations ending before the comm code should be ignored
+    factories.FootnoteAssociationGoodsNomenclatureFactory.create_batch(
+        2,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.future,
+    )  # Associations that have not started yet should be deleted
+    return commodity
+
+
+@pytest.mark.parametrize(
+    "commodity, tab",
+    [
+        ("commodity_with_measures", "#measures"),
+        ("commodity_with_associations", "#footnote-associations"),
+    ],
+)
 def test_auto_end_measures_renders(
     valid_user_client,
     user_workbasket,
-    commodity_with_measures,
     date_ranges,
+    commodity,
+    tab,
+    request,
 ):
-    """Test that the list of measures to be ended renders correctly."""
-    commodity_with_measures.new_version(
+    """Test that the lists of measures and footnote associations to be ended
+    render correctly."""
+    commodity = request.getfixturevalue(commodity)
+    commodity.new_version(
         workbasket=user_workbasket,
         valid_between=date_ranges.normal,
     )
-    url = reverse(
-        "workbaskets:workbasket-ui-auto-end-date-measures",
+    url = (
+        reverse(
+            "workbaskets:workbasket-ui-auto-end-date-measures",
+        )
+        + tab
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
@@ -2728,10 +2772,18 @@ def test_auto_end_measures_post(
     assert call_check_end_measures.called
 
 
-def test_auto_end_measures(commodity_with_measures, user_workbasket, date_ranges):
-    """Test that the call_end_measures correctly ends measures and reorders them
-    in the workbasket."""
-    new_commodity = commodity_with_measures.new_version(
+@pytest.mark.parametrize(
+    "commodity, object",
+    [
+        ("commodity_with_measures", Measure),
+        ("commodity_with_associations", FootnoteAssociationGoodsNomenclature),
+    ],
+)
+def test_auto_end_measures(user_workbasket, date_ranges, commodity, object, request):
+    """Test that the call_end_measures correctly ends measures and footnote
+    associations and reorders them in the workbasket."""
+    commodity = request.getfixturevalue(commodity)
+    new_commodity = commodity.new_version(
         workbasket=user_workbasket,
         valid_between=date_ranges.normal,
     )
@@ -2739,22 +2791,32 @@ def test_auto_end_measures(commodity_with_measures, user_workbasket, date_ranges
     with override_current_transaction(Transaction.objects.last()):
         measures_to_end = user_workbasket.get_measures_to_end_date()
         footnotes_to_end = user_workbasket.get_footnote_associations_to_end_date()
-        assert len(measures_to_end) == 11
+        # Assert 11 objects have been found that will be ended
+        assert len(measures_to_end) + len(footnotes_to_end) == 11
+
         measure_pks = [measure.pk for measure in measures_to_end]
-        call_end_measures(measure_pks, footnotes_to_end, user_workbasket.pk)
-        ended_measures = user_workbasket.measures
-        for measure in ended_measures[:9]:
-            assert measure.valid_between.upper == new_commodity.valid_between.upper
-        update_types = [measure.update_type for measure in ended_measures]
-        assert update_types.count(UpdateType.UPDATE) == 9
+        association_pks = [association.pk for association in footnotes_to_end]
+        call_end_measures(measure_pks, association_pks, user_workbasket.pk)
+
+        updated_objects = user_workbasket.tracked_models.filter(
+            update_type=UpdateType.UPDATE,
+        )
+        end_dated_objects = [obj for obj in updated_objects if isinstance(obj, object)]
+        # Assert that the objects that were updated all have the commodity's end date now
+        for item in end_dated_objects:
+            assert item.valid_between.upper == new_commodity.valid_between.upper
+        update_types = [object.update_type for object in user_workbasket.tracked_models]
+        # Assert 9 objects were updated (10 including the commodity) and 2 were deleted
+        assert update_types.count(UpdateType.UPDATE) == 10
         assert update_types.count(UpdateType.DELETE) == 2
         first_11_items = (
             TrackedModel.objects.all()
             .filter(transaction__workbasket=user_workbasket)
             .order_by("transaction__order")[:10]
         )
+        # Assert correct reordering that the first 11 objects are of measure or footnote association type
         for item in first_11_items:
-            assert isinstance(item, Measure)
+            assert isinstance(item, object)
 
 
 def test_get_measures_to_end_date(user_workbasket, date_ranges):
@@ -2800,6 +2862,56 @@ def test_get_measures_to_end_date(user_workbasket, date_ranges):
             ]
         )
         assert measure_ended_before_commodity not in measures
+
+
+def test_get_footnote_associations_to_end_date(user_workbasket, date_ranges):
+    """Test that the utility function correctly gathers footnote associations,
+    not including those which already have an end date before the
+    commodity's."""
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end,
+    )
+
+    open_ended_association = (
+        factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+            goods_nomenclature=commodity,
+            valid_between=date_ranges.no_end,
+        )
+    )
+    association_ended_before_commodity = (
+        factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+            goods_nomenclature=commodity,
+            valid_between=date_ranges.starts_with_normal,
+        )
+    )
+    association_ended_after_commodity_ends = (
+        factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+            goods_nomenclature=commodity,
+            valid_between=date_ranges.starts_delta_to_2_months_ahead,
+        )
+    )
+    association_to_start_after_commodity_ends = (
+        factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+            goods_nomenclature=commodity,
+            valid_between=date_ranges.future,
+        )
+    )
+
+    new_commodity = commodity.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.normal,
+    )
+    with override_current_transaction(Transaction.objects.last()):
+        associations = user_workbasket.get_footnote_associations_to_end_date()
+        assert all(
+            association in associations
+            for association in [
+                open_ended_association,
+                association_ended_after_commodity_ends,
+                association_to_start_after_commodity_ends,
+            ]
+        )
+        assert association_ended_before_commodity not in associations
 
 
 def test_reordering_transactions_bug(valid_user_client, user_workbasket):
