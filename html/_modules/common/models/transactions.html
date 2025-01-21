@@ -136,6 +136,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.serializers.json</span><span class="w"> </span><span class="kn">import</span> <span class="n">DjangoJSONEncoder</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">atomic</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_fsm</span><span class="w"> </span><span class="kn">import</span> <span class="n">FSMIntegerField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_fsm</span><span class="w"> </span><span class="kn">import</span> <span class="n">transition</span>
@@ -331,7 +332,10 @@
             <span class="n">versions</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">version_group</span><span class="o">.</span><span class="n">versions</span><span class="o">.</span><span class="n">has_approved_state</span><span class="p">()</span>
                 <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-pk&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                    <span class="n">Q</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+                    <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">transaction__workbasket</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">transaction</span><span class="o">.</span><span class="n">workbasket</span><span class="p">),</span>
+                <span class="p">)</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">versions</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">version_group</span><span class="o">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="kc">None</span>
