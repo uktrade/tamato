@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Iterable
+from unittest.mock import PropertyMock
 from unittest.mock import patch
 
 import pytest
@@ -498,3 +499,43 @@ def test_terminate_missing_measures_check_no_id():
         missing_measures_check_task_id=None,
     )
     assert workbasket.terminate_missing_measures_check() is None
+
+
+def test_dequeue_reverts_current_version(valid_user, user_workbasket):
+    """Test that when dequeueing a workbasket with 2 updates of the same object
+    that the current version is correctly reverted."""
+    measure_create = factories.MeasureFactory.create()
+    measure_update_1 = measure_create.new_version(
+        workbasket=user_workbasket,
+        update_type=UpdateType.UPDATE,
+    )
+    measure_update_2 = measure_create.new_version(
+        workbasket=user_workbasket,
+        update_type=UpdateType.UPDATE,
+    )
+
+    for tx in user_workbasket.transactions.all():
+        TransactionCheckFactory.create(
+            transaction=tx,
+            successful=True,
+            completed=True,
+        )
+
+    assert measure_create.version_group.current_version == measure_create
+
+    with patch(
+        "workbaskets.models.WorkBasket.unchecked_or_errored_transactions",
+        new_callable=PropertyMock,
+    ) as mock_unchecked:
+        mock_unchecked.return_value = Transaction.objects.none()
+        user_workbasket.queue(
+            valid_user.pk,
+            settings.TRANSACTION_SCHEMA,
+        )
+
+    measure_create.refresh_from_db()
+    assert measure_create.version_group.current_version == measure_update_2
+
+    user_workbasket.dequeue()
+    measure_create.refresh_from_db()
+    assert measure_create.version_group.current_version == measure_create
