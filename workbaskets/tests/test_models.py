@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Iterable
+from unittest.mock import PropertyMock
 from unittest.mock import patch
 
 import pytest
