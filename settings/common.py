@@ -223,6 +223,7 @@ CSP_STYLE_SRC = (
     "https://tagmanager.google.com/",
 )
 CSP_SCRIPT_SRC = (
+    "'strict-dynamic'",
     "'self'",
     "'unsafe-eval'",
     "'unsafe-inline'",
