@@ -231,6 +231,7 @@ CSP_SCRIPT_SRC = (
     "ajax.googleapis.com/",
 )
 CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
+CSP_OBJECT_SRC = ("'none'",)
 CSP_INCLUDE_NONCE_IN = ("script-src",)
 CSP_REPORT_ONLY = False
 
