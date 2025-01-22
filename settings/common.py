@@ -232,6 +232,7 @@ CSP_SCRIPT_SRC = (
 )
 CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
 CSP_OBJECT_SRC = ("'none'",)
+CSP_BASE_URI = ("'none'",)
 CSP_INCLUDE_NONCE_IN = ("script-src",)
 CSP_REPORT_ONLY = False
 
