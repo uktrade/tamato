@@ -145,10 +145,6 @@ class MeasureConditionsWizardStepFormSet(
         return kwargs
 
 
-class MeasureCreateStartForm(forms.Form):
-    pass
-
-
 class MeasureDetailsForm(
     SerializableFormMixin,
     ValidityPeriodForm,

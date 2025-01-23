@@ -156,3 +156,32 @@ class TrackedModelCheck(TimestampedMixin):
         Returns business rule code (e.g. `FO4`).
         """
         return self.check_name.split(".")[-1][:-1]
+
+
+class MissingMeasuresCheck(TimestampedMixin):
+    """Stores a timestamp for when check_workbasket_for_missing_measures was
+    last run, FK to the workbasket and whether the check was successful."""
+
+    workbasket = models.OneToOneField(
+        "workbaskets.WorkBasket",
+        on_delete=models.CASCADE,
+        null=True,
+        related_name="missing_measures_check",
+    )
+
+    successful = fields.BooleanField(null=True)
+
+
+class MissingMeasureCommCode(models.Model):
+    """Links a GoodsNomenclature to a MissingMeasuresCheck when the commodity
+    fails the check."""
+
+    commodity = models.ForeignKey(
+        "commodities.GoodsNomenclature",
+        on_delete=models.CASCADE,
+    )
+    missing_measures_check = models.ForeignKey(
+        MissingMeasuresCheck,
+        on_delete=models.CASCADE,
+        related_name="model_checks",
+    )

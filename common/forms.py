@@ -931,3 +931,8 @@ class ExtraErrorFormMixin:
             self._errors[field].extend(error_list)
             if field in self.cleaned_data:
                 del self.cleaned_data[field]
+
+
+class DummyForm(forms.Form):
+    """Form with no fields used as a placeholder for when the view requires a
+    form class."""
