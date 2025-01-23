@@ -1,6 +1,11 @@
+import threading
+from functools import wraps
+
 import pytest
+from django.db import OperationalError
 from django.db.models import CASCADE
 from django.db.models import ForeignKey
+from django.db.models import QuerySet
 from factory import SubFactory
 from factory.django import DjangoModelFactory
 
@@ -209,3 +214,182 @@ def test_item_promote_to_first(three_item_queue):
     item = item.promote_to_first()
 
     assert item.position == 1
+
+
+@pytest.mark.django_db(transaction=True)
+class TestQueueRaceConditions:
+    """Tests that concurrent requests to reorder queue items don't result in
+    duplicate or non-consecutive positions."""
+
+    NUM_THREADS: int = 2
+    """The number of threads each test uses."""
+
+    THREAD_TIMEOUT: int = 5
+    """The duration in seconds to wait for a thread to complete before timing
+    out."""
+
+    NUM_QUEUE_ITEMS: int = 5
+    """The number of queue items to create for each test."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, queue):
+        """Initialises a barrier to synchronise threads and creates queue items
+        anew for each test."""
+
+        self.unexpected_exceptions: list[Exception] = []
+
+        self.barrier: threading.Barrier = threading.Barrier(
+            parties=self.NUM_THREADS,
+            timeout=self.THREAD_TIMEOUT,
+        )
+
+        self.queue: TestQueue = queue
+        self.queue_items: QuerySet[TestQueueItem] = TestQueueItemFactory.create_batch(
+            self.NUM_QUEUE_ITEMS,
+            queue=queue,
+        )
+
+    def assert_no_unexpected_exceptions(self):
+        """Asserts that no threads raised an unexpected exception."""
+        assert (
+            not self.unexpected_exceptions
+        ), f"Unexpected exception(s) raised: {self.unexpected_exceptions}"
+
+    def assert_expected_positions(self):
+        """Asserts that queue item positions remain both unique and in
+        consecutive sequence."""
+        positions = list(
+            TestQueueItem.objects.filter(
+                queue=self.queue,
+            )
+            .order_by("position")
+            .values_list("position", flat=True),
+        )
+
+        assert len(set(positions)) == len(positions), "Duplicate positions found!"
+
+        assert positions == list(
+            range(min(positions), max(positions) + 1),
+        ), "Non-consecutive positions found!"
+
+    def synchronised(func):
+        """
+        Decorator that ensures all threads wait until they can call their target
+        function in a synchronised fashion.
+
+        Any unexpected exceptions raised during the execution of the decorated
+        function are stored for the individual test to re-raise.
+        """
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            try:
+                self.barrier.wait()
+                func(self, *args, **kwargs)
+            except OperationalError:
+                # A conflicting lock is already acquired
+                pass
+            except Exception as error:
+                self.unexpected_exceptions.append(error)
+
+        return wrapper
+
+    @synchronised
+    def synchronised_call(
+        self,
+        method_name: str,
+        queue_item: TestQueueItem,
+    ):
+        """
+        Thread-synchronised wrapper for the following `QueueItem` instance
+        methods:
+
+        - delete
+        - promote
+        - demote
+        - promote_to_first
+        - demote_to_last
+        """
+        getattr(queue_item, method_name)()
+
+    @synchronised
+    def synchronised_create_queue_item(self):
+        """Thread-synchronised wrapper to create a new queue item instance."""
+        TestQueueItemFactory.create(queue=self.queue)
+
+    def execute_threads(self, threads: list[threading.Thread]):
+        """Starts a list of threads and waits for them to complete or
+        timeout."""
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join(timeout=self.THREAD_TIMEOUT)
+            if thread.is_alive():
+                raise RuntimeError(f"Thread {thread.name} timed out.")
+
+    def test_demote_and_promote_queue_items(self):
+        """Demotes and promotes the same queue item."""
+        thread1 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "demote",
+                "queue_item": self.queue_items[2],
+            },
+            name="DemoteItemThread1",
+        )
+        thread2 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "promote",
+                "queue_item": self.queue_items[2],
+            },
+            name="PromoteItemThread2",
+        )
+
+        self.execute_threads([thread1, thread2])
+        self.assert_no_unexpected_exceptions()
+        self.assert_expected_positions()
+
+    def test_delete_and_create_queue_items(self):
+        """Deletes the first item while creating a new one."""
+        thread1 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "delete",
+                "queue_item": self.queue_items[0],
+            },
+            name="DeleteItemThread1",
+        )
+        thread2 = threading.Thread(
+            target=self.synchronised_create_queue_item,
+            name="CreateItemThread2",
+        )
+
+        self.execute_threads([thread1, thread2])
+        self.assert_no_unexpected_exceptions()
+        self.assert_expected_positions()
+
+    def test_promote_and_promote_to_first_queue_items(self):
+        """Promotes to first the last-placed item while promoting the one before
+        it."""
+        thread1 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "promote_to_first",
+                "queue_item": self.queue_items[4],
+            },
+            name="PromoteItemToFirstThread1",
+        )
+        thread2 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "promote",
+                "queue_item": self.queue_items[3],
+            },
+            name="PromoteItemThread2",
+        )
+
+        self.execute_threads([thread1, thread2])
+        self.assert_no_unexpected_exceptions()
+        self.assert_expected_positions()
