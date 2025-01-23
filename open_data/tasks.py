@@ -117,8 +117,8 @@ def find_relations():
 
     It uses the dictionary to find orphaned records, ie records that are in the
     table, but are not used by any fk. The queries generated are very, very
-    slow, and I am not sure we need to delete the orphaned records. I am leaving
-    the code in, just in case.
+    slow, and I am not sure if we need to delete the orphaned records. I am
+    leaving the code in, just in case.
     """
     config = django.apps.apps.get_app_config(APP_LABEL)
     relations = {}
@@ -154,3 +154,34 @@ def find_relations():
         print(qs.count())
         print(qs.query)
     # return relations, inverse_relations
+
+
+def check_approved_against_last_tx():
+
+    config = django.apps.apps.get_app_config(APP_LABEL)
+    tx = Transaction.objects.last()
+    for model in config.get_models():
+        if issubclass(model, ReportModel) and model.update_table:
+            mod = model.shadowed_model
+            latest = mod.objects.latest_approved()
+            up_to_transaction = mod.objects.approved_up_to_transaction(tx)
+            # if latest.count() != up_to_transaction.count():
+            #     print(f"{mod} approved {latest.count()} != to_transaction {up_to_transaction.count()}")
+            try:
+                # See if there are elements in the approved list
+                # that are not in the up_to_transaction
+                sid_list = up_to_transaction.values("sid")
+                result_diff = latest.exclude(sid__in=sid_list)
+                if result_diff.count() == 0:
+                    # print(f"{model} is OK")
+                    pass
+                else:
+                    print(f"Discrepancies {result_diff.count()} in {mod}")
+                    for row in result_diff:
+                        print(f"{row.sid=}")
+                        # Measure.objects.filter(sid='20243789')
+                        for m in mod.objects.filter(sid=row.sid):
+                            print(f"\t{m.transaction=}, {m.transaction.workbasket}")
+            # 20256544
+            except:
+                print(f"No SID in {mod}")
