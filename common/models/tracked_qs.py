@@ -81,7 +81,7 @@ class TrackedModelQuerySet(
         """
         if not transaction:
             return self.latest_approved()
-
+        # return self.latest_approved()
         return (
             self.annotate(
                 latest=Max(
