@@ -21,7 +21,6 @@ from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
 from measures.forms import MeasureStartDateForm
 from measures.models import Measure
-from measures.models.tracked_models import DutyExpression
 from measures.validators import MeasureExplosionLevel
 
 pytestmark = pytest.mark.django_db
@@ -1026,6 +1025,10 @@ def test_measure_forms_conditions_invalid_duty(
             "3.5 % + 11 GBP / 100 kg",
             "A compound duty expression was found at character 7. \n\nCheck that you are entering a single duty amount or a duty amount together with a measurement unit (and measurement unit qualifier if required). ",
         ),
+        (
+            "1.2345 GBP / kg",
+            "The reference price cannot have more than 3 decimal places.",
+        ),
     ],
 )
 def test_measure_forms_conditions_wizard_invalid_duty(
@@ -1219,38 +1222,6 @@ def test_measure_forms_conditions_wizard_clears_unneeded_certificate(date_ranges
         )
         assert form_expects_no_certificate.is_valid()
         assert form_expects_no_certificate.cleaned_data["required_certificate"] is None
-
-
-def test_measure_forms_conditions_wizard_form_invalid_duty(date_ranges):
-    """Tests that MeasureConditionsWizardStepForm is invalid when the duty has
-    more than 3 decimal places."""
-    condition_code = factories.MeasureConditionCodeFactory.create()
-    monetary_unit = factories.MonetaryUnitFactory.create()
-    factories.MeasurementUnitFactory.create()
-    factories.MeasurementUnitQualifierFactory.create()
-    factories.MeasureConditionComponentFactory.create()
-    action = factories.MeasureActionFactory.create()
-    if not DutyExpression.objects.filter(sid=99):
-        factories.DutyExpressionFactory.create(sid=99)
-
-    data = {
-        "reference_price": f"1.2345 {monetary_unit.code}",
-        "action": action.pk,
-        "condition_code": condition_code.pk,
-    }
-    # MeasureConditionsForm.__init__ expects prefix kwarg for instantiating crispy forms `Layout` object
-    form = forms.MeasureConditionsWizardStepForm(
-        data,
-        prefix="",
-        measure_start_date=date_ranges.normal,
-    )
-
-    with override_current_transaction(action.transaction):
-        assert not form.is_valid()
-        assert (
-            "The reference price cannot have more than 3 decimal places."
-            in form.errors["reference_price"]
-        )
 
 
 def test_measure_form_valid_data(erga_omnes, session_request_with_workbasket):
