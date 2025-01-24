@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Sequence
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -460,7 +461,7 @@ class DutyTransformer(Transformer):
 
     def duty_amount(self, value):
         (value,) = value
-        return ("duty_amount", float(value))
+        return ("duty_amount", Decimal(value))
 
     def monetary_unit(self, value):
         (value,) = value

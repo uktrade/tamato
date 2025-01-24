@@ -252,6 +252,13 @@ class MeasureConditionsFormMixin(forms.ModelForm):
             try:
                 components = parser.transform(price)
                 cleaned_data["duty_amount"] = components[0].get("duty_amount")
+                if (
+                    cleaned_data["duty_amount"]
+                    and len(str(cleaned_data["duty_amount"]).split(".")[-1]) > 3
+                ):
+                    raise ValidationError(
+                        f"The reference price cannot have more than 3 decimal places.",
+                    )
                 cleaned_data["monetary_unit"] = components[0].get("monetary_unit")
                 cleaned_data["condition_measurement"] = (
                     models.Measurement.objects.as_at(date)
