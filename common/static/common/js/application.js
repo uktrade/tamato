@@ -9,6 +9,7 @@ const imagePath = (name) => images(name, true);
 
 require.context("govuk-frontend/govuk/assets");
 
+import "./trustedTypes";
 import { initAll } from "govuk-frontend";
 
 import showHideCheckboxes from "./showHideCheckboxes";
