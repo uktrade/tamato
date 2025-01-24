@@ -1600,8 +1600,7 @@ class CommodityCollectionLoader:
         goods_sids = Subquery(goods_query.values("sid"))
 
         indents_query = (
-            _apply_filters(GoodsNomenclatureIndent.objects)
-            .with_end_date()
+            _apply_filters(GoodsNomenclatureIndent.objects.with_end_date())
             .filter(indented_goods_nomenclature__sid__in=goods_sids)
             .annotate(goods_sid=F("indented_goods_nomenclature__sid"))
             .order_by("transaction", "validity_start")

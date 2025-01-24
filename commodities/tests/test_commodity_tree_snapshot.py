@@ -92,3 +92,11 @@ def test_get_dependent_measures_works_with_wonky_archived_measure(
     assert wonky_archived_measure.generating_regulation == old_regulation
     assert target_commodity in commodities_collection.commodities
     assert target_commodity in target.commodities
+
+
+def test_CommodityCollectionLoader(seed_database_with_indented_goods):
+    # Test that effective_only does not crash the code
+    commodities_collection = CommodityCollectionLoader(prefix="2903").load(
+        effective_only=True,
+    )
+    assert len(commodities_collection.commodities) == 6
