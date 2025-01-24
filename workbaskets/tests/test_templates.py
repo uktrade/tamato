@@ -4,6 +4,8 @@ import pytest
 from bs4 import BeautifulSoup
 from django.template.loader import render_to_string
 
+from common.tests.factories import GoodsNomenclatureFactory
+
 pytestmark = pytest.mark.django_db
 
 
@@ -11,6 +13,11 @@ def test_check_missing_measures_in_progress(user_workbasket):
     user_workbasket.missing_measures_check_task_id = "12345"
     user_workbasket.refresh_from_db()
     mock_request = MagicMock()
+
+    with user_workbasket.new_transaction() as tx:
+        GoodsNomenclatureFactory.create(
+            transaction=tx,
+        )
 
     rendered = render_to_string(
         "workbaskets/checks/missing_measures.jinja",
