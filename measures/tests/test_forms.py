@@ -21,6 +21,7 @@ from measures.forms import MeasureEndDateForm
 from measures.forms import MeasureForm
 from measures.forms import MeasureStartDateForm
 from measures.models import Measure
+from measures.models.tracked_models import DutyExpression
 from measures.validators import MeasureExplosionLevel
 
 pytestmark = pytest.mark.django_db
@@ -1228,8 +1229,9 @@ def test_measure_forms_conditions_wizard_form_invalid_duty(date_ranges):
     factories.MeasurementUnitFactory.create()
     factories.MeasurementUnitQualifierFactory.create()
     factories.MeasureConditionComponentFactory.create()
-    factories.DutyExpressionFactory.create(sid=99)
     action = factories.MeasureActionFactory.create()
+    if not DutyExpression.objects.filter(sid=99):
+        factories.DutyExpressionFactory.create(sid=99)
 
     data = {
         "reference_price": f"1.2345 {monetary_unit.code}",
