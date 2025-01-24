@@ -380,7 +380,7 @@ class DutyTransformer(Transformer):
             )
 
     def validate_duty_amount(self, duty_amount):
-        if len(str(duty_amount).split(".")[-1]) > 3:
+        if duty_amount.as_tuple().exponent < -3:
             raise ValidationError(
                 f"The reference price cannot have more than 3 decimal places.",
             )
