@@ -379,6 +379,12 @@ class DutyTransformer(Transformer):
                 f"Measurement unit qualifier {qualifier.abbreviation} cannot be used with measurement unit {unit.abbreviation}.",
             )
 
+    def validate_duty_amount(self, duty_amount):
+        if len(str(duty_amount).split(".")[-1]) > 3:
+            raise ValidationError(
+                f"The reference price cannot have more than 3 decimal places.",
+            )
+
     def validate_phrase(self, phrase):
         # Each measure component can have an amount, monetary unit and measurement.
         # Which expression elements are allowed in a component is controlled by
@@ -392,6 +398,9 @@ class DutyTransformer(Transformer):
         monetary_unit = phrase.get("monetary_unit", None)
         measurement_unit = phrase.get("measurement_unit", None)
         measurement_unit_qualifier = phrase.get("measurement_unit_qualifier", None)
+
+        if duty_amount:
+            self.validate_duty_amount(duty_amount)
 
         self.validate_according_to_applicability_code(
             amount_code,
