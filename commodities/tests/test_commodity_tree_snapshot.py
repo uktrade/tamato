@@ -94,8 +94,8 @@ def test_get_dependent_measures_works_with_wonky_archived_measure(
     assert target_commodity in target.commodities
 
 
-def test_CommodityCollectionLoader(seed_database_with_indented_goods):
-    # Test that effective_only does not crash the code
+def test_commodity_collection_loader(seed_database_with_indented_goods):
+    # Test that 'effective_only' does not crash the code
     commodities_collection = CommodityCollectionLoader(prefix="2903").load(
         effective_only=True,
     )
