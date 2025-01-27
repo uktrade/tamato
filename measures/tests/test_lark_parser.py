@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -45,7 +46,7 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
             ["1.230", "EUR", "kg"],
             [
                 {
-                    "duty_amount": 1.23,
+                    "duty_amount": Decimal("1.23"),
                     "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
                     "monetary_unit": EURO_FIXTURE_NAME,
                     "measurement_unit": KILOGRAM_FIXTURE_NAME,
@@ -57,16 +58,16 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
             ["9.10", "%", "MAX", "1.00", "%", "+", "0.90", "GBP", "100 kg"],
             [
                 {
-                    "duty_amount": 9.1,
+                    "duty_amount": Decimal("9.1"),
                     "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
                 },
                 {
                     "duty_expression_sid": MAXIMUM_CLAUSE_SID[0],
-                    "duty_amount": 1.0,
+                    "duty_amount": Decimal("1.0"),
                 },
                 {
                     "duty_expression_sid": PLUS_PERCENT_OR_AMOUNT_SID[1],
-                    "duty_amount": 0.9,
+                    "duty_amount": Decimal("0.9"),
                     "monetary_unit": BRITISH_POUND_FIXTURE_NAME,
                     "measurement_unit": HECTOKILOGRAM_FIXTURE_NAME,
                 },
@@ -77,7 +78,7 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
             ["0.300", "XEM", "100 kg", "lactic."],
             [
                 {
-                    "duty_amount": 0.3,
+                    "duty_amount": Decimal("0.3"),
                     "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
                     "measurement_unit": HECTOKILOGRAM_FIXTURE_NAME,
                     "measurement_unit_qualifier": LACTIC_MATTER_FIXTURE_NAME,
@@ -91,10 +92,10 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
             [
                 {
                     "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
-                    "duty_amount": 12.9,
+                    "duty_amount": Decimal("12.9"),
                 },
                 {
-                    "duty_amount": 20.0,
+                    "duty_amount": Decimal("20.0"),
                     "duty_expression_sid": PLUS_PERCENT_OR_AMOUNT_SID[0],
                     "measurement_unit": KILOGRAM_FIXTURE_NAME,
                     "monetary_unit": EURO_FIXTURE_NAME,

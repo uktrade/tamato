@@ -1,0 +1,38 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "includes/workbaskets/navigation.jinja" import navigation %}
+{% from "macros/fake_tabs.jinja" import fake_tabs %}
+
+{% set page_title %}
+  Workbasket {{ workbasket.id if workbasket else request.user.current_workbasket.id }} - Checks
+{% endset %}
+
+{% block content %}
+
+{% set links = [
+    {
+      "text": "Live rules status",
+      "href": url('workbaskets:workbasket-checks'),
+      "selected": selected_tab == "rules-check"
+    },
+    {
+      "text": "Worksheet check",
+      "href": url('workbaskets:workbasket-check-ui-compare'),
+      "selected": selected_tab == "worksheet-check",
+    },
+    {
+      "text": "Missing measures",
+      "href": url('workbaskets:workbasket-ui-missing-measures-check'),
+      "selected": selected_tab == "measures-check",
+    },
+  ]
+%}
+
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
+  {{ navigation(request, "check") }}
+  {{ fake_tabs(links, font_size='small') }}
+  <div class="govuk-tabs__panel">
+    {% block tab_content %}{% endblock %}
+  </div>
+
+{% endblock %}
