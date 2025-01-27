@@ -15,6 +15,7 @@ from django.urls import reverse
 from django.utils.timezone import localtime
 
 from checks.models import TrackedModelCheck
+from checks.tests.factories import MissingMeasuresCheckFactory
 from checks.tests.factories import TrackedModelCheckFactory
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from common.inspect_tap_tasks import CeleryTask
@@ -212,7 +213,7 @@ def test_edit_workbasket_page_sets_workbasket(valid_user_client, user_workbasket
         reverse("workbaskets:edit-workbasket"),
     )
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     assert str(user_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
 
 
@@ -225,7 +226,7 @@ def test_workbasket_detail_page_url_params(
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     buttons = soup.select(".govuk-button.govuk-button--primary")
     for button in buttons:
         # test that accidental spacing in template hasn't mangled the url
@@ -285,8 +286,8 @@ def test_workbasket_assignments_appear(valid_user_client):
     worker = factories.UserFactory.create(first_name="Worker", last_name="User")
     reviewer = factories.UserFactory.create(first_name="Reviewer", last_name="User")
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
-    assert worker.get_full_name() not in str(response.content)
-    assert reviewer.get_full_name() not in str(response.content)
+    assert worker.get_full_name() not in response.content.decode(response.charset)
+    assert reviewer.get_full_name() not in response.content.decode(response.charset)
 
     # Fully assign the workbasket
     task = factories.TaskFactory.create(workbasket=workbasket)
@@ -303,8 +304,12 @@ def test_workbasket_assignments_appear(valid_user_client):
     )
     # Assert that the assigned names appear in the table
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
-    assert worker_assignment.user.get_full_name() in str(response.content)
-    assert reviewer_assignment.user.get_full_name() in str(response.content)
+    assert worker_assignment.user.get_full_name() in response.content.decode(
+        response.charset,
+    )
+    assert reviewer_assignment.user.get_full_name() in response.content.decode(
+        response.charset,
+    )
 
 
 @pytest.mark.parametrize(
@@ -471,7 +476,7 @@ def test_workbasket_list_all_view(valid_user_client):
 
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     table = soup.select("table")[0]
     row_text = [row.text for row in table.findChildren("td")]
 
@@ -507,7 +512,7 @@ def test_workbasket_list_all_view_search_filters(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     rows = soup.select("table > tbody > tr")
     row_text = [td.text for td in rows[0]]
@@ -619,7 +624,7 @@ def test_workbasket_review_tabs(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     columns = page.select(".govuk-table__header")
     rows = page.select("tbody > tr")
     assert len(columns) == num_columns
@@ -645,7 +650,7 @@ def test_workbasket_review_measures(valid_user_client):
 
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     non_workbasket_measures_sids = {str(m.sid) for m in non_workbasket_measures}
     measure_sids = [e.text for e in soup.select("table tr td:first-child")]
@@ -711,7 +716,7 @@ def test_workbasket_review_measures_filters_update_type(
     response = valid_user_client.get(url + search_filter)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     rows = page.select("tbody > tr")
     assert len(rows) == expected_measure_count
 
@@ -737,7 +742,7 @@ def test_workbasket_review_measures_pagination(
 
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     measure_sids = {e.text for e in soup.select("table tr td:first-child")}
     workbasket_measures = Measure.objects.filter(
@@ -767,7 +772,7 @@ def test_workbasket_review_measures_conditions(valid_user_client):
         kwargs={"pk": workbasket.pk},
     )
     response = valid_user_client.get(url)
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     # 11th column is conditions. We're interested in the first (and only) row.
     condition_text = soup.select("table tr td:nth-child(11)")[0].text
 
@@ -962,6 +967,11 @@ def test_submit_for_packaging_disabled(
 
     import_batch = import_batch_factory()
 
+    MissingMeasuresCheckFactory.create(
+        workbasket=user_workbasket,
+        successful=True,
+    )
+
     if import_batch:
         import_batch.workbasket_id = user_workbasket.id
         if isinstance(import_batch, ImportBatch):
@@ -978,7 +988,7 @@ def test_submit_for_packaging_disabled(
     )
 
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     packaging_button = soup.find("a", href="/publishing/create/")
 
@@ -1015,7 +1025,7 @@ def test_submit_for_packaging(
     )
 
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     assert soup.find("a", href="/publishing/create/")
 
@@ -1056,7 +1066,7 @@ def test_workbasket_violations(valid_user_client, user_workbasket):
 
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     table = page.findChildren("table")[0]
     row = table.findChildren("tr")[1]
     cells = row.findChildren("td")
@@ -1092,7 +1102,7 @@ def test_workbasket_violations_summary_pagination(
 
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     warning_text = soup.select(".govuk-warning-text")
     rows = soup.select("tbody > tr")
     pagination_div_text = soup.select(".pagination > div")[0].text.replace("\\n", "")
@@ -1116,7 +1126,7 @@ def test_violation_detail_page(valid_user_client, user_workbasket):
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     paragraphs_text = [e.text for e in soup.select("p")]
     assert check.rule_code in paragraphs_text
     assert check.message in paragraphs_text
@@ -1277,7 +1287,7 @@ def test_violation_list_page_sorting_date(setup, valid_user_client, user_workbas
 
     checks = user_workbasket.tracked_model_check_errors
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     activity_dates = [
         element.text for element in soup.select("table tbody tr td:nth-child(5)")
     ]
@@ -1308,7 +1318,7 @@ def test_violation_list_page_sorting_model_name(
 
     checks = user_workbasket.tracked_model_check_errors
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     activity_dates = [
         element.text for element in soup.select("table tbody tr td:nth-child(5)")
     ]
@@ -1339,7 +1349,7 @@ def test_violation_list_page_sorting_check_name(
 
     checks = user_workbasket.tracked_model_check_errors
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     rule_codes = [
         element.text for element in soup.select("table tbody tr td:nth-child(3)")
     ]
@@ -1402,7 +1412,7 @@ def test_workbasket_detail_view_displays_workbasket_details(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     table = soup.select("table")[0]
     row_text = [row.text for row in table.findChildren("td")]
 
@@ -1430,7 +1440,7 @@ def test_workbasket_changes_view_without_change_permission(client, user_workbask
     response = client.get(url)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     columns = page.select(".govuk-table__header")
     rows = page.select("tbody > tr")
     checkboxes = page.select(".govuk-checkboxes__input")
@@ -1456,7 +1466,7 @@ def test_workbasket_changes_view_with_change_permission(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     columns = page.select(".govuk-table__header")
     rows = page.select("tbody > tr")
     checkboxes = page.select(".govuk-checkboxes__input")
@@ -1601,7 +1611,7 @@ def test_workbasket_transaction_order_view_with_reorder_permission(valid_user_cl
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     table_rows = page.select("table > tbody > tr > td.item:first-child")
     checkboxes = page.select(".govuk-checkboxes__input")
     move_top_button = page.find("button", string=re.compile(r"Move to top"))
@@ -2185,7 +2195,7 @@ def test_review_goods_notification_button(
         )
 
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     # notify_button = soup.find("a", href=f"/notify-goods-report/{import_batch.id}/")
     notify_button = soup.select(".govuk-body")
@@ -2202,7 +2212,7 @@ def test_no_active_workbasket_view(valid_user_client):
     buttons."""
     response = valid_user_client.get(reverse("workbaskets:no-active-workbasket"))
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     message = soup.find("h1", text="You need an active workbasket to access this page")
     select_a_new_workbasket = soup.find(
         "a",
@@ -2247,6 +2257,12 @@ def test_disabled_packaging_for_unassigned_workbasket(
 ):
     """Tests that if a workbasket has not been fully assigned then the send to
     packaging queue button is disabled."""
+
+    MissingMeasuresCheckFactory.create(
+        workbasket=user_empty_workbasket,
+        successful=True,
+    )
+
     with user_empty_workbasket.new_transaction() as transaction:
         footnote = factories.FootnoteFactory.create(
             transaction=transaction,
@@ -2260,7 +2276,7 @@ def test_disabled_packaging_for_unassigned_workbasket(
 
     url = reverse("workbaskets:workbasket-checks")
     response = valid_user_client.get(url)
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     assert soup.find("button", {"id": "send-to-packaging", "aria-disabled": "true"})
 
     # Assign the workbasket so it can now be packaged
@@ -2275,7 +2291,7 @@ def test_disabled_packaging_for_unassigned_workbasket(
     )
 
     response = valid_user_client.get(url)
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     packaging_button = soup.find("a", href="/publishing/create/")
     assert not packaging_button.has_attr("disabled")
 
@@ -2291,7 +2307,7 @@ def test_workbasket_assign_users_view(valid_user, valid_user_client, user_workba
         ),
     )
     assert response.status_code == 200
-    assert "Assign users to workbasket" in str(response.content)
+    assert "Assign users to workbasket" in response.content.decode(response.charset)
 
 
 def test_workbasket_assign_users_view_without_permission(client, user_workbasket):
@@ -2317,7 +2333,7 @@ def test_workbasket_unassign_users_view(valid_user, valid_user_client, user_work
         ),
     )
     assert response.status_code == 200
-    assert "Unassign users from workbasket" in str(response.content)
+    assert "Unassign users from workbasket" in response.content.decode(response.charset)
 
 
 def test_workbasket_unassign_users_view_without_permission(client, user_workbasket):
@@ -2363,7 +2379,7 @@ def test_workbasket_summary_view_displays_comments(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     container = soup.find("div", id="workbasket-comments-container")
     headers = container.find_all("header")
     contents = container.find_all("div", "comment")
@@ -2481,7 +2497,7 @@ def test_workbasket_comment_list_view(valid_user_client, user_workbasket):
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     headers = soup.select("article > header")
     contents = soup.find_all("div", "comment")
     assert len(headers) == len(comments)
@@ -2599,7 +2615,7 @@ def test_current_tasks_is_called(valid_user_client):
         # Assert current_tasks gets called
         mock_current_tasks.assert_called_once()
         # Assert the mocked response is formatted correctly on the page
-        soup = BeautifulSoup(str(response.content), "html.parser")
+        soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
         table_rows = [element for element in soup.select(".govuk-table__row")]
         assert "10:34 11 Jun 2024" in str(table_rows[1])
         assert len(table_rows) == 4
@@ -2626,7 +2642,7 @@ def test_remove_all_workbasket_changes_button_only_shown_to_superusers(
 
     response = client.get(url)
     assert response.status_code == 200
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     remove_all_button = page.find("button", value="remove-all")
     assert remove_all_button
@@ -2643,7 +2659,7 @@ def test_remove_all_workbasket_changes_button_not_shown_to_users_without_permisi
 
     response = valid_user_client.get(url)
     assert response.status_code == 200
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     remove_all_button = page.find("button", value="remove-all")
     assert not remove_all_button
@@ -2737,7 +2753,7 @@ def test_auto_end_measures_renders(
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     rows = page.find_all("tr", {"class": "govuk-table__row"})
     text = page.get_text()
     assert text.count("To be end-dated") == 9

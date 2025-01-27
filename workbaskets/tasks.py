@@ -162,6 +162,10 @@ def get_comm_codes_with_missing_measures(tx_pk: int, comm_code_pks: List[int]):
             logger.info(f"Chapters 98 and 99 are exempt. Skipping.")
             continue
 
+        if code.valid_between.upper and code.valid_between.upper < date.today():
+            logger.info(f"Commodity validity has ended. Skipping.")
+            continue
+
         tx = Transaction.objects.get(pk=tx_pk)
 
         applicable_measures = get_measures_on_declarable_commodities(

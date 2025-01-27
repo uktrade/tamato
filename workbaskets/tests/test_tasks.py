@@ -93,6 +93,28 @@ def test_get_comm_codes_with_missing_measures_new_comm_code_103_pass(
     assert not comm_codes_with_missing_measures
 
 
+def test_get_comm_codes_with_missing_measures_ended_comm_code_pass(
+    erga_omnes,
+    date_ranges,
+):
+    measure_type142 = factories.MeasureTypeFactory.create(sid=103)
+    workbasket = factories.WorkBasketFactory.create()
+    new_commodity = factories.GoodsNomenclatureFactory.create(
+        transaction=workbasket.new_transaction(),
+        valid_between=date_ranges.earlier,
+    )
+    pref = factories.MeasureFactory.create(
+        measure_type=measure_type142,
+        goods_nomenclature=new_commodity,
+        transaction=workbasket.new_transaction(),
+    )
+    comm_codes_with_missing_measures = get_comm_codes_with_missing_measures(
+        pref.transaction.pk,
+        [new_commodity.pk],
+    )
+    assert not comm_codes_with_missing_measures
+
+
 @patch("workbaskets.tasks.get_comm_codes_with_missing_measures")
 def test_check_workbasket_for_missing_measures(mock_check_comm_codes):
     workbasket = factories.WorkBasketFactory.create()
