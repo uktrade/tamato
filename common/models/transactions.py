@@ -7,6 +7,7 @@ from logging import getLogger
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.db.models import Q
 from django.db.transaction import atomic
 from django_fsm import FSMIntegerField
 from django_fsm import transition
@@ -202,7 +203,10 @@ class TransactionQueryset(models.QuerySet):
             versions = (
                 version_group.versions.has_approved_state()
                 .order_by("-pk")
-                .exclude(pk=obj.pk)
+                .exclude(
+                    Q(pk=obj.pk)
+                    | Q(transaction__workbasket=obj.transaction.workbasket),
+                )
             )
             if versions.count() == 0:
                 version_group.current_version = None

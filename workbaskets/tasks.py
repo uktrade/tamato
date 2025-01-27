@@ -11,14 +11,14 @@ from checks.models import MissingMeasureCommCode
 from checks.models import MissingMeasuresCheck
 from checks.tasks import check_transaction
 from checks.tasks import check_transaction_sync
-from common.util import TaricDateRange
-from common.validators import UpdateType
-from measures.models.tracked_models import Measure
 from commodities.helpers import get_measures_on_declarable_commodities
 from commodities.models.orm import GoodsNomenclature
 from common.celery import app
 from common.models import Transaction
+from common.util import TaricDateRange
+from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
+from measures.models.tracked_models import Measure
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -157,6 +157,10 @@ def get_comm_codes_with_missing_measures(tx_pk: int, comm_code_pks: List[int]):
 
         if code.item_id.startswith("99") or code.item_id.startswith("98"):
             logger.info(f"Chapters 98 and 99 are exempt. Skipping.")
+            continue
+
+        if code.valid_between.upper and code.valid_between.upper < date.today():
+            logger.info(f"Commodity validity has ended. Skipping.")
             continue
 
         tx = Transaction.objects.get(pk=tx_pk)
