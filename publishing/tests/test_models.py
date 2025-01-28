@@ -163,6 +163,7 @@ def test_success_processing_transition(
     assert packaged_work_basket.processing_state == ProcessingState.AWAITING_PROCESSING
 
     packaged_work_basket.begin_processing()
+    assert packaged_work_basket.processing_started_at
     assert packaged_work_basket.position == 0
     assert (
         packaged_work_basket.pk == PackagedWorkBasket.objects.currently_processing().pk
