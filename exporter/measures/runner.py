@@ -1,6 +1,6 @@
 import csv
-import datetime
 import logging
+from datetime import date
 from tempfile import NamedTemporaryFile
 
 from django.contrib.postgres.aggregates import StringAgg
@@ -191,7 +191,7 @@ class MeasureExport:
             )
         )
         # hard coded date for testing
-        filter_date = datetime.date(2025, 1, 23)
+        filter_date = date.today()
         measure_base = ReportMeasure.objects.filter(sid__gte=20000000)
         if not self.include_future_measure:
             measure_base = measure_base.filter(valid_between__contains=filter_date)
