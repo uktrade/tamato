@@ -478,11 +478,11 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
-        instance = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(
             pk=self.pk,
         )
-        instance.processing_started_at = make_aware(datetime.now())
-        instance.save()
+        self.processing_started_at = make_aware(datetime.now())
+        self.save()
 
     @create_envelope_on_completed_processing
     @save_after
