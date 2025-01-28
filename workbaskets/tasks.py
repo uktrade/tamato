@@ -219,6 +219,7 @@ def check_workbasket_for_missing_measures(
         )
 
     missing_measures_check.successful = not bool(commodities)
+    missing_measures_check.hash = workbasket.commodity_measure_changes_hash
 
     for commodity in commodities:
         MissingMeasureCommCode.objects.create(
