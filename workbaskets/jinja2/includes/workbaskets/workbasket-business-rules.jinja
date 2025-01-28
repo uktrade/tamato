@@ -102,7 +102,7 @@ govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--seco
           <a href="{{ url('publishing:packaged-workbasket-queue-ui-create')}}" disabled class="govuk-button govuk-button--primary">
             Send to packaging queue
           </a>
-        {% elif not missing_measures_check_successful %}
+        {% elif workbasket.has_commodities and not missing_measures_check_successful %}
           <div class="govuk-hint"> 
             Missing measures check must be run before packaging.
           </div>
