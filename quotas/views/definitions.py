@@ -63,7 +63,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
         return (
             QuotaBlocking.objects.current()
             .filter(
-                quota_definition__order_number=self.quota,
+                quota_definition__order_number__sid=self.quota.sid,
             )
             .order_by("quota_definition__sid")
         )
@@ -72,7 +72,7 @@ class QuotaDefinitionList(SortingMixin, ListView):
     def suspension_periods(self):
         return (
             QuotaSuspension.objects.current()
-            .filter(quota_definition__order_number=self.quota)
+            .filter(quota_definition__order_number__sid=self.quota.sid)
             .order_by("quota_definition__sid")
         )
 
@@ -80,14 +80,14 @@ class QuotaDefinitionList(SortingMixin, ListView):
     def sub_quotas(self):
         return (
             QuotaAssociation.objects.current()
-            .filter(main_quota__order_number=self.quota)
+            .filter(main_quota__order_number__sid=self.quota.sid)
             .order_by("sub_quota__sid")
         )
 
     @property
     def main_quotas(self):
         main_quotas = QuotaAssociation.objects.current().filter(
-            sub_quota__order_number=self.quota,
+            sub_quota__order_number__sid=self.quota.sid,
         )
         return main_quotas
 

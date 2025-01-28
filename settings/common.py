@@ -223,6 +223,7 @@ CSP_STYLE_SRC = (
     "https://tagmanager.google.com/",
 )
 CSP_SCRIPT_SRC = (
+    "'strict-dynamic'",
     "'self'",
     "'unsafe-eval'",
     "'unsafe-inline'",
@@ -231,6 +232,10 @@ CSP_SCRIPT_SRC = (
     "ajax.googleapis.com/",
 )
 CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
+CSP_OBJECT_SRC = ("'none'",)
+CSP_BASE_URI = ("'none'",)
+CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
+CSP_TRUSTED_TYPES = ("tap#webpack", "dompurify", "default")
 CSP_INCLUDE_NONCE_IN = ("script-src",)
 CSP_REPORT_ONLY = False
 
@@ -645,6 +650,9 @@ CELERY_ROUTES = {
         "queue": "rule-check",
     },
     "workbaskets.tasks.check_workbasket": {
+        "queue": "rule-check",
+    },
+    "workbaskets.tasks.check_workbasket_for_missing_measures": {
         "queue": "rule-check",
     },
     "workbaskets.tasks.transition": {
