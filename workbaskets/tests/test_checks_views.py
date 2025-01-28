@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from checks.tests.factories import MissingMeasureCommCodeFactory
 from checks.tests.factories import MissingMeasuresCheckFactory
+from common.tests.factories import GoodsNomenclatureFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -17,6 +18,12 @@ def test_check_missing_measures_200(valid_user_client, user_workbasket):
 
 
 def test_check_missing_measures_fail_list(valid_user_client, user_workbasket):
+
+    with user_workbasket.new_transaction() as tx:
+        GoodsNomenclatureFactory.create(
+            transaction=tx,
+        )
+
     missing_measures_check = MissingMeasuresCheckFactory.create(
         workbasket=user_workbasket,
         successful=False,
@@ -36,6 +43,10 @@ def test_check_missing_measures_fail_list(valid_user_client, user_workbasket):
 
 
 def test_check_missing_measures_success(valid_user_client, user_workbasket):
+    with user_workbasket.new_transaction() as tx:
+        GoodsNomenclatureFactory.create(
+            transaction=tx,
+        )
     MissingMeasuresCheckFactory.create(
         workbasket=user_workbasket,
         successful=True,
