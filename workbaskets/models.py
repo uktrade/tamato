@@ -341,6 +341,18 @@ class WorkBasket(TimestampedMixin):
 
     transactions: TransactionQueryset
 
+    @property
+    def has_commodities(self):
+        # avoid circular import
+        from commodities.models.orm import GoodsNomenclature
+
+        codes = [
+            item
+            for item in self.tracked_models.all()
+            if isinstance(item, GoodsNomenclature)
+        ]
+        return len(codes) != 0
+
     def terminate_rule_check(self):
         """Terminate any task associated with the WorkBasket's rule checking, as
         identified by its rule_check_task_id."""
