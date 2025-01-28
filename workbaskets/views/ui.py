@@ -3,7 +3,6 @@ import re
 from datetime import date
 from functools import cached_property
 from typing import Tuple
-from urllib.parse import urlencode
 
 import boto3
 import django_filters
@@ -45,7 +44,6 @@ from common.forms import DummyForm
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
-from common.util import format_date_string
 from common.views import SortingMixin
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
@@ -54,7 +52,6 @@ from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
-from importer.goods_report import GoodsReporter
 from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
@@ -1429,78 +1426,6 @@ class WorkbasketReviewGoodsView(
         context["selected_tab"] = "commodities"
         context["user_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
-        context["report_lines"] = []
-        context["import_batch_pk"] = None
-
-        # Get actual values from the ImportBatch instance if one is associated
-        # with the workbasket.
-        try:
-            import_batch = self.workbasket.importbatch
-        except ObjectDoesNotExist:
-            import_batch = None
-
-        taric_file = None
-        if import_batch and import_batch.taric_file and import_batch.taric_file.name:
-            taric_file = import_batch.taric_file.storage.exists(
-                import_batch.taric_file.name,
-            )
-
-        if taric_file:
-            reporter = GoodsReporter(import_batch.taric_file)
-            goods_report = reporter.create_report()
-            today = date.today()
-
-            context["report_lines"] = [
-                {
-                    "update_type": line.update_type.title() if line.update_type else "",
-                    "record_name": line.record_name.title() if line.record_name else "",
-                    "item_id": line.goods_nomenclature_item_id,
-                    "item_id_search_url": (
-                        reverse("commodity-ui-list")
-                        + "?"
-                        + urlencode({"item_id": line.goods_nomenclature_item_id})
-                        if line.goods_nomenclature_item_id
-                        else ""
-                    ),
-                    "measures_search_url": (
-                        reverse("measure-ui-list")
-                        + "?"
-                        + urlencode(
-                            {
-                                "goods_nomenclature__item_id": line.goods_nomenclature_item_id,
-                                "end_date_modifier": "after",
-                                "end_date_0": today.day,
-                                "end_date_1": today.month,
-                                "end_date_2": today.year,
-                            },
-                        )
-                        if line.goods_nomenclature_item_id
-                        else ""
-                    ),
-                    "suffix": line.suffix,
-                    "start_date": format_date_string(
-                        line.validity_start_date,
-                        short_format=True,
-                    ),
-                    "end_date": format_date_string(
-                        line.validity_end_date,
-                        short_format=True,
-                    ),
-                    "comments": line.comments,
-                }
-                for line in goods_report.report_lines
-            ]
-            context["import_batch_pk"] = import_batch.pk
-
-            # notifications only relevant to a goods import
-            if context["workbasket"] == context["user_workbasket"]:
-                context["unsent_notification"] = (
-                    import_batch.goods_import
-                    and not Notification.objects.filter(
-                        notified_object_pk=import_batch.pk,
-                        notification_type=NotificationTypeChoices.GOODS_REPORT,
-                    ).exists()
-                )
 
         return context
 
