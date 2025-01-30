@@ -2,6 +2,7 @@ import datetime
 import os
 import re
 from unittest.mock import MagicMock
+from unittest.mock import PropertyMock
 from unittest.mock import mock_open
 from unittest.mock import patch
 
@@ -2803,10 +2804,18 @@ def test_auto_end_measures(user_workbasket, date_ranges, commodity, object, requ
         workbasket=user_workbasket,
         valid_between=date_ranges.normal,
     )
+    auto_end_date_view = ui.AutoEndDateMeasures()
 
-    with override_current_transaction(Transaction.objects.last()):
-        measures_to_end = user_workbasket.get_measures_to_end_date()
-        footnotes_to_end = user_workbasket.get_footnote_associations_to_end_date()
+    with (
+        override_current_transaction(Transaction.objects.last()),
+        patch(
+            "workbaskets.views.ui.AutoEndDateMeasures.workbasket",
+            new_callable=PropertyMock,
+        ) as mock_wb,
+    ):
+        mock_wb.return_value = user_workbasket
+        measures_to_end = auto_end_date_view.get_measures_to_end_date()
+        footnotes_to_end = auto_end_date_view.get_footnote_associations_to_end_date()
         # Assert 11 objects have been found that will be ended
         assert len(measures_to_end) + len(footnotes_to_end) == 11
 
@@ -2867,8 +2876,17 @@ def test_get_measures_to_end_date(user_workbasket, date_ranges):
         workbasket=user_workbasket,
         valid_between=date_ranges.normal,
     )
-    with override_current_transaction(Transaction.objects.last()):
-        measures = user_workbasket.get_measures_to_end_date()
+    auto_end_date_view = ui.AutoEndDateMeasures()
+
+    with (
+        override_current_transaction(Transaction.objects.last()),
+        patch(
+            "workbaskets.views.ui.AutoEndDateMeasures.workbasket",
+            new_callable=PropertyMock,
+        ) as mock_wb,
+    ):
+        mock_wb.return_value = user_workbasket
+        measures = auto_end_date_view.get_measures_to_end_date()
         assert all(
             measure in measures
             for measure in [
@@ -2917,8 +2935,17 @@ def test_get_footnote_associations_to_end_date(user_workbasket, date_ranges):
         workbasket=user_workbasket,
         valid_between=date_ranges.normal,
     )
-    with override_current_transaction(Transaction.objects.last()):
-        associations = user_workbasket.get_footnote_associations_to_end_date()
+
+    with (
+        override_current_transaction(Transaction.objects.last()),
+        patch(
+            "workbaskets.views.ui.AutoEndDateMeasures.workbasket",
+            new_callable=PropertyMock,
+        ) as mock_wb,
+    ):
+        mock_wb.return_value = user_workbasket
+        auto_end_date_view = ui.AutoEndDateMeasures()
+        associations = auto_end_date_view.get_footnote_associations_to_end_date()
         assert all(
             association in associations
             for association in [
