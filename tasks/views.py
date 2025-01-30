@@ -35,6 +35,7 @@ from tasks.forms import TaskWorkflowUpdateForm
 from tasks.models import Queue
 from tasks.models import QueueItem
 from tasks.models import Task
+from tasks.models import TaskAssignee
 from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
@@ -64,6 +65,21 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
     model = Task
     template_name = "tasks/detail.jinja"
     permission_required = "tasks.view_task"
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+
+        context["assignees"] = TaskAssignee.objects.filter(
+            task=self.get_object(),
+            # TODO:
+            # Using all task assignees is temporary for illustration as it
+            # doesn't align with the new approach of assigning users to tasks
+            # rather than assigning users to workbaskets (the old approach,
+            # uses tasks as an intermediary object).
+            # assignment_type=TaskAssignee.AssignmentType.GENERAL,
+        )
+
+        return context
 
 
 class TaskCreateView(PermissionRequiredMixin, CreateView):
