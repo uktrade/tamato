@@ -18,22 +18,36 @@
   ) }}
 {% endblock %}
 
-{% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-    </div>
-  </div>
+{% set workbasket_summary_link %}
+  {% if object.workbasket %}
+    <a
+      class="govuk-link"
+      href="{{ url('workbaskets:workbasket-ui-detail', kwargs={'pk': object.workbasket.pk}) }}"
+    >{{ object.workbasket.pk }} ({{ object.workbasket.status }})</a>
+  {% else %}
+    None
+  {% endif %}
+{% endset %}
 
-  <h2 class="govuk-heading-m">Details</h2>
-  
-  <dl class="govuk-summary-list">
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  </div>
+</div>
+
+<h2 class="govuk-heading-m">Details</h2>
+
+<dl class="govuk-summary-list">
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">
       ID
     </dt>
     <dd class="govuk-summary-list__value">
       {{ object.pk }}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <!-- Empty for column alignment -->
     </dd>
   </div>
 
@@ -90,7 +104,7 @@
       Workbasket
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ object.workbasket }}
+      {{ workbasket_summary_link }}
     </dd>
     <dd class="govuk-summary-list__actions">
       <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> workbasket</span></a>
@@ -104,6 +118,9 @@
     <dd class="govuk-summary-list__value">
       {{ "{:%d %b %Y %H:%M}".format(object.created_at) }}
     </dd>
+    <dd class="govuk-summary-list__actions">
+      <!-- Empty for column alignment -->
+    </dd>
   </div>
 
   <div class="govuk-summary-list__row">
@@ -113,28 +130,59 @@
     <dd class="govuk-summary-list__value">
       {{ object.creator.get_displayname() if object.creator else "-" }}
     </dd>
+    <dd class="govuk-summary-list__actions">
+      <!-- Empty for column alignment -->
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Assignees
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {% if assignees %}
+        {% for assignee in assignees %}
+          <div class="govuk-!-margin-bottom-3">
+              {{ assignee.user.get_displayname() }}
+              ({{ assignee.get_assignment_type_display() }}){% if not loop.last %}, {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+          <div class="govuk-!-margin-bottom-3">
+            None
+          </div>
+      {% endif %}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a
+        class="govuk-link"
+        href="{{ url('workflow:task-ui-update-assignees', kwargs={'pk': object.pk}) }}"
+      >Change<span class="govuk-visually-hidden"> assignees</a>
+    </dd>
   </div>
 </dl>
 
 <div class="govuk-button-group">
-{% if not object.parent_task %}
-  {{ govukButton({
-    "text": "Delete task",
-    "href": url("workflow:task-ui-delete", kwargs={"pk": object.pk}),
-    "classes": "govuk-button--warning"
-  }) }}
+  {% if not object.parent_task %}
+    {{ govukButton({
+      "text": "Delete task",
+      "href": url("workflow:task-ui-delete", kwargs={"pk": object.pk}),
+      "classes": "govuk-button--warning"
+    }) }}
   {% else %}
     {{ govukButton({
-    "text": "Delete subtask",
-    "href": url("workflow:subtask-ui-delete", kwargs={"pk": object.pk}),
-    "classes": "govuk-button--warning"
-  }) }}
+      "text": "Delete subtask",
+      "href": url("workflow:subtask-ui-delete", kwargs={"pk": object.pk}),
+      "classes": "govuk-button--warning"
+    }) }}
   {% endif %}
+
   {{ govukButton({
     "text": "Find and view tasks",
     "href": url("workflow:task-ui-list"),
     "classes": "govuk-button--secondary"
   }) }}
+
   {% if not object.parent_task %}
     {{ govukButton({
       "text": "Create subtask",

@@ -200,9 +200,45 @@ class TaskAssigneeQueryset(WithSignalQuerysetMixin, models.QuerySet):
 
 
 class TaskAssignee(TimestampedMixin):
+    """
+    Model used to assocate Task instances with one or more Users.
+
+    The original intent was to associate two mandatory user roles to a workbasket:
+    - Worker who creates data in the workbasket - instances have
+      `assignment_type = AssignmentType.WORKBASKET_WORKER`
+    - Reviewer of workbasket data - instances have
+      `assignment_type = AssignmentType.WORKBASKET_REVIEWER`
+
+    In retrospect, these users should be assigned directly to the workbasket,
+    not via a Task, which is includes an unnecessary level of indirection,
+    allowing incorrect assignment of multiple users to one or other of the
+    roles on the same workbasket. View and Form validation must be used to guard
+    against this outcome rather than relying upon DB / Model constraints.
+
+    Current Task management introduces AssignmentType.GENERAL. TaskAssignee
+    instances with
+      `assignment_type = AssignmentType.GENERAL`
+    are actual task assignments, rather than the legacy approach to assigning
+    user to worker or reviewer roles.
+
+    Migrations should be created and run to:
+    - Introduce nullable Model attributes:
+        WorkBasket.user_worker
+        WorkBasket.user_reviewer
+    - Set the new WorkBasket's `user_worker` and `user_reviewer` from existing
+      TaskInstances.
+    - Remove legacy TaskAssignee instances with an `assignment_type` equal to
+      one of `WORKBASKET_WORKER` or `WORKBASKET_REVIEWER`.
+    - Remove the `AssignmentType` model since all remaining instances will have
+        `assignment_type = AssignmentType.GENERAL`
+      (unless real need is found for it).
+    - Ensure signal handling works correctly after these changes.
+    """
+
     class AssignmentType(models.TextChoices):
         WORKBASKET_WORKER = "WORKBASKET_WORKER", "Workbasket worker"
         WORKBASKET_REVIEWER = "WORKBASKET_REVIEWER", "Workbasket reviewer"
+        GENERAL = "GENERAL", "General"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
