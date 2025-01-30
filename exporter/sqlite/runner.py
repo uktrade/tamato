@@ -212,7 +212,7 @@ class Runner:
             migrations_in_tmp_dir=settings.SQLITE_MIGRATIONS_IN_TMP_DIR,
         )
         sqlite_migrator.migrate()
-
+        exit()
         assert sqlite_file.exists()
         return cls(apsw.Connection(str(sqlite_file)))
 
