@@ -10,7 +10,7 @@
   };
   const groupsWithMembers = {{groups_with_members|safe}};
   const geoAreasOptions = [
-    {"label": "", "value": ""},
+    {"label": "Choose geographical area", "value": ""},
     {% for geo_area in geo_area_options %}
     {
       "label": "{{ geo_area.area_id  ~ " - " ~ geo_area.description }}",

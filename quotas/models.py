@@ -465,6 +465,33 @@ class QuotaAssociation(TrackedModel):
         business_rules.SameMainAndSubQuota,
     )
 
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """
+        Generate a URL to a representation of the model in the webapp.
+
+        Custom for quota associations as they do not have a detail view or
+        typical list/edit views.
+        """
+        if action == "edit":
+            url = self.sub_quota.get_association_edit_url()
+            return url
+        try:
+            if action == "create":
+                url = reverse("sub_quota_definitions-ui-create")
+            elif action == "delete":
+                url = reverse("quota_association-ui-delete", kwargs={"pk": self.pk})
+            else:
+                url = reverse(
+                    "quota_definition-ui-list-filter",
+                    kwargs={
+                        "sid": self.main_quota.order_number.sid,
+                        "quota_type": "quota_associations",
+                    },
+                )
+            return url
+        except NoReverseMatch:
+            return None
+
 
 class QuotaSuspension(TrackedModel, ValidityMixin):
     """Defines a suspension period for a quota."""
@@ -515,6 +542,24 @@ class QuotaBlocking(TrackedModel, ValidityMixin):
     description = ShortDescription()
 
     business_rules = (business_rules.QBP2, UniqueIdentifyingFields, UpdateValidity)
+
+    def get_url(self, action: str = "detail") -> Optional[str]:
+        """Overrides the parent get_url as there is no detail view for
+        QuotaBlocking objects for it to default to."""
+        url = super().get_url(action=action)
+        if not url:
+            url = reverse(
+                "quota_definition-ui-list-filter",
+                kwargs={
+                    "sid": self.quota_definition.order_number.sid,
+                    "quota_type": "blocking_periods",
+                },
+            )
+
+        return url
+
+    def __str__(self):
+        return f"{self.sid}"
 
 
 class QuotaEvent(TrackedModel):

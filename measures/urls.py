@@ -44,6 +44,16 @@ ui_patterns = [
         name="measure-ui-edit-multiple",
     ),
     path(
+        "edit/done-async/<int:expected_measures_count>/",
+        views.MeasuresWizardAsyncConfirm.as_view(),
+        name="measure-ui-edit-async-confirm",
+    ),
+    path(
+        "edit/done-sync/<int:edited_or_created_measures_count>/",
+        views.MeasuresWizardSyncConfirm.as_view(),
+        name="measure-ui-edit-sync-confirm",
+    ),
+    path(
         "delete-multiple-measures/",
         views.MeasureMultipleDelete.as_view(),
         name="measure-ui-delete-multiple",
@@ -58,8 +68,13 @@ ui_patterns = [
     ),
     path(
         "create/done-async/<int:expected_measures_count>/",
-        views.MeasuresWizardCreateConfirm.as_view(),
-        name="measure-ui-create-confirm",
+        views.MeasuresWizardAsyncConfirm.as_view(),
+        name="measure-ui-create-async-confirm",
+    ),
+    path(
+        "create/done-sync/<int:edited_or_created_measures_count>/",
+        views.MeasuresWizardSyncConfirm.as_view(),
+        name="measure-ui-create-sync-confirm",
     ),
     path(
         f"{detail}/edit-footnotes/",
@@ -67,9 +82,14 @@ ui_patterns = [
         name="measure-ui-edit-footnotes",
     ),
     path(
-        "process-queue/",
+        "create-process-queue/",
         views.MeasuresCreateProcessQueue.as_view(),
         name="measure-create-process-queue",
+    ),
+    path(
+        "edit-process-queue/",
+        views.MeasuresEditProcessQueue.as_view(),
+        name="measure-edit-process-queue",
     ),
     path(
         "cancel-bulk-processor-task/<int:pk>/",

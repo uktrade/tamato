@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 from unittest import mock
@@ -11,6 +12,12 @@ from common.tests import factories
 from common.tests import models
 from common.tests.util import Dates
 from common.tests.util import wrap_numbers_over_max_digits
+from common.util import TaricDateRange
+from common.validators import UpdateType
+from geo_areas.models import GeographicalArea
+from geo_areas.models import GeographicalAreaDescription
+from geo_areas.validators import AreaCode
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -27,7 +34,7 @@ pytestmark = pytest.mark.django_db
                 "port": 1234,
                 "dbname": "dbname",
             },
-            "engine://username:password@host:1234/dbname",
+            "engine://username:password@host:1234/dbname",  # /PS-IGNORE
         ),
         (
             {
@@ -379,3 +386,245 @@ def test_xml_fromstring_vulnerabilities(file_name):
     string = open(file).read()
     with pytest.raises((XMLSyntaxError, DTDForbidden)):
         util.xml_fromstring(string)
+
+
+def test_make_real_edit_create(date_ranges):
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    tx1 = workbasket.new_transaction()
+
+    data = {
+        "area_id": "AAA",
+        "area_code": AreaCode.COUNTRY,
+        "valid_between": date_ranges.normal,
+    }
+    new_geo_area = util.make_real_edit(
+        tx=tx1,
+        cls=GeographicalArea,
+        obj=None,
+        data=data,
+        workbasket=workbasket,
+        update_type=UpdateType.CREATE,
+    )
+    data = {
+        "described_geographicalarea": new_geo_area,
+        "description": "Lorem ipsum",
+        "validity_start": date_ranges.normal.lower,
+    }
+    util.make_real_edit(
+        tx=tx1,
+        cls=GeographicalAreaDescription,
+        obj=None,
+        data=data,
+        workbasket=workbasket,
+        update_type=UpdateType.CREATE,
+    )
+
+    # geo area and description created
+    assert workbasket.tracked_models.count() == 2
+    assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalAreaDescription).count() == 1
+    )
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+        == UpdateType.CREATE
+    )
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalAreaDescription)
+        .first()
+        .update_type
+        == UpdateType.CREATE
+    )
+
+
+def test_make_real_edit_update_edit():
+    # preexisting geo area
+    geo_area = factories.GeographicalAreaFactory.create(area_id="ABC")
+
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+
+    assert workbasket.tracked_models.count() == 0
+
+    tx1 = workbasket.new_transaction()
+
+    data = {"area_id": "AAA"}
+    geo_area_update = util.make_real_edit(
+        tx=tx1,
+        cls=GeographicalArea,
+        obj=geo_area,
+        data=data,
+        workbasket=workbasket,
+        update_type=UpdateType.UPDATE,
+    )
+
+    assert geo_area_update.area_id == "AAA"
+
+    assert workbasket.tracked_models.count() == 1
+    assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+        == UpdateType.UPDATE
+    )
+
+    # edit again
+    tx = workbasket.new_transaction()
+
+    data = {"area_id": "BBB"}
+    geo_area_update2 = util.make_real_edit(
+        tx=tx,
+        cls=GeographicalArea,
+        obj=geo_area_update,
+        data=data,
+        workbasket=workbasket,
+        update_type=UpdateType.UPDATE,
+    )
+
+    assert geo_area_update2.area_id == "BBB"
+
+    assert workbasket.tracked_models.count() == 1
+    assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+        == UpdateType.UPDATE
+    )
+
+
+def test_make_real_edit_update_delete():
+    # preexisting geo area
+    geo_area = factories.GeographicalAreaFactory.create(area_id="ABC")
+
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+
+    assert workbasket.tracked_models.count() == 0
+
+    tx1 = workbasket.new_transaction()
+
+    data = {"area_id": "AAA"}
+    geo_area_update = util.make_real_edit(
+        tx=tx1,
+        cls=GeographicalArea,
+        obj=geo_area,
+        data=data,
+        workbasket=workbasket,
+        update_type=UpdateType.UPDATE,
+    )
+
+    assert geo_area_update.area_id == "AAA"
+
+    assert workbasket.tracked_models.count() == 1
+    assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+        == UpdateType.UPDATE
+    )
+
+    tx2 = workbasket.new_transaction()
+
+    geo_area = workbasket.tracked_models.instance_of(GeographicalArea).first()
+    deleted_geo_area = util.make_real_edit(
+        tx=tx2,
+        cls=GeographicalArea,
+        obj=geo_area,
+        data={},
+        workbasket=workbasket,
+        update_type=UpdateType.DELETE,
+    )
+    assert deleted_geo_area == None
+    assert workbasket.tracked_models.count() == 1
+    assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+        == UpdateType.DELETE
+    )
+
+
+def test_make_real_edit_create_delete():
+    workbasket = factories.WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+    tx1 = workbasket.new_transaction()
+
+    with tx1:
+        geo_area = factories.GeographicalAreaFactory.create(area_id="ABC")
+
+    # geo area and description created
+    assert workbasket.tracked_models.count() == 2
+    assert workbasket.tracked_models.instance_of(GeographicalArea).count() == 1
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalAreaDescription).count() == 1
+    )
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalArea).first().update_type
+        == UpdateType.CREATE
+    )
+    assert (
+        workbasket.tracked_models.instance_of(GeographicalAreaDescription)
+        .first()
+        .update_type
+        == UpdateType.CREATE
+    )
+
+    tx2 = workbasket.new_transaction()
+
+    geo_area = workbasket.tracked_models.instance_of(GeographicalArea).first()
+    deleted_geo_area = util.make_real_edit(
+        tx=tx2,
+        cls=GeographicalArea,
+        obj=geo_area,
+        data={},
+        workbasket=workbasket,
+        update_type=UpdateType.DELETE,
+    )
+    # since the FK to geo area on description has on_delete=models.CASCADE this will delete the description as well
+    assert deleted_geo_area == None
+    assert workbasket.tracked_models.count() == 0
+
+
+@pytest.mark.parametrize(
+    "date_range,compared_date_range,expected",
+    (
+        (
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            True,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 1)),
+            True,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 1)),
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            False,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            True,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 1)),
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            False,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            True,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 2)),
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            False,
+        ),
+    ),
+)
+def test_contains(date_range, compared_date_range, expected):
+    assert date_range.contains(compared_date_range) == expected

@@ -58,6 +58,7 @@ from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
+from geo_areas.validators import AreaCode
 from importer.models import ImportBatchStatus
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
@@ -1777,15 +1778,15 @@ def percent_or_amount() -> DutyExpression:
 
 
 @pytest.fixture
-def plus_percent_or_amount() -> DutyExpression:
-    return factories.DutyExpressionFactory(
-        sid=4,
-        prefix="+",
-        description=f"+ % or amount",
-        duty_amount_applicability_code=ApplicabilityCode.MANDATORY,
-        measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
-        monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
-    )
+def plus_percent_or_amount() -> list[DutyExpression]:
+    kwargs = {
+        "prefix": "+",
+        "description": f"+ % or amount",
+        "duty_amount_applicability_code": ApplicabilityCode.MANDATORY,
+        "measurement_unit_applicability_code": ApplicabilityCode.PERMITTED,
+        "monetary_unit_applicability_code": ApplicabilityCode.PERMITTED,
+    }
+    return [factories.DutyExpressionFactory(sid=sid, **kwargs) for sid in [4, 19, 20]]
 
 
 @pytest.fixture
@@ -1798,6 +1799,18 @@ def plus_agri_component() -> DutyExpression:
         measurement_unit_applicability_code=ApplicabilityCode.PERMITTED,
         monetary_unit_applicability_code=ApplicabilityCode.PERMITTED,
     )
+
+
+@pytest.fixture
+def maximum_clause_expression() -> list[DutyExpression]:
+    kwargs = {
+        "prefix": "MAX",
+        "description": "Maximum",
+        "duty_amount_applicability_code": ApplicabilityCode.MANDATORY,
+        "measurement_unit_applicability_code": ApplicabilityCode.PERMITTED,
+        "monetary_unit_applicability_code": ApplicabilityCode.PERMITTED,
+    }
+    return [factories.DutyExpressionFactory(sid=sid, **kwargs) for sid in [17, 35]]
 
 
 @pytest.fixture
@@ -1838,39 +1851,26 @@ def supplementary_unit() -> DutyExpression:
 
 @pytest.fixture
 def duty_expressions(
-    percent_or_amount: DutyExpression,
-    plus_percent_or_amount: DutyExpression,
-    plus_agri_component: DutyExpression,
-    plus_amount_only: DutyExpression,
-    supplementary_unit: DutyExpression,
-    nothing: DutyExpression,
+    duty_expressions_list: list[DutyExpression],
 ) -> Dict[int, DutyExpression]:
-    return {
-        d.sid: d
-        for d in [
-            percent_or_amount,
-            plus_percent_or_amount,
-            plus_agri_component,
-            plus_amount_only,
-            supplementary_unit,
-            nothing,
-        ]
-    }
+    return {d.sid: d for d in duty_expressions_list}
 
 
 @pytest.fixture
 def duty_expressions_list(
     percent_or_amount: DutyExpression,
-    plus_percent_or_amount: DutyExpression,
+    plus_percent_or_amount: list[DutyExpression],
     plus_agri_component: DutyExpression,
+    maximum_clause_expression: list[DutyExpression],
     plus_amount_only: DutyExpression,
     supplementary_unit: DutyExpression,
     nothing: DutyExpression,
 ) -> Sequence[DutyExpression]:
     return [
         percent_or_amount,
-        plus_percent_or_amount,
+        *plus_percent_or_amount,
         plus_agri_component,
+        *maximum_clause_expression,
         plus_amount_only,
         supplementary_unit,
         nothing,
@@ -2263,3 +2263,11 @@ def crown_dependencies_envelope_factory(successful_envelope_factory):
         )
 
     return factory_method
+
+
+@pytest.fixture
+def erga_omnes():
+    return factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1011",
+    )

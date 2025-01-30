@@ -26,8 +26,13 @@
     {%- endset %}
 
     {% set item_count -%}
+        {%- if object.expected_measures_count == None -%}
+            {% set expected_measures_count = "unknown number" %}
+        {% else %}
+            {% set expected_measures_count = object.expected_measures_count %}
+        {%- endif%}
         <span class="processed-count">
-            {{ object.successfully_processed_count }} of {{ object.expected_measures_count }} processed
+            {{ object.successfully_processed_count }} of {{ expected_measures_count }} processed
         </span>
     {%- endset %}
 

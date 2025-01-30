@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -13,13 +14,18 @@ from measures.duty_sentence_parser import InvalidDutyExpression
 from measures.duty_sentence_parser import InvalidMeasurementUnit
 from measures.duty_sentence_parser import InvalidMeasurementUnitQualififer
 from measures.duty_sentence_parser import InvalidMonetaryUnit
+from measures.models import DutyExpression
+from measures.validators import ApplicabilityCode
 
 pytestmark = pytest.mark.django_db
 
 PERCENT_OR_AMOUNT_FIXTURE_NAME = "percent_or_amount"
-PLUS_PERCENT_OR_AMOUNT_FIXTURE_NAME = "plus_percent_or_amount"
+PLUS_PERCENT_OR_AMOUNT_SID = (4, 19, 20)
 SUPPLEMENTARY_UNIT_FIXTURE_NAME = "supplementary_unit"
 PLUS_AGRI_COMPONENT_FIXTURE_NAME = "plus_agri_component"
+MAXIMUM_CLAUSE_SID = (17, 35)
+NOTHING_FIXTURE_NAME = "nothing"
+BRITISH_POUND_FIXTURE_NAME = "british_pound"
 EURO_FIXTURE_NAME = "euro"
 KILOGRAM_FIXTURE_NAME = "kilogram"
 THOUSAND_ITEMS_FIXTURE_NAME = "thousand_items"
@@ -40,10 +46,30 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
             ["1.230", "EUR", "kg"],
             [
                 {
-                    "duty_amount": 1.23,
+                    "duty_amount": Decimal("1.23"),
                     "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
                     "monetary_unit": EURO_FIXTURE_NAME,
                     "measurement_unit": KILOGRAM_FIXTURE_NAME,
+                },
+            ],
+        ),
+        (
+            "9.10% MAX 1.00% + 0.90 GBP / 100 kg",
+            ["9.10", "%", "MAX", "1.00", "%", "+", "0.90", "GBP", "100 kg"],
+            [
+                {
+                    "duty_amount": Decimal("9.1"),
+                    "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
+                },
+                {
+                    "duty_expression_sid": MAXIMUM_CLAUSE_SID[0],
+                    "duty_amount": Decimal("1.0"),
+                },
+                {
+                    "duty_expression_sid": PLUS_PERCENT_OR_AMOUNT_SID[1],
+                    "duty_amount": Decimal("0.9"),
+                    "monetary_unit": BRITISH_POUND_FIXTURE_NAME,
+                    "measurement_unit": HECTOKILOGRAM_FIXTURE_NAME,
                 },
             ],
         ),
@@ -52,7 +78,7 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
             ["0.300", "XEM", "100 kg", "lactic."],
             [
                 {
-                    "duty_amount": 0.3,
+                    "duty_amount": Decimal("0.3"),
                     "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
                     "measurement_unit": HECTOKILOGRAM_FIXTURE_NAME,
                     "measurement_unit_qualifier": LACTIC_MATTER_FIXTURE_NAME,
@@ -66,11 +92,11 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
             [
                 {
                     "duty_expression": PERCENT_OR_AMOUNT_FIXTURE_NAME,
-                    "duty_amount": 12.9,
+                    "duty_amount": Decimal("12.9"),
                 },
                 {
-                    "duty_amount": 20.0,
-                    "duty_expression": PLUS_PERCENT_OR_AMOUNT_FIXTURE_NAME,
+                    "duty_amount": Decimal("20.0"),
+                    "duty_expression_sid": PLUS_PERCENT_OR_AMOUNT_SID[0],
                     "measurement_unit": KILOGRAM_FIXTURE_NAME,
                     "monetary_unit": EURO_FIXTURE_NAME,
                 },
@@ -119,6 +145,7 @@ ECU_CONVERSION_FIXTURE_NAME = "ecu_conversion"
     ids=[
         "simple_ad_valorem",
         "simple_specific_duty",
+        "max_compound_duty",
         "unit_with_qualifier",
         "multi_component_expression",
         "supplementary_unit",
@@ -146,7 +173,7 @@ def reversible_duty_sentence_data(request):
                 },
                 {
                     "duty_amount": 10.0,
-                    "duty_expression": PLUS_PERCENT_OR_AMOUNT_FIXTURE_NAME,
+                    "duty_expression_sid": PLUS_PERCENT_OR_AMOUNT_SID[0],
                     "measurement_unit": HECTOKILOGRAM_FIXTURE_NAME,
                     "monetary_unit": EURO_FIXTURE_NAME,
                 },
@@ -191,6 +218,28 @@ def irreversible_duty_sentence_data(request):
     return duty_sentence, exp_parsed, exp_transformed
 
 
+def replace_with_component_instances(expected_components: dict, request) -> None:
+    """
+    Modifies `expected_components` so that it can be compared to a dictionary of
+    parsed and transformed duty components.
+
+    Duty component fixture names and duty expression SID values are replaced
+    with their object instances.
+    """
+    if "duty_expression_sid" in expected_components:
+        expected_components["duty_expression"] = DutyExpression.objects.get(
+            sid=expected_components["duty_expression_sid"],
+        )
+        expected_components.pop("duty_expression_sid")
+
+    with_fixtures = {
+        key: request.getfixturevalue(val)
+        for key, val in expected_components.items()
+        if type(val) == str
+    }
+    expected_components.update(with_fixtures)
+
+
 def duty_sentence_parser_test(
     lark_duty_sentence_parser: DutySentenceParser,
     duty_sentence_data: Tuple[str, List[str], List[Dict]],
@@ -207,12 +256,7 @@ def duty_sentence_parser_test(
     transformed = lark_duty_sentence_parser.transform(duty_sentence)
     assert len(transformed) == len(exp_components)
     for phrase, exp in zip(transformed, exp_components):
-        with_fixtures = {
-            key: request.getfixturevalue(val)
-            for key, val in exp.items()
-            if type(val) == str
-        }
-        exp.update(with_fixtures)
+        replace_with_component_instances(exp, request)
         assert phrase == exp
 
 
@@ -243,10 +287,10 @@ def test_irreversible_duty_sentence_parsing(
 def test_only_permitted_measurements_allowed(lark_duty_sentence_parser):
     with pytest.raises(ValidationError) as e:
         lark_duty_sentence_parser.transform("1.0 EUR / kg / lactic.")
-        assert (
-            e.message
-            == "Measurement unit qualifier lactic. cannot be used with measurement unit kg."
-        )
+    assert (
+        "Measurement unit qualifier lactic. cannot be used with measurement unit kg."
+        in str(e.value)
+    )
 
 
 @pytest.mark.parametrize(
@@ -296,25 +340,67 @@ def test_compound_duty_not_permitted_error(sentence, simple_lark_duty_sentence_p
             "A duty expression cannot be used more than once in a duty sentence.",
         ),
         (
-            f"+ 5.5% 10%",
+            f"+ AC 10%",
             "Duty expressions must be used in the duty sentence in ascending order of SID.",
         ),
         (
-            "+ AC 10%",
-            f"Duty amount cannot be used with duty expression + agricultural component (+ AC).",
-        ),
-        (
             "NIHIL / 100 kg",
-            f"Measurement unit 100 kg (KGM) cannot be used with duty expression (nothing) (NIHIL).",
+            f"Measurement unit 100 kg (DTN) cannot be used with duty expression (nothing) (NIHIL).",
         ),
     ],
 )
-def test_duty_validation_errors(sentence, exp_error_message, lark_duty_sentence_parser):
-    """
-    Tests validation based on applicability codes.
-
-    See conftest.py for DutyExpression fixture details.
-    """
-    with pytest.raises(ValidationError) as e:
+def test_duty_transformer_duty_expression_validation_errors(
+    sentence,
+    exp_error_message,
+    lark_duty_sentence_parser,
+):
+    with pytest.raises(ValidationError) as error:
         lark_duty_sentence_parser.transform(sentence)
-        assert exp_error_message in e.message
+    assert exp_error_message in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "code, duty_expression, item, item_name, error_message",
+    [
+        (
+            ApplicabilityCode.NOT_PERMITTED,
+            PLUS_AGRI_COMPONENT_FIXTURE_NAME,
+            10.0,
+            "duty amount",
+            "Duty amount cannot be used with duty expression + agricultural component (+ AC).",
+        ),
+        (
+            ApplicabilityCode.NOT_PERMITTED,
+            NOTHING_FIXTURE_NAME,
+            BRITISH_POUND_FIXTURE_NAME,
+            "monetary unit",
+            "Monetary unit cannot be used with duty expression (nothing) (NIHIL).",
+        ),
+        (
+            ApplicabilityCode.MANDATORY,
+            PERCENT_OR_AMOUNT_FIXTURE_NAME,
+            None,
+            "duty amount",
+            f"Duty expression % or amount () requires a duty amount.",
+        ),
+    ],
+)
+def test_duty_transformer_applicability_code_validation_errors(
+    code,
+    duty_expression,
+    item,
+    item_name,
+    error_message,
+    lark_duty_sentence_parser,
+    request,
+):
+    with pytest.raises(ValidationError) as error:
+        transformer = lark_duty_sentence_parser.transformer
+        duty_expression = request.getfixturevalue(duty_expression)
+        transformer.validate_according_to_applicability_code(
+            code,
+            duty_expression,
+            item,
+            item_name,
+        )
+    assert error_message in str(error.value)

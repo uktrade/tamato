@@ -13,6 +13,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.urls import reverse
+from django.utils.timezone import make_aware
 
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
@@ -315,7 +316,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
     def unassign_users(self):
         assignments = self.cleaned_data["assignments"]
         for assignment in assignments:
-            assignment.unassigned_at = datetime.now()
+            assignment.unassigned_at = make_aware(datetime.now())
 
         user_assignments = UserAssignment.objects.bulk_update(
             assignments,

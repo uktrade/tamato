@@ -1,0 +1,78 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% set page_title = "Delete preferential quota order number" %}
+
+{% block breadcrumb %}
+    {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ object.reference_document_version.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":object.reference_document_version.reference_document.pk})},
+    {"text": "Version " ~ object.reference_document_version.version, "href": url("reference_documents:version-details", kwargs={"pk":object.reference_document_version.pk})},
+    {"text": page_title}]
+  }) }}
+{% endblock %}
+
+{% block content %}
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+            <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+        </div>
+    </div>
+
+    <div class="govuk-grid-row govuk-!-margin-bottom-5">
+        <div class="govuk-grid-column-two-thirds">
+            <p class="govuk-body">
+                Are you sure you want to permanently delete preferential quota order number {{ object.order_number }},
+                reference document {{ object.reference_document_version.reference_document.area_id }}?
+            </p>
+
+            {{ govukWarningText({
+              "text": "Deleted preferential quota order number cannot be recovered.",
+              "iconFallbackText": "Warning"
+            }) }}
+
+            <form method="post">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+                {% set error_list = [] %}
+
+                {% for field, errors in form.errors.items() %}
+                    {% for error in errors.data %}
+                        {% if error.message|length > 1 %}
+                            {{ error_list.append({
+            "text": error.message,
+            "href": "#" ~ (form.prefix ~ "-" if form.prefix else "") ~ field ~ ("_" ~ error.subfield if error.subfield is defined else ""),
+          }) or "" }}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+
+                {% if error_list|length > 0 %}
+                    {{ govukErrorSummary({
+          "titleText": "There is a problem",
+          "errorList": error_list
+        }) }}
+                {% endif %}
+
+                <div class="govuk-button-group">
+                    {{ govukButton({
+          "text": "Delete",
+          "classes": "govuk-button--warning",
+          "name": "action",
+          "value": "delete"
+        }) }}
+                    {{ govukButton({
+            "text": "Cancel",
+            "href": url("reference_documents:index"),
+            "classes": "govuk-button--secondary"
+          }) }}
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

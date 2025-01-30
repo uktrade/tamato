@@ -1,4 +1,4 @@
 -r requirements.txt
 
-django_debug_toolbar
+django_debug_toolbar==5.0.1
 pre-commit

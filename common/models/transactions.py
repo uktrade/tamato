@@ -7,6 +7,7 @@ from logging import getLogger
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.db.models import Q
 from django.db.transaction import atomic
 from django_fsm import FSMIntegerField
 from django_fsm import transition
@@ -203,7 +204,10 @@ class TransactionQueryset(models.QuerySet):
             versions = (
                 version_group.versions.has_approved_state()
                 .order_by("-pk")
-                .exclude(pk=obj.pk)
+                .exclude(
+                    Q(pk=obj.pk)
+                    | Q(transaction__workbasket=obj.transaction.workbasket),
+                )
             )
             if versions.count() == 0:
                 version_group.current_version = None
@@ -281,6 +285,17 @@ class Transaction(TimestampedMixin):
     order = models.IntegerField()
 
     composite_key = models.CharField(max_length=16, unique=True)
+    """
+    Originally containing workbasket pk, order and partition for user created
+    transactions.
+
+    Now a random unique string to avoid duplicate values when reordering /
+    deleting transactions.
+
+    It is not clear what the purpose of composite_key is other than as an
+    application level unique ID for a transaction. It is not used anywhere in
+    the app.
+    """
 
     objects = TransactionManager.from_queryset(TransactionQueryset)()
 

@@ -1,8 +1,9 @@
-from datetime import date
+from datetime import datetime
 from datetime import timedelta
 
 from django.db.models import Count
 from django.db.models.functions import TruncDate
+from django.utils.timezone import make_aware
 
 from reports.reports.base_chart import ReportBaseChart
 from workbaskets.models import WorkBasket
@@ -24,10 +25,12 @@ class Report(ReportBaseChart):
     hover_text = "rejected"
 
     def min_date_str(self):
-        return str(date.today() + timedelta(days=-(self.days_in_past + 1)))
+        return str(
+            make_aware(datetime.today()) + timedelta(days=-(self.days_in_past + 1)),
+        )
 
     def max_date_str(self):
-        return str(date.today())
+        return str(datetime.today())
 
     def data(self):
         result = []
@@ -43,7 +46,9 @@ class Report(ReportBaseChart):
     def query(self):
         return (
             WorkBasket.objects.filter(
-                updated_at__gt=date.today() + timedelta(days=-(self.days_in_past + 1)),
+                updated_at__gt=make_aware(
+                    datetime.today() + timedelta(days=-(self.days_in_past + 1)),
+                ),
                 status=WorkflowStatus.ERRORED,
             )
             .values(date=TruncDate("updated_at"))

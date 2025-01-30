@@ -38,8 +38,10 @@ from markdownify import markdownify
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
+from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
 from common.filters import TamatoFilter
+from common.forms import DummyForm
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
@@ -72,8 +74,11 @@ from workbaskets.models import DataUpload
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
+from workbaskets.tasks import call_end_measures
+from workbaskets.tasks import check_workbasket_for_missing_measures
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
+from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 logger = logging.getLogger(__name__)
@@ -1058,6 +1063,76 @@ class WorkBasketViolationDetail(DetailView):
         return redirect("workbaskets:workbasket-ui-violations")
 
 
+class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
+    success_url = reverse_lazy("workbaskets:workbasket-ui-missing-measures-check")
+    template_name = "workbaskets/checks/missing_measures.jinja"
+    form_class = DummyForm
+
+    model = MissingMeasureCommCode
+    sort_by_fields = ["commodity"]
+    custom_sorting = {
+        "commodity": "commodity__item_id",
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    def get_queryset(self):
+        self.queryset = MissingMeasureCommCode.objects.filter(
+            missing_measures_check__workbasket=self.workbasket,
+        )
+        return super().get_queryset()
+
+    @atomic
+    def run_missing_measures_check(self, comm_code_pks):
+        """Remove old checks, start new checks via a Celery task and save the
+        newly created task's ID on the workbasket."""
+        workbasket = self.workbasket
+        last_tx = self.workbasket.transactions.last()
+        task = check_workbasket_for_missing_measures.delay(
+            workbasket.pk,
+            last_tx.pk,
+            comm_code_pks,
+        )
+        logger.info(
+            f"Started missing measures check against workbasket.id={workbasket.pk} "
+            f"on task.id={task.id}",
+        )
+        workbasket.missing_measures_check_task_id = task.id
+        workbasket.save()
+
+    def form_valid(self, form):
+        form_action = self.request.POST.get("form-action")
+        if form_action == "start-check":
+            comm_code_pks = get_comm_codes_affected_by_workbasket_changes(
+                self.workbasket,
+            )
+            self.run_missing_measures_check(comm_code_pks)
+        if form_action == "stop-check":
+            self.workbasket.terminate_missing_measures_check()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["workbasket"] = self.workbasket
+        context["missing_measures_check"] = getattr(
+            self.workbasket,
+            "missing_measures_check",
+            None,
+        )
+        context["selected_tab"] = "measures-check"
+
+        if self.workbasket.missing_measures_check_task_id:
+            result = AsyncResult(self.workbasket.missing_measures_check_task_id)
+            if result.status != "SUCCESS":
+                context["missing_measures_check_in_progress"] = True
+            else:
+                context["missing_measures_check_in_progress"] = False
+        return context
+
+
 class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
     """
     UI to confirm (or cancel) workbasket deletion.
@@ -1123,7 +1198,7 @@ class WorkBasketDeleteDone(TemplateView):
 
 class WorkBasketCompare(WithCurrentWorkBasket, FormView):
     success_url = reverse_lazy("workbaskets:workbasket-check-ui-compare")
-    template_name = "workbaskets/compare.jinja"
+    template_name = "workbaskets/checks/worksheet.jinja"
     form_class = forms.WorkbasketCompareForm
 
     @property
@@ -1186,6 +1261,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             workbasket=self.workbasket,
             data_upload=self.data_upload,
             matching_measures=self.matching_measures,
+            selected_tab="worksheet-check",
             *args,
             **kwargs,
         )
@@ -1193,7 +1269,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketChecksView(FormView):
-    template_name = "workbaskets/checks.jinja"
+    template_name = "workbaskets/checks/business_rules.jinja"
     form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.
@@ -1235,6 +1311,18 @@ class WorkBasketChecksView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["selected_tab"] = "rules-check"
+        missing_measures_check = getattr(
+            self.workbasket,
+            "missing_measures_check",
+            None,
+        )
+        if missing_measures_check is not None:
+            context["missing_measures_check_successful"] = (
+                missing_measures_check.successful
+            )
+        else:
+            context["missing_measures_check_successful"] = False
         # set to true if there is an associated goods import batch with an unsent notification
         try:
             import_batch = self.workbasket.importbatch
@@ -1779,3 +1867,57 @@ class RuleCheckQueueView(
                 "text": task_status,
                 "tag_class": "",
             }
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
+    model = Measure
+    paginate_by = 20
+    template_name = "workbaskets/auto_end_date_measures.jinja"
+    sort_by_fields = ["start_date", "goods_nomenclature", "sid"]
+    custom_sorting = {
+        "start_date": "valid_between",
+        "goods_nomenclature": "goods_nomenclature__item_id",
+        "sid": "sid",
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    @property
+    def measures(self):
+        return self.workbasket.get_measures_to_end_date()
+
+    def get_queryset(self):
+        ordering = self.get_ordering()
+        queryset = self.measures
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["workbasket"] = self.workbasket
+        context["today"] = date.today()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action", None) == "auto-end-date-measures":
+            self.end_measures()
+            self.request.session["count_ended_measures"] = len(self.measures)
+            return redirect(
+                "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+                self.workbasket.pk,
+            )
+
+    def end_measures(self):
+        measure_pks = [measure.pk for measure in self.measures]
+        call_end_measures.apply_async((measure_pks, self.workbasket.pk))
+
+
+class AutoEndDateMeasuresConfirm(DetailView):
+    template_name = "workbaskets/confirm_auto_end_date_measures.jinja"
+    model = WorkBasket

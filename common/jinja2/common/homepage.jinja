@@ -120,10 +120,18 @@
         <p class="govuk-body">
           <a href="{{ url('measure-create-process-queue') }}"
             class="govuk-link"
-          >Measures process queue</a>
+          >Measures create process queue</a>
           <br>
           This queue shows the status of measures that you submitted for
           creation.
+          </p>
+          <p class="govuk-body">
+          <a href="{{ url('measure-edit-process-queue') }}"
+            class="govuk-link"
+          >Measures edit process queue</a>
+          <br>
+          This queue shows the status of measures that you submitted for
+          editing.
           </p>
           <p class="govuk-body">
           <a href="{{ url('workbaskets:rule-check-queue') }}"
@@ -152,6 +160,8 @@
           <li>
             <a href="{{ url('taric_parser_import_ui_list') }}" class="govuk-link">Importer V2</a>
           </li>
+            {% endif %}
+      {% if request.user.has_perm('reference_documents.view_referencedocument') %}
           <li>
             <a href="{{ url('reference_documents:index') }}" class="govuk-link">Reference documents</a>
           </li>

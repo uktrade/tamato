@@ -1,0 +1,31 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/tabs/macro.njk" import govukTabs %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% set page_title = "Alignment Report details for " ~ reference_document_version.reference_document.area_id ~ " version " ~ reference_document_version.version %}
+
+{% block breadcrumb %}
+    {{ govukBreadcrumbs({
+    "items": [{"text": "Home", "href": url("home")},
+    {"text": "View reference documents", "href": url("reference_documents:index")},
+    {"text": "Reference document " ~ reference_document_version.reference_document.area_id, "href": url("reference_documents:details", kwargs={"pk":reference_document_version.reference_document.pk})},
+    {"text": "Version " ~ reference_document_version.version}]
+  }) }}
+{% endblock %}
+
+{% block content %}
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
+        {{ page_title }}
+    </h1>
+    <span class="govuk-caption-xl govuk-!-margin-bottom-9">You will find a list of alignment checks and the outcome for the related reference document version.</span>
+    <div>
+        {{ govukTable({
+        "head": alignment_check_table_headers,
+        "rows": alignment_check_table_rows }) }}
+    </div>
+{% endblock %}
+
+
+

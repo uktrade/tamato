@@ -13,6 +13,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.timezone import make_aware
 
 from additional_codes.models import AdditionalCode
 from commodities.models import GoodsNomenclature
@@ -142,10 +143,6 @@ class MeasureConditionsWizardStepFormSet(
         }
 
         return kwargs
-
-
-class MeasureCreateStartForm(forms.Form):
-    pass
 
 
 class MeasureDetailsForm(
@@ -630,7 +627,7 @@ class MeasureCommodityAndDutiesFormSet(
         # Filter tuples(duty, form) for unique duties to avoid parsing the same duty more than once
         duties = [next(group) for duty, group in groupby(data, key=lambda x: x[0])]
         duty_sentence_parser = LarkDutySentenceParser(
-            date=self.measure_start_date or datetime.datetime.now(),
+            date=self.measure_start_date or make_aware(datetime.datetime.now()),
         )
         for duty, form in duties:
             try:

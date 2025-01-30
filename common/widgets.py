@@ -71,3 +71,23 @@ class MultipleFileInput(FileInput):
     """Enable multiple files to be selected using FileInput widget."""
 
     allow_multiple_selected = True
+
+
+class DecimalSuffix(widgets.NumberInput):
+    """Identical to the Decimal widget but allows the addition of a suffix."""
+
+    template_name = "common/widgets/decimal_suffix.html"
+
+    def __init__(self, attrs=None, suffix="", **kwargs):
+        self.suffix = suffix
+        super().__init__(attrs, **kwargs)
+
+    def render(self, name, value, attrs=None, renderer=None):
+        if attrs is None:
+            attrs = {}
+        context = self.get_context(name, value, attrs)
+        if self.suffix:
+            context["widget"]["suffix"] = self.suffix
+
+        template = loader.get_template(self.template_name).render(context)
+        return mark_safe(template)

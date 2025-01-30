@@ -8,7 +8,6 @@ browse and make changes to the UK Global Tariff, and submit these changes to HMR
 
 The tool is available at https://www.manage-trade-tariffs.trade.gov.uk/
 
-
 Development environment setup
 -----------------------------
 

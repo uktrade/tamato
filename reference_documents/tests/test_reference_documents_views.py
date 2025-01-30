@@ -4,9 +4,70 @@ from django.contrib.auth.models import Permission
 from django.urls import reverse
 
 from reference_documents.models import ReferenceDocument
+from reference_documents.models import ReferenceDocumentVersionStatus
 from reference_documents.tests import factories
+from reference_documents.tests.factories import ReferenceDocumentFactory
+from reference_documents.tests.factories import ReferenceDocumentVersionFactory
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.mark.reference_documents
+class TestReferenceDocumentDetails:
+
+    def test_get_with_valid_user(self, superuser_client):
+        # seed database
+        reference_document = ReferenceDocumentFactory()
+        ReferenceDocumentVersionFactory(
+            reference_document=reference_document,
+            status=ReferenceDocumentVersionStatus.EDITING,
+            version=2.0,
+        )
+        ReferenceDocumentVersionFactory(
+            reference_document=reference_document,
+            status=ReferenceDocumentVersionStatus.IN_REVIEW,
+            version=1.5,
+        )
+        ReferenceDocumentVersionFactory(
+            reference_document=reference_document,
+            status=ReferenceDocumentVersionStatus.PUBLISHED,
+            version=1.0,
+        )
+
+        resp = superuser_client.get(
+            reverse(
+                "reference_documents:details",
+                kwargs={
+                    "pk": reference_document.pk,
+                },
+            ),
+        )
+
+        assert resp.status_code == 200
+        assert len(resp.context_data["reference_document_versions"]) == 3
+
+    def test_details(self, superuser_client):
+        """Test that the reference document detail view shows a row for each
+        reference document version."""
+        ref_doc = factories.ReferenceDocumentFactory.create()
+        ref_doc_version_1 = factories.ReferenceDocumentVersionFactory(
+            reference_document=ref_doc,
+            version=1.0,
+        )
+        ref_doc_version_2 = factories.ReferenceDocumentVersionFactory(
+            reference_document=ref_doc,
+            version=2.0,
+        )
+        ref_doc_version_2 = factories.ReferenceDocumentVersionFactory(
+            reference_document=ref_doc,
+            version=3.0,
+        )
+        details_url = reverse("reference_documents:details", kwargs={"pk": ref_doc.pk})
+        response = superuser_client.get(details_url)
+        page = BeautifulSoup(response.content, "html.parser")
+        assert response.status_code == 200
+        table_rows = page.select("tr")
+        assert len(table_rows) == 4
 
 
 @pytest.mark.reference_documents
@@ -189,28 +250,3 @@ def test_ref_doc_list_view(superuser_client):
     andorra_row = page.select("tr")[1]
     latest_version_cell = andorra_row.select("td")[0]
     assert str(ref_doc_version.version) in latest_version_cell
-
-
-@pytest.mark.reference_documents
-def test_ref_doc_detail_view(superuser_client):
-    """Test that the reference document detail view shows a row for each
-    reference document version."""
-    ref_doc = factories.ReferenceDocumentFactory.create()
-    ref_doc_version_1 = factories.ReferenceDocumentVersionFactory(
-        reference_document=ref_doc,
-        version=1.0,
-    )
-    ref_doc_version_2 = factories.ReferenceDocumentVersionFactory(
-        reference_document=ref_doc,
-        version=2.0,
-    )
-    ref_doc_version_2 = factories.ReferenceDocumentVersionFactory(
-        reference_document=ref_doc,
-        version=3.0,
-    )
-    details_url = reverse("reference_documents:details", kwargs={"pk": ref_doc.pk})
-    response = superuser_client.get(details_url)
-    page = BeautifulSoup(response.content, "html.parser")
-    assert response.status_code == 200
-    table_rows = page.select("tr")
-    assert len(table_rows) == 4

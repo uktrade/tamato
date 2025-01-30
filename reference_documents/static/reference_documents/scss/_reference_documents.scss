@@ -1,3 +1,7 @@
 .order_number_link {
-    padding-right: 10px;
+  padding-right: 10px;
+}
+
+input[type=number].govuk-input--width-20 {
+  @extend .govuk-input;
 }

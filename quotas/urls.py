@@ -70,6 +70,32 @@ urlpatterns = [
         name="quota_definition-ui-create",
     ),
     path(
+        f"quotas/quota_definitions/bulk_create/<step>",
+        views.QuotaDefinitionBulkCreatorWizard.as_view(
+            url_name="quota_definition-ui-bulk-create",
+            done_step_name="complete",
+        ),
+        name="quota_definition-ui-bulk-create",
+    ),
+    path(
+        f"quotas/quota_definitions/bulk_create/",
+        views.QuotaDefinitionBulkCreatorWizard.as_view(
+            url_name="quota_definition-ui-bulk-create",
+            done_step_name="complete",
+        ),
+        name="quota_definition-ui-bulk-create",
+    ),
+    path(
+        f"quotas/quota_definitions/bulk_create/<pk>/edit",
+        views.QuotaDefinitionBulkCreatorUpdateDefinitionData.as_view(),
+        name="quota_definition-ui-bulk-create-edit",
+    ),
+    path(
+        f"quotas/bulk_create_success",
+        views.QuotaDefinitionBulkCreateSuccess.as_view(),
+        name="quota_definition-ui-bulk-create-success",
+    ),
+    path(
         f"quotas/duplicate_quota_definitions/<step>",
         views.DuplicateDefinitionsWizard.as_view(
             url_name="sub_quota_definitions-ui-create",
@@ -214,6 +240,36 @@ urlpatterns = [
         f"quotas/suspension-periods/<sid>/confirm-delete/",
         views.QuotaSuspensionConfirmDelete.as_view(),
         name="quota_suspension-ui-confirm-delete",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/edit/",
+        views.QuotaBlockingUpdate.as_view(),
+        name="quota_blocking-ui-edit",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/edit-create/",
+        views.QuotaBlockingEditCreate.as_view(),
+        name="quota_blocking-ui-edit-create",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/edit-update/",
+        views.QuotaBlockingEditUpdate.as_view(),
+        name="quota_blocking-ui-edit-update",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/confirm-update/",
+        views.QuotaBlockingConfirmUpdate.as_view(),
+        name="quota_blocking-ui-confirm-update",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/delete/",
+        views.QuotaBlockingDelete.as_view(),
+        name="quota_blocking-ui-delete",
+    ),
+    path(
+        f"quotas/blocking-periods/<sid>/confirm-delete/",
+        views.QuotaBlockingConfirmDelete.as_view(),
+        name="quota_blocking-ui-confirm-delete",
     ),
     path(
         f"quota_definitions/quota-association/<pk>/delete/",

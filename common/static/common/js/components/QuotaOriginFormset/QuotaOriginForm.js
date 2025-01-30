@@ -67,7 +67,7 @@ function QuotaOriginForm({
 
   return (
     <div>
-      <h3 className="govuk-heading-m">Origin {index + 1}</h3>
+      <h3 className="govuk-heading-m">Quota origin {index + 1}</h3>
       <input type="hidden" name={`origins-${index}-pk`} value={origin.pk} />
       <div className="govuk-form-group">
         <DateField

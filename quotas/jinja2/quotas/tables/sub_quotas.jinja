@@ -3,6 +3,7 @@
 {% set table_rows = [] %}
 {% if sub_quotas %}
 <h3 class="govuk-heading-m">Sub-quotas</h3>
+<p class="govuk-body">The following sub-quota definitions exist for definition periods on Quota {{ quota.order_number}}.</p>
   {% for object in sub_quotas %}
     {% set definition_link -%}
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}#definition-details">{{ object.sub_quota.sid }}</a>
@@ -11,7 +12,7 @@
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.sub_quota.order_number.sid]) }}">{{ object.sub_quota.order_number.order_number }}</a>
     {% endset %}
     {% set actions_html %}
-      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
+      <a class="govuk-link" href="{{ object.sub_quota.get_association_edit_url() }}">Edit</a>
       <br/>
       <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
     {% endset %}
@@ -19,8 +20,8 @@
     {{ table_rows.append([
       {"text": definition_link },
       {"text": sub_quota_link },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
+      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(object.sub_quota.valid_between.upper) if object.sub_quota.valid_between.upper else "-"},
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
       {"text": actions_html },
@@ -41,6 +42,7 @@
   }) }}
 {% elif main_quotas %}
 <h3 class="govuk-heading-m">Main quotas</h3>
+<p class="govuk-body">Quota {{ quota.order_number }} has definition periods which are sub-quotas of the following quota definitions. To edit the associations, go to the main quota's data page.</p>
   {% for object in main_quotas %}
     {% set definition_link -%}
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.main_quota.order_number.sid]) }}#definition-details">{{ object.main_quota.sid }}</a>
@@ -48,19 +50,13 @@
     {% set main_quota_link -%}
       <a class="govuk-link" href="{{ url('quota-ui-detail', args=[object.main_quota.order_number.sid]) }}">{{ object.main_quota.order_number.order_number }}</a>
     {% endset %}
-    {% set actions_html %}
-      <a class="govuk-link" href="{{ object.sub_quota.version_at(request.user.current_workbasket.transactions.last()).get_association_edit_url() }}">Edit</a>
-      <br/>
-      <a class="govuk-link" href="{{ url('quota_association-ui-delete', args=[object.pk]) }}">Delete</a>
-    {% endset %}
     {{ table_rows.append([
       {"text": definition_link },
       {"text": main_quota_link },
-      {"text": "{:%d %b %Y}".format(object.main_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.lower) },
-      {"text": "{:%d %b %Y}".format(object.main_quota.version_at(request.user.current_workbasket.transactions.last()).valid_between.upper) if object.main_quota.valid_between.upper else "-"},
+      {"text": "{:%d %b %Y}".format(object.main_quota.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(object.main_quota.valid_between.upper) if object.main_quota.valid_between.upper else "-"},
       {"text": object.get_sub_quota_relation_type_display() },
       {"text": object.coefficient },
-      {"text": actions_html },
     ]) or "" }}
   {% endfor %}
   {{ govukTable({
@@ -71,7 +67,6 @@
       {"text": "End date"},
       {"text": "Relationship type"},
       {"text": "Coefficient"},
-      {"text": "Actions"},
     ],
     "rows": table_rows
   }) }}
