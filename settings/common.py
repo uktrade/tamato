@@ -120,7 +120,6 @@ DOMAIN_APPS = [
     "footnotes.apps.FootnotesConfig",
     "geo_areas.apps.GeoAreasConfig",
     "measures.apps.MeasuresConfig",
-    "open_data.apps.OpenDataConfig",
     "quotas.apps.QuotasConfig",
     "reports.apps.ReportsConfig",
     "regulations.apps.RegulationsConfig",
@@ -143,6 +142,8 @@ TAMATO_APPS = [
     "test_utils",
 ]
 
+OPEN_DATA_APPS = ["open_data.apps.OpenDataConfig"]
+
 APPS_THAT_MUST_COME_LAST = ["django.forms"]
 
 INSTALLED_APPS = [
@@ -150,6 +151,7 @@ INSTALLED_APPS = [
     *THIRD_PARTY_APPS,
     *TAMATO_APPS,
     *DOMAIN_APPS,
+    *OPEN_DATA_APPS,
     *APPS_THAT_MUST_COME_LAST,
 ]
 
