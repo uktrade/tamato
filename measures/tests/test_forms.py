@@ -1025,6 +1025,10 @@ def test_measure_forms_conditions_invalid_duty(
             "3.5 % + 11 GBP / 100 kg",
             "A compound duty expression was found at character 7. \n\nCheck that you are entering a single duty amount or a duty amount together with a measurement unit (and measurement unit qualifier if required). ",
         ),
+        (
+            "1.2345 GBP / kg",
+            "The reference price cannot have more than 3 decimal places.",
+        ),
     ],
 )
 def test_measure_forms_conditions_wizard_invalid_duty(
@@ -1970,6 +1974,8 @@ def test_simple_measure_edit_forms_serialize_deserialize(
     request,
     duty_sentence_parser,
 ):
+    """Test that the EditMeasure simple forms that use the SerializableFormMixin
+    behave correctly and as expected."""
     """Test that the EditMeasure simple forms that use the SerializableFormMixin
     behave correctly and as expected."""
 
