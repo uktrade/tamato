@@ -58,7 +58,13 @@ class ReportModel(models.Model):
         read_field = ") SELECT "
         # Find the SQL query that return the latest_approved on the
         # model we are shadowing
-        latest_query = str(cls.shadowed_model.objects.latest_approved().query)
+        if hasattr(cls.shadowed_model.objects.all(), "published"):
+            published_query = str(
+                cls.shadowed_model.objects.published().latest_approved().query,
+            )
+            latest_query = published_query.replace("PUBLISHED", "'PUBLISHED'")
+        else:
+            latest_query = str(cls.shadowed_model.objects.latest_approved().query)
         split_query = latest_query.split(" FROM")
         # The query is split at the FROM keyword, and the second part contains
         # the correct table we want to copy from and the correct WHERE clause
