@@ -87,7 +87,7 @@ class ReportModel(models.Model):
         )
 
     @classmethod
-    def ignore_fk_list(cls):
+    def get_ignore_fk_list(cls):
         return []
 
     @classmethod
@@ -101,7 +101,7 @@ class ReportModel(models.Model):
         # There is no attempt to make the process efficient!
         query_list = []
         if cls.patch_fk:
-            ignore_list = cls.ignore_fk_list()
+            ignore_list = cls.get_ignore_fk_list()
             for f in cls._meta.get_fields():
                 if (
                     type(f) is models.fields.related.ForeignKey

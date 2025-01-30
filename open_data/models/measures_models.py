@@ -79,7 +79,7 @@ class ReportFootnoteAssociationMeasure(ReportModel):
         db_table = ReportModel.create_table_name(FootnoteAssociationMeasure)
 
     @classmethod
-    def ignore_fk_list(cls):
+    def get_ignore_fk_list(cls):
         return ["footnoted_measure"]
 
 
@@ -248,7 +248,7 @@ class ReportMeasureCondition(ReportModel):
     reference_price = models.TextField(blank=True, null=True)
 
     @classmethod
-    def ignore_fk_list(cls):
+    def get_ignore_fk_list(cls):
         """The ORM used to populate this table does not return the latest
         required_certificate To fix it, I am using the function update_fk,
         excluding all the other FK."""
