@@ -92,12 +92,12 @@ class ReportModel(models.Model):
 
     @classmethod
     def update_fk_queries(cls):
-        # The foreign keys in a table don't always point to the object latest version
+        # The foreign keys in a table don't always point to the latest version of the object.
         # It is an unfortunate fact, with several causes. It will not be fixed, at least
         # for now. So there is a materialised view, mapping every single primary key to
         # the equivalent latest version.
         # The following code generate the queries required to update the foreign keys
-        # in the table.
+        # in the tables.
         # There is no attempt to make the process efficient!
         query_list = []
         if cls.patch_fk:
