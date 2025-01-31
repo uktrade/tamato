@@ -40,6 +40,12 @@ SKIPPED_MODELS = {
     "QuotaEvent",
 }
 
+app_list = (
+    name.split(".")[0]
+    for name in settings.DOMAIN_APPS
+    if name not in settings.SQLITE_EXCLUDED_APPS
+)
+
 
 def make_export_plan(sqlite_runner: runner.Runner) -> plan.Plan:
     app_names = (

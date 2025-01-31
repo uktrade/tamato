@@ -13,6 +13,7 @@ from typing import Tuple
 import apsw
 from django.conf import settings
 
+import exporter.sqlite as sqlite
 from exporter.sqlite.plan import Operation
 
 logger = logging.getLogger(__name__)
@@ -140,11 +141,13 @@ class SQLiteMigrator:
             )
 
             logger.info(f"Running `migrate` in {migration_dir}")
-            self.manage(
-                migration_dir,
-                ENV_INFO_FLAG,
-                "migrate",
-            )
+            for app_name in sqlite.app_list:
+                self.manage(
+                    migration_dir,
+                    ENV_INFO_FLAG,
+                    "migrate",
+                    app_name,
+                )
 
     def manage(self, exec_dir: str, *manage_args: str):
         """
