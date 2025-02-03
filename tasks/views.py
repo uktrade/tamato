@@ -1,7 +1,9 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import OperationalError
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -43,6 +45,8 @@ from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.signals import set_current_instigator
 
+User = get_user_model()
+
 
 class TaskListView(PermissionRequiredMixin, SortingMixin, WithPaginationListView):
     model = Task
@@ -69,15 +73,32 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        context["assignees"] = TaskAssignee.objects.filter(
-            task=self.get_object(),
-            # TODO:
-            # Using all task assignees is temporary for illustration as it
-            # doesn't align with the new approach of assigning users to tasks
-            # rather than assigning users to workbaskets (the old approach,
-            # uses tasks as an intermediary object).
-            # assignment_type=TaskAssignee.AssignmentType.GENERAL,
-        )
+        # TODO: Factor out queries and place in TaskAssigeeQuerySet.
+        context["task_assignees"] = [
+            {"pk": assignee.pk, "name": assignee.user.get_full_name()}
+            for assignee in TaskAssignee.objects.filter(
+                task=self.get_object(),
+                # TODO:
+                # Using all task assignees is temporary for illustration as it
+                # doesn't align with the new approach of assigning users to tasks
+                # rather than assigning users to workbaskets (the old approach,
+                # uses tasks as an intermediary joining object).
+                # assignment_type=TaskAssignee.AssignmentType.GENERAL,
+            ).order_by(
+                "user__first_name",
+                "user__last_name",
+            )
+        ]
+        context["assignable_users"] = [
+            {"pk": user.pk, "name": user.get_full_name()}
+            for user in User.objects.filter(
+                Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
+                | Q(is_superuser=True),
+            )
+            .filter(is_active=True)
+            .distinct()
+            .order_by("first_name", "last_name")
+        ]
 
         return context
 
