@@ -1,6 +1,41 @@
 {% extends "workbaskets/review.jinja" %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% block filters %}{% endblock %}
-{% block tab_content %}
+{% set nested_tab_links = [
+  {
+    "text": "Commodity codes",
+    "href": url("workbaskets:workbasket-ui-review-goods", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "commodity-codes",
+  },
+  {
+    "text": "Descriptions",
+    "href": url("workbaskets:workbasket-ui-review-goods-descriptions", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "descriptions",
+  },
+  {
+    "text": "Description periods",
+    "href": url("workbaskets:workbasket-ui-review-goods-descriptions", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "description-periods",
+  },
+  {
+    "text": "Indents",
+    "href": url("workbaskets:workbasket-ui-review-goods-indents", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "indents",
+  },
+  {
+    "text": "Origins",
+    "href": url("workbaskets:workbasket-ui-review-goods-origins", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "origins",
+  },
+  {
+    "text": "Successors",
+    "href": url("workbaskets:workbasket-ui-review-goods-successors", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "successors",
+  },
+  ]
+%}
+
+{% block review_tabs %}
+  {{ super() }}
+  {{ fake_tabs(nested_tab_links, is_nested=True) }}
 {% endblock %}

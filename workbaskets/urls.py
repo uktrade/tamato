@@ -87,6 +87,26 @@ ui_patterns = [
         name="workbasket-ui-review-goods",
     ),
     path(
+        f"<pk>/review-goods-descriptions/",
+        ui_views.WorkbasketReviewGoodsDescriptionsView.as_view(),
+        name="workbasket-ui-review-goods-descriptions",
+    ),
+    path(
+        f"<pk>/review-goods-indents/",
+        ui_views.WorkbasketReviewGoodsIndentsView.as_view(),
+        name="workbasket-ui-review-goods-indents",
+    ),
+    path(
+        f"<pk>/review-goods-origins/",
+        ui_views.WorkbasketReviewGoodsOriginsView.as_view(),
+        name="workbasket-ui-review-goods-origins",
+    ),
+    path(
+        f"<pk>/review-goods-successors/",
+        ui_views.WorkbasketReviewGoodsSuccessorsView.as_view(),
+        name="workbasket-ui-review-goods-successors",
+    ),
+    path(
         f"<pk>/review-footnotes/",
         ui_views.WorkBasketReviewFootnotesView.as_view(),
         name="workbasket-ui-review-footnotes",

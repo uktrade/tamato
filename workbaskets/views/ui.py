@@ -39,6 +39,11 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
+from commodities.models.orm import GoodsNomenclature
+from commodities.models.orm import GoodsNomenclatureDescription
+from commodities.models.orm import GoodsNomenclatureIndent
+from commodities.models.orm import GoodsNomenclatureOrigin
+from commodities.models.orm import GoodsNomenclatureSuccessor
 from common.filters import TamatoFilter
 from common.forms import DummyForm
 from common.inspect_tap_tasks import TAPTasks
@@ -1407,31 +1412,82 @@ class WorkBasketReviewCertificatesView(WorkBasketReviewView):
         return context
 
 
-class WorkbasketReviewGoodsView(
-    PermissionRequiredMixin,
-    TemplateView,
-):
+class WorkbasketReviewGoodsView(WorkBasketReviewView):
     """UI endpoint for reviewing goods changes in a workbasket."""
 
+    model = GoodsNomenclature
     template_name = "workbaskets/review-goods.jinja"
-    permission_required = "workbaskets.view_workbasket"
-
-    def get(self, *args, **kwargs):
-        return HttpResponseRedirect(
-            reverse("review-imported-goods", kwargs={"pk": self.workbasket.pk}),
-        )
-
-    @property
-    def workbasket(self):
-        return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["tab_page_title"] = "Review commodities"
+        context["tab_page_title"] = "Review commodity codes"
         context["selected_tab"] = "commodities"
-        context["user_workbasket"] = WorkBasket.current(self.request)
-        context["workbasket"] = self.workbasket
+        context["selected_nested_tab"] = "commodity-codes"
+        context["tab_template"] = "includes/workbaskets/review-commodity-codes.jinja"
+        return context
 
+
+class WorkbasketReviewGoodsDescriptionsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureDescription
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity descriptions"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "descriptions"
+        context["tab_template"] = (
+            "includes/workbaskets/review-commodity-descriptions.jinja"
+        )
+        return context
+
+
+class WorkbasketReviewGoodsIndentsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureIndent
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity indents"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "indents"
+        context["tab_template"] = "includes/workbaskets/review-commodity-indents.jinja"
+        return context
+
+
+class WorkbasketReviewGoodsOriginsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureOrigin
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity origins"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "origins"
+        context["tab_template"] = "includes/workbaskets/review-commodity-origins.jinja"
+        return context
+
+
+class WorkbasketReviewGoodsSuccessorsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureSuccessor
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity successors"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "successors"
+        context["tab_template"] = (
+            "includes/workbaskets/review-commodity-successors.jinja"
+        )
         return context
 
 
