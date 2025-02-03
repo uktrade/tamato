@@ -1900,7 +1900,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     def footnote_associations(self):
         return self.get_footnote_associations_to_end_date()
 
-    @property
+    @cached_property
     def commodity_dictionary(self):
         """Returns a dictionary of commodity SIDs that have been end-dated in
         the workbasket along with their end dates."""
