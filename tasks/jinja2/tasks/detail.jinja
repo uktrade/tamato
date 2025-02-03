@@ -140,24 +140,39 @@
       Assignees
     </dt>
     <dd class="govuk-summary-list__value">
-      {% if assignees %}
-        {% for assignee in assignees %}
-          <div class="govuk-!-margin-bottom-3">
-              {{ assignee.user.get_displayname() }}
-              ({{ assignee.get_assignment_type_display() }}){% if not loop.last %}, {% endif %}
-          </div>
-        {% endfor %}
-      {% else %}
-          <div class="govuk-!-margin-bottom-3">
-            None
-          </div>
-      {% endif %}
+      <div id="assigned-users-content">
+        {% if assignees %}
+          {% for assignee in assignees %}
+            <div class="govuk-!-margin-bottom-3">
+                {{ assignee.user.get_displayname() }}
+                ({{ assignee.get_assignment_type_display() }}){% if not loop.last %}, {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+            <div class="govuk-!-margin-bottom-3">
+              None
+            </div>
+        {% endif %}
+      </div>
     </dd>
     <dd class="govuk-summary-list__actions">
-      <a
-        class="govuk-link"
-        href="#"
-      >Change<span class="govuk-visually-hidden"> assignees</a>
+      <ul class="govuk-summary-list__actions-list">
+        <li class="govuk-summary-list__actions-list-item">
+          <a
+            id="assign-users"
+            class="govuk-link"
+            href="#"
+          >Assign<span class="govuk-visually-hidden"> users</span></a>
+        </li>
+        {% if task_assignees %}
+        <li class="govuk-summary-list__actions-list-item">
+          <a
+            id="unassign-users"
+            class="govuk-link" href="#"
+          >Unassign<span class="govuk-visually-hidden"> users</span></a>
+        </li>
+        {% endif %}
+      </ul>
     </dd>
   </div>
 </dl>
@@ -191,4 +206,21 @@
     }) }}
   {% endif %}
 </div>
+
+<script nonce="{{ request.csp_nonce }}">
+  const CSRF_TOKEN = "{{ csrf_token }}";
+
+  // TODO: rename to taskAssignees to correctly reflect "id" attr's object type.
+  const assignedUsers = {{ task_assignees|safe }};
+  const assignableUsers = {{ assignable_users|safe }};
+
+  const assignUsersUrl = "{{ assign_users_link }}";
+  const unassignUsersUrl = "{{ unassign_users_link }}";
+</script>
+{% endblock %}
+
+
+{% block bodyEnd %}
+  {{ super() }}
+  <!-- TODO: Move above script here -->
 {% endblock %}
