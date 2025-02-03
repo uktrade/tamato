@@ -1,1 +1,23 @@
-Successors
+{% set table_rows = [] %}
+{% for obj in object_list %}
+
+  {% set replaced_goods_nomenclature %}
+    <a class="govuk-link" href="{{ obj.replaced_goods_nomenclature.get_url() }}">
+      {{ obj.replaced_goods_nomenclature.item_id }}
+    </a>
+  {% endset %}
+
+
+  {{ table_rows.append([
+    {"html": replaced_goods_nomenclature},
+    {"text": obj.absorbed_into_goods_nomenclature.item_id},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Replaced commodity code"},
+    {"text": "Absorbed into commodity code"},  
+    ],
+  "rows": table_rows
+}) }}

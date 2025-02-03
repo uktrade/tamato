@@ -8,9 +8,9 @@
 
 
   {{ table_rows.append([
-    {"html": obj.sid},
-    {"text": commodity_link},
-    {"html": obj.suffix},
+    {"text": obj.sid},
+    {"html": commodity_link},
+    {"text": obj.suffix},
     {"text": "{:%d %b %Y}".format(obj.valid_between.lower)},
     {"text": "{:%d %b %Y}".format(obj.valid_between.upper) if obj.valid_between.upper else "-"},
   ]) or "" }}

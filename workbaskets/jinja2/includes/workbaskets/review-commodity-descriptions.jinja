@@ -9,7 +9,7 @@
 
   {{ table_rows.append([
     {"html": description_link},
-    {"html": obj.described_goods_nomenclature.item_id},
+    {"text": obj.described_goods_nomenclature.item_id},
     {"text": obj.description},
     {"text": "{:%d %b %Y}".format(obj.validity_start) if obj.validity_start else "-"},
   ]) or "" }}
