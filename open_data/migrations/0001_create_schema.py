@@ -3,13 +3,25 @@
 from django.db import migrations
 
 
+def forwards(apps, schema_editor):
+    if not schema_editor.connection.alias != "default":
+        return
+    try:
+        schema_editor.execute("CREATE SCHEMA reporting;")
+    except:
+        print(f"{schema_editor.connection.alias}")
+
+
+def backwards(apps, schema_editor):
+    if not schema_editor.connection.vendor.startswith("postgres"):
+        return
+    schema_editor.execute("DROP SCHEMA reporting;")
+
+
 class Migration(migrations.Migration):
 
     dependencies = []
 
     operations = [
-        migrations.RunSQL(
-            sql=[("CREATE SCHEMA reporting;")],
-            reverse_sql=[("DROP SCHEMA reporting;")],
-        ),
+        migrations.RunPython(forwards, backwards),
     ]
