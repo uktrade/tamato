@@ -16,9 +16,14 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db.models import Case
+from django.db.models import DateField
 from django.db.models import F
 from django.db.models import ProtectedError
 from django.db.models import Q
+from django.db.models import QuerySet
+from django.db.models import Value
+from django.db.models import When
 from django.db.transaction import atomic
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -40,6 +45,8 @@ from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
+from commodities.models.orm import FootnoteAssociationGoodsNomenclature
+from commodities.models.orm import GoodsNomenclature
 from common.filters import TamatoFilter
 from common.forms import DummyForm
 from common.inspect_tap_tasks import TAPTasks
@@ -1873,7 +1880,7 @@ class RuleCheckQueueView(
 class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     model = Measure
     paginate_by = 20
-    template_name = "workbaskets/auto_end_date_measures.jinja"
+    template_name = "workbaskets/auto_end_objects.jinja"
     sort_by_fields = ["start_date", "goods_nomenclature", "sid"]
     custom_sorting = {
         "start_date": "valid_between",
@@ -1887,7 +1894,25 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     @property
     def measures(self):
-        return self.workbasket.get_measures_to_end_date()
+        return self.get_measures_to_end_date()
+
+    @property
+    def footnote_associations(self):
+        return self.get_footnote_associations_to_end_date()
+
+    @cached_property
+    def commodity_dictionary(self):
+        """Returns a dictionary of commodity SIDs that have been end-dated in
+        the workbasket along with their end dates."""
+        end_dated_commodities = GoodsNomenclature.objects.current().filter(
+            transaction__workbasket=self.workbasket,
+            valid_between__upper_inf=False,
+        )
+        commodity_dict = {
+            commodity.sid: commodity.valid_between
+            for commodity in end_dated_commodities
+        }
+        return commodity_dict
 
     def get_queryset(self):
         ordering = self.get_ordering()
@@ -1902,22 +1927,87 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["workbasket"] = self.workbasket
         context["today"] = date.today()
+        context["footnote_associations"] = self.footnote_associations
         return context
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("action", None) == "auto-end-date-measures":
-            self.end_measures()
-            self.request.session["count_ended_measures"] = len(self.measures)
+        if request.POST.get("action", None) == "auto-end-date":
+            self.auto_end_date()
             return redirect(
-                "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+                "workbaskets:workbasket-ui-auto-end-date-confirm",
                 self.workbasket.pk,
             )
 
-    def end_measures(self):
+    def auto_end_date(self):
         measure_pks = [measure.pk for measure in self.measures]
-        call_end_measures.apply_async((measure_pks, self.workbasket.pk))
+        footnote_association_pks = [
+            footnote_association.pk
+            for footnote_association in self.footnote_associations
+        ]
+        call_end_measures.apply_async(
+            (measure_pks, footnote_association_pks, self.workbasket.pk),
+        )
+
+    def get_measures_to_end_date(self) -> QuerySet:
+        """
+        Returns a queryset of measures on end-dated commodities in the
+        workbasket along with those commodities' end-dates.
+
+        It filters out measures which have already ended.
+        """
+        measures_on_commodities = Measure.objects.current().filter(
+            goods_nomenclature__sid__in=self.commodity_dictionary.keys(),
+        )
+        conditions = [
+            When(
+                goods_nomenclature__sid=commodity_sid,
+                then=Value(commodity_valid_between),
+            )
+            for commodity_sid, commodity_valid_between in self.commodity_dictionary.items()
+        ]
+        measures = measures_on_commodities.annotate(
+            commodity_valid_between=Case(
+                *conditions,
+                output_field=DateField(),
+            ),
+        )
+
+        return measures.with_effective_valid_between().exclude(
+            db_effective_valid_between__not_gt=F("commodity_valid_between"),
+        )
+
+    def get_footnote_associations_to_end_date(self) -> QuerySet:
+        """
+        Returns a queryset of footnote associations on end-dated commodities in
+        the workbasket along with those commodities' end-dates.
+
+        It filters out associations which have already ended.
+        """
+
+        footnote_associations = (
+            FootnoteAssociationGoodsNomenclature.objects.current().filter(
+                goods_nomenclature__sid__in=self.commodity_dictionary.keys(),
+            )
+        )
+        conditions = [
+            When(
+                goods_nomenclature__sid=commodity_sid,
+                then=Value(commodity_valid_between),
+            )
+            for commodity_sid, commodity_valid_between in self.commodity_dictionary.items()
+        ]
+        footnote_associations = footnote_associations.annotate(
+            commodity_valid_between=Case(
+                *conditions,
+                output_field=DateField(),
+            ),
+        )
+
+        return footnote_associations.exclude(
+            valid_between__not_gt=F("commodity_valid_between"),
+        )
 
 
-class AutoEndDateMeasuresConfirm(DetailView):
-    template_name = "workbaskets/confirm_auto_end_date_measures.jinja"
+class AutoEndDateConfirm(DetailView):
+    template_name = "workbaskets/confirm_auto_end_date.jinja"
     model = WorkBasket
