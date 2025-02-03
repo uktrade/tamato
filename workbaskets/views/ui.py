@@ -1416,6 +1416,11 @@ class WorkbasketReviewGoodsView(
     template_name = "workbaskets/review-goods.jinja"
     permission_required = "workbaskets.view_workbasket"
 
+    def get(self, *args, **kwargs):
+        return HttpResponseRedirect(
+            reverse("review-imported-goods", kwargs={"pk": self.workbasket.pk}),
+        )
+
     @property
     def workbasket(self):
         return WorkBasket.objects.get(pk=self.kwargs["pk"])
