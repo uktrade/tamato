@@ -1,1 +1,23 @@
-Indents
+{% set table_rows = [] %}
+{% for obj in object_list %}
+  {% set indent_link %}
+    <a class="govuk-link" href="{{ url("commodity-ui-detail-indent-history", kwargs={'sid':obj.indented_goods_nomenclature.sid}) }}">
+      {{ obj.sid }}
+    </a>
+  {% endset %}
+
+
+  {{ table_rows.append([
+    {"html": indent_link},
+    {"html": obj.indent if obj.indent else "-"},
+    {"text": "{:%d %b %Y}".format(obj.validity_start) if obj.validity_start else "-"},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "SID"},
+    {"text": "Indent"},
+    {"text": "Start date"},  ],
+  "rows": table_rows
+}) }}

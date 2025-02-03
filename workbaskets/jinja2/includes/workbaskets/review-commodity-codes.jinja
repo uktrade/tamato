@@ -1,1 +1,28 @@
-Commodity codes
+{% set table_rows = [] %}
+{% for obj in object_list %}
+  {% set commodity_link %}
+    <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
+      {{ obj.item_id }}
+    </a>
+  {% endset %}
+
+
+  {{ table_rows.append([
+    {"html": obj.sid},
+    {"text": commodity_link},
+    {"html": obj.suffix},
+    {"text": "{:%d %b %Y}".format(obj.valid_between.lower)},
+    {"text": "{:%d %b %Y}".format(obj.valid_between.upper) if obj.valid_between.upper else "-"},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "SID"},
+    {"text": "Commodity code"},
+    {"text": "Suffix"},
+    {"text": "Start date"},
+    {"text": "End date"},
+  ],
+  "rows": table_rows
+}) }}
