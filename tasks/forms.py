@@ -7,7 +7,6 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Q
 from django.db.models import TextChoices
 from django.forms import CharField
 from django.forms import CheckboxSelectMultiple
@@ -95,7 +94,7 @@ class AssignUsersForm(Form):
     users = ModelMultipleChoiceField(
         help_text="Select users to assign",
         widget=CheckboxSelectMultiple,
-        queryset=User.objects.all(),
+        queryset=User.objects.active_tms(),
         error_messages={"required": "Select one or more users to assign"},
     )
 
@@ -105,15 +104,6 @@ class AssignUsersForm(Form):
         self.init_layout()
 
     def init_fields(self):
-        self.fields["users"].queryset = (
-            User.objects.filter(
-                Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
-                | Q(is_superuser=True),
-            )
-            .filter(is_active=True)
-            .distinct()
-            .order_by("first_name", "last_name")
-        )
         self.fields["users"].label_from_instance = lambda obj: obj.get_full_name()
 
     def init_layout(self):

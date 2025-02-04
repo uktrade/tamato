@@ -2,8 +2,24 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
+class UserQuerySet(models.QuerySet):
+    def active_tms(self) -> models.QuerySet | list["User"]:
+        """Return a QuerySet of active users that may take the tariff manager
+        role."""
+        return (
+            self.filter(
+                models.Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
+                | models.Q(is_superuser=True),
+            )
+            .filter(is_active=True)
+            .order_by("first_name", "last_name")
+        )
+
+
 class User(AbstractUser):
     """Custom user model."""
+
+    objects = UserQuerySet.as_manager()
 
     current_workbasket = models.ForeignKey(
         "workbaskets.WorkBasket",

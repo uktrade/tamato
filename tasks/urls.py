@@ -29,7 +29,7 @@ task_ui_patterns = [
     ),
     path(
         "<int:pk>/assign-users/",
-        views.TaskAssigneeUsersView.as_view(),
+        views.TaskAssignUsersView.as_view(),
         name="task-ui-assign-users",
     ),
     path(

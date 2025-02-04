@@ -155,7 +155,7 @@
     </dt>
     <dd class="govuk-summary-list__value">
       <div id="assigned-users-content">
-        {{ display_assignees(task_assignees) }}
+        {{ display_assignees(current_assignees) }}
       </div>
     </dd>
     <dd class="govuk-summary-list__actions">
@@ -167,7 +167,7 @@
             href="#"
           >Assign<span class="govuk-visually-hidden"> users</span></a>
         </li>
-        {% if task_assignees %}
+        {% if current_assignees %}
         <li class="govuk-summary-list__actions-list-item">
           <a
             id="unassign-users"
@@ -216,7 +216,7 @@
 <script nonce="{{ request.csp_nonce }}">
   const CSRF_TOKEN = "{{ csrf_token }}";
 
-  const taskAssignees = {{ task_assignees|safe }};
+  const currentAssignees = {{ current_assignees|safe }};
   const assignableUsers = {{ assignable_users|safe }};
 
   const assignUsersUrl = "{{ assign_users_link }}";

@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import OperationalError
 from django.db import transaction
-from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -76,7 +75,7 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         # TODO: Factor out queries and place in TaskAssigeeQuerySet.
-        task_assignees = TaskAssignee.objects.filter(
+        current_assignees = TaskAssignee.objects.filter(
             task=self.get_object(),
             # TODO:
             # Using all task assignees is temporary for illustration as it
@@ -86,23 +85,18 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
             # assignment_type=TaskAssignee.AssignmentType.GENERAL,
         ).assigned()
 
-        context["task_assignees"] = [
+        context["current_assignees"] = [
             {"pk": assignee.pk, "name": assignee.user.get_full_name()}
-            for assignee in task_assignees.order_by(
+            for assignee in current_assignees.order_by(
                 "user__first_name",
                 "user__last_name",
             )
         ]
         context["assignable_users"] = [
             {"pk": user.pk, "name": user.get_full_name()}
-            for user in User.objects.filter(
-                Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
-                | Q(is_superuser=True),
+            for user in User.objects.active_tms().exclude(
+                pk__in=current_assignees.values_list("user__pk", flat=True),
             )
-            .filter(is_active=True)
-            .exclude(pk__in=task_assignees.values_list("user__pk", flat=True))
-            .distinct()
-            .order_by("first_name", "last_name")
         ]
 
         return context
@@ -203,7 +197,7 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
-class TaskAssigneeUsersView(PermissionRequiredMixin, FormView):
+class TaskAssignUsersView(PermissionRequiredMixin, FormView):
     permission_required = "tasks.add_taskassignee"
     template_name = "tasks/assign_users.jinja"
     form_class = AssignUsersForm
@@ -217,7 +211,6 @@ class TaskAssigneeUsersView(PermissionRequiredMixin, FormView):
         context["page_title"] = "Assign users to task"
         return context
 
-    @transaction.atomic
     def form_valid(self, form):
         form.assign_users(task=self.task, user_instigator=self.request.user)
         return HttpResponseRedirect(self.get_success_url())
