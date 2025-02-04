@@ -10,6 +10,20 @@
   {% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
 {% endif%}
 
+{% macro display_assignees(assignees) %}
+  {% if not assignees %}
+    <div class="govuk-!-margin-bottom-3">
+      None
+    </div>
+  {% else %}
+    {% for assignee in assignees %}
+      <div class="govuk-!-margin-bottom-3">
+      {{ assignee.name }}{% if not loop.last %}, {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endmacro %}
+
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
@@ -141,18 +155,7 @@
     </dt>
     <dd class="govuk-summary-list__value">
       <div id="assigned-users-content">
-        {% if assignees %}
-          {% for assignee in assignees %}
-            <div class="govuk-!-margin-bottom-3">
-                {{ assignee.user.get_displayname() }}
-                ({{ assignee.get_assignment_type_display() }}){% if not loop.last %}, {% endif %}
-            </div>
-          {% endfor %}
-        {% else %}
-            <div class="govuk-!-margin-bottom-3">
-              None
-            </div>
-        {% endif %}
+        {{ display_assignees(task_assignees) }}
       </div>
     </dd>
     <dd class="govuk-summary-list__actions">
@@ -207,6 +210,9 @@
   {% endif %}
 </div>
 
+{% set assign_users_link = url("workflow:task-ui-assign-users", kwargs={"pk": object.pk}) %}
+{% set unassign_users_link = url("workflow:task-ui-assign-users", kwargs={"pk": object.pk}) %}
+
 <script nonce="{{ request.csp_nonce }}">
   const CSRF_TOKEN = "{{ csrf_token }}";
 
@@ -222,5 +228,5 @@
 
 {% block bodyEnd %}
   {{ super() }}
-  <!-- TODO: Move above script here -->
+  <!-- TODO: Move above script here and init component here -->
 {% endblock %}

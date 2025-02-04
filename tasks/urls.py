@@ -27,6 +27,16 @@ task_ui_patterns = [
         views.TaskConfirmDeleteView.as_view(),
         name="task-ui-confirm-delete",
     ),
+    path(
+        "<int:pk>/assign-users/",
+        views.TaskAssigneeUsersView.as_view(),
+        name="task-ui-assign-users",
+    ),
+    path(
+        "<int:pk>/confirm-update-assignees/",
+        views.TaskAssigneesConfirmUpdateView.as_view(),
+        name="task-ui-conform-update-assignees",
+    ),
     # Subtask urls
     path(
         "<int:parent_task_pk>/subtasks/create/",

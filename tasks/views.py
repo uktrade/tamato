@@ -21,6 +21,7 @@ from tasks.filters import TaskAndWorkflowFilter
 from tasks.filters import TaskFilter
 from tasks.filters import TaskWorkflowFilter
 from tasks.filters import WorkflowTemplateFilter
+from tasks.forms import AssignUsersForm
 from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
@@ -74,17 +75,19 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         # TODO: Factor out queries and place in TaskAssigeeQuerySet.
+        task_assignees = TaskAssignee.objects.filter(
+            task=self.get_object(),
+            # TODO:
+            # Using all task assignees is temporary for illustration as it
+            # doesn't align with the new approach of assigning users to tasks
+            # rather than assigning users to workbaskets (the old approach,
+            # uses tasks as an intermediary joining object).
+            # assignment_type=TaskAssignee.AssignmentType.GENERAL,
+        )
+
         context["task_assignees"] = [
             {"pk": assignee.pk, "name": assignee.user.get_full_name()}
-            for assignee in TaskAssignee.objects.filter(
-                task=self.get_object(),
-                # TODO:
-                # Using all task assignees is temporary for illustration as it
-                # doesn't align with the new approach of assigning users to tasks
-                # rather than assigning users to workbaskets (the old approach,
-                # uses tasks as an intermediary joining object).
-                # assignment_type=TaskAssignee.AssignmentType.GENERAL,
-            ).order_by(
+            for assignee in task_assignees.order_by(
                 "user__first_name",
                 "user__last_name",
             )
@@ -96,6 +99,7 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
                 | Q(is_superuser=True),
             )
             .filter(is_active=True)
+            .exclude(pk__in=task_assignees.values_list("user__pk", flat=True))
             .distinct()
             .order_by("first_name", "last_name")
         ]
@@ -196,6 +200,39 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         context_data["deleted_pk"] = self.kwargs["pk"]
         context_data["verbose_name"] = "task"
         return context_data
+
+
+class TaskAssigneeUsersView(PermissionRequiredMixin, FormView):
+    permission_required = "tasks.add_taskassignee"
+    template_name = "tasks/assign_users.jinja"
+    form_class = AssignUsersForm
+
+    @property
+    def task(self):
+        return Task.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Assign users to task"
+        return context
+
+    @transaction.atomic
+    def form_valid(self, form):
+        set_current_instigator(self.request.user)
+        form.assign_users(task=self.task, user_instigator=self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-ui-detail",
+            kwargs={"pk": self.kwargs["pk"]},
+        )
+
+
+class TaskAssigneesConfirmUpdateView(PermissionRequiredMixin, DetailView):
+    model = Task
+    template_name = "tasks/confirm_edit_assignees.jinja"
+    permission_required = "tasks.change_taskworkflow"
 
 
 class SubTaskCreateView(PermissionRequiredMixin, CreateView):
