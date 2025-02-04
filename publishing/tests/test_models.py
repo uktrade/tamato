@@ -8,6 +8,7 @@ import factory
 import freezegun
 import pytest
 from django.db import OperationalError
+from django.db import connections
 from django_fsm import TransitionNotAllowed
 
 from common.tests import factories
@@ -547,6 +548,8 @@ class TestPackagingQueueRaceConditions:
 
         Any unexpected exceptions raised during the execution of the decorated
         function are stored for the individual test to re-raise.
+
+        Any lingering DB connections are closed after threaded execution.
         """
 
         @wraps(func)
@@ -558,6 +561,8 @@ class TestPackagingQueueRaceConditions:
                 pass
             except Exception as error:
                 self.unexpected_exceptions.append(error)
+            finally:
+                connections.close_all()
 
         return wrapper
 
