@@ -6,11 +6,16 @@
       {{ obj.replaced_goods_nomenclature.item_id }}
     </a>
   {% endset %}
+  {% set absorbed_into_goods_nomenclature %}
+    <a class="govuk-link" href="{{ obj.absorbed_into_goods_nomenclature.get_url() }}">
+      {{ obj.absorbed_into_goods_nomenclature.item_id }}
+    </a>
+  {% endset %}
 
 
   {{ table_rows.append([
     {"html": replaced_goods_nomenclature},
-    {"text": obj.absorbed_into_goods_nomenclature.item_id},
+    {"html": absorbed_into_goods_nomenclature},
   ]) or "" }}
 {% endfor %}
 

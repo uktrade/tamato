@@ -8,7 +8,6 @@
 
 
   {{ table_rows.append([
-    {"html": obj.sid},
     {"html": indent_link},
     {"text": obj.indent if obj.indent else "-"},
     {"text": "{:%d %b %Y}".format(obj.validity_start) if obj.validity_start else "-"},
@@ -17,7 +16,6 @@
 
 {{ govukTable({
   "head": [
-    {"text": "SID"},
     {"text": "Indented commodity"},
     {"text": "Indent"},
     {"text": "Start date"},  

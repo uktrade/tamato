@@ -8,7 +8,6 @@
 
 
   {{ table_rows.append([
-    {"text": obj.sid},
     {"html": commodity_link},
     {"text": obj.suffix},
     {"text": "{:%d %b %Y}".format(obj.valid_between.lower)},
@@ -37,7 +36,6 @@
 
 {{ govukTable({
   "head": [
-    {"text": "SID"},
     {"text": "Commodity code"},
     {"text": "Suffix"},
     {"text": "Start date"},

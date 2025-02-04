@@ -8,7 +8,6 @@
 
 
   {{ table_rows.append([
-    {"text": obj.sid},
     {"html": description_link},
     {"text": obj.description},
     {"text": "{:%d %b %Y}".format(obj.validity_start) if obj.validity_start else "-"},
@@ -17,7 +16,6 @@
 
 {{ govukTable({
   "head": [
-    {"text": "SID"},
     {"text": "Described commodity"},
     {"text": "Description"},
     {"text": "Start date"},  ],
