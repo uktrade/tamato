@@ -19,7 +19,6 @@ function TaskUserAssignment({ action, users, buttonId, formId }) {
   const [showForm, setShowForm] = useState(null);
 
   const removeFormDiv = () => {
-    // TODO: Replace as component params, moving init call to applicable page?
     const possibleFormDivs = [
       document.getElementById("assign-users-form"),
       document.getElementById("unassign-users-form"),
