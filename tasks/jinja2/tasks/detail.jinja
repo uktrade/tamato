@@ -216,8 +216,7 @@
 <script nonce="{{ request.csp_nonce }}">
   const CSRF_TOKEN = "{{ csrf_token }}";
 
-  // TODO: rename to taskAssignees to correctly reflect "id" attr's object type.
-  const assignedUsers = {{ task_assignees|safe }};
+  const taskAssignees = {{ task_assignees|safe }};
   const assignableUsers = {{ assignable_users|safe }};
 
   const assignUsersUrl = "{{ assign_users_link }}";

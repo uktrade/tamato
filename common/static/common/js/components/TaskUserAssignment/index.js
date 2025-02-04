@@ -1,4 +1,4 @@
-/* global assignableUsers:readonly, assignedUsers:readonly */
+/* global assignableUsers:readonly, taskAssignees:readonly */
 
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
@@ -119,7 +119,7 @@ function init() {
     unassignUsers.render(
       <TaskUserAssignment
         action="Unassign"
-        users={assignedUsers}
+        users={taskAssignees}
         buttonId="unassign-users"
         formId="unassign-users-form"
       />,
