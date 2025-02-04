@@ -569,13 +569,13 @@ class TestPackagingQueueRaceConditions:
     ):
         """
         Thread-synchronised wrapper for the following `PackagedWorkBasket`
-
         instance methods:
+
         - begin_processing
         - abandon
         - promote_to_top_position
-        - promote
-        - demote
+        - promote_position
+        - demote_position
         """
         getattr(packaged_workbasket, method_name)()
 
