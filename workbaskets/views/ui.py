@@ -1436,16 +1436,16 @@ class WorkbasketReviewGoodsView(WorkBasketReviewView):
         except ObjectDoesNotExist:
             import_batch = None
 
-        context["import_batch_pk"] = import_batch.pk
-
-        if context["workbasket"] == context["user_workbasket"]:
-            context["unsent_notification"] = (
-                import_batch.goods_import
-                and not Notification.objects.filter(
-                    notified_object_pk=import_batch.pk,
-                    notification_type=NotificationTypeChoices.GOODS_REPORT,
-                ).exists()
-            )
+        if import_batch:
+            context["import_batch_pk"] = import_batch.pk
+            if context["workbasket"] == context["user_workbasket"]:
+                context["unsent_notification"] = (
+                    import_batch.goods_import
+                    and not Notification.objects.filter(
+                        notified_object_pk=import_batch.pk,
+                        notification_type=NotificationTypeChoices.GOODS_REPORT,
+                    ).exists()
+                )
 
         return context
 
