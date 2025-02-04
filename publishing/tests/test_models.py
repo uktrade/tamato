@@ -687,6 +687,30 @@ class TestPackagingQueueRaceConditions:
         self.assert_no_unexpected_exceptions()
         self.assert_expected_positions()
 
+    def test_abandon_and_process_packaged_workbaskets(self):
+        """Abandons the top-most packaged workbasket while beginning to process
+        it."""
+        thread1 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "abandon",
+                "packaged_workbasket": self.packaged_workbaskets[0],
+            },
+            name="AbandonThread1",
+        )
+        thread2 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "begin_processing",
+                "packaged_workbasket": self.packaged_workbaskets[0],
+            },
+            name="BeginProcessingThread2",
+        )
+
+        self.execute_threads(threads=[thread1, thread2])
+        self.assert_no_unexpected_exceptions()
+        self.assert_expected_positions()
+
 
 def test_crown_dependencies_publishing_pause_and_unpause(unpause_publishing):
     """Test that Crown Dependencies publishing operational status can be paused
