@@ -28,9 +28,6 @@ class ReportGeographicalArea(ReportModel):
     is_group = models.BooleanField(blank=True, null=True)
     is_all_countries = models.BooleanField(blank=True, null=True)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(GeographicalArea)
-
 
 class ReportGeographicalMembership(ReportModel):
     shadowed_model = GeographicalMembership
@@ -48,6 +45,3 @@ class ReportGeographicalMembership(ReportModel):
         models.DO_NOTHING,
         related_name="geoareasgeographicalmembership_member_set",
     )
-
-    class Meta:
-        db_table = ReportModel.create_table_name(GeographicalMembership)

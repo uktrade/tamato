@@ -19,9 +19,6 @@ class ReportCertificateType(ReportModel):
     sid = models.CharField(max_length=1)
     description = models.CharField(max_length=500, blank=True, null=True)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(CertificateType)
-
 
 class ReportCertificate(ReportModel):
     shadowed_model = Certificate
@@ -40,6 +37,3 @@ class ReportCertificate(ReportModel):
     )
     # Field completed using orm functions
     description = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(Certificate)

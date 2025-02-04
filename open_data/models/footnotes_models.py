@@ -21,9 +21,6 @@ class ReportFootnoteType(ReportModel):
     application_code = models.IntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(FootnoteType)
-
 
 class ReportFootnote(ReportModel):
     shadowed_model = Footnote
@@ -39,6 +36,3 @@ class ReportFootnote(ReportModel):
     footnote_type = models.ForeignKey("ReportFootnoteType", models.DO_NOTHING)
     # Field completed using orm functions
     description = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(Footnote)

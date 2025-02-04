@@ -31,9 +31,6 @@ class ReportQuotaAssociation(ReportModel):
         related_name="quotasquotaassociation_sub_quota_set",
     )
 
-    class Meta:
-        db_table = ReportModel.create_table_name(QuotaAssociation)
-
 
 class ReportQuotaDefinition(ReportModel):
     shadowed_model = QuotaDefinition
@@ -73,9 +70,6 @@ class ReportQuotaDefinition(ReportModel):
     )
     order_number = models.ForeignKey("ReportQuotaOrderNumber", models.DO_NOTHING)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(QuotaDefinition)
-
 
 class ReportQuotaOrderNumber(ReportModel):
     shadowed_model = QuotaOrderNumber
@@ -93,9 +87,6 @@ class ReportQuotaOrderNumber(ReportModel):
     mechanism = models.SmallIntegerField()
     category = models.SmallIntegerField()
 
-    class Meta:
-        db_table = ReportModel.create_table_name(QuotaOrderNumber)
-
 
 class ReportQuotaOrderNumberOrigin(ReportModel):
     shadowed_model = QuotaOrderNumberOrigin
@@ -112,9 +103,6 @@ class ReportQuotaOrderNumberOrigin(ReportModel):
     geographical_area = models.ForeignKey("ReportGeographicalArea", models.DO_NOTHING)
     order_number = models.ForeignKey(ReportQuotaOrderNumber, models.DO_NOTHING)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(QuotaOrderNumberOrigin)
-
 
 class ReportQuotaSuspension(ReportModel):
     shadowed_model = QuotaSuspension
@@ -130,9 +118,6 @@ class ReportQuotaSuspension(ReportModel):
     sid = models.IntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(QuotaSuspension)
 
 
 class ReportQuotaOrderNumberOriginExclusion(ReportModel):
@@ -151,9 +136,6 @@ class ReportQuotaOrderNumberOriginExclusion(ReportModel):
     )
     origin = models.ForeignKey(ReportQuotaOrderNumberOrigin, models.DO_NOTHING)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(QuotaOrderNumberOriginExclusion)
-
 
 class ReportQuotaEvent(ReportModel):
     shadowed_model = QuotaEvent
@@ -169,9 +151,6 @@ class ReportQuotaEvent(ReportModel):
     occurrence_timestamp = models.DateTimeField()
     data = models.JSONField()
     quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(QuotaEvent)
 
 
 class ReportQuotaBlocking(ReportModel):
@@ -189,6 +168,3 @@ class ReportQuotaBlocking(ReportModel):
     blocking_period_type = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
     quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(QuotaBlocking)

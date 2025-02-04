@@ -38,9 +38,6 @@ class ReportGoodsNomenclature(ReportModel):
         """Returns a CommodityCode instance for the good."""
         return CommodityCode(code=self.item_id)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(GoodsNomenclature)
-
 
 class ReportGoodsNomenclatureSuccessor(ReportModel):
     shadowed_model = GoodsNomenclatureSuccessor
@@ -60,9 +57,6 @@ class ReportGoodsNomenclatureSuccessor(ReportModel):
         models.DO_NOTHING,
         related_name="commoditiesgoodsnomenclaturesuccessor_replaced_goods_nomenclature_set",
     )
-
-    class Meta:
-        db_table = ReportModel.create_table_name(GoodsNomenclatureSuccessor)
 
 
 class ReportGoodsNomenclatureOrigin(ReportModel):
@@ -85,9 +79,6 @@ class ReportGoodsNomenclatureOrigin(ReportModel):
         related_name="commoditiesgoodsnomenclatureorigin_new_goods_nomenclature_set",
     )
 
-    class Meta:
-        db_table = ReportModel.create_table_name(GoodsNomenclatureOrigin)
-
 
 class ReportFootnoteAssociationGoodsNomenclature(ReportModel):
     shadowed_model = FootnoteAssociationGoodsNomenclature
@@ -105,6 +96,3 @@ class ReportFootnoteAssociationGoodsNomenclature(ReportModel):
         ReportGoodsNomenclature,
         models.DO_NOTHING,
     )
-
-    class Meta:
-        db_table = ReportModel.create_table_name(FootnoteAssociationGoodsNomenclature)

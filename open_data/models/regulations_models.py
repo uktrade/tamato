@@ -26,9 +26,6 @@ class ReportAmendment(ReportModel):
         related_name="regulationsamendment_target_regulation_set",
     )
 
-    class Meta:
-        db_table = ReportModel.create_table_name(Amendment)
-
 
 class ReportGroup(ReportModel):
     shadowed_model = Group
@@ -43,9 +40,6 @@ class ReportGroup(ReportModel):
     valid_between = TaricDateRangeField(db_index=True)
     group_id = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(Group)
 
 
 class ReportRegulation(ReportModel):
@@ -82,9 +76,6 @@ class ReportRegulation(ReportModel):
         null=True,
     )
 
-    class Meta:
-        db_table = ReportModel.create_table_name(Regulation)
-
 
 class ReportSuspension(ReportModel):
     shadowed_model = Suspension
@@ -103,9 +94,6 @@ class ReportSuspension(ReportModel):
         models.DO_NOTHING,
         related_name="regulationssuspension_target_regulation_set",
     )
-
-    class Meta:
-        db_table = ReportModel.create_table_name(Suspension)
 
 
 class ReportReplacement(ReportModel):
@@ -127,6 +115,3 @@ class ReportReplacement(ReportModel):
         models.DO_NOTHING,
         related_name="regulationsreplacement_target_regulation_set",
     )
-
-    class Meta:
-        db_table = ReportModel.create_table_name(Replacement)

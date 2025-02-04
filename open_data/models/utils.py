@@ -1,15 +1,7 @@
 from django.db import models
 
-from open_data.apps import APP_LABEL
-
 SCHEMA_NAME = "reporting"
 LOOK_UP_VIEW = f"{SCHEMA_NAME}.foreign_key_lookup"
-
-
-def create_name_with_schema(name):
-    # NOTE: the " around the stop are really important.
-    # without them, the table will not be created in the correct schema
-    return f'{SCHEMA_NAME}"."{APP_LABEL}_report{name}'
 
 
 class ReportModel(models.Model):
@@ -28,20 +20,6 @@ class ReportModel(models.Model):
     patch_fk = True
     update_description = False
     update_table = True
-
-    def contain_all_fields(self):
-        # This function will check that there are no new field in the shadowed table
-        pass
-
-    @staticmethod
-    def create_table_name(shadowed_model):
-        # to create a table in a different schema, we need to specify the schema
-        # in the db_table. The new name is constructed by removing
-        # the app name from the shadowed table, and prefixing the name
-        # with 'report', the app_label and the schema
-        shadowed_tb_name = shadowed_model._meta.db_table
-        new_name = shadowed_tb_name.split(shadowed_model._meta.app_label + "_")[1]
-        return create_name_with_schema(new_name)
 
     @classmethod
     def extra_queries(cls):

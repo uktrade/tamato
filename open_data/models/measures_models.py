@@ -36,9 +36,6 @@ class ReportAdditionalCodeTypeMeasureType(ReportModel):
     )
     measure_type = models.ForeignKey("ReportMeasureType", models.DO_NOTHING)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(AdditionalCodeTypeMeasureType)
-
 
 class ReportDutyExpression(ReportModel):
     shadowed_model = DutyExpression
@@ -58,9 +55,6 @@ class ReportDutyExpression(ReportModel):
     monetary_unit_applicability_code = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(DutyExpression)
-
 
 class ReportFootnoteAssociationMeasure(ReportModel):
     shadowed_model = FootnoteAssociationMeasure
@@ -74,9 +68,6 @@ class ReportFootnoteAssociationMeasure(ReportModel):
 
     associated_footnote = models.ForeignKey("ReportFootnote", models.DO_NOTHING)
     footnoted_measure = models.ForeignKey("ReportMeasure", models.DO_NOTHING)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(FootnoteAssociationMeasure)
 
     @classmethod
     def get_ignore_fk_list(cls):
@@ -138,9 +129,6 @@ class ReportMeasure(ReportModel):
     # ORM derived
     duty_sentence = models.TextField(null=True, blank=True)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(Measure)
-
 
 class ReportMeasureAction(ReportModel):
     shadowed_model = MeasureAction
@@ -156,9 +144,6 @@ class ReportMeasureAction(ReportModel):
     code = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
     requires_duty = models.BooleanField()
-
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasureAction)
 
 
 class ReportMeasureConditionComponent(ReportModel):
@@ -191,9 +176,6 @@ class ReportMeasureConditionComponent(ReportModel):
         blank=True,
         null=True,
     )
-
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasureConditionComponent)
 
 
 class ReportMeasureCondition(ReportModel):
@@ -260,9 +242,6 @@ class ReportMeasureCondition(ReportModel):
             "monetary_unit",
         ]
 
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasureCondition)
-
 
 class ReportMeasureConditionCode(ReportModel):
     shadowed_model = MeasureConditionCode
@@ -280,9 +259,6 @@ class ReportMeasureConditionCode(ReportModel):
     accepts_certificate = models.BooleanField()
     accepts_price = models.BooleanField()
 
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasureConditionCode)
-
 
 class ReportMeasurementUnit(ReportModel):
     shadowed_model = MeasurementUnit
@@ -298,9 +274,6 @@ class ReportMeasurementUnit(ReportModel):
     code = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
     abbreviation = models.CharField(max_length=32)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasurementUnit)
 
 
 class ReportMeasurementUnitQualifier(ReportModel):
@@ -318,9 +291,6 @@ class ReportMeasurementUnitQualifier(ReportModel):
     description = models.CharField(max_length=500, blank=True, null=True)
     abbreviation = models.CharField(max_length=32)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasurementUnitQualifier)
-
 
 class ReportMeasureTypeSeries(ReportModel):
     shadowed_model = MeasureTypeSeries
@@ -337,9 +307,6 @@ class ReportMeasureTypeSeries(ReportModel):
     measure_type_combination = models.SmallIntegerField()
     description = models.CharField(max_length=500, blank=True, null=True)
 
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasureTypeSeries)
-
 
 class ReportMonetaryUnit(ReportModel):
     shadowed_model = MonetaryUnit
@@ -354,9 +321,6 @@ class ReportMonetaryUnit(ReportModel):
     valid_between = TaricDateRangeField(db_index=True)
     code = models.CharField(max_length=3)
     description = models.CharField(max_length=500, blank=True, null=True)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(MonetaryUnit)
 
 
 class ReportMeasureType(ReportModel):
@@ -383,9 +347,6 @@ class ReportMeasureType(ReportModel):
         models.DO_NOTHING,
     )
 
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasureType)
-
 
 class ReportMeasurement(ReportModel):
     shadowed_model = Measurement
@@ -406,9 +367,6 @@ class ReportMeasurement(ReportModel):
         null=True,
     )
 
-    class Meta:
-        db_table = ReportModel.create_table_name(Measurement)
-
 
 class ReportMeasureExcludedGeographicalArea(ReportModel):
     shadowed_model = MeasureExcludedGeographicalArea
@@ -425,13 +383,6 @@ class ReportMeasureExcludedGeographicalArea(ReportModel):
         models.DO_NOTHING,
     )
     modified_measure = models.ForeignKey(ReportMeasure, models.DO_NOTHING)
-
-    # @classmethod
-    # def ignore_fk_list(cls):
-    #     return ["modified_measure"]
-
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasureExcludedGeographicalArea)
 
 
 class ReportMeasureComponent(ReportModel):
@@ -464,6 +415,3 @@ class ReportMeasureComponent(ReportModel):
         blank=True,
         null=True,
     )
-
-    class Meta:
-        db_table = ReportModel.create_table_name(MeasureComponent)

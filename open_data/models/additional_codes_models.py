@@ -20,9 +20,6 @@ class ReportAdditionalCodeType(ReportModel):
     description = models.CharField(max_length=500, blank=True, null=True)
     application_code = models.SmallIntegerField()
 
-    class Meta:
-        db_table = ReportModel.create_table_name(AdditionalCodeType)
-
 
 class ReportAdditionalCode(ReportModel):
     shadowed_model = AdditionalCode
@@ -40,6 +37,3 @@ class ReportAdditionalCode(ReportModel):
     type = models.ForeignKey(ReportAdditionalCodeType, models.DO_NOTHING)
     # Field completed using orm functions
     description = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = ReportModel.create_table_name(AdditionalCode)
