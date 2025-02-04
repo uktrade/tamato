@@ -1430,6 +1430,23 @@ class WorkbasketReviewGoodsView(WorkBasketReviewView):
         context["selected_tab"] = "commodities"
         context["selected_nested_tab"] = "commodity-codes"
         context["tab_template"] = "includes/workbaskets/review-commodity-codes.jinja"
+
+        try:
+            import_batch = self.workbasket.importbatch
+        except ObjectDoesNotExist:
+            import_batch = None
+
+        context["import_batch_pk"] = import_batch.pk
+
+        if context["workbasket"] == context["user_workbasket"]:
+            context["unsent_notification"] = (
+                import_batch.goods_import
+                and not Notification.objects.filter(
+                    notified_object_pk=import_batch.pk,
+                    notification_type=NotificationTypeChoices.GOODS_REPORT,
+                ).exists()
+            )
+
         return context
 
 
