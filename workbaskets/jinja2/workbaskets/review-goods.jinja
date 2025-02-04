@@ -30,7 +30,12 @@
   ]
 %}
 
+
+
+
 {% block review_tabs %}
+
   {{ super() }}
+
   {{ fake_tabs(nested_tab_links, is_nested=True) }}
 {% endblock %}

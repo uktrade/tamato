@@ -16,6 +16,25 @@
   ]) or "" }}
 {% endfor %}
 
+
+  <div class="govuk-body">
+    {% if import_batch_pk %}
+      {{ govukButton({
+        "html": "Download as Excel",
+        "href": url("goods-report-ui-download", kwargs={"pk": import_batch_pk}),
+        "classes": "govuk-button--primary align-right govuk-!-margin-left-5"
+      }) }}
+    {% endif %}
+
+    {% if unsent_notification %}
+      {{ govukButton({
+        "html": "Notify Channel Islands",
+        "href": url("goods-report-notify", kwargs={"pk": import_batch_pk}),
+        "classes": "govuk-button--primary align-right"
+      }) }}
+    {% endif %}
+  </div>
+
 {{ govukTable({
   "head": [
     {"text": "SID"},
