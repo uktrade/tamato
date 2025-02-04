@@ -211,7 +211,7 @@
 </div>
 
 {% set assign_users_link = url("workflow:task-ui-assign-users", kwargs={"pk": object.pk}) %}
-{% set unassign_users_link = url("workflow:task-ui-assign-users", kwargs={"pk": object.pk}) %}
+{% set unassign_users_link = url("workflow:task-ui-unassign-users", kwargs={"pk": object.pk}) %}
 
 <script nonce="{{ request.csp_nonce }}">
   const CSRF_TOKEN = "{{ csrf_token }}";

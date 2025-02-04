@@ -33,6 +33,11 @@ task_ui_patterns = [
         name="task-ui-assign-users",
     ),
     path(
+        f"<int:pk>/unassign-users/",
+        views.TaskUnassignUsersView.as_view(),
+        name="task-ui-unassign-users",
+    ),
+    path(
         "<int:pk>/confirm-update-assignees/",
         views.TaskAssigneesConfirmUpdateView.as_view(),
         name="task-ui-conform-update-assignees",

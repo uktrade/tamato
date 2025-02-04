@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
@@ -14,6 +16,7 @@ from django.forms import ModelChoiceField
 from django.forms import ModelForm
 from django.forms import ModelMultipleChoiceField
 from django.forms import Textarea
+from django.utils.timezone import make_aware
 
 from common.forms import BindNestedFormMixin
 from common.forms import RadioNested
@@ -147,6 +150,59 @@ class AssignUsersForm(Form):
             .exists()
         ]
         return TaskAssignee.objects.bulk_create(assignees)
+
+
+class UnassignUsersForm(Form):
+    assignees = ModelMultipleChoiceField(
+        label="Users",
+        help_text="Select users to unassign",
+        widget=CheckboxSelectMultiple,
+        queryset=TaskAssignee.objects.all(),
+        error_messages={"required": "Select one or more users to unassign"},
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.task = kwargs.pop("task", None)
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.init_layout()
+
+    def init_fields(self):
+        self.fields["assignees"].queryset = self.task.assignees.order_by(
+            "user__first_name",
+            "user__last_name",
+        )
+
+        self.fields["assignees"].label_from_instance = (
+            lambda obj: f"{obj.user.get_full_name()}"
+        )
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "assignees",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    @transaction.atomic
+    def unassign_users(self, user_instigator):
+        set_current_instigator(user_instigator)
+
+        assignees = self.cleaned_data["assignees"]
+        for assignee in assignees:
+            assignee.unassigned_at = make_aware(datetime.now())
+
+        return TaskAssignee.objects.bulk_update(
+            assignees,
+            fields=["unassigned_at"],
+        )
 
 
 class SubTaskCreateForm(TaskBaseForm):

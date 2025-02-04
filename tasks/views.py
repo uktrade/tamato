@@ -35,6 +35,7 @@ from tasks.forms import TaskWorkflowTemplateCreateForm
 from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.forms import TaskWorkflowUpdateForm
+from tasks.forms import UnassignUsersForm
 from tasks.models import Queue
 from tasks.models import QueueItem
 from tasks.models import Task
@@ -83,7 +84,7 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
             # rather than assigning users to workbaskets (the old approach,
             # uses tasks as an intermediary joining object).
             # assignment_type=TaskAssignee.AssignmentType.GENERAL,
-        )
+        ).assigned()
 
         context["task_assignees"] = [
             {"pk": assignee.pk, "name": assignee.user.get_full_name()}
@@ -218,8 +219,37 @@ class TaskAssigneeUsersView(PermissionRequiredMixin, FormView):
 
     @transaction.atomic
     def form_valid(self, form):
-        set_current_instigator(self.request.user)
         form.assign_users(task=self.task, user_instigator=self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-ui-detail",
+            kwargs={"pk": self.kwargs["pk"]},
+        )
+
+
+class TaskUnassignUsersView(PermissionRequiredMixin, FormView):
+    permission_required = "tasks.change_taskassignee"
+    template_name = "tasks/assign_users.jinja"
+    form_class = UnassignUsersForm
+
+    @property
+    def task(self):
+        return Task.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Unassign users from task"
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["task"] = self.task
+        return kwargs
+
+    def form_valid(self, form):
+        form.unassign_users(self.request.user)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
