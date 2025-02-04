@@ -4,21 +4,21 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
-    if not schema_editor.connection.alias != "default":
-        return
-    try:
-        schema_editor.execute("CREATE SCHEMA reporting;")
-    except:
-        print(f"{schema_editor.connection.alias}")
+    if schema_editor.connection.vendorstartswith("postgres"):
+        print("In POSTGRES")
+        try:
+            schema_editor.execute("CREATE SCHEMA reporting;")
+        except:
+            print(f"ERROR: {schema_editor.connection.alias=}")
 
 
 def backwards(apps, schema_editor):
-    if not schema_editor.connection.vendor.startswith("postgres"):
-        return
-    schema_editor.execute("DROP SCHEMA reporting;")
+    if schema_editor.connection.vendor.startswith("postgres"):
+        schema_editor.execute("DROP SCHEMA reporting;")
 
 
 class Migration(migrations.Migration):
+    initial = True
 
     dependencies = []
 
