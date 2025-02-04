@@ -1,7 +1,6 @@
 from django.db import models
 
-SCHEMA_NAME = "reporting"
-LOOK_UP_VIEW = f"{SCHEMA_NAME}.foreign_key_lookup"
+LOOK_UP_VIEW = f"foreign_key_lookup"
 
 
 class ReportModel(models.Model):

@@ -3,22 +3,22 @@
 from django.db import migrations
 
 create_view_sql = """
-CREATE MATERIALIZED VIEW reporting.foreign_key_lookup AS
+CREATE MATERIALIZED VIEW foreign_key_lookup AS
 	SELECT  common_trackedmodel.ID as old_id, current_version_id
 	FROM public.common_trackedmodel
  	INNER JOIN common_versiongroup
 		ON (common_trackedmodel.version_group_id = common_versiongroup.id)
 WHERE (current_version_id IS NOT NULL AND NOT (common_trackedmodel.update_type = 2));
 
-CREATE UNIQUE INDEX old_id_idx ON reporting.foreign_key_lookup (old_id);
-CREATE INDEX current_version_id_idx ON reporting.foreign_key_lookup (current_version_id);
+CREATE UNIQUE INDEX old_id_idx ON foreign_key_lookup (old_id);
+CREATE INDEX current_version_id_idx ON foreign_key_lookup (current_version_id);
 """
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("open_data", "0003_drop_fk_constrains"),
+        ("open_data", "0002_drop_fk_constrains"),
     ]
 
     operations = [
