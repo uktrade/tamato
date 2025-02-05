@@ -150,10 +150,10 @@
         We have a range of resources you can use with the Tariff Application Platform.
       </p>
       <ul id="homepage-tap-resources" class="govuk-list govuk-list--spaced">
+      {% if request.user.is_superuser %}
         <li>
           <a href="{{ url('app-info') }}" class="govuk-link">Application information</a>
         </li>
-        {% if request.user.is_superuser %}
           <li>
             <a href="{{ url('import_batch-ui-list') }}" class="govuk-link">Importer V1</a>
           </li>
