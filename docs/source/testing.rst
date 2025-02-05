@@ -1,7 +1,7 @@
 Testing
 =======
 
-Running tests - new branding
+Running tests
 -------------
 
 There are several ways to run tests, the recommended way is to use ``make``:
