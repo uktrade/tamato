@@ -77,7 +77,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 # -- Application
 
 DJANGO_CORE_APPS = [
-    "django.contrib.admin",
+    "admin.apps.TamatoAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -174,7 +174,7 @@ if SSO_ENABLED and not MAINTENANCE_MODE:
     ]
 
 if MAINTENANCE_MODE:
-    INSTALLED_APPS.remove("django.contrib.admin")
+    INSTALLED_APPS.remove("admin.apps.TamatoAdminConfig")
 
     MIDDLEWARE.remove("django.contrib.sessions.middleware.SessionMiddleware")
     MIDDLEWARE.remove("django.contrib.auth.middleware.AuthenticationMiddleware")

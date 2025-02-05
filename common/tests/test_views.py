@@ -199,7 +199,7 @@ def test_accessibility_statement_view_returns_200(valid_user_client):
     MIDDLEWARE={
         "remove": [
             "authbroker_client.middleware.ProtectAllViewsMiddleware",
-            "django.contrib.admin",
+            "admin.apps.TamatoAdminConfig",
             "django.contrib.sessions.middleware.SessionMiddleware",
             "django.contrib.auth.middleware.AuthenticationMiddleware",
             "django.contrib.messages.middleware.MessageMiddleware",
@@ -380,3 +380,17 @@ def test_resources_view_displays_resources(heading, expected_url, valid_user_cli
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     assert page.find("h3", string=heading)
     assert page.find("a", href=expected_url)
+
+
+@override_settings(SSO_ENABLED=True)
+def test_admin_login_shows_403_when_sso_enabled(superuser_client):
+    """Test to check that when staff SSO is enabled, the login page shows a 404
+    but the rest of the admin site is still available.
+    """
+    response = superuser_client.get(reverse("admin:login"))
+    assert response.status_code == 404
+
+    response = superuser_client.get(reverse("admin:index"))
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    assert page.find("h1", string="Site administration")
