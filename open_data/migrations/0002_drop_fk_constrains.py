@@ -7,7 +7,7 @@ from django.db import migrations
 # models, so Django will create the correct queryset: the following query t
 # dropped them in the database while they are still the model definition.
 # The 'magic' query has been copied from somewhere in Stackoverflow!
-
+# This does not work in sqlite.
 
 drop_fk_sql = """
 DO $$DECLARE r record;
@@ -22,6 +22,14 @@ DO $$DECLARE r record;
 """
 
 
+def forwards(apps, schema_editor):
+    if schema_editor.connection.vendor == "postgres":
+        try:
+            schema_editor.execute(drop_fk_sql)
+        except:
+            print(f"ERROR: Not Postgres database")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -29,5 +37,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(drop_fk_sql),
+        migrations.RunPython(forwards),
     ]

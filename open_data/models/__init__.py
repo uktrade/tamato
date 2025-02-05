@@ -31,7 +31,6 @@ from open_data.models.measures_models import ReportMonetaryUnit
 from open_data.models.quotas_models import ReportQuotaAssociation
 from open_data.models.quotas_models import ReportQuotaBlocking
 from open_data.models.quotas_models import ReportQuotaDefinition
-from open_data.models.quotas_models import ReportQuotaEvent
 from open_data.models.quotas_models import ReportQuotaOrderNumber
 from open_data.models.quotas_models import ReportQuotaOrderNumberOrigin
 from open_data.models.quotas_models import ReportQuotaOrderNumberOriginExclusion
@@ -78,7 +77,6 @@ __all__ = [
     "ReportQuotaOrderNumberOrigin",
     "ReportQuotaSuspension",
     "ReportQuotaOrderNumberOriginExclusion",
-    "ReportQuotaEvent",
     "ReportQuotaBlocking",
     "ReportAmendment",
     "ReportGroup",

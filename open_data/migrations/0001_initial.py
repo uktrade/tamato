@@ -834,34 +834,6 @@ class Migration(migrations.Migration):
                 "abstract": False,
             },
         ),
-        migrations.CreateModel(
-            name="ReportQuotaEvent",
-            fields=[
-                (
-                    "trackedmodel_ptr",
-                    models.OneToOneField(
-                        db_column="trackedmodel_ptr_id",
-                        on_delete=django.db.models.deletion.DO_NOTHING,
-                        primary_key=True,
-                        serialize=False,
-                        to="quotas.quotaevent",
-                    ),
-                ),
-                ("subrecord_code", models.CharField(max_length=2)),
-                ("occurrence_timestamp", models.DateTimeField()),
-                ("data", models.JSONField()),
-                (
-                    "quota_definition",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.DO_NOTHING,
-                        to="open_data.reportquotadefinition",
-                    ),
-                ),
-            ],
-            options={
-                "abstract": False,
-            },
-        ),
         migrations.AddField(
             model_name="reportquotadefinition",
             name="order_number",

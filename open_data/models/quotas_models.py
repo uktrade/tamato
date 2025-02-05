@@ -5,7 +5,6 @@ from open_data.models.utils import ReportModel
 from quotas.models import QuotaAssociation
 from quotas.models import QuotaBlocking
 from quotas.models import QuotaDefinition
-from quotas.models import QuotaEvent
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaOrderNumberOrigin
 from quotas.models import QuotaOrderNumberOriginExclusion
@@ -135,22 +134,6 @@ class ReportQuotaOrderNumberOriginExclusion(ReportModel):
         models.DO_NOTHING,
     )
     origin = models.ForeignKey(ReportQuotaOrderNumberOrigin, models.DO_NOTHING)
-
-
-class ReportQuotaEvent(ReportModel):
-    shadowed_model = QuotaEvent
-
-    trackedmodel_ptr = models.OneToOneField(
-        shadowed_model,
-        models.DO_NOTHING,
-        primary_key=True,
-        db_column="trackedmodel_ptr_id",
-    )
-
-    subrecord_code = models.CharField(max_length=2)
-    occurrence_timestamp = models.DateTimeField()
-    data = models.JSONField()
-    quota_definition = models.ForeignKey(ReportQuotaDefinition, models.DO_NOTHING)
 
 
 class ReportQuotaBlocking(ReportModel):

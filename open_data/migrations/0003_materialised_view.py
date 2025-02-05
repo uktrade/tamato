@@ -15,6 +15,14 @@ CREATE INDEX current_version_id_idx ON foreign_key_lookup (current_version_id);
 """
 
 
+def forwards(apps, schema_editor):
+    if schema_editor.connection.vendor == "postgres":
+        try:
+            schema_editor.execute(create_view_sql)
+        except:
+            print(f"ERROR: Not Postgres database")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -22,5 +30,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(create_view_sql),
+        migrations.RunPython(forwards),
     ]
