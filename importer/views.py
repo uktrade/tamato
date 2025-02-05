@@ -1,7 +1,10 @@
+from datetime import date
 from os import path
 from tempfile import NamedTemporaryFile
+from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django.db.models import Q
 from django.http import HttpResponse
@@ -10,7 +13,9 @@ from django.urls import reverse
 from django.urls import reverse_lazy
 from django.views.generic import DetailView
 from django.views.generic import FormView
+from django.views.generic import TemplateView
 
+from common.util import format_date_string
 from common.views import RequiresSuperuserMixin
 from common.views import WithPaginationListView
 from importer import forms
@@ -21,6 +26,9 @@ from importer.goods_report import GoodsReporter
 from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from notifications.models import GoodsSuccessfulImportNotification
+from notifications.models import Notification
+from notifications.models import NotificationTypeChoices
+from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 
@@ -321,3 +329,98 @@ class NotifyGoodsReportSuccessView(DetailView):
 
     template_name = "eu-importer/notify-success.jinja"
     model = models.ImportBatch
+
+
+class ImportedGoodsReview(
+    PermissionRequiredMixin,
+    TemplateView,
+):
+    """UI endpoint for reviewing goods changes from an imported Taric file."""
+
+    template_name = "eu-importer/review-imported-goods.jinja"
+    permission_required = "workbaskets.view_workbasket"
+
+    @property
+    def workbasket(self):
+        return WorkBasket.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodities"
+        context["selected_tab"] = "commodities"
+        context["user_workbasket"] = WorkBasket.current(self.request)
+        context["workbasket"] = self.workbasket
+        context["report_lines"] = []
+        context["import_batch_pk"] = None
+
+        # Get actual values from the ImportBatch instance if one is associated
+        # with the workbasket.
+        try:
+            import_batch = self.workbasket.importbatch
+        except ObjectDoesNotExist:
+            import_batch = None
+
+        taric_file = None
+        if import_batch and import_batch.taric_file and import_batch.taric_file.name:
+            taric_file = import_batch.taric_file.storage.exists(
+                import_batch.taric_file.name,
+            )
+
+        if taric_file:
+            reporter = GoodsReporter(import_batch.taric_file)
+            goods_report = reporter.create_report()
+            today = date.today()
+
+            context["report_lines"] = [
+                {
+                    "update_type": line.update_type.title() if line.update_type else "",
+                    "record_name": line.record_name.title() if line.record_name else "",
+                    "item_id": line.goods_nomenclature_item_id,
+                    "item_id_search_url": (
+                        reverse("commodity-ui-list")
+                        + "?"
+                        + urlencode({"item_id": line.goods_nomenclature_item_id})
+                        if line.goods_nomenclature_item_id
+                        else ""
+                    ),
+                    "measures_search_url": (
+                        reverse("measure-ui-list")
+                        + "?"
+                        + urlencode(
+                            {
+                                "goods_nomenclature__item_id": line.goods_nomenclature_item_id,
+                                "end_date_modifier": "after",
+                                "end_date_0": today.day,
+                                "end_date_1": today.month,
+                                "end_date_2": today.year,
+                            },
+                        )
+                        if line.goods_nomenclature_item_id
+                        else ""
+                    ),
+                    "suffix": line.suffix,
+                    "start_date": format_date_string(
+                        line.validity_start_date,
+                        short_format=True,
+                    ),
+                    "end_date": format_date_string(
+                        line.validity_end_date,
+                        short_format=True,
+                    ),
+                    "comments": line.comments,
+                }
+                for line in goods_report.report_lines
+            ]
+            context["import_batch_pk"] = import_batch.pk
+
+            # notifications only relevant to a goods import
+            if context["workbasket"] == context["user_workbasket"]:
+                context["unsent_notification"] = (
+                    import_batch.goods_import
+                    and not Notification.objects.filter(
+                        notified_object_pk=import_batch.pk,
+                        notification_type=NotificationTypeChoices.GOODS_REPORT,
+                    ).exists()
+                )
+
+        return context
