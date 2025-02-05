@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 
 project = "Tariff Management Tool"
-copyright = "2025, Department for Business and Trade"
+copyright = "2021, Department for Business and Trade"
 author = "Department for Business and Trade"
 
 # The full version, including alpha/beta/rc tags
