@@ -58,6 +58,7 @@ from common.tests.util import make_non_duplicate_record
 from common.tests.util import raises_if
 from common.validators import ApplicabilityCode
 from common.validators import UpdateType
+from geo_areas.validators import AreaCode
 from importer.models import ImportBatchStatus
 from importer.nursery import get_nursery
 from importer.taric import process_taric_xml_stream
@@ -2278,3 +2279,11 @@ def crown_dependencies_envelope_factory(successful_envelope_factory):
         )
 
     return factory_method
+
+
+@pytest.fixture
+def erga_omnes():
+    return factories.GeographicalAreaFactory.create(
+        area_code=AreaCode.GROUP,
+        area_id="1011",
+    )

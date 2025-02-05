@@ -14,17 +14,13 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Case
-from django.db.models import DateField
-from django.db.models import F
 from django.db.models import Max
 from django.db.models import QuerySet
 from django.db.models import Subquery
-from django.db.models import Value
-from django.db.models import When
 from django_fsm import FSMField
 from django_fsm import transition
 
+from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
 from checks.models import TransactionCheck
 from common.models.mixins import TimestampedMixin
@@ -331,8 +327,26 @@ class WorkBasket(TimestampedMixin):
         blank=True,
         unique=True,
     )
+    missing_measures_check_task_id = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        unique=True,
+    )
 
     transactions: TransactionQueryset
+
+    @property
+    def has_commodities(self):
+        # avoid circular import
+        from commodities.models.orm import GoodsNomenclature
+
+        codes = [
+            item
+            for item in self.tracked_models.all()
+            if isinstance(item, GoodsNomenclature)
+        ]
+        return len(codes) != 0
 
     def terminate_rule_check(self):
         """Terminate any task associated with the WorkBasket's rule checking, as
@@ -365,6 +379,40 @@ class WorkBasket(TimestampedMixin):
         self.save()
         logger.info(
             f"Terminated rule check for WorkBasket pk={self.pk}.",
+        )
+
+    def terminate_missing_measures_check(self):
+        """Terminate any task associated with the WorkBasket's missing measures
+        checking, as identified by its missing_measures_check_task_id."""
+
+        logger.info(
+            f"Attempting missing measures check termination for WorkBasket "
+            f"pk={self.pk}.",
+        )
+        if not self.missing_measures_check_task_id:
+            logger.info(
+                f"Unable to terminate missing measures check for WorkBasket "
+                f"pk={self.pk} - "
+                f"empty missing_measures_check_task_id.",
+            )
+            return
+
+        task_result = AsyncResult(self.missing_measures_check_task_id)
+        if not task_result:
+            logger.info(
+                f"Unable to terminate missing measures check for WorkBasket "
+                f"pk={self.pk}, "
+                f"missing_measures_check_task_id={self.missing_measures_check_task_id} - "
+                f"task result is unavailable.",
+            )
+            return
+
+        task_result.revoke()
+        self.delete_missing_measure_comm_codes()
+        self.missing_measures_check_task_id = None
+        self.save()
+        logger.info(
+            f"Terminated missing measures check for WorkBasket pk={self.pk}.",
         )
 
     @property
@@ -627,6 +675,13 @@ class WorkBasket(TimestampedMixin):
             transaction__workbasket=self,
         ).delete()
 
+    def delete_missing_measure_comm_codes(self):
+        """Delete all MissingMeasureCommCode instances related to the
+        WorkBasket."""
+        MissingMeasureCommCode.objects.filter(
+            missing_measures_check__workbasket=self,
+        ).delete()
+
     @property
     def unchecked_or_errored_transactions(self):
         """
@@ -698,45 +753,6 @@ class WorkBasket(TimestampedMixin):
         """Returns a queryset of `User` instances assigned as reviewers."""
         user_ids = self.reviewer_assignments.values_list("user_id", flat=True)
         return User.objects.filter(id__in=user_ids)
-
-    def get_measures_to_end_date(self) -> QuerySet:
-        """
-        Returns a queryset of measures on end-dated commodities in the
-        workbasket along with those commodities' end-dates.
-
-        It filters out measures which have already ended.
-        """
-
-        from commodities.models.orm import GoodsNomenclature
-
-        end_dated_commodities = GoodsNomenclature.objects.current().filter(
-            transaction__workbasket=self,
-            valid_between__upper_inf=False,
-        )
-        commodity_dict = {
-            commodity.sid: commodity.valid_between
-            for commodity in end_dated_commodities
-        }
-        measures_on_commodities = Measure.objects.current().filter(
-            goods_nomenclature__sid__in=commodity_dict.keys(),
-        )
-        conditions = [
-            When(
-                goods_nomenclature__sid=commodity_sid,
-                then=Value(commodity_valid_between),
-            )
-            for commodity_sid, commodity_valid_between in commodity_dict.items()
-        ]
-        measures = measures_on_commodities.annotate(
-            commodity_valid_between=Case(
-                *conditions,
-                output_field=DateField(),
-            ),
-        )
-
-        return measures.with_effective_valid_between().exclude(
-            db_effective_valid_between__not_gt=F("commodity_valid_between"),
-        )
 
     class Meta:
         verbose_name = "workbasket"

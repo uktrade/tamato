@@ -155,10 +155,18 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         queued instances up one position."""
         instance = self.__class__.objects.select_for_update(nowait=True).get(pk=self.pk)
 
-        self.__class__.objects.select_for_update(nowait=True).filter(
-            position__gt=instance.position,
-            **{self.get_queue_field(): self.get_queue()},
-        ).update(position=models.F("position") - 1)
+        to_update = list(
+            self.__class__.objects.select_for_update(nowait=True)
+            .filter(
+                position__gt=instance.position,
+                **{self.get_queue_field(): self.get_queue()},
+            )
+            .values_list("pk", flat=True),
+        )
+
+        self.__class__.objects.filter(pk__in=to_update).update(
+            position=models.F("position") - 1,
+        )
 
         return super().delete()
 
@@ -234,10 +242,18 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         if instance.position == 1:
             return instance
 
-        self.__class__.objects.select_for_update(nowait=True).filter(
-            position__lt=instance.position,
-            **{self.get_queue_field(): self.get_queue()},
-        ).update(position=models.F("position") + 1)
+        to_update = list(
+            self.__class__.objects.select_for_update(nowait=True)
+            .filter(
+                position__lt=instance.position,
+                **{self.get_queue_field(): self.get_queue()},
+            )
+            .values_list("pk", flat=True),
+        )
+
+        self.__class__.objects.filter(pk__in=to_update).update(
+            position=models.F("position") + 1,
+        )
 
         instance.position = 1
         instance.save(update_fields=["position"])
@@ -267,10 +283,18 @@ class QueueItem(models.Model, metaclass=QueueItemMetaClass):
         if instance.position == last_place:
             return instance
 
-        self.__class__.objects.select_for_update(nowait=True).filter(
-            position__gt=instance.position,
-            **queue_kwarg,
-        ).update(position=models.F("position") - 1)
+        to_update = list(
+            self.__class__.objects.select_for_update(nowait=True)
+            .filter(
+                position__gt=instance.position,
+                **queue_kwarg,
+            )
+            .values_list("pk", flat=True),
+        )
+
+        self.__class__.objects.filter(pk__in=to_update).update(
+            position=models.F("position") - 1,
+        )
 
         instance.position = last_place
         instance.save(update_fields=["position"])

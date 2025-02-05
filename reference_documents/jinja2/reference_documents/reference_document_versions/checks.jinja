@@ -18,8 +18,8 @@
 
 {% block content %}
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">{{ page_title }}</h1>
-    {% if object.checkable() %}
-        {% if request.user.has_perm("reference_documents.add_alignmentreportcheck") %}
+    {% if request.user.has_perm("reference_documents.add_alignmentreportcheck") %}
+        {% if object.entry_into_force_date %}
             <h2 class="govuk-heading-m">Run check against TAP data</h2>
             <p class=govuk-body>Run a check to see how this reference document's data compares to the data held in TAP. Any discrepancies will be flagged.</p>
             <form method="post" action="{{ url("reference_documents:alignment-reports", kwargs={"pk":object.pk}) }}">
@@ -27,12 +27,18 @@
                 <input class="govuk-button govuk-button--primary" type="submit" value="Run new check"/>
             </form>
         {% else %}
-            <h2 class="govuk-heading-m">You do not have permission to run checks against TAP data</h2>
-            <p class=govuk-body>If you believe you should have permission to run this check, please contact someone on the TAP team for support.</p>
+            <h2 class="govuk-heading-m">Run check against TAP data</h2>
+            <p class=govuk-body>Run a check to see how this reference document's data compares to the data held in TAP. Any discrepancies will be flagged.</p>
+            <b><p class=govuk-body>Version {{ object.version }} of the reference document does not have an entry into
+                force date. Update the reference document version with the correct entry into force
+                date to enable alignment checks.</p></b>
+
         {% endif %}
     {% else %}
-        <p class=govuk-body>Reference document version must be in a published state to run checks against TAP dat.</p>
+        <h2 class="govuk-heading-m">You do not have permission to run checks against TAP data</h2>
+        <p class=govuk-body>If you believe you should have permission to run this check, please contact someone on the TAP team for support.</p>
     {% endif %}
+
     <p class="govuk-body govuk-!-font-weight-bold" style="float:right">
         {% if last_run %}
             Last Run: ({{ last_run }})
