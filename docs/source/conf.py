@@ -77,7 +77,7 @@ html_context = {
     "conf_py_path": "docs/",  # assuming your Sphinx folder is called `docs`
     "version": "main",  # assuming `main` is your repository's default branch
     "accessibility": "accessibility.md",  # assuming your accessibility statement is at `docs/accessibility.md`
-    "logo": "govuk-logo.png",
+    "logo": "tudor-crown-logo.svg",
 }
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
