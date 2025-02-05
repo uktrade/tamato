@@ -2,6 +2,7 @@ import datetime
 import os
 import re
 from unittest.mock import MagicMock
+from unittest.mock import PropertyMock
 from unittest.mock import mock_open
 from unittest.mock import patch
 
@@ -15,7 +16,9 @@ from django.urls import reverse
 from django.utils.timezone import localtime
 
 from checks.models import TrackedModelCheck
+from checks.tests.factories import MissingMeasuresCheckFactory
 from checks.tests.factories import TrackedModelCheckFactory
+from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from common.inspect_tap_tasks import CeleryTask
 from common.inspect_tap_tasks import TAPTasks
 from common.models.trackedmodel import TrackedModel
@@ -212,7 +215,7 @@ def test_edit_workbasket_page_sets_workbasket(valid_user_client, user_workbasket
         reverse("workbaskets:edit-workbasket"),
     )
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     assert str(user_workbasket.pk) in soup.select(".govuk-heading-xl")[0].text
 
 
@@ -225,7 +228,7 @@ def test_workbasket_detail_page_url_params(
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     buttons = soup.select(".govuk-button.govuk-button--primary")
     for button in buttons:
         # test that accidental spacing in template hasn't mangled the url
@@ -285,8 +288,8 @@ def test_workbasket_assignments_appear(valid_user_client):
     worker = factories.UserFactory.create(first_name="Worker", last_name="User")
     reviewer = factories.UserFactory.create(first_name="Reviewer", last_name="User")
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
-    assert worker.get_full_name() not in str(response.content)
-    assert reviewer.get_full_name() not in str(response.content)
+    assert worker.get_full_name() not in response.content.decode(response.charset)
+    assert reviewer.get_full_name() not in response.content.decode(response.charset)
 
     # Fully assign the workbasket
     task = factories.TaskFactory.create(workbasket=workbasket)
@@ -303,8 +306,12 @@ def test_workbasket_assignments_appear(valid_user_client):
     )
     # Assert that the assigned names appear in the table
     response = valid_user_client.get(reverse("workbaskets:workbasket-ui-list"))
-    assert worker_assignment.user.get_full_name() in str(response.content)
-    assert reviewer_assignment.user.get_full_name() in str(response.content)
+    assert worker_assignment.user.get_full_name() in response.content.decode(
+        response.charset,
+    )
+    assert reviewer_assignment.user.get_full_name() in response.content.decode(
+        response.charset,
+    )
 
 
 @pytest.mark.parametrize(
@@ -471,7 +478,7 @@ def test_workbasket_list_all_view(valid_user_client):
 
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     table = soup.select("table")[0]
     row_text = [row.text for row in table.findChildren("td")]
 
@@ -507,7 +514,7 @@ def test_workbasket_list_all_view_search_filters(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     rows = soup.select("table > tbody > tr")
     row_text = [td.text for td in rows[0]]
@@ -619,7 +626,7 @@ def test_workbasket_review_tabs(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     columns = page.select(".govuk-table__header")
     rows = page.select("tbody > tr")
     assert len(columns) == num_columns
@@ -645,7 +652,7 @@ def test_workbasket_review_measures(valid_user_client):
 
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     non_workbasket_measures_sids = {str(m.sid) for m in non_workbasket_measures}
     measure_sids = [e.text for e in soup.select("table tr td:first-child")]
@@ -711,7 +718,7 @@ def test_workbasket_review_measures_filters_update_type(
     response = valid_user_client.get(url + search_filter)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     rows = page.select("tbody > tr")
     assert len(rows) == expected_measure_count
 
@@ -737,7 +744,7 @@ def test_workbasket_review_measures_pagination(
 
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     measure_sids = {e.text for e in soup.select("table tr td:first-child")}
     workbasket_measures = Measure.objects.filter(
@@ -767,7 +774,7 @@ def test_workbasket_review_measures_conditions(valid_user_client):
         kwargs={"pk": workbasket.pk},
     )
     response = valid_user_client.get(url)
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     # 11th column is conditions. We're interested in the first (and only) row.
     condition_text = soup.select("table tr td:nth-child(11)")[0].text
 
@@ -962,6 +969,11 @@ def test_submit_for_packaging_disabled(
 
     import_batch = import_batch_factory()
 
+    MissingMeasuresCheckFactory.create(
+        workbasket=user_workbasket,
+        successful=True,
+    )
+
     if import_batch:
         import_batch.workbasket_id = user_workbasket.id
         if isinstance(import_batch, ImportBatch):
@@ -978,7 +990,7 @@ def test_submit_for_packaging_disabled(
     )
 
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     packaging_button = soup.find("a", href="/publishing/create/")
 
@@ -1015,7 +1027,7 @@ def test_submit_for_packaging(
     )
 
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     assert soup.find("a", href="/publishing/create/")
 
@@ -1056,7 +1068,7 @@ def test_workbasket_violations(valid_user_client, user_workbasket):
 
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     table = page.findChildren("table")[0]
     row = table.findChildren("tr")[1]
     cells = row.findChildren("td")
@@ -1092,7 +1104,7 @@ def test_workbasket_violations_summary_pagination(
 
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     warning_text = soup.select(".govuk-warning-text")
     rows = soup.select("tbody > tr")
     pagination_div_text = soup.select(".pagination > div")[0].text.replace("\\n", "")
@@ -1116,7 +1128,7 @@ def test_violation_detail_page(valid_user_client, user_workbasket):
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     paragraphs_text = [e.text for e in soup.select("p")]
     assert check.rule_code in paragraphs_text
     assert check.message in paragraphs_text
@@ -1277,7 +1289,7 @@ def test_violation_list_page_sorting_date(setup, valid_user_client, user_workbas
 
     checks = user_workbasket.tracked_model_check_errors
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     activity_dates = [
         element.text for element in soup.select("table tbody tr td:nth-child(5)")
     ]
@@ -1308,7 +1320,7 @@ def test_violation_list_page_sorting_model_name(
 
     checks = user_workbasket.tracked_model_check_errors
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     activity_dates = [
         element.text for element in soup.select("table tbody tr td:nth-child(5)")
     ]
@@ -1339,7 +1351,7 @@ def test_violation_list_page_sorting_check_name(
 
     checks = user_workbasket.tracked_model_check_errors
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     rule_codes = [
         element.text for element in soup.select("table tbody tr td:nth-child(3)")
     ]
@@ -1402,7 +1414,7 @@ def test_workbasket_detail_view_displays_workbasket_details(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     table = soup.select("table")[0]
     row_text = [row.text for row in table.findChildren("td")]
 
@@ -1430,7 +1442,7 @@ def test_workbasket_changes_view_without_change_permission(client, user_workbask
     response = client.get(url)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     columns = page.select(".govuk-table__header")
     rows = page.select("tbody > tr")
     checkboxes = page.select(".govuk-checkboxes__input")
@@ -1456,7 +1468,7 @@ def test_workbasket_changes_view_with_change_permission(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     columns = page.select(".govuk-table__header")
     rows = page.select("tbody > tr")
     checkboxes = page.select(".govuk-checkboxes__input")
@@ -1601,7 +1613,7 @@ def test_workbasket_transaction_order_view_with_reorder_permission(valid_user_cl
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     table_rows = page.select("table > tbody > tr > td.item:first-child")
     checkboxes = page.select(".govuk-checkboxes__input")
     move_top_button = page.find("button", string=re.compile(r"Move to top"))
@@ -2185,7 +2197,7 @@ def test_review_goods_notification_button(
         )
 
     assert response.status_code == 200
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     # notify_button = soup.find("a", href=f"/notify-goods-report/{import_batch.id}/")
     notify_button = soup.select(".govuk-body")
@@ -2202,7 +2214,7 @@ def test_no_active_workbasket_view(valid_user_client):
     buttons."""
     response = valid_user_client.get(reverse("workbaskets:no-active-workbasket"))
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     message = soup.find("h1", text="You need an active workbasket to access this page")
     select_a_new_workbasket = soup.find(
         "a",
@@ -2247,6 +2259,12 @@ def test_disabled_packaging_for_unassigned_workbasket(
 ):
     """Tests that if a workbasket has not been fully assigned then the send to
     packaging queue button is disabled."""
+
+    MissingMeasuresCheckFactory.create(
+        workbasket=user_empty_workbasket,
+        successful=True,
+    )
+
     with user_empty_workbasket.new_transaction() as transaction:
         footnote = factories.FootnoteFactory.create(
             transaction=transaction,
@@ -2260,7 +2278,7 @@ def test_disabled_packaging_for_unassigned_workbasket(
 
     url = reverse("workbaskets:workbasket-checks")
     response = valid_user_client.get(url)
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     assert soup.find("button", {"id": "send-to-packaging", "aria-disabled": "true"})
 
     # Assign the workbasket so it can now be packaged
@@ -2275,7 +2293,7 @@ def test_disabled_packaging_for_unassigned_workbasket(
     )
 
     response = valid_user_client.get(url)
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     packaging_button = soup.find("a", href="/publishing/create/")
     assert not packaging_button.has_attr("disabled")
 
@@ -2398,7 +2416,7 @@ def test_workbasket_summary_view_displays_comments(
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     container = soup.find("div", id="workbasket-comments-container")
     headers = container.find_all("header")
     contents = container.find_all("div", "comment")
@@ -2516,7 +2534,7 @@ def test_workbasket_comment_list_view(valid_user_client, user_workbasket):
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
-    soup = BeautifulSoup(str(response.content), "html.parser")
+    soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     headers = soup.select("article > header")
     contents = soup.find_all("div", "comment")
     assert len(headers) == len(comments)
@@ -2634,7 +2652,7 @@ def test_current_tasks_is_called(valid_user_client):
         # Assert current_tasks gets called
         mock_current_tasks.assert_called_once()
         # Assert the mocked response is formatted correctly on the page
-        soup = BeautifulSoup(str(response.content), "html.parser")
+        soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
         table_rows = [element for element in soup.select(".govuk-table__row")]
         assert "10:34 11 Jun 2024" in str(table_rows[1])
         assert len(table_rows) == 4
@@ -2661,7 +2679,7 @@ def test_remove_all_workbasket_changes_button_only_shown_to_superusers(
 
     response = client.get(url)
     assert response.status_code == 200
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     remove_all_button = page.find("button", value="remove-all")
     assert remove_all_button
@@ -2678,7 +2696,7 @@ def test_remove_all_workbasket_changes_button_not_shown_to_users_without_permisi
 
     response = valid_user_client.get(url)
     assert response.status_code == 200
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
     remove_all_button = page.find("button", value="remove-all")
     assert not remove_all_button
@@ -2713,23 +2731,66 @@ def commodity_with_measures(date_ranges):
     return commodity
 
 
+@pytest.fixture
+def commodity_with_associations(date_ranges):
+    """Fixture used for texting the automatic end-dating of footnote
+    associations on an end- dated commodity code."""
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end,
+    )
+    factories.FootnoteAssociationGoodsNomenclatureFactory.create_batch(
+        5,
+        goods_nomenclature=commodity,
+    )  # Open ended associations should be end-dated
+    factories.FootnoteAssociationGoodsNomenclatureFactory.create_batch(
+        4,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_delta_to_2_months_ahead,
+    )  # Associations ending after the comm code should have their end-date aligned
+    factories.FootnoteAssociationGoodsNomenclatureFactory.create_batch(
+        3,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.starts_with_normal,
+    )  # Associations ending before the comm code should be ignored
+    factories.FootnoteAssociationGoodsNomenclatureFactory.create_batch(
+        2,
+        goods_nomenclature=commodity,
+        valid_between=date_ranges.future,
+    )  # Associations that have not started yet should be deleted
+    return commodity
+
+
+@pytest.mark.parametrize(
+    "commodity, tab",
+    [
+        ("commodity_with_measures", "#measures"),
+        ("commodity_with_associations", "#footnote-associations"),
+    ],
+)
 def test_auto_end_measures_renders(
     valid_user_client,
     user_workbasket,
-    commodity_with_measures,
     date_ranges,
+    commodity,
+    tab,
+    request,
 ):
-    """Test that the list of measures to be ended renders correctly."""
-    commodity_with_measures.new_version(
+    """Test that the lists of measures and footnote associations to be ended
+    render correctly."""
+    commodity = request.getfixturevalue(commodity)
+    commodity.new_version(
         workbasket=user_workbasket,
         valid_between=date_ranges.normal,
     )
-    url = reverse(
-        "workbaskets:workbasket-ui-auto-end-date-measures",
+    url = (
+        reverse(
+            "workbaskets:workbasket-ui-auto-end-date-measures",
+        )
+        + tab
     )
     response = valid_user_client.get(url)
     assert response.status_code == 200
-    page = BeautifulSoup(str(response.content), "html.parser")
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     rows = page.find_all("tr", {"class": "govuk-table__row"})
     text = page.get_text()
     assert text.count("To be end-dated") == 9
@@ -2754,9 +2815,9 @@ def test_auto_end_measures_post(
     url = reverse(
         "workbaskets:workbasket-ui-auto-end-date-measures",
     )
-    response = valid_user_client.post(url, {"action": "auto-end-date-measures"})
+    response = valid_user_client.post(url, {"action": "auto-end-date"})
     confirmation_url = reverse(
-        "workbaskets:workbasket-ui-auto-end-date-measures-confirm",
+        "workbaskets:workbasket-ui-auto-end-date-confirm",
         kwargs={"pk": user_workbasket.pk},
     )
     assert response.status_code == 302
@@ -2764,32 +2825,59 @@ def test_auto_end_measures_post(
     assert call_check_end_measures.called
 
 
-def test_auto_end_measures(commodity_with_measures, user_workbasket, date_ranges):
-    """Test that the call_end_measures correctly ends measures and reorders them
-    in the workbasket."""
-    new_commodity = commodity_with_measures.new_version(
+@pytest.mark.parametrize(
+    "commodity, object",
+    [
+        ("commodity_with_measures", Measure),
+        ("commodity_with_associations", FootnoteAssociationGoodsNomenclature),
+    ],
+)
+def test_auto_end_measures(user_workbasket, date_ranges, commodity, object, request):
+    """Test that the call_end_measures correctly ends measures and footnote
+    associations and reorders them in the workbasket."""
+    commodity = request.getfixturevalue(commodity)
+    new_commodity = commodity.new_version(
         workbasket=user_workbasket,
         valid_between=date_ranges.normal,
     )
+    auto_end_date_view = ui.AutoEndDateMeasures()
 
-    with override_current_transaction(Transaction.objects.last()):
-        measures_to_end = user_workbasket.get_measures_to_end_date()
-        assert len(measures_to_end) == 11
+    with (
+        override_current_transaction(Transaction.objects.last()),
+        patch(
+            "workbaskets.views.ui.AutoEndDateMeasures.workbasket",
+            new_callable=PropertyMock,
+        ) as mock_wb,
+    ):
+        mock_wb.return_value = user_workbasket
+        measures_to_end = auto_end_date_view.get_measures_to_end_date()
+        footnotes_to_end = auto_end_date_view.get_footnote_associations_to_end_date()
+        # Assert 11 objects have been found that will be ended
+        assert len(measures_to_end) + len(footnotes_to_end) == 11
+
         measure_pks = [measure.pk for measure in measures_to_end]
-        call_end_measures(measure_pks, user_workbasket.pk)
-        ended_measures = user_workbasket.measures
-        for measure in ended_measures[:9]:
-            assert measure.valid_between.upper == new_commodity.valid_between.upper
-        update_types = [measure.update_type for measure in ended_measures]
-        assert update_types.count(UpdateType.UPDATE) == 9
+        association_pks = [association.pk for association in footnotes_to_end]
+        call_end_measures(measure_pks, association_pks, user_workbasket.pk)
+
+        updated_objects = user_workbasket.tracked_models.filter(
+            update_type=UpdateType.UPDATE,
+        )
+        end_dated_objects = [obj for obj in updated_objects if isinstance(obj, object)]
+        # Assert that the objects that were updated all have the commodity's end date now
+        for item in end_dated_objects:
+            assert item.valid_between.upper == new_commodity.valid_between.upper
+        update_types = [object.update_type for object in user_workbasket.tracked_models]
+        # Assert 9 objects were updated (10 including the commodity) and 2 were deleted
+        assert update_types.count(UpdateType.UPDATE) == 10
         assert update_types.count(UpdateType.DELETE) == 2
         first_11_items = (
             TrackedModel.objects.all()
             .filter(transaction__workbasket=user_workbasket)
             .order_by("transaction__order")[:10]
         )
+        # Assert correct reordering that the first 11 objects are of measure or footnote association type
         for item in first_11_items:
-            assert isinstance(item, Measure)
+            assert isinstance(item, object)
 
 
 def test_get_measures_to_end_date(user_workbasket, date_ranges):
@@ -2824,8 +2912,17 @@ def test_get_measures_to_end_date(user_workbasket, date_ranges):
         workbasket=user_workbasket,
         valid_between=date_ranges.normal,
     )
-    with override_current_transaction(Transaction.objects.last()):
-        measures = user_workbasket.get_measures_to_end_date()
+    auto_end_date_view = ui.AutoEndDateMeasures()
+
+    with (
+        override_current_transaction(Transaction.objects.last()),
+        patch(
+            "workbaskets.views.ui.AutoEndDateMeasures.workbasket",
+            new_callable=PropertyMock,
+        ) as mock_wb,
+    ):
+        mock_wb.return_value = user_workbasket
+        measures = auto_end_date_view.get_measures_to_end_date()
         assert all(
             measure in measures
             for measure in [
@@ -2835,6 +2932,65 @@ def test_get_measures_to_end_date(user_workbasket, date_ranges):
             ]
         )
         assert measure_ended_before_commodity not in measures
+
+
+def test_get_footnote_associations_to_end_date(user_workbasket, date_ranges):
+    """Test that the utility function correctly gathers footnote associations,
+    not including those which already have an end date before the
+    commodity's."""
+    commodity = factories.GoodsNomenclatureFactory.create(
+        valid_between=date_ranges.no_end,
+    )
+
+    open_ended_association = (
+        factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+            goods_nomenclature=commodity,
+            valid_between=date_ranges.no_end,
+        )
+    )
+    association_ended_before_commodity = (
+        factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+            goods_nomenclature=commodity,
+            valid_between=date_ranges.starts_with_normal,
+        )
+    )
+    association_ended_after_commodity_ends = (
+        factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+            goods_nomenclature=commodity,
+            valid_between=date_ranges.starts_delta_to_2_months_ahead,
+        )
+    )
+    association_to_start_after_commodity_ends = (
+        factories.FootnoteAssociationGoodsNomenclatureFactory.create(
+            goods_nomenclature=commodity,
+            valid_between=date_ranges.future,
+        )
+    )
+
+    new_commodity = commodity.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.normal,
+    )
+
+    with (
+        override_current_transaction(Transaction.objects.last()),
+        patch(
+            "workbaskets.views.ui.AutoEndDateMeasures.workbasket",
+            new_callable=PropertyMock,
+        ) as mock_wb,
+    ):
+        mock_wb.return_value = user_workbasket
+        auto_end_date_view = ui.AutoEndDateMeasures()
+        associations = auto_end_date_view.get_footnote_associations_to_end_date()
+        assert all(
+            association in associations
+            for association in [
+                open_ended_association,
+                association_ended_after_commodity_ends,
+                association_to_start_after_commodity_ends,
+            ]
+        )
+        assert association_ended_before_commodity not in associations
 
 
 def test_reordering_transactions_bug(valid_user_client, user_workbasket):

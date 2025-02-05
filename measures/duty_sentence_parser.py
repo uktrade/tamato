@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Sequence
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -378,6 +379,12 @@ class DutyTransformer(Transformer):
                 f"Measurement unit qualifier {qualifier.abbreviation} cannot be used with measurement unit {unit.abbreviation}.",
             )
 
+    def validate_duty_amount(self, duty_amount):
+        if duty_amount.as_tuple().exponent < -3:
+            raise ValidationError(
+                f"The reference price cannot have more than 3 decimal places.",
+            )
+
     def validate_phrase(self, phrase):
         # Each measure component can have an amount, monetary unit and measurement.
         # Which expression elements are allowed in a component is controlled by
@@ -391,6 +398,9 @@ class DutyTransformer(Transformer):
         monetary_unit = phrase.get("monetary_unit", None)
         measurement_unit = phrase.get("measurement_unit", None)
         measurement_unit_qualifier = phrase.get("measurement_unit_qualifier", None)
+
+        if duty_amount:
+            self.validate_duty_amount(duty_amount)
 
         self.validate_according_to_applicability_code(
             amount_code,
@@ -460,7 +470,7 @@ class DutyTransformer(Transformer):
 
     def duty_amount(self, value):
         (value,) = value
-        return ("duty_amount", float(value))
+        return ("duty_amount", Decimal(value))
 
     def monetary_unit(self, value):
         (value,) = value
