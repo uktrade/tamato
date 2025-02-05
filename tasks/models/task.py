@@ -210,29 +210,66 @@ class TaskAssignee(TimestampedMixin):
       `assignment_type = AssignmentType.WORKBASKET_REVIEWER`
 
     In retrospect, these users should be assigned directly to the workbasket,
-    not via a Task, which is includes an unnecessary level of indirection,
-    allowing incorrect assignment of multiple users to one or other of the
-    roles on the same workbasket. View and Form validation must be used to guard
-    against this outcome rather than relying upon DB / Model constraints.
+    not via a Task, which includes an unnecessary level of indirection.
 
     Current Task management introduces AssignmentType.GENERAL. TaskAssignee
     instances with
       `assignment_type = AssignmentType.GENERAL`
     are actual task assignments, rather than the legacy approach to assigning
-    user to worker or reviewer roles.
+    users to worker or reviewer roles.
 
-    Migrations should be created and run to:
-    - Introduce nullable Model attributes:
-        WorkBasket.user_worker
-        WorkBasket.user_reviewer
-    - Set the new WorkBasket's `user_worker` and `user_reviewer` from existing
-      TaskInstances.
-    - Remove legacy TaskAssignee instances with an `assignment_type` equal to
-      one of `WORKBASKET_WORKER` or `WORKBASKET_REVIEWER`.
-    - Remove the `AssignmentType` model since all remaining instances will have
-        `assignment_type = AssignmentType.GENERAL`
-      (unless real need is found for it).
-    - Ensure signal handling works correctly after these changes.
+    Workbasket and new task assignment should be separated by introducing a new
+    Django Model, say, WorkBasketAssignee, and old assignments should be
+    migrated to instances of the new, replacement model.
+
+        class WorkBasketAssignee(TimestampedMixin):
+            class AssignmentType(models.TextChoices):
+                WORKBASKET_WORKER = "WORKBASKET_WORKER", "Workbasket worker"
+                WORKBASKET_REVIEWER = "WORKBASKET_REVIEWER", "Workbasket reviewer"
+
+            workbasket = models.ForeignKey(
+                WorkBasket,
+                blank=True,
+                null=True,
+                on_delete=models.CASCADE,
+                related_name="workbasketassignees",
+            )
+            user = models.ForeignKey(
+                settings.AUTH_USER_MODEL,
+                on_delete=models.PROTECT,
+                related_name="assigned_to",
+            )
+            assignment_type = models.CharField(
+                choices=AssignmentType.choices,
+                max_length=50,
+            )
+            unassigned_at = models.DateTimeField(
+                auto_now=False,
+                blank=True,
+                null=True,
+            )
+
+            @property
+            def is_assigned(self) -> bool:
+                return True if not self.unassigned_at else False
+
+            @classmethod
+            def unassign_user(cls, user, workbasket) -> bool:
+                try:
+                    assignment = cls.objects.get(user=user, workbasket=workbasket)
+                except cls.DoesNotExist:
+                    return False
+
+                if assignment.unassigned_at:
+                    return False
+
+                with transaction.atomic():
+                    assignment.unassigned_at = make_aware(datetime.now())
+                    assignment.save(update_fields=["unassigned_at"])
+                    return True
+
+    AssignmentType can then be stripped from TaskAssignee, since there'll only
+    be one type of assignee against tasks.
     """
 
     class AssignmentType(models.TextChoices):
