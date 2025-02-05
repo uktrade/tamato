@@ -29,7 +29,6 @@
   </h1>
 
 
-  {% if request.user.is_superuser %}
   <div class="govuk-grid-row govuk-!-margin-bottom-6 info-section">
     <div class="govuk-grid-column-full">
       <h2 class="govuk-heading-m">Deployment information</h2>
@@ -75,7 +74,6 @@
       }) }}
     </div>
   </div>
-  {% endif %}
 
 
   <div class="govuk-grid-row govuk-!-margin-bottom-6 info-section">
@@ -172,7 +170,7 @@
   </div>
 
 
-  {%- if request.user.is_superuser and SQLITE_DUMP_LIST %}
+  {%- if SQLITE_DUMP_LIST %}
   <div class="govuk-grid-row govuk-!-margin-bottom-6 info-section">
     <div class="govuk-grid-column-full">
       <h2 class="govuk-heading-m">Sqlite dumps (past {{ SQLITE_DUMP_DAYS }} days)</h2>
