@@ -2,6 +2,8 @@
 
 from django.db import migrations
 
+from open_data.models.utils import migrate_to_postgres
+
 # It will be impossible to update the tables in the open data area with the
 # foreign keys constrain in place. But it is useful to declare them in the Django
 # models, so Django will create the correct queryset: the following query t
@@ -22,20 +24,15 @@ DO $$DECLARE r record;
 """
 
 
-def forwards(apps, schema_editor):
-    if schema_editor.connection.vendor.find("postgres") != -1:
-        try:
-            schema_editor.execute(drop_fk_sql)
-        except:
-            print(f"ERROR: Not Postgres database")
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
         ("open_data", "0002_initial"),
     ]
 
-    operations = [
-        migrations.RunPython(forwards),
-    ]
+    if migrate_to_postgres():
+        operations = [
+            migrations.RunSQL(drop_fk_sql),
+        ]
+    else:
+        operations = []

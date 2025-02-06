@@ -2,6 +2,8 @@
 
 from django.db import migrations
 
+from open_data.models.utils import migrate_to_postgres
+
 create_view_sql = """
 CREATE MATERIALIZED VIEW reporting.foreign_key_lookup AS
 	SELECT  common_trackedmodel.ID as old_id, current_version_id
@@ -15,20 +17,14 @@ CREATE INDEX current_version_id_idx ON reporting.foreign_key_lookup (current_ver
 """
 
 
-def forwards(apps, schema_editor):
-    if schema_editor.connection.vendor.find("postgres") != -1:
-        try:
-            schema_editor.execute(create_view_sql)
-        except:
-            print(f"ERROR: Not Postgres database")
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
         ("open_data", "0003_drop_fk_constrains"),
     ]
-
-    operations = [
-        migrations.RunPython(forwards),
-    ]
+    if migrate_to_postgres():
+        operations = [
+            migrations.RunSQL(create_view_sql),
+        ]
+    else:
+        operations = []

@@ -2,25 +2,19 @@
 
 from django.db import migrations
 
-
-def forwards(apps, schema_editor):
-    if schema_editor.connection.vendor.find("postgres") != -1:
-        try:
-            schema_editor.execute("CREATE SCHEMA reporting;")
-        except:
-            print(f"ERROR: {schema_editor.connection.alias=}")
-
-
-def backwards(apps, schema_editor):
-    if schema_editor.connection.vendor == "postgres":
-        schema_editor.execute("DROP SCHEMA reporting;")
+from open_data.models.utils import migrate_to_postgres
 
 
 class Migration(migrations.Migration):
     initial = True
 
     dependencies = []
-
-    operations = [
-        migrations.RunPython(forwards, backwards),
-    ]
+    if migrate_to_postgres():
+        operations = [
+            migrations.RunSQL(
+                sql=[("CREATE SCHEMA reporting;")],
+                reverse_sql=[("DROP SCHEMA reporting;")],
+            ),
+        ]
+    else:
+        operations = []

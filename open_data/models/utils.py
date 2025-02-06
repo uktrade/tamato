@@ -8,16 +8,24 @@ SCHEMA_NAME = "reporting"
 LOOK_UP_VIEW = f"{SCHEMA_NAME}.foreign_key_lookup"
 
 
+def migrate_to_postgres():
+    data_base_url = os.environ.get("DATABASE_URL", "Postgres").lower()
+    # schema is not supported by sqlite.
+    # During sqlite dump creation, DATABASE_URL is set to sqlitexxxxx
+    # so we can establish if we are handlind sqlite, and ignore the schema name
+    if "sqlite" in data_base_url:
+        return False
+    return True
+
+
 def create_name_with_schema(name):
     # NOTE: the " around the stop are really important.
     # without them, the table will not be created in the correct schema
     # But is we are exporting to sqlite, we must omit the schma name
-    data_base_url = os.environ.get("DATABASE_URL", "Postgres").lower()
-
-    if "sqlite" in data_base_url:
-        return f"{APP_LABEL}_report{name}"
-    else:
+    if migrate_to_postgres():
         return f'{SCHEMA_NAME}"."{APP_LABEL}_report{name}'
+    else:
+        return f"{APP_LABEL}_report{name}"
 
 
 class ReportModel(models.Model):
