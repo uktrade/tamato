@@ -121,7 +121,9 @@ class AssignUsersForm(Form):
         )
 
     @transaction.atomic
-    def assign_users(self, task: Task, user_instigator):
+    def assign_users(self, task: Task, user_instigator) -> list[TaskAssignee]:
+        """Create TaskAssignee instances for the selected Users and return the
+        TaskAssignees as a list."""
         set_current_instigator(user_instigator)
 
         assignees = [
@@ -182,7 +184,9 @@ class UnassignUsersForm(Form):
         )
 
     @transaction.atomic
-    def unassign_users(self, user_instigator):
+    def unassign_users(self, user_instigator) -> int:
+        """Set assignees as unassigned from their associated task and return the
+        number of assignees that have been updated in this way."""
         set_current_instigator(user_instigator)
 
         assignees = self.cleaned_data["assignees"]
