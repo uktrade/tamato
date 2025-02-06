@@ -16,6 +16,7 @@ from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from common.celery import app
 from common.models import Transaction
+from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
@@ -138,16 +139,41 @@ def end_objects(objects, workbasket):
         promote_item_to_top(new_version.transaction, workbasket_transactions)
 
 
+@atomic
+def delete_objects(objects, workbasket):
+    """Iterate through a queryset of tracked models on deleted commodities and
+    delete them."""
+    for object in objects:
+        workbasket_transactions = Transaction.objects.filter(
+            workbasket=workbasket,
+            workbasket__status=WorkflowStatus.EDITING,
+        ).order_by("order")
+
+        new_version = object.new_version(
+            workbasket=workbasket,
+            update_type=UpdateType.DELETE,
+        )
+
+        promote_item_to_top(new_version.transaction, workbasket_transactions)
+
+
 @app.task
-def call_end_measures(measure_pks, footnote_association_pks, workbasket_pk):
+def call_end_measures(
+    measure_pks,
+    footnote_association_pks,
+    objects_to_delete_pks,
+    workbasket_pk,
+):
     """Calls end_objects for measures and footnote associations."""
     workbasket = WorkBasket.objects.all().get(pk=workbasket_pk)
     measures = Measure.objects.all().filter(pk__in=measure_pks)
     footnote_associations = FootnoteAssociationGoodsNomenclature.objects.all().filter(
         pk__in=footnote_association_pks,
     )
+    objects_to_delete = TrackedModel.objects.all().filter(pk=objects_to_delete_pks)
     end_objects(measures, workbasket)
     end_objects(footnote_associations, workbasket)
+    delete_objects(objects_to_delete)
 
 
 def get_comm_codes_with_missing_measures(tx_pk: int, comm_code_pks: List[int]):
