@@ -1,0 +1,23 @@
+{% set table_rows = [] %}
+{% for obj in object_list %}
+  {% set description_link %}
+    <a class="govuk-link" href="{{ url("commodity-ui-detail-descriptions", kwargs={'sid':obj.described_goods_nomenclature.sid}) }}">
+      {{ obj.described_goods_nomenclature.item_id }}
+    </a>
+  {% endset %}
+
+
+  {{ table_rows.append([
+    {"html": description_link},
+    {"text": obj.description},
+    {"text": "{:%d %b %Y}".format(obj.validity_start) if obj.validity_start else "-"},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Described commodity"},
+    {"text": "Description"},
+    {"text": "Start date"},  ],
+  "rows": table_rows
+}) }}

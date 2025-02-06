@@ -1,0 +1,29 @@
+{% set table_rows = [] %}
+{% for obj in object_list %}
+
+  {% set derived_from_goods_nomenclature %}
+    <a class="govuk-link" href="{{ obj.derived_from_goods_nomenclature.get_url() }}">
+      {{ obj.derived_from_goods_nomenclature.item_id }}
+    </a>
+  {% endset %}
+
+  {% set new_goods_nomenclature %}
+    <a class="govuk-link" href="{{ obj.new_goods_nomenclature.get_url() }}">
+      {{ obj.new_goods_nomenclature.item_id }}
+    </a>
+  {% endset %}
+
+
+  {{ table_rows.append([
+    {"html": new_goods_nomenclature},
+    {"html": derived_from_goods_nomenclature},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "New commodity code"},
+    {"text": "Derived from commodity code"},  
+    ],
+  "rows": table_rows
+}) }}
