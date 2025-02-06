@@ -71,7 +71,7 @@ from quotas.models import QuotaSuspension
 from regulations.models import Regulation
 from tasks.models import Comment
 from tasks.models import Task
-from tasks.models import UserAssignment
+from tasks.models import TaskAssignee
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
@@ -110,12 +110,12 @@ class WorkBasketAssignmentFilter(FilterSet):
 
     def assignment_filter(self, queryset, name, value):
         active_workers = (
-            UserAssignment.objects.workbasket_workers()
+            TaskAssignee.objects.workbasket_workers()
             .assigned()
             .values_list("task__workbasket_id")
         )
         active_reviewers = (
-            UserAssignment.objects.workbasket_reviewers()
+            TaskAssignee.objects.workbasket_reviewers()
             .assigned()
             .values_list("task__workbasket_id")
         )
@@ -1618,7 +1618,7 @@ class NoActiveWorkBasket(TemplateView):
 
 
 class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
-    permission_required = "tasks.add_userassignment"
+    permission_required = "tasks.add_taskassignee"
     template_name = "workbaskets/assign_users.jinja"
     form_class = forms.WorkBasketAssignUsersForm
 
@@ -1648,6 +1648,7 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
             defaults={
                 "title": self.workbasket.title,
                 "description": self.workbasket.reason,
+                "creator": self.request.user,
             },
         )
         form.assign_users(task=task)
@@ -1658,7 +1659,7 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
 
 
 class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
-    permission_required = "tasks.change_userassignment"
+    permission_required = "tasks.change_taskassignee"
     template_name = "workbaskets/assign_users.jinja"
     form_class = forms.WorkBasketUnassignUsersForm
 
@@ -1681,7 +1682,6 @@ class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
         )
         return kwargs
 
-    @atomic
     def form_valid(self, form):
         form.unassign_users()
         return redirect(self.get_success_url())
