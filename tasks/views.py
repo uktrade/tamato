@@ -59,6 +59,13 @@ class TaskListView(PermissionRequiredMixin, SortingMixin, WithPaginationListView
             queryset = queryset.order_by(*ordering)
         return queryset
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=object_list, **kwargs)
+        context["base_url"] = (
+            f"{reverse("workflow:task-ui-list")}?{self.clean_query_params().urlencode()}"
+        )
+        return context
+
 
 class TaskDetailView(PermissionRequiredMixin, DetailView):
     model = Task
@@ -68,7 +75,7 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
 
 class TaskCreateView(PermissionRequiredMixin, CreateView):
     model = Task
-    template_name = "layouts/create.jinja"
+    template_name = "tasks/create.jinja"
     permission_required = "tasks.add_task"
     form_class = TaskCreateForm
 
@@ -163,27 +170,31 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
 
 class SubTaskCreateView(PermissionRequiredMixin, CreateView):
     model = Task
-    template_name = "layouts/create.jinja"
+    template_name = "tasks/create.jinja"
     permission_required = "tasks.add_task"
     form_class = SubTaskCreateForm
+
+    @property
+    def parent_task(self) -> Task:
+        return Task.objects.get(pk=self.kwargs["parent_task_pk"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_title"] = (
             f"Create a subtask for task {self.kwargs['parent_task_pk']}"
         )
+        context["parent_task"] = self.parent_task
         return context
 
     def form_valid(self, form):
-        parent_task = Task.objects.filter(pk=self.kwargs["parent_task_pk"]).first()
-        if parent_task.parent_task:
+        if self.parent_task.parent_task:
             form.add_error(
                 None,
                 "You cannot make a subtask from a subtask.",
             )
             return self.form_invalid(form)
         else:
-            self.object = form.save(parent_task, user=self.request.user)
+            self.object = form.save(self.parent_task, user=self.request.user)
             return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
@@ -294,6 +305,13 @@ class TaskWorkflowListView(
             queryset = queryset.order_by(*ordering)
         return queryset
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=object_list, **kwargs)
+        context["base_url"] = (
+            f"{reverse("workflow:task-workflow-ui-list")}?{self.clean_query_params().urlencode()}"
+        )
+        return context
+
 
 class TaskAndWorkflowListView(
     PermissionRequiredMixin,
@@ -315,6 +333,13 @@ class TaskAndWorkflowListView(
             queryset = queryset.order_by(*ordering)
         return queryset
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=object_list, **kwargs)
+        context["base_url"] = (
+            f"{reverse("workflow:task-and-workflow-ui-list")}?{self.clean_query_params().urlencode()}"
+        )
+        return context
+
 
 class TaskWorkflowTemplateListView(
     PermissionRequiredMixin,
@@ -330,9 +355,10 @@ class TaskWorkflowTemplateListView(
 
     def get_context_data(self, **kwargs) -> dict:
         context_data = super().get_context_data(**kwargs)
-
         context_data["datetime_format"] = settings.DATETIME_FORMAT
-
+        context_data["base_url"] = (
+            f"{reverse("workflow:task-workflow-template-ui-list")}?{self.clean_query_params().urlencode()}"
+        )
         return context_data
 
     def get_queryset(self):
