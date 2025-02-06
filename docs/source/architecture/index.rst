@@ -32,7 +32,7 @@ directly.
 
 HMRC's Customs Declaration Services (CDS) system is a primary consumer of data
 from TaMaTo. There are also a number of other consumers: the Jersey and Guernsey
-border systems Caesar and GEMS, policy-makers via DIT's Data Workspace and other
+border systems Caesar and GEMS, policy-makers via DBT's Data Workspace and other
 third parties via open data.
 
 Concepts
