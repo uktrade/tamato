@@ -383,7 +383,7 @@ def test_resources_view_displays_resources(heading, expected_url, valid_user_cli
 
 
 @override_settings(SSO_ENABLED=True)
-def test_admin_login_shows_403_when_sso_enabled(superuser_client):
+def test_admin_login_shows_404_when_sso_enabled(superuser_client):
     """Test to check that when staff SSO is enabled, the login page shows a 404
     but the rest of the admin site is still available.
     """

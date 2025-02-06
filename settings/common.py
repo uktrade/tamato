@@ -77,7 +77,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 # -- Application
 
 DJANGO_CORE_APPS = [
-    "admin.apps.TamatoAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -114,6 +113,7 @@ if os.getenv("ELASTIC_TOKEN"):
     }
 
 DOMAIN_APPS = [
+    "admin.apps.TamatoAdminConfig",
     "common",
     "checks",
     "additional_codes.apps.AdditionalCodesConfig",
