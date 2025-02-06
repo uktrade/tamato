@@ -37,11 +37,6 @@ task_ui_patterns = [
         views.TaskUnassignUsersView.as_view(),
         name="task-ui-unassign-users",
     ),
-    path(
-        "<int:pk>/confirm-update-assignees/",
-        views.TaskAssigneesConfirmUpdateView.as_view(),
-        name="task-ui-conform-update-assignees",
-    ),
     # Subtask urls
     path(
         "<int:parent_task_pk>/subtasks/create/",

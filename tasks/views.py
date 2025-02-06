@@ -252,12 +252,6 @@ class TaskUnassignUsersView(PermissionRequiredMixin, FormView):
         )
 
 
-class TaskAssigneesConfirmUpdateView(PermissionRequiredMixin, DetailView):
-    model = Task
-    template_name = "tasks/confirm_edit_assignees.jinja"
-    permission_required = "tasks.change_taskworkflow"
-
-
 class SubTaskCreateView(PermissionRequiredMixin, CreateView):
     model = Task
     template_name = "layouts/create.jinja"
