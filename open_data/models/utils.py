@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 
 from open_data.apps import APP_LABEL
@@ -9,7 +11,13 @@ LOOK_UP_VIEW = f"{SCHEMA_NAME}.foreign_key_lookup"
 def create_name_with_schema(name):
     # NOTE: the " around the stop are really important.
     # without them, the table will not be created in the correct schema
-    return f'{SCHEMA_NAME}"."{APP_LABEL}_report{name}'
+    # But is we are exporting to sqlite, we must omit the schma name
+    data_base_url = os.environ.get("DATABASE_URL", "Postgres").lower()
+
+    if "sqlite" in data_base_url:
+        return f"{APP_LABEL}_report{name}"
+    else:
+        return f'{SCHEMA_NAME}"."{APP_LABEL}_report{name}'
 
 
 class ReportModel(models.Model):

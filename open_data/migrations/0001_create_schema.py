@@ -4,8 +4,7 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
-    if schema_editor.connection.vendorstartswith("postgres"):
-        print("In POSTGRES")
+    if schema_editor.connection.vendor.find("postgres") != -1:
         try:
             schema_editor.execute("CREATE SCHEMA reporting;")
         except:
@@ -13,7 +12,7 @@ def forwards(apps, schema_editor):
 
 
 def backwards(apps, schema_editor):
-    if schema_editor.connection.vendor.startswith("postgres"):
+    if schema_editor.connection.vendor == "postgres":
         schema_editor.execute("DROP SCHEMA reporting;")
 
 

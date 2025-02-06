@@ -22,6 +22,14 @@ DO $$DECLARE r record;
 """
 
 
+def forwards(apps, schema_editor):
+    if schema_editor.connection.vendor.find("postgres") != -1:
+        try:
+            schema_editor.execute(drop_fk_sql)
+        except:
+            print(f"ERROR: Not Postgres database")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -29,5 +37,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(drop_fk_sql),
+        migrations.RunPython(forwards),
     ]
