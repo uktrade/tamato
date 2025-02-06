@@ -19,7 +19,7 @@
 {% endmacro %}
 {% set list_include = "includes/measures/create-task-list.jinja"%}
 
-{% set page_title = "Rule check queue" %}
+{% set page_title = "Rule check and missing measures check queue" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
@@ -33,7 +33,7 @@
 <div class="govuk-grid-row">
 
   <div class="govuk-grid-column-full">
-    <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+    <h2 class="govuk-heading-l">{{ page_title }}</h2>
 
         {{ govukButton({
             "html": refresh_button_content,
@@ -42,11 +42,13 @@
       }) }}
   </div>
 
- <div class="govuk-grid-column-full">
+  <div class="govuk-grid-column-full">
+  {{current_rule_checks}}
 
    {% set table_head = [
         {"text": "Workbasket ID"},
-        {"text": "Checks completed"},
+        {"text": "Check type"},
+        {"text": "Progress"},
         {"text": "Time started"},
         {"text": "Celery task ID"},
         {"text": "Status"},
@@ -59,7 +61,8 @@
         {% for task in current_rule_checks %}
             {{ table_rows.append([
                             {"text": workbasket_link(task.workbasket_id)},
-                            {"text": task.checks_completed},
+                            {"text": task.verbose_name},
+                            {"text": task.progress},
                             {"text": task.date_time_start},
                             {"text": task.task_id},
                             {"html": status_tag(task.status)},
@@ -71,10 +74,10 @@
               }) }}
 
     {% else %}
-        <p class="govuk-body">There are currently no rule checks running or queued.</p>
+        <p class="govuk-body">There are currently no checks running or queued.</p>
     {% endif %}
 {% else %}
-    <p class="govuk-body">Business rule check details are currently unavailable.</p>
+    <p class="govuk-body">Check details are currently unavailable.</p>
 {% endif %}
 </div>
 </div>

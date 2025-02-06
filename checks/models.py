@@ -185,3 +185,4 @@ class MissingMeasureCommCode(models.Model):
         on_delete=models.CASCADE,
         related_name="model_checks",
     )
+    successful = fields.BooleanField(null=True)
