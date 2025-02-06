@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import factory
+from factory.fuzzy import FuzzyText
 
 from checks import models
 from checks.checks import Checker
@@ -95,6 +96,7 @@ class MissingMeasuresCheckFactory(factory.django.DjangoModelFactory):
 
     workbasket = factory.SubFactory(factories.WorkBasketFactory)
     successful = True
+    hash = FuzzyText(length=200)
 
 
 class MissingMeasureCommCodeFactory(factory.django.DjangoModelFactory):

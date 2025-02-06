@@ -159,14 +159,24 @@ class TrackedModelCheck(TimestampedMixin):
 
 
 class MissingMeasuresCheck(TimestampedMixin):
-    """Stores a timestamp for when check_workbasket_for_missing_measures was
-    last run, FK to the workbasket and whether the check was successful."""
+    """
+    Stores a timestamp for when check_workbasket_for_missing_measures was last
+    run, FK to the workbasket, whether the check was successful and a hash of
+    the workbasket's measure and commodity changes to check when we should flag
+    the check as stale.
+
+    See workbasket.commodity_measure_changes_hash
+    """
 
     workbasket = models.OneToOneField(
         "workbaskets.WorkBasket",
         on_delete=models.CASCADE,
         null=True,
         related_name="missing_measures_check",
+    )
+    hash = models.CharField(
+        max_length=200,
+        null=True,
     )
 
     successful = fields.BooleanField(null=True)

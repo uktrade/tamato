@@ -27,6 +27,7 @@ def test_check_missing_measures_fail_list(valid_user_client, user_workbasket):
     missing_measures_check = MissingMeasuresCheckFactory.create(
         workbasket=user_workbasket,
         successful=False,
+        hash=user_workbasket.commodity_measure_changes_hash,
     )
     MissingMeasureCommCodeFactory.create_batch(
         3,
