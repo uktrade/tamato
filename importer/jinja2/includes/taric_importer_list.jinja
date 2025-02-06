@@ -17,9 +17,9 @@
       <form action="{{ url("workbaskets:workbasket-ui-list") }}" method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         <input type="hidden" name="workbasket" value="{{ object.workbasket.pk }}">
-        <input type="hidden" name="workbasket-tab" value="review-goods">
-        <input type="submit" class="button-link" name="submit" value="View Workbasket {{object.workbasket.pk}}">
+        <input type="submit" class="button-link" name="submit" value="View workbasket {{object.workbasket.pk}}">
       </form>
+      <a class="govuk-link govuk-!font-weight-bold" href="{{ url('review-imported-goods', kwargs={'pk': object.workbasket.pk}) }}">View imported goods</a>
     {% elif goods_status(object) == "no_goods" %}
       <span>No action</span>
     {%- else -%}
