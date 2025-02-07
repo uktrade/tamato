@@ -40,6 +40,7 @@ from open_data.models.regulations_models import ReportGroup
 from open_data.models.regulations_models import ReportRegulation
 from open_data.models.regulations_models import ReportReplacement
 from open_data.models.regulations_models import ReportSuspension
+from open_data.models.report_models import MeasureAsDefinedReport
 
 __all__ = [
     "ReportAdditionalCode",
@@ -83,4 +84,5 @@ __all__ = [
     "ReportRegulation",
     "ReportSuspension",
     "ReportReplacement",
+    "MeasureAsDefinedReport",
 ]
