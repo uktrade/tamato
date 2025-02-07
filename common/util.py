@@ -47,7 +47,9 @@ from django.db.models.functions import Cast
 from django.db.models.functions.text import Lower
 from django.db.models.functions.text import Upper
 from django.db.transaction import atomic
+from django.http import HttpRequest
 from django.template import loader
+from django.urls import reverse
 from django.utils import timezone
 from lxml import etree
 from psycopg.types.range import DateRange
@@ -809,3 +811,11 @@ def get_related_names(instance, related_model) -> list[str]:
         if field.one_to_many and issubclass(field.related_model, related_model):
             related_names.append(field.get_accessor_name())
     return related_names
+
+
+def get_current_view_url(request: HttpRequest) -> str:
+    """Returns the resolved URL of the current view."""
+    view_name = request.resolver_match.view_name
+    args = request.resolver_match.args
+    kwargs = request.resolver_match.kwargs
+    return reverse(view_name, args=args, kwargs=kwargs)
