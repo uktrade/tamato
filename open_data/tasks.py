@@ -17,6 +17,8 @@ from open_data.models.utils import ReportModel
 
 
 def add_description(model, verbose=True):
+    if type(model) is not ReportModel:
+        return
     if model.update_description:
         if issubclass(model.shadowed_model, DescribedMixin):
             queryset = model.objects.select_related(

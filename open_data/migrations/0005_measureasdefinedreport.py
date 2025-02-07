@@ -3,8 +3,16 @@
 from django.db import migrations
 from django.db import models
 
+from open_data.models.utils import migrate_to_postgres
+
 
 class Migration(migrations.Migration):
+
+    # schema is not supported by sqlite.
+    if migrate_to_postgres():
+        schema_name = 'reporting"."'
+    else:
+        schema_name = ""
 
     dependencies = [
         ("open_data", "0004_materialised_view"),
@@ -19,12 +27,18 @@ class Migration(migrations.Migration):
                     "trackedmodel_ptr_id",
                     models.IntegerField(primary_key=True, serialize=False),
                 ),
-                ("commodity_sid", models.IntegerField(blank=True, null=True)),
+                (
+                    "commodity_sid",
+                    models.CharField(blank=True, max_length=500, null=True),
+                ),
                 (
                     "commodity_code",
-                    models.CharField(blank=True, max_length=10, null=True),
+                    models.CharField(blank=True, max_length=500, null=True),
                 ),
-                ("commodity_indent", models.IntegerField(blank=True, null=True)),
+                (
+                    "commodity_indent",
+                    models.CharField(blank=True, max_length=500, null=True),
+                ),
                 ("commodity_description", models.TextField(blank=True, null=True)),
                 ("measure_sid", models.IntegerField()),
                 (
@@ -56,7 +70,7 @@ class Migration(migrations.Migration):
                 ("measure_footnotes", models.TextField(blank=True, null=True)),
                 (
                     "measure_conditions",
-                    models.CharField(blank=True, max_length=500, null=True),
+                    models.TextField(blank=True, null=True),
                 ),
                 (
                     "measure_geographical_area_sid",
@@ -64,7 +78,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "measure_geographical_area_id",
-                    models.CharField(blank=True, max_length=4, null=True),
+                    models.CharField(blank=True, max_length=500, null=True),
                 ),
                 (
                     "measure_geographical_area_description",
@@ -84,15 +98,15 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "measure_regulation_id",
-                    models.CharField(blank=True, max_length=8, null=True),
+                    models.CharField(blank=True, max_length=500, null=True),
                 ),
                 (
                     "measure_regulation_url",
-                    models.CharField(blank=True, max_length=200, null=True),
+                    models.CharField(blank=True, max_length=500, null=True),
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasure_as_defined_report',
+                "db_table": f"{schema_name}open_data_reportmeasure_as_defined_report",
             },
         ),
     ]
