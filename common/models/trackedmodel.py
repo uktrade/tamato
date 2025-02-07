@@ -337,7 +337,7 @@ class TrackedModel(PolymorphicModel, TimestampedMixin):
 
     @property
     def current_version(self: Cls) -> Cls:
-        """The current version of this model."""
+        """The current published version of this model."""
         current_version = self.version_group.current_version
         if current_version is None:
             raise self.__class__.DoesNotExist("Object has no current version")

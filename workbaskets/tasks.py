@@ -170,10 +170,10 @@ def call_end_measures(
     footnote_associations = FootnoteAssociationGoodsNomenclature.objects.all().filter(
         pk__in=footnote_association_pks,
     )
-    objects_to_delete = TrackedModel.objects.all().filter(pk=objects_to_delete_pks)
+    objects_to_delete = TrackedModel.objects.all().filter(pk__in=objects_to_delete_pks)
     end_objects(measures, workbasket)
     end_objects(footnote_associations, workbasket)
-    delete_objects(objects_to_delete)
+    delete_objects(objects_to_delete, workbasket)
 
 
 def get_comm_codes_with_missing_measures(tx_pk: int, comm_code_pks: List[int]):

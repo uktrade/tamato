@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import date
 from functools import cached_property
+from itertools import chain
 from typing import Tuple
 
 import boto3
@@ -1825,7 +1826,13 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     @property
     def measures(self):
-        return self.get_measures_to_end_date()
+        measures_list = [
+            measure.pk
+            for measure in list(
+                chain(self.get_measures_to_end_date(), self.get_measures_to_delete()),
+            )
+        ]
+        return Measure.objects.all().filter(pk__in=measures_list)
 
     @property
     def footnote_associations(self):
@@ -1851,12 +1858,13 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     @cached_property
     def deleted_commodities(self):
-        """Returns a queryset of commodities that have been deleted in the
+        """Returns a list of SIDs of commodities that have been deleted in the
         current workbasket."""
-        return GoodsNomenclature.objects.current().filter(
+        # TODO: What if a commodity is deleted then recreated. How can we filter deleted commodities in the workbasket but not include ones which then appear again
+        return GoodsNomenclature.objects.filter(
             transaction__workbasket=self.workbasket,
             update_type=UpdateType.DELETE,
-        )
+        ).values_list("sid")
 
     def get_queryset(self):
         ordering = self.get_ordering()
@@ -1888,7 +1896,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
             footnote_association.pk
             for footnote_association in self.get_footnote_associations_to_end_date()
         ]
-        pks_to_delete = [measure.pk for measure in self.get_measures_to_end_date()] + [
+        pks_to_delete = [measure.pk for measure in self.get_measures_to_delete()] + [
             footnote_association.pk
             for footnote_association in self.get_footnote_associations_to_delete()
         ]
@@ -1962,12 +1970,12 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     def get_measures_to_delete(self) -> QuerySet:
         return Measure.objects.current().filter(
-            goods_nomenclature__in=self.deleted_commodities,
+            goods_nomenclature__sid__in=self.deleted_commodities,
         )
 
     def get_footnote_associations_to_delete(self) -> QuerySet:
         return FootnoteAssociationGoodsNomenclature.objects.current().filter(
-            goods_nomenclature__in=self.deleted_commodities,
+            goods_nomenclature__sid__in=self.deleted_commodities,
         )
 
 
