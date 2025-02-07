@@ -164,9 +164,9 @@ class SortingMixin:
         else:
             return None
 
-    def clean_query_params(self) -> QueryDict:
-        """Returns a cleaned copy of query parameters having removed 'sort_by'
-        and 'ordered'."""
+    def remove_sorting_params(self) -> QueryDict:
+        """Returns a cleaned copy of GET params having removed 'sort_by' and
+        'ordered'."""
         query_params = self.request.GET.copy()
         query_params.pop("sort_by", None)
         query_params.pop("ordered", None)
