@@ -223,8 +223,8 @@ ui_patterns = [
     ),
     path(
         f"<pk>/confirm-auto-end-date-measures/",
-        ui_views.AutoEndDateMeasuresConfirm.as_view(),
-        name="workbasket-ui-auto-end-date-measures-confirm",
+        ui_views.AutoEndDateConfirm.as_view(),
+        name="workbasket-ui-auto-end-date-confirm",
     ),
 ]
 

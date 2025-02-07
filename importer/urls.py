@@ -56,6 +56,11 @@ commodity_importer_urlpatterns = [
         views.NotifyGoodsReportSuccessView.as_view(),
         name="goods-report-notify-success",
     ),
+    path(
+        "review-imported-goods/<pk>/",
+        views.ImportedGoodsReview.as_view(),
+        name="review-imported-goods",
+    ),
 ]
 
 urlpatterns = general_importer_urlpatterns + commodity_importer_urlpatterns
