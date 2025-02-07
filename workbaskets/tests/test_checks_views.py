@@ -51,6 +51,7 @@ def test_check_missing_measures_success(valid_user_client, user_workbasket):
     MissingMeasuresCheckFactory.create(
         workbasket=user_workbasket,
         successful=True,
+        hash=user_workbasket.commodity_measure_changes_hash,
     )
     url = reverse("workbaskets:workbasket-ui-missing-measures-check")
     response = valid_user_client.get(url)

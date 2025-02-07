@@ -19,6 +19,7 @@ from django.db.models import Case
 from django.db.models import DateField
 from django.db.models import F
 from django.db.models import Max
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Subquery
 from django.db.models import Value
@@ -347,12 +348,8 @@ class WorkBasket(TimestampedMixin):
         # avoid circular import
         from commodities.models.orm import GoodsNomenclature
 
-        codes = [
-            item
-            for item in self.tracked_models.all().order_by("pk")
-            if isinstance(item, GoodsNomenclature)
-        ]
-        return len(codes) != 0
+        codes = self.tracked_models.filter(Q(instance_of=GoodsNomenclature))
+        return codes.count() != 0
 
     def terminate_rule_check(self):
         """Terminate any task associated with the WorkBasket's rule checking, as
@@ -470,11 +467,9 @@ class WorkBasket(TimestampedMixin):
         # avoid circular import
         from commodities.models.orm import GoodsNomenclature
 
-        changes = [
-            item
-            for item in self.tracked_models.all().order_by("pk")
-            if isinstance(item, GoodsNomenclature) or isinstance(item, Measure)
-        ]
+        changes = self.tracked_models.filter(
+            Q(instance_of=GoodsNomenclature) | Q(instance_of=Measure),
+        ).order_by("pk")
         snapshot = "".join(
             [
                 # ignore django's ModelState object

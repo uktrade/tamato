@@ -1117,11 +1117,17 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
         context = super().get_context_data(**kwargs)
 
         context["workbasket"] = self.workbasket
-        context["missing_measures_check"] = getattr(
+        missing_measures_check = getattr(
             self.workbasket,
             "missing_measures_check",
             None,
         )
+        context["missing_measures_check"] = missing_measures_check
+        if missing_measures_check is not None:
+            context["check_is_stale"] = (
+                missing_measures_check.hash
+                != self.workbasket.commodity_measure_changes_hash
+            )
         context["selected_tab"] = "measures-check"
 
         if self.workbasket.missing_measures_check_task_id:
