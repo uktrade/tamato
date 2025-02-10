@@ -58,8 +58,8 @@
           {"text": "Title"},
           {"text": "Description"},
           {"text": "Created by"},
-          {"text": create_sortable_anchor(request, "created_at", "Created", base_url, query_params=True)},
-          {"text": create_sortable_anchor(request, "updated_at", "Last updated", base_url, query_params=True)},
+          {"text": create_sortable_anchor(request, "Created", sorting_urls["created_at"])},
+          {"text": create_sortable_anchor(request, "Last updated", sorting_urls["updated_at"])},
         ],
           "rows": table_rows
         }) }}

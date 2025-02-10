@@ -45,18 +45,16 @@
     ]) or "" }}
   {% endfor %}
 
-  {% set base_url = url('regulation-ui-detail-measures', kwargs={"role_type": object.role_type, "regulation_id": object.regulation_id}) %}
-
   {% set commodity_code %}
-    {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
+    {{ create_sortable_anchor(request, "Commodity code", sorting_urls["goods_nomenclature"]) }}
   {% endset %}
 
   {% set geo_area %}
-    {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url) }}
+    {{ create_sortable_anchor(request, "Geographical area", sorting_urls["geo_area"]) }}
   {% endset %}
 
   {% set start_date %}
-    {{ create_sortable_anchor(request, "start_date", "Start date", base_url) }}
+    {{ create_sortable_anchor(request, "Start date", sorting_urls["start_date"]) }}
   {% endset %}
 
   {% if paginator.count > 0 %}
