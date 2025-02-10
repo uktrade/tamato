@@ -1,0 +1,66 @@
+{% extends "layouts/detail.jinja" %}
+
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/tabs/macro.njk" import govukTabs %}
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+
+{% set page_title %}
+  Workbasket {{ workbasket.pk }} - Auto end measures
+{% endset %}
+
+{% set measures_tab %}{% include "includes/workbaskets/auto_end_date_measures.jinja" %}{% endset %}
+{% set footnote_associations_tab %}{% include "includes/workbaskets/auto_end_date_footnote_associations.jinja" %}{% endset %}
+
+{% block breadcrumb %}
+  {{ govukBreadcrumbs({
+    "items": [
+      {"text": "Home", "href": url("home")},
+      {"text": "Workbasket " ~ request.user.current_workbasket.id, "href": url("workbaskets:edit-workbasket")},
+      {"text": page_title}
+    ]
+  }) }}
+{% endblock %}
+
+{% set tabs = {
+    "items": [
+      {
+        "label": "Auto end measures",
+        "id": "measures",
+        "panel": {
+          "html": measures_tab
+        }
+      },
+      {
+        "label": "Auto end footnote associations",
+        "id": "footnote-associations",
+        "panel": {
+          "html": footnote_associations_tab
+        }
+      },
+    ]
+  }%}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">Auto end measures</h1>
+    </div>
+  </div>
+      {{ govukTabs(tabs) }}
+{% if object_list or footnote_associations %}
+<form
+    method="post"
+  >
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+    {{ govukButton({
+        'text': "Submit",
+        'preventDoubleClick': true,
+        "name": "action",
+        "value": "auto-end-date",
+}) }}
+  </form>
+  {% endif %}
+{% endblock %}

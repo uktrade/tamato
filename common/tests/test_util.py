@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 from unittest import mock
@@ -11,6 +12,7 @@ from common.tests import factories
 from common.tests import models
 from common.tests.util import Dates
 from common.tests.util import wrap_numbers_over_max_digits
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalAreaDescription
@@ -621,3 +623,47 @@ def test_tablelock_as_decorator(mock_get_connection):
     mock_cursor.execute.assert_called_once_with(
         f"LOCK TABLE {model._meta.db_table} IN {lock} MODE",
     )
+
+
+@pytest.mark.parametrize(
+    "date_range,compared_date_range,expected",
+    (
+        (
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            True,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 1)),
+            True,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 1)),
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            False,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 2)),
+            True,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1), datetime.date(2020, 1, 1)),
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            False,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            True,
+        ),
+        (
+            TaricDateRange(datetime.date(2020, 1, 2)),
+            TaricDateRange(datetime.date(2020, 1, 1)),
+            False,
+        ),
+    ),
+)
+def test_contains(date_range, compared_date_range, expected):
+    assert date_range.contains(compared_date_range) == expected

@@ -18,6 +18,9 @@ module.exports = {
     // (they are picked up by `collectstatic`)
     publicPath: "/assets/webpack_bundles/",
     filename: "[name]-[hash].js",
+    trustedTypes: {
+      policyName: "tap#webpack",
+    },
   },
 
   plugins: [

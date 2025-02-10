@@ -25,10 +25,6 @@ from quotas.serializers import serialize_duplicate_data
 from workbaskets.forms import SelectableObjectsForm
 
 
-class DuplicateQuotaDefinitionPeriodStartForm(forms.Form):
-    pass
-
-
 class QuotaOrderNumbersSelectForm(forms.Form):
     main_quota_order_number = AutoCompleteField(
         label="Main quota order number",
@@ -290,6 +286,12 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         self.fields["end_date"].help_text = ""
         self.fields["end_date"].required = True
         self.fields["measurement_unit"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
+        self.fields["measurement_unit_qualifier"].queryset = self.fields[
+            "measurement_unit_qualifier"
+        ].queryset.order_by("code")
+        self.fields["measurement_unit_qualifier"].label_from_instance = (
             lambda obj: f"{obj.code} - {obj.description}"
         )
         self.fields["measurement_unit_qualifier"].help_text = (
@@ -559,6 +561,15 @@ class BulkDefinitionUpdateData(
         if "description" in definition_data:
             fields["description"].initial = definition_data["description"]
 
+        self.fields["measurement_unit_qualifier"].help_text = (
+            "A measurement unit qualifier is not always required"
+        )
+        self.fields["measurement_unit_qualifier"].queryset = self.fields[
+            "measurement_unit_qualifier"
+        ].queryset.order_by("code")
+        self.fields["measurement_unit_qualifier"].label_from_instance = (
+            lambda obj: f"{obj.code} - {obj.description}"
+        )
         if (
             "measurement_unit_qualifier" in definition_data
             and definition_data["measurement_unit_qualifier"] != "None"
@@ -576,9 +587,6 @@ class BulkDefinitionUpdateData(
             definition_data["threshold"],
         )
         fields["quota_critical"].initial = definition_data["quota_critical"]
-        self.fields["measurement_unit_qualifier"].help_text = (
-            "A measurement unit qualifier is not always required"
-        )
 
     def update_definition_data_in_session(self, cleaned_data):
         cleaned_data.update(

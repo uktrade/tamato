@@ -89,18 +89,11 @@ def test_health_check_view_response(
 
 
 def test_app_info_non_superuser(valid_user_client):
-    """Users without the superuser permission have a restricted view of
-    application information."""
+    """Users without the superuser permission cannot view the application
+    information page."""
     response = valid_user_client.get(reverse("app-info"))
 
-    assert response.status_code == 200
-
-    page = BeautifulSoup(str(response.content), "html.parser")
-    h2_elements = page.select(".info-section h2")
-
-    assert len(h2_elements) == 2
-    assert "Active business rule checks" in h2_elements[0].text
-    assert "Active envelope generation tasks" in h2_elements[1].text
+    assert response.status_code == 403
 
 
 def test_app_info_superuser(superuser_client, new_workbasket):
