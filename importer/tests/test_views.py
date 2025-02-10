@@ -322,3 +322,9 @@ def test_notify_channel_islands_redirects(
         "goods-report-notify-success",
         kwargs={"pk": completed_goods_import_batch.pk},
     )
+
+
+def test_view_imported_goods_renders(valid_user_client, workbasket):
+    url = reverse("review-imported-goods", kwargs={"pk": workbasket.pk})
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
