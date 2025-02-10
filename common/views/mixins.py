@@ -14,6 +14,7 @@ from common.business_rules import BusinessRule
 from common.business_rules import BusinessRuleViolation
 from common.models import TrackedModel
 from common.pagination import build_pagination_list
+from common.util import get_current_view_url
 
 
 class WithPaginationListMixin:
@@ -171,3 +172,33 @@ class SortingMixin:
         query_params.pop("sort_by", None)
         query_params.pop("ordered", None)
         return query_params
+
+    def build_sorting_urls(self) -> dict[str, str]:
+        """
+        Returns a dictionary mapping a sort_by_field to its sorting URL.
+
+        Appends `sort_by` and `ordered` query params to the current view URL for each field in `sort_by_fields`,
+        while keeping other query params (such as those used for filtering) in place.
+        """
+        urls = {}
+        view_url = get_current_view_url(self.request)
+        query_params = self.remove_sorting_params().urlencode()
+        ordering = self.get_ordering()
+
+        for sort_by in self.sort_by_fields:
+            if ordering and ordering.startswith("-"):
+                sorting_params = f"sort_by={sort_by}&ordered=asc"
+            else:
+                sorting_params = f"sort_by={sort_by}&ordered=desc"
+            urls[sort_by] = (
+                f"{view_url}?{query_params}&{sorting_params}"
+                if query_params
+                else f"{view_url}?{sorting_params}"
+            )
+
+        return urls
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["sorting_urls"] = self.build_sorting_urls()
+        return context
