@@ -1836,7 +1836,18 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     @property
     def footnote_associations(self):
-        return self.get_footnote_associations_to_end_date()
+        associations_list = [
+            association.pk
+            for association in list(
+                chain(
+                    self.get_footnote_associations_to_end_date(),
+                    self.get_footnote_associations_to_delete(),
+                ),
+            )
+        ]
+        return FootnoteAssociationGoodsNomenclature.objects.all().filter(
+            pk__in=associations_list,
+        )
 
     @cached_property
     def end_dated_commodity_dictionary(self):
