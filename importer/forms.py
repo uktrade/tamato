@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Sequence
 
 import lxml
@@ -47,7 +48,7 @@ class ImporterV2FormMixin:
     ):
         """
         Create ImporterXmlChunk associate with `batch`, and schedule parser
-        execution against `batch` conditional upon a chunk havinfg been created.
+        execution against `batch` conditional upon a chunk having been created.
 
         The function returns the number of chunks created by the chunker.
 
@@ -67,6 +68,23 @@ class ImporterV2FormMixin:
             )
         return chunk_count
 
+    def validate_taric_file_name(self, file_name):
+        """
+        This replaces validate_file_name which was vulnerable to exploitation:
+        Input Validation Not Enforced by Application
+        Confirms the taric_file.name matches one of the following formats:
+        TGBXXXXX.XML or DITXXXXX.XML where the Xs are numerical only
+        """
+        tgb_file_name = re.compile(r"TGB[0-9]{5}\.xml")
+        dit_file_name = re.compile(r"DIT[0-9]{6}\.xml")
+
+        if tgb_file_name.match(file_name) or dit_file_name.match(file_name):
+            pass
+        else:
+            raise ValidationError(
+                "Invalid file name. Please check and try again",
+            )
+
     def clean_taric_file(self):
         """Perform validation checks against the uploaded file."""
         uploaded_taric_file = self.cleaned_data["taric_file"]
@@ -75,8 +93,7 @@ class ImporterV2FormMixin:
         mime_type = get_mime_type(uploaded_taric_file)
         if mime_type not in ["text/xml", "application/xml"]:
             raise ValidationError("The selected file must be XML")
-
-        validate_filename(uploaded_taric_file.name)
+        self.validate_taric_file_name(uploaded_taric_file.name)
         validate_filepath(uploaded_taric_file)
 
         try:
@@ -323,6 +340,12 @@ class CommodityImportForm(ImporterV2FormMixin, forms.Form):
             else None
         )
         if taric_file:
+            mime_type = get_mime_type(taric_file)
+            if mime_type not in ["text/xml", "application/xml"]:
+                raise forms.ValidationError(
+                    "The selected loading report files must be XML",
+                )
+
             cleaned_data["name"] = taric_file.name
 
         return cleaned_data

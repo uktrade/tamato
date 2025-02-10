@@ -170,13 +170,13 @@ def test_commodity_importer_import_new_success_redirect(mock_save, valid_user_cl
     mock_save.return_value = factories.ImportBatchFactory.create()
     url = reverse("commodity_importer-ui-create")
 
-    with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as f:
+    with open(f"{TEST_FILES_PATH}/TGB12345.xml", "rb") as f:
         content = f.read()
 
     data = {
         "workbasket_title": "12345",
         "taric_file": SimpleUploadedFile(
-            "taric_file.xml",
+            "TGB12345.xml",
             content,
             content_type="text/xml",
         ),
@@ -210,7 +210,7 @@ def test_commodity_importer_import_new_failure(file_name, error_msg, valid_user_
     url = reverse("commodity_importer-ui-create")
     with open(f"{TEST_FILES_PATH}/{file_name}", "rb") as f:
         content = f.read()
-    taric_file = SimpleUploadedFile("taric_file.xml", content, content_type="text/xml")
+    taric_file = SimpleUploadedFile("TGB12345.xml", content, content_type="text/xml")
     response = valid_user_client.post(
         url,
         {"workbasket_title": "12345", "taric_file": taric_file},
