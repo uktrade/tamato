@@ -2574,7 +2574,7 @@ def test_clean_tasks():
                 "hostname": "celery@1",
                 "time_start": None,
                 "acknowledged": False,
-                "delivery_info": {},
+                "delivery_info": {"routing_key": "rule-check"},
                 "worker_pid": None,
             },
             {
@@ -2586,11 +2586,24 @@ def test_clean_tasks():
                 "hostname": "celery@1",
                 "time_start": None,
                 "acknowledged": False,
-                "delivery_info": {},
+                "delivery_info": {"routing_key": "rule-check"},
                 "worker_pid": None,
             },
         ],
-        "celery@2": [],
+        "celery@2": [
+            {
+                "id": "task2_id",
+                "name": "workbaskets.tasks.some_other_task_name",
+                "args": [1587],
+                "kwargs": {},
+                "type": "workbaskets.tasks.some_other_task_name",
+                "hostname": "celery@1",
+                "time_start": None,
+                "acknowledged": False,
+                "delivery_info": {"routing_key": "standard"},
+                "worker_pid": None,
+            },
+        ],
         "celery@3": [],
     }
     expected_result = [
@@ -2603,7 +2616,7 @@ def test_clean_tasks():
             "hostname": "celery@1",
             "time_start": None,
             "acknowledged": False,
-            "delivery_info": {},
+            "delivery_info": {"routing_key": "rule-check"},
             "worker_pid": None,
             "status": "Active",
         },
@@ -2616,7 +2629,7 @@ def test_clean_tasks():
             "hostname": "celery@1",
             "time_start": None,
             "acknowledged": False,
-            "delivery_info": {},
+            "delivery_info": {"routing_key": "rule-check"},
             "worker_pid": None,
             "status": "Active",
         },
@@ -2626,7 +2639,7 @@ def test_clean_tasks():
         tap_tasks.clean_tasks(
             celery_dictionary,
             task_status="Active",
-            task_name="workbaskets.tasks.call_check_workbasket_sync",
+            routing_key="rule-check",
         )
         == expected_result
     )
@@ -2640,13 +2653,14 @@ def test_current_tasks_is_called(valid_user_client):
     return_value = [
         CeleryTask(
             "12345",
+            "Task name",
             1,
             TAPTasks.timestamp_to_datetime_string(1718098484.8248514),
             "54 out of 100",
             "Active",
         ),
-        CeleryTask("23456", 2, "", "0 out of 100", "Queued"),
-        CeleryTask("34567", 3, "", "0 out of 100", "Queued"),
+        CeleryTask("23456", "Task name", 2, "", "0 out of 100", "Queued"),
+        CeleryTask("34567", "Task name", 3, "", "0 out of 100", "Queued"),
     ]
 
     with patch.object(

@@ -32,6 +32,7 @@ def test_check_missing_measures_fail_list(valid_user_client, user_workbasket):
     MissingMeasureCommCodeFactory.create_batch(
         3,
         missing_measures_check=missing_measures_check,
+        successful=False,
     )
     url = reverse("workbaskets:workbasket-ui-missing-measures-check")
     response = valid_user_client.get(url)
