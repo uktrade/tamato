@@ -836,21 +836,24 @@ def test_create_workflow_task_view(valid_user_client, task_workflow):
         "progress_state": progress_state.pk,
     }
     create_response = valid_user_client.post(create_url, form_data)
+
+    assert task_workflow.get_tasks().count() == 1
+    assert create_response.status_code == 302
+
     created_workflow_task = task_workflow.get_tasks().get()
     confirmation_url = reverse(
         "workflow:task-workflow-task-ui-confirm-create",
         kwargs={"pk": created_workflow_task.pk},
     )
-
-    assert create_response.status_code == 302
-    assert task_workflow.get_tasks().count() == 1
     assert create_response.url == confirmation_url
 
     confirmation_response = valid_user_client.get(confirmation_url)
-
-    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-
     assert confirmation_response.status_code == 200
+
+    soup = BeautifulSoup(
+        confirmation_response.content.decode(confirmation_response.charset),
+        "html.parser",
+    )
     assert created_workflow_task.title in soup.select("h1.govuk-panel__title")[0].text
 
 

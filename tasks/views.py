@@ -583,7 +583,7 @@ class TaskWorkflowTaskCreateView(PermissionRequiredMixin, CreateView):
                 workflow=self.get_task_workflow(),
                 task=self.object,
             )
-        return HttpResponseRedirect(self.get_success_url(), self.object.pk)
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
         return reverse(
