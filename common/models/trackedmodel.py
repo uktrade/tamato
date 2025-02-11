@@ -52,6 +52,11 @@ class VersionGroup(TimestampedMixin):
 
     versions: QuerySet[TrackedModel]
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["current_version"]),
+        ]
+
 
 Cls = TypeVar("Cls", bound="TrackedModel")
 

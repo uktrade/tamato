@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 
 project = "Tariff Management Tool"
-copyright = "2021, Department for International Trade"
-author = "Department for International Trade"
+copyright = "2021, Department for Business and Trade"
+author = "Department for Business and Trade"
 
 # The full version, including alpha/beta/rc tags
 release = "1.0.0"
@@ -77,12 +77,13 @@ html_context = {
     "conf_py_path": "docs/",  # assuming your Sphinx folder is called `docs`
     "version": "main",  # assuming `main` is your repository's default branch
     "accessibility": "accessibility.md",  # assuming your accessibility statement is at `docs/accessibility.md`
+    "logo": "tudor-crown-logo.svg",
 }
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "organisation": "DIT",  # replace with your organisation's abbreviation (ideally) or name - long text may not look nice
+    "organisation": "DBT",  # replace with your organisation's abbreviation (ideally) or name - long text may not look nice
     "phase": "Alpha",  # replace with an Agile project phase - see https://www.gov.uk/service-manual/agile-delivery
 }
 # Add any paths that contain custom static files (such as style sheets) here,
