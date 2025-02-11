@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import OperationalError
 from django.db import transaction
@@ -19,6 +20,7 @@ from tasks.filters import TaskAndWorkflowFilter
 from tasks.filters import TaskFilter
 from tasks.filters import TaskWorkflowFilter
 from tasks.filters import WorkflowTemplateFilter
+from tasks.forms import AssignUsersForm
 from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
@@ -32,15 +34,19 @@ from tasks.forms import TaskWorkflowTemplateCreateForm
 from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.forms import TaskWorkflowUpdateForm
+from tasks.forms import UnassignUsersForm
 from tasks.models import Queue
 from tasks.models import QueueItem
 from tasks.models import Task
+from tasks.models import TaskAssignee
 from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.signals import set_current_instigator
+
+User = get_user_model()
 
 
 class TaskListView(PermissionRequiredMixin, SortingMixin, WithPaginationListView):
@@ -64,6 +70,36 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
     model = Task
     template_name = "tasks/detail.jinja"
     permission_required = "tasks.view_task"
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+
+        # TODO: Factor out queries and place in TaskAssigeeQuerySet.
+        current_assignees = TaskAssignee.objects.filter(
+            task=self.get_object(),
+            # TODO:
+            # Using all task assignees is temporary for illustration as it
+            # doesn't align with the new approach of assigning users to tasks
+            # rather than assigning users to workbaskets (the old approach,
+            # uses tasks as an intermediary joining object).
+            # assignment_type=TaskAssignee.AssignmentType.GENERAL,
+        ).assigned()
+
+        context["current_assignees"] = [
+            {"pk": assignee.pk, "name": assignee.user.get_full_name()}
+            for assignee in current_assignees.order_by(
+                "user__first_name",
+                "user__last_name",
+            )
+        ]
+        context["assignable_users"] = [
+            {"pk": user.pk, "name": user.get_full_name()}
+            for user in User.objects.active_tms().exclude(
+                pk__in=current_assignees.values_list("user__pk", flat=True),
+            )
+        ]
+
+        return context
 
 
 class TaskCreateView(PermissionRequiredMixin, CreateView):
@@ -159,6 +195,61 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         context_data["deleted_pk"] = self.kwargs["pk"]
         context_data["verbose_name"] = "task"
         return context_data
+
+
+class TaskAssignUsersView(PermissionRequiredMixin, FormView):
+    permission_required = "tasks.add_taskassignee"
+    template_name = "tasks/assign_users.jinja"
+    form_class = AssignUsersForm
+
+    @property
+    def task(self):
+        return Task.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Assign users to task"
+        return context
+
+    def form_valid(self, form):
+        form.assign_users(task=self.task, user_instigator=self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-ui-detail",
+            kwargs={"pk": self.kwargs["pk"]},
+        )
+
+
+class TaskUnassignUsersView(PermissionRequiredMixin, FormView):
+    permission_required = "tasks.change_taskassignee"
+    template_name = "tasks/assign_users.jinja"
+    form_class = UnassignUsersForm
+
+    @property
+    def task(self):
+        return Task.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = "Unassign users from task"
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["task"] = self.task
+        return kwargs
+
+    def form_valid(self, form):
+        form.unassign_users(self.request.user)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-ui-detail",
+            kwargs={"pk": self.kwargs["pk"]},
+        )
 
 
 class SubTaskCreateView(PermissionRequiredMixin, CreateView):
