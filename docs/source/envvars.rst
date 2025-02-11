@@ -5,7 +5,7 @@ Environment variables
 
     (default ``True``)
 
-    Use DIT staff SSO for authentication. You may want to set this to ``"false"`` for
+    Use DBT staff SSO for authentication. You may want to set this to ``"false"`` for
     local development. If ``"false"``, Django's ModelBackend authentication is used
     instead.
 
