@@ -1,5 +1,6 @@
 """WorkBasket models."""
 
+import hashlib
 import importlib
 import logging
 from abc import ABCMeta
@@ -15,6 +16,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Max
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Subquery
 from django_fsm import FSMField
@@ -341,12 +343,8 @@ class WorkBasket(TimestampedMixin):
         # avoid circular import
         from commodities.models.orm import GoodsNomenclature
 
-        codes = [
-            item
-            for item in self.tracked_models.all()
-            if isinstance(item, GoodsNomenclature)
-        ]
-        return len(codes) != 0
+        codes = self.tracked_models.filter(Q(instance_of=GoodsNomenclature))
+        return codes.count() != 0
 
     def terminate_rule_check(self):
         """Terminate any task associated with the WorkBasket's rule checking, as
@@ -450,6 +448,34 @@ class WorkBasket(TimestampedMixin):
     @property
     def approved(self):
         return self.status in WorkflowStatus.approved_statuses()
+
+    @property
+    def commodity_measure_changes_hash(self):
+        """
+        Used by the missing measures check to compare the state of measures and
+        commodities in a workbasket to see what's changed.
+
+        Uses __dict__ to look at tracked model values then hashes the result so
+        we can keep to a fixed output length. See MissingMeasuresCheck and
+        check_workbasket_for_missing_measures.
+        """
+        # avoid circular import
+        from commodities.models.orm import GoodsNomenclature
+
+        changes = self.tracked_models.filter(
+            Q(instance_of=GoodsNomenclature) | Q(instance_of=Measure),
+        ).order_by("pk")
+        snapshot = "".join(
+            [
+                # ignore django's ModelState object
+                "".join([str(v) for k, v in c.__dict__.items() if k != "_state"])
+                for c in changes
+            ],
+        )
+        value = bytes(f"{snapshot}", "utf-8")
+        hash = hashlib.sha256()
+        hash.update(value)
+        return hash.hexdigest()
 
     def __str__(self):
         return f"({self.pk}) [{self.status}]"
