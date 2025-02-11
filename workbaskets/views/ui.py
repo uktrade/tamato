@@ -46,6 +46,10 @@ from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
+from commodities.models.orm import GoodsNomenclatureDescription
+from commodities.models.orm import GoodsNomenclatureIndent
+from commodities.models.orm import GoodsNomenclatureOrigin
+from commodities.models.orm import GoodsNomenclatureSuccessor
 from common.filters import TamatoFilter
 from common.forms import DummyForm
 from common.inspect_tap_tasks import TAPTasks
@@ -1085,6 +1089,7 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
     def get_queryset(self):
         self.queryset = MissingMeasureCommCode.objects.filter(
             missing_measures_check__workbasket=self.workbasket,
+            successful=False,
         )
         return super().get_queryset()
 
@@ -1121,11 +1126,17 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
         context = super().get_context_data(**kwargs)
 
         context["workbasket"] = self.workbasket
-        context["missing_measures_check"] = getattr(
+        missing_measures_check = getattr(
             self.workbasket,
             "missing_measures_check",
             None,
         )
+        context["missing_measures_check"] = missing_measures_check
+        if missing_measures_check is not None:
+            context["check_is_stale"] = (
+                missing_measures_check.hash
+                != self.workbasket.commodity_measure_changes_hash
+            )
         context["selected_tab"] = "measures-check"
 
         if self.workbasket.missing_measures_check_task_id:
@@ -1414,31 +1425,99 @@ class WorkBasketReviewCertificatesView(WorkBasketReviewView):
         return context
 
 
-class WorkbasketReviewGoodsView(
-    PermissionRequiredMixin,
-    TemplateView,
-):
+class WorkbasketReviewGoodsView(WorkBasketReviewView):
     """UI endpoint for reviewing goods changes in a workbasket."""
 
+    model = GoodsNomenclature
     template_name = "workbaskets/review-goods.jinja"
-    permission_required = "workbaskets.view_workbasket"
-
-    def get(self, *args, **kwargs):
-        return HttpResponseRedirect(
-            reverse("review-imported-goods", kwargs={"pk": self.workbasket.pk}),
-        )
-
-    @property
-    def workbasket(self):
-        return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["tab_page_title"] = "Review commodities"
+        context["tab_page_title"] = "Review commodity codes"
         context["selected_tab"] = "commodities"
-        context["user_workbasket"] = WorkBasket.current(self.request)
-        context["workbasket"] = self.workbasket
+        context["selected_nested_tab"] = "commodity-codes"
+        context["tab_template"] = "includes/workbaskets/review-commodity-codes.jinja"
 
+        try:
+            import_batch = self.workbasket.importbatch
+        except ObjectDoesNotExist:
+            import_batch = None
+
+        if import_batch:
+            context["import_batch_pk"] = import_batch.pk
+            if context["workbasket"] == context["user_workbasket"]:
+                context["unsent_notification"] = (
+                    import_batch.goods_import
+                    and not Notification.objects.filter(
+                        notified_object_pk=import_batch.pk,
+                        notification_type=NotificationTypeChoices.GOODS_REPORT,
+                    ).exists()
+                )
+
+        return context
+
+
+class WorkbasketReviewGoodsDescriptionsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureDescription
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity descriptions"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "descriptions"
+        context["tab_template"] = (
+            "includes/workbaskets/review-commodity-descriptions.jinja"
+        )
+        return context
+
+
+class WorkbasketReviewGoodsIndentsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureIndent
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity indents"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "indents"
+        context["tab_template"] = "includes/workbaskets/review-commodity-indents.jinja"
+        return context
+
+
+class WorkbasketReviewGoodsOriginsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureOrigin
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity origins"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "origins"
+        context["tab_template"] = "includes/workbaskets/review-commodity-origins.jinja"
+        return context
+
+
+class WorkbasketReviewGoodsSuccessorsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureSuccessor
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity successors"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "successors"
+        context["tab_template"] = (
+            "includes/workbaskets/review-commodity-successors.jinja"
+        )
         return context
 
 
@@ -1777,7 +1856,7 @@ class RuleCheckQueueView(
         try:
             context["celery_healthy"] = True
             context["current_rule_checks"] = tap_tasks.current_tasks(
-                "workbaskets.tasks.call_check_workbasket_sync",
+                routing_key="rule-check",
             )
             context["status_tag_generator"] = self.status_tag_generator
         except kombu.exceptions.OperationalError as oe:
