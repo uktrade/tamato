@@ -1089,6 +1089,7 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
     def get_queryset(self):
         self.queryset = MissingMeasureCommCode.objects.filter(
             missing_measures_check__workbasket=self.workbasket,
+            successful=False,
         )
         return super().get_queryset()
 
@@ -1855,7 +1856,7 @@ class RuleCheckQueueView(
         try:
             context["celery_healthy"] = True
             context["current_rule_checks"] = tap_tasks.current_tasks(
-                "workbaskets.tasks.call_check_workbasket_sync",
+                routing_key="rule-check",
             )
             context["status_tag_generator"] = self.status_tag_generator
         except kombu.exceptions.OperationalError as oe:
