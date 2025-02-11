@@ -18,7 +18,7 @@ class RateChecks(BaseRateCheck):
         """
         # comm code live on EIF date
         if not self.tap_comm_code():
-            message = f"{self.ref_rate.commodity_code} {self.tap_geo_area_description()} comm code not live"
+            message = f"Rate {self.ref_rate.commodity_code} {self.ref_rate.valid_between}: commodity code not found for period."
             print("FAIL", message)
             return AlignmentReportCheckStatus.FAIL, message
 
@@ -27,21 +27,65 @@ class RateChecks(BaseRateCheck):
 
         # this is ok - there is a single measure matching the expected query
         if len(measures) == 1:
-            return AlignmentReportCheckStatus.PASS, ""
+            return (
+                AlignmentReportCheckStatus.PASS,
+                f"{self.tap_comm_code()} {self.ref_rate.valid_between}: rate for commodity code matched",
+            )
 
         # this is not inline with expected measures presence - check comm code children
         elif len(measures) == 0:
-            # check 1 level down for presence of measures
-            match = self.tap_recursive_comm_code_check(
-                self.get_snapshot(),
-                self.ref_rate.commodity_code,
-                80,
-            )
+            # check parents from chapter level snapshot
+            parent_snapshot = self.get_snapshot(self.ref_rate.commodity_code[0:4])
+            parent_commodities = []
+            child_commodity = None
+            match_parents = False
+            match_children = False
 
-            message = f"{self.tap_comm_code()} : "
+            for commodity in parent_snapshot.commodities:
+                if (
+                    commodity.item_id == self.ref_rate.commodity_code
+                    and commodity.suffix == "80"
+                ):
+                    child_commodity = commodity
+                    break
 
-            if match:
-                message += f"matched with children"
+            if child_commodity is not None:
+                next_parent = child_commodity
+                while True:
+                    next_parent = parent_snapshot.get_parent(next_parent)
+                    if next_parent is None:
+                        break
+
+                    parent_commodities.append(next_parent)
+                    related_measures = self.tap_related_measures(next_parent.item_id)
+                    if len(related_measures) > 0:
+                        match_parents = True
+                        break
+                    if (
+                        next_parent.item_id
+                        == self.ref_rate.commodity_code[0:4] + "000000"
+                        and next_parent.suffix == "80"
+                    ):
+                        break
+
+            if not match_parents:
+                # children recursively
+                match_children = self.tap_recursive_comm_code_check(
+                    self.get_snapshot(),
+                    self.ref_rate.commodity_code,
+                    "80",
+                    1,
+                )
+
+            message = f"Rate {self.tap_comm_code()} {self.ref_rate.valid_between}: "
+
+            if match_children:
+                message += f"matched (against commodity code children)"
+                print("PASS", message)
+
+                return AlignmentReportCheckStatus.PASS, message
+            if match_parents:
+                message += f"matched (against commodity code parent)"
                 print("PASS", message)
 
                 return AlignmentReportCheckStatus.PASS, message
@@ -52,6 +96,6 @@ class RateChecks(BaseRateCheck):
                 return AlignmentReportCheckStatus.FAIL, message
 
         else:
-            message = f"{self.tap_comm_code()} : multiple measures match"
+            message = f"Rate {self.tap_comm_code()} {self.ref_rate.valid_between} : multiple measures match"
             print("WARNING", message)
             return AlignmentReportCheckStatus.WARNING, message

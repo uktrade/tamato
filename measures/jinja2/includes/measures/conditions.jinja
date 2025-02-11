@@ -1,6 +1,6 @@
-{% macro conditions_list(measure) -%}
+{% macro conditions_list(measure, workbasket) -%}
   <ol class="govuk-list">
-    {% for condition in measure.conditions.current().with_reference_price_string() -%}
+    {% for condition in measure.conditions.approved_up_to_transaction(workbasket.transactions.last()).with_reference_price_string() -%}
       <li title="{{ condition.description }}">
 
         <span class="condition_code">

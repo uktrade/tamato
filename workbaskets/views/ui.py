@@ -3,7 +3,6 @@ import re
 from datetime import date
 from functools import cached_property
 from typing import Tuple
-from urllib.parse import urlencode
 
 import boto3
 import django_filters
@@ -16,9 +15,14 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db.models import Case
+from django.db.models import DateField
 from django.db.models import F
 from django.db.models import ProtectedError
 from django.db.models import Q
+from django.db.models import QuerySet
+from django.db.models import Value
+from django.db.models import When
 from django.db.transaction import atomic
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -38,12 +42,15 @@ from markdownify import markdownify
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
+from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
+from commodities.models.orm import FootnoteAssociationGoodsNomenclature
+from commodities.models.orm import GoodsNomenclature
 from common.filters import TamatoFilter
+from common.forms import DummyForm
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
-from common.util import format_date_string
 from common.views import SortingMixin
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
@@ -52,7 +59,6 @@ from exporter.models import Upload
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from geo_areas.models import GeographicalMembership
-from importer.goods_report import GoodsReporter
 from measures.models import Measure
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
@@ -72,8 +78,11 @@ from workbaskets.models import DataUpload
 from workbaskets.models import WorkBasket
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
+from workbaskets.tasks import call_end_measures
+from workbaskets.tasks import check_workbasket_for_missing_measures
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.decorators import require_current_workbasket
+from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
 from workbaskets.views.mixins import WithCurrentWorkBasket
 
 logger = logging.getLogger(__name__)
@@ -1058,6 +1067,76 @@ class WorkBasketViolationDetail(DetailView):
         return redirect("workbaskets:workbasket-ui-violations")
 
 
+class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
+    success_url = reverse_lazy("workbaskets:workbasket-ui-missing-measures-check")
+    template_name = "workbaskets/checks/missing_measures.jinja"
+    form_class = DummyForm
+
+    model = MissingMeasureCommCode
+    sort_by_fields = ["commodity"]
+    custom_sorting = {
+        "commodity": "commodity__item_id",
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    def get_queryset(self):
+        self.queryset = MissingMeasureCommCode.objects.filter(
+            missing_measures_check__workbasket=self.workbasket,
+        )
+        return super().get_queryset()
+
+    @atomic
+    def run_missing_measures_check(self, comm_code_pks):
+        """Remove old checks, start new checks via a Celery task and save the
+        newly created task's ID on the workbasket."""
+        workbasket = self.workbasket
+        last_tx = self.workbasket.transactions.last()
+        task = check_workbasket_for_missing_measures.delay(
+            workbasket.pk,
+            last_tx.pk,
+            comm_code_pks,
+        )
+        logger.info(
+            f"Started missing measures check against workbasket.id={workbasket.pk} "
+            f"on task.id={task.id}",
+        )
+        workbasket.missing_measures_check_task_id = task.id
+        workbasket.save()
+
+    def form_valid(self, form):
+        form_action = self.request.POST.get("form-action")
+        if form_action == "start-check":
+            comm_code_pks = get_comm_codes_affected_by_workbasket_changes(
+                self.workbasket,
+            )
+            self.run_missing_measures_check(comm_code_pks)
+        if form_action == "stop-check":
+            self.workbasket.terminate_missing_measures_check()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["workbasket"] = self.workbasket
+        context["missing_measures_check"] = getattr(
+            self.workbasket,
+            "missing_measures_check",
+            None,
+        )
+        context["selected_tab"] = "measures-check"
+
+        if self.workbasket.missing_measures_check_task_id:
+            result = AsyncResult(self.workbasket.missing_measures_check_task_id)
+            if result.status != "SUCCESS":
+                context["missing_measures_check_in_progress"] = True
+            else:
+                context["missing_measures_check_in_progress"] = False
+        return context
+
+
 class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
     """
     UI to confirm (or cancel) workbasket deletion.
@@ -1123,7 +1202,7 @@ class WorkBasketDeleteDone(TemplateView):
 
 class WorkBasketCompare(WithCurrentWorkBasket, FormView):
     success_url = reverse_lazy("workbaskets:workbasket-check-ui-compare")
-    template_name = "workbaskets/compare.jinja"
+    template_name = "workbaskets/checks/worksheet.jinja"
     form_class = forms.WorkbasketCompareForm
 
     @property
@@ -1186,6 +1265,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
             workbasket=self.workbasket,
             data_upload=self.data_upload,
             matching_measures=self.matching_measures,
+            selected_tab="worksheet-check",
             *args,
             **kwargs,
         )
@@ -1193,7 +1273,7 @@ class WorkBasketCompare(WithCurrentWorkBasket, FormView):
 
 @method_decorator(require_current_workbasket, name="dispatch")
 class WorkBasketChecksView(FormView):
-    template_name = "workbaskets/checks.jinja"
+    template_name = "workbaskets/checks/business_rules.jinja"
     form_class = forms.SelectableObjectsForm
 
     # Form action mappings to URL names.
@@ -1235,6 +1315,18 @@ class WorkBasketChecksView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["selected_tab"] = "rules-check"
+        missing_measures_check = getattr(
+            self.workbasket,
+            "missing_measures_check",
+            None,
+        )
+        if missing_measures_check is not None:
+            context["missing_measures_check_successful"] = (
+                missing_measures_check.successful
+            )
+        else:
+            context["missing_measures_check_successful"] = False
         # set to true if there is an associated goods import batch with an unsent notification
         try:
             import_batch = self.workbasket.importbatch
@@ -1331,6 +1423,11 @@ class WorkbasketReviewGoodsView(
     template_name = "workbaskets/review-goods.jinja"
     permission_required = "workbaskets.view_workbasket"
 
+    def get(self, *args, **kwargs):
+        return HttpResponseRedirect(
+            reverse("review-imported-goods", kwargs={"pk": self.workbasket.pk}),
+        )
+
     @property
     def workbasket(self):
         return WorkBasket.objects.get(pk=self.kwargs["pk"])
@@ -1341,78 +1438,6 @@ class WorkbasketReviewGoodsView(
         context["selected_tab"] = "commodities"
         context["user_workbasket"] = WorkBasket.current(self.request)
         context["workbasket"] = self.workbasket
-        context["report_lines"] = []
-        context["import_batch_pk"] = None
-
-        # Get actual values from the ImportBatch instance if one is associated
-        # with the workbasket.
-        try:
-            import_batch = self.workbasket.importbatch
-        except ObjectDoesNotExist:
-            import_batch = None
-
-        taric_file = None
-        if import_batch and import_batch.taric_file and import_batch.taric_file.name:
-            taric_file = import_batch.taric_file.storage.exists(
-                import_batch.taric_file.name,
-            )
-
-        if taric_file:
-            reporter = GoodsReporter(import_batch.taric_file)
-            goods_report = reporter.create_report()
-            today = date.today()
-
-            context["report_lines"] = [
-                {
-                    "update_type": line.update_type.title() if line.update_type else "",
-                    "record_name": line.record_name.title() if line.record_name else "",
-                    "item_id": line.goods_nomenclature_item_id,
-                    "item_id_search_url": (
-                        reverse("commodity-ui-list")
-                        + "?"
-                        + urlencode({"item_id": line.goods_nomenclature_item_id})
-                        if line.goods_nomenclature_item_id
-                        else ""
-                    ),
-                    "measures_search_url": (
-                        reverse("measure-ui-list")
-                        + "?"
-                        + urlencode(
-                            {
-                                "goods_nomenclature__item_id": line.goods_nomenclature_item_id,
-                                "end_date_modifier": "after",
-                                "end_date_0": today.day,
-                                "end_date_1": today.month,
-                                "end_date_2": today.year,
-                            },
-                        )
-                        if line.goods_nomenclature_item_id
-                        else ""
-                    ),
-                    "suffix": line.suffix,
-                    "start_date": format_date_string(
-                        line.validity_start_date,
-                        short_format=True,
-                    ),
-                    "end_date": format_date_string(
-                        line.validity_end_date,
-                        short_format=True,
-                    ),
-                    "comments": line.comments,
-                }
-                for line in goods_report.report_lines
-            ]
-            context["import_batch_pk"] = import_batch.pk
-
-            # notifications only relevant to a goods import
-            if context["workbasket"] == context["user_workbasket"]:
-                context["unsent_notification"] = (
-                    import_batch.goods_import
-                    and not Notification.objects.filter(
-                        notified_object_pk=import_batch.pk,
-                        notification_type=NotificationTypeChoices.GOODS_REPORT,
-                    ).exists()
-                )
 
         return context
 
@@ -1779,3 +1804,140 @@ class RuleCheckQueueView(
                 "text": task_status,
                 "tag_class": "",
             }
+
+
+@method_decorator(require_current_workbasket, name="dispatch")
+class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
+    model = Measure
+    paginate_by = 20
+    template_name = "workbaskets/auto_end_objects.jinja"
+    sort_by_fields = ["start_date", "goods_nomenclature", "sid"]
+    custom_sorting = {
+        "start_date": "valid_between",
+        "goods_nomenclature": "goods_nomenclature__item_id",
+        "sid": "sid",
+    }
+
+    @property
+    def workbasket(self) -> WorkBasket:
+        return WorkBasket.current(self.request)
+
+    @property
+    def measures(self):
+        return self.get_measures_to_end_date()
+
+    @property
+    def footnote_associations(self):
+        return self.get_footnote_associations_to_end_date()
+
+    @cached_property
+    def commodity_dictionary(self):
+        """Returns a dictionary of commodity SIDs that have been end-dated in
+        the workbasket along with their end dates."""
+        end_dated_commodities = GoodsNomenclature.objects.current().filter(
+            transaction__workbasket=self.workbasket,
+            valid_between__upper_inf=False,
+        )
+        commodity_dict = {
+            commodity.sid: commodity.valid_between
+            for commodity in end_dated_commodities
+        }
+        return commodity_dict
+
+    def get_queryset(self):
+        ordering = self.get_ordering()
+        queryset = self.measures
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["workbasket"] = self.workbasket
+        context["today"] = date.today()
+        context["footnote_associations"] = self.footnote_associations
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action", None) == "auto-end-date":
+            self.auto_end_date()
+            return redirect(
+                "workbaskets:workbasket-ui-auto-end-date-confirm",
+                self.workbasket.pk,
+            )
+
+    def auto_end_date(self):
+        measure_pks = [measure.pk for measure in self.measures]
+        footnote_association_pks = [
+            footnote_association.pk
+            for footnote_association in self.footnote_associations
+        ]
+        call_end_measures.apply_async(
+            (measure_pks, footnote_association_pks, self.workbasket.pk),
+        )
+
+    def get_measures_to_end_date(self) -> QuerySet:
+        """
+        Returns a queryset of measures on end-dated commodities in the
+        workbasket along with those commodities' end-dates.
+
+        It filters out measures which have already ended.
+        """
+        measures_on_commodities = Measure.objects.current().filter(
+            goods_nomenclature__sid__in=self.commodity_dictionary.keys(),
+        )
+        conditions = [
+            When(
+                goods_nomenclature__sid=commodity_sid,
+                then=Value(commodity_valid_between),
+            )
+            for commodity_sid, commodity_valid_between in self.commodity_dictionary.items()
+        ]
+        measures = measures_on_commodities.annotate(
+            commodity_valid_between=Case(
+                *conditions,
+                output_field=DateField(),
+            ),
+        )
+
+        return measures.with_effective_valid_between().exclude(
+            db_effective_valid_between__not_gt=F("commodity_valid_between"),
+        )
+
+    def get_footnote_associations_to_end_date(self) -> QuerySet:
+        """
+        Returns a queryset of footnote associations on end-dated commodities in
+        the workbasket along with those commodities' end-dates.
+
+        It filters out associations which have already ended.
+        """
+
+        footnote_associations = (
+            FootnoteAssociationGoodsNomenclature.objects.current().filter(
+                goods_nomenclature__sid__in=self.commodity_dictionary.keys(),
+            )
+        )
+        conditions = [
+            When(
+                goods_nomenclature__sid=commodity_sid,
+                then=Value(commodity_valid_between),
+            )
+            for commodity_sid, commodity_valid_between in self.commodity_dictionary.items()
+        ]
+        footnote_associations = footnote_associations.annotate(
+            commodity_valid_between=Case(
+                *conditions,
+                output_field=DateField(),
+            ),
+        )
+
+        return footnote_associations.exclude(
+            valid_between__not_gt=F("commodity_valid_between"),
+        )
+
+
+class AutoEndDateConfirm(DetailView):
+    template_name = "workbaskets/confirm_auto_end_date.jinja"
+    model = WorkBasket

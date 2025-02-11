@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.conf import settings
+from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db import transaction
@@ -81,6 +82,17 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
             & models.Q(parent_task__isnull=True),
         )
 
+    def parents(self):
+        """Returns a queryset of tasks who do not have subtasks linked to
+        them."""
+        return self.filter(
+            models.Q(parent_task=None),
+        )
+
+    def subtasks(self):
+        """Returns a queryset of tasks who have parent tasks linked to them."""
+        return self.exclude(models.Q(parent_task=None))
+
 
 class TaskBase(TimestampedMixin):
     """Abstract model mixin containing model fields common to TaskTemplate and
@@ -133,6 +145,7 @@ class Task(TaskBase):
         ordering = ["id"]
 
     @property
+    @admin.display(boolean=True)
     def is_subtask(self) -> bool:
         return bool(self.parent_task)
 

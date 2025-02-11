@@ -55,6 +55,7 @@ omit = [
     'manage.py',
     '*/.pycharm_helpers/*',
     '*/pycharm/*',
+    '/tmp/*', # sqlite snapshots copy source tree plus extra migrations here.
 ]
 
 exclude_lines = [
@@ -97,5 +98,6 @@ norecursedirs = [
 ]
 markers = [
     "importer_v2",
-    "reference_documents"
+    "reference_documents",
+    "business_rules"
 ]

@@ -9,6 +9,7 @@ from common.tests import factories
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.business_rules
 def test_CET1(assert_handles_duplicates):
     """The type of the Certificate must be unique."""
 
@@ -18,6 +19,7 @@ def test_CET1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_CET2(delete_record):
     """The Certificate type cannot be deleted if it is used in a Certificate."""
 
@@ -29,6 +31,7 @@ def test_CET2(delete_record):
         )
 
 
+@pytest.mark.business_rules
 def test_CET3(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -36,6 +39,7 @@ def test_CET3(date_ranges):
         factories.CertificateTypeFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 @pytest.mark.xfail(reason="CE2 disabled")
 def test_CE2(assert_handles_duplicates):
     """The combination of certificate type and code must be unique."""
@@ -47,6 +51,7 @@ def test_CE2(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_CE3(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -54,6 +59,7 @@ def test_CE3(date_ranges):
         factories.CertificateFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 def test_CE4(assert_spanning_enforced):
     """If a certificate is used in a measure condition then the validity period
     of the certificate must span the validity period of the measure."""
@@ -68,6 +74,7 @@ def test_CE4(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_CE5(delete_record):
     """The certificate cannot be deleted if it is used in a measure
     condition."""
@@ -80,6 +87,7 @@ def test_CE5(delete_record):
         )
 
 
+@pytest.mark.business_rules
 def test_CE6_one_description_mandatory():
     """At least one description record is mandatory."""
     certificate = factories.CertificateFactory.create(description=None)
@@ -89,6 +97,7 @@ def test_CE6_one_description_mandatory():
             business_rules.CE6(certificate.transaction).validate(certificate)
 
 
+@pytest.mark.business_rules
 def test_CE6_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the certificate."""
@@ -104,6 +113,7 @@ def test_CE6_first_description_must_have_same_start_date(date_ranges):
             )
 
 
+@pytest.mark.business_rules
 def test_CE6_start_dates_cannot_match():
     """No two associated description periods for the same certificate and
     language may have the same start date."""
@@ -120,6 +130,7 @@ def test_CE6_start_dates_cannot_match():
             )
 
 
+@pytest.mark.business_rules
 def test_CE6_certificate_validity_period_must_span_description(date_ranges):
     """The validity period of the certificate must span the validity period of
     the certificate description."""
@@ -135,6 +146,7 @@ def test_CE6_certificate_validity_period_must_span_description(date_ranges):
             )
 
 
+@pytest.mark.business_rules
 def test_CE7(assert_spanning_enforced):
     """The validity period of the certificate type must span the validity period
     of the certificate."""

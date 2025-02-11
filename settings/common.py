@@ -155,7 +155,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
+    "common.middleware.CustomSecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -223,6 +223,7 @@ CSP_STYLE_SRC = (
     "https://tagmanager.google.com/",
 )
 CSP_SCRIPT_SRC = (
+    "'strict-dynamic'",
     "'self'",
     "'unsafe-eval'",
     "'unsafe-inline'",
@@ -231,6 +232,10 @@ CSP_SCRIPT_SRC = (
     "ajax.googleapis.com/",
 )
 CSP_FONT_SRC = ("'self'", "'unsafe-inline'")
+CSP_OBJECT_SRC = ("'none'",)
+CSP_BASE_URI = ("'none'",)
+CSP_REQUIRE_TRUSTED_TYPES_FOR = ("'script'",)
+CSP_TRUSTED_TYPES = ("tap#webpack", "dompurify", "default")
 CSP_INCLUDE_NONCE_IN = ("script-src",)
 CSP_REPORT_ONLY = False
 
@@ -633,7 +638,7 @@ if ENABLE_CROWN_DEPENDENCIES_PUBLISHING:
     CROWN_DEPENDENCIES_API_CRON = (
         crontab(os.environ.get("CROWN_DEPENDENCIES_API_CRON"))
         if os.environ.get("CROWN_DEPENDENCIES_API_CRON")
-        else crontab(minute="0", hour="8-18/2", day_of_week="mon-fri")
+        else crontab(minute="0", hour="*/2")
     )
     CELERY_BEAT_SCHEDULE["crown_dependencies_api_publish"] = {
         "task": "publishing.tasks.publish_to_api",
@@ -645,6 +650,9 @@ CELERY_ROUTES = {
         "queue": "rule-check",
     },
     "workbaskets.tasks.check_workbasket": {
+        "queue": "rule-check",
+    },
+    "workbaskets.tasks.check_workbasket_for_missing_measures": {
         "queue": "rule-check",
     },
     "workbaskets.tasks.transition": {
@@ -669,6 +677,9 @@ CELERY_ROUTES = {
         "queue": "bulk-create",
     },
     "measures.tasks.bulk_edit_measures": {
+        "queue": "bulk-create",
+    },
+    "workbaskets.tasks.call_end_measures": {
         "queue": "bulk-create",
     },
     re.compile(r"(reference_documents)\.tasks\..*"): {

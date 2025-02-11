@@ -26,5 +26,6 @@ def test_modc_query(seed_database_with_indented_goods):
     )
 
     result = get_measures_on_declarable_commodities(measure2.transaction, "2903691900")
+    assert result.count() == 2
     assert measure1 in result
     assert measure2 in result

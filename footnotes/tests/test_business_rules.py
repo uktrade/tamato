@@ -13,6 +13,7 @@ pytestmark = pytest.mark.django_db
 # Footnote Type
 
 
+@pytest.mark.business_rules
 def test_FOT1(assert_handles_duplicates):
     """The type of the footnote must be unique."""
 
@@ -22,6 +23,7 @@ def test_FOT1(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_FOT2(delete_record):
     """The footnote type cannot be deleted if it is used in a footnote."""
 
@@ -32,6 +34,7 @@ def test_FOT2(delete_record):
         business_rules.FOT2(deleted_record.transaction).validate(deleted_record)
 
 
+@pytest.mark.business_rules
 def test_FOT3(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -42,6 +45,7 @@ def test_FOT3(date_ranges):
 # Footnote
 
 
+@pytest.mark.business_rules
 def test_FO2(assert_handles_duplicates):
     """The combination of footnote type and code must be unique."""
 
@@ -51,6 +55,7 @@ def test_FO2(assert_handles_duplicates):
     )
 
 
+@pytest.mark.business_rules
 def test_FO3(date_ranges):
     """The start date must be less than or equal to the end date."""
 
@@ -58,6 +63,7 @@ def test_FO3(date_ranges):
         factories.FootnoteFactory.create(valid_between=date_ranges.backwards)
 
 
+@pytest.mark.business_rules
 def test_FO4_one_description_mandatory():
     """At least one description record is mandatory."""
     footnote = factories.FootnoteFactory.create(description=None)
@@ -66,6 +72,7 @@ def test_FO4_one_description_mandatory():
             business_rules.FO4(footnote.transaction).validate(footnote)
 
 
+@pytest.mark.business_rules
 def test_FO4_first_description_must_have_same_start_date(date_ranges):
     """The start date of the first description period must be equal to the start
     date of the footnote."""
@@ -77,6 +84,7 @@ def test_FO4_first_description_must_have_same_start_date(date_ranges):
             business_rules.FO4(footnote.transaction).validate(footnote)
 
 
+@pytest.mark.business_rules
 def test_FO4_start_dates_cannot_match():
     """No two associated description periods may have the same start date."""
 
@@ -90,6 +98,7 @@ def test_FO4_start_dates_cannot_match():
             business_rules.FO4(duplicate.transaction).validate(footnote)
 
 
+@pytest.mark.business_rules
 def test_FO4_description_start_before_footnote_end(date_ranges):
     """The start date must be less than or equal to the end date of the
     footnote."""
@@ -107,6 +116,7 @@ def test_FO4_description_start_before_footnote_end(date_ranges):
             business_rules.FO4(early_description.transaction).validate(footnote)
 
 
+@pytest.mark.business_rules
 def test_FO5(assert_spanning_enforced):
     """When a footnote is used in a measure the validity period of the footnote
     must span the validity period of the measure."""
@@ -118,6 +128,7 @@ def test_FO5(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_FO6(assert_spanning_enforced):
     """When a footnote is used in a goods nomenclature the validity period of
     the footnote must span the validity period of the association with the goods
@@ -130,6 +141,7 @@ def test_FO6(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Export Refunds not implemented")
 def test_FO7():
     """When a footnote is used in an export refund nomenclature code the
@@ -139,6 +151,7 @@ def test_FO7():
     assert False
 
 
+@pytest.mark.business_rules
 def test_FO9(assert_spanning_enforced):
     """When a footnote is used in an additional code the validity period of the
     footnote must span the validity period of the association with the
@@ -151,6 +164,7 @@ def test_FO9(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 @requires_meursing_tables
 def test_FO10():
     """When a footnote is used in a meursing table heading the validity period
@@ -158,6 +172,7 @@ def test_FO10():
     meursing heading."""
 
 
+@pytest.mark.business_rules
 def test_FO17(assert_spanning_enforced):
     """The validity period of the footnote type must span the validity period of
     the footnote."""
@@ -167,6 +182,7 @@ def test_FO17(assert_spanning_enforced):
     )
 
 
+@pytest.mark.business_rules
 def test_FO11(delete_record):
     """When a footnote is used in a measure then the footnote may not be
     deleted."""
@@ -179,6 +195,7 @@ def test_FO11(delete_record):
         )
 
 
+@pytest.mark.business_rules
 def test_FO12(delete_record):
     """When a footnote is used in a goods nomenclature then the footnote may not
     be deleted."""
@@ -191,6 +208,7 @@ def test_FO12(delete_record):
         )
 
 
+@pytest.mark.business_rules
 @pytest.mark.skip(reason="Export Refunds not implemented")
 def test_FO13():
     """When a footnote is used in an export refund code then the footnote may
@@ -199,6 +217,7 @@ def test_FO13():
     assert False
 
 
+@pytest.mark.business_rules
 def test_FO15(delete_record):
     """When a footnote is used in an additional code then the footnote may not
     be deleted."""
@@ -211,6 +230,7 @@ def test_FO15(delete_record):
         )
 
 
+@pytest.mark.business_rules
 @requires_meursing_tables
 def test_FO16():
     """When a footnote is used in a meursing table heading then the footnote may

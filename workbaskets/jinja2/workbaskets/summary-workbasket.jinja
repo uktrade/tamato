@@ -169,6 +169,16 @@
         {% endif %}
       </div>
     {% endif %}
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Auto end-date measures</dt>
+      <dd class="govuk-summary-list__value">Automatically end-date or delete measures and footnote associations on commodities which have been ended in this workbasket.</dd>
+      <dd class="govuk-summary-list__actions">
+        <a
+          class="govuk-link"
+          href="{{ url('workbaskets:workbasket-ui-auto-end-date-measures') }}"
+        >Auto end-date measures</a>
+      </dd>
+    </div>
   </dl>
 
   {% if comments and can_view_comment %}

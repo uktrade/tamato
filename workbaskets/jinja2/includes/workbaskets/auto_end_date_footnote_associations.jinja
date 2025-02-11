@@ -1,0 +1,50 @@
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% block tab_content %}
+    <h2 class="govuk-heading-l">Workbasket {{workbasket.pk}} - Auto end footnote associations </h2>
+
+ {% set table_rows = [] %}
+  {% for association in footnote_associations %}
+    {% set footnote_link %}
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ association.associated_footnote.get_url() }}">{{ association.associated_footnote }}</a>
+    {% endset %}
+
+    {% set commodity_link %}
+      <a class="govuk-link govuk-!-font-weight-bold" href="{{ association.goods_nomenclature.get_url() }}">{{ association.goods_nomenclature.item_id }}</a>
+    {% endset %}
+
+    {% set action %}
+      {% if association.valid_between.lower > [today, association.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper]|min %}To be deleted{% else %}To be end-dated{% endif %}
+    {% endset %}
+
+    {{ table_rows.append([
+      {"text": footnote_link},
+      {"html": commodity_link if association.goods_nomenclature else "-"},
+      {"text": "{:%d %b %Y}".format(association.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper) if association.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper else "-" },
+      {"text": "{:%d %b %Y}".format(association.valid_between.lower) },
+      {"text": "{:%d %b %Y}".format(association.valid_between.upper) if association.valid_between.upper else '-' },
+      {"text": action},
+    ]) or "" }}
+  {% endfor %}
+
+  {% if footnote_associations %}
+    <p>The following footnote associations are linked to commodity codes that have been end-dated in your workbasket. Click submit to automatically end-date or delete these associations.</p>
+    {{ govukTable({
+      "head": [
+        {"text": "Footnote SID"},
+        {"text": "Commodity code"},
+        {"text": "Commodity end date"},
+        {"text": "Association start date"},
+        {"text": 'Association end date'},
+        {"text": "Action"},
+      ],
+      "rows": table_rows
+    }) }}
+    
+  {% else %}
+    <p class="govuk-body">No associations to end-date have been found. </p>
+    <p class="govuk-body">There are either no active footnote associations related to commodity codes updated in this workbasket or the associations already have end-dates in line with their respective commodities.</p>
+  {% endif %}
+    
+{% endblock %}
