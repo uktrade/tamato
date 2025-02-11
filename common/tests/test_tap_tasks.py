@@ -130,3 +130,90 @@ def test_tap_tasks_current_tasks(mock_get_due_tasks, user_workbasket):
         ),
     ]
     assert current_tasks == exp
+
+
+def test_clean_tasks():
+    """Test that the clean_tasks function of TAPTasks class returns a cleaned
+    list of tasks from Celery task dictionary."""
+    tap_tasks = TAPTasks()
+
+    celery_dictionary = {
+        "celery@1": [
+            {
+                "id": "task1_id",
+                "name": "workbaskets.tasks.call_check_workbasket_sync",
+                "args": [1591],
+                "kwargs": {},
+                "type": "workbaskets.tasks.call_check_workbasket_sync",
+                "hostname": "celery@1",
+                "time_start": None,
+                "acknowledged": False,
+                "delivery_info": {"routing_key": "rule-check"},
+                "worker_pid": None,
+            },
+            {
+                "id": "task2_id",
+                "name": "workbaskets.tasks.call_check_workbasket_sync",
+                "args": [1587],
+                "kwargs": {},
+                "type": "workbaskets.tasks.call_check_workbasket_sync",
+                "hostname": "celery@1",
+                "time_start": None,
+                "acknowledged": False,
+                "delivery_info": {"routing_key": "rule-check"},
+                "worker_pid": None,
+            },
+        ],
+        "celery@2": [
+            {
+                "id": "task2_id",
+                "name": "workbaskets.tasks.some_other_task_name",
+                "args": [1587],
+                "kwargs": {},
+                "type": "workbaskets.tasks.some_other_task_name",
+                "hostname": "celery@1",
+                "time_start": None,
+                "acknowledged": False,
+                "delivery_info": {"routing_key": "standard"},
+                "worker_pid": None,
+            },
+        ],
+        "celery@3": [],
+    }
+    expected_result = [
+        {
+            "id": "task1_id",
+            "name": "workbaskets.tasks.call_check_workbasket_sync",
+            "args": [1591],
+            "kwargs": {},
+            "type": "workbaskets.tasks.call_check_workbasket_sync",
+            "hostname": "celery@1",
+            "time_start": None,
+            "acknowledged": False,
+            "delivery_info": {"routing_key": "rule-check"},
+            "worker_pid": None,
+            "status": "Active",
+        },
+        {
+            "id": "task2_id",
+            "name": "workbaskets.tasks.call_check_workbasket_sync",
+            "args": [1587],
+            "kwargs": {},
+            "type": "workbaskets.tasks.call_check_workbasket_sync",
+            "hostname": "celery@1",
+            "time_start": None,
+            "acknowledged": False,
+            "delivery_info": {"routing_key": "rule-check"},
+            "worker_pid": None,
+            "status": "Active",
+        },
+    ]
+
+    assert (
+        tap_tasks.clean_tasks(
+            celery_dictionary,
+            task_status="Active",
+            routing_key="rule-check",
+        )
+        == expected_result
+    )
