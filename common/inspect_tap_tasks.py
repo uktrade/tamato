@@ -46,8 +46,8 @@ class TAPTasks:
         if not tasks:
             return []
 
-        # tasks_info should be a dictionary of {celery worker : [related tasks]}
-        # tasks_info.values() therefore is a list of lists of celery tasks grouped by worker
+        # tasks should be a dictionary of {celery worker : [related tasks]}
+        # tasks.values() therefore is a list of lists of celery tasks grouped by worker
         tasks_cleaned = []
         for task in tasks.values():
             for item in task:
