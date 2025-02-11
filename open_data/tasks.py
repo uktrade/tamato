@@ -63,6 +63,8 @@ def update_model(model, cursor):
 
 
 def update_all_tables(verbose=False):
+    print("Inside update table")
+
     config = django.apps.apps.get_app_config(APP_LABEL)
 
     with connection.cursor() as cursor:
@@ -85,14 +87,22 @@ def update_all_tables(verbose=False):
     tx = Transaction.objects.last()
     with override_current_transaction(tx):
         for model in config.get_models():
+            if verbose:
+                print(f'Starting update of "{model._meta.db_table}"')
+                start_time = time.time()
             add_description(model)
+        if verbose:
+            elapsed_time = time.time() - start_time
+            print(
+                f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',
+            )
         save_commodities_parent(verbose)
         save_geo_areas(verbose)
         update_measure(verbose)
         update_measure_components(verbose)
 
 
-def update_single_model(model):
+def update_model_and_description(model):
     print(f'Starting update of "{model._meta.db_table}"')
     start_time = time.time()
     with connection.cursor() as cursor:
