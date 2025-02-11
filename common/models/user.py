@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import UserManager
 from django.db import models
 
 
@@ -20,7 +21,7 @@ class UserQuerySet(models.QuerySet):
 class User(AbstractUser):
     """Custom user model."""
 
-    objects = UserQuerySet.as_manager()
+    objects = UserManager.from_queryset(UserQuerySet)()
 
     current_workbasket = models.ForeignKey(
         "workbaskets.WorkBasket",
