@@ -18,10 +18,14 @@ class UserQuerySet(models.QuerySet):
         )
 
 
+class TamatoUserManager(UserManager.from_queryset(UserQuerySet)):
+    use_in_migrations = True
+
+
 class User(AbstractUser):
     """Custom user model."""
 
-    objects = UserManager.from_queryset(UserQuerySet)()
+    objects = TamatoUserManager()
 
     current_workbasket = models.ForeignKey(
         "workbaskets.WorkBasket",
