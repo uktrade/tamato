@@ -43,6 +43,7 @@ class WorkBasketFilterMixin(TamatoFilterMixin):
         exact_match_query = Q(search=search_term)
         partial_match_query = Q(search__icontains=search_term)
         query = exact_match_query | partial_match_query
+
         try:
             pk_query = Q(pk=int(search_term))
             query |= pk_query
@@ -52,6 +53,7 @@ class WorkBasketFilterMixin(TamatoFilterMixin):
                 output_field=FloatField(),
             )
         except ValueError:
+            # search_term cannot be converted to an integer
             pass
 
         return (
