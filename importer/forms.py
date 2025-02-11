@@ -70,9 +70,8 @@ class ImporterV2FormMixin:
 
     def validate_taric_file_name(self, file_name):
         """
-        This replaces validate_file_name which was vulnerable to exploitation:
-        Input Validation Not Enforced by Application
-        Confirms the taric_file.name matches one of the following formats:
+        Ensures taric_file.name matches one of the following formats:
+
         TGBXXXXX.XML or DITXXXXX.XML where the Xs are numerical only
         """
         tgb_file_name = re.compile(r"TGB[0-9]{5}\.xml")
