@@ -12,6 +12,7 @@ class UserQuerySet(models.QuerySet):
                 | models.Q(is_superuser=True),
             )
             .filter(is_active=True)
+            .distinct()
             .order_by("first_name", "last_name")
         )
 
