@@ -396,7 +396,7 @@ class CurrentWorkBasket(SortingMixin, FormView):
     @cached_property
     def comments(self):
         comments = Comment.objects.filter(task__workbasket=self.workbasket)
-        ordering = self.get_ordering()
+        ordering = self.get_comments_ordering()[0]
         if ordering:
             comments = comments.order_by(ordering)
         return comments
@@ -405,16 +405,18 @@ class CurrentWorkBasket(SortingMixin, FormView):
     def paginator(self):
         return Paginator(self.comments, per_page=20)
 
-    def get_comments_sort_by_label(self) -> str:
-        """Returns the sort_by_label to use for comments based on current
-        ordering."""
-        sort_by = self.request.GET.get("sort_by")
-        ordered = self.request.GET.get("ordered")
-        if sort_by == "comments" and ordered == "desc":
+    def get_comments_ordering(self) -> tuple[str, str]:
+        """Reverses the ordering value returned by `super().get_ordering()` to
+        list newest comments first by default and includes a custom label to use
+        as the sorting anchor's title."""
+        ordering = super().get_ordering()
+        if ordering and ordering.startswith("-"):
+            ordering = "created_at"
             sort_by_label = "Newest first"
         else:
+            ordering = "-created_at"
             sort_by_label = "Oldest first"
-        return sort_by_label
+        return ordering, sort_by_label
 
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket=self.workbasket)
@@ -473,7 +475,7 @@ class CurrentWorkBasket(SortingMixin, FormView):
                 "can_add_comment": can_add_comment,
                 "can_view_comment": can_view_comment,
                 "comments": page.object_list,
-                "sort_by_label": self.get_comments_sort_by_label(),
+                "sort_by_label": self.get_comments_ordering()[1],
                 "paginator": self.paginator,
                 "page_obj": page,
                 "page_links": page_links,
