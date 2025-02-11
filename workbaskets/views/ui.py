@@ -1871,7 +1871,6 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
     def deleted_commodities(self):
         """Returns a list of SIDs of commodities that have been deleted in the
         current workbasket."""
-        # TODO: What if a commodity is deleted then recreated. How can we filter deleted commodities in the workbasket but not include ones which then appear again
         return list(
             GoodsNomenclature.objects.filter(
                 transaction__workbasket=self.workbasket,
