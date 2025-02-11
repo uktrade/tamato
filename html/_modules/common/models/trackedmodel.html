@@ -164,7 +164,12 @@
         <span class="n">related_query_name</span><span class="o">=</span><span class="s2">&quot;is_current&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">versions</span><span class="p">:</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]</span></div>
+    <span class="n">versions</span><span class="p">:</span> <span class="n">QuerySet</span><span class="p">[</span><span class="n">TrackedModel</span><span class="p">]</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;current_version&quot;</span><span class="p">]),</span>
+        <span class="p">]</span></div>
 
 
 <span class="n">Cls</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Cls&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;TrackedModel&quot;</span><span class="p">)</span>
