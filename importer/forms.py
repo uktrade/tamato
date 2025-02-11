@@ -340,12 +340,6 @@ class CommodityImportForm(ImporterV2FormMixin, forms.Form):
             else None
         )
         if taric_file:
-            mime_type = get_mime_type(taric_file)
-            if mime_type not in ["text/xml", "application/xml"]:
-                raise forms.ValidationError(
-                    "The selected loading report files must be XML",
-                )
-
             cleaned_data["name"] = taric_file.name
 
         return cleaned_data
