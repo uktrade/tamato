@@ -36,6 +36,7 @@ from measures.models import Measure
 from measures.querysets import MeasuresQuerySet
 from workbaskets.util import serialize_uploaded_data
 from workbaskets.validators import WorkflowStatus
+from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
 
 logger = logging.getLogger(__name__)
 
@@ -445,6 +446,19 @@ class WorkBasket(TimestampedMixin):
 
         return num_completed, total
 
+    def missing_measure_check_progress(self) -> Tuple[int, int]:
+        """
+        Provides progress of a rule check for the WorkBasket.
+
+        Returns:
+            num_completed: the number of transaction checks already completed
+            total: the total number of transactions to be checked
+        """
+        num_completed = self.missing_measure_comm_codes.count()
+        total = len(get_comm_codes_affected_by_workbasket_changes(self))
+
+        return num_completed, total
+
     @property
     def approved(self):
         return self.status in WorkflowStatus.approved_statuses()
@@ -691,6 +705,12 @@ class WorkBasket(TimestampedMixin):
     def tracked_model_check_errors(self):
         return self.tracked_model_checks.filter(successful=False)
 
+    @property
+    def missing_measure_comm_codes(self):
+        return MissingMeasureCommCode.objects.filter(
+            missing_measures_check__workbasket=self,
+        )
+
     def delete_checks(self):
         """Delete all TrackedModelCheck and TransactionCheck instances related
         to the WorkBasket."""
@@ -704,9 +724,7 @@ class WorkBasket(TimestampedMixin):
     def delete_missing_measure_comm_codes(self):
         """Delete all MissingMeasureCommCode instances related to the
         WorkBasket."""
-        MissingMeasureCommCode.objects.filter(
-            missing_measures_check__workbasket=self,
-        ).delete()
+        self.missing_measure_comm_codes.delete()
 
     @property
     def unchecked_or_errored_transactions(self):
