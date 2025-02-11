@@ -547,67 +547,109 @@ def test_workbasket_review_tabs_without_permission(url, client):
 
 
 @pytest.mark.parametrize(
-    ("url", "object_factory", "num_columns"),
+    ("url", "object_factory", "num_columns", "num_rows"),
     [
         (
             "workbaskets:workbasket-ui-review-additional-codes",
             lambda: factories.AdditionalCodeFactory(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-certificates",
             lambda: factories.CertificateFactory.create(),
             6,
+            1,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods",
+            lambda: factories.GoodsNomenclatureFactory.create(),
+            4,
+            2,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods-descriptions",
+            lambda: factories.GoodsNomenclatureDescriptionFactory.create(),
+            3,
+            1,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods-indents",
+            lambda: factories.GoodsNomenclatureIndentFactory.create(),
+            3,
+            1,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods-origins",
+            lambda: factories.GoodsNomenclatureOriginFactory.create(),
+            2,
+            1,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods-successors",
+            lambda: factories.GoodsNomenclatureSuccessorFactory.create(),
+            2,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-footnotes",
             lambda: factories.FootnoteFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-geo-areas",
             lambda: factories.GeographicalAreaFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-geo-memberships",
             lambda: factories.GeographicalMembershipFactory.create(),
             7,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-measures",
             lambda: factories.MeasureFactory.create(),
             11,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-quotas",
             lambda: factories.QuotaOrderNumberFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-quota-definitions",
             lambda: factories.QuotaDefinitionFactory.create(),
             11,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-sub-quotas",
             lambda: factories.QuotaAssociationFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-quota-blocking-periods",
             lambda: factories.QuotaBlockingFactory.create(),
             7,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-quota-suspension-periods",
             lambda: factories.QuotaSuspensionFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-regulations",
             lambda: factories.RegulationFactory.create(),
             6,
+            1,
         ),
     ],
 )
@@ -615,6 +657,7 @@ def test_workbasket_review_tabs(
     url,
     object_factory,
     num_columns,
+    num_rows,
     valid_user_client,
     user_workbasket,
 ):
@@ -630,7 +673,7 @@ def test_workbasket_review_tabs(
     columns = page.select(".govuk-table__header")
     rows = page.select("tbody > tr")
     assert len(columns) == num_columns
-    assert len(rows) == 1
+    assert len(rows) == num_rows
 
 
 def test_workbasket_review_measures(valid_user_client):
