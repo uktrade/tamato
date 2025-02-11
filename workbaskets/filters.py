@@ -21,13 +21,21 @@ class WorkBasketFilterMixin(TamatoFilterMixin):
         Results are ordered first by relevancy then by PK to favour newer
         objects in the event of a tied rank value. Exact search term matches are
         therefore prioritised over partial substring matches.
+
+        The search rank is normalised to penalise longer documents and those
+        with a high unique word count, improving relevance scoring.
         """
+        NORMALISATION_LOG_LENGTH = 1
+        NORMALISATION_UNIQUE_WORDS = 8
+
         search_term = self.get_search_term(search_term)
         search_vector = SearchVector(*self.search_fields)
         search_rank = SearchRank(
             search_vector,
             search_term,
-            normalization=Value(1).bitor(Value(8)),
+            normalization=Value(NORMALISATION_LOG_LENGTH).bitor(
+                Value(NORMALISATION_UNIQUE_WORDS),
+            ),
         )
 
         vector_queryset = queryset.annotate(search=search_vector)
