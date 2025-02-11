@@ -163,7 +163,7 @@ class UnassignUsersForm(Form):
         self.fields["assignees"].queryset = self.task.assignees.order_by(
             "user__first_name",
             "user__last_name",
-        )
+        ).exclude(unassigned_at__isnull=False)
 
         self.fields["assignees"].label_from_instance = (
             lambda obj: f"{obj.user.get_full_name()}"
