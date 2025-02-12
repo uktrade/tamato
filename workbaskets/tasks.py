@@ -182,53 +182,93 @@ def call_end_measures(
     delete_objects(objects_to_delete, workbasket)
 
 
-def get_comm_codes_with_missing_measures(tx_pk: int, comm_code_pks: List[int]):
-    output = []
+def check_comm_code_for_missing_measures(
+    tx_pk: int,
+    comm_code_pk: int,
+    index: int,
+    total_num: int,
+    missing_measures_check,
+):
+    code = GoodsNomenclature.objects.get(pk=comm_code_pk)
 
-    for pk in comm_code_pks:
-        code = GoodsNomenclature.objects.get(pk=pk)
+    logger.info(f"Checking commodity {code.item_id}")
+    logger.info(
+        f"Progress: {index + 1} out of {total_num}",
+    )
 
-        logger.info(f"Checking commodity {code.item_id}")
-
-        if code.item_id.startswith("99") or code.item_id.startswith("98"):
-            logger.info(f"Chapters 98 and 99 are exempt. Skipping.")
-            continue
-
-        if code.valid_between.upper and code.valid_between.upper < date.today():
-            logger.info(f"Commodity validity has ended. Skipping.")
-            continue
-
-        tx = Transaction.objects.get(pk=tx_pk)
-
-        applicable_measures = get_measures_on_declarable_commodities(
-            tx,
-            code.item_id,
-            None,
+    if code.item_id.startswith("99") or code.item_id.startswith("98"):
+        logger.info(f"Chapters 98 and 99 are exempt. Skipping.")
+        return MissingMeasureCommCode.objects.create(
+            commodity=code,
+            missing_measures_check=missing_measures_check,
+            successful=True,
         )
 
-        if not applicable_measures:
-            logger.info(
-                f"Commodity {code.item_id} has no applicable measures of any type!",
-            )
-            output.append(code)
-            continue
-
-        filtered_measures = applicable_measures.filter(
-            measure_type__sid=103,
-            geographical_area=GeographicalArea.objects.erga_omnes().first(),
+    if code.valid_between.upper and code.valid_between.upper < date.today():
+        logger.info(f"Commodity validity has ended. Skipping.")
+        return MissingMeasureCommCode.objects.create(
+            commodity=code,
+            missing_measures_check=missing_measures_check,
+            successful=True,
         )
 
-        if not filtered_measures:
-            logger.info(
-                f"Commodity {code.item_id} has no applicable measures of type 103!",
-            )
-            output.append(code)
+    tx = Transaction.objects.get(pk=tx_pk)
 
+    applicable_measures = get_measures_on_declarable_commodities(
+        tx,
+        code.item_id,
+        None,
+    )
+
+    if not applicable_measures:
         logger.info(
-            f"Commodity {code.item_id} has {filtered_measures.count()} applicable type 103 measure(s)",
+            f"Commodity {code.item_id} has no applicable measures of any type!",
+        )
+        return MissingMeasureCommCode.objects.create(
+            commodity=code,
+            missing_measures_check=missing_measures_check,
+            successful=False,
         )
 
-    return output
+    filtered_measures = applicable_measures.filter(
+        measure_type__sid=103,
+        geographical_area=GeographicalArea.objects.erga_omnes().first(),
+    )
+
+    if not filtered_measures:
+        logger.info(
+            f"Commodity {code.item_id} has no applicable measures of type 103!",
+        )
+        return MissingMeasureCommCode.objects.create(
+            commodity=code,
+            missing_measures_check=missing_measures_check,
+            successful=False,
+        )
+
+    logger.info(
+        f"Commodity {code.item_id} has {filtered_measures.count()} applicable type 103 measure(s)",
+    )
+    return MissingMeasureCommCode.objects.create(
+        commodity=code,
+        missing_measures_check=missing_measures_check,
+        successful=True,
+    )
+
+
+def create_missing_measure_comm_codes(
+    tx_pk: int,
+    comm_code_pks: List[int],
+    total_num: int,
+    missing_measures_check,
+):
+    for i, pk in enumerate(comm_code_pks):
+        check_comm_code_for_missing_measures(
+            tx_pk,
+            pk,
+            i,
+            total_num,
+            missing_measures_check,
+        )
 
 
 @app.task
@@ -240,7 +280,7 @@ def check_workbasket_for_missing_measures(
     logger.info(
         f"Checking workbasket {workbasket_id} for missing measures on updated commodity codes",
     )
-    commodities = get_comm_codes_with_missing_measures(tx_pk, comm_code_pks)
+    all_commodities = GoodsNomenclature.objects.filter(pk__in=comm_code_pks)
     workbasket: WorkBasket = WorkBasket.objects.get(pk=workbasket_id)
     logger.info(
         f"Deleting previous missing measure checks from workbasket {workbasket_id}",
@@ -253,12 +293,16 @@ def check_workbasket_for_missing_measures(
             workbasket=workbasket,
         )
 
-    missing_measures_check.successful = not bool(commodities)
+    create_missing_measure_comm_codes(
+        tx_pk,
+        comm_code_pks,
+        all_commodities.count(),
+        missing_measures_check,
+    )
 
-    for commodity in commodities:
-        MissingMeasureCommCode.objects.create(
-            commodity=commodity,
-            missing_measures_check=missing_measures_check,
-        )
+    missing_measures_check.successful = (
+        workbasket.missing_measure_comm_codes.filter(successful=False).count() == 0
+    )
+    missing_measures_check.hash = workbasket.commodity_measure_changes_hash
 
     missing_measures_check.save()
