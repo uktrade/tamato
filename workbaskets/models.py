@@ -491,6 +491,10 @@ class WorkBasket(TimestampedMixin):
         hash.update(value)
         return hash.hexdigest()
 
+    @property
+    def autocomplete_label(self):
+        return f"({self.pk})  {self.title} - {self.reason}"
+
     def __str__(self):
         return f"({self.pk}) [{self.status}]"
 
