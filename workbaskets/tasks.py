@@ -123,11 +123,13 @@ def end_objects(objects, workbasket):
             date.today(),
             commodity.valid_between.upper,
         ):
+            logger.info(f"Deleting object {type(object)} - {object.pk}")
             new_version = object.new_version(
                 workbasket=workbasket,
                 update_type=UpdateType.DELETE,
             )
         else:
+            logger.info(f"End dating object {type(object)} - {object.pk}")
             new_version = object.new_version(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
@@ -149,6 +151,7 @@ def delete_objects(objects, workbasket):
             workbasket__status=WorkflowStatus.EDITING,
         ).order_by("order")
 
+        logger.info(f"Deleting object {type(object)} - {object.pk}")
         new_version = object.new_version(
             workbasket=workbasket,
             update_type=UpdateType.DELETE,
@@ -171,8 +174,11 @@ def call_end_measures(
         pk__in=footnote_association_pks,
     )
     objects_to_delete = TrackedModel.objects.all().filter(pk__in=objects_to_delete_pks)
+    logger.info(f"Calling end objects for measures")
     end_objects(measures, workbasket)
+    logger.info(f"Calling end objects for footnote associations")
     end_objects(footnote_associations, workbasket)
+    logger.info(f"Calling delete objects for measures and footnote associations")
     delete_objects(objects_to_delete, workbasket)
 
 
