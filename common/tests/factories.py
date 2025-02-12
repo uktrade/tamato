@@ -1569,7 +1569,12 @@ class SubTaskFactory(TaskFactory):
 @factory.django.mute_signals(signals.pre_save)
 class TaskAssigneeFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
-    assignment_type = FuzzyChoice(TaskAssignee.AssignmentType.values)
+    assignment_type = FuzzyChoice(
+        [
+            TaskAssignee.AssignmentType.WORKBASKET_WORKER,
+            TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
+        ],
+    )
     task = factory.SubFactory(TaskFactory)
 
     class Meta:
