@@ -27,6 +27,16 @@ task_ui_patterns = [
         views.TaskConfirmDeleteView.as_view(),
         name="task-ui-confirm-delete",
     ),
+    path(
+        "<int:pk>/assign-users/",
+        views.TaskAssignUsersView.as_view(),
+        name="task-ui-assign-users",
+    ),
+    path(
+        f"<int:pk>/unassign-users/",
+        views.TaskUnassignUsersView.as_view(),
+        name="task-ui-unassign-users",
+    ),
     # Subtask urls
     path(
         "<int:parent_task_pk>/subtasks/create/",
@@ -110,6 +120,16 @@ workflow_ui_patterns = [
         "<int:pk>/confirm-delete/",
         views.TaskWorkflowConfirmDeleteView.as_view(),
         name="task-workflow-ui-confirm-delete",
+    ),
+    path(
+        "<int:task_workflow_pk>/task/create/",
+        views.TaskWorkflowTaskCreateView.as_view(),
+        name="task-workflow-task-ui-create",
+    ),
+    path(
+        "task/<int:pk>/confirm-create/",
+        views.TaskWorkflowTaskConfirmCreateView.as_view(),
+        name="task-workflow-task-ui-confirm-create",
     ),
 ]
 

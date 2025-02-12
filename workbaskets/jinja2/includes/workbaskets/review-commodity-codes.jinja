@@ -1,0 +1,45 @@
+{% set table_rows = [] %}
+{% for obj in object_list %}
+  {% set commodity_link %}
+    <a class="govuk-link" href="{{ obj.get_url() or "#" }}">
+      {{ obj.item_id }}
+    </a>
+  {% endset %}
+
+
+  {{ table_rows.append([
+    {"html": commodity_link},
+    {"text": obj.suffix},
+    {"text": "{:%d %b %Y}".format(obj.valid_between.lower)},
+    {"text": "{:%d %b %Y}".format(obj.valid_between.upper) if obj.valid_between.upper else "-"},
+  ]) or "" }}
+{% endfor %}
+
+
+  <div class="govuk-body">
+    {% if import_batch_pk %}
+      {{ govukButton({
+        "html": "Download as Excel",
+        "href": url("goods-report-ui-download", kwargs={"pk": import_batch_pk}),
+        "classes": "govuk-button--primary align-right govuk-!-margin-left-5"
+      }) }}
+    {% endif %}
+
+    {% if unsent_notification %}
+      {{ govukButton({
+        "html": "Notify Channel Islands",
+        "href": url("goods-report-notify", kwargs={"pk": import_batch_pk}),
+        "classes": "govuk-button--primary align-right"
+      }) }}
+    {% endif %}
+  </div>
+
+{{ govukTable({
+  "head": [
+    {"text": "Commodity code"},
+    {"text": "Suffix"},
+    {"text": "Start date"},
+    {"text": "End date"},
+  ],
+  "rows": table_rows
+}) }}

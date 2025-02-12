@@ -15,6 +15,9 @@ def get_current_instigator():
 
 
 def set_current_instigator(instigator):
+    """Sets the current user (`instigator`) who is instigating a task
+    action / change. This is normally done from the view that handles the
+    change. When the change is saved, instigator details are logged."""
     _thread_locals.instigator = instigator
 
 
