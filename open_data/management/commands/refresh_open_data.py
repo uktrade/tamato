@@ -2,7 +2,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from open_data.tasks import update_all_tables
+from open_data.tasks import populate_open_data
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         logger.info(f"Starting the update of all the tables in the database")
-        update_all_tables(True)
+        populate_open_data(True)
         self.stdout.write(
             self.style.SUCCESS("Successfully updated the reporting tables."),
         )

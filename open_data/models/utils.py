@@ -35,19 +35,22 @@ class ReportModel(models.Model):
     # an error. I could parse it and check if AND is in the clause, but it is too
     # much extra effort, as the error will be identified immediately.
     extra_where = ""
-    # Some tables contains several version of the same object, but with different
+    # Some tables contain several version of the same object, but with different
     # validity. To make report creation easier, the old version will be removed
     # when remove_obsolete is set to True
     # The structure of the tables is identical, they always have a validity start
     # The field to use for aggregation has to be specified
     remove_obsolete = False
+    # The foreign keys in tracked models sometimes don't link to the latest object.
+    # Set patch_fk to run the query updating the foreign keys to the latest one.
     patch_fk = True
+    # objects with a description in a separate table to allow several versions
+    # must set update_description to True. The description will be updated
+    # using the orm 'get_description'
     update_description = False
+    # If false, the data will not be copied using the generated SQL.
+    # Required for complex data that is reconstructed using ORM calls.
     update_table = True
-
-    def contain_all_fields(self):
-        # This function will check that there are no new field in the shadowed table
-        pass
 
     @staticmethod
     def create_table_name(shadowed_model):
@@ -66,11 +69,11 @@ class ReportModel(models.Model):
         return []
 
     @classmethod
-    def update_query(cls):
+    def copy_data_query(cls):
         # used the generated queries for 'latest update' to create the query
         # updating the report table with the latest values
         db_from_table = cls.shadowed_model._meta.db_table
-        update_field = f'INSERT INTO "{cls._meta.db_table}" ('
+        insert_fields = f'INSERT INTO "{cls._meta.db_table}" ('
         read_field = ") SELECT "
         # Find the SQL query that return the latest_approved on the
         # model we are shadowing
@@ -95,10 +98,10 @@ class ReportModel(models.Model):
             if db_from_table in field:
                 read_field += field
                 # Remove the table name from the field definition
-                update_field += field.split(".")[1]
-        # return update_field + read_field + query_from_and_where + ";"
+                insert_fields += field.split(".")[1]
+        # return a correct SQL query for copying the fields from the tracked table"
         return (
-            f"{update_field} {read_field}  {query_from_and_where} {cls.extra_where} ;"
+            f"{insert_fields} {read_field}  {query_from_and_where} {cls.extra_where} ;"
         )
 
     @classmethod
@@ -135,8 +138,6 @@ class ReportModel(models.Model):
     def remove_obsolete_row_query(cls):
         query = ""
         if cls.remove_obsolete:
-            #  TO DO
-            # Raise error if cls.partition_field is not defined
             # Don't ask about the next horrible lines. It works
             partition_field_db = cls._meta.get_field(
                 cls.partition_field,

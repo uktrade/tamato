@@ -17,6 +17,10 @@ from open_data.models.utils import ReportModel
 
 
 def add_description(model, verbose=True):
+    # The open data description is in the main table, not in a different table,
+    # because we only need the current version.
+    # The field is populated using the orm get_description() on the tracked table
+    # Not efficient, but correct
     if type(model) is not ReportModel:
         return
     if model.update_description:
@@ -35,35 +39,33 @@ def add_description(model, verbose=True):
                 print(f"Elapsed time {model._meta.db_table} {time.time() - start}")
 
 
-def update_model(model, cursor):
+def update_model(model, cursor, verbose=True):
+    if verbose:
+        print(f"Delete data from {model._meta.db_table}")
+
     cursor.execute(f'TRUNCATE TABLE "{model._meta.db_table}"')
-    print("Delete data")
-    print(f"{model.update_table=}")
     if model.update_table:
-        cursor.execute(model.update_query())
+        cursor.execute(model.copy_data_query())
+
         fk_query_list = model.update_fk_queries()
-        # The foreign keys are updated from TAP database,
-        # not from the reporting area, so they can be updated at any time
+
         if fk_query_list:
             for query in fk_query_list:
                 cursor.execute(query)
 
         if model.remove_obsolete:
-            # print(model.create_remove_obsolete_row_query())
             cursor.execute(model.remove_obsolete_row_query())
 
-        extra_query_list = model.extra_queries()
+        extra_queries = model.extra_queries()
 
-        if extra_query_list:
-            for sql_query in extra_query_list:
-                # print(sql_query)
+        if extra_queries:
+            for sql_query in extra_queries:
                 cursor.execute(sql_query)
+    if verbose:
+        print(f"{model._meta.db_table} updated")
 
-    print("Completed")
 
-
-def update_all_tables(verbose=False):
-    print("Inside update table")
+def populate_open_data(verbose=False):
 
     config = django.apps.apps.get_app_config(APP_LABEL)
 
@@ -74,15 +76,16 @@ def update_all_tables(verbose=False):
                 if verbose:
                     print(f'Starting update of "{model._meta.db_table}"')
                     start_time = time.time()
-                update_model(model, cursor)
+                update_model(model, cursor, verbose)
                 if verbose:
                     elapsed_time = time.time() - start_time
                     print(
                         f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',
                     )
-    # The following are changes specific to different table.
+    # The following are changes specific to different tables.
     # They update fields using Django routines, created specifically for the task.
-    # Unless there is a current transaction, reading the latest description will fail in a misterious way
+    # Unless there is a current transaction,
+    # reading the latest description will fail in a misterious way
     # Because this is called in a command, there is no transaction set"""
     tx = Transaction.objects.last()
     with override_current_transaction(tx):
