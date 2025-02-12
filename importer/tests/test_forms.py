@@ -15,8 +15,9 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.importer_v2
-def test_upload_taric_form_valid_envelope_id():
-    with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as upload_file:
+@pytest.mark.parametrize("file_name", ["TGB12345.xml", "DIT123456.xml"])
+def test_upload_taric_form_valid_envelope_id(file_name):
+    with open(f"{TEST_FILES_PATH}/{file_name}", "rb") as upload_file:
         data = {
             "name": "test_upload",
             "status": WorkflowStatus.EDITING,
@@ -121,7 +122,7 @@ def test_commodity_import_form_valid_envelope(
     """Test that form is valid when given valid xml file."""
     mock_request = MagicMock()
 
-    with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as upload_file:
+    with open(f"{TEST_FILES_PATH}/TGB12345.xml", "rb") as upload_file:
         content = upload_file.read()
 
     file_data = {
@@ -174,10 +175,11 @@ def test_commodity_import_form_invalid_envelope(capture_exception, file_name, se
 
         assert not form.is_valid()
 
-        error_message = "The selected file could not be uploaded - try again"
+        error_message = "Invalid file name. Please check and try again"
 
         assert error_message in form.errors["taric_file"]
-        capture_exception.assert_called_once()
+        # capture exception is no longer called as the error is caught first
+        # capture_exception.assert_called_once()
 
 
 @pytest.mark.importer_v2
@@ -206,7 +208,7 @@ def test_commodity_import_form_long_definition_description(superuser):
     """Tests that form is valid when provided with QuotaDefinition description
     longer than 500 characters."""
     mock_request = MagicMock()
-    with open(f"{TEST_FILES_PATH}/quota_definition.xml", "rb") as upload_file:
+    with open(f"{TEST_FILES_PATH}/DIT123456.xml", "rb") as upload_file:
         data = {
             "workbasket_title": "12345",
         }
