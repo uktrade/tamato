@@ -21,7 +21,7 @@ def add_description(model, verbose=True):
     # because we only need the current version.
     # The field is populated using the orm get_description() on the tracked table
     # Not efficient, but correct
-    if type(model) is not ReportModel:
+    if not issubclass(model, ReportModel):
         return
     if model.update_description:
         if issubclass(model.shadowed_model, DescribedMixin):
@@ -33,8 +33,9 @@ def add_description(model, verbose=True):
                 description = model.shadowed_model.objects.get(
                     pk=row.trackedmodel_ptr_id,
                 ).get_description()
-                row.description = description.description
-                row.save()
+                if description:
+                    row.description = description.description
+                    row.save()
             if verbose:
                 print(f"Elapsed time {model._meta.db_table} {time.time() - start}")
 
@@ -114,7 +115,9 @@ def update_model_and_description(model):
     print(
         f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',
     )
-    add_description(model)
+    tx = Transaction.objects.last()
+    with override_current_transaction(tx):
+        add_description(model)
 
 
 def orphan_fk_queryset(model, fk_list):

@@ -71,48 +71,27 @@ def test_footnotes():
     factories.ApprovedTransactionFactory.create()
     test_description = "Test description"
     assert Footnote.objects.count() == 0
-
-    fact = factories.FootnoteFactory(
+    test_footnote_id = "001"
+    factories.FootnoteFactory(
+        footnote_id=test_footnote_id,
         transaction=published_transaction,
-        description=factories.FootnoteDescriptionFactory(
-            transaction=published_transaction,
-            description=test_description,
-        ),
+        description__description=test_description,
     )
-    footnote_qs = Footnote.objects.all()
-    for f in footnote_qs:
-        f.get_descriptions()
-        print(f.footnote_id)
-
-    print("***************")
-    # Why 2??????
-    assert Footnote.objects.count() == 2
+    assert Footnote.objects.count() == 1
     assert FootnoteDescription.objects.count() == 1
+    # Open data is empty
     assert ReportFootnote.objects.count() == 0
-    assert Footnote.objects.published().count() == 2
+    assert Footnote.objects.published().count() == 1
     populate_open_data()
-    assert Footnote.objects.count() == 2
+
+    # Nothing created or deleted in the footnotes
+    assert Footnote.objects.count() == 1
+    assert Footnote.objects.published().count() == 1
     assert FootnoteDescription.objects.count() == 1
-    assert ReportFootnote.objects.count() == 2
-    assert Footnote.objects.published().count() == 2
-
-
-# def footnote_NC000(date_ranges, approved_transaction):
-#     footnote = factories.FootnoteFactory.create(
-#         footnote_id="000",
-#         footnote_type=factories.FootnoteTypeFactory.create(
-#             footnote_type_id="NC",
-#             valid_between=date_ranges.no_end,
-#             transaction=approved_transaction,
-#         ),
-#         valid_between=date_ranges.normal,
-#         transaction=approved_transaction,
-#         description__description="This is NC000",
-#         description__validity_start=date_ranges.starts_with_normal.lower,
-#     )
-#     factories.FootnoteDescriptionFactory.create(
-#         described_footnote=footnote,
-#         validity_start=date_ranges.ends_with_normal.lower,
-#         transaction=approved_transaction,
-#     )
-#     return footnote
+    # Open data has a record
+    assert ReportFootnote.objects.count() == 1
+    # and the description is correct
+    assert (
+        ReportFootnote.objects.get(footnote_id=test_footnote_id).description
+        == test_description
+    )
