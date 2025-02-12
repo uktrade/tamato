@@ -121,6 +121,16 @@ workflow_ui_patterns = [
         views.TaskWorkflowConfirmDeleteView.as_view(),
         name="task-workflow-ui-confirm-delete",
     ),
+    path(
+        "<int:task_workflow_pk>/task/create/",
+        views.TaskWorkflowTaskCreateView.as_view(),
+        name="task-workflow-task-ui-create",
+    ),
+    path(
+        "task/<int:pk>/confirm-create/",
+        views.TaskWorkflowTaskConfirmCreateView.as_view(),
+        name="task-workflow-task-ui-confirm-create",
+    ),
 ]
 
 task_and_workflow_ui_patterns = [

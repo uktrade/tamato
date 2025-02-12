@@ -649,6 +649,51 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
+class TaskWorkflowTaskCreateView(PermissionRequiredMixin, CreateView):
+    model = Task
+    template_name = "layouts/create.jinja"
+    permission_required = "tasks.add_task"
+    form_class = TaskCreateForm
+
+    def get_task_workflow(self):
+        """Get the associated TaskWorkflow via its pk in the URL."""
+        return TaskWorkflow.objects.get(
+            pk=self.kwargs["task_workflow_pk"],
+        )
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+
+        context["page_title"] = "Create a task"
+        return context
+
+    def form_valid(self, form) -> HttpResponseRedirect:
+        with transaction.atomic():
+            self.object = form.save(user=self.request.user)
+            TaskItem.objects.create(
+                workflow=self.get_task_workflow(),
+                task=self.object,
+            )
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-workflow-task-ui-confirm-create",
+            kwargs={"pk": self.object.pk},
+        )
+
+
+class TaskWorkflowTaskConfirmCreateView(PermissionRequiredMixin, DetailView):
+    model = Task
+    template_name = "tasks/confirm_create.jinja"
+    permission_required = "tasks.add_task"
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "task"
+        return context
+
+
 class TaskWorkflowTemplateDetailView(
     PermissionRequiredMixin,
     QueuedItemManagementMixin,

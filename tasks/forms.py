@@ -35,7 +35,13 @@ User = get_user_model()
 class TaskBaseForm(ModelForm):
     class Meta:
         model = Task
-        exclude = ["parent_task", "creator"]
+        fields = [
+            "title",
+            "description",
+            "progress_state",
+            "category",
+            "workbasket",
+        ]
 
         error_messages = {
             "title": {
