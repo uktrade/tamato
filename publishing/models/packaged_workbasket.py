@@ -418,6 +418,13 @@ class PackagedWorkBasket(TimestampedMixin):
             # successfully published to tariffs-api.
             # See Jira ticket TP2000-1646 for details of the issue.
 
+            # NOTE:
+            # We want to: return the previous envelope ID IF it was the previous year.
+            # So:
+            # get current year: current_year = str(date_time.now().year)[-2:] or if needed as int, int(str(date_time.now().year)[-2:])
+            # check if the last_envelope_last_year = current_year-1
+            # TODO: check if current_envelope_year == current_year
+            # TODO: check if current_year = last_envelope_last_year+1
             current_envelope_year = int(self.envelope.envelope_id[:2])
             last_envelope_last_year = (
                 publishing_models.Envelope.objects.last_envelope_for_year(
