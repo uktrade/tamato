@@ -347,7 +347,9 @@ def test_footnote_detail_measures_view_sorting_commodity(valid_user_client):
             associated_footnote=footnote,
         )
         measures.append(measure)
-    commodity_codes = [measure.goods_nomenclature.item_id for measure in measures]
+    commodity_codes = sorted(
+        [measure.goods_nomenclature.item_id for measure in measures],
+    )
     url = reverse(
         "footnote-ui-detail-measures",
         kwargs={
