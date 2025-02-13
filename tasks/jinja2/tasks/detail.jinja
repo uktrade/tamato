@@ -4,11 +4,36 @@
 
 {% set page_title = "Task: " ~ object.title %}
 
-{%if object.parent_task%}
+{% if object.parent_task %}
   {% set edit_url = url("workflow:subtask-ui-update", kwargs={"pk": object.pk}) %}
+  {% set title_caption = "Subtask" %}
+  {% set parent_summary_list_row %}
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">
+        Parent task
+      </dt>
+      <dd class="govuk-summary-list__value">
+        <a
+          class="govuk-link"
+          href="{{ object.parent_task.get_url("detail") }}"
+        >{{ object.parent_task.pk }}</a>
+      </dd>
+    </div>
+  {% endset %}
 {% else %}
   {% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
-{% endif%}
+{% endif %}
+
+{% set workbasket_linked_id %}
+  {% if object.workbasket -%}
+    <a
+      class="govuk-link"
+      href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}"
+    >{{ object.workbasket.pk }}</a>
+  {% else %}
+    -
+  {% endif -%}
+{% endset %}
 
 {% macro display_assignees(assignees) %}
   {% if not assignees %}
@@ -28,7 +53,8 @@
   {{ breadcrumbs(request, [
       {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
       {"text": page_title}
-    ]
+    ],
+    with_workbasket=False,
   ) }}
 {% endblock %}
 
@@ -46,6 +72,13 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
+    {% if title_caption %}
+      {% block page_subtitle %}
+        <span class="govuk-caption-xl">
+          {{ title_caption }}
+        </span>
+      {% endblock %}
+    {% endif %}
     <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   </div>
 </div>
@@ -94,7 +127,7 @@
       Category
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ object.category }}
+      {{ object.category or "-" }}
     </dd>
     <dd class="govuk-summary-list__actions">
       <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> category</span></a>
@@ -118,12 +151,16 @@
       Workbasket
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ workbasket_summary_link }}
+      {{ workbasket_linked_id }}
     </dd>
     <dd class="govuk-summary-list__actions">
-      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> workbasket</span></a>
+      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
     </dd>
   </div>
+
+  {% if object.parent_task %}
+    {{ parent_summary_list_row }}
+  {% endif %}
 
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">

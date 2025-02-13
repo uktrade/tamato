@@ -3,15 +3,21 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 
-{% set page_title = "Find and view task workflow templates" %}
+{% set page_title = "Find and view workflow templates" %}
 
-{% set base_url = url("workflow:task-workflow-template-ui-list") %}
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
 
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
-    Search for task workflow templates.
-    Alternatively, <a class="govuk-link" href="{{ url("workflow:task-workflow-template-ui-create") }}">create a new task workflow template</a>.
+    Search for workflow templates.
+    Alternatively, <a class="govuk-link" href="{{ url("workflow:task-workflow-template-ui-create") }}">create a new workflow template</a>.
   </p>
 
   <div class="filter-layout">
@@ -39,7 +45,7 @@
         {{ table_rows.append([
           {"text": workflow_template_linked_id},
           {"text": object.title},
-          {"text": object.description},
+          {"text": object.description|truncate(75)},
           {"text": object.creator.get_displayname() if object.creator else "Unknown"},
           {"text": object.created_at.strftime(datetime_format)},
           {"text": object.updated_at.strftime(datetime_format)},
@@ -52,8 +58,8 @@
           {"text": "Title"},
           {"text": "Description"},
           {"text": "Created by"},
-          {"text": create_sortable_anchor(request, "created_at", "Created", base_url)},
-          {"text": create_sortable_anchor(request, "updated_at", "Last Updated", base_url)},
+          {"text": create_sortable_anchor(request, "Created", sorting_urls["created_at"])},
+          {"text": create_sortable_anchor(request, "Last updated", sorting_urls["updated_at"])},
         ],
           "rows": table_rows
         }) }}

@@ -16,10 +16,8 @@
   ]) or "" }}
 {% endfor %}
 
-{% set base_url = url('quota-ui-detail', args=[object.sid]) %}
-
 {% set commodity_code %}
-  {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url, "#measures") }}
+  {{ create_sortable_anchor(request, "Commodity code", sorting_urls["goods_nomenclature"], "#measures") }}
 {% endset %}
 
 <div class="quota__measures govuk-grid-row">

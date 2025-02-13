@@ -42,8 +42,8 @@
     "classes": "govuk-button"
   }) }}
   {{ govukButton({
-    "text": "Return to homepage",
-    "href": url("home"),
+    "text": "Return to workflow template",
+    "href": url("workflow:task-workflow-template-ui-detail", kwargs={"pk": task_workflow_template.pk}),
     "classes": "govuk-button--secondary"
   }) }}
 {% endblock %}

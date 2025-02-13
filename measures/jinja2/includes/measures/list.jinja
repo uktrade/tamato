@@ -13,23 +13,23 @@
 {%- endset %}
 
 {% set sid %}
-  {{ create_sortable_anchor(request, "sid", "SID", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "SID", sorting_urls["sid"]) }}
 {% endset %}
 
 {% set measure_type %}
-  {{ create_sortable_anchor(request, "measure_type", "Type", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "Type", sorting_urls["measure_type"]) }}
 {% endset %}
 
 {% set geo_area %}
-  {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "Geographical area", sorting_urls["geo_area"]) }}
 {% endset %}
 
 {% set start_date %}
-  {{ create_sortable_anchor(request, "start_date", "Start date", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "Start date", sorting_urls["start_date"]) }}
 {% endset %}
 
 {% set end_date %}
-  {{ create_sortable_anchor(request, "end_date", "End date", base_url, query_params) }}
+  {{ create_sortable_anchor(request, "End date", sorting_urls["end_date"]) }}
 {% endset %}
 
 {# sets out form #}

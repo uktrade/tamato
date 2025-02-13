@@ -65,11 +65,11 @@
 {% endfor %}
 
 {% set sid %}
-  {{ create_sortable_anchor(request, "sid", "Quota definition SID", base_url) }}
+  {{ create_sortable_anchor(request, "Quota definition SID", sorting_urls["sid"]) }}
 {% endset %}
 
 {% set start_date %}
-  {{ create_sortable_anchor(request, "valid_between", "Start date", base_url) }}
+  {{ create_sortable_anchor(request, "Start date", sorting_urls["valid_between"]) }}
 {% endset %}
 
 {{ govukTable({

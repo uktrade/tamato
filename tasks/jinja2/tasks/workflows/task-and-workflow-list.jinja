@@ -5,7 +5,13 @@
 
 {% set page_title = "Find and view tasks and workflows" %}
 
-{% set base_url = url("workflow:task-and-workflow-ui-list") %}
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
 
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
@@ -20,7 +26,7 @@
     <div class="filter-layout__filters">
       <h2 class="govuk-heading-m govuk-!-margin-top-3">Search and filter</h2>
 
-      <form method="get" action="{{ base_url }}">
+      <form method="get" action="{{ url("workflow:task-and-workflow-ui-list") }}">
           {{ crispy(filter.form) }}
       </form>
     </div>
@@ -86,7 +92,7 @@
             {"text": "Category"},
             {"text": "Status"},
             {"text": "Workbasket"},
-            {"text": create_sortable_anchor(request, "created_at", "Created", base_url)},
+            {"text": create_sortable_anchor(request, "Created", sorting_urls["created_at"])},
           ],
             "rows": table_rows
           }) }}

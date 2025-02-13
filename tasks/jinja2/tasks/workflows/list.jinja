@@ -3,9 +3,15 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 
-{% set page_title = "Find and view tasks workflows" %}
+{% set page_title = "Find and view workflows" %}
 
-{% set base_url = url("workflow:task-workflow-ui-list") %}
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
 
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
@@ -53,7 +59,7 @@
           {{ table_rows.append([
             {"text": task_linked_id},
             {"text": object.title},
-            {"text": object.category},
+            {"text": object.category or "-"},
             {"text": object.progress_state},
             {"text": workbasket_linked_id},
             {"text": "{:%d %b %Y}".format(object.created_at)},
@@ -67,7 +73,7 @@
             {"text": "Category"},
             {"text": "Status"},
             {"text": "Workbasket"},
-            {"text": create_sortable_anchor(request, "created_at", "Created", base_url)},
+            {"text": create_sortable_anchor(request, "Created", sorting_urls["created_at"])},
           ],
             "rows": table_rows
           }) }}
