@@ -80,7 +80,7 @@ govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--seco
   {% endset %}
   {% set rule_check_button = terminate_rule_check_form %}
   {% set rule_check_block %}{% endset %}
-{% elif workbasket.tracked_model_checks.exists() and not workbasket.unchecked_or_errored_transactions.exists() and not missing_measures_check_successful %}
+{% elif workbasket.tracked_model_checks.exists() and not workbasket.unchecked_or_errored_transactions.exists() %}
   {% set live_rule_check_status = "Business rule check passed. No business rule violations" %}
   {% set rule_check_button = run_business_rules_form %}
   {% set rule_check_block %}
@@ -98,6 +98,13 @@ govuk-button{% if workbasket.tracked_model_checks.exists() %} govuk-button--seco
         {% elif unsent_notification %}
           <div class="govuk-hint"> 
             For commodity code imports, a notification to the Channel Islands must be sent from the commodities tab on the workbasket review page before packaging.
+          </div>
+          <a href="{{ url('publishing:packaged-workbasket-queue-ui-create')}}" disabled class="govuk-button govuk-button--primary">
+            Send to packaging queue
+          </a>
+        {% elif workbasket.has_commodities and not missing_measures_check_successful %}
+          <div class="govuk-hint"> 
+            Missing measures check must be run before packaging.
           </div>
           <a href="{{ url('publishing:packaged-workbasket-queue-ui-create')}}" disabled class="govuk-button govuk-button--primary">
             Send to packaging queue

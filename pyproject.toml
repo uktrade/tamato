@@ -55,6 +55,7 @@ omit = [
     'manage.py',
     '*/.pycharm_helpers/*',
     '*/pycharm/*',
+    '/tmp/*', # sqlite snapshots copy source tree plus extra migrations here.
 ]
 
 exclude_lines = [

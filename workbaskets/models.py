@@ -1,5 +1,6 @@
 """WorkBasket models."""
 
+import hashlib
 import importlib
 import logging
 from abc import ABCMeta
@@ -14,14 +15,10 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Case
-from django.db.models import DateField
-from django.db.models import F
 from django.db.models import Max
+from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Subquery
-from django.db.models import Value
-from django.db.models import When
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -39,6 +36,7 @@ from measures.models import Measure
 from measures.querysets import MeasuresQuerySet
 from workbaskets.util import serialize_uploaded_data
 from workbaskets.validators import WorkflowStatus
+from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
 
 logger = logging.getLogger(__name__)
 
@@ -341,6 +339,14 @@ class WorkBasket(TimestampedMixin):
 
     transactions: TransactionQueryset
 
+    @property
+    def has_commodities(self):
+        # avoid circular import
+        from commodities.models.orm import GoodsNomenclature
+
+        codes = self.tracked_models.filter(Q(instance_of=GoodsNomenclature))
+        return codes.count() != 0
+
     def terminate_rule_check(self):
         """Terminate any task associated with the WorkBasket's rule checking, as
         identified by its rule_check_task_id."""
@@ -440,9 +446,50 @@ class WorkBasket(TimestampedMixin):
 
         return num_completed, total
 
+    def missing_measure_check_progress(self) -> Tuple[int, int]:
+        """
+        Provides progress of a rule check for the WorkBasket.
+
+        Returns:
+            num_completed: the number of transaction checks already completed
+            total: the total number of transactions to be checked
+        """
+        num_completed = self.missing_measure_comm_codes.count()
+        total = len(get_comm_codes_affected_by_workbasket_changes(self))
+
+        return num_completed, total
+
     @property
     def approved(self):
         return self.status in WorkflowStatus.approved_statuses()
+
+    @property
+    def commodity_measure_changes_hash(self):
+        """
+        Used by the missing measures check to compare the state of measures and
+        commodities in a workbasket to see what's changed.
+
+        Uses __dict__ to look at tracked model values then hashes the result so
+        we can keep to a fixed output length. See MissingMeasuresCheck and
+        check_workbasket_for_missing_measures.
+        """
+        # avoid circular import
+        from commodities.models.orm import GoodsNomenclature
+
+        changes = self.tracked_models.filter(
+            Q(instance_of=GoodsNomenclature) | Q(instance_of=Measure),
+        ).order_by("pk")
+        snapshot = "".join(
+            [
+                # ignore django's ModelState object
+                "".join([str(v) for k, v in c.__dict__.items() if k != "_state"])
+                for c in changes
+            ],
+        )
+        value = bytes(f"{snapshot}", "utf-8")
+        hash = hashlib.sha256()
+        hash.update(value)
+        return hash.hexdigest()
 
     def __str__(self):
         return f"({self.pk}) [{self.status}]"
@@ -658,6 +705,12 @@ class WorkBasket(TimestampedMixin):
     def tracked_model_check_errors(self):
         return self.tracked_model_checks.filter(successful=False)
 
+    @property
+    def missing_measure_comm_codes(self):
+        return MissingMeasureCommCode.objects.filter(
+            missing_measures_check__workbasket=self,
+        )
+
     def delete_checks(self):
         """Delete all TrackedModelCheck and TransactionCheck instances related
         to the WorkBasket."""
@@ -671,9 +724,7 @@ class WorkBasket(TimestampedMixin):
     def delete_missing_measure_comm_codes(self):
         """Delete all MissingMeasureCommCode instances related to the
         WorkBasket."""
-        MissingMeasureCommCode.objects.filter(
-            missing_measures_check__workbasket=self,
-        ).delete()
+        self.missing_measure_comm_codes.delete()
 
     @property
     def unchecked_or_errored_transactions(self):
@@ -739,45 +790,6 @@ class WorkBasket(TimestampedMixin):
     def assigned_reviewers(self):
         user_ids = self.reviewer_assignments.values_list("user_id", flat=True)
         return User.objects.filter(id__in=user_ids)
-
-    def get_measures_to_end_date(self) -> QuerySet:
-        """
-        Returns a queryset of measures on end-dated commodities in the
-        workbasket along with those commodities' end-dates.
-
-        It filters out measures which have already ended.
-        """
-
-        from commodities.models.orm import GoodsNomenclature
-
-        end_dated_commodities = GoodsNomenclature.objects.current().filter(
-            transaction__workbasket=self,
-            valid_between__upper_inf=False,
-        )
-        commodity_dict = {
-            commodity.sid: commodity.valid_between
-            for commodity in end_dated_commodities
-        }
-        measures_on_commodities = Measure.objects.current().filter(
-            goods_nomenclature__sid__in=commodity_dict.keys(),
-        )
-        conditions = [
-            When(
-                goods_nomenclature__sid=commodity_sid,
-                then=Value(commodity_valid_between),
-            )
-            for commodity_sid, commodity_valid_between in commodity_dict.items()
-        ]
-        measures = measures_on_commodities.annotate(
-            commodity_valid_between=Case(
-                *conditions,
-                output_field=DateField(),
-            ),
-        )
-
-        return measures.with_effective_valid_between().exclude(
-            db_effective_valid_between__not_gt=F("commodity_valid_between"),
-        )
 
     class Meta:
         verbose_name = "workbasket"

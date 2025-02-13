@@ -42,92 +42,117 @@
 
 {% block tab_content %}
   <h2 class="govuk-heading-s">Missing measures check</h2>
-  {% if missing_measures_check_in_progress %}
+  {% if not workbasket.has_commodities %}
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-        <p class="govuk-body">Missing measures check is in progress. Come back later or refresh to see results</p>
-      </div>
-      <div class="govuk-grid-column-one-third">
-        {{ stop_button }}
+        <p class="govuk-body">Missing measures check is only required for workbaskets with commodity changes</p>
       </div>
     </div>
   {% else %}
-    {% if not missing_measures_check %}
-    <div class="govuk-grid-row">
-      <div class="govuk-grid-column-two-thirds">
-        <p class="govuk-body">No missing measures check has been performed yet</p>
-      </div>
-      <div class="govuk-grid-column-one-third">
-        {{ run_button() }}
-      </div>
-    </div>
-
-    {% else %}
-
-      {% if missing_measures_check.successful %}
-        <p class="govuk-body">Missing measures check finished.</p>
-        <div class="success-summary">
-          <div class="govuk-grid-row">
-            <div class="govuk-grid-column-two-thirds">
-              <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-0">There are no missing 103 measures.</p>
-            </div>
-            <div class="govuk-grid-column-one-third">
-            <p class="govuk-body govuk-!-font-weight-bold text-align-right govuk-!-margin-bottom-0">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
-            </div>
-          </div>
+    {% if missing_measures_check_in_progress %}
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+          <p class="govuk-body">Missing measures check is in progress. Come back later or refresh to see results</p>
         </div>
-        {{ run_button(text="Re-run") }}
+        <div class="govuk-grid-column-one-third">
+          {{ stop_button }}
+        </div>
+      </div>
+    {% else %}
+    {# check is finished or has not been run yet #}
+      {% if not missing_measures_check %}
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+          <p class="govuk-body">No missing measures check has been performed yet</p>
+        </div>
+        <div class="govuk-grid-column-one-third">
+          {{ run_button() }}
+        </div>
+      </div>
 
-      {# check was not successful #}
       {% else %}
-
-
-        <p class="govuk-body">Missing measures check finished.</p>
-        <div class="govuk-error-summary">
+      {# check has been run #}
+        {% if check_is_stale %}
           <div class="govuk-grid-row">
             <div class="govuk-grid-column-two-thirds">
               {{ govukWarningText({
-                "text": "The following commodity codes are missing a 103 measure type:",
+                "text": "Workbasket contents have changed since last check.",
                 "iconFallbackText": "Warning",
-                "classes": "govuk-!-margin-bottom-0",
-              }) }}
+                "classes": "govuk-!-margin-bottom-5",
+                }) }}
             </div>
             <div class="govuk-grid-column-one-third">
               <p class="govuk-body govuk-!-font-weight-bold text-align-right">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
             </div>
           </div>
-        </div>
+          {{ run_button(text="Re-run") }}
 
-        {% set base_url = url("workbaskets:workbasket-ui-missing-measures-check") %}
+        {% else %}
 
-        {% set commodity_code %}
-          {{ create_sortable_anchor(request, "commodity", "Commodity code", base_url) }}
-        {% endset %}
+          {% if missing_measures_check.successful %}
+            <p class="govuk-body">Missing measures check finished.</p>
+            <div class="success-summary govuk-!-margin-bottom-5">
+              <div class="govuk-grid-row">
+                <div class="govuk-grid-column-two-thirds">
+                  <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-0">There are no missing 103 measures.</p>
+                </div>
+                <div class="govuk-grid-column-one-third">
+                <p class="govuk-body govuk-!-font-weight-bold text-align-right govuk-!-margin-bottom-0">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
+                </div>
+              </div>
+            </div>
+            {{ run_button(text="Re-run") }}
 
-        {% set table_rows = [] %}
-        {% for check in object_list %}
-          {% set link -%}
-            <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', kwargs={'sid': check.commodity.sid}) }}">{{ check.commodity.item_id }}</a>
-          {%- endset %}
-          {{ table_rows.append([
-            {"html": link},
-            {"text": check.commodity.get_description().description if check.commodity.get_description().description else "—"},
-            {"text": "Measure type 103 missing"},
-          ]) or "" }}
-        {% endfor %}
-        {{ govukTable({
-          "head": [
-            {"text": commodity_code},
-            {"text": "Description"},
-            {"text": "Issue"},
-          ],
-          "rows": table_rows
-        }) }}
+          {# check was not successful #}
+          {% else %}
+            <p class="govuk-body">Missing measures check finished.</p>
+            <div class="govuk-error-summary">
+              <div class="govuk-grid-row">
+                <div class="govuk-grid-column-two-thirds">
+                  {{ govukWarningText({
+                    "text": "The following commodity codes are missing a 103 measure type:",
+                    "iconFallbackText": "Warning",
+                    "classes": "govuk-!-margin-bottom-0",
+                  }) }}
+                </div>
+                <div class="govuk-grid-column-one-third">
+                  <p class="govuk-body govuk-!-font-weight-bold text-align-right">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
+                </div>
+              </div>
+            </div>
 
-        {{ run_button(text="Re-run") }}
+            {% set base_url = url("workbaskets:workbasket-ui-missing-measures-check") %}
+
+            {% set commodity_code %}
+              {{ create_sortable_anchor(request, "commodity", "Commodity code", base_url) }}
+            {% endset %}
+
+            {% set table_rows = [] %}
+            {% for check in object_list %}
+              {% set link -%}
+                <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', kwargs={'sid': check.commodity.sid}) }}">{{ check.commodity.item_id }}</a>
+              {%- endset %}
+              {{ table_rows.append([
+                {"html": link},
+                {"text": check.commodity.get_description().description if check.commodity.get_description().description else "—"},
+                {"text": "Measure type 103 missing"},
+              ]) or "" }}
+            {% endfor %}
+            {{ govukTable({
+              "head": [
+                {"text": commodity_code},
+                {"text": "Description"},
+                {"text": "Issue"},
+              ],
+              "rows": table_rows
+            }) }}
+
+            {{ run_button(text="Re-run") }}
+
+          {% endif %}
+        {% endif %}
 
       {% endif %}
-
     {% endif %}
   {% endif %}
 {% endblock %}

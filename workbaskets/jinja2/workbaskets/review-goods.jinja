@@ -1,82 +1,41 @@
 {% extends "workbaskets/review.jinja" %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% block filters %}{% endblock %}
-{% block tab_content %}
-  <div class="govuk-body">
-    {{ report_lines|length if report_lines else 0 }} goods
-    change{{ report_lines|pluralize }} available to review.
+{% set nested_tab_links = [
+  {
+    "text": "Commodity codes",
+    "href": url("workbaskets:workbasket-ui-review-goods", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "commodity-codes",
+  },
+  {
+    "text": "Descriptions",
+    "href": url("workbaskets:workbasket-ui-review-goods-descriptions", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "descriptions",
+  },
+  {
+    "text": "Indents",
+    "href": url("workbaskets:workbasket-ui-review-goods-indents", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "indents",
+  },
+  {
+    "text": "Origins",
+    "href": url("workbaskets:workbasket-ui-review-goods-origins", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "origins",
+  },
+  {
+    "text": "Successors",
+    "href": url("workbaskets:workbasket-ui-review-goods-successors", kwargs={"pk": workbasket.pk}),
+    "selected": selected_nested_tab == "successors",
+  },
+  ]
+%}
 
-    {% if import_batch_pk %}
-      {{ govukButton({
-        "html": "Download as Excel",
-        "href": url("goods-report-ui-download", kwargs={"pk": import_batch_pk}),
-        "classes": "govuk-button--primary align-right govuk-!-margin-left-5"
-      }) }}
-    {% endif %}
 
-    {% if unsent_notification %}
-      {{ govukButton({
-        "html": "Notify Channel Islands",
-        "href": url("goods-report-notify", kwargs={"pk": import_batch_pk}),
-        "classes": "govuk-button--primary align-right"
-      }) }}
-    {% endif %}
-  </div>
 
-  {% if report_lines %}
-    {% set rows = [] %}
-    {% for row in report_lines %}
-      {% set item_search_link -%}
-        {% if row.item_id_search_url %}
-          <a
-            class="govuk-link govuk-!-font-weight-bold"
-            href="{{ row.item_id_search_url }}"
-          >{{ row.item_id }}</a>
-        {% else %}
-          ""
-        {% endif %}
-      {%- endset %}
 
-      {% set measures_search_link -%}
-        {% if row.measures_search_url %}
-          <a
-            class="govuk-link govuk-!-font-weight-bold"
-            href="{{ row.measures_search_url }}"
-          >Measures</a>
-        {% else %}
-          ""
-        {% endif %}
-      {%- endset %}
+{% block review_tabs %}
 
-      {% set cells = [
-        {"text": row.update_type},
-        {"text": row.record_name},
-        {"html": item_search_link},
-        {"html": measures_search_link},
-        {"text": row.suffix},
-        {"text": row.start_date},
-        {"text": row.end_date},
-        {"text": row.comments},
-      ] or "" %}
+  {{ super() }}
 
-      {{ rows.append(cells) or "" }}
-    {% endfor %}
-
-    {{ govukTable({
-      "head": [
-        {"text": "Action"},
-        {"text": "Update"},
-        {"html": "Commodity code"},
-        {"html": "Measures"},
-        {"text": "Suffix"},
-        {"text": "Start date"},
-        {"text": "End date"},
-        {"text": "Comments"},
-      ],
-      "rows": rows,
-    }) }}
-  {% endif %}
-
-  {% set items_name = "goods changes" %}
+  {{ fake_tabs(nested_tab_links, is_nested=True) }}
 {% endblock %}
