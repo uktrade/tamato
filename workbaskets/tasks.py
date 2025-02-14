@@ -198,14 +198,15 @@ def check_comm_code_for_missing_measures(
             successful=False,
         )
 
+    # check for 103 and 105 measure types
     filtered_measures = applicable_measures.filter(
-        measure_type__sid=103,
+        measure_type__sid__in=[103, 105],
         geographical_area=GeographicalArea.objects.erga_omnes().first(),
     )
 
     if not filtered_measures:
         logger.info(
-            f"Commodity {code.item_id} has no applicable measures of type 103!",
+            f"Commodity {code.item_id} has no applicable measures of type 103 or 105!",
         )
         return MissingMeasureCommCode.objects.create(
             commodity=code,
@@ -214,7 +215,7 @@ def check_comm_code_for_missing_measures(
         )
 
     logger.info(
-        f"Commodity {code.item_id} has {filtered_measures.count()} applicable type 103 measure(s)",
+        f"Commodity {code.item_id} has {filtered_measures.count()} applicable type 103 and/or 105 measure(s)",
     )
     return MissingMeasureCommCode.objects.create(
         commodity=code,
