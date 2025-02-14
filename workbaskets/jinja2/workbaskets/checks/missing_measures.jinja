@@ -135,7 +135,7 @@
               {{ table_rows.append([
                 {"html": link},
                 {"text": check.commodity.get_description().description if check.commodity.get_description().description else "—"},
-                {"text": "Measure type 103 missing"},
+                {"text": "Measure type 103/105 missing"},
               ]) or "" }}
             {% endfor %}
             {{ govukTable({
