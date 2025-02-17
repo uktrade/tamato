@@ -12,17 +12,21 @@
     {% endset %}
 
     {% set commodity_link %}
-      <a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', args=[measure.goods_nomenclature.sid]) }}">{{ measure.goods_nomenclature.item_id }}</a>
+      {% if measure.goods_nomenclature.current_version_inc_draft %}<a class="govuk-link govuk-!-font-weight-bold" href="{{ url('commodity-ui-detail', args=[measure.goods_nomenclature.sid]) }}">{{ measure.goods_nomenclature.item_id }}</a>{% else %} {{ measure.goods_nomenclature.item_id }} {% endif %}
     {% endset %}
 
     {% set action %}
+    {% if measure.goods_nomenclature.current_version_inc_draft%}
       {% if measure.valid_between.lower > [today, measure.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper]|min %}To be deleted{% else %}To be end-dated{% endif %}
+    {% else %} To be deleted
+    {% endif %}
     {% endset %}
 
     {{ table_rows.append([
       {"text": measure_link},
       {"html": commodity_link if measure.goods_nomenclature else "-"},
-      {"text": "{:%d %b %Y}".format(measure.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper) if measure.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper else "-" },
+      {"text": "Commodity end-dated" if measure.goods_nomenclature.current_version_inc_draft else "Commodity deleted"},
+      {"text": "{:%d %b %Y}".format(measure.goods_nomenclature.current_version_inc_draft.valid_between.upper) if measure.goods_nomenclature.current_version_inc_draft and measure.goods_nomenclature.current_version_inc_draft.valid_between.upper else "-" },
       {"text": "{:%d %b %Y}".format(measure.valid_between.lower) },
       {"text": "{:%d %b %Y}".format(measure.effective_end_date) if measure.effective_end_date else '-' },
       {"text": action},
@@ -49,6 +53,7 @@
       "head": [
         {"text": measure_sid},
         {"text": commodity_code},
+        {"text": "Commodity update type"},
         {"text": "Commodity end date"},
         {"text": start_date},
         {"text": 'Measure end date'},
