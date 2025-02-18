@@ -94,7 +94,7 @@
             <div class="success-summary govuk-!-margin-bottom-5">
               <div class="govuk-grid-row">
                 <div class="govuk-grid-column-two-thirds">
-                  <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-0">There are no missing 103 measures.</p>
+                  <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-0">There are no missing 103 or 105 measures.</p>
                 </div>
                 <div class="govuk-grid-column-one-third">
                 <p class="govuk-body govuk-!-font-weight-bold text-align-right govuk-!-margin-bottom-0">Last run: {{ "{:%d %b %Y %H:%M}".format(missing_measures_check.updated_at) }}</p>
@@ -110,7 +110,7 @@
               <div class="govuk-grid-row">
                 <div class="govuk-grid-column-two-thirds">
                   {{ govukWarningText({
-                    "text": "The following commodity codes are missing a 103 measure type:",
+                    "text": "The following commodity codes are missing a 103 or 105 measure type:",
                     "iconFallbackText": "Warning",
                     "classes": "govuk-!-margin-bottom-0",
                   }) }}
@@ -135,7 +135,7 @@
               {{ table_rows.append([
                 {"html": link},
                 {"text": check.commodity.get_description().description if check.commodity.get_description().description else "—"},
-                {"text": "Measure type 103 missing"},
+                {"text": "Measure type 103/105 missing"},
               ]) or "" }}
             {% endfor %}
             {{ govukTable({
