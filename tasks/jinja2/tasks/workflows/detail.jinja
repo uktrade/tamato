@@ -2,23 +2,11 @@
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set object_name = object._meta.verbose_name %}
-
-{% set page_title = object_name|capitalize ~ ": " ~ object.title %}
-
-{% if object_name == "workflow" %}
-  {% set task_object_name = "task" %}
-  {% set task_object_create_url = url("workflow:task-workflow-task-ui-create", kwargs={"task_workflow_pk": object.pk}) %}
-{% elif object_name == "workflow template" %}
-  {% set task_object_name = "task template" %}
-  {% set task_object_create_url = url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}) %}
-{% endif %}
-
-{% set list_include = "tasks/includes/task_queue.jinja" %}
+{% set page_title = verbose_name|capitalize ~ ": " ~ object.title %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and view "~ object_name ~ "s", "href": object.get_url("list")},
+      {"text": "Find and view " ~ verbose_name ~ "s", "href": object.get_url("list")},
       {"text": page_title}
     ],
     with_workbasket=False,
@@ -68,16 +56,18 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-three-quarters">
-      <h2 class="govuk-heading-m">{{ task_object_name|capitalize }}s</h2>
+      <h2 class="govuk-heading-m">Steps</h2>
     </div>
 
-    <div class="govuk-grid-column-one-quarter">
-      {{ govukButton({
-        "text": "Create a " ~ task_object_name,
-        "href": task_object_create_url,
-        "classes": "govuk-button align-right"
-      }) }}
-    </div>
+    {% if verbose_name == "ticket template"%}
+      <div class="govuk-grid-column-one-quarter">
+        {{ govukButton({
+          "text": "Add a step",
+          "href": url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}),
+          "classes": "govuk-button align-right"
+        }) }}
+      </div>
+    {% endif %}
   </div>
 
   <div class="govuk-grid-row">
@@ -90,16 +80,19 @@
     </div>
   </div>
 
-  <div class="govuk-button-group govuk-!-margin-top-6">
-    {{ govukButton({
-      "text": "Delete " ~ object_name,
-      "href": object.get_url("delete"),
-      "classes": "govuk-button--warning"
-    }) }}
-    {{ govukButton({
-      "text": "Find and view " ~ object_name ~ "s",
-      "href": object.get_url("list"),
-      "classes": "govuk-button--secondary"
-    }) }}
-  </div>
+  {% if verbose_name == "ticket template" %}
+    <div class="govuk-button-group govuk-!-margin-top-6">
+      {{ govukButton({
+        "text": "Delete " ~ verbose_name,
+        "href": object.get_url("delete"),
+        "classes": "govuk-button--warning"
+      }) }}
+      {{ govukButton({
+        "text": "Find and view " ~ verbose_name ~ "s",
+        "href": object.get_url("list"),
+        "classes": "govuk-button--secondary"
+      }) }}
+    </div>
+  {% endif %}
+
 {% endblock %}

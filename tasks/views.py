@@ -536,7 +536,13 @@ class TaskWorkflowDetailView(
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["object_list"] = self.get_object().get_tasks()
+        context_data.update(
+            {
+                "object_list": self.get_object().get_tasks(),
+                "verbose_name": "ticket",
+                "list_include": "tasks/includes/task_list.jinja",
+            },
+        )
         return context_data
 
 
@@ -713,7 +719,13 @@ class TaskWorkflowTemplateDetailView(
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["object_list"] = self.queue.get_task_templates()
+        context_data.update(
+            {
+                "object_list": self.queue.get_task_templates(),
+                "verbose_name": "ticket template",
+                "list_include": "tasks/includes/task_queue.jinja",
+            },
+        )
         return context_data
 
     def post(self, request, *args, **kwargs):
