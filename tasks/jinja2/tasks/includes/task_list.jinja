@@ -1,4 +1,5 @@
 {% from "components/table/macro.njk" import govukTable %}
+{% from "tasks/macros/display_assignees.jinja" import display_assignees %}
 
 {% set table_rows = [] %}
 
@@ -9,6 +10,7 @@
 
   {{ table_rows.append([
     {"html": object_link},
+    {"text": display_assignees(object.assignees.assigned())},
     {"text": object.progress_state},
   ]) or "" }}
 {% endfor %}
@@ -16,7 +18,8 @@
 {{ govukTable({
   "head": [
     {"text": "Name"},
-    {"text": "Status"}
+    {"text": "Assignee"},
+    {"text": "Status"},
   ],
   "rows": table_rows
 }) }}
