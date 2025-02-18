@@ -105,6 +105,21 @@
 
           {# check was not successful #}
           {% else %}
+            {% if request.user.is_superuser %}
+              <form method="post">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+                {{ govukWarningText({
+                  "text": "Be sure that you understand the implications of this violation before choosing to override it."
+                }) }}
+                {{ govukButton({
+                  "text": "Override measures check",
+                  "classes": "govuk-button--warning",
+                  "name": "form-action",
+                  "value": "override"
+                }) }}
+              </form>
+            {% endif %}
             <p class="govuk-body">Missing measures check finished.</p>
             <div class="govuk-error-summary">
               <div class="govuk-grid-row">
