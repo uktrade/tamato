@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         schema_name = ""
 
     dependencies = [
-        ("open_data", "0001_create_schema"),
+        ("open_data", "0001_initial"),
     ]
 
     operations = [

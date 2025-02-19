@@ -27,7 +27,7 @@ DO $$DECLARE r record;
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("open_data", "0002_initial"),
+        ("open_data", "0002_create_tables"),
     ]
 
     if migrate_to_postgres():

@@ -4,6 +4,8 @@ from django.db import migrations
 
 from open_data.models.utils import migrate_to_postgres
 
+# common 0013_versiongroup_common_vers_current_04c358_idx
+
 
 class Migration(migrations.Migration):
     initial = True
@@ -12,7 +14,7 @@ class Migration(migrations.Migration):
     if migrate_to_postgres():
         operations = [
             migrations.RunSQL(
-                sql=[("CREATE ASCHEMA reporting;")],
+                sql=[("CREATE SCHEMA reporting;")],
                 reverse_sql=[("DROP SCHEMA reporting;")],
             ),
         ]
