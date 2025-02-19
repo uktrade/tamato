@@ -27,22 +27,10 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-three-quarters">
+      <h2 class="govuk-heading-m">Description</h2>
+      <p class="govuk-body"> {{ object.description }}</p>
+
       <h2 class="govuk-heading-m">Steps</h2>
-    </div>
-
-    {% if verbose_name == "ticket template"%}
-      <div class="govuk-grid-column-one-quarter">
-        {{ govukButton({
-          "text": "Add a step",
-          "href": url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}),
-          "classes": "govuk-button align-right"
-        }) }}
-      </div>
-    {% endif %}
-  </div>
-
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
       {% if object_list %}
         {% include list_include %}
       {% else %}
@@ -52,17 +40,20 @@
   </div>
 
   {% if verbose_name == "ticket template" %}
-    <div class="govuk-button-group govuk-!-margin-top-6">
-      {{ govukButton({
-        "text": "Delete " ~ verbose_name,
-        "href": object.get_url("delete"),
-        "classes": "govuk-button--warning"
-      }) }}
-      {{ govukButton({
-        "text": "Find and view " ~ verbose_name ~ "s",
-        "href": object.get_url("list"),
-        "classes": "govuk-button--secondary"
-      }) }}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-button-group">
+          {{ govukButton({
+            "text": "Add a step",
+            "href": url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}),
+          }) }}
+          {{ govukButton({
+            "text": "Delete " ~ verbose_name,
+            "href": object.get_url("delete"),
+            "classes": "govuk-button--warning"
+          }) }}
+        </div>
+      </div>
     </div>
   {% endif %}
 
