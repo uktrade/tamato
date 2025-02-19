@@ -15,6 +15,13 @@
     <a
       class="govuk-link"
       href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}) }}"
-    >{{ workbasket.pk }}</a>
+    >{{ workbasket.pk }} - {{ workbasket.status }}</a>
   {% endif %}
+{%- endmacro %}
+
+{% macro display_summary_row_stacked(key, value) -%}
+  <div class="govuk-summary-list__row__stacked">
+    <dt class="govuk-summary-list__key__stacked">{{ key }}</dt>
+    <dd class="govuk-summary-list__value__stacked">{{ value }}</dd>
+  </div>
 {%- endmacro %}
