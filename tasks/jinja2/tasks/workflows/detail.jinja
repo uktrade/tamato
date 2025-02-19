@@ -18,11 +18,19 @@
 
 {% block content %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
-      <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">
+    <div class="govuk-grid-column-three-quarters">
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-0">
         <span class="govuk-caption-xl">{{ object.title }}</span>
         {{ page_title }}
       </h1>
+    </div>
+
+    <div class="govuk-grid-column-one-quarter govuk-!-margin-top-7">
+      {{ govukButton({
+        "text": "Edit " ~ verbose_name,
+        "href": object.get_url("edit"),
+        "classes": "align-right",
+      }) }}
     </div>
   </div>
 
