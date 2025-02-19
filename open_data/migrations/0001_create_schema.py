@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     if migrate_to_postgres():
         operations = [
             migrations.RunSQL(
-                sql=[("CREATE SCHEMA reporting;")],
+                sql=[("CREATE ASCHEMA reporting;")],
                 reverse_sql=[("DROP SCHEMA reporting;")],
             ),
         ]
