@@ -25,44 +25,6 @@
 
   <hr class="govuk-section-break govuk-section-break--visible">
 
-  <h2 class="govuk-heading-m">Details</h2>
-  
-  <dl class="govuk-summary-list">
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        ID
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ object.pk }}
-      </dd>
-      <dd class="govuk-summary-list__actions"></dd>
-    </div>
-
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Title
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ object.title }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href="{{ object.get_url("edit") }}">Change<span class="govuk-visually-hidden"> title</span></a>
-      </dd>
-    </div>
-
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Description
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ object.description }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href="{{ object.get_url("edit") }}">Change<span class="govuk-visually-hidden"> description</span></a>
-      </dd>
-    </div>
-  </dl>
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-three-quarters">
       <h2 class="govuk-heading-m">Steps</h2>
