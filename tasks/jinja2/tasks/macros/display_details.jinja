@@ -1,0 +1,20 @@
+{% macro display_assignees(assignees) -%}
+  {% if not assignees %}
+    None
+  {% else %}
+    {% for assignee in assignees %}
+      {{ assignee.user.get_displayname() }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  {% endif %}
+{%- endmacro %}
+
+{% macro display_workbasket(workbasket) -%}
+  {% if not workbasket %}
+    None
+  {% else %}
+    <a
+      class="govuk-link"
+      href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}) }}"
+    >{{ workbasket.pk }}</a>
+  {% endif %}
+{%- endmacro %}
