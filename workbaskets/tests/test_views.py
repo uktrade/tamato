@@ -15,7 +15,9 @@ from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils.timezone import localtime
 
+from checks.models import MissingMeasuresCheck
 from checks.models import TrackedModelCheck
+from checks.tests.factories import MissingMeasureCommCodeFactory
 from checks.tests.factories import MissingMeasuresCheckFactory
 from checks.tests.factories import TrackedModelCheckFactory
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
@@ -3067,3 +3069,23 @@ def test_reordering_transactions_bug(valid_user_client, user_workbasket):
         pytest.fail(
             "IntegrityError - New trackedmodel cannot be created after reordering then deleting transactions.",
         )
+
+
+def test_missing_measures_override(valid_user_client, user_workbasket):
+    missing_measures_check = MissingMeasuresCheckFactory.create(
+        workbasket=user_workbasket,
+        successful=False,
+    )
+    MissingMeasureCommCodeFactory.create_batch(
+        5,
+        missing_measures_check=missing_measures_check,
+        successful=False,
+    )
+    url = reverse("workbaskets:workbasket-ui-missing-measures-check")
+    response = valid_user_client.post(url, {"form-action": "override"})
+
+    assert response.status_code == 302
+    assert response.url == url
+    check = MissingMeasuresCheck.objects.get(workbasket=user_workbasket)
+    assert check.successful == True
+    assert check.model_checks.count() == 0

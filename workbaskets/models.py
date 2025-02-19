@@ -23,6 +23,7 @@ from django_fsm import FSMField
 from django_fsm import transition
 
 from checks.models import MissingMeasureCommCode
+from checks.models import MissingMeasuresCheck
 from checks.models import TrackedModelCheck
 from checks.models import TransactionCheck
 from common.models.mixins import TimestampedMixin
@@ -725,6 +726,9 @@ class WorkBasket(TimestampedMixin):
         """Delete all MissingMeasureCommCode instances related to the
         WorkBasket."""
         self.missing_measure_comm_codes.delete()
+
+    def override_missing_measures_check(self):
+        MissingMeasuresCheck.objects.get(workbasket=self).override()
 
     @property
     def unchecked_or_errored_transactions(self):

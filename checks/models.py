@@ -181,6 +181,11 @@ class MissingMeasuresCheck(TimestampedMixin):
 
     successful = fields.BooleanField(null=True)
 
+    def override(self):
+        self.model_checks.all().delete()
+        self.successful = True
+        self.save()
+
 
 class MissingMeasureCommCode(models.Model):
     """Links a GoodsNomenclature to a MissingMeasuresCheck when the commodity
