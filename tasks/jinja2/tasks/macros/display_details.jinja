@@ -1,3 +1,5 @@
+{% from "components/tag/macro.njk" import govukTag %}
+
 {% macro display_assignees(assignees) -%}
   {% if not assignees %}
     None
@@ -25,3 +27,16 @@
     <dd class="govuk-summary-list__value__stacked">{{ value }}</dd>
   </div>
 {%- endmacro %}
+
+{% macro display_status(status) %}
+  {% set status_to_class_map = ({
+    "In progress": "govuk-tag--blue",
+    "Done": "govuk-tag--green",
+    "To do": "govuk-tag--purple",
+  }) %}
+
+  {{ govukTag({
+    "text": status,
+    "classes": status_to_class_map[status],
+  }) }}
+{% endmacro %}
