@@ -4,6 +4,7 @@ from factory.django import DjangoModelFactory
 
 from common.tests.factories import CategoryFactory
 from common.tests.factories import TaskFactory
+from common.tests.factories import UserFactory
 from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
@@ -16,6 +17,7 @@ class TaskWorkflowTemplateFactory(DjangoModelFactory):
 
     title = factory.Faker("sentence")
     description = factory.Faker("sentence")
+    creator = factory.SubFactory(UserFactory)
 
     class Meta:
         model = TaskWorkflowTemplate

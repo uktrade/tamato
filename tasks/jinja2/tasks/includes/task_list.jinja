@@ -1,0 +1,26 @@
+{% from "components/table/macro.njk" import govukTable %}
+{% from "tasks/macros/display_details.jinja" import display_assignees %}
+{% from "tasks/macros/display_details.jinja" import display_status %}
+
+{% set table_rows = [] %}
+
+{% for object in object_list %}
+  {% set object_link -%}
+    <a class="govuk-link" href="{{ object.get_url(action='detail') }}">{{ object.title }}</a>
+  {%- endset %}
+
+  {{ table_rows.append([
+    {"html": object_link},
+    {"text": display_assignees(object.assignees.assigned())},
+    {"text": display_status(object.progress_state.__str__())},
+  ]) or "" }}
+{% endfor %}
+
+{{ govukTable({
+  "head": [
+    {"text": "Name"},
+    {"text": "Assignee"},
+    {"text": "Status"},
+  ],
+  "rows": table_rows
+}) }}

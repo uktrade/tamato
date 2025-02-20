@@ -165,3 +165,29 @@
 .govuk-checkboxes__label:before {
   background-color: white
 }
+
+.govuk-summary-list__row__stacked {
+  @extend .govuk-summary-list__row;
+  display: block;
+}
+
+.govuk-summary-list__key__stacked {
+  @extend .govuk-summary-list__key;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.govuk-summary-list__value__stacked {
+  @extend .govuk-summary-list__value;
+  display: block;
+  padding: 0;
+  margin: 0;
+}
+
+.govuk-summary-list__value__stacked:last-child {
+  width: 100%;
+  padding-bottom: govuk-spacing(2);
+  margin: 0;
+}
