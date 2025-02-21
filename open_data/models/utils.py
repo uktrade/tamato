@@ -2,6 +2,7 @@ import os
 
 from django.db import models
 
+from common.util import in_test
 from open_data.apps import APP_LABEL
 
 SCHEMA_NAME = "reporting"
@@ -22,7 +23,10 @@ def create_name_with_schema(name):
     # NOTE: the " around the stop are really important.
     # without them, the table will not be created in the correct schema
     # But is we are exporting to sqlite, we must omit the schma name
-    if migrate_to_postgres():
+
+    if in_test():
+        return name
+    elif migrate_to_postgres():
         return f'{SCHEMA_NAME}"."{APP_LABEL}_report{name}'
     else:
         return f"{APP_LABEL}_report{name}"
