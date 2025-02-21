@@ -1,14 +1,19 @@
 from django.db.models import TextChoices
 from django.forms import CheckboxSelectMultiple
+from django.forms import widgets
 from django.urls import reverse_lazy
 from django_filters import ChoiceFilter
+from django_filters import ModelChoiceFilter
 from django_filters import ModelMultipleChoiceFilter
 
 from common.filters import TamatoFilter
+from common.models import User
 from common.widgets import RadioSelect
+from tasks.forms import TaskFilterForm
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskWorkflowTemplate
+from tasks.models.task import Category
 
 
 class TaskFilter(TamatoFilter):
@@ -51,9 +56,22 @@ class TaskWorkflowFilter(TamatoFilter):
         widget=CheckboxSelectMultiple,
     )
 
+    category = ModelChoiceFilter(
+        label="Work type",
+        queryset=Category.objects.all(),
+        widget=widgets.Select(),
+    )
+
+    assigned_to = ModelChoiceFilter(
+        label="Assignee",
+        field_name="assigned_to",
+        queryset=User.objects.all(),
+    )
+
     class Meta:
         model = Task
-        fields = ["search", "category", "progress_state"]
+        form = TaskFilterForm
+        fields = ["search", "progress_state", "category"]
 
     @property
     def qs(self):
