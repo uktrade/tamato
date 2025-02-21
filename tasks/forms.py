@@ -451,12 +451,13 @@ TaskTemplateDeleteForm = delete_form_for(TaskTemplate)
 class TaskFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.init_fields()
         self.helper = FormHelper()
 
         self.helper.layout = Layout(
             "search",
             "progress_state",
-            "assigned_to",
+            "assignees",
             "category",
             Button(
                 "submit",
@@ -465,4 +466,9 @@ class TaskFilterForm(forms.Form):
             HTML(
                 f'<a class="govuk-button govuk-button--secondary" href="{self.clear_url}"> Clear </a>',
             ),
+        )
+
+    def init_fields(self):
+        self.fields["assignees"].label_from_instance = (
+            lambda obj: f"{obj.get_displayname()}"
         )

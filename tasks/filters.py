@@ -62,16 +62,16 @@ class TaskWorkflowFilter(TamatoFilter):
         widget=widgets.Select(),
     )
 
-    assigned_to = ModelChoiceFilter(
+    assignees = ModelChoiceFilter(
         label="Assignee",
-        field_name="assigned_to",
+        field_name="assignees",
         queryset=User.objects.all(),
     )
 
     class Meta:
         model = Task
         form = TaskFilterForm
-        fields = ["search", "progress_state", "category"]
+        fields = ["search", "progress_state", "category", "assignees"]
 
     @property
     def qs(self):
