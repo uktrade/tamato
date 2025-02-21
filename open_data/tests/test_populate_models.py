@@ -29,7 +29,7 @@ excluded_models = [
 test_models = ["TestModel1", "TestModel2", "TestModel3", "TestModelDescription1"]
 
 
-def test_models_are_included():
+def test_models_are_included(create_schema):
     # This test will fail when a new tracked model has been created,
     # without creating an equivalent model in the open data app
     # If the new model is not relevant to open data, its name should be added
