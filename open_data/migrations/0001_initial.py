@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-from open_data.models.utils import migrate_to_postgres
+from open_data.models.utils import schema_required
 
 
 class Migration(migrations.Migration):
@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("common", "0013_versiongroup_common_vers_current_04c358_idx"),
     ]
-    if migrate_to_postgres():
+    if schema_required():
         operations = [
             migrations.RunSQL(
                 sql=[("CREATE SCHEMA reporting;")],

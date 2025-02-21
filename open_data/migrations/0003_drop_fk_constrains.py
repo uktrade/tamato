@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-from open_data.models.utils import migrate_to_postgres
+from open_data.models.utils import schema_required
 
 # It will be impossible to update the tables in the open data area with the
 # foreign keys constrain in place. But it is useful to declare them in the Django
@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
         ("open_data", "0002_create_tables"),
     ]
 
-    if migrate_to_postgres():
+    if schema_required():
         operations = [
             migrations.RunSQL(drop_fk_sql),
         ]

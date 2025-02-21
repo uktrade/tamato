@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-from open_data.models.utils import migrate_to_postgres
+from open_data.models.utils import schema_required
 
 create_view_sql = """
 CREATE MATERIALIZED VIEW reporting.foreign_key_lookup AS
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("open_data", "0003_drop_fk_constrains"),
     ]
-    if migrate_to_postgres():
+    if schema_required():
         operations = [
             migrations.RunSQL(create_view_sql),
         ]
