@@ -557,13 +557,14 @@ class TaskWorkflowDetailView(
 
 
 class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
+    # Feb 2025 - Workflows will now be called Tickets in the UI only.
     permission_required = "tasks.add_taskworkflow"
     template_name = "tasks/workflows/create.jinja"
     form_class = TaskWorkflowCreateForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "workflow"
+        context["verbose_name"] = "ticket"
         context["list_url"] = "#NOT-IMPLEMENTED"
         return context
 
@@ -576,7 +577,7 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
         create_type = form.cleaned_data["create_type"]
 
         if create_type == TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE:
-            template = form.cleaned_data["workflow_template"]
+            template = form.cleaned_data["work_type"]
             self.object = template.create_task_workflow(**summary_data)
         elif create_type == TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE:
             with transaction.atomic():
