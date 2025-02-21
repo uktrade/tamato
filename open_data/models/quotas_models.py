@@ -14,7 +14,7 @@ from quotas.models import QuotaSuspension
 class ReportQuotaAssociation(ReportModel):
     shadowed_model = QuotaAssociation
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -37,7 +37,7 @@ class ReportQuotaAssociation(ReportModel):
 class ReportQuotaDefinition(ReportModel):
     shadowed_model = QuotaDefinition
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -79,7 +79,7 @@ class ReportQuotaDefinition(ReportModel):
 class ReportQuotaOrderNumber(ReportModel):
     shadowed_model = QuotaOrderNumber
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -99,7 +99,7 @@ class ReportQuotaOrderNumber(ReportModel):
 class ReportQuotaOrderNumberOrigin(ReportModel):
     shadowed_model = QuotaOrderNumberOrigin
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -118,7 +118,7 @@ class ReportQuotaOrderNumberOrigin(ReportModel):
 class ReportQuotaSuspension(ReportModel):
     shadowed_model = QuotaSuspension
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -137,7 +137,7 @@ class ReportQuotaSuspension(ReportModel):
 class ReportQuotaOrderNumberOriginExclusion(ReportModel):
     shadowed_model = QuotaOrderNumberOriginExclusion
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -157,7 +157,7 @@ class ReportQuotaOrderNumberOriginExclusion(ReportModel):
 class ReportQuotaBlocking(ReportModel):
     shadowed_model = QuotaBlocking
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,

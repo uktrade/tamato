@@ -13,7 +13,7 @@ class ReportGoodsNomenclature(ReportModel):
     shadowed_model = GoodsNomenclature
     extra_where = " AND valid_between @> CURRENT_DATE"
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -44,7 +44,7 @@ class ReportGoodsNomenclature(ReportModel):
 
 class ReportGoodsNomenclatureSuccessor(ReportModel):
     shadowed_model = GoodsNomenclatureSuccessor
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -68,7 +68,7 @@ class ReportGoodsNomenclatureSuccessor(ReportModel):
 class ReportGoodsNomenclatureOrigin(ReportModel):
     shadowed_model = GoodsNomenclatureOrigin
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -92,7 +92,7 @@ class ReportGoodsNomenclatureOrigin(ReportModel):
 class ReportFootnoteAssociationGoodsNomenclature(ReportModel):
     shadowed_model = FootnoteAssociationGoodsNomenclature
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,

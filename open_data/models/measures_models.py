@@ -22,7 +22,7 @@ from open_data.models.utils import ReportModel
 
 class ReportAdditionalCodeTypeMeasureType(ReportModel):
     shadowed_model = AdditionalCodeTypeMeasureType
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -43,7 +43,7 @@ class ReportAdditionalCodeTypeMeasureType(ReportModel):
 class ReportDutyExpression(ReportModel):
     shadowed_model = DutyExpression
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -65,7 +65,7 @@ class ReportDutyExpression(ReportModel):
 class ReportFootnoteAssociationMeasure(ReportModel):
     shadowed_model = FootnoteAssociationMeasure
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -85,7 +85,7 @@ class ReportFootnoteAssociationMeasure(ReportModel):
 
 class ReportMeasure(ReportModel):
     shadowed_model = Measure
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -145,7 +145,7 @@ class ReportMeasure(ReportModel):
 class ReportMeasureAction(ReportModel):
     shadowed_model = MeasureAction
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -164,7 +164,7 @@ class ReportMeasureAction(ReportModel):
 class ReportMeasureConditionComponent(ReportModel):
     shadowed_model = MeasureConditionComponent
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -200,7 +200,7 @@ class ReportMeasureCondition(ReportModel):
     shadowed_model = MeasureCondition
     update_table = False
     # This table is populated using the ORM
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -267,7 +267,7 @@ class ReportMeasureCondition(ReportModel):
 class ReportMeasureConditionCode(ReportModel):
     shadowed_model = MeasureConditionCode
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -287,7 +287,7 @@ class ReportMeasureConditionCode(ReportModel):
 class ReportMeasurementUnit(ReportModel):
     shadowed_model = MeasurementUnit
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -306,7 +306,7 @@ class ReportMeasurementUnit(ReportModel):
 class ReportMeasurementUnitQualifier(ReportModel):
     shadowed_model = MeasurementUnitQualifier
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -325,7 +325,7 @@ class ReportMeasurementUnitQualifier(ReportModel):
 class ReportMeasureTypeSeries(ReportModel):
     shadowed_model = MeasureTypeSeries
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -344,7 +344,7 @@ class ReportMeasureTypeSeries(ReportModel):
 class ReportMonetaryUnit(ReportModel):
     shadowed_model = MonetaryUnit
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -362,7 +362,7 @@ class ReportMonetaryUnit(ReportModel):
 class ReportMeasureType(ReportModel):
     shadowed_model = MeasureType
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -390,7 +390,7 @@ class ReportMeasureType(ReportModel):
 class ReportMeasurement(ReportModel):
     shadowed_model = Measurement
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -413,7 +413,7 @@ class ReportMeasurement(ReportModel):
 class ReportMeasureExcludedGeographicalArea(ReportModel):
     shadowed_model = MeasureExcludedGeographicalArea
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -437,7 +437,7 @@ class ReportMeasureExcludedGeographicalArea(ReportModel):
 class ReportMeasureComponent(ReportModel):
     shadowed_model = MeasureComponent
 
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,

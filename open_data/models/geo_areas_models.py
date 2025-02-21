@@ -8,7 +8,7 @@ from open_data.models.utils import ReportModel
 
 class ReportGeographicalArea(ReportModel):
     shadowed_model = GeographicalArea
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
@@ -34,7 +34,7 @@ class ReportGeographicalArea(ReportModel):
 
 class ReportGeographicalMembership(ReportModel):
     shadowed_model = GeographicalMembership
-    trackedmodel_ptr = models.OneToOneField(
+    trackedmodel_ptr = models.ForeignKey(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
