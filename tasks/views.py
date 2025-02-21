@@ -569,22 +569,17 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
         return context
 
     def form_valid(self, form):
-        summary_data = {
-            "title": form.cleaned_data["title"],
+        data = {
+            "title": form.cleaned_data["ticket_name"],
             "description": form.cleaned_data["description"],
             "creator": self.request.user,
+            # Pass in new fields
+            "eif_date": form.cleaned_data["entry_into_force_date"],
+            "policy_contact": form.cleaned_data["policy_contact"],
         }
-        create_type = form.cleaned_data["create_type"]
-
-        if create_type == TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE:
-            template = form.cleaned_data["work_type"]
-            self.object = template.create_task_workflow(**summary_data)
-        elif create_type == TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE:
-            with transaction.atomic():
-                summary_task = Task.objects.create(**summary_data)
-                self.object = TaskWorkflow.objects.create(
-                    summary_task=summary_task,
-                )
+        template = form.cleaned_data["work_type"]
+        # Pass all data to the create_task_workflow function
+        self.object = template.create_task_workflow(**data)
 
         return super().form_valid(form)
 

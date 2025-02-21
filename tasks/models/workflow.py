@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.conf import settings
 from django.db import models
 from django.db.transaction import atomic
@@ -30,6 +32,11 @@ class TaskWorkflow(Queue):
         on_delete=models.SET_NULL,
     )
     """The template from which this workflow was created, if any."""
+    eif_date = models.DateField(
+        blank=True,
+        null=True,
+    )
+    policy_contact = models.CharField(max_length=24, null=True)
 
     class Meta(Queue.Meta):
         abstract = False
@@ -163,6 +170,9 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
         title: str,
         description: str,
         creator: User,
+        # Take in additional data
+        eif_date: date,
+        policy_contact: str,
     ) -> "TaskWorkflow":
         """Create a workflow and it subtasks, using values from this template
         workflow and its task templates."""
@@ -175,6 +185,9 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
         task_workflow = TaskWorkflow.objects.create(
             summary_task=summary_task,
             creator_template=self,
+            # Pass new data to the workflow instance that will be made
+            eif_date=eif_date,
+            policy_contact=policy_contact,
         )
 
         task_item_templates = TaskItemTemplate.objects.select_related(
