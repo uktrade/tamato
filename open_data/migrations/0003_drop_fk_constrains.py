@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+from common.util import in_test
 from open_data.models.utils import schema_required
 
 # It will be impossible to update the tables in the open data area with the
@@ -16,7 +17,7 @@ DO $$DECLARE r record;
     BEGIN
         FOR r IN SELECT table_schema, table_name, constraint_name
 				FROM information_schema.table_constraints AS tc 
-				WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema='reporting'
+				WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name like 'open_data%'
         LOOP
             EXECUTE 'ALTER TABLE '|| quote_ident(r.table_schema) || '.' || quote_ident(r.table_name)|| ' DROP CONSTRAINT '|| quote_ident(r.constraint_name) || ';';
         END LOOP;
@@ -30,7 +31,7 @@ class Migration(migrations.Migration):
         ("open_data", "0002_create_tables"),
     ]
 
-    if schema_required():
+    if schema_required() or in_test():
         operations = [
             migrations.RunSQL(drop_fk_sql),
         ]

@@ -6,7 +6,6 @@ from common.util import in_test
 from open_data.apps import APP_LABEL
 
 SCHEMA_NAME = "reporting"
-LOOK_UP_VIEW = f"{SCHEMA_NAME}.foreign_key_lookup"
 
 
 def schema_required():
@@ -20,6 +19,14 @@ def schema_required():
     if "sqlite" in data_base_url or in_test():
         return False
     return True
+
+
+def get_lookup_name():
+    if schema_required():
+        prefix = f"{SCHEMA_NAME}."
+    else:
+        prefix = ""
+    return f"{prefix}foreign_key_lookup"
 
 
 def create_open_data_name(name):
@@ -132,7 +139,7 @@ class ReportModel(models.Model):
                     query_list.append(
                         f'UPDATE "{cls._meta.db_table}" '
                         f"SET {f.column}=current_version_id "
-                        f" FROM {LOOK_UP_VIEW} "
+                        f" FROM {get_lookup_name()} "
                         f" WHERE {f.column} = old_id;",
                     )
         return query_list

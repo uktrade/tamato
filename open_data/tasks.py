@@ -12,8 +12,8 @@ from open_data.commodities import save_commodities_parent
 from open_data.geo_areas import save_geo_areas
 from open_data.measures import update_measure
 from open_data.measures import update_measure_components
-from open_data.models.utils import LOOK_UP_VIEW
 from open_data.models.utils import ReportModel
+from open_data.models.utils import get_lookup_name
 
 
 def add_description(model, verbose=True):
@@ -71,7 +71,7 @@ def populate_open_data(verbose=False):
     config = django.apps.apps.get_app_config(APP_LABEL)
 
     with connection.cursor() as cursor:
-        cursor.execute(f"REFRESH MATERIALIZED VIEW {LOOK_UP_VIEW};")
+        cursor.execute(f"REFRESH MATERIALIZED VIEW {get_lookup_name()};")
         for model in config.get_models():
             if issubclass(model, ReportModel):
                 if verbose:
