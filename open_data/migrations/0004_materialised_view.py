@@ -2,9 +2,8 @@
 
 from django.db import migrations
 
-from common.util import in_test
 from open_data.models.utils import get_lookup_name
-from open_data.models.utils import schema_required
+from open_data.models.utils import in_sqlite
 
 create_view_sql = f"""
 CREATE MATERIALIZED VIEW {get_lookup_name()} AS
@@ -24,7 +23,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("open_data", "0003_drop_fk_constrains"),
     ]
-    if schema_required() or in_test():
+    if not in_sqlite():
         operations = [
             migrations.RunSQL(create_view_sql),
         ]

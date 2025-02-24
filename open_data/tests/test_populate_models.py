@@ -12,6 +12,7 @@ from open_data.tasks import populate_open_data
 
 pytestmark = pytest.mark.django_db
 
+
 excluded_models = [
     "QuotaEvent",  # excluded because not available in sqlite exported to data.gov
     "GeographicalAreaDescription",  # Description are merged in the described table

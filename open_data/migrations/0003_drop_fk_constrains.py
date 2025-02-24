@@ -2,9 +2,6 @@
 
 from django.db import migrations
 
-from common.util import in_test
-from open_data.models.utils import schema_required
-
 # It will be impossible to update the tables in the open data area with the
 # foreign keys constrain in place. But it is useful to declare them in the Django
 # models, so Django will create the correct queryset: the following query t
@@ -31,7 +28,7 @@ class Migration(migrations.Migration):
         ("open_data", "0002_create_tables"),
     ]
 
-    if schema_required() or in_test():
+    if not is_sql():
         operations = [
             migrations.RunSQL(drop_fk_sql),
         ]

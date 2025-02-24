@@ -8,15 +8,21 @@ from open_data.apps import APP_LABEL
 SCHEMA_NAME = "reporting"
 
 
-def schema_required():
+def in_sqlite():
     data_base_url = os.environ.get("DATABASE_URL", "Postgres").lower()
+    if "sqlite" in data_base_url:
+        return True
+    return False
+
+
+def schema_required():
     # schema is not supported by sqlite.
     # During sqlite dump creation, DATABASE_URL is set to sqlitexxxxx
     # so we can establish if we are handlind sqlite, and ignore the schema name
     # And we can't use the schema during testing, because pytest does not run the
     # migrations, but generates the sql from the table definition. So the migration
     # creating the partition is not run, and the table creation fails.
-    if "sqlite" in data_base_url or in_test():
+    if in_sqlite() or in_test():
         return False
     return True
 
