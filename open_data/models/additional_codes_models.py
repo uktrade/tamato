@@ -5,10 +5,14 @@ from additional_codes.models import AdditionalCodeType
 from common.fields import TaricDateRangeField
 from open_data.models.utils import ReportModel
 
+# class OneToOneNWField(models.OneToOneField):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+
 
 class ReportAdditionalCodeType(ReportModel):
     shadowed_model = AdditionalCodeType
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,

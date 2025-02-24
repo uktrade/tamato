@@ -5,11 +5,10 @@ from django.db import migrations
 from django.db import models
 
 import common.fields
+from open_data.models.utils import schema_required
 
 
 class Migration(migrations.Migration):
-
-    initial = True
 
     dependencies = [
         ("footnotes", "0006_allow_blank_descriptions"),
@@ -26,6 +25,10 @@ class Migration(migrations.Migration):
         ("open_data", "0001_initial"),
     ]
 
+    if schema_required():
+        schema_name = 'reporting"."'
+    else:
+        schema_name = ""
     operations = [
         migrations.CreateModel(
             name="ReportAdditionalCode",
@@ -46,7 +49,7 @@ class Migration(migrations.Migration):
                 ("description", models.TextField(blank=True, null=True)),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportadditionalcode',
+                "db_table": f"{schema_name}open_data_reportadditionalcode",
             },
         ),
         migrations.CreateModel(
@@ -71,7 +74,7 @@ class Migration(migrations.Migration):
                 ("application_code", models.SmallIntegerField()),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportadditionalcodetype',
+                "db_table": f"{schema_name}open_data_reportadditionalcodetype",
             },
         ),
         migrations.CreateModel(
@@ -92,7 +95,7 @@ class Migration(migrations.Migration):
                 ("description", models.TextField(blank=True, null=True)),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportcertificate',
+                "db_table": f"{schema_name}open_data_reportcertificate",
             },
         ),
         migrations.CreateModel(
@@ -116,7 +119,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportcertificatetype',
+                "db_table": f"{schema_name}open_data_reportcertificatetype",
             },
         ),
         migrations.CreateModel(
@@ -144,7 +147,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportdutyexpression',
+                "db_table": f"{schema_name}open_data_reportdutyexpression",
             },
         ),
         migrations.CreateModel(
@@ -165,7 +168,7 @@ class Migration(migrations.Migration):
                 ("description", models.TextField(blank=True, null=True)),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportfootnote',
+                "db_table": f"{schema_name}open_data_reportfootnote",
             },
         ),
         migrations.CreateModel(
@@ -190,7 +193,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportfootnotetype',
+                "db_table": f"{schema_name}open_data_reportfootnotetype",
             },
         ),
         migrations.CreateModel(
@@ -231,7 +234,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportgeographicalarea',
+                "db_table": f"{schema_name}open_data_reportgeographicalarea",
             },
         ),
         migrations.CreateModel(
@@ -264,7 +267,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportgoodsnomenclature',
+                "db_table": f"{schema_name}open_data_reportgoodsnomenclature",
             },
         ),
         migrations.CreateModel(
@@ -288,7 +291,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportgroup',
+                "db_table": f"{schema_name}open_data_reportgroup",
             },
         ),
         migrations.CreateModel(
@@ -332,7 +335,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasure',
+                "db_table": f"{schema_name}open_data_reportmeasure",
             },
         ),
         migrations.CreateModel(
@@ -357,7 +360,7 @@ class Migration(migrations.Migration):
                 ("requires_duty", models.BooleanField()),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasureaction',
+                "db_table": f"{schema_name}open_data_reportmeasureaction",
             },
         ),
         migrations.CreateModel(
@@ -396,7 +399,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasurecondition',
+                "db_table": f"{schema_name}open_data_reportmeasurecondition",
             },
         ),
         migrations.CreateModel(
@@ -422,7 +425,7 @@ class Migration(migrations.Migration):
                 ("accepts_price", models.BooleanField()),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasureconditioncode',
+                "db_table": f"{schema_name}open_data_reportmeasureconditioncode",
             },
         ),
         migrations.CreateModel(
@@ -447,7 +450,7 @@ class Migration(migrations.Migration):
                 ("abbreviation", models.CharField(max_length=32)),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasurementunit',
+                "db_table": f"{schema_name}open_data_reportmeasurementunit",
             },
         ),
         migrations.CreateModel(
@@ -472,7 +475,7 @@ class Migration(migrations.Migration):
                 ("abbreviation", models.CharField(max_length=32)),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasurementunitqualifier',
+                "db_table": f"{schema_name}open_data_reportmeasurementunitqualifier",
             },
         ),
         migrations.CreateModel(
@@ -497,7 +500,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasuretypeseries',
+                "db_table": f"{schema_name}open_data_reportmeasuretypeseries",
             },
         ),
         migrations.CreateModel(
@@ -521,7 +524,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmonetaryunit',
+                "db_table": f"{schema_name}open_data_reportmonetaryunit",
             },
         ),
         migrations.CreateModel(
@@ -580,7 +583,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportquotadefinition',
+                "db_table": f"{schema_name}open_data_reportquotadefinition",
             },
         ),
         migrations.CreateModel(
@@ -603,7 +606,7 @@ class Migration(migrations.Migration):
                 ("category", models.SmallIntegerField()),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportquotaordernumber',
+                "db_table": f"{schema_name}open_data_reportquotaordernumber",
             },
         ),
         migrations.CreateModel(
@@ -637,7 +640,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportquotaordernumberorigin',
+                "db_table": f"{schema_name}open_data_reportquotaordernumberorigin",
             },
         ),
         migrations.CreateModel(
@@ -690,7 +693,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportregulation',
+                "db_table": f"{schema_name}open_data_reportregulation",
             },
         ),
         migrations.CreateModel(
@@ -724,7 +727,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportsuspension',
+                "db_table": f"{schema_name}open_data_reportsuspension",
             },
         ),
         migrations.CreateModel(
@@ -769,7 +772,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportreplacement',
+                "db_table": f"{schema_name}open_data_reportreplacement",
             },
         ),
         migrations.CreateModel(
@@ -800,7 +803,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportquotasuspension',
+                "db_table": f"{schema_name}open_data_reportquotasuspension",
             },
         ),
         migrations.CreateModel(
@@ -832,7 +835,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportquotaordernumberoriginexclusion',
+                "db_table": f"{schema_name}open_data_reportquotaordernumberoriginexclusion",
             },
         ),
         migrations.AddField(
@@ -872,7 +875,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportquotablocking',
+                "db_table": f"{schema_name}open_data_reportquotablocking",
             },
         ),
         migrations.CreateModel(
@@ -907,7 +910,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportquotaassociation',
+                "db_table": f"{schema_name}open_data_reportquotaassociation",
             },
         ),
         migrations.CreateModel(
@@ -944,7 +947,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasuretype',
+                "db_table": f"{schema_name}open_data_reportmeasuretype",
             },
         ),
         migrations.CreateModel(
@@ -979,7 +982,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasurement',
+                "db_table": f"{schema_name}open_data_reportmeasurement",
             },
         ),
         migrations.CreateModel(
@@ -1011,7 +1014,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasureexcludedgeographicalarea',
+                "db_table": f"{schema_name}open_data_reportmeasureexcludedgeographicalarea",
             },
         ),
         migrations.CreateModel(
@@ -1070,7 +1073,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasureconditioncomponent',
+                "db_table": f"{schema_name}open_data_reportmeasureconditioncomponent",
             },
         ),
         migrations.AddField(
@@ -1175,7 +1178,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportmeasurecomponent',
+                "db_table": f"{schema_name}open_data_reportmeasurecomponent",
             },
         ),
         migrations.AddField(
@@ -1263,7 +1266,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportgoodsnomenclaturesuccessor',
+                "db_table": f"{schema_name}open_data_reportgoodsnomenclaturesuccessor",
             },
         ),
         migrations.CreateModel(
@@ -1296,7 +1299,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportgoodsnomenclatureorigin',
+                "db_table": f"{schema_name}open_data_reportgoodsnomenclatureorigin",
             },
         ),
         migrations.CreateModel(
@@ -1330,7 +1333,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportgeographicalmembership',
+                "db_table": f"{schema_name}open_data_reportgeographicalmembership",
             },
         ),
         migrations.CreateModel(
@@ -1362,7 +1365,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportfootnoteassociationmeasure',
+                "db_table": f"{schema_name}open_data_reportfootnoteassociationmeasure",
             },
         ),
         migrations.CreateModel(
@@ -1395,7 +1398,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportfootnoteassociationgoodsnomenclature',
+                "db_table": f"{schema_name}open_data_reportfootnoteassociationgoodsnomenclature",
             },
         ),
         migrations.AddField(
@@ -1444,7 +1447,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportamendment',
+                "db_table": f"{schema_name}open_data_reportamendment",
             },
         ),
         migrations.CreateModel(
@@ -1477,7 +1480,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": 'reporting"."open_data_reportadditionalcodetypemeasuretype',
+                "db_table": f"{schema_name}open_data_reportadditionalcodetypemeasuretype",
             },
         ),
         migrations.AddField(
