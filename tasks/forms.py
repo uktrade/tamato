@@ -246,6 +246,7 @@ class TaskWorkflowTemplateForm(Form):
 class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
 
     ticket_name = CharField(
+        required=True,
         max_length=255,
         validators=[SymbolValidator],
         error_messages={
@@ -254,21 +255,27 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
     )
 
     work_type = ModelChoiceField(
+        required=True,
         help_text="Choose the most appropriate category, this will generate a pre-defined set of steps to complete the work",
         queryset=TaskWorkflowTemplate.objects.all(),
+        error_messages={
+            "required": "Choose a work type",
+        },
     )
 
     description = CharField(
+        required=False,
         validators=[SymbolValidator],
         widget=Textarea(),
         help_text="This field is optional",
     )
 
     entry_into_force_date = DateInputFieldFixed(
-        help_text="This field is optional",
+        required=True,
     )
 
     policy_contact = CharField(
+        required=False,
         max_length=255,
         validators=[SymbolValidator],
         help_text="This field is optional",
