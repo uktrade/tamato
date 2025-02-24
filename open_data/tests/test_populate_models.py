@@ -1,10 +1,13 @@
 import pytest
+from django.db import connection
 
 from common.models import TrackedModel
 from common.tests import factories
 from footnotes.models import Footnote
 from footnotes.models import FootnoteDescription
 from measures.models import Measure
+from open_data.direct_sql import get_create_materialised_view_sql
+from open_data.direct_sql import get_drop_fk_sql
 from open_data.models import ReportFootnote
 from open_data.models import ReportMeasure
 from open_data.models.utils import ReportModel
@@ -47,7 +50,14 @@ def test_models_are_included():
     assert len(missing_models) == 0
 
 
+def run_required_sql():
+    with connection.cursor() as cursor:
+        cursor.execute(get_drop_fk_sql())
+        cursor.execute(get_create_materialised_view_sql())
+
+
 def test_measures_unpublished_and_unapproved():
+    run_required_sql()
     factories.MeasureFactory.create(
         transaction=factories.UnapprovedTransactionFactory.create(),
     )
@@ -68,6 +78,7 @@ def test_measures_unpublished_and_unapproved():
 
 
 def test_footnotes():
+    run_required_sql()
     published_transaction = factories.PublishedTransactionFactory.create()
     factories.ApprovedTransactionFactory.create()
     test_description = "Test description"

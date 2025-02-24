@@ -2,20 +2,8 @@
 
 from django.db import migrations
 
-from open_data.models.utils import get_lookup_name
+from open_data.direct_sql import get_create_materialised_view_sql
 from open_data.models.utils import in_sqlite
-
-create_view_sql = f"""
-CREATE MATERIALIZED VIEW {get_lookup_name()} AS
-	SELECT  common_trackedmodel.ID as old_id, current_version_id
-	FROM public.common_trackedmodel
- 	INNER JOIN common_versiongroup
-		ON (common_trackedmodel.version_group_id = common_versiongroup.id)
-WHERE (current_version_id IS NOT NULL AND NOT (common_trackedmodel.update_type = 2));
-
-CREATE UNIQUE INDEX old_id_idx ON {get_lookup_name()} (old_id);
-CREATE INDEX current_version_id_idx ON {get_lookup_name()} (current_version_id);
-"""
 
 
 class Migration(migrations.Migration):
@@ -24,8 +12,9 @@ class Migration(migrations.Migration):
         ("open_data", "0003_drop_fk_constrains"),
     ]
     if not in_sqlite():
+
         operations = [
-            migrations.RunSQL(create_view_sql),
+            migrations.RunSQL(get_create_materialised_view_sql()),
         ]
     else:
         operations = []
