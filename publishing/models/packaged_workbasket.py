@@ -434,7 +434,7 @@ class PackagedWorkBasket(TimestampedMixin):
             # Accounts for manually publishing an envelope and re-setting the seed_id within the current year
             print("*" * 30, "manually publishing")
             expected_previous_id = seed_id
-        elif int(previous_id[:2]) == int(current_year) - 1:
+        elif previous_id and (int(previous_id[:2]) == int(current_year) - 1):
             print("*" * 30, "first envelope of the year")
             # First envelope of new year - previous/expected_previous_id doesn't matter
             expected_previous_id = current_year + "0000"
