@@ -8,11 +8,12 @@ from open_data.models.utils import ReportModel
 
 class ReportCertificateType(ReportModel):
     shadowed_model = CertificateType
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     valid_between = TaricDateRangeField(db_index=True)
@@ -26,11 +27,12 @@ class ReportCertificateType(ReportModel):
 class ReportCertificate(ReportModel):
     shadowed_model = Certificate
     update_description = True
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
     valid_between = TaricDateRangeField(db_index=True)
     sid = models.CharField(max_length=3)

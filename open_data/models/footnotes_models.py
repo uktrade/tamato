@@ -9,11 +9,12 @@ from open_data.models.utils import ReportModel
 class ReportFootnoteType(ReportModel):
     shadowed_model = FootnoteType
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     valid_between = TaricDateRangeField(db_index=True)
@@ -28,11 +29,12 @@ class ReportFootnoteType(ReportModel):
 class ReportFootnote(ReportModel):
     shadowed_model = Footnote
     update_description = True
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
     valid_between = TaricDateRangeField(db_index=True)
     footnote_id = models.CharField(max_length=5)

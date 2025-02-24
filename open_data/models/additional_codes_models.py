@@ -17,6 +17,7 @@ class ReportAdditionalCodeType(ReportModel):
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     valid_between = TaricDateRangeField(db_index=True)
@@ -31,11 +32,12 @@ class ReportAdditionalCodeType(ReportModel):
 class ReportAdditionalCode(ReportModel):
     shadowed_model = AdditionalCode
     update_description = True
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     valid_between = TaricDateRangeField(db_index=True)

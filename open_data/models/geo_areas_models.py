@@ -8,11 +8,12 @@ from open_data.models.utils import ReportModel
 
 class ReportGeographicalArea(ReportModel):
     shadowed_model = GeographicalArea
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     valid_between = TaricDateRangeField(db_index=True)
@@ -34,11 +35,12 @@ class ReportGeographicalArea(ReportModel):
 
 class ReportGeographicalMembership(ReportModel):
     shadowed_model = GeographicalMembership
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     valid_between = TaricDateRangeField(db_index=True)

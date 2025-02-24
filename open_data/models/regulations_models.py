@@ -12,11 +12,12 @@ from regulations.models import Suspension
 class ReportAmendment(ReportModel):
     shadowed_model = Amendment
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     enacting_regulation = models.ForeignKey("ReportRegulation", models.DO_NOTHING)
@@ -33,11 +34,12 @@ class ReportAmendment(ReportModel):
 class ReportGroup(ReportModel):
     shadowed_model = Group
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     valid_between = TaricDateRangeField(db_index=True)
@@ -51,11 +53,12 @@ class ReportGroup(ReportModel):
 class ReportRegulation(ReportModel):
     shadowed_model = Regulation
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     role_type = models.IntegerField()
@@ -89,11 +92,12 @@ class ReportRegulation(ReportModel):
 class ReportSuspension(ReportModel):
     shadowed_model = Suspension
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     effective_end_date = models.DateField(blank=True, null=True)
@@ -111,11 +115,12 @@ class ReportSuspension(ReportModel):
 class ReportReplacement(ReportModel):
     shadowed_model = Replacement
 
-    trackedmodel_ptr = models.ForeignKey(
+    trackedmodel_ptr = models.OneToOneField(
         shadowed_model,
         models.DO_NOTHING,
         primary_key=True,
         db_column="trackedmodel_ptr_id",
+        related_name="+",
     )
 
     measure_type_id = models.CharField(max_length=6, blank=True, null=True)

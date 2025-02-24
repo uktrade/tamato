@@ -8,9 +8,8 @@ from open_data.models.utils import schema_required
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [
-        ("common", "0013_versiongroup_common_vers_current_04c358_idx"),
-    ]
+    dependencies = []
+
     if schema_required():
         operations = [
             migrations.RunSQL(
