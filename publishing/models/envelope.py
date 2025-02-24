@@ -263,6 +263,11 @@ class Envelope(TimestampedMixin):
         and publishing in the new year.
         """
         # last envelope for the current year
+        """Get packaged workbaskets where proc state SUCCESS.
+        Provide the next envelope_id for regular publishing, manually
+        publishing and publishing in the new year.
+        """
+        # last envelope for the current year
         envelope = Envelope.objects.last_envelope_for_year()
         seed_id = settings.HMRC_PACKAGING_SEED_ENVELOPE_ID
         current_year = str(datetime.now().year)[-2:]
@@ -276,7 +281,10 @@ class Envelope(TimestampedMixin):
             # First envelope of the year.
             print("*" * 30, "first envelope of the year")
             counter = current_year + "0001"
+            print("*" * 30, "first envelope of the year")
+            counter = current_year + "0001"
         else:
+            print("*" * 30, "not first env or manually publishing")
             print("*" * 30, "not first env or manually publishing")
             counter = max(
                 int(envelope.envelope_id) + 1,
@@ -294,7 +302,6 @@ class Envelope(TimestampedMixin):
         print("*" * 30, "fin")
         # import pdb; pdb.set_trace()
         return f"{counter}"
-        # return f"{counter:04d}"
 
     def delete_envelope(self, **kwargs):
         """Delete function within model to ensure that the file is deleted from
