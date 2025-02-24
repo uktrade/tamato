@@ -437,7 +437,6 @@ class PackagedWorkBasket(TimestampedMixin):
         elif previous_id and (int(previous_id[:2]) == int(current_year) - 1):
             print("*" * 30, "first envelope of the year")
             # First envelope of new year - previous/expected_previous_id doesn't matter
-            expected_previous_id = current_year + "0000"
             return True
         else:
             print("*" * 30, "regular publishing")
