@@ -783,3 +783,10 @@ def make_real_edit(
                 cls.objects.filter(pk=obj.pk).update(update_type=UpdateType.DELETE)
 
         return None
+
+
+def in_test() -> bool:
+    """Returns True if we're currently in a test situation (e.g. running via
+    pytest or python manage.py test), False otherwise."""
+
+    return os.environ.get("DJANGO_SETTINGS_MODULE") == "settings.test"
