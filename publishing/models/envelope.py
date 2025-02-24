@@ -256,28 +256,45 @@ class Envelope(TimestampedMixin):
 
     @classmethod
     def next_envelope_id(cls) -> str:
-        """Get packaged workbaskets where proc state SUCCESS."""
-        envelope = Envelope.objects.last_envelope_for_year()
+        """
+        Get packaged workbaskets where proc state SUCCESS.
 
-        if envelope is None:
+        Provide the next envelope_id for regular publishing, manually publishing
+        and publishing in the new year.
+        """
+        # last envelope for the current year
+        envelope = Envelope.objects.last_envelope_for_year()
+        seed_id = settings.HMRC_PACKAGING_SEED_ENVELOPE_ID
+        current_year = str(datetime.now().year)[-2:]
+        # if int(envelope.envelope_id) >
+        # if (envelope) and (seed_id[:2] == current_year):
+        #     print('*'*30, "manually publishing")
+        #     # Manually publishing, iterate from an updated
+        #     # HMRC_PACKAGING_SEED_ENVELOPE_ID.
+        #     counter = int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID)+1
+        if (envelope is None) and (seed_id[:2] != current_year):
             # First envelope of the year.
-            now = datetime.today()
-            counter = max(1, int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID))
+            print("*" * 30, "first envelope of the year")
+            counter = current_year + "0001"
         else:
-            year = int(envelope.envelope_id[:2])
+            print("*" * 30, "not first env or manually publishing")
             counter = max(
-                int(envelope.envelope_id[2:]) + 1,
+                int(envelope.envelope_id) + 1,
                 int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID),
             )
+            # year = int(envelope.envelope_id[:2])
 
-            if counter > 9999:
+            if counter > (int(current_year + "0000") + 9999):
                 raise ValueError(
                     "Cannot create more than 9999 Envelopes on a single year.",
                 )
+            counter = str(counter)
 
-            now = datetime(year, 1, 1)
-
-        return f"{now:%y}{counter:04d}"
+            # now = datetime(year, 1, 1)
+        print("*" * 30, "fin")
+        # import pdb; pdb.set_trace()
+        return f"{counter}"
+        # return f"{counter:04d}"
 
     def delete_envelope(self, **kwargs):
         """Delete function within model to ensure that the file is deleted from
@@ -401,7 +418,7 @@ class Envelope(TimestampedMixin):
 
             total_transactions = len(rendered_envelope.transactions)
             logger.info(
-                f"{envelope_file.name} \N{WHITE HEAVY CHECK MARK}  XML "
+                f"{envelope_file.name} {{WHITE HEAVY CHECK MARK}}  XML "
                 f"valid. {total_transactions} transactions, using "
                 f"{envelope_file.tell()} bytes.",
             )
