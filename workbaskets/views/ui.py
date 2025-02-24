@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import date
 from functools import cached_property
+from itertools import chain
 from typing import Tuple
 
 import boto3
@@ -46,11 +47,16 @@ from checks.models import MissingMeasureCommCode
 from checks.models import TrackedModelCheck
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
+from commodities.models.orm import GoodsNomenclatureDescription
+from commodities.models.orm import GoodsNomenclatureIndent
+from commodities.models.orm import GoodsNomenclatureOrigin
+from commodities.models.orm import GoodsNomenclatureSuccessor
 from common.filters import TamatoFilter
 from common.forms import DummyForm
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
+from common.validators import UpdateType
 from common.views import SortingMixin
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
@@ -1085,6 +1091,7 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
     def get_queryset(self):
         self.queryset = MissingMeasureCommCode.objects.filter(
             missing_measures_check__workbasket=self.workbasket,
+            successful=False,
         )
         return super().get_queryset()
 
@@ -1121,11 +1128,17 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
         context = super().get_context_data(**kwargs)
 
         context["workbasket"] = self.workbasket
-        context["missing_measures_check"] = getattr(
+        missing_measures_check = getattr(
             self.workbasket,
             "missing_measures_check",
             None,
         )
+        context["missing_measures_check"] = missing_measures_check
+        if missing_measures_check is not None:
+            context["check_is_stale"] = (
+                missing_measures_check.hash
+                != self.workbasket.commodity_measure_changes_hash
+            )
         context["selected_tab"] = "measures-check"
 
         if self.workbasket.missing_measures_check_task_id:
@@ -1414,31 +1427,99 @@ class WorkBasketReviewCertificatesView(WorkBasketReviewView):
         return context
 
 
-class WorkbasketReviewGoodsView(
-    PermissionRequiredMixin,
-    TemplateView,
-):
+class WorkbasketReviewGoodsView(WorkBasketReviewView):
     """UI endpoint for reviewing goods changes in a workbasket."""
 
+    model = GoodsNomenclature
     template_name = "workbaskets/review-goods.jinja"
-    permission_required = "workbaskets.view_workbasket"
-
-    def get(self, *args, **kwargs):
-        return HttpResponseRedirect(
-            reverse("review-imported-goods", kwargs={"pk": self.workbasket.pk}),
-        )
-
-    @property
-    def workbasket(self):
-        return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["tab_page_title"] = "Review commodities"
+        context["tab_page_title"] = "Review commodity codes"
         context["selected_tab"] = "commodities"
-        context["user_workbasket"] = WorkBasket.current(self.request)
-        context["workbasket"] = self.workbasket
+        context["selected_nested_tab"] = "commodity-codes"
+        context["tab_template"] = "includes/workbaskets/review-commodity-codes.jinja"
 
+        try:
+            import_batch = self.workbasket.importbatch
+        except ObjectDoesNotExist:
+            import_batch = None
+
+        if import_batch:
+            context["import_batch_pk"] = import_batch.pk
+            if context["workbasket"] == context["user_workbasket"]:
+                context["unsent_notification"] = (
+                    import_batch.goods_import
+                    and not Notification.objects.filter(
+                        notified_object_pk=import_batch.pk,
+                        notification_type=NotificationTypeChoices.GOODS_REPORT,
+                    ).exists()
+                )
+
+        return context
+
+
+class WorkbasketReviewGoodsDescriptionsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureDescription
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity descriptions"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "descriptions"
+        context["tab_template"] = (
+            "includes/workbaskets/review-commodity-descriptions.jinja"
+        )
+        return context
+
+
+class WorkbasketReviewGoodsIndentsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureIndent
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity indents"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "indents"
+        context["tab_template"] = "includes/workbaskets/review-commodity-indents.jinja"
+        return context
+
+
+class WorkbasketReviewGoodsOriginsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureOrigin
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity origins"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "origins"
+        context["tab_template"] = "includes/workbaskets/review-commodity-origins.jinja"
+        return context
+
+
+class WorkbasketReviewGoodsSuccessorsView(WorkBasketReviewView):
+    """UI endpoint for reviewing goods changes in a workbasket."""
+
+    model = GoodsNomenclatureSuccessor
+    template_name = "workbaskets/review-goods.jinja"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["tab_page_title"] = "Review commodity successors"
+        context["selected_tab"] = "commodities"
+        context["selected_nested_tab"] = "successors"
+        context["tab_template"] = (
+            "includes/workbaskets/review-commodity-successors.jinja"
+        )
         return context
 
 
@@ -1777,7 +1858,7 @@ class RuleCheckQueueView(
         try:
             context["celery_healthy"] = True
             context["current_rule_checks"] = tap_tasks.current_tasks(
-                "workbaskets.tasks.call_check_workbasket_sync",
+                routing_key="rule-check",
             )
             context["status_tag_generator"] = self.status_tag_generator
         except kombu.exceptions.OperationalError as oe:
@@ -1824,25 +1905,57 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     @property
     def measures(self):
-        return self.get_measures_to_end_date()
+        measures_list = [
+            measure.pk
+            for measure in list(
+                chain(self.get_measures_to_end_date(), self.get_measures_to_delete()),
+            )
+        ]
+        return Measure.objects.all().filter(pk__in=measures_list)
 
     @property
     def footnote_associations(self):
-        return self.get_footnote_associations_to_end_date()
+        associations_list = [
+            association.pk
+            for association in list(
+                chain(
+                    self.get_footnote_associations_to_end_date(),
+                    self.get_footnote_associations_to_delete(),
+                ),
+            )
+        ]
+        return FootnoteAssociationGoodsNomenclature.objects.all().filter(
+            pk__in=associations_list,
+        )
 
     @cached_property
-    def commodity_dictionary(self):
+    def end_dated_commodity_dictionary(self):
         """Returns a dictionary of commodity SIDs that have been end-dated in
         the workbasket along with their end dates."""
-        end_dated_commodities = GoodsNomenclature.objects.current().filter(
-            transaction__workbasket=self.workbasket,
-            valid_between__upper_inf=False,
+        end_dated_commodities = (
+            GoodsNomenclature.objects.current()
+            .filter(
+                transaction__workbasket=self.workbasket,
+                valid_between__upper_inf=False,
+            )
+            .exclude(update_type=UpdateType.DELETE)
         )
         commodity_dict = {
             commodity.sid: commodity.valid_between
             for commodity in end_dated_commodities
         }
         return commodity_dict
+
+    @cached_property
+    def deleted_commodities(self):
+        """Returns a list of SIDs of commodities that have been deleted in the
+        current workbasket."""
+        return list(
+            GoodsNomenclature.objects.filter(
+                transaction__workbasket=self.workbasket,
+                update_type=UpdateType.DELETE,
+            ).values_list("sid", flat=True),
+        )
 
     def get_queryset(self):
         ordering = self.get_ordering()
@@ -1869,13 +1982,22 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
             )
 
     def auto_end_date(self):
-        measure_pks = [measure.pk for measure in self.measures]
-        footnote_association_pks = [
+        measure_pks_to_end = [measure.pk for measure in self.get_measures_to_end_date()]
+        footnote_association_pks_to_end = [
             footnote_association.pk
-            for footnote_association in self.footnote_associations
+            for footnote_association in self.get_footnote_associations_to_end_date()
+        ]
+        pks_to_delete = [measure.pk for measure in self.get_measures_to_delete()] + [
+            footnote_association.pk
+            for footnote_association in self.get_footnote_associations_to_delete()
         ]
         call_end_measures.apply_async(
-            (measure_pks, footnote_association_pks, self.workbasket.pk),
+            (
+                measure_pks_to_end,
+                footnote_association_pks_to_end,
+                pks_to_delete,
+                self.workbasket.pk,
+            ),
         )
 
     def get_measures_to_end_date(self) -> QuerySet:
@@ -1886,14 +2008,14 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
         It filters out measures which have already ended.
         """
         measures_on_commodities = Measure.objects.current().filter(
-            goods_nomenclature__sid__in=self.commodity_dictionary.keys(),
+            goods_nomenclature__sid__in=self.end_dated_commodity_dictionary.keys(),
         )
         conditions = [
             When(
                 goods_nomenclature__sid=commodity_sid,
                 then=Value(commodity_valid_between),
             )
-            for commodity_sid, commodity_valid_between in self.commodity_dictionary.items()
+            for commodity_sid, commodity_valid_between in self.end_dated_commodity_dictionary.items()
         ]
         measures = measures_on_commodities.annotate(
             commodity_valid_between=Case(
@@ -1916,7 +2038,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
         footnote_associations = (
             FootnoteAssociationGoodsNomenclature.objects.current().filter(
-                goods_nomenclature__sid__in=self.commodity_dictionary.keys(),
+                goods_nomenclature__sid__in=self.end_dated_commodity_dictionary.keys(),
             )
         )
         conditions = [
@@ -1924,7 +2046,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
                 goods_nomenclature__sid=commodity_sid,
                 then=Value(commodity_valid_between),
             )
-            for commodity_sid, commodity_valid_between in self.commodity_dictionary.items()
+            for commodity_sid, commodity_valid_between in self.end_dated_commodity_dictionary.items()
         ]
         footnote_associations = footnote_associations.annotate(
             commodity_valid_between=Case(
@@ -1935,6 +2057,16 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
         return footnote_associations.exclude(
             valid_between__not_gt=F("commodity_valid_between"),
+        )
+
+    def get_measures_to_delete(self) -> QuerySet:
+        return Measure.objects.current().filter(
+            goods_nomenclature__sid__in=self.deleted_commodities,
+        )
+
+    def get_footnote_associations_to_delete(self) -> QuerySet:
+        return FootnoteAssociationGoodsNomenclature.objects.current().filter(
+            goods_nomenclature__sid__in=self.deleted_commodities,
         )
 
 

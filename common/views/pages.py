@@ -39,6 +39,7 @@ from common.celery import app as celery_app
 from common.forms import HomeSearchForm
 from common.models import Transaction
 from common.util import is_cloud_foundry
+from common.views.mixins import RequiresSuperuserMixin
 from exporter.sqlite.util import sqlite_dumps
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
@@ -356,6 +357,7 @@ def get_uptime() -> str:
 
 class AppInfoView(
     LoginRequiredMixin,
+    RequiresSuperuserMixin,
     TemplateView,
 ):
     template_name = "common/app_info.jinja"

@@ -27,16 +27,18 @@ def test_check_missing_measures_fail_list(valid_user_client, user_workbasket):
     missing_measures_check = MissingMeasuresCheckFactory.create(
         workbasket=user_workbasket,
         successful=False,
+        hash=user_workbasket.commodity_measure_changes_hash,
     )
     MissingMeasureCommCodeFactory.create_batch(
         3,
         missing_measures_check=missing_measures_check,
+        successful=False,
     )
     url = reverse("workbaskets:workbasket-ui-missing-measures-check")
     response = valid_user_client.get(url)
     soup = BeautifulSoup(str(response.content), "html.parser")
     assert (
-        "The following commodity codes are missing a 103 measure type:"
+        "The following commodity codes are missing a 103 or 105 measure type:"
         in soup.select_one(".govuk-tabs__panel").text
     )
     assert len(soup.select("tbody .govuk-table__row")) == 3
@@ -50,12 +52,13 @@ def test_check_missing_measures_success(valid_user_client, user_workbasket):
     MissingMeasuresCheckFactory.create(
         workbasket=user_workbasket,
         successful=True,
+        hash=user_workbasket.commodity_measure_changes_hash,
     )
     url = reverse("workbaskets:workbasket-ui-missing-measures-check")
     response = valid_user_client.get(url)
     soup = BeautifulSoup(str(response.content), "html.parser")
     assert (
-        "There are no missing 103 measures."
+        "There are no missing 103 or 105 measures."
         in soup.select_one(".govuk-tabs__panel").text
     )
 

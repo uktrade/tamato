@@ -546,67 +546,109 @@ def test_workbasket_review_tabs_without_permission(url, client):
 
 
 @pytest.mark.parametrize(
-    ("url", "object_factory", "num_columns"),
+    ("url", "object_factory", "num_columns", "num_rows"),
     [
         (
             "workbaskets:workbasket-ui-review-additional-codes",
             lambda: factories.AdditionalCodeFactory(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-certificates",
             lambda: factories.CertificateFactory.create(),
             6,
+            1,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods",
+            lambda: factories.GoodsNomenclatureFactory.create(),
+            4,
+            2,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods-descriptions",
+            lambda: factories.GoodsNomenclatureDescriptionFactory.create(),
+            3,
+            1,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods-indents",
+            lambda: factories.GoodsNomenclatureIndentFactory.create(),
+            3,
+            1,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods-origins",
+            lambda: factories.GoodsNomenclatureOriginFactory.create(),
+            2,
+            1,
+        ),
+        (
+            "workbaskets:workbasket-ui-review-goods-successors",
+            lambda: factories.GoodsNomenclatureSuccessorFactory.create(),
+            2,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-footnotes",
             lambda: factories.FootnoteFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-geo-areas",
             lambda: factories.GeographicalAreaFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-geo-memberships",
             lambda: factories.GeographicalMembershipFactory.create(),
             7,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-measures",
             lambda: factories.MeasureFactory.create(),
             11,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-quotas",
             lambda: factories.QuotaOrderNumberFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-quota-definitions",
             lambda: factories.QuotaDefinitionFactory.create(),
             11,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-sub-quotas",
             lambda: factories.QuotaAssociationFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-quota-blocking-periods",
             lambda: factories.QuotaBlockingFactory.create(),
             7,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-quota-suspension-periods",
             lambda: factories.QuotaSuspensionFactory.create(),
             6,
+            1,
         ),
         (
             "workbaskets:workbasket-ui-review-regulations",
             lambda: factories.RegulationFactory.create(),
             6,
+            1,
         ),
     ],
 )
@@ -614,6 +656,7 @@ def test_workbasket_review_tabs(
     url,
     object_factory,
     num_columns,
+    num_rows,
     valid_user_client,
     user_workbasket,
 ):
@@ -629,7 +672,7 @@ def test_workbasket_review_tabs(
     columns = page.select(".govuk-table__header")
     rows = page.select("tbody > tr")
     assert len(columns) == num_columns
-    assert len(rows) == 1
+    assert len(rows) == num_rows
 
 
 def test_workbasket_review_measures(valid_user_client):
@@ -2515,80 +2558,6 @@ def test_workbasket_comment_list_view(valid_user_client, user_workbasket):
         assert comments[i].content in content
 
 
-def test_clean_tasks():
-    """Test that the clean_tasks function of TAPTasks class returns a cleaned
-    list of tasks from Celery task dictionary."""
-    tap_tasks = TAPTasks()
-
-    celery_dictionary = {
-        "celery@1": [
-            {
-                "id": "task1_id",
-                "name": "workbaskets.tasks.call_check_workbasket_sync",
-                "args": [1591],
-                "kwargs": {},
-                "type": "workbaskets.tasks.call_check_workbasket_sync",
-                "hostname": "celery@1",
-                "time_start": None,
-                "acknowledged": False,
-                "delivery_info": {},
-                "worker_pid": None,
-            },
-            {
-                "id": "task2_id",
-                "name": "workbaskets.tasks.call_check_workbasket_sync",
-                "args": [1587],
-                "kwargs": {},
-                "type": "workbaskets.tasks.call_check_workbasket_sync",
-                "hostname": "celery@1",
-                "time_start": None,
-                "acknowledged": False,
-                "delivery_info": {},
-                "worker_pid": None,
-            },
-        ],
-        "celery@2": [],
-        "celery@3": [],
-    }
-    expected_result = [
-        {
-            "id": "task1_id",
-            "name": "workbaskets.tasks.call_check_workbasket_sync",
-            "args": [1591],
-            "kwargs": {},
-            "type": "workbaskets.tasks.call_check_workbasket_sync",
-            "hostname": "celery@1",
-            "time_start": None,
-            "acknowledged": False,
-            "delivery_info": {},
-            "worker_pid": None,
-            "status": "Active",
-        },
-        {
-            "id": "task2_id",
-            "name": "workbaskets.tasks.call_check_workbasket_sync",
-            "args": [1587],
-            "kwargs": {},
-            "type": "workbaskets.tasks.call_check_workbasket_sync",
-            "hostname": "celery@1",
-            "time_start": None,
-            "acknowledged": False,
-            "delivery_info": {},
-            "worker_pid": None,
-            "status": "Active",
-        },
-    ]
-
-    assert (
-        tap_tasks.clean_tasks(
-            celery_dictionary,
-            task_status="Active",
-            task_name="workbaskets.tasks.call_check_workbasket_sync",
-        )
-        == expected_result
-    )
-
-
 def test_current_tasks_is_called(valid_user_client):
     """Test that current_tasks function gets called when a user goes to the rule
     check page and the page correctly displays the returned list of rule check
@@ -2597,13 +2566,14 @@ def test_current_tasks_is_called(valid_user_client):
     return_value = [
         CeleryTask(
             "12345",
+            "Task name",
             1,
             TAPTasks.timestamp_to_datetime_string(1718098484.8248514),
             "54 out of 100",
             "Active",
         ),
-        CeleryTask("23456", 2, "", "0 out of 100", "Queued"),
-        CeleryTask("34567", 3, "", "0 out of 100", "Queued"),
+        CeleryTask("23456", "Task name", 2, "", "0 out of 100", "Queued"),
+        CeleryTask("34567", "Task name", 3, "", "0 out of 100", "Queued"),
     ]
 
     with patch.object(
@@ -2761,6 +2731,19 @@ def test_auto_end_measures_renders(
     assert text.count("To be deleted") == 2
     assert len(rows) == 12
 
+    commodity.new_version(
+        workbasket=user_workbasket,
+        update_type=UpdateType.DELETE,
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    rows = page.find_all("tr", {"class": "govuk-table__row"})
+    text = page.get_text()
+    assert text.count("To be deleted") == 14
+    assert len(rows) == 15
+
 
 @patch("workbaskets.tasks.call_end_measures.apply_async")
 def test_auto_end_measures_post(
@@ -2796,9 +2779,16 @@ def test_auto_end_measures_post(
         ("commodity_with_associations", FootnoteAssociationGoodsNomenclature),
     ],
 )
-def test_auto_end_measures(user_workbasket, date_ranges, commodity, object, request):
+def test_auto_end_measures_end_dated_commodity(
+    user_workbasket,
+    date_ranges,
+    commodity,
+    object,
+    request,
+):
     """Test that the call_end_measures correctly ends measures and footnote
-    associations and reorders them in the workbasket."""
+    associations and reorders them in the workbasket when a commodity is end-
+    dated."""
     commodity = request.getfixturevalue(commodity)
     new_commodity = commodity.new_version(
         workbasket=user_workbasket,
@@ -2821,7 +2811,7 @@ def test_auto_end_measures(user_workbasket, date_ranges, commodity, object, requ
 
         measure_pks = [measure.pk for measure in measures_to_end]
         association_pks = [association.pk for association in footnotes_to_end]
-        call_end_measures(measure_pks, association_pks, user_workbasket.pk)
+        call_end_measures(measure_pks, association_pks, [], user_workbasket.pk)
 
         updated_objects = user_workbasket.tracked_models.filter(
             update_type=UpdateType.UPDATE,
@@ -2837,10 +2827,69 @@ def test_auto_end_measures(user_workbasket, date_ranges, commodity, object, requ
         first_11_items = (
             TrackedModel.objects.all()
             .filter(transaction__workbasket=user_workbasket)
-            .order_by("transaction__order")[:10]
+            .order_by("transaction__order")[:11]
         )
         # Assert correct reordering that the first 11 objects are of measure or footnote association type
         for item in first_11_items:
+            assert isinstance(item, object)
+
+
+@pytest.mark.parametrize(
+    "commodity, object",
+    [
+        ("commodity_with_measures", Measure),
+        ("commodity_with_associations", FootnoteAssociationGoodsNomenclature),
+    ],
+)
+def test_auto_end_measures_deleted_commodity(
+    user_workbasket,
+    commodity,
+    object,
+    request,
+):
+    """Test that the call_end_measures correctly deletes measures and footnote
+    associations and reorders them in the workbasket when a commodity is
+    deleted."""
+    commodity = request.getfixturevalue(commodity)
+    commodity.new_version(
+        workbasket=user_workbasket,
+        update_type=UpdateType.DELETE,
+    )
+    auto_end_date_view = ui.AutoEndDateMeasures()
+
+    with (
+        override_current_transaction(Transaction.objects.last()),
+        patch(
+            "workbaskets.views.ui.AutoEndDateMeasures.workbasket",
+            new_callable=PropertyMock,
+        ) as mock_wb,
+    ):
+        mock_wb.return_value = user_workbasket
+        measures_to_delete = auto_end_date_view.get_measures_to_delete()
+        footnotes_to_delete = auto_end_date_view.get_footnote_associations_to_delete()
+        # Assert 14 objects have been found that will be ended
+        assert len(measures_to_delete) + len(footnotes_to_delete) == 14
+
+        pks_to_delete = [measure.pk for measure in measures_to_delete] + [
+            association.pk for association in footnotes_to_delete
+        ]
+        call_end_measures([], [], pks_to_delete, user_workbasket.pk)
+
+        deleted_tracked_models = user_workbasket.tracked_models.filter(
+            update_type=UpdateType.DELETE,
+        )
+        deleted_objects = [
+            obj for obj in deleted_tracked_models if isinstance(obj, object)
+        ]
+        # Assert that there are 14 deleted objects of Measure or FootnoteAssociation
+        assert len(deleted_objects) == 14
+        first_14_items = (
+            TrackedModel.objects.all()
+            .filter(transaction__workbasket=user_workbasket)
+            .order_by("transaction__order")[:14]
+        )
+        # Assert correct reordering that the first 14 objects are of measure or footnote association type
+        for item in first_14_items:
             assert isinstance(item, object)
 
 
@@ -2955,6 +3004,36 @@ def test_get_footnote_associations_to_end_date(user_workbasket, date_ranges):
             ]
         )
         assert association_ended_before_commodity not in associations
+
+
+def test_deleted_end_dated_commodity_combo(
+    valid_user_client,
+    commodity_with_measures,
+    user_workbasket,
+    date_ranges,
+):
+    """Test that when commodities are both deleted and end-dated in a workbasket
+    that measures from both appear on the page."""
+    commodity = factories.GoodsNomenclatureFactory.create()
+    factories.MeasureFactory.create_batch(3, goods_nomenclature=commodity)
+    deleted_commodity = commodity.new_version(
+        workbasket=user_workbasket,
+        update_type=UpdateType.DELETE,
+    )
+    end_dated_commodity = commodity_with_measures.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.normal,
+    )
+
+    url = reverse("workbaskets:workbasket-ui-auto-end-date-measures")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    rows = page.find_all("tr", {"class": "govuk-table__row"})
+    assert len(rows) == 15
+    text = page.get_text()
+    assert text.count("Commodity deleted") == 3
+    assert text.count("Commodity end-dated") == 11
 
 
 def test_reordering_transactions_bug(valid_user_client, user_workbasket):
