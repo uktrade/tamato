@@ -220,7 +220,7 @@ def test_upload_envelope_handles_validate_envelope(packaged_workbasket_factory):
 
 
 @freezegun.freeze_time("2025-01-01")
-def test_next_expected_to_api_with_new_seed_envelope_id(
+def test_next_envelope_id_new_seed_envelope_id(
     settings,
     successful_envelope_factory,
 ):
