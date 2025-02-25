@@ -573,12 +573,10 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
             "title": form.cleaned_data["ticket_name"],
             "description": form.cleaned_data["description"],
             "creator": self.request.user,
-            # Pass in new fields
             "eif_date": form.cleaned_data["entry_into_force_date"],
             "policy_contact": form.cleaned_data["policy_contact"],
         }
         template = form.cleaned_data["work_type"]
-        # Pass all data to the create_task_workflow function
         self.object = template.create_task_workflow(**data)
 
         return super().form_valid(form)

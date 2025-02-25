@@ -271,7 +271,8 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
     )
 
     entry_into_force_date = DateInputFieldFixed(
-        required=True,
+        required=False,
+        help_text="This field is optional",
     )
 
     policy_contact = CharField(

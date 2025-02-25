@@ -28,6 +28,7 @@ class TaskWorkflow(Queue):
     workflow."""
     creator_template = models.ForeignKey(
         "tasks.TaskWorkflowTemplate",
+        blank=False,
         null=True,
         on_delete=models.SET_NULL,
     )
@@ -36,7 +37,7 @@ class TaskWorkflow(Queue):
         blank=True,
         null=True,
     )
-    policy_contact = models.CharField(max_length=24, null=True)
+    policy_contact = models.CharField(max_length=24, blank=True, null=True)
 
     class Meta(Queue.Meta):
         abstract = False
