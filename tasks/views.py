@@ -383,7 +383,7 @@ class TaskWorkflowListView(
     permission_required = "tasks.view_task"
     paginate_by = settings.DEFAULT_PAGINATOR_PER_PAGE_MAX
     filterset_class = TaskWorkflowFilter
-    sort_by_fields = []
+    sort_by_fields = ["id"]
 
     def get_queryset(self):
         queryset = Task.objects.all()

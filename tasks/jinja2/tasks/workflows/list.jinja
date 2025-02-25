@@ -68,7 +68,7 @@
 
         {{ govukTable({
           "head": [
-            {"text": "ID"},
+            {"text": create_sortable_anchor(request, "ID", sorting_urls["id"])},
             {"text": "Ticket name"},
             {"text": "Assignee"},
             {"text": "Entry into force date"},
