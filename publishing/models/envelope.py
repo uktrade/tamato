@@ -268,29 +268,18 @@ class Envelope(TimestampedMixin):
         publishing and publishing in the new year.
         """
         # last envelope for the current year
-        envelope = Envelope.objects.last_envelope_for_year()
+        previous_envelope = Envelope.objects.last_envelope_for_year()
         seed_id = settings.HMRC_PACKAGING_SEED_ENVELOPE_ID
         current_year = str(datetime.now().year)[-2:]
-        # if int(envelope.envelope_id) >
-        # if (envelope) and (seed_id[:2] == current_year):
-        #     print('*'*30, "manually publishing")
-        #     # Manually publishing, iterate from an updated
-        #     # HMRC_PACKAGING_SEED_ENVELOPE_ID.
-        #     counter = int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID)+1
-        if (envelope is None) and (seed_id[:2] != current_year):
+        if (previous_envelope is None) and (seed_id[:2] != current_year):
             # First envelope of the year.
-            print("*" * 30, "first envelope of the year")
-            counter = current_year + "0001"
-            print("*" * 30, "first envelope of the year")
             counter = current_year + "0001"
         else:
-            print("*" * 30, "not first env or manually publishing")
-            print("*" * 30, "not first env or manually publishing")
+            # Regular publishing
             counter = max(
-                int(envelope.envelope_id) + 1,
-                int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID),
+                int(previous_envelope.envelope_id or 0) + 1,
+                int(seed_id) + 1,
             )
-            # year = int(envelope.envelope_id[:2])
 
             if counter > (int(current_year + "0000") + 9999):
                 raise ValueError(
@@ -298,9 +287,6 @@ class Envelope(TimestampedMixin):
                 )
             counter = str(counter)
 
-            # now = datetime(year, 1, 1)
-        print("*" * 30, "fin")
-        # import pdb; pdb.set_trace()
         return f"{counter}"
 
     def delete_envelope(self, **kwargs):

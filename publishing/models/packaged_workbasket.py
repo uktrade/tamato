@@ -416,38 +416,24 @@ class PackagedWorkBasket(TimestampedMixin):
         If the HMRC_PACKAGING_SEED_ENVELOPE_ID is from this year, it is assumed
         to have been updated to account for manually piblishing an envelope.
         """
-        # HMRC_PACKAGING_SEED_ENVELOPE_ID should be '230044'
-        # Set this in AWS config
-
-        # envelope id generated when added to packaging queue
         seed_id = settings.HMRC_PACKAGING_SEED_ENVELOPE_ID
-        previous_id = PackagedWorkBasket.objects.last_published_envelope_id()
-        print("*" * 30, f"{seed_id=}")
-        print("*" * 30, f"{previous_id=}")
-        self.envelope.envelope_id
+        previous_id = PackagedWorkBasket.objects.last_published_envelope_id() or 0
+        current_id = self.envelope.envelope_id
         current_year = str(datetime.now().year)[-2:]
-        # print('*'*30, f'{current_id=}')
-        # TODO: config change: update HMRC_PACKAGING_SEED_ENVELOPE_ID to be
-        # year specific (ie. 230044)
-        # import pdb; pdb.set_trace()
-        if (seed_id[:2] == current_year) and (int(seed_id) > int(previous_id)):
-            # Accounts for manually publishing an envelope and re-setting the seed_id within the current year
-            print("*" * 30, "manually publishing")
-            expected_previous_id = seed_id
-        elif previous_id and (int(previous_id[:2]) == int(current_year) - 1):
-            print("*" * 30, "first envelope of the year")
-            # First envelope of new year - previous/expected_previous_id doesn't matter
-            return True
+        if previous_id == 0 or (int(previous_id[:2]) == int(current_year) - 1):
+            print("*" * 30, "first of the year", f"{current_id=}")
+            # check that the current_id == YY0001
+            return current_id == current_year + "0001"
         else:
-            print("*" * 30, "regular publishing")
+            print("*" * 30, "not first of the year", f"{current_id=}")
             # Regular publishing
-            expected_previous_id = str(int(self.envelope.envelope_id) - 1)
+            expected_previous_id = max(
+                int(previous_id or 0) + 1,
+                int(seed_id) + 1,
+            )
+            # expected_previous_id = str(int(self.envelope.envelope_id) - 1)
 
         if previous_id and previous_id != expected_previous_id:
-            print(
-                "*" * 40,
-                f"next_expected_to_api fails {previous_id=} does not match {expected_previous_id=}",
-            )
             return False
 
         return True
