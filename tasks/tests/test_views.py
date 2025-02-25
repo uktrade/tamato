@@ -786,7 +786,8 @@ def test_workflow_delete_view(
     assert f"Workflow ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
 
 
-def test_workflow_list_view(valid_user_client, task_workflow):
+def test_ticket_list_view(valid_user_client, task_workflow):
+    """Test that the ticket list view returns 200 and renders correctly."""
     response = valid_user_client.get(reverse("workflow:task-workflow-ui-list"))
 
     assert response.status_code == 200
@@ -798,6 +799,10 @@ def test_workflow_list_view(valid_user_client, task_workflow):
     assert table.select("tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)")[
         0
     ].text == str(task_workflow.pk)
+
+
+def test_ticket_list_view_filtering():
+    """Test that the ticket list view filters correctly."""
 
 
 def test_task_and_workflow_list_view(valid_user_client, task, task_workflow):
