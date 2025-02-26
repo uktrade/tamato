@@ -246,7 +246,6 @@ class PackagedWorkBasketQuerySet(QuerySet):
     def last_published_envelope_id(self) -> "publishing_models.EnvelopeId":
         """Get the envelope_id of the last Envelope successfully published to
         the Tariffs API service."""
-        print("*" * 20, "last_published_envelope_id")
         return (
             self.select_related(
                 "envelope",
@@ -420,16 +419,15 @@ class PackagedWorkBasket(TimestampedMixin):
         previous_id = PackagedWorkBasket.objects.last_published_envelope_id() or 0
         current_id = self.envelope.envelope_id
         current_year = str(datetime.now().year)[-2:]
-
         if previous_id == 0 or (int(previous_id[:2]) == int(current_year) - 1):
             return current_id == current_year + "0001"
         else:
             expected_previous_id = max(
-                int(previous_id or 0) + 1,
-                int(seed_id) + 1,
+                int(previous_id or 0),
+                int(seed_id),
             )
 
-        if previous_id and previous_id != expected_previous_id:
+        if previous_id and int(previous_id) != expected_previous_id:
             return False
 
         return True
