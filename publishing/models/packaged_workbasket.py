@@ -420,72 +420,19 @@ class PackagedWorkBasket(TimestampedMixin):
         previous_id = PackagedWorkBasket.objects.last_published_envelope_id() or 0
         current_id = self.envelope.envelope_id
         current_year = str(datetime.now().year)[-2:]
+
         if previous_id == 0 or (int(previous_id[:2]) == int(current_year) - 1):
-            print("*" * 30, "first of the year", f"{current_id=}")
-            # check that the current_id == YY0001
             return current_id == current_year + "0001"
         else:
-            print("*" * 30, "not first of the year", f"{current_id=}")
-            # Regular publishing
             expected_previous_id = max(
                 int(previous_id or 0) + 1,
                 int(seed_id) + 1,
             )
-            # expected_previous_id = str(int(self.envelope.envelope_id) - 1)
 
         if previous_id and previous_id != expected_previous_id:
             return False
 
         return True
-        # on 1/1/26 we should:
-        # check if seed id starts with current_year
-        # if it doesn't (it shouldn't), the first id should be current_year+0001
-        # only using previous_id for next_id if they are in the same year
-
-        # consider:
-        # current year
-        # last successfully published envelope id
-        # prefix to last successfully published envelope id
-        # what's the value of the seed_envelope_id
-        # if
-        # check if the HMRC_PACKAGING_SEED_ENVELOPE_ID has been updated
-        # if settings.HMRC_PACKAGING_SEED_ENVELOPE_ID[:2] == current_year:
-        #     # NOTE:
-        #     # if the HMRC_PACKAGING_SEED_ENVELOPE_ID is for the current year,
-        #     # it should be considered to be the expected_previous_id
-        #     expected_previous_id = settings.HMRC_PACKAGING_SEED_ENVELOPE_ID
-        # # check that the previous_id is from last year AND
-        # # that the id is not drawing from the HMRC_PACKAGING_SEED_ENVELOPE_ID
-        # elif (int(current_year) == int(previous_id[:2])+1) and (
-        #     current_id[:2] != settings.HMRC_PACKAGING_SEED_ENVELOPE_ID[:2]
-        # ):
-        #     # CHARLIE'S NOTE:
-        #     # previous code:
-        #     # if self.envelope.envelope_id[2:] == settings.HMRC_PACKAGING_SEED_ENVELOPE_ID:
-        #     # NOTE:
-        #     # Code in this conditional block, and therefore this function,
-        #     # wrongly assumes a new year has passed since the last envelope was
-        #     # successfully published to tariffs-api.
-        #     # See Jira ticket TP2000-1646 for details of the issue.
-
-        #     current_envelope_year = int(self.envelope.envelope_id[:2])
-        #     last_envelope_last_year = (
-        #         publishing_models.Envelope.objects.last_envelope_for_year(
-        #             year=current_envelope_year - 1,
-        #         )
-        #     )
-        #     expected_previous_id = (
-        #         last_envelope_last_year.envelope_id if last_envelope_last_year else None
-        #     )
-        # else:
-        #     expected_previous_id = str(int(self.envelope.envelope_id) - 1)
-
-        # if previous_id and previous_id != expected_previous_id:
-        #     return False
-
-        # return True
-
-    # processing_state transition management.
 
     def begin_processing_condition_at_position_1(self) -> bool:
         """Django FSM condition: Instance must be at position 1 in order to
