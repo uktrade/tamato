@@ -149,6 +149,28 @@
 
             {{ run_button(text="Re-run") }}
 
+            {% if request.user.is_superuser %}
+            <details class="govuk-details">
+              <summary class="govuk-details__summary">
+                <span class="govuk-details__summary-text">Override missing measures check</span>
+              </summary>
+              <form method="post">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input type="hidden" name="workbasket_id" value="{{ workbasket.id }}">
+                {{ govukWarningText({
+                  "text": "Be sure that you understand the implications of this violation before choosing to override it.",
+                  "classes": "govuk-!-margin-top-5"
+                }) }}
+                {{ govukButton({
+                  "text": "Override",
+                  "classes": "govuk-button--warning",
+                  "name": "form-action",
+                  "value": "override"
+                }) }}
+              </form>
+            </details>
+            {% endif %}
+
           {% endif %}
         {% endif %}
 
