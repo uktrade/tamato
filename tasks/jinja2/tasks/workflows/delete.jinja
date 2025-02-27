@@ -10,9 +10,9 @@
   {{ breadcrumbs(
     request,
     [
-      {"text": "Find and view "~ object_name ~ "s", "href": object.get_url("list")},
+      {"text": "Find and view "~ verbose_name ~ "s", "href": object.get_url("list")},
       {
-        "text": object_name|capitalize ~ ": " ~ object.title,
+        "text": verbose_name|capitalize ~ ": " ~ object.title,
         "href": object.get_url("detail"),
       },
       {"text": page_title}
