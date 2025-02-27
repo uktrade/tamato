@@ -1122,6 +1122,8 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
             self.run_missing_measures_check(comm_code_pks)
         if form_action == "stop-check":
             self.workbasket.terminate_missing_measures_check()
+        if form_action == "override":
+            self.workbasket.override_missing_measures_check()
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
