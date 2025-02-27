@@ -263,19 +263,14 @@ class Envelope(TimestampedMixin):
         and publishing in the new year.
         """
         # last envelope for the current year
-        """Get packaged workbaskets where proc state SUCCESS.
-        Provide the next envelope_id for regular publishing, manually
-        publishing and publishing in the new year.
-        """
-        # last envelope for the current year
         previous_envelope = Envelope.objects.last_envelope_for_year()
         seed_id = settings.HMRC_PACKAGING_SEED_ENVELOPE_ID
         current_year = str(datetime.now().year)[-2:]
+
         if (previous_envelope is None) and (seed_id[:2] != current_year):
-            # First envelope of the year.
+            # First envelope of the year in the format of YYCCCC.
             counter = current_year + "0001"
         else:
-            # Regular publishing
             counter = max(
                 int(previous_envelope.envelope_id or 0) + 1,
                 int(seed_id) + 1,

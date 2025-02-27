@@ -399,12 +399,6 @@ class PackagedWorkBasket(TimestampedMixin):
         """
         Checks if previous envelope in sequence has been published to the API.
 
-        This check will check if the previous packaged workbasket has a
-        CrownDependenciesEnvelope OR has published_to_tariffs_api set in the
-        Envelope model. Will return True if the previous_id comes back as None
-        (this means the envelope is the first to be published to the API)
-
-        NEW:
         Returns True if the current PackagedWorkBasket object is the next
         to be published to the API.
         It returns True for the following:
@@ -412,10 +406,10 @@ class PackagedWorkBasket(TimestampedMixin):
         If the previous PackagedWorkBasket has a CrownDependenciesEnvelope OR
         If the previous PackagedWorkBasket has published_to_tariffs_api set in
         the Envelope model.
-        If the HMRC_PACKAGING_SEED_ENVELOPE_ID is from this year, it is assumed
-        to have been updated to account for manually piblishing an envelope.
+        If the HMRC_PACKAGING_SEED_ENVELOPE_ID is from this year, and is
+        greater than the previously published Envelope.envelope_id.
         """
-        seed_id = settings.HMRC_PACKAGING_SEED_ENVELOPE_ID
+
         previous_id = PackagedWorkBasket.objects.last_published_envelope_id() or 0
         current_id = self.envelope.envelope_id
         current_year = str(datetime.now().year)[-2:]
@@ -424,7 +418,7 @@ class PackagedWorkBasket(TimestampedMixin):
         else:
             expected_previous_id = max(
                 int(previous_id or 0),
-                int(seed_id),
+                int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID),
             )
 
         if previous_id and int(previous_id) != expected_previous_id:
