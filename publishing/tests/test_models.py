@@ -770,7 +770,6 @@ def test_next_expected_to_api_first_envelope_of_new_year(
     assert unpublished[0].next_expected_to_api()
 
 
-# This tests next_expected_to_api AND next_envelope_id
 @freezegun.freeze_time("2025-01-01")
 def test_next_expected_to_api_first_envelope_of_new_year_last_envelope_failed(
     successful_envelope_factory,
@@ -796,3 +795,16 @@ def test_next_expected_to_api_first_envelope_of_new_year_last_envelope_failed(
     assert pwbs.last_published_envelope_id() == penultimate_env.envelope_id
     assert unpublished[0].next_expected_to_api()
     assert first.envelope_id == "250001"
+
+
+def test_next_expected_to_api_returns_false_for_second_in_queue(
+    successful_envelope_factory,
+):
+
+    successful_envelope_factory()
+    successful_envelope_factory()
+
+    pwbs = PackagedWorkBasket.objects.all()
+    unpublished = pwbs.get_unpublished_to_api()
+
+    assert not unpublished[1].next_expected_to_api()
