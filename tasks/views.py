@@ -659,10 +659,10 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
-                "verbose_name": "workflow",
+                "verbose_name": "ticket",
                 "deleted_pk": self.kwargs["pk"],
                 "create_url": reverse("workflow:task-workflow-ui-create"),
-                "list_url": "#NOT-IMPLEMENTED",
+                "list_url": reverse("workflow:task-workflow-ui-list"),
             },
         )
         return context_data
