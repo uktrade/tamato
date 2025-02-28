@@ -748,7 +748,7 @@ def test_workflow_delete_view(
     assert confirmation_response.status_code == 200
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert f"Workflow ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
+    assert f"Ticket ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
 
 
 def test_workflow_list_view(valid_user_client, task_workflow):
@@ -856,5 +856,5 @@ def test_workflow_delete_view_deletes_related_tasks(
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert (
-        f"Workflow ID: {task_workflow_pk}" in soup.select(".govuk-panel__title")[0].text
+        f"Ticket ID: {task_workflow_pk}" in soup.select(".govuk-panel__title")[0].text
     )

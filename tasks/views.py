@@ -620,6 +620,11 @@ class TaskWorkflowDeleteView(PermissionRequiredMixin, DeleteView):
         kwargs["instance"] = self.object
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["verbose_name"] = "ticket"
+        return context_data
+
     @transaction.atomic
     def form_valid(self, form):
         summary_task = self.object.summary_task
@@ -644,10 +649,10 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
-                "verbose_name": "workflow",
+                "verbose_name": "ticket",
                 "deleted_pk": self.kwargs["pk"],
                 "create_url": reverse("workflow:task-workflow-ui-create"),
-                "list_url": "#NOT-IMPLEMENTED",
+                "list_url": reverse("workflow:task-workflow-ui-list"),
             },
         )
         return context_data
