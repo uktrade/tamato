@@ -590,6 +590,11 @@ class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = "tasks.change_taskworkflow"
     form_class = TaskWorkflowUpdateForm
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket"
+        return context
+
     def get_success_url(self):
         return reverse(
             "workflow:task-workflow-ui-confirm-update",
@@ -774,6 +779,11 @@ class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
     template_name = "tasks/workflows/edit.jinja"
     permission_required = "tasks.change_taskworkflowtemplate"
     form_class = TaskWorkflowTemplateUpdateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket template"
+        return context
 
     def get_success_url(self):
         return reverse(
