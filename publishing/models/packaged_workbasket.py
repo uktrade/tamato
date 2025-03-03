@@ -418,11 +418,11 @@ class PackagedWorkBasket(TimestampedMixin):
             return current_id == current_year + "0001"
         else:
             expected_previous_id = max(
-                int(previous_id or 0),
+                int(previous_id),
                 int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID),
             )
 
-        if previous_id and int(previous_id) != expected_previous_id:
+        if int(previous_id) != expected_previous_id:
             return False
 
         return True

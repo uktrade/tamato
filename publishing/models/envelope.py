@@ -268,7 +268,7 @@ class Envelope(TimestampedMixin):
             counter = current_year + "0001"
         else:
             counter = max(
-                int(previous_envelope.envelope_id) + 1,
+                (int(previous_envelope.envelope_id) + 1) if previous_envelope else 1,
                 int(seed_id) + 1,
             )
 
