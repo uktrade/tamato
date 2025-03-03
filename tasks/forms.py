@@ -312,23 +312,31 @@ TaskWorkflowDeleteForm = delete_form_for(TaskWorkflow)
 
 class TaskWorkflowUpdateForm(ModelForm):
     title = CharField(
+        label="Ticket name",
         max_length=255,
         validators=[SymbolValidator],
         error_messages={
-            "required": "Enter a title",
+            "required": "Enter a ticket name",
         },
     )
     description = CharField(
         validators=[SymbolValidator],
         widget=Textarea(),
-        error_messages={
-            "required": "Enter a description",
-        },
+        required=False,
+    )
+    eif_date = DateInputFieldFixed(
+        label="Entry into force date",
+        required=False,
+    )
+    policy_contact = CharField(
+        required=False,
+        max_length=40,
+        validators=[SymbolValidator],
     )
 
     class Meta:
         model = TaskWorkflow
-        fields = []
+        fields = ["eif_date", "policy_contact"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -346,9 +354,11 @@ class TaskWorkflowUpdateForm(ModelForm):
         self.helper.layout = Layout(
             "title",
             "description",
+            "eif_date",
+            "policy_contact",
             Submit(
                 "submit",
-                "Update",
+                "Save",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
@@ -356,12 +366,16 @@ class TaskWorkflowUpdateForm(ModelForm):
 
     @transaction.atomic
     def save(self, commit=True):
-        summary_task = self.instance.summary_task
+        instance = super().save(commit)
+
+        summary_task = instance.summary_task
         summary_task.title = self.cleaned_data["title"]
         summary_task.description = self.cleaned_data["description"]
+
         if commit:
             summary_task.save()
-        return self.instance
+
+        return instance
 
 
 class TaskWorkflowTemplateBaseForm(ModelForm):
