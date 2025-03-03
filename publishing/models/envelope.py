@@ -256,12 +256,8 @@ class Envelope(TimestampedMixin):
 
     @classmethod
     def next_envelope_id(cls) -> str:
-        """
-        Get packaged workbaskets where proc state SUCCESS.
-
-        Provide the next envelope_id for regular publishing, manually publishing
-        and publishing in the new year.
-        """
+        """Provide the next envelope_id for regular publishing, manually
+        publishing and publishing in the new year."""
         # last envelope for the current year
         previous_envelope = Envelope.objects.last_envelope_for_year()
         seed_id = settings.HMRC_PACKAGING_SEED_ENVELOPE_ID
@@ -272,7 +268,7 @@ class Envelope(TimestampedMixin):
             counter = current_year + "0001"
         else:
             counter = max(
-                int(previous_envelope.envelope_id or 0) + 1,
+                int(previous_envelope.envelope_id) + 1,
                 int(seed_id) + 1,
             )
 
