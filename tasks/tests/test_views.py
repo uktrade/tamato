@@ -1,3 +1,5 @@
+from datetime import date
+
 import factory
 import pytest
 from bs4 import BeautifulSoup
@@ -18,8 +20,6 @@ from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.tests.factories import TaskItemTemplateFactory
 from tasks.tests.factories import TaskWorkflowTemplateFactory
-
-pytestmark = pytest.mark.django_db
 
 pytestmark = pytest.mark.django_db
 
@@ -355,7 +355,9 @@ def test_workflow_template_update_view(
     assert confirmation_response.status_code == 200
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert task_workflow_template.title in soup.select("h1.govuk-panel__title")[0].text
+    assert (
+        str(task_workflow_template.id) in soup.select("h1.govuk-panel__title")[0].text
+    )
 
 
 def test_workflow_template_delete_view(
@@ -589,6 +591,9 @@ def test_workflow_detail_view_displays_tasks(
     task_workflow_single_task_item,
 ):
     workflow = task_workflow_single_task_item
+    workflow.policy_contact = "Policy contact"
+    workflow.eif_date = date.today()
+    workflow.save()
     workbasket = workflow.summary_task.workbasket
 
     url = reverse(
@@ -604,6 +609,8 @@ def test_workflow_detail_view_displays_tasks(
     assert page.find("p", text=workflow.description)
     assert page.find("a", text=f"{workbasket.pk} - {workbasket.status}")
     assert page.find("dd", text=format_date(workflow.summary_task.created_at))
+    assert page.find("dd", text=format_date(workflow.eif_date))
+    assert page.find("dd", text=workflow.policy_contact)
 
     step_rows = page.select(".govuk-table__body > .govuk-table__row")
     assert len(step_rows) == workflow.get_tasks().count()
@@ -661,8 +668,8 @@ def test_workflow_update_view(
     confirmation view returns a HTTP 200 response."""
 
     form_data = {
-        "title": "Updated workflow title",
-        "description": "Updated workflow description",
+        "title": "Updated title",
+        "description": "Updated description",
     }
     update_url = task_workflow.get_url("edit")
 
@@ -683,7 +690,7 @@ def test_workflow_update_view(
     assert confirmation_response.status_code == 200
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert str(task_workflow) in soup.select("h1.govuk-panel__title")[0].text
+    assert str(task_workflow.id) in soup.select("h1.govuk-panel__title")[0].text
 
 
 def test_workflow_delete_view(
