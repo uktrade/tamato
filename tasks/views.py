@@ -573,7 +573,7 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-workflow-ui-confirm-create",
+            "workflow:task-workflow-ui-detail",
             kwargs={"pk": self.object.pk},
         )
 

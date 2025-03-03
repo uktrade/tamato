@@ -47,7 +47,7 @@ def test_workflow_create_form_valid_data(task_workflow_template):
 @pytest.mark.parametrize(
     ("form_data", "field", "error_message"),
     [
-        ({"ticket_name": ""}, "ticket_name", "Enter a title for the workflow"),
+        ({"ticket_name": ""}, "ticket_name", "Enter a title for the ticket"),
         (
             {"work_type": ""},
             "work_type",

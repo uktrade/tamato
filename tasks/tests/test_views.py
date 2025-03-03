@@ -641,7 +641,7 @@ def test_workflow_create_view(
     )
 
     confirmation_url = reverse(
-        "workflow:task-workflow-ui-confirm-create",
+        "workflow:task-workflow-ui-detail",
         kwargs={"pk": created_workflow.pk},
     )
     assert create_response.url == confirmation_url
@@ -650,7 +650,7 @@ def test_workflow_create_view(
     assert confirmation_response.status_code == 200
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert str(created_workflow) in soup.select("h1.govuk-panel__title")[0].text
+    assert str(created_workflow) in soup.select("h1")[0].text
 
 
 def test_workflow_update_view(
