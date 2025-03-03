@@ -546,15 +546,11 @@ class QueuedItemManagementMixin:
 
 class TaskWorkflowDetailView(
     PermissionRequiredMixin,
-    QueuedItemManagementMixin,
     DetailView,
 ):
     template_name = "tasks/workflows/detail.jinja"
     permission_required = "tasks.view_taskworkflow"
     model = TaskWorkflow
-    queued_item_model = TaskItem
-    item_lookup_field = "task_id"
-    queue_field = queued_item_model.queue_field
 
     @property
     def view_url(self) -> str:
@@ -565,20 +561,14 @@ class TaskWorkflowDetailView(
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["object_list"] = self.queue.get_tasks()
+        context_data.update(
+            {
+                "object_list": self.get_object().get_tasks(),
+                "verbose_name": "ticket",
+                "list_include": "tasks/includes/task_list.jinja",
+            },
+        )
         return context_data
-
-    def post(self, request, *args, **kwargs):
-        if "promote" in request.POST:
-            self.promote(request.POST.get("promote"))
-        elif "demote" in request.POST:
-            self.demote(request.POST.get("demote"))
-        elif "promote_to_first" in request.POST:
-            self.promote_to_first(request.POST.get("promote_to_first"))
-        elif "demote_to_last" in request.POST:
-            self.demote_to_last(request.POST.get("demote_to_last"))
-
-        return HttpResponseRedirect(self.view_url)
 
 
 class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
@@ -655,6 +645,11 @@ class TaskWorkflowDeleteView(PermissionRequiredMixin, DeleteView):
         kwargs["instance"] = self.object
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["verbose_name"] = "ticket"
+        return context_data
+
     @transaction.atomic
     def form_valid(self, form):
         summary_task = self.object.summary_task
@@ -679,10 +674,10 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
-                "verbose_name": "workflow",
+                "verbose_name": "ticket",
                 "deleted_pk": self.kwargs["pk"],
                 "create_url": reverse("workflow:task-workflow-ui-create"),
-                "list_url": "#NOT-IMPLEMENTED",
+                "list_url": reverse("workflow:task-workflow-ui-list"),
             },
         )
         return context_data
@@ -754,7 +749,13 @@ class TaskWorkflowTemplateDetailView(
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["object_list"] = self.queue.get_task_templates()
+        context_data.update(
+            {
+                "object_list": self.queue.get_task_templates(),
+                "verbose_name": "ticket template",
+                "list_include": "tasks/includes/task_queue.jinja",
+            },
+        )
         return context_data
 
     def post(self, request, *args, **kwargs):

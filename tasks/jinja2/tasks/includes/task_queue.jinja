@@ -28,10 +28,6 @@
     <a href="{{ obj.get_url(action='detail') }}" class="govuk-link">{{ obj.title }}</a>
   {% endset -%}
 
-  {%- set description_cell_content %}
-    <span>{{ obj.description|truncate(50) }}</span>
-  {% endset -%}
-
   {%- set order_cell_content %}
     {% if object_list|length == 1 %}
       {# No buttons needed for a single item #}
@@ -54,7 +50,6 @@
     {"html": up_down_cell_content},
     {"text": loop.index},
     {"html": title_cell_content},
-    {"html": description_cell_content},
     {"html": order_cell_content},
     {"html": remove_cell_content},
   ]) or "" }}
@@ -68,8 +63,7 @@
     "head": [
       {"text": ""},
       {"text": "Position"},
-      {"text": "Title"},
-      {"text": "Description"},
+      {"text": "Name"},
       {"text": "Order"},
       {"text": "Remove"},
     ],
