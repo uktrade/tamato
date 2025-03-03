@@ -250,7 +250,7 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
         max_length=255,
         validators=[SymbolValidator],
         error_messages={
-            "required": "Enter a title for the workflow",
+            "required": "Enter a title for the ticket",
         },
     )
 
