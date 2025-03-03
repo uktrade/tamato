@@ -37,7 +37,7 @@ class TaskWorkflow(Queue):
         blank=True,
         null=True,
     )
-    policy_contact = models.CharField(max_length=24, blank=True, null=True)
+    policy_contact = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta(Queue.Meta):
         abstract = False
