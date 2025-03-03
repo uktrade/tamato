@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -15,14 +17,19 @@ def test_create_task_workflow_from_task_workflow_template(
     """Test creation of TaskWorkflow instances from TaskWorkflowTemplates using
     its `create_task_workflow()` method."""
 
-    title = "Workflow title"
+    ticket_name = "Workflow title"
     description = "Workflow description"
     creator = valid_user
+    eif_date = datetime.date(2026, 12, 12)
+    policy_contact = "Policy Contact"
+
     task_workflow = (
         task_workflow_template_three_task_template_items.create_task_workflow(
-            title=title,
+            title=ticket_name,
             description=description,
             creator=creator,
+            eif_date=eif_date,
+            policy_contact=policy_contact,
         )
     )
 
@@ -31,10 +38,12 @@ def test_create_task_workflow_from_task_workflow_template(
         task_workflow.creator_template
         == task_workflow_template_three_task_template_items
     )
-    assert task_workflow.summary_task.title == title
+    assert task_workflow.summary_task.title == ticket_name
     assert task_workflow.summary_task.description == description
     assert task_workflow.summary_task.creator == creator
     assert task_workflow.get_items().count() == 3
+    assert task_workflow.eif_date == eif_date
+    assert task_workflow.policy_contact == policy_contact
 
     # Validate that item positions are equivalent.
     zipped_items = zip(

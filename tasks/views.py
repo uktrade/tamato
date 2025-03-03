@@ -547,39 +547,33 @@ class TaskWorkflowDetailView(
 
 
 class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
+    # Feb 2025 - Workflows will now be called Tickets in the UI only.
     permission_required = "tasks.add_taskworkflow"
     template_name = "tasks/workflows/create.jinja"
     form_class = TaskWorkflowCreateForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "workflow"
+        context["verbose_name"] = "ticket"
         context["list_url"] = "#NOT-IMPLEMENTED"
         return context
 
     def form_valid(self, form):
-        summary_data = {
-            "title": form.cleaned_data["title"],
+        data = {
+            "title": form.cleaned_data["ticket_name"],
             "description": form.cleaned_data["description"],
             "creator": self.request.user,
+            "eif_date": form.cleaned_data["entry_into_force_date"],
+            "policy_contact": form.cleaned_data["policy_contact"],
         }
-        create_type = form.cleaned_data["create_type"]
-
-        if create_type == TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE:
-            template = form.cleaned_data["workflow_template"]
-            self.object = template.create_task_workflow(**summary_data)
-        elif create_type == TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE:
-            with transaction.atomic():
-                summary_task = Task.objects.create(**summary_data)
-                self.object = TaskWorkflow.objects.create(
-                    summary_task=summary_task,
-                )
+        template = form.cleaned_data["work_type"]
+        self.object = template.create_task_workflow(**data)
 
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-workflow-ui-confirm-create",
+            "workflow:task-workflow-ui-detail",
             kwargs={"pk": self.object.pk},
         )
 
