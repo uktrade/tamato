@@ -162,6 +162,21 @@ class GoodsNomenclature(TrackedModel, ValidityMixin, DescribedMixin):
             return None
         return indents.last()
 
+    @property
+    def current_version_inc_draft(self):
+        """
+        Returns the current version of a goods nomenclature, including
+        unpublished drafts in the current workbasket.
+
+        Returns none if there is no current version, suggesting it has been
+        deleted.
+        """
+        current_version = GoodsNomenclature.objects.current().filter(sid=self.sid)
+        if current_version:
+            return current_version[0]
+        else:
+            return None
+
 
 class GoodsNomenclatureIndent(TrackedModel, ValidityStartMixin):
     record_code = "400"
