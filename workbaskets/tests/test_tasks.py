@@ -14,6 +14,11 @@ def measure_type103():
     return factories.MeasureTypeFactory.create(sid=103)
 
 
+@pytest.fixture
+def measure_type142():
+    return factories.MeasureTypeFactory.create(sid=142)
+
+
 def test_create_missing_measure_comm_codes_new_comm_code_fail(
     erga_omnes,
     date_ranges,
@@ -38,8 +43,10 @@ def test_create_missing_measure_comm_codes_new_comm_code_fail(
     assert new_commodity in [m.commodity for m in failed_comm_codes]
 
 
-def test_create_missing_measure_comm_codes_new_comm_code_142_fail(erga_omnes):
-    measure_type142 = factories.MeasureTypeFactory.create(sid=103)
+def test_create_missing_measure_comm_codes_new_comm_code_142_fail(
+    erga_omnes,
+    measure_type142,
+):
     workbasket = factories.WorkBasketFactory.create()
     new_commodity = factories.GoodsNomenclatureFactory.create(
         transaction=workbasket.new_transaction(),
@@ -89,16 +96,15 @@ def test_create_missing_measure_comm_codes_new_comm_code_99_pass(
     assert not failed_comm_codes
 
 
-def test_create_missing_measure_comm_codes_new_comm_code_103_pass(
-    erga_omnes,
-    measure_type103,
-):
+@pytest.mark.parametrize("sid", [(103), (105)])
+def test_create_missing_measure_comm_codes_new_comm_code_pass(sid, erga_omnes):
+    measure_type = factories.MeasureTypeFactory.create(sid=sid)
     workbasket = factories.WorkBasketFactory.create()
     new_commodity = factories.GoodsNomenclatureFactory.create(
         transaction=workbasket.new_transaction(),
     )
-    mfn = factories.MeasureFactory.create(
-        measure_type=measure_type103,
+    factories.MeasureFactory.create(
+        measure_type=measure_type,
         goods_nomenclature=new_commodity,
         geographical_area=erga_omnes,
         transaction=workbasket.new_transaction(),
@@ -121,8 +127,8 @@ def test_create_missing_measure_comm_codes_new_comm_code_103_pass(
 def test_create_missing_measure_comm_codes_ended_comm_code_pass(
     erga_omnes,
     date_ranges,
+    measure_type142,
 ):
-    measure_type142 = factories.MeasureTypeFactory.create(sid=103)
     workbasket = factories.WorkBasketFactory.create()
     new_commodity = factories.GoodsNomenclatureFactory.create(
         transaction=workbasket.new_transaction(),

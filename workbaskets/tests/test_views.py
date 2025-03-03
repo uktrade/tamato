@@ -15,7 +15,9 @@ from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils.timezone import localtime
 
+from checks.models import MissingMeasuresCheck
 from checks.models import TrackedModelCheck
+from checks.tests.factories import MissingMeasureCommCodeFactory
 from checks.tests.factories import MissingMeasuresCheckFactory
 from checks.tests.factories import TrackedModelCheckFactory
 from commodities.models.orm import FootnoteAssociationGoodsNomenclature
@@ -2731,6 +2733,19 @@ def test_auto_end_measures_renders(
     assert text.count("To be deleted") == 2
     assert len(rows) == 12
 
+    commodity.new_version(
+        workbasket=user_workbasket,
+        update_type=UpdateType.DELETE,
+    )
+
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    rows = page.find_all("tr", {"class": "govuk-table__row"})
+    text = page.get_text()
+    assert text.count("To be deleted") == 14
+    assert len(rows) == 15
+
 
 @patch("workbaskets.tasks.call_end_measures.apply_async")
 def test_auto_end_measures_post(
@@ -2766,9 +2781,16 @@ def test_auto_end_measures_post(
         ("commodity_with_associations", FootnoteAssociationGoodsNomenclature),
     ],
 )
-def test_auto_end_measures(user_workbasket, date_ranges, commodity, object, request):
+def test_auto_end_measures_end_dated_commodity(
+    user_workbasket,
+    date_ranges,
+    commodity,
+    object,
+    request,
+):
     """Test that the call_end_measures correctly ends measures and footnote
-    associations and reorders them in the workbasket."""
+    associations and reorders them in the workbasket when a commodity is end-
+    dated."""
     commodity = request.getfixturevalue(commodity)
     new_commodity = commodity.new_version(
         workbasket=user_workbasket,
@@ -2791,7 +2813,7 @@ def test_auto_end_measures(user_workbasket, date_ranges, commodity, object, requ
 
         measure_pks = [measure.pk for measure in measures_to_end]
         association_pks = [association.pk for association in footnotes_to_end]
-        call_end_measures(measure_pks, association_pks, user_workbasket.pk)
+        call_end_measures(measure_pks, association_pks, [], user_workbasket.pk)
 
         updated_objects = user_workbasket.tracked_models.filter(
             update_type=UpdateType.UPDATE,
@@ -2807,10 +2829,69 @@ def test_auto_end_measures(user_workbasket, date_ranges, commodity, object, requ
         first_11_items = (
             TrackedModel.objects.all()
             .filter(transaction__workbasket=user_workbasket)
-            .order_by("transaction__order")[:10]
+            .order_by("transaction__order")[:11]
         )
         # Assert correct reordering that the first 11 objects are of measure or footnote association type
         for item in first_11_items:
+            assert isinstance(item, object)
+
+
+@pytest.mark.parametrize(
+    "commodity, object",
+    [
+        ("commodity_with_measures", Measure),
+        ("commodity_with_associations", FootnoteAssociationGoodsNomenclature),
+    ],
+)
+def test_auto_end_measures_deleted_commodity(
+    user_workbasket,
+    commodity,
+    object,
+    request,
+):
+    """Test that the call_end_measures correctly deletes measures and footnote
+    associations and reorders them in the workbasket when a commodity is
+    deleted."""
+    commodity = request.getfixturevalue(commodity)
+    commodity.new_version(
+        workbasket=user_workbasket,
+        update_type=UpdateType.DELETE,
+    )
+    auto_end_date_view = ui.AutoEndDateMeasures()
+
+    with (
+        override_current_transaction(Transaction.objects.last()),
+        patch(
+            "workbaskets.views.ui.AutoEndDateMeasures.workbasket",
+            new_callable=PropertyMock,
+        ) as mock_wb,
+    ):
+        mock_wb.return_value = user_workbasket
+        measures_to_delete = auto_end_date_view.get_measures_to_delete()
+        footnotes_to_delete = auto_end_date_view.get_footnote_associations_to_delete()
+        # Assert 14 objects have been found that will be ended
+        assert len(measures_to_delete) + len(footnotes_to_delete) == 14
+
+        pks_to_delete = [measure.pk for measure in measures_to_delete] + [
+            association.pk for association in footnotes_to_delete
+        ]
+        call_end_measures([], [], pks_to_delete, user_workbasket.pk)
+
+        deleted_tracked_models = user_workbasket.tracked_models.filter(
+            update_type=UpdateType.DELETE,
+        )
+        deleted_objects = [
+            obj for obj in deleted_tracked_models if isinstance(obj, object)
+        ]
+        # Assert that there are 14 deleted objects of Measure or FootnoteAssociation
+        assert len(deleted_objects) == 14
+        first_14_items = (
+            TrackedModel.objects.all()
+            .filter(transaction__workbasket=user_workbasket)
+            .order_by("transaction__order")[:14]
+        )
+        # Assert correct reordering that the first 14 objects are of measure or footnote association type
+        for item in first_14_items:
             assert isinstance(item, object)
 
 
@@ -2927,6 +3008,36 @@ def test_get_footnote_associations_to_end_date(user_workbasket, date_ranges):
         assert association_ended_before_commodity not in associations
 
 
+def test_deleted_end_dated_commodity_combo(
+    valid_user_client,
+    commodity_with_measures,
+    user_workbasket,
+    date_ranges,
+):
+    """Test that when commodities are both deleted and end-dated in a workbasket
+    that measures from both appear on the page."""
+    commodity = factories.GoodsNomenclatureFactory.create()
+    factories.MeasureFactory.create_batch(3, goods_nomenclature=commodity)
+    deleted_commodity = commodity.new_version(
+        workbasket=user_workbasket,
+        update_type=UpdateType.DELETE,
+    )
+    end_dated_commodity = commodity_with_measures.new_version(
+        workbasket=user_workbasket,
+        valid_between=date_ranges.normal,
+    )
+
+    url = reverse("workbaskets:workbasket-ui-auto-end-date-measures")
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    rows = page.find_all("tr", {"class": "govuk-table__row"})
+    assert len(rows) == 15
+    text = page.get_text()
+    assert text.count("Commodity deleted") == 3
+    assert text.count("Commodity end-dated") == 11
+
+
 def test_reordering_transactions_bug(valid_user_client, user_workbasket):
     """Test that a user can reorder transactions, delete one and still be able
     to add new objects to the workbasket."""
@@ -2958,3 +3069,23 @@ def test_reordering_transactions_bug(valid_user_client, user_workbasket):
         pytest.fail(
             "IntegrityError - New trackedmodel cannot be created after reordering then deleting transactions.",
         )
+
+
+def test_missing_measures_override(valid_user_client, user_workbasket):
+    missing_measures_check = MissingMeasuresCheckFactory.create(
+        workbasket=user_workbasket,
+        successful=False,
+    )
+    MissingMeasureCommCodeFactory.create_batch(
+        5,
+        missing_measures_check=missing_measures_check,
+        successful=False,
+    )
+    url = reverse("workbaskets:workbasket-ui-missing-measures-check")
+    response = valid_user_client.post(url, {"form-action": "override"})
+
+    assert response.status_code == 302
+    assert response.url == url
+    check = MissingMeasuresCheck.objects.get(workbasket=user_workbasket)
+    assert check.successful == True
+    assert check.model_checks.count() == 0
