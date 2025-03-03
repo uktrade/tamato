@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from crispy_forms_gds.helper import FormHelper
+from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
@@ -361,6 +362,10 @@ class TaskWorkflowUpdateForm(ModelForm):
                 "Save",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
+                css_class="govuk-!-margin-right-2",
+            ),
+            HTML(
+                f'<a class="govuk-link govuk-!-display-inline-block govuk-!-margin-top-2" href="{self.instance.get_url("detail")}">Back</a>',
             ),
         )
 
