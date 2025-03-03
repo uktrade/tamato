@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 
 from common.tests.factories import ProgressStateFactory
@@ -80,13 +82,19 @@ def test_workflow_update_form_save(task_workflow):
     """Tests that the details of `TaskWorkflow.summary_task` are updated when
     calling form.save()."""
     form_data = {
-        "title": "Updated workflow title",
-        "description": "Updated workflow description",
+        "title": "Updated title",
+        "description": "Updated description",
+        "eif_date_0": date.today().day,
+        "eif_date_1": date.today().month,
+        "eif_date_2": date.today().year,
+        "policy_contact": "Policy contact",
     }
 
     form = forms.TaskWorkflowUpdateForm(data=form_data, instance=task_workflow)
     assert form.is_valid()
 
     workflow = form.save()
+    assert workflow.eif_date == date.today()
+    assert workflow.policy_contact == form_data["policy_contact"]
     assert workflow.summary_task.title == form_data["title"]
     assert workflow.summary_task.description == form_data["description"]

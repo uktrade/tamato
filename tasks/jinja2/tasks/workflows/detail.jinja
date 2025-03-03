@@ -59,8 +59,8 @@
           {{ display_summary_row_stacked("Assignee", display_assignees(object.summary_task.assignees.assigned())) }}
           {{ display_summary_row_stacked("Work type", object.creator_template.title) }}
           {{ display_summary_row_stacked("Created date", object.summary_task.created_at|format_date) }}
-          {{ display_summary_row_stacked("Entry into force date", "None") }}
-          {{ display_summary_row_stacked("Policy contact", "None") }}
+          {{ display_summary_row_stacked("Entry into force date", object.eif_date|format_date) }}
+          {{ display_summary_row_stacked("Policy contact", object.policy_contact or "None") }}
         {% elif verbose_name == "ticket template" %}
           {{ display_summary_row_stacked("Created by", object.creator.get_displayname()) }}
           {{ display_summary_row_stacked("Created date", object.created_at|format_date) }}
