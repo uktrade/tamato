@@ -50,14 +50,17 @@ def test_models_are_included():
     assert len(missing_models) == 0
 
 
+@pytest.fixture()
 def run_required_sql():
+    # The following sql are run in migrations.
+    # Because pytest is run with --nomigrations
+    # they need to be run before testing can be performed
     with connection.cursor() as cursor:
         cursor.execute(get_drop_fk_sql())
         cursor.execute(get_create_materialised_view_sql())
 
 
-def test_measures_unpublished_and_unapproved():
-    run_required_sql()
+def test_measures_unpublished_and_unapproved(run_required_sql):
     factories.MeasureFactory.create(
         transaction=factories.UnapprovedTransactionFactory.create(),
     )
@@ -77,8 +80,7 @@ def test_measures_unpublished_and_unapproved():
     assert Measure.objects.published().count() == 1
 
 
-def test_footnotes():
-    run_required_sql()
+def test_footnotes(run_required_sql):
     published_transaction = factories.PublishedTransactionFactory.create()
     factories.ApprovedTransactionFactory.create()
     test_description = "Test description"
