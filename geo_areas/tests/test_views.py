@@ -579,7 +579,9 @@ def test_geo_area_detail_measures_view_sorting_commodity(valid_user_client):
         3,
         geographical_area=geo_area,
     )
-    commodity_codes = [measure.goods_nomenclature.item_id for measure in measures]
+    commodity_codes = sorted(
+        [measure.goods_nomenclature.item_id for measure in measures],
+    )
 
     url = reverse(
         "geo_area-ui-detail-measures",

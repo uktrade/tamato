@@ -190,7 +190,7 @@ class QuotaList(QuotaOrderNumberMixin, TamatoListView):
     filterset_class = QuotaFilter
 
 
-class QuotaDetail(QuotaOrderNumberMixin, TrackedModelDetailView, SortingMixin):
+class QuotaDetail(QuotaOrderNumberMixin, SortingMixin, TrackedModelDetailView):
     template_name = "quotas/detail.jinja"
     sort_by_fields = ["goods_nomenclature"]
 
