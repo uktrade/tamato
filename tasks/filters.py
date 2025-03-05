@@ -41,6 +41,11 @@ class TaskFilter(TamatoFilter):
         return super().qs.non_workflow()
 
 
+# class TaskWorkflowAssignmentChoices(TextChoices):
+#     ASSIGNED_TICKETS = "ASSIGNED_TICKETS", "Assigned"
+#     UNASSIGNED_TICKETS = "UNASSIGNED_TICKETS", "Not assigned"
+
+
 class TaskWorkflowFilter(TamatoFilter):
     search_fields = (
         "id",
@@ -63,15 +68,40 @@ class TaskWorkflowFilter(TamatoFilter):
     )
 
     assignees = ModelChoiceFilter(
-        label="Assignee",
+        label="Assignees",
         field_name="assignees",
         queryset=User.objects.all(),
+        # queryset=UserQuerySet.active_tms()
     )
+
+    # assignment_status = ChoiceFilter(
+    #     choices=TaskWorkflowAssignmentChoices.choices,
+    #     widget=CheckboxSelectMultiple,
+    #     method="filter_active_state",
+    #     label="Assignment status",
+    #     help_text="Select one to filter by assigned or unassigned tickets",
+    #     required=False,
+    # )
 
     class Meta:
         model = Task
         form = TaskFilterForm
-        fields = ["search", "progress_state", "category", "assignees"]
+        fields = [
+            "search",
+            "progress_state",
+            "category",
+            "assignees",
+            "assignment_status",
+        ]
+
+    # def filter_by_ticket_assignment_status(self, queryset, name, value):
+    #     if TaskWorkflowAssignmentChoices.ASSIGNED_TICKETS == value:
+    #         queryset = queryset.filter(assignee__isnull=False)
+
+    #     elif TaskWorkflowAssignmentChoices.UNASSIGNED_TICKETS == value:
+    #         queryset = queryset.filter(assignee__isnull=True)
+
+    #     return queryset
 
     @property
     def qs(self):

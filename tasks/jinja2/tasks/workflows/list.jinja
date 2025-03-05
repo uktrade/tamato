@@ -61,17 +61,17 @@
             {"html": task_linked_id},
             {"text": object.title},
             {"html": assignees if object.assignees.all().count() > 0 else "-" },
-            {"text": "Not implemented"},
+            {"text": "{:%d %b %Y}".format(object.taskworkflow.eif_date) if object.taskworkflow.eif_date else "-"},
             {"text": status_tag(object.progress_state.name)},
           ]) or "" }}
         {% endfor %}
 
         {{ govukTable({
           "head": [
-            {"text": "ID"},
+            {"text": create_sortable_anchor(request, "ID", sorting_urls["id"])},
             {"text": "Ticket name"},
             {"text": "Assignee"},
-            {"text": "Entry into force date"},
+            {"text": create_sortable_anchor(request, "Entry into force date", sorting_urls["taskworkflow__eif_date"])},
             {"text": "Status"},
           ],
             "rows": table_rows
