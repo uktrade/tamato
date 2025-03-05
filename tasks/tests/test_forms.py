@@ -26,71 +26,45 @@ def test_create_subtask_assigns_correct_parent_task(valid_user):
     assert new_subtask.parent_task.pk == parent_task_instance.pk
 
 
-@pytest.mark.parametrize(
-    "form_data",
-    [
-        {
-            "title": "Test workflow 1",
-            "description": "Workflow created without using template",
-            "create_type": forms.TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE,
-        },
-        {
-            "title": "Test workflow 2",
-            "description": "Workflow created using template",
-            "create_type": forms.TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE,
-            "workflow_template": "",
-        },
-    ],
-    ids=(
-        "without_template",
-        "with_template",
-    ),
-)
-def test_workflow_create_form_valid_data(form_data, task_workflow_template):
+def test_workflow_create_form_valid_data(task_workflow_template):
     """Tests that `TaskWorkflowCreateForm` returns expected cleaned_data given
     valid form data."""
 
-    if "workflow_template" in form_data:
-        form_data["workflow_template"] = task_workflow_template
+    form_data = {
+        "ticket_name": "Test ticket 1",
+        "description": "Ticket created with all fields",
+        "work_type": task_workflow_template,
+        "entry_into_force_date_0": 12,
+        "entry_into_force_date_1": 12,
+        "entry_into_force_date_2": 2026,
+        "policy_contact": "Fake Contact Name",
+    }
 
     form = forms.TaskWorkflowCreateForm(form_data)
     assert form.is_valid()
-    assert form.cleaned_data == form_data
 
 
 @pytest.mark.parametrize(
     ("form_data", "field", "error_message"),
     [
-        ({"title": ""}, "title", "Enter a title for the workflow"),
-        ({"description": ""}, "description", "Enter a description for the workflow"),
+        ({"ticket_name": ""}, "ticket_name", "Enter a title for the ticket"),
         (
-            {"create_type": ""},
-            "create_type",
-            "Select if you want to use a workflow template",
+            {"work_type": ""},
+            "work_type",
+            "Choose a work type",
         ),
         (
             {
-                "create_type": forms.TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE,
-                "workflow_template": "",
-            },
-            "create_type",
-            "Select a workflow template",
-        ),
-        (
-            {
-                "create_type": forms.TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE,
                 "workflow_template": "invalidchoice",
             },
-            "create_type",
-            "Select a valid choice. That choice is not one of the available choices.",
+            "work_type",
+            "Choose a work type",
         ),
     ],
     ids=(
         "missing_title",
-        "missing_description",
-        "missing_create_type",
-        "missing_workflow_template",
-        "invalid_workflow_template",
+        "missing_work_type",
+        "invalid_work_type",
     ),
 )
 def test_workflow_create_form_invalid_data(form_data, field, error_message):

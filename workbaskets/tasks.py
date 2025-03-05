@@ -16,6 +16,7 @@ from commodities.models.orm import FootnoteAssociationGoodsNomenclature
 from commodities.models.orm import GoodsNomenclature
 from common.celery import app
 from common.models import Transaction
+from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
 from common.util import TaricDateRange
 from common.validators import UpdateType
@@ -122,11 +123,13 @@ def end_objects(objects, workbasket):
             date.today(),
             commodity.valid_between.upper,
         ):
+            logger.info(f"Deleting object {type(object)} - {object.pk}")
             new_version = object.new_version(
                 workbasket=workbasket,
                 update_type=UpdateType.DELETE,
             )
         else:
+            logger.info(f"End dating object {type(object)} - {object.pk}")
             new_version = object.new_version(
                 workbasket=workbasket,
                 update_type=UpdateType.UPDATE,
@@ -138,16 +141,45 @@ def end_objects(objects, workbasket):
         promote_item_to_top(new_version.transaction, workbasket_transactions)
 
 
+@atomic
+def delete_objects(objects, workbasket):
+    """Iterate through a queryset of tracked models on deleted commodities and
+    delete them."""
+    for object in objects:
+        workbasket_transactions = Transaction.objects.filter(
+            workbasket=workbasket,
+            workbasket__status=WorkflowStatus.EDITING,
+        ).order_by("order")
+
+        logger.info(f"Deleting object {type(object)} - {object.pk}")
+        new_version = object.new_version(
+            workbasket=workbasket,
+            update_type=UpdateType.DELETE,
+        )
+
+        promote_item_to_top(new_version.transaction, workbasket_transactions)
+
+
 @app.task
-def call_end_measures(measure_pks, footnote_association_pks, workbasket_pk):
+def call_end_measures(
+    measure_pks,
+    footnote_association_pks,
+    objects_to_delete_pks,
+    workbasket_pk,
+):
     """Calls end_objects for measures and footnote associations."""
     workbasket = WorkBasket.objects.all().get(pk=workbasket_pk)
     measures = Measure.objects.all().filter(pk__in=measure_pks)
     footnote_associations = FootnoteAssociationGoodsNomenclature.objects.all().filter(
         pk__in=footnote_association_pks,
     )
+    objects_to_delete = TrackedModel.objects.all().filter(pk__in=objects_to_delete_pks)
+    logger.info(f"Calling end objects for measures")
     end_objects(measures, workbasket)
+    logger.info(f"Calling end objects for footnote associations")
     end_objects(footnote_associations, workbasket)
+    logger.info(f"Calling delete objects for measures and footnote associations")
+    delete_objects(objects_to_delete, workbasket)
 
 
 def check_comm_code_for_missing_measures(
@@ -198,14 +230,15 @@ def check_comm_code_for_missing_measures(
             successful=False,
         )
 
+    # check for 103 and 105 measure types
     filtered_measures = applicable_measures.filter(
-        measure_type__sid=103,
+        measure_type__sid__in=[103, 105],
         geographical_area=GeographicalArea.objects.erga_omnes().first(),
     )
 
     if not filtered_measures:
         logger.info(
-            f"Commodity {code.item_id} has no applicable measures of type 103!",
+            f"Commodity {code.item_id} has no applicable measures of type 103 or 105!",
         )
         return MissingMeasureCommCode.objects.create(
             commodity=code,
@@ -214,7 +247,7 @@ def check_comm_code_for_missing_measures(
         )
 
     logger.info(
-        f"Commodity {code.item_id} has {filtered_measures.count()} applicable type 103 measure(s)",
+        f"Commodity {code.item_id} has {filtered_measures.count()} applicable type 103 and/or 105 measure(s)",
     )
     return MissingMeasureCommCode.objects.create(
         commodity=code,

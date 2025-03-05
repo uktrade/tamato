@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import date
 from functools import cached_property
+from itertools import chain
 
 import boto3
 import django_filters
@@ -54,6 +55,7 @@ from common.forms import DummyForm
 from common.inspect_tap_tasks import TAPTasks
 from common.models import Transaction
 from common.models.transactions import TransactionPartition
+from common.validators import UpdateType
 from common.views import SortingMixin
 from common.views import WithPaginationListMixin
 from common.views import WithPaginationListView
@@ -1122,6 +1124,8 @@ class WorkBasketCommCodeChecks(SortingMixin, ListView, FormView):
             self.run_missing_measures_check(comm_code_pks)
         if form_action == "stop-check":
             self.workbasket.terminate_missing_measures_check()
+        if form_action == "override":
+            self.workbasket.override_missing_measures_check()
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -1905,25 +1909,57 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
     @property
     def measures(self):
-        return self.get_measures_to_end_date()
+        measures_list = [
+            measure.pk
+            for measure in list(
+                chain(self.get_measures_to_end_date(), self.get_measures_to_delete()),
+            )
+        ]
+        return Measure.objects.all().filter(pk__in=measures_list)
 
     @property
     def footnote_associations(self):
-        return self.get_footnote_associations_to_end_date()
+        associations_list = [
+            association.pk
+            for association in list(
+                chain(
+                    self.get_footnote_associations_to_end_date(),
+                    self.get_footnote_associations_to_delete(),
+                ),
+            )
+        ]
+        return FootnoteAssociationGoodsNomenclature.objects.all().filter(
+            pk__in=associations_list,
+        )
 
     @cached_property
-    def commodity_dictionary(self):
+    def end_dated_commodity_dictionary(self):
         """Returns a dictionary of commodity SIDs that have been end-dated in
         the workbasket along with their end dates."""
-        end_dated_commodities = GoodsNomenclature.objects.current().filter(
-            transaction__workbasket=self.workbasket,
-            valid_between__upper_inf=False,
+        end_dated_commodities = (
+            GoodsNomenclature.objects.current()
+            .filter(
+                transaction__workbasket=self.workbasket,
+                valid_between__upper_inf=False,
+            )
+            .exclude(update_type=UpdateType.DELETE)
         )
         commodity_dict = {
             commodity.sid: commodity.valid_between
             for commodity in end_dated_commodities
         }
         return commodity_dict
+
+    @cached_property
+    def deleted_commodities(self):
+        """Returns a list of SIDs of commodities that have been deleted in the
+        current workbasket."""
+        return list(
+            GoodsNomenclature.objects.filter(
+                transaction__workbasket=self.workbasket,
+                update_type=UpdateType.DELETE,
+            ).values_list("sid", flat=True),
+        )
 
     def get_queryset(self):
         ordering = self.get_ordering()
@@ -1950,13 +1986,22 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
             )
 
     def auto_end_date(self):
-        measure_pks = [measure.pk for measure in self.measures]
-        footnote_association_pks = [
+        measure_pks_to_end = [measure.pk for measure in self.get_measures_to_end_date()]
+        footnote_association_pks_to_end = [
             footnote_association.pk
-            for footnote_association in self.footnote_associations
+            for footnote_association in self.get_footnote_associations_to_end_date()
+        ]
+        pks_to_delete = [measure.pk for measure in self.get_measures_to_delete()] + [
+            footnote_association.pk
+            for footnote_association in self.get_footnote_associations_to_delete()
         ]
         call_end_measures.apply_async(
-            (measure_pks, footnote_association_pks, self.workbasket.pk),
+            (
+                measure_pks_to_end,
+                footnote_association_pks_to_end,
+                pks_to_delete,
+                self.workbasket.pk,
+            ),
         )
 
     def get_measures_to_end_date(self) -> QuerySet:
@@ -1967,14 +2012,14 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
         It filters out measures which have already ended.
         """
         measures_on_commodities = Measure.objects.current().filter(
-            goods_nomenclature__sid__in=self.commodity_dictionary.keys(),
+            goods_nomenclature__sid__in=self.end_dated_commodity_dictionary.keys(),
         )
         conditions = [
             When(
                 goods_nomenclature__sid=commodity_sid,
                 then=Value(commodity_valid_between),
             )
-            for commodity_sid, commodity_valid_between in self.commodity_dictionary.items()
+            for commodity_sid, commodity_valid_between in self.end_dated_commodity_dictionary.items()
         ]
         measures = measures_on_commodities.annotate(
             commodity_valid_between=Case(
@@ -1997,7 +2042,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
         footnote_associations = (
             FootnoteAssociationGoodsNomenclature.objects.current().filter(
-                goods_nomenclature__sid__in=self.commodity_dictionary.keys(),
+                goods_nomenclature__sid__in=self.end_dated_commodity_dictionary.keys(),
             )
         )
         conditions = [
@@ -2005,7 +2050,7 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
                 goods_nomenclature__sid=commodity_sid,
                 then=Value(commodity_valid_between),
             )
-            for commodity_sid, commodity_valid_between in self.commodity_dictionary.items()
+            for commodity_sid, commodity_valid_between in self.end_dated_commodity_dictionary.items()
         ]
         footnote_associations = footnote_associations.annotate(
             commodity_valid_between=Case(
@@ -2016,6 +2061,16 @@ class AutoEndDateMeasures(SortingMixin, WithPaginationListMixin, ListView):
 
         return footnote_associations.exclude(
             valid_between__not_gt=F("commodity_valid_between"),
+        )
+
+    def get_measures_to_delete(self) -> QuerySet:
+        return Measure.objects.current().filter(
+            goods_nomenclature__sid__in=self.deleted_commodities,
+        )
+
+    def get_footnote_associations_to_delete(self) -> QuerySet:
+        return FootnoteAssociationGoodsNomenclature.objects.current().filter(
+            goods_nomenclature__sid__in=self.deleted_commodities,
         )
 
 

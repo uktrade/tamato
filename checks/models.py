@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import fields
+from django.db.transaction import atomic
 
 from checks.querysets import TransactionCheckQueryset
 from common.models.mixins import TimestampedMixin
@@ -180,6 +181,12 @@ class MissingMeasuresCheck(TimestampedMixin):
     )
 
     successful = fields.BooleanField(null=True)
+
+    @atomic
+    def override(self):
+        self.model_checks.all().delete()
+        self.successful = True
+        self.save()
 
 
 class MissingMeasureCommCode(models.Model):

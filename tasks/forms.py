@@ -10,7 +10,6 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import TextChoices
 from django.forms import CharField
 from django.forms import CheckboxSelectMultiple
 from django.forms import Form
@@ -22,7 +21,7 @@ from django.utils.timezone import make_aware
 
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
-from common.forms import RadioNested
+from common.forms import DateInputFieldFixed
 from common.forms import delete_form_for
 from common.validators import SymbolValidator
 from tasks.models import Task
@@ -248,36 +247,42 @@ class TaskWorkflowTemplateForm(Form):
 
 
 class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
-    class CreateType(TextChoices):
-        WITH_TEMPLATE = "WITH_TEMPLATE", "Yes"
-        WITHOUT_TEMPLATE = "WITHOUT_TEMPLATE", "No"
 
-    title = CharField(
+    ticket_name = CharField(
+        required=True,
         max_length=255,
         validators=[SymbolValidator],
         error_messages={
-            "required": "Enter a title for the workflow",
+            "required": "Enter a title for the ticket",
+        },
+    )
+
+    work_type = ModelChoiceField(
+        required=True,
+        help_text="Choose the most appropriate category, this will generate a pre-defined set of steps to complete the work",
+        queryset=TaskWorkflowTemplate.objects.all(),
+        error_messages={
+            "required": "Choose a work type",
         },
     )
 
     description = CharField(
+        required=False,
         validators=[SymbolValidator],
         widget=Textarea(),
-        error_messages={
-            "required": "Enter a description for the workflow",
-        },
+        help_text="This field is optional",
     )
 
-    create_type = RadioNested(
-        label="Do you want to use a workflow template?",
-        choices=CreateType.choices,
-        nested_forms={
-            CreateType.WITH_TEMPLATE.value: [TaskWorkflowTemplateForm],
-            CreateType.WITHOUT_TEMPLATE.value: [],
-        },
-        error_messages={
-            "required": "Select if you want to use a workflow template",
-        },
+    entry_into_force_date = DateInputFieldFixed(
+        required=False,
+        help_text="This field is optional",
+    )
+
+    policy_contact = CharField(
+        required=False,
+        max_length=255,
+        validators=[SymbolValidator],
+        help_text="This field is optional",
     )
 
     def __init__(self, *args, **kwargs):
@@ -290,10 +295,12 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             Fieldset(
-                "title",
+                "ticket_name",
+                "work_type",
                 "description",
+                "entry_into_force_date",
+                "policy_contact",
             ),
-            "create_type",
             Submit(
                 "submit",
                 "Create",
