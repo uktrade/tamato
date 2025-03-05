@@ -690,16 +690,16 @@ def format_date_string(date_string: str, short_format=False) -> str:
         return ""
 
 
-def format_date(value: datetime) -> str:
-    """Formats a datetime object using `settings.DATE_FORMAT`."""
-    if isinstance(value, datetime):
+def format_date(value: datetime | date) -> str:
+    """Formats a datetime or date object using `settings.DATE_FORMAT`."""
+    if isinstance(value, (datetime, date)):
         return value.strftime(settings.DATE_FORMAT)
     return value
 
 
-def format_short_date(value: datetime) -> str:
-    """Formats a datetime object using `settings.SHORT_DATE_FORMAT`."""
-    if isinstance(value, datetime):
+def format_short_date(value: datetime | date) -> str:
+    """Formats a datetime or date object using `settings.SHORT_DATE_FORMAT`."""
+    if isinstance(value, (datetime, date)):
         return value.strftime(settings.SHORT_DATE_FORMAT)
     return value
 
