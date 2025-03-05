@@ -91,7 +91,6 @@ class TaskWorkflowFilter(TamatoFilter):
             "progress_state",
             "category",
             "assignees",
-            "assignment_status",
         ]
 
     # def filter_by_ticket_assignment_status(self, queryset, name, value):
