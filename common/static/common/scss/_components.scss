@@ -175,15 +175,15 @@
   @extend .govuk-summary-list__key;
   display: block;
   width: 100%;
-  padding: 0;
-  margin: 0;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .govuk-summary-list__value__stacked {
   @extend .govuk-summary-list__value;
   display: block;
   padding: 0;
-  margin: 0;
+  margin-bottom: govuk-spacing(2) !important;
 }
 
 .govuk-summary-list__value__stacked:last-child {
