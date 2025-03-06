@@ -746,10 +746,6 @@ def test_ticket_list_view(valid_user_client, task_workflow):
     ].text == str(task_workflow.pk)
 
 
-def test_ticket_list_view_filtering():
-    """Test that the ticket list view filters correctly."""
-
-
 def test_workflow_list_view_eif_date(
     valid_user_client,
 ):
