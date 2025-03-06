@@ -395,32 +395,7 @@ class TaskWorkflowListView(
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
-        context["status_tag_generator"] = self.status_tag_generator
         return context
-
-    def status_tag_generator(self, task_status) -> dict:
-        """Returns a dict with text and a CSS class for a UI-friendly label for
-        a ticket status."""
-        if task_status == "TO_DO":
-            return {
-                "text": "TO DO",
-                "tag_class": "tamato-badge-light-purple",
-            }
-        elif task_status == "IN_PROGRESS":
-            return {
-                "text": "IN PROGRESS",
-                "tag_class": "tamato-badge-light-blue",
-            }
-        elif task_status == "DONE":
-            return {
-                "text": "DONE",
-                "tag_class": "tamato-badge-light-green",
-            }
-        else:
-            return {
-                "text": task_status,
-                "tag_class": "",
-            }
 
 
 class TaskAndWorkflowListView(
