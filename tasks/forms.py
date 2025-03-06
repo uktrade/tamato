@@ -483,7 +483,7 @@ class TaskFilterForm(forms.Form):
             "search",
             "progress_state",
             "assignees",
-            "category",
+            "work_type",
             Button(
                 "submit",
                 "Search and filter",

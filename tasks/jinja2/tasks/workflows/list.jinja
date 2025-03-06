@@ -2,12 +2,8 @@
 
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
-
-{% macro status_tag(task_status) %}
-    <span class="{{status_tag_generator(task_status).tag_class}}">
-            {{ status_tag_generator(task_status).text }}
-        </span>
-{% endmacro %}
+{% from "tasks/macros/display_details.jinja" import display_status %}
+{% from "tasks/macros/display_details.jinja" import display_assignees %}
 
 {% set page_title = "Find and view tickets" %}
 
@@ -60,9 +56,9 @@
           {{ table_rows.append([
             {"html": task_linked_id},
             {"text": object.title},
-            {"html": assignees if object.assignees.all().count() > 0 else "-" },
+            {"html": display_assignees(object.assignees.assigned())},
             {"text": "{:%d %b %Y}".format(object.taskworkflow.eif_date) if object.taskworkflow.eif_date else "-"},
-            {"text": status_tag(object.progress_state.name)},
+            {"text": display_status(object.progress_state.__str__())},
           ]) or "" }}
         {% endfor %}
 

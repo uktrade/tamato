@@ -13,7 +13,6 @@ from tasks.forms import TaskFilterForm
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskWorkflowTemplate
-from tasks.models.task import Category
 
 
 class TaskFilter(TamatoFilter):
@@ -56,16 +55,17 @@ class TaskWorkflowFilter(TamatoFilter):
         widget=CheckboxSelectMultiple,
     )
 
-    category = ModelChoiceFilter(
+    work_type = ModelChoiceFilter(
         label="Work type",
-        queryset=Category.objects.all(),
+        queryset=TaskWorkflowTemplate.objects.all(),
+        field_name="taskworkflow__creator_template",
         widget=widgets.Select(),
     )
 
     assignees = ModelChoiceFilter(
         label="Assignees",
         field_name="assignees",
-        queryset=User.objects.all(),
+        queryset=User.objects.active_tms(),
     )
 
     class Meta:
@@ -74,7 +74,6 @@ class TaskWorkflowFilter(TamatoFilter):
         fields = [
             "search",
             "progress_state",
-            "category",
             "assignees",
         ]
 
