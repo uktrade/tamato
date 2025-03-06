@@ -93,6 +93,10 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         """Returns a queryset of tasks who have parent tasks linked to them."""
         return self.exclude(models.Q(parent_task=None))
 
+    def incomplete(self):
+        """Returns a queryset of tasks excluding those marked as complete."""
+        return self.exclude(progress_state__name=ProgressState.State.DONE)
+
 
 class TaskBase(TimestampedMixin):
     """Abstract model mixin containing model fields common to TaskTemplate and
@@ -314,9 +318,7 @@ class TaskAssignee(TimestampedMixin):
         from tasks.signals import set_current_instigator
 
         try:
-            assignment = cls.objects.get(user=user, task=task)
-            if assignment.unassigned_at:
-                return False
+            assignment = cls.objects.assigned().get(user=user, task=task)
             set_current_instigator(instigator)
             with transaction.atomic():
                 assignment.unassigned_at = make_aware(datetime.now())
