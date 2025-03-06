@@ -260,7 +260,7 @@ class Migration(migrations.Migration):
                 ("description", models.TextField(blank=True, null=True)),
                 (
                     "parent_trackedmodel_ptr",
-                    models.OneToOneField(
+                    models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.DO_NOTHING,
                         to="open_data.reportgoodsnomenclature",

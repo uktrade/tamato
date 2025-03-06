@@ -51,7 +51,7 @@ def save_commodities_parent(verbose=False):
             commodities=commodities_collection.commodities,
             moment=moment,
         )
-        # snapshot = commodities_collection.get_snapshot(None, date.today())
+
         tree_edge_to_db(snapshot.edges)
     if verbose:
-        print(f"Elapsed time {time.time() - start}")
+        print(f"Commodities: elapsed time {time.time() - start}")

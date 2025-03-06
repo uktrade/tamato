@@ -28,7 +28,7 @@ class ReportGoodsNomenclature(ReportModel):
 
     indent = models.IntegerField(null=True)
     description = models.TextField(blank=True, null=True)
-    parent_trackedmodel_ptr = models.OneToOneField(
+    parent_trackedmodel_ptr = models.ForeignKey(
         "self",
         models.DO_NOTHING,
         null=True,

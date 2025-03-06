@@ -42,7 +42,7 @@ def add_description(model, verbose=True):
 
 def update_model(model, cursor, verbose=True):
     if verbose:
-        print(f"Delete data from {model._meta.db_table}")
+        print(f'Delete data from "{model._meta.db_table}"')
 
     cursor.execute(f'TRUNCATE TABLE "{model._meta.db_table}"')
     if model.update_table:
@@ -69,7 +69,7 @@ def update_model(model, cursor, verbose=True):
 def populate_open_data(verbose=False):
 
     config = django.apps.apps.get_app_config(APP_LABEL)
-
+    populate_start_time = time.time()
     with connection.cursor() as cursor:
         cursor.execute(f"REFRESH MATERIALIZED VIEW {get_lookup_name()};")
         for model in config.get_models():
@@ -85,6 +85,7 @@ def populate_open_data(verbose=False):
                     )
     # The following are changes specific to different tables.
     # They update fields using Django routines, created specifically for the task.
+
     # Unless there is a current transaction,
     # reading the latest description will fail in a misterious way
     # Because this is called in a command, there is no transaction set"""
@@ -92,18 +93,22 @@ def populate_open_data(verbose=False):
     with override_current_transaction(tx):
         for model in config.get_models():
             if verbose:
-                print(f'Starting update of "{model._meta.db_table}"')
+                print(f'Add description to "{model._meta.db_table}"')
                 start_time = time.time()
             add_description(model)
         if verbose:
             elapsed_time = time.time() - start_time
             print(
-                f'Completed update of "{model._meta.db_table}" in {elapsed_time} seconds',
+                f'Add description to "{model._meta.db_table}" in {elapsed_time} seconds',
             )
         save_commodities_parent(verbose)
         save_geo_areas(verbose)
         update_measure(verbose)
         update_measure_components(verbose)
+
+        print(
+            f"Completed open data table in {(time.time()-populate_start_time)/60} minutes",
+        )
 
 
 def update_model_and_description(model):

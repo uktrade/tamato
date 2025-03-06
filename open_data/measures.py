@@ -25,7 +25,7 @@ def update_measure_components(verbose):
         component_list = []
         for measure in measures_qs:
             counter += 1
-            if counter % 1000 == 0:
+            if verbose and counter % 1000 == 0:
                 print(f"Measure count {counter}")
             # comp_counter = 0
             for (
@@ -52,7 +52,7 @@ def update_measure_components(verbose):
                 )
 
     ReportMeasureCondition.objects.bulk_create(component_list)
-    print("Completed Measure condition creation")
+
     #     The required_certificate_id is not updated when the certificate is updated
     #     In the UI it works because the certificate is selected using the SID and
     #     'approved to last Transaction'. In data workspace works because when a
@@ -66,7 +66,7 @@ def update_measure_components(verbose):
                 cursor.execute(query)
 
     if verbose:
-        print(f"Elapsed time {time.time() - start}")
+        print(f"Measure condition creation elapsed time {time.time() - start}")
 
 
 def update_measure(verbose):
@@ -90,4 +90,4 @@ def update_measure(verbose):
                 measure.save()
 
     if verbose:
-        print(f"Elapsed time {time.time() - start}")
+        print(f"Update measure elapsed time {time.time() - start}")

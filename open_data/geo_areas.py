@@ -26,4 +26,4 @@ def save_geo_areas(verbose):
         report_geo_area.description = description
         report_geo_area.save()
     if verbose:
-        print(f"Elapsed time {time.time() - start}")
+        print(f"Save GEO AREA Elapsed time {time.time() - start}")
