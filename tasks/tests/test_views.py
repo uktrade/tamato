@@ -10,6 +10,7 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from common.util import format_date
+from tasks.forms import TaskWorkflowCreateForm
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskItem
@@ -630,6 +631,7 @@ def test_workflow_create_view(
         "ticket_name": "Test workflow 1",
         "description": "Workflow created",
         "work_type": task_workflow_template_single_task_template_item.pk,
+        "assignment": TaskWorkflowCreateForm.AssignType.SELF,
     }
 
     create_url = reverse("workflow:task-workflow-ui-create")
@@ -641,6 +643,8 @@ def test_workflow_create_view(
         summary_task__description=form_data["description"],
         summary_task__creator=valid_user,
     )
+
+    assert created_workflow.summary_task.assignees.get().user == valid_user
 
     assert (
         created_workflow.get_tasks().count()
@@ -658,6 +662,32 @@ def test_workflow_create_view(
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert str(created_workflow) in soup.select("h1")[0].text
+
+
+def test_workflow_create_view_assigns_tasks(
+    valid_user,
+    valid_user_client,
+    task_workflow_template_three_task_template_items,
+):
+    """Tests that when a new workflow is created with an assignee, all
+    associated tasks are assigned to the assignee."""
+
+    form_data = {
+        "ticket_name": "Test workflow 1",
+        "work_type": task_workflow_template_three_task_template_items.pk,
+        "assignment": TaskWorkflowCreateForm.AssignType.OTHER_USER,
+        "assignee": valid_user.pk,
+    }
+
+    url = reverse("workflow:task-workflow-ui-create")
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    workflow = TaskWorkflow.objects.get()
+    assert workflow.summary_task.assignees.get().user == valid_user
+
+    for task in workflow.get_tasks():
+        assert task.assignees.get().user == valid_user
 
 
 def test_workflow_update_view(
