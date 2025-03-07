@@ -251,7 +251,7 @@ class TaskWorkflowAssigneeForm(Form):
         queryset=User.objects.active_tms(),
         help_text="Choose assignee",
         error_messages={
-            "required": "Select someone to assign",
+            "required": "Select an assignee",
         },
     )
 

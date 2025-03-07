@@ -13,12 +13,14 @@ from common.util import format_date
 from tasks.forms import TaskWorkflowCreateForm
 from tasks.models import ProgressState
 from tasks.models import Task
+from tasks.models import TaskAssignee
 from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskLog
 from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
+from tasks.tests.factories import TaskItemFactory
 from tasks.tests.factories import TaskItemTemplateFactory
 from tasks.tests.factories import TaskWorkflowTemplateFactory
 
@@ -670,7 +672,7 @@ def test_workflow_create_view_assigns_tasks(
     task_workflow_template_three_task_template_items,
 ):
     """Tests that when a new workflow is created with an assignee, all
-    associated tasks are assigned to the assignee."""
+    associated tasks are assigned to the user."""
 
     form_data = {
         "ticket_name": "Test workflow 1",
@@ -691,6 +693,7 @@ def test_workflow_create_view_assigns_tasks(
 
 
 def test_workflow_update_view(
+    valid_user,
     valid_user_client,
     task_workflow,
 ):
@@ -700,6 +703,7 @@ def test_workflow_update_view(
     form_data = {
         "title": "Updated title",
         "description": "Updated description",
+        "assignee": valid_user.pk,
     }
     update_url = task_workflow.get_url("edit")
 
@@ -721,6 +725,50 @@ def test_workflow_update_view(
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert str(task_workflow.id) in soup.select("h1.govuk-panel__title")[0].text
+
+
+def test_workflow_update_view_reassigns_tasks(
+    valid_user,
+    valid_user_client,
+    assigned_task_workflow,
+):
+    """Tests that when a workflow is updated with a new assignee, all associated
+    tasks are assigned to that user except for those marked as done."""
+
+    TaskItemFactory.create_batch(2, workflow=assigned_task_workflow)
+    done_state = ProgressStateFactory.create(name=ProgressState.State.DONE)
+    done_task = TaskItemFactory.create(
+        workflow=assigned_task_workflow,
+        task__progress_state=done_state,
+    ).task
+
+    form_data = {
+        "title": "Updated workflow",
+        "assignee": valid_user.pk,
+    }
+
+    url = assigned_task_workflow.get_url("edit")
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+
+    assert (
+        assigned_task_workflow.summary_task.assignees.assigned().get().user
+        == valid_user
+    )
+
+    incomplete_tasks = assigned_task_workflow.get_tasks().incomplete()
+    assert incomplete_tasks
+
+    for task in incomplete_tasks:
+        assert (
+            task.assignees.get().user == valid_user
+        ), "Task should be assigned to the new user"
+
+    assert (
+        not TaskAssignee.objects.filter(task=done_task, user=valid_user)
+        .assigned()
+        .exists()
+    ), "Done task should not be assigned to the new user"
 
 
 def test_workflow_delete_view(

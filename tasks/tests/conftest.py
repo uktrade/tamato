@@ -118,6 +118,16 @@ def task_workflow() -> TaskWorkflow:
 
 
 @pytest.fixture()
+def assigned_task_workflow() -> TaskWorkflow:
+    """Return an empty TaskWorkflow instance whose `summary_task` has an
+    assignee."""
+    workflow = factories.TaskWorkflowFactory.create()
+    assignee = workflow.summary_task.creator
+    TaskAssigneeFactory.create(task=workflow.summary_task, user=assignee)
+    return workflow
+
+
+@pytest.fixture()
 def task_workflow_single_task_item(task_workflow) -> TaskWorkflow:
     """Return a TaskWorkflow instance containing a single TaskItem instance with
     associated Task instance."""
