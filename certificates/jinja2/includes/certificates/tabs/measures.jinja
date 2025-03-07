@@ -44,18 +44,16 @@
     ]) or "" }}
   {% endfor %}
 
-  {% set base_url = url('certificate-ui-detail-measures', kwargs={"certificate_type__sid":object.certificate_type.sid, "sid":object.sid}) %}
-
   {% set commodity_code %}
-    {{ create_sortable_anchor(request, "goods_nomenclature", "Commodity code", base_url) }}
+    {{ create_sortable_anchor(request, "Commodity code", sorting_urls["goods_nomenclature"]) }}
   {% endset %}
 
   {% set geo_area %}
-    {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url) }}
+    {{ create_sortable_anchor(request, "Geographical area", sorting_urls["geo_area"]) }}
   {% endset %}
 
   {% set start_date %}
-    {{ create_sortable_anchor(request, "start_date", "Start date", base_url) }}
+    {{ create_sortable_anchor(request, "Start date", sorting_urls["start_date"]) }}
   {% endset %}
 
   {% if paginator.count > 0 %}

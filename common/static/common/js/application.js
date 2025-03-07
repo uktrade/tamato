@@ -26,6 +26,7 @@ import initTapDebounce from "./buttonDebounce";
 import { setupQuotaOriginFormset } from "./components/QuotaOriginFormset/index";
 import { setupGeoAreaForm } from "./components/GeoAreaForm/index";
 import { setupWorkbasketUserAssignment } from "./components/WorkbasketUserAssignment/index";
+import { setupTaskUserAssignment } from "./components/TaskUserAssignment/index";
 import { initMasonry } from "./masonry";
 
 showHideCheckboxes();
@@ -46,4 +47,5 @@ initTapDebounce();
 setupQuotaOriginFormset();
 setupGeoAreaForm();
 setupWorkbasketUserAssignment();
+setupTaskUserAssignment();
 initMasonry();

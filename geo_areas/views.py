@@ -148,6 +148,7 @@ class GeoAreaDetailMeasures(SortingMixin, WithPaginationListMixin, ListView):
     paginate_by = 20
     sort_by_fields = ["goods_nomenclature", "start_date"]
     custom_sorting = {
+        "goods_nomenclature": "goods_nomenclature__item_id",
         "start_date": "valid_between",
     }
 
