@@ -8,7 +8,7 @@ from open_data.models import ReportMeasure
 from open_data.models import ReportMeasureCondition
 
 
-def update_measure_components(verbose):
+def create_measure_components(verbose):
     # Unless there is a current transaction, reading the latest description will fail in a misterious way
     # Because this is called in a command, there is no transaction set"""
     counter = 0
@@ -16,13 +16,16 @@ def update_measure_components(verbose):
     start = time.time()
     if verbose:
         print("Updating measure components")
+
+    with connection.cursor() as cursor:
+        cursor.execute(f'TRUNCATE TABLE "{ReportMeasureCondition._meta.db_table}"')
+
     with override_current_transaction(tx):
         measures_qs = (
             ReportMeasure.objects.filter(sid__gte=20000000)
             .only("trackedmodel_ptr")
             .select_related("trackedmodel_ptr")
         )
-        component_list = []
         for measure in measures_qs:
             counter += 1
             if verbose and counter % 1000 == 0:
@@ -33,25 +36,21 @@ def update_measure_components(verbose):
             ) in (
                 measure.trackedmodel_ptr.conditions.latest_approved().with_reference_price_string()
             ):
-                # comp_counter += 1
-                # print(f"    Condition count {comp_counter}")
-                component_list.append(
-                    ReportMeasureCondition(
-                        trackedmodel_ptr_id=component.trackedmodel_ptr_id,
-                        sid=component.sid,
-                        component_sequence_number=component.component_sequence_number,
-                        duty_amount=component.duty_amount,
-                        action_id=component.action_id,
-                        condition_code_id=component.condition_code_id,
-                        condition_measurement_id=component.condition_measurement_id,
-                        dependent_measure_id=measure.trackedmodel_ptr_id,
-                        monetary_unit_id=component.monetary_unit_id,
-                        required_certificate_id=component.required_certificate_id,
-                        reference_price=component.reference_price_string,
-                    ),
+                # The create on each record is faster by 50% than a bulk_create
+                # of all the records at the end
+                ReportMeasureCondition.objects.create(
+                    trackedmodel_ptr_id=component.trackedmodel_ptr_id,
+                    sid=component.sid,
+                    component_sequence_number=component.component_sequence_number,
+                    duty_amount=component.duty_amount,
+                    action_id=component.action_id,
+                    condition_code_id=component.condition_code_id,
+                    condition_measurement_id=component.condition_measurement_id,
+                    dependent_measure_id=measure.trackedmodel_ptr_id,
+                    monetary_unit_id=component.monetary_unit_id,
+                    required_certificate_id=component.required_certificate_id,
+                    reference_price=component.reference_price_string,
                 )
-
-    ReportMeasureCondition.objects.bulk_create(component_list)
 
     #     The required_certificate_id is not updated when the certificate is updated
     #     In the UI it works because the certificate is selected using the SID and
