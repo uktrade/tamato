@@ -42,7 +42,7 @@ freezegun==1.1.0
 gevent==23.9.1
 govuk-tech-docs-sphinx-theme==1.0.0
 gunicorn==22.0.0
-Jinja2==3.1.5
+Jinja2==3.1.6
 lark==1.1.9
 lxml==5.2.2
 markdown==3.6
