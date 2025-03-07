@@ -47,12 +47,6 @@
             >{{ object.taskworkflow.pk }}</a>
           {%- endset -%}
 
-          {%- set assignees -%}
-            {% for assignee in object.assignees.all()%}
-            {{assignee.user.get_displayname()}}<br>
-            {% endfor%}
-          {%- endset -%}
-
           {{ table_rows.append([
             {"html": task_linked_id},
             {"text": object.title},
