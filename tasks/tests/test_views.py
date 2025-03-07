@@ -19,6 +19,7 @@ from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.tests.factories import TaskItemTemplateFactory
+from tasks.tests.factories import TaskWorkflowFactory
 from tasks.tests.factories import TaskWorkflowTemplateFactory
 
 pytestmark = pytest.mark.django_db
@@ -730,7 +731,8 @@ def test_workflow_delete_view(
     assert f"Ticket ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
 
 
-def test_workflow_list_view(valid_user_client, task_workflow):
+def test_ticket_list_view(valid_user_client, task_workflow):
+    """Test that the ticket list view returns 200 and renders correctly."""
     response = valid_user_client.get(reverse("workflow:task-workflow-ui-list"))
 
     assert response.status_code == 200
@@ -742,6 +744,44 @@ def test_workflow_list_view(valid_user_client, task_workflow):
     assert table.select("tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)")[
         0
     ].text == str(task_workflow.pk)
+
+
+def test_workflow_list_view_eif_date(
+    valid_user_client,
+):
+    """Tests that workflows listed on `TaskWorkflowList` view can be sorted by
+    entry into force (eif) date in ascending or descending order."""
+
+    workflow_instance_1 = TaskWorkflowFactory.create(eif_date=date(2022, 1, 1))
+    workflow_instance_2 = TaskWorkflowFactory.create(eif_date=date(2022, 2, 2))
+
+    url = reverse(
+        "workflow:task-workflow-ui-list",
+    )
+    response = valid_user_client.get(
+        f"{url}?sort_by=taskworkflow__eif_date&ordered=asc",
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    ticket_ids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert ticket_ids == [workflow_instance_1.id, workflow_instance_2.id]
+
+    response = valid_user_client.get(
+        f"{url}?sort_by=taskworkflow__eif_date&ordered=desc",
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    ticket_ids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert ticket_ids == [workflow_instance_2.id, workflow_instance_1.id]
 
 
 def test_task_and_workflow_list_view(valid_user_client, task, task_workflow):
