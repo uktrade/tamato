@@ -628,6 +628,59 @@ class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
         context["verbose_name"] = "ticket"
         return context
 
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        self.update_assignments(form)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def update_assignments(self, form):
+        """
+        Assigns a new user to `TaskWorkflow.summary_task` in addition to all
+        other `Task` instances associated to this `TaskWorkflow` instance.
+
+        `Task` instances that are marked as done are not reassigned.
+        """
+        set_current_instigator(self.request.user)
+
+        summary_task = self.object.summary_task
+        current_assignee = summary_task.assignees.assigned()
+        new_assignee = form.cleaned_data["assignee"]
+
+        if current_assignee:
+            if new_assignee == current_assignee.get().user:
+                return
+
+            TaskAssignee.unassign_user(
+                user=current_assignee.get().user,
+                task=summary_task,
+                instigator=self.request.user,
+            )
+
+        TaskAssignee.objects.create(
+            task=summary_task,
+            user=new_assignee,
+            assignment_type=TaskAssignee.AssignmentType.GENERAL,
+        )
+
+        for task in self.object.get_tasks().incomplete():
+            current_assignee = task.assignees.assigned()
+
+            if current_assignee and current_assignee.get().user != new_assignee:
+                TaskAssignee.unassign_user(
+                    user=current_assignee.get().user,
+                    task=task,
+                    instigator=self.request.user,
+                )
+
+            TaskAssignee.objects.assigned().get_or_create(
+                task=task,
+                user=new_assignee,
+                assignment_type=TaskAssignee.AssignmentType.GENERAL,
+            )
+
+        return
+
     def get_success_url(self):
         return reverse(
             "workflow:task-workflow-ui-confirm-update",

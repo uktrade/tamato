@@ -345,7 +345,7 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
 TaskWorkflowDeleteForm = delete_form_for(TaskWorkflow)
 
 
-class TaskWorkflowUpdateForm(ModelForm):
+class TaskWorkflowUpdateForm(TaskWorkflowAssigneeForm, ModelForm):
     title = CharField(
         label="Ticket name",
         max_length=255,
@@ -382,6 +382,14 @@ class TaskWorkflowUpdateForm(ModelForm):
         self.fields["title"].initial = self.instance.summary_task.title
         self.fields["description"].initial = self.instance.summary_task.description
 
+        self.fields["assignee"].help_text = ""
+        try:
+            self.fields["assignee"].initial = (
+                self.instance.summary_task.assignees.assigned().get().user
+            )
+        except TaskAssignee.DoesNotExist:
+            pass
+
     def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -389,6 +397,7 @@ class TaskWorkflowUpdateForm(ModelForm):
         self.helper.layout = Layout(
             "title",
             "description",
+            "assignee",
             "eif_date",
             "policy_contact",
             Submit(
