@@ -7,6 +7,10 @@ from common.models.utils import override_current_transaction
 from open_data.models import ReportMeasure
 from open_data.models import ReportMeasureCondition
 
+# The operations in this module are the most expensive in time.
+# I tried to merge create_measure_components and update_measures, so the measure table
+# was read only once, but merging the two results in an increase of 15 minutes!
+
 
 def create_measure_components(verbose):
     # Unless there is a current transaction, reading the latest description will fail in a misterious way
