@@ -296,7 +296,7 @@ def publish_to_api():
             # checks if expected sequence
             if not unpublished.next_expected_to_api():
                 message = f"""Cannot publish PackagedWorkBasket instance to tariff API,
-                    Envelope Id {unpublished.envelope.envelope_id} is not the next not expected envelope.
+                    Envelope Id {unpublished.envelope.envelope_id} is not the next expected envelope.
                     Pausing Queue."""
                 pause_queue_and_log_error(publishing_task, message)
                 return
