@@ -525,22 +525,21 @@ class QueuedItemManagementMixin:
 class TaskWorkflowDetailView(
     PermissionRequiredMixin,
     DetailView,
-    SortingMixin,
 ):
     template_name = "tasks/workflows/detail.jinja"
     permission_required = "tasks.view_taskworkflow"
     model = TaskWorkflow
-    sort_by_fields = ["comments"]
-    custom_sorting = {"comments": "created_at"}
 
     @property
-    def task(self):
+    def summary_task(self):
         workflow = TaskWorkflow.objects.all().get(id=self.kwargs["pk"])
         return workflow.summary_task
 
-    @cached_property
+    @property
     def comments(self):
-        comments = Comment.objects.filter(task=self.task).order_by("-created_at")
+        comments = Comment.objects.filter(task=self.summary_task).order_by(
+            "-created_at",
+        )
         return comments
 
     @cached_property
