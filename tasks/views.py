@@ -562,11 +562,20 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
         data = {
             "title": form.cleaned_data["ticket_name"],
             "description": form.cleaned_data["description"],
+            "assignee_choice": form.cleaned_data["assignee_choice"],
             "creator": self.request.user,
             "eif_date": form.cleaned_data["entry_into_force_date"],
             "policy_contact": form.cleaned_data["policy_contact"],
         }
         template = form.cleaned_data["work_type"]
+
+        if data.assignee_choice == "ASSIGN_OTHER":
+            data["assignee"] = form.cleaned_data["user"]
+        elif data.assignee_choice == "ASSIGN_SELF":
+            data["assignee"] = self.request.user
+        else:
+            data["assignee"] = None
+
         self.object = template.create_task_workflow(**data)
 
         return super().form_valid(form)

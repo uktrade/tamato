@@ -8,6 +8,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import TextChoices
 from django.forms import CharField
 from django.forms import CheckboxSelectMultiple
 from django.forms import Form
@@ -20,6 +21,7 @@ from django.utils.timezone import make_aware
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import DateInputFieldFixed
+from common.forms import RadioNested
 from common.forms import delete_form_for
 from common.validators import SymbolValidator
 from tasks.models import Task
@@ -109,6 +111,13 @@ class TaskCreateForm(TaskBaseForm):
 
 class TaskUpdateForm(TaskBaseForm):
     pass
+
+
+class AssignUserForm(Form):
+    user = ModelChoiceField(
+        label="Choose assignee",
+        queryset=User.objects.active_tms(),
+    )
 
 
 class AssignUsersForm(Form):
@@ -246,6 +255,11 @@ class TaskWorkflowTemplateForm(Form):
 
 class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
 
+    class AssigneeChoice(TextChoices):
+        ASSIGN_SELF = "ASSIGN_SELF", "Assign task to me"
+        ASSIGN_OTHER = "ASSIGN_OTHER", "Assign task to someone else"
+        WITHOUT_ASSIGNEE = "WITHOUT_ASSIGNEE", "Do not assign to anyone"
+
     ticket_name = CharField(
         required=True,
         max_length=255,
@@ -261,6 +275,16 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
         queryset=TaskWorkflowTemplate.objects.all(),
         error_messages={
             "required": "Choose a work type",
+        },
+    )
+
+    assignee_choice = RadioNested(
+        label="Assignee",
+        choices=AssigneeChoice.choices,
+        nested_forms={
+            AssigneeChoice.ASSIGN_SELF.value: [],
+            AssigneeChoice.ASSIGN_OTHER.value: [AssignUserForm],
+            AssigneeChoice.WITHOUT_ASSIGNEE.value: [],
         },
     )
 
@@ -295,10 +319,12 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
             Fieldset(
                 "ticket_name",
                 "work_type",
+                "assignee_choice",
                 "description",
                 "entry_into_force_date",
                 "policy_contact",
             ),
+            "user",
             Submit(
                 "submit",
                 "Create",
