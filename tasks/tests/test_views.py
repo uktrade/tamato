@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from django.urls import reverse
 
 import settings
+from common.tests.factories import CommentFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
@@ -876,4 +877,34 @@ def test_workflow_delete_view_deletes_related_tasks(
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert (
         f"Ticket ID: {task_workflow_pk}" in soup.select(".govuk-panel__title")[0].text
+    )
+
+
+def test_ticket_comments_render(valid_user_client):
+    """Test that comments on a ticket appear and order from last to first."""
+    ticket = TaskWorkflowFactory.create()
+    CommentFactory.create(
+        task=ticket.summary_task,
+        content="This is an initial comment which should be on the second page.",
+    )
+    CommentFactory.create_batch(12, task=ticket.summary_task)
+    url = reverse("workflow:task-workflow-ui-detail", kwargs={"pk": ticket.id})
+    response = valid_user_client.get(url)
+
+    page_1 = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    comments = page_1.find_all("article")
+    assert len(comments) == 10
+
+    url = (
+        reverse("workflow:task-workflow-ui-detail", kwargs={"pk": ticket.id})
+        + "?page=2"
+    )
+    response = valid_user_client.get(url)
+
+    page_2 = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    comments = page_2.find_all("article")
+    assert len(comments) == 3
+    assert (
+        "This is an initial comment which should be on the second page."
+        in comments[2].text
     )
