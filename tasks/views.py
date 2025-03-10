@@ -6,12 +6,14 @@ from django.db import OperationalError
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import DeleteView
+from django.views.generic.edit import FormMixin
 from django.views.generic.edit import FormView
 from django.views.generic.edit import UpdateView
 
@@ -36,6 +38,7 @@ from tasks.forms import TaskWorkflowTemplateCreateForm
 from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.forms import TaskWorkflowUpdateForm
+from tasks.forms import TicketCommentCreateForm
 from tasks.forms import UnassignUsersForm
 from tasks.models import Comment
 from tasks.models import Queue
@@ -525,15 +528,28 @@ class QueuedItemManagementMixin:
 class TaskWorkflowDetailView(
     PermissionRequiredMixin,
     DetailView,
+    FormMixin,
 ):
     template_name = "tasks/workflows/detail.jinja"
     permission_required = "tasks.view_taskworkflow"
     model = TaskWorkflow
+    form_class = TicketCommentCreateForm
 
     @property
     def summary_task(self):
-        workflow = TaskWorkflow.objects.all().get(id=self.kwargs["pk"])
-        return workflow.summary_task
+        return self.workflow.summary_task
+
+    def post(self, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    @property
+    def workflow(self):
+        return TaskWorkflow.objects.all().get(id=self.kwargs["pk"])
 
     @property
     def comments(self):
@@ -551,6 +567,16 @@ class TaskWorkflowDetailView(
         return reverse(
             "workflow:task-workflow-ui-detail",
             kwargs={"pk": self.queue.pk},
+        )
+
+    def form_valid(self, form):
+        form.save(user=self.request.user, task=self.summary_task)
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse(
+            "workflow:task-workflow-ui-detail",
+            kwargs={"pk": self.workflow.id},
         )
 
     def get_context_data(self, **kwargs):

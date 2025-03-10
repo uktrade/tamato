@@ -1,8 +1,11 @@
 from datetime import datetime
 
+import bleach
+import markdown
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
+from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
@@ -24,6 +27,8 @@ from common.forms import BindNestedFormMixin
 from common.forms import DateInputFieldFixed
 from common.forms import delete_form_for
 from common.validators import SymbolValidator
+from common.validators import markdown_tags_allowlist
+from tasks.models import Comment
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskTemplate
@@ -497,3 +502,53 @@ class TaskFilterForm(forms.Form):
         self.fields["assignees"].label_from_instance = (
             lambda obj: f"{obj.get_displayname()}"
         )
+
+
+class TicketCommentForm(forms.ModelForm):
+    content = forms.CharField(
+        label="",
+        error_messages={"required": "Enter your comment"},
+        widget=forms.widgets.Textarea,
+        max_length=5000,
+    )
+
+    class Meta:
+        model = Comment
+        fields = ("content",)
+
+    def clean_content(self):
+        content = self.cleaned_data["content"]
+        html = markdown.markdown(text=content, extensions=["sane_lists", "tables"])
+        content = bleach.clean(
+            text=html,
+            tags=markdown_tags_allowlist,
+            attributes=[],
+            strip=True,
+        )
+        return content
+
+
+class TicketCommentCreateForm(TicketCommentForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Field.textarea("content", rows=1, placeholder="Add a comment"),
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def save(self, user, task, commit=True):
+        instance = super().save(commit=False)
+        instance.author = user
+        instance.task = Task.objects.get(id=task.id)
+        if commit:
+            instance.save()
+        return instance
