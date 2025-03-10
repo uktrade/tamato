@@ -81,6 +81,17 @@ def test_task_assignee_workbasket_reviewers_queryset(
     assert workbasket_reviewer_assignee in workbasket_reviewers
 
 
+def test_task_incomplete_queryset(task):
+    """Tests that `TaskQueryset.incomplete()` excludes `Task` instances that are
+    marked as done."""
+    done_task = TaskFactory.create(progress_state__name=ProgressState.State.DONE)
+    incomplete_tasks = Task.objects.incomplete()
+
+    assert Task.objects.count() == 2
+    assert task in incomplete_tasks
+    assert done_task not in incomplete_tasks
+
+
 def test_non_workflow_queryset(task, task_workflow_single_task_item):
     """Test correct behaviour of TaskQueryset.non_workflow()."""
 
