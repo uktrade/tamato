@@ -10,6 +10,7 @@ from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import TextChoices
 from django.forms import CharField
 from django.forms import CheckboxSelectMultiple
 from django.forms import Form
@@ -22,6 +23,7 @@ from django.utils.timezone import make_aware
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
 from common.forms import DateInputFieldFixed
+from common.forms import RadioNested
 from common.forms import delete_form_for
 from common.validators import SymbolValidator
 from tasks.models import Task
@@ -246,7 +248,25 @@ class TaskWorkflowTemplateForm(Form):
     )
 
 
+class TaskWorkflowAssigneeForm(Form):
+    assignee = ModelChoiceField(
+        queryset=User.objects.active_tms(),
+        help_text="Choose assignee",
+        error_messages={
+            "required": "Select an assignee",
+        },
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["assignee"].label_from_instance = lambda obj: obj.get_displayname()
+
+
 class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
+    class AssignType(TextChoices):
+        SELF = "SELF", "Assign ticket to me"
+        OTHER_USER = "OTHER_USER", "Assign ticket to someone else"
+        NO_USER = "NO_USER", "Do not assign ticket to anyone"
 
     ticket_name = CharField(
         required=True,
@@ -259,10 +279,23 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
 
     work_type = ModelChoiceField(
         required=True,
-        help_text="Choose the most appropriate category, this will generate a pre-defined set of steps to complete the work",
+        help_text="Choose the most appropriate category. This will generate a pre-defined set of steps to complete the work",
         queryset=TaskWorkflowTemplate.objects.all(),
         error_messages={
             "required": "Choose a work type",
+        },
+    )
+
+    assignment = RadioNested(
+        label="Assignee",
+        choices=AssignType.choices,
+        nested_forms={
+            AssignType.SELF.value: [],
+            AssignType.OTHER_USER: [TaskWorkflowAssigneeForm],
+            AssignType.NO_USER.value: [],
+        },
+        error_messages={
+            "required": "Select an assignee option",
         },
     )
 
@@ -297,6 +330,7 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
             Fieldset(
                 "ticket_name",
                 "work_type",
+                "assignment",
                 "description",
                 "entry_into_force_date",
                 "policy_contact",
@@ -313,7 +347,7 @@ class TaskWorkflowCreateForm(BindNestedFormMixin, Form):
 TaskWorkflowDeleteForm = delete_form_for(TaskWorkflow)
 
 
-class TaskWorkflowUpdateForm(ModelForm):
+class TaskWorkflowUpdateForm(TaskWorkflowAssigneeForm, ModelForm):
     title = CharField(
         label="Ticket name",
         max_length=255,
@@ -350,6 +384,14 @@ class TaskWorkflowUpdateForm(ModelForm):
         self.fields["title"].initial = self.instance.summary_task.title
         self.fields["description"].initial = self.instance.summary_task.description
 
+        self.fields["assignee"].help_text = ""
+        try:
+            self.fields["assignee"].initial = (
+                self.instance.summary_task.assignees.assigned().get().user
+            )
+        except TaskAssignee.DoesNotExist:
+            pass
+
     def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
@@ -357,6 +399,7 @@ class TaskWorkflowUpdateForm(ModelForm):
         self.helper.layout = Layout(
             "title",
             "description",
+            "assignee",
             "eif_date",
             "policy_contact",
             Submit(

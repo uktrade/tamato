@@ -37,6 +37,21 @@ def test_task_assignee_unassign_user_classmethod(task_assignee):
     assert not TaskAssignee.unassign_user(user=user, task=task, instigator=user)
 
 
+def test_task_assignee_assign_user_classmethod(task_assignee, valid_user):
+    """Tests that `TaskAssignee.assign_user()` assigns the new user to the task
+    and unassigns the existing assignee."""
+    old_assignee = task_assignee.user
+    task = task_assignee.task
+
+    new_assignee = TaskAssignee.assign_user(
+        user=valid_user,
+        task=task,
+        instigator=valid_user,
+    )
+    assert task.assignees.assigned().get() == new_assignee
+    assert TaskAssignee.objects.unassigned().get(user=old_assignee, task=task)
+
+
 def test_task_assignee_assigned_queryset(
     task_assignee,
 ):
@@ -79,6 +94,24 @@ def test_task_assignee_workbasket_reviewers_queryset(
 
     assert workbasket_reviewers.count() == 1
     assert workbasket_reviewer_assignee in workbasket_reviewers
+
+
+def test_task_incomplete_queryset():
+    """Tests that `TaskQueryset.incomplete()` excludes `Task` instances that are
+    marked as done."""
+    task = TaskFactory.create(
+        progress_state=ProgressStateFactory.create(
+            name=ProgressState.State.IN_PROGRESS,
+        ),
+    )
+    done_task = TaskFactory.create(
+        progress_state=ProgressStateFactory.create(name=ProgressState.State.DONE),
+    )
+    incomplete_tasks = Task.objects.incomplete()
+
+    assert Task.objects.count() == 2
+    assert task in incomplete_tasks
+    assert done_task not in incomplete_tasks
 
 
 def test_non_workflow_queryset(task, task_workflow_single_task_item):
