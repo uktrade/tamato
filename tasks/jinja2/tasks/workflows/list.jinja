@@ -60,7 +60,7 @@
           "head": [
             {"text": create_sortable_anchor(request, "ID", sorting_urls["taskworkflow__id"])},
             {"text": "Ticket name"},
-            {"text": "Assignee"},
+            {"text": create_sortable_anchor(request, "Assignee", sorting_urls["assignees"])},
             {"text": create_sortable_anchor(request, "Entry into force date", sorting_urls["taskworkflow__eif_date"])},
             {"text": "Status"},
           ],
