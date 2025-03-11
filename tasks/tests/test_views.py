@@ -11,6 +11,7 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from common.util import format_date
+from tasks.models import Comment
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskItem
@@ -908,3 +909,18 @@ def test_ticket_comments_render(valid_user_client):
         "This is an initial comment which should be on the second page."
         in comments[2].text
     )
+
+
+def test_ticket_view_add_comment(valid_user_client):
+    """Tests that a comment can be added to a ticket from the ticket summary
+    view."""
+    ticket = TaskWorkflowFactory.create()
+    content = "Test comment."
+    form_data = {"content": content}
+    url = reverse("workflow:task-workflow-ui-detail", kwargs={"pk": ticket.id})
+    assert not Comment.objects.exists()
+
+    response = valid_user_client.post(url, form_data)
+    assert response.status_code == 302
+    assert response.url == url
+    assert content in Comment.objects.get(task=ticket.summary_task).content

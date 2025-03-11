@@ -98,3 +98,14 @@ def test_workflow_update_form_save(task_workflow):
     assert workflow.policy_contact == form_data["policy_contact"]
     assert workflow.summary_task.title == form_data["title"]
     assert workflow.summary_task.description == form_data["description"]
+
+
+def test_add_comment_form_valid(task_workflow):
+    form_data = {"content": "Test comment."}
+    form = forms.TicketCommentCreateForm(data=form_data, instance=task_workflow)
+    assert form.is_valid()
+
+    empty_form_data = {"content": ""}
+    form = forms.TicketCommentCreateForm(data=empty_form_data, instance=task_workflow)
+    assert not form.is_valid()
+    assert "Enter your comment" in form.errors["content"]
