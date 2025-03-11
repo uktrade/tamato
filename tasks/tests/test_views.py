@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from django.urls import reverse
 
 import settings
+from common.tests.factories import CommentFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
@@ -19,6 +20,7 @@ from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.tests.factories import TaskItemTemplateFactory
+from tasks.tests.factories import TaskWorkflowFactory
 from tasks.tests.factories import TaskWorkflowTemplateFactory
 
 pytestmark = pytest.mark.django_db
@@ -730,7 +732,8 @@ def test_workflow_delete_view(
     assert f"Ticket ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
 
 
-def test_workflow_list_view(valid_user_client, task_workflow):
+def test_ticket_list_view(valid_user_client, task_workflow):
+    """Test that the ticket list view returns 200 and renders correctly."""
     response = valid_user_client.get(reverse("workflow:task-workflow-ui-list"))
 
     assert response.status_code == 200
@@ -742,6 +745,44 @@ def test_workflow_list_view(valid_user_client, task_workflow):
     assert table.select("tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)")[
         0
     ].text == str(task_workflow.pk)
+
+
+def test_workflow_list_view_eif_date(
+    valid_user_client,
+):
+    """Tests that workflows listed on `TaskWorkflowList` view can be sorted by
+    entry into force (eif) date in ascending or descending order."""
+
+    workflow_instance_1 = TaskWorkflowFactory.create(eif_date=date(2022, 1, 1))
+    workflow_instance_2 = TaskWorkflowFactory.create(eif_date=date(2022, 2, 2))
+
+    url = reverse(
+        "workflow:task-workflow-ui-list",
+    )
+    response = valid_user_client.get(
+        f"{url}?sort_by=taskworkflow__eif_date&ordered=asc",
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    ticket_ids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert ticket_ids == [workflow_instance_1.id, workflow_instance_2.id]
+
+    response = valid_user_client.get(
+        f"{url}?sort_by=taskworkflow__eif_date&ordered=desc",
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    ticket_ids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert ticket_ids == [workflow_instance_2.id, workflow_instance_1.id]
 
 
 def test_task_and_workflow_list_view(valid_user_client, task, task_workflow):
@@ -836,4 +877,34 @@ def test_workflow_delete_view_deletes_related_tasks(
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert (
         f"Ticket ID: {task_workflow_pk}" in soup.select(".govuk-panel__title")[0].text
+    )
+
+
+def test_ticket_comments_render(valid_user_client):
+    """Test that comments on a ticket appear and order from last to first."""
+    ticket = TaskWorkflowFactory.create()
+    CommentFactory.create(
+        task=ticket.summary_task,
+        content="This is an initial comment which should be on the second page.",
+    )
+    CommentFactory.create_batch(12, task=ticket.summary_task)
+    url = reverse("workflow:task-workflow-ui-detail", kwargs={"pk": ticket.id})
+    response = valid_user_client.get(url)
+
+    page_1 = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    comments = page_1.find_all("article")
+    assert len(comments) == 10
+
+    url = (
+        reverse("workflow:task-workflow-ui-detail", kwargs={"pk": ticket.id})
+        + "?page=2"
+    )
+    response = valid_user_client.get(url)
+
+    page_2 = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    comments = page_2.find_all("article")
+    assert len(comments) == 3
+    assert (
+        "This is an initial comment which should be on the second page."
+        in comments[2].text
     )

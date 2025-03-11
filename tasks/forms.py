@@ -2,10 +2,12 @@ from datetime import datetime
 
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
+from crispy_forms_gds.layout import Button
 from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
+from django import forms
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import TextChoices
@@ -495,3 +497,29 @@ class TaskTemplateUpdateForm(TaskTemplateFormBase):
 
 
 TaskTemplateDeleteForm = delete_form_for(TaskTemplate)
+
+
+class TaskFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            "search",
+            "progress_state",
+            "assignees",
+            "work_type",
+            Button(
+                "submit",
+                "Search and filter",
+            ),
+            HTML(
+                f'<a class="govuk-button govuk-button--secondary" href="{self.clear_url}"> Clear </a>',
+            ),
+        )
+
+    def init_fields(self):
+        self.fields["assignees"].label_from_instance = (
+            lambda obj: f"{obj.get_displayname()}"
+        )

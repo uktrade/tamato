@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.paginator import Paginator
 from django.db import OperationalError
 from django.db import transaction
 from django.http import HttpResponseRedirect
@@ -14,6 +15,7 @@ from django.views.generic.edit import DeleteView
 from django.views.generic.edit import FormView
 from django.views.generic.edit import UpdateView
 
+from common.pagination import build_pagination_list
 from common.views import SortingMixin
 from common.views import WithPaginationListView
 from tasks.filters import TaskAndWorkflowFilter
@@ -35,6 +37,7 @@ from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.forms import TaskWorkflowUpdateForm
 from tasks.forms import UnassignUsersForm
+from tasks.models import Comment
 from tasks.models import Queue
 from tasks.models import QueueItem
 from tasks.models import Task
@@ -383,7 +386,7 @@ class TaskWorkflowListView(
     permission_required = "tasks.view_task"
     paginate_by = settings.DEFAULT_PAGINATOR_PER_PAGE_MAX
     filterset_class = TaskWorkflowFilter
-    sort_by_fields = ["created_at"]
+    sort_by_fields = ["taskworkflow__id", "taskworkflow__eif_date"]
 
     def get_queryset(self):
         queryset = Task.objects.all()
@@ -528,6 +531,22 @@ class TaskWorkflowDetailView(
     model = TaskWorkflow
 
     @property
+    def summary_task(self):
+        workflow = TaskWorkflow.objects.all().get(id=self.kwargs["pk"])
+        return workflow.summary_task
+
+    @property
+    def comments(self):
+        comments = Comment.objects.filter(task=self.summary_task).order_by(
+            "-created_at",
+        )
+        return comments
+
+    @cached_property
+    def paginator(self):
+        return Paginator(self.comments, per_page=10)
+
+    @property
     def view_url(self) -> str:
         return reverse(
             "workflow:task-workflow-ui-detail",
@@ -536,11 +555,22 @@ class TaskWorkflowDetailView(
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
+
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
+
         context_data.update(
             {
                 "object_list": self.get_object().get_tasks(),
                 "verbose_name": "ticket",
                 "list_include": "tasks/includes/task_list.jinja",
+                "comments": page.object_list,
+                "paginator": self.paginator,
+                "page_obj": page,
+                "page_links": page_links,
             },
         )
         return context_data
