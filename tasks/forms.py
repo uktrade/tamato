@@ -537,10 +537,9 @@ class TicketCommentCreateForm(TicketCommentForm):
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
             Field.textarea("content", rows=1, placeholder="Add a comment"),
-            Submit(
+            Button.secondary(
                 "submit",
-                "Save",
-                data_module="govuk-button",
+                "Add",
                 data_prevent_double_click="true",
             ),
         )
