@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Self
 
 from django.conf import settings
 from django.contrib import admin
@@ -314,7 +315,9 @@ class TaskAssignee(TimestampedMixin):
         return True if not self.unassigned_at else False
 
     @classmethod
-    def unassign_user(cls, user, task, instigator):
+    def unassign_user(cls, user, task, instigator) -> bool:
+        """Unassigns the user from the given task by setting the
+        TaskAssignee.unassigned_at field."""
         from tasks.signals import set_current_instigator
 
         try:
@@ -326,6 +329,35 @@ class TaskAssignee(TimestampedMixin):
             return True
         except cls.DoesNotExist:
             return False
+
+    @classmethod
+    def assign_user(cls, user, task, instigator) -> Self:
+        """Assigns a new user to the given task and unassigns the current
+        assignee if one exists."""
+        from tasks.signals import set_current_instigator
+
+        set_current_instigator(instigator)
+
+        try:
+            current_assignee = task.assignees.assigned().get().user
+        except cls.DoesNotExist:
+            current_assignee = None
+
+        if current_assignee:
+            if current_assignee == user:
+                return TaskAssignee.objects.none()
+
+            cls.unassign_user(
+                user=current_assignee,
+                task=task,
+                instigator=instigator,
+            )
+
+        return cls.objects.create(
+            task=task,
+            user=user,
+            assignment_type=cls.AssignmentType.GENERAL,
+        )
 
 
 class Comment(TimestampedMixin):

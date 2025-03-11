@@ -641,42 +641,20 @@ class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
 
         `Task` instances that are marked as done are not reassigned.
         """
-        set_current_instigator(self.request.user)
 
-        summary_task = self.object.summary_task
-        current_assignee = summary_task.assignees.assigned()
         new_assignee = form.cleaned_data["assignee"]
 
-        if current_assignee:
-            if new_assignee == current_assignee.get().user:
-                return
-
-            TaskAssignee.unassign_user(
-                user=current_assignee.get().user,
-                task=summary_task,
-                instigator=self.request.user,
-            )
-
-        TaskAssignee.objects.create(
-            task=summary_task,
+        TaskAssignee.assign_user(
             user=new_assignee,
-            assignment_type=TaskAssignee.AssignmentType.GENERAL,
+            task=self.object.summary_task,
+            instigator=self.request.user,
         )
 
         for task in self.object.get_tasks().incomplete():
-            current_assignee = task.assignees.assigned()
-
-            if current_assignee and current_assignee.get().user != new_assignee:
-                TaskAssignee.unassign_user(
-                    user=current_assignee.get().user,
-                    task=task,
-                    instigator=self.request.user,
-                )
-
-            TaskAssignee.objects.assigned().get_or_create(
-                task=task,
+            TaskAssignee.assign_user(
                 user=new_assignee,
-                assignment_type=TaskAssignee.AssignmentType.GENERAL,
+                task=task,
+                instigator=self.request.user,
             )
 
         return
