@@ -36,6 +36,7 @@ def test_workflow_create_form_valid_data(task_workflow_template):
         "ticket_name": "Test ticket 1",
         "description": "Ticket created with all fields",
         "work_type": task_workflow_template,
+        "assignment": forms.TaskWorkflowCreateForm.AssignType.SELF,
         "entry_into_force_date_0": 12,
         "entry_into_force_date_1": 12,
         "entry_into_force_date_2": 2026,
@@ -62,11 +63,26 @@ def test_workflow_create_form_valid_data(task_workflow_template):
             "work_type",
             "Choose a work type",
         ),
+        (
+            {"assignment": ""},
+            "assignment",
+            "Select an assignee option",
+        ),
+        (
+            {
+                "assignment": forms.TaskWorkflowCreateForm.AssignType.OTHER_USER.value,
+                "assignee": "",
+            },
+            "assignment",
+            "Select an assignee",
+        ),
     ],
     ids=(
         "missing_title",
         "missing_work_type",
         "invalid_work_type",
+        "missing_assignment",
+        "invalid_assignee",
     ),
 )
 def test_workflow_create_form_invalid_data(form_data, field, error_message):
@@ -78,19 +94,20 @@ def test_workflow_create_form_invalid_data(form_data, field, error_message):
     assert error_message in form.errors[field]
 
 
-def test_workflow_update_form_save(task_workflow):
+def test_workflow_update_form_save(assigned_task_workflow):
     """Tests that the details of `TaskWorkflow.summary_task` are updated when
     calling form.save()."""
     form_data = {
         "title": "Updated title",
         "description": "Updated description",
+        "assignee": assigned_task_workflow.summary_task.assignees.get().user,
         "eif_date_0": date.today().day,
         "eif_date_1": date.today().month,
         "eif_date_2": date.today().year,
         "policy_contact": "Policy contact",
     }
 
-    form = forms.TaskWorkflowUpdateForm(data=form_data, instance=task_workflow)
+    form = forms.TaskWorkflowUpdateForm(data=form_data, instance=assigned_task_workflow)
     assert form.is_valid()
 
     workflow = form.save()
