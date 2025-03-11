@@ -64,7 +64,7 @@ class TaskWorkflowFilter(TamatoFilter):
 
     assignees = ModelChoiceFilter(
         label="Assignees",
-        field_name="assignees",
+        field_name="assignees__user",
         queryset=User.objects.active_tms(),
     )
 
@@ -74,7 +74,7 @@ class TaskWorkflowFilter(TamatoFilter):
         fields = [
             "search",
             "progress_state",
-            "assignees",
+            "assignees__user",
         ]
 
     @property
