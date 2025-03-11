@@ -387,6 +387,9 @@ class TaskWorkflowListView(
     paginate_by = settings.DEFAULT_PAGINATOR_PER_PAGE_MAX
     filterset_class = TaskWorkflowFilter
     sort_by_fields = ["taskworkflow__id", "taskworkflow__eif_date", "assignees"]
+    custom_sorting = {
+        "assignees": "assignees__user__first_name",
+    }
 
     def get_queryset(self):
         queryset = Task.objects.all()
