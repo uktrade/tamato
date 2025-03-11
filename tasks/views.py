@@ -611,9 +611,10 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "ticket"
-        context["list_url"] = "#NOT-IMPLEMENTED"
+        context["list_url"] = reverse("workflow:task-workflow-ui-list")
         return context
 
+    @transaction.atomic
     def form_valid(self, form):
         data = {
             "title": form.cleaned_data["ticket_name"],
@@ -625,7 +626,39 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
         template = form.cleaned_data["work_type"]
         self.object = template.create_task_workflow(**data)
 
+        self.create_assignments(form)
+
         return super().form_valid(form)
+
+    def create_assignments(self, form):
+        """Assigns a chosen user to `TaskWorkflow.summary_task` in addition to
+        all other `Task` instances associated to this `TaskWorkflow`
+        instance."""
+        set_current_instigator(self.request.user)
+
+        assign_type = form.cleaned_data["assignment"]
+
+        if assign_type == TaskWorkflowCreateForm.AssignType.SELF:
+            assignee = self.request.user
+        elif assign_type == TaskWorkflowCreateForm.AssignType.OTHER_USER:
+            assignee = form.cleaned_data["assignee"]
+        else:
+            return
+
+        TaskAssignee.objects.create(
+            task=self.object.summary_task,
+            user=assignee,
+            assignment_type=TaskAssignee.AssignmentType.GENERAL,
+        )
+
+        for task in self.object.get_tasks():
+            TaskAssignee.objects.create(
+                task=task,
+                user=assignee,
+                assignment_type=TaskAssignee.AssignmentType.GENERAL,
+            )
+
+        return
 
     def get_success_url(self):
         return reverse(
@@ -650,6 +683,37 @@ class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context["verbose_name"] = "ticket"
         return context
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        self.update_assignments(form)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def update_assignments(self, form):
+        """
+        Assigns a new user to `TaskWorkflow.summary_task` in addition to all
+        other `Task` instances associated to this `TaskWorkflow` instance.
+
+        `Task` instances that are marked as done are not reassigned.
+        """
+
+        new_assignee = form.cleaned_data["assignee"]
+
+        TaskAssignee.assign_user(
+            user=new_assignee,
+            task=self.object.summary_task,
+            instigator=self.request.user,
+        )
+
+        for task in self.object.get_tasks().incomplete():
+            TaskAssignee.assign_user(
+                user=new_assignee,
+                task=task,
+                instigator=self.request.user,
+            )
+
+        return
 
     def get_success_url(self):
         return reverse(
