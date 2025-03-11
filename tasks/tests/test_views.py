@@ -735,11 +735,17 @@ def test_workflow_update_view_reassigns_tasks(
     """Tests that when a workflow is updated with a new assignee, all associated
     tasks are assigned to that user except for those marked as done."""
 
-    TaskItemFactory.create_batch(2, workflow=assigned_task_workflow)
-    done_state = ProgressStateFactory.create(name=ProgressState.State.DONE)
+    TaskItemFactory.create_batch(
+        2,
+        workflow=assigned_task_workflow,
+        task__progress_state=ProgressStateFactory.create(
+            name=ProgressState.State.TO_DO,
+        ),
+    )
+
     done_task = TaskItemFactory.create(
         workflow=assigned_task_workflow,
-        task__progress_state=done_state,
+        task__progress_state=ProgressStateFactory.create(name=ProgressState.State.DONE),
     ).task
 
     form_data = {

@@ -118,12 +118,11 @@ def task_workflow() -> TaskWorkflow:
 
 
 @pytest.fixture()
-def assigned_task_workflow() -> TaskWorkflow:
+def assigned_task_workflow(valid_user) -> TaskWorkflow:
     """Return an empty TaskWorkflow instance whose `summary_task` has an
     assignee."""
     workflow = factories.TaskWorkflowFactory.create()
-    assignee = workflow.summary_task.creator
-    TaskAssigneeFactory.create(task=workflow.summary_task, user=assignee)
+    TaskAssigneeFactory.create(task=workflow.summary_task, user=valid_user)
     return workflow
 
 
