@@ -1,0 +1,20 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Copy " ~ object._meta.verbose_name %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit " ~ object._meta.verbose_name_plural, "href": object.get_url("list")},
+      {"text": object._meta.verbose_name|capitalize ~ ": " ~ object.sid, "href": object.get_url()},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block form %}
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}
