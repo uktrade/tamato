@@ -150,7 +150,12 @@ def test_download(
     bucket = "hmrc"
     settings.HMRC_STORAGE_BUCKET_NAME = bucket
     try:
-        s3_resource.create_bucket(Bucket="hmrc")
+        s3_resource.create_bucket(
+            Bucket="hmrc",
+            CreateBucketConfiguration={
+                "LocationConstraint": "eu-west-2",
+            },
+        )
     except s3.exceptions.BucketAlreadyOwnedByYou:
         pass
     with patch(
