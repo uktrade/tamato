@@ -19,6 +19,7 @@ from common.tests.factories import TransactionFactory
 from common.tests.factories import WorkBasketFactory
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
+from tasks.models import AssignmentType
 from tasks.models import UserAssignment
 from workbaskets import tasks
 from workbaskets.models import REVISION_ONLY
@@ -368,11 +369,11 @@ def test_queue(valid_user, unapproved_checked_transaction):
     wb = unapproved_checked_transaction.workbasket
     task = factories.TaskFactory.create(workbasket=wb)
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     wb.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
@@ -455,11 +456,11 @@ def test_unassigned_workbasket_cannot_be_queued():
 
     factories.UserAssignmentFactory.create(
         user=worker,
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     assert workbasket.is_fully_assigned()
@@ -471,11 +472,11 @@ def test_unassigned_workbasket_cannot_be_queued():
 def test_workbasket_user_assignments_queryset():
     workbasket = factories.WorkBasketFactory.create()
     worker_assignment = factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
         task__workbasket=workbasket,
     )
     reviewer_assignment = factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task__workbasket=workbasket,
     )
     # Inactive assignment

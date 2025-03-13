@@ -33,8 +33,8 @@ from exporter.tasks import upload_workbaskets
 from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from measures.models import Measure
+from tasks.models import AssignmentType
 from tasks.models import Comment
-from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets.tasks import call_end_measures
 from workbaskets.tasks import check_workbasket_sync
@@ -301,12 +301,12 @@ def test_workbasket_assignments_appear(valid_user_client):
     task = factories.TaskFactory.create(workbasket=workbasket)
 
     worker_assignment = factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
         task=task,
         user=worker,
     )
     reviewer_assignment = factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task=task,
         user=reviewer,
     )
@@ -348,11 +348,11 @@ def test_select_workbasket_filtering(
     task = factories.TaskFactory.create(workbasket=fully_assigned_workbasket)
 
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     # Create an unassigned workbasket
@@ -363,14 +363,14 @@ def test_select_workbasket_filtering(
         workbasket=reviewer_assigned_workbasket,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task=reviewer_task,
     )
     # Create a workbasket with only a worker assigned
     worker_assigned_workbasket = factories.WorkBasketFactory.create(id=4)
     worker_task = factories.TaskFactory.create(workbasket=worker_assigned_workbasket)
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
         task=worker_task,
     )
 
@@ -2333,11 +2333,11 @@ def test_disabled_packaging_for_unassigned_workbasket(
     # Assign the workbasket so it can now be packaged
     task = factories.TaskFactory.create(workbasket=user_empty_workbasket)
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
 

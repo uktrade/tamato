@@ -18,6 +18,7 @@ from django.utils.timezone import make_aware
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
 from common.validators import markdown_tags_allowlist
+from tasks.models import AssignmentType
 from tasks.models import Comment
 from tasks.models import Task
 from tasks.models import UserAssignment
@@ -209,7 +210,7 @@ class WorkBasketAssignUsersForm(forms.Form):
         error_messages={"required": "Select one or more users to assign"},
     )
     assignment_type = forms.ChoiceField(
-        choices=UserAssignment.AssignmentType.choices,
+        choices=AssignmentType.choices,
         widget=forms.RadioSelect,
         error_messages={"required": "Select an assignment type"},
     )

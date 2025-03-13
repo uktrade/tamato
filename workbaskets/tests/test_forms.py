@@ -1,6 +1,7 @@
 import pytest
 
 from common.tests import factories
+from tasks.models import AssignmentType
 from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.validators import tops_jira_number_validator
@@ -129,7 +130,7 @@ def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbas
     users = factories.UserFactory.create_batch(2, is_superuser=True)
     data = {
         "users": users,
-        "assignment_type": UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        "assignment_type": AssignmentType.WORKBASKET_WORKER,
     }
 
     form = forms.WorkBasketAssignUsersForm(
@@ -168,7 +169,7 @@ def test_workbasket_unassign_users_form_unassigns_users(
     request.user = valid_user
     assignments = factories.UserAssignmentFactory.create_batch(
         2,
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task__workbasket=user_workbasket,
     )
     data = {
