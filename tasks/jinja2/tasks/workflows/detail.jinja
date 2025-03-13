@@ -87,10 +87,10 @@
     </div>
   {% endif %}
   <h2 class="govuk-heading-m">Comments</h2>
-
+  <div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters">
+  {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
   {% if comments %}
-    <div class="govuk-grid-row">
-      <div class="govuk-grid-column-three-quarters">
         {% for comment in comments %}
           <article>
             <header class="govuk-!-margin-bottom-4">
