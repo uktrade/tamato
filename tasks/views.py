@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import OperationalError
 from django.db import transaction
@@ -16,6 +17,7 @@ from django.views.generic.edit import DeleteView
 from django.views.generic.edit import FormMixin
 from django.views.generic.edit import FormView
 from django.views.generic.edit import UpdateView
+from markdownify import markdownify
 
 from common.pagination import build_pagination_list
 from common.views import SortingMixin
@@ -39,6 +41,8 @@ from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.forms import TaskWorkflowUpdateForm
 from tasks.forms import TicketCommentCreateForm
+from tasks.forms import TicketCommentDeleteForm
+from tasks.forms import TicketCommentUpdateForm
 from tasks.forms import UnassignUsersForm
 from tasks.models import Comment
 from tasks.models import Queue
@@ -600,6 +604,55 @@ class TaskWorkflowDetailView(
             },
         )
         return context_data
+
+
+class TicketCommentUpdateDeleteMixin:
+    model = Comment
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["ticket_pk"] = self.kwargs["ticket_pk"]
+        return kwargs
+
+    def editable(self, comment: Comment) -> bool:
+        return comment.author == self.request.user
+
+    def get_object(self, queryset=None):
+        obj = super().get_object()
+        if not self.editable(obj):
+            raise PermissionDenied
+        else:
+            return obj
+
+    def get_success_url(self):
+        ticket_pk = self.kwargs["ticket_pk"]
+        return reverse("workflow:task-workflow-ui-detail", kwargs={"pk": ticket_pk})
+
+
+class TicketCommentUpdate(
+    PermissionRequiredMixin,
+    TicketCommentUpdateDeleteMixin,
+    UpdateView,
+):
+    form_class = TicketCommentUpdateForm
+    template_name = "tasks/workflows/comment_edit.jinja"
+    permission_required = ["tasks.change_comment"]
+
+    def get_initial(self):
+        initial = super().get_initial()
+        markdown = markdownify(self.object.content, heading_style="atx")
+        initial["content"] = markdown
+        return initial
+
+
+class TicketCommentDelete(
+    PermissionRequiredMixin,
+    TicketCommentUpdateDeleteMixin,
+    DeleteView,
+):
+    form_class = TicketCommentDeleteForm
+    template_name = "tasks/workflows/comment_delete.jinja"
+    permission_required = ["tasks.delete_comment"]
 
 
 class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
