@@ -590,7 +590,7 @@ class TicketCommentCreateForm(TicketCommentForm):
     def save(self, user, task, commit=True):
         instance = super().save(commit=False)
         instance.author = user
-        instance.task = Task.objects.get(id=task.id)
+        instance.task = task
         if commit:
             instance.save()
         return instance
