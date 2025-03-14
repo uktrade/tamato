@@ -35,20 +35,6 @@
   {% endif -%}
 {% endset %}
 
-{% macro display_assignees(assignees) %}
-  {% if not assignees %}
-    <div class="govuk-!-margin-bottom-3">
-      None
-    </div>
-  {% else %}
-    {% for assignee in assignees %}
-      <div class="govuk-!-margin-bottom-3">
-      {{ assignee.name }}{% if not loop.last %}, {% endif %}
-      </div>
-    {% endfor %}
-  {% endif %}
-{% endmacro %}
-
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
@@ -188,29 +174,32 @@
 
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">
-      Assignees
+      Assignee
     </dt>
     <dd class="govuk-summary-list__value">
       <div id="assigned-users-content">
-        {{ display_assignees(current_assignees) }}
+        <div class="govuk-!-margin-bottom-3">
+          {{ current_assignee.name if current_assignee else "None" }}
+        </div>
       </div>
     </dd>
     <dd class="govuk-summary-list__actions">
       <ul class="govuk-summary-list__actions-list">
+        {% if not current_assignee %}
         <li class="govuk-summary-list__actions-list-item">
           <a
             id="assign-users"
             class="govuk-link"
             href="{{ url('workflow:task-ui-assign-user', kwargs={'pk': object.pk}) }}"
-          >Assign<span class="govuk-visually-hidden"> users</span></a>
+          >Assign<span class="govuk-visually-hidden"> user</span></a>
         </li>
-        {% if current_assignees %}
+        {% elif current_assignee %}
         <li class="govuk-summary-list__actions-list-item">
           <a
             id="unassign-users"
             class="govuk-link"
             href="{{ url('workflow:task-ui-unassign-user', kwargs={'pk': object.pk}) }}"
-          >Unassign<span class="govuk-visually-hidden"> users</span></a>
+          >Unassign<span class="govuk-visually-hidden"> user</span></a>
         </li>
         {% endif %}
       </ul>

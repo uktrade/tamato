@@ -84,29 +84,19 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        # TODO: Factor out queries and place in TaskAssigeeQuerySet.
-        current_assignees = TaskAssignee.objects.filter(
-            task=self.get_object(),
-            # TODO:
-            # Using all task assignees is temporary for illustration as it
-            # doesn't align with the new approach of assigning users to tasks
-            # rather than assigning users to workbaskets (the old approach,
-            # uses tasks as an intermediary joining object).
-            # assignment_type=TaskAssignee.AssignmentType.GENERAL,
-        ).assigned()
+        current_assignee = self.get_object().get_current_assignee()
+        context["current_assignee"] = (
+            {"pk": current_assignee.pk, "name": current_assignee.user.get_displayname()}
+            if current_assignee
+            else {}
+        )
 
-        context["current_assignees"] = [
-            {"pk": assignee.pk, "name": assignee.user.get_full_name()}
-            for assignee in current_assignees.order_by(
-                "user__first_name",
-                "user__last_name",
-            )
-        ]
+        assignable_users = User.objects.active_tms()
+        if current_assignee:
+            assignable_users = assignable_users.exclude(pk=current_assignee.user.pk)
+
         context["assignable_users"] = [
-            {"pk": user.pk, "name": user.get_full_name()}
-            for user in User.objects.active_tms().exclude(
-                pk__in=current_assignees.values_list("user__pk", flat=True),
-            )
+            {"pk": user.pk, "name": user.get_full_name()} for user in assignable_users
         ]
 
         return context
@@ -262,10 +252,7 @@ class TaskUnassignUserView(PermissionRequiredMixin, FormView):
 
     def get_initial(self):
         initial = super().get_initial()
-        try:
-            initial["assignee"] = self.task.assignees.assigned().get()
-        except TaskAssignee.DoesNotExist:
-            pass
+        initial["assignee"] = self.task.get_current_assignee()
         return initial
 
     def form_valid(self, form):
