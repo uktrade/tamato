@@ -131,6 +131,16 @@ workflow_ui_patterns = [
         views.TaskWorkflowTaskConfirmCreateView.as_view(),
         name="task-workflow-task-ui-confirm-create",
     ),
+    path(
+        "<ticket_pk>/comment-update/<int:pk>/",
+        views.TicketCommentUpdate.as_view(),
+        name="ticket-comment-update",
+    ),
+    path(
+        "<ticket_pk>/comment-delete/<int:pk>/",
+        views.TicketCommentDelete.as_view(),
+        name="ticket-comment-delete",
+    ),
 ]
 
 task_and_workflow_ui_patterns = [
