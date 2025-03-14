@@ -16,7 +16,7 @@ from common.util import xml_fromstring
 from common.views import HealthCheckView
 from common.views import handler403
 from common.views import handler500
-from tasks.models import UserAssignment
+from tasks.models import TaskAssignee
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -274,9 +274,9 @@ def test_homepage_cards_contain_expected_links(superuser_client):
 def test_homepage_card_currently_working_on(status, valid_user, valid_user_client):
     test_reason = "test reason"
     workbasket = factories.WorkBasketFactory.create(status=status, reason=test_reason)
-    factories.UserAssignmentFactory.create(
+    factories.TaskAssigneeFactory.create(
         user=valid_user,
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
         task__workbasket=workbasket,
     )
     TrackedModelCheckFactory.create(
@@ -378,8 +378,7 @@ def test_resources_view_displays_resources(heading, expected_url, valid_user_cli
 @override_settings(SSO_ENABLED=True)
 def test_admin_login_shows_404_when_sso_enabled(superuser_client):
     """Test to check that when staff SSO is enabled, the login page shows a 404
-    but the rest of the admin site is still available.
-    """
+    but the rest of the admin site is still available."""
     response = superuser_client.get(reverse("admin:login"))
     assert response.status_code == 404
 
@@ -387,3 +386,50 @@ def test_admin_login_shows_404_when_sso_enabled(superuser_client):
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     assert page.find("h1", string="Site administration")
+
+
+@pytest.mark.parametrize(
+    "client_name",
+    [
+        "client",
+        "superuser_client",
+        "valid_user_client",
+    ],
+)
+def test_tickets_tile_visibility_based_on_user_permissions(client_name, request):
+    """This test checks if 'Tickets' tile is only visible to either Tariff
+    Managers (valid_user_client used as proxy) or superusers."""
+    client = request.getfixturevalue(client_name)
+    response = client.get(reverse("home"))
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    card = page.find("h3", string="Tickets")
+
+    if client_name == "client":
+        assert not card
+    else:
+        assert card
+
+
+@pytest.mark.parametrize(
+    "client_name",
+    [
+        "valid_user_client",
+        "superuser_client",
+    ],
+)
+def test_ticket_templates_link_only_visible_to_superuser(client_name, request):
+    """This test checks if the 'Ticket Templates' link is only visible to
+    superusers."""
+    print(f"Using the following client: {client_name}")
+    client = request.getfixturevalue(client_name)
+    response = client.get(reverse("home"))
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    link_url = reverse("workflow:task-workflow-template-ui-list")
+    ticket_templates_link = page.find("a", href=link_url)
+
+    if client_name == "valid_user_client":
+        assert not ticket_templates_link
+    else:
+        assert ticket_templates_link
