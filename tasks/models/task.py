@@ -98,6 +98,13 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         """Returns a queryset of tasks excluding those marked as complete."""
         return self.exclude(progress_state__name=ProgressState.State.DONE)
 
+    def not_assigned_workflow(self):
+        """Returns a queryset of summary Task instances that have not been
+        assigned to a user at all."""
+        return self.filter(
+            models.Q(taskworkflow__isnull=False) & models.Q(assignees__isnull=True),
+        )
+
 
 class TaskBase(TimestampedMixin):
     """Abstract model mixin containing model fields common to TaskTemplate and

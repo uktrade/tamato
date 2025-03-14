@@ -52,7 +52,7 @@
             {"text": object.title},
             {"html": display_assignees(object.assignees.assigned())},
             {"text": "{:%d %b %Y}".format(object.taskworkflow.eif_date) if object.taskworkflow.eif_date else "-"},
-            {"text": display_status(object.progress_state.__str__())},
+            {"text": display_status(object.progress_state.__str__()), },
           ]) or "" }}
         {% endfor %}
 
@@ -62,7 +62,7 @@
             {"text": "Ticket name"},
             {"text": create_sortable_anchor(request, "Assignee", sorting_urls["assignees"])},
             {"text": create_sortable_anchor(request, "Entry into force date", sorting_urls["taskworkflow__eif_date"])},
-            {"text": "Status"},
+            {"text": "Status", "classes": "govuk-!-padding-right-5"},
           ],
             "rows": table_rows
           }) }}

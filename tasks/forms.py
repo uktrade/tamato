@@ -3,6 +3,7 @@ from datetime import datetime
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
+from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
 from crispy_forms_gds.layout import Size
@@ -521,12 +522,15 @@ class TaskFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.helper = FormHelper()
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
 
         self.helper.layout = Layout(
             "search",
             "progress_state",
             "assignees",
-            "work_type",
+            Field("work_type", css_class="govuk-!-width-full"),
+            "assignment_status",
             Button(
                 "submit",
                 "Search and filter",
