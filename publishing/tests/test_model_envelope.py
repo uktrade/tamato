@@ -186,7 +186,7 @@ def test_delete_envelope(envelope_storage, published_envelope_factory, settings)
     assert envelope.deleted is True
 
 
-@freezegun.freeze_time("2023-01-01")
+@freezegun.freeze_time("2024-01-01")
 def test_next_envelope_id(successful_envelope_factory, settings):
     """Verify that envelope ID is made up of two digits of the year and a 4
     digit counter starting from 0001."""
@@ -217,3 +217,17 @@ def test_upload_envelope_handles_validate_envelope(packaged_workbasket_factory):
             envelope.validation_state
             == ValidationState.FAILED_TARIC_DATA_ASSERTION_ERROR
         )
+
+
+@freezegun.freeze_time("2025-01-01")
+def test_next_envelope_id_new_seed_envelope_id(
+    settings,
+    successful_envelope_factory,
+):
+    # publish an envelope
+    successful_envelope_factory()
+    # change seed_id within current year
+    settings.HMRC_PACKAGING_SEED_ENVELOPE_ID = "250045"
+    # resume automated publishing
+    env = successful_envelope_factory()
+    assert env.envelope_id == "250046"
