@@ -28,9 +28,9 @@ task_ui_patterns = [
         name="task-ui-confirm-delete",
     ),
     path(
-        "<int:pk>/assign-users/",
-        views.TaskAssignUsersView.as_view(),
-        name="task-ui-assign-users",
+        "<int:pk>/assign-user/",
+        views.TaskAssignUserView.as_view(),
+        name="task-ui-assign-user",
     ),
     path(
         f"<int:pk>/unassign-users/",

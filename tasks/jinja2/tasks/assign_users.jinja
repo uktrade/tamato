@@ -6,9 +6,11 @@
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
-      {"text": page_title}
-    ]
+      {"text": "Ticket " ~ ticket.id, "href": ticket.get_url("detail")},
+      {"text": "Step: " ~ step.title, "href": step.get_url("detail")},
+      {"text": page_title},
+    ],
+    with_workbasket=False,
   ) }}
 {% endblock %}
 

@@ -24,7 +24,7 @@ from tasks.filters import TaskAndWorkflowFilter
 from tasks.filters import TaskFilter
 from tasks.filters import TaskWorkflowFilter
 from tasks.filters import WorkflowTemplateFilter
-from tasks.forms import AssignUsersForm
+from tasks.forms import AssignUserForm
 from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
@@ -207,10 +207,10 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
-class TaskAssignUsersView(PermissionRequiredMixin, FormView):
+class TaskAssignUserView(PermissionRequiredMixin, FormView):
     permission_required = "tasks.add_taskassignee"
     template_name = "tasks/assign_users.jinja"
-    form_class = AssignUsersForm
+    form_class = AssignUserForm
 
     @property
     def task(self):
@@ -218,11 +218,18 @@ class TaskAssignUsersView(PermissionRequiredMixin, FormView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["page_title"] = "Assign users to task"
+        context["page_title"] = "Assign user to step"
+        context["ticket"] = self.task.taskitem.workflow
+        context["step"] = self.task
         return context
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["task"] = self.task
+        return kwargs
+
     def form_valid(self, form):
-        form.assign_users(task=self.task, user_instigator=self.request.user)
+        form.assign_user(task=self.task, user_instigator=self.request.user)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):

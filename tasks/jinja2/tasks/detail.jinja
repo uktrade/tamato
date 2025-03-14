@@ -201,7 +201,7 @@
           <a
             id="assign-users"
             class="govuk-link"
-            href="{{ url('workflow:task-ui-assign-users', kwargs={'pk': object.pk}) }}"
+            href="{{ url('workflow:task-ui-assign-user', kwargs={'pk': object.pk}) }}"
           >Assign<span class="govuk-visually-hidden"> users</span></a>
         </li>
         {% if current_assignees %}
@@ -248,7 +248,7 @@
   {% endif %}
 </div>
 
-{% set assign_users_link = url("workflow:task-ui-assign-users", kwargs={"pk": object.pk}) %}
+{% set assign_users_link = url("workflow:task-ui-assign-user", kwargs={"pk": object.pk}) %}
 {% set unassign_users_link = url("workflow:task-ui-unassign-users", kwargs={"pk": object.pk}) %}
 
 <script nonce="{{ request.csp_nonce }}">

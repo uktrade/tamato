@@ -12,6 +12,7 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import TextChoices
 from django.forms import CharField
@@ -120,28 +121,28 @@ class TaskUpdateForm(TaskBaseForm):
     pass
 
 
-class AssignUsersForm(Form):
-    users = ModelMultipleChoiceField(
-        help_text="Select users to assign",
-        widget=CheckboxSelectMultiple,
+class AssignUserForm(Form):
+    user = ModelChoiceField(
+        label="Select user",
         queryset=User.objects.active_tms(),
-        error_messages={"required": "Select one or more users to assign"},
+        error_messages={"required": "Select a user to assign"},
     )
 
     def __init__(self, *args, **kwargs):
+        self.task = kwargs.pop("task", None)
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.init_layout()
 
     def init_fields(self):
-        self.fields["users"].label_from_instance = lambda obj: obj.get_full_name()
+        self.fields["user"].label_from_instance = lambda obj: obj.get_displayname()
 
     def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            "users",
+            "user",
             Submit(
                 "submit",
                 "Save",
@@ -150,28 +151,23 @@ class AssignUsersForm(Form):
             ),
         )
 
-    @transaction.atomic
-    def assign_users(self, task: Task, user_instigator) -> list[TaskAssignee]:
-        """Create TaskAssignee instances for the selected Users and return the
-        TaskAssignees as a list."""
-        set_current_instigator(user_instigator)
+    def clean(self):
+        if self.task.assignees.assigned().exists():
+            raise ValidationError(
+                "The selected user cannot be assigned because this step already has an assignee.",
+            )
 
-        assignees = [
-            TaskAssignee(
-                user=user,
-                assignment_type=TaskAssignee.AssignmentType.GENERAL,
-                task=task,
-            )
-            for user in self.cleaned_data["users"]
-            if not TaskAssignee.objects.filter(
-                user=user,
-                assignment_type=TaskAssignee.AssignmentType.GENERAL,
-                task=task,
-            )
-            .assigned()
-            .exists()
-        ]
-        return TaskAssignee.objects.bulk_create(assignees)
+        return super().clean()
+
+    @transaction.atomic
+    def assign_user(self, task: Task, user_instigator) -> list[TaskAssignee]:
+        user = self.cleaned_data["user"]
+
+        return TaskAssignee.assign_user(
+            user=user,
+            task=task,
+            instigator=user_instigator,
+        )
 
 
 class UnassignUsersForm(Form):
