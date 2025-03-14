@@ -1,12 +1,12 @@
-/* global CSRF_TOKEN:readonly, assignUsersUrl:readonly */
+/* global CSRF_TOKEN:readonly, assignUserUrl:readonly */
 
 import React, { useEffect } from "react";
 import accessibleAutocomplete from "accessible-autocomplete";
 import PropTypes from "prop-types";
 
 function AssignUserForm({ users }) {
-  const elementId = "users-select";
-  const elementName = "users";
+  const elementId = "user-select";
+  const elementName = "user";
   const label = "Assign user";
   const hint = "Select a user to assign";
 
@@ -25,7 +25,7 @@ function AssignUserForm({ users }) {
   return (
     <>
       <form
-        action={assignUsersUrl}
+        action={assignUserUrl}
         method="POST"
         data-testid={"assign-user-form"}
       >
