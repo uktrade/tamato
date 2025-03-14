@@ -149,7 +149,9 @@ class AssignUserForm(Form):
     def clean(self):
         if self.task.assignees.assigned().exists():
             raise ValidationError(
-                "The selected user cannot be assigned because this step already has an assignee.",
+                {
+                    "user": "The selected user cannot be assigned because the step already has an assignee.",
+                },
             )
 
         return super().clean()
@@ -201,7 +203,9 @@ class UnassignUserForm(Form):
     def clean(self):
         if self.task.progress_state.name == ProgressState.State.DONE:
             raise ValidationError(
-                "The selected user cannot be unassigned because the step has a status of Done.",
+                {
+                    "assignee": "The selected user cannot be unassigned because the step has a status of Done.",
+                },
             )
 
         return super().clean()
