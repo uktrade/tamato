@@ -5,6 +5,7 @@ import importlib
 import logging
 from abc import ABCMeta
 from abc import abstractmethod
+from datetime import datetime
 from os import urandom
 from typing import Optional
 from typing import Tuple
@@ -19,6 +20,7 @@ from django.db.models import Max
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Subquery
+from django.utils.timezone import make_aware
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -830,4 +832,123 @@ class DataRow(ValidityMixin, models.Model):
         max_length=255,
         null=True,
         blank=True,
+    )
+
+
+# TODO: Remove
+# class Task(TimestampedMixin):
+#    title = models.CharField(max_length=255)
+#    description = models.TextField()
+#    workbasket = models.ForeignKey(
+#        WorkBasket,
+#        on_delete=models.PROTECT,
+#        #related_name="tasks",
+#        related_name="workbasket_tasks",
+#    )
+#
+#    def __str__(self):
+#        return self.title
+
+
+class WorkBasketAssignmentQueryset(models.QuerySet):
+    def assigned(self):
+        return self.exclude(unassigned_at__isnull=False)
+
+    def unassigned(self):
+        return self.exclude(unassigned_at__isnull=True)
+
+    def workbasket_workers(self):
+        return self.filter(
+            assignment_type=WorkBasketAssignment.AssignmentType.WORKBASKET_WORKER,
+        )
+
+    def workbasket_reviewers(self):
+        return self.filter(
+            assignment_type=WorkBasketAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        )
+
+
+class AssignmentType(models.TextChoices):
+    WORKBASKET_WORKER = "WORKBASKET_WORKER", "Workbasket worker"
+    WORKBASKET_REVIEWER = "WORKBASKET_REVIEWER", "Workbasket reviewer"
+
+
+class WorkBasketAssignment(TimestampedMixin):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        # TODO: remove
+        # related_name="assigned_to",
+        related_name="assigned_to_workbaskets",
+    )
+    workbasket = models.ForeignKey(
+        WorkBasket,
+        # TODO: remove
+        # on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
+        # TODO: remove
+        # related_name="assignments",
+        related_name="workbasket_assignments",
+    )
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        # TODO: remove
+        # related_name="assigned_by",
+        related_name="workbasket_assigned_by",
+    )
+    assignment_type = models.CharField(
+        choices=AssignmentType.choices,
+        max_length=50,
+    )
+    unassigned_at = models.DateTimeField(
+        auto_now=False,
+        blank=True,
+        null=True,
+    )
+
+    objects = WorkBasketAssignmentQueryset.as_manager()
+
+    def __str__(self):
+        return (
+            f"User: {self.user} ({self.assignment_type}), "
+            f"WorkBasket ID: {self.workbasket.id}"
+        )
+
+    @property
+    def is_assigned(self):
+        return True if not self.unassigned_at else False
+
+    @classmethod
+    def unassign_user(cls, user, task):
+        try:
+            assignment = cls.objects.get(user=user, task=task)
+            if assignment.unassigned_at:
+                return False
+            assignment.unassigned_at = make_aware(datetime.now())
+            assignment.save(update_fields=["unassigned_at"])
+            return True
+        except cls.DoesNotExist:
+            return False
+
+
+class WorkBasketComment(TimestampedMixin):
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        # TODO: remove
+        # related_name="authored_comments",
+        related_name="authored_workbasket_comments",
+    )
+    content = models.TextField(
+        max_length=1000 * 5,  # Max words * average character word length.
+    )
+    workbasket = models.ForeignKey(
+        WorkBasket,
+        # TODO: remove
+        # on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
+        related_name="workbasket_comments",
     )
