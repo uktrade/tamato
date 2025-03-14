@@ -30,6 +30,38 @@ from tasks.tests.factories import TaskWorkflowTemplateFactory
 pytestmark = pytest.mark.django_db
 
 
+def test_task_assign_user_view(valid_user_client, valid_user, task):
+    """Tests that a successful POST to`TaskAssignUserView` assigns the given
+    user to the task and redirects to the task detail view."""
+    form_data = {
+        "user": valid_user.pk,
+    }
+    url = reverse("workflow:task-ui-assign-user", kwargs={"pk": task.pk})
+
+    response = valid_user_client.post(url, form_data)
+
+    assert response.status_code == 302
+    assert response.url == task.get_url("detail")
+    assert TaskAssignee.objects.assigned().get(task=task, user=valid_user)
+
+
+def test_task_unassign_user_view(valid_user_client, task_assignee):
+    """Tests that a successful POST to`TaskUnassignUserView` unassigns the given
+    user from the task and redirects to the task detail view."""
+    task = task_assignee.task
+
+    form_data = {
+        "assignee": task_assignee.pk,
+    }
+    url = reverse("workflow:task-ui-unassign-user", kwargs={"pk": task.pk})
+
+    response = valid_user_client.post(url, form_data)
+
+    assert response.status_code == 302
+    assert response.url == task.get_url("detail")
+    assert TaskAssignee.objects.unassigned().get(pk=task_assignee.pk)
+
+
 def test_task_update_view_update_progress_state(valid_user_client):
     """Tests that `TaskUpdateView` updates `Task.progress_state` and that a
     related `TaskLog` entry is also created."""
