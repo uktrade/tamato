@@ -71,7 +71,7 @@ from measures.models import MeasurementUnitQualifier
 from measures.models import MonetaryUnit
 from measures.parsers import DutySentenceParser
 from publishing.models import PackagedWorkBasket
-from tasks.models import UserAssignment
+from tasks.models import AssignmentType
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
@@ -542,11 +542,11 @@ def workbasket():
 
     task = factories.TaskFactory.create(workbasket=workbasket)
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
         task=task,
     )
     factories.UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task=task,
     )
     return workbasket

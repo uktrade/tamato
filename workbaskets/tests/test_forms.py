@@ -1,6 +1,7 @@
 import pytest
 
 from common.tests import factories
+from tasks.models import AssignmentType
 from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.validators import tops_jira_number_validator
@@ -129,7 +130,7 @@ def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbas
     users = factories.UserFactory.create_batch(2, is_superuser=True)
     data = {
         "users": users,
-        "assignment_type": UserAssignment.AssignmentType.WORKBASKET_WORKER,
+        "assignment_type": AssignmentType.WORKBASKET_WORKER,
     }
 
     form = forms.WorkBasketAssignUsersForm(
@@ -168,7 +169,7 @@ def test_workbasket_unassign_users_form_unassigns_users(
     request.user = valid_user
     assignments = factories.UserAssignmentFactory.create_batch(
         2,
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         task__workbasket=user_workbasket,
     )
     data = {
@@ -216,7 +217,7 @@ def test_workbasket_comment_create_form(assigned_workbasket):
     user = assigned_workbasket.author
     comment = form.save(user=user, workbasket=assigned_workbasket)
     assert comment.author == user
-    assert comment.task == assigned_workbasket.tasks.get()
+    assert comment.workbasket == assigned_workbasket
     assert expected_content in comment.content
 
 
@@ -261,7 +262,7 @@ def test_workbasket_comment_update_form_cleans_content(
 ):
     """Tests that `WorkBasketCommentUpdateForm` converts Markdown to sanitised
     HTML."""
-    comment = factories.CommentFactory.create()
+    comment = factories.WorkBasketCommentFactory.create()
     data = {"content": markdown}
     form = forms.WorkBasketCommentCreateForm(instance=comment, data=data)
     assert form.is_valid()
@@ -270,7 +271,7 @@ def test_workbasket_comment_update_form_cleans_content(
 
 def test_workbasket_comment_update_form():
     """Tests that `WorkBasketCommentUpdateForm` updates a comment's content."""
-    comment = factories.CommentFactory.create()
+    comment = factories.WorkBasketCommentFactory.create()
     content = "Edited comment."
     data = {"content": content}
     form = forms.WorkBasketCommentUpdateForm(instance=comment, data=data)

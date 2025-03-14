@@ -47,6 +47,7 @@ from measures.models import Measure
 from publishing.models import PackagedWorkBasket
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
+from tasks.models import AssignmentType
 from tasks.models import UserAssignment
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
@@ -75,8 +76,7 @@ class HomeView(LoginRequiredMixin, FormView):
             workbasket = assignment.task.workbasket
             assignment_type = (
                 "Assigned"
-                if assignment.assignment_type
-                == UserAssignment.AssignmentType.WORKBASKET_WORKER
+                if assignment.assignment_type == AssignmentType.WORKBASKET_WORKER
                 else "Reviewing"
             )
             rule_violations_count = workbasket.tracked_model_check_errors.count()
