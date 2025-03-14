@@ -19,11 +19,11 @@ from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
 from common.validators import markdown_tags_allowlist
 from tasks.models import AssignmentType
-from tasks.models import Comment
 from tasks.models import Task
 from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets import validators
+from workbaskets.models import WorkBasketComment
 from workbaskets.util import serialize_uploaded_data
 
 User = get_user_model()
@@ -335,7 +335,7 @@ class WorkBasketCommentForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Comment
+        model = WorkBasketComment
         fields = ("content",)
 
     def clean_content(self):
@@ -402,7 +402,7 @@ class WorkBasketCommentUpdateForm(WorkBasketCommentForm):
 
 class WorkBasketCommentDeleteForm(forms.ModelForm):
     class Meta:
-        model = Comment
+        model = WorkBasketComment
         fields = ()
 
     def __init__(self, *args, **kwargs):

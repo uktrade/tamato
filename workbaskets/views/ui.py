@@ -75,13 +75,13 @@ from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from regulations.models import Regulation
-from tasks.models import Comment
 from tasks.models import Task
 from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
 from workbaskets.models import WorkBasket
+from workbaskets.models import WorkBasketComment
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.tasks import call_end_measures
@@ -401,7 +401,7 @@ class CurrentWorkBasket(FormView):
     @cached_property
     def comments(self):
         ordering = self.get_comments_ordering()[0]
-        return Comment.objects.filter(task__workbasket=self.workbasket).order_by(
+        return WorkBasketComment.objects.filter(workbasket=self.workbasket).order_by(
             ordering,
         )
 
@@ -1790,7 +1790,7 @@ class WorkBasketCommentListView(
         return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
     def get_queryset(self):
-        return Comment.objects.filter(task__workbasket=self.workbasket).order_by(
+        return WorkBasketComment.objects.filter(workbasket=self.workbasket).order_by(
             "-created_at",
         )
 
@@ -1801,13 +1801,13 @@ class WorkBasketCommentListView(
 
 
 class WorkBasketCommentUpdateDeleteMixin:
-    model = Comment
+    model = WorkBasketComment
     success_url = reverse_lazy("workbaskets:current-workbasket")
 
-    def editable(self, comment: Comment) -> bool:
+    def editable(self, comment: WorkBasketComment) -> bool:
         return (
             comment.author == self.request.user
-            and comment.task.workbasket.status == WorkflowStatus.EDITING
+            and comment.workbasket.status == WorkflowStatus.EDITING
         )
 
     def get_object(self, queryset=None):

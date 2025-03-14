@@ -217,7 +217,7 @@ def test_workbasket_comment_create_form(assigned_workbasket):
     user = assigned_workbasket.author
     comment = form.save(user=user, workbasket=assigned_workbasket)
     assert comment.author == user
-    assert comment.task == assigned_workbasket.tasks.get()
+    assert comment.workbasket == assigned_workbasket
     assert expected_content in comment.content
 
 
@@ -262,7 +262,7 @@ def test_workbasket_comment_update_form_cleans_content(
 ):
     """Tests that `WorkBasketCommentUpdateForm` converts Markdown to sanitised
     HTML."""
-    comment = factories.CommentFactory.create()
+    comment = factories.WorkBasketCommentFactory.create()
     data = {"content": markdown}
     form = forms.WorkBasketCommentCreateForm(instance=comment, data=data)
     assert form.is_valid()
@@ -271,7 +271,7 @@ def test_workbasket_comment_update_form_cleans_content(
 
 def test_workbasket_comment_update_form():
     """Tests that `WorkBasketCommentUpdateForm` updates a comment's content."""
-    comment = factories.CommentFactory.create()
+    comment = factories.WorkBasketCommentFactory.create()
     content = "Edited comment."
     data = {"content": content}
     form = forms.WorkBasketCommentUpdateForm(instance=comment, data=data)

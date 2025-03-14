@@ -31,6 +31,7 @@ from measures.validators import OrderNumberCaptureCode
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
 from tasks.models import AssignmentType
+from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
 User = get_user_model()
@@ -1571,10 +1572,10 @@ class AssignedWorkBasketFactory(WorkBasketFactory):
         )
 
 
-class CommentFactory(factory.django.DjangoModelFactory):
+class WorkBasketCommentFactory(factory.django.DjangoModelFactory):
     author = factory.SubFactory(UserFactory)
     content = factory.Faker("sentence")
-    task = factory.SubFactory(TaskFactory)
+    workbasket = factory.SubFactory(WorkBasket)
 
     class Meta:
-        model = "tasks.Comment"
+        model = "workbaskets.WorkBasketComment"
