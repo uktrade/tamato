@@ -39,7 +39,7 @@ from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.forms import TaskWorkflowUpdateForm
 from tasks.forms import TicketCommentCreateForm
-from tasks.forms import UnassignUsersForm
+from tasks.forms import UnassignUserForm
 from tasks.models import Comment
 from tasks.models import Queue
 from tasks.models import QueueItem
@@ -239,10 +239,10 @@ class TaskAssignUserView(PermissionRequiredMixin, FormView):
         )
 
 
-class TaskUnassignUsersView(PermissionRequiredMixin, FormView):
+class TaskUnassignUserView(PermissionRequiredMixin, FormView):
     permission_required = "tasks.change_taskassignee"
     template_name = "tasks/assign_users.jinja"
-    form_class = UnassignUsersForm
+    form_class = UnassignUserForm
 
     @property
     def task(self):
@@ -250,7 +250,9 @@ class TaskUnassignUsersView(PermissionRequiredMixin, FormView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["page_title"] = "Unassign users from task"
+        context["page_title"] = "Unassign user from step"
+        context["ticket"] = self.task.taskitem.workflow
+        context["step"] = self.task
         return context
 
     def get_form_kwargs(self):
@@ -258,8 +260,16 @@ class TaskUnassignUsersView(PermissionRequiredMixin, FormView):
         kwargs["task"] = self.task
         return kwargs
 
+    def get_initial(self):
+        initial = super().get_initial()
+        try:
+            initial["assignee"] = self.task.assignees.assigned().get()
+        except TaskAssignee.DoesNotExist:
+            pass
+        return initial
+
     def form_valid(self, form):
-        form.unassign_users(self.request.user)
+        form.unassign_user(user_instigator=self.request.user)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
