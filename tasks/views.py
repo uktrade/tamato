@@ -2,10 +2,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.paginator import Paginator
-from django.db import OperationalError
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -40,9 +38,9 @@ from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.forms import TaskWorkflowUpdateForm
 from tasks.forms import TicketCommentCreateForm
 from tasks.forms import UnassignUserForm
+from tasks.mixins import QueuedItemManagementMixin
+from tasks.mixins import TaskAssignmentMixin
 from tasks.models import Comment
-from tasks.models import Queue
-from tasks.models import QueueItem
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskItem
@@ -197,58 +195,28 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         return context_data
 
 
-class TaskAssignUserView(PermissionRequiredMixin, FormView):
+class TaskAssignUserView(PermissionRequiredMixin, TaskAssignmentMixin, FormView):
     permission_required = "tasks.add_taskassignee"
-    template_name = "tasks/assign_users.jinja"
     form_class = AssignUserForm
-
-    @property
-    def task(self):
-        return Task.objects.get(pk=self.kwargs["pk"])
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["page_title"] = "Assign user to step"
-        context["ticket"] = self.task.taskitem.workflow
-        context["step"] = self.task
         return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["task"] = self.task
-        return kwargs
 
     def form_valid(self, form):
         form.assign_user(task=self.task, user_instigator=self.request.user)
         return HttpResponseRedirect(self.get_success_url())
 
-    def get_success_url(self):
-        return reverse(
-            "workflow:task-ui-detail",
-            kwargs={"pk": self.kwargs["pk"]},
-        )
 
-
-class TaskUnassignUserView(PermissionRequiredMixin, FormView):
+class TaskUnassignUserView(PermissionRequiredMixin, TaskAssignmentMixin, FormView):
     permission_required = "tasks.change_taskassignee"
-    template_name = "tasks/assign_users.jinja"
     form_class = UnassignUserForm
-
-    @property
-    def task(self):
-        return Task.objects.get(pk=self.kwargs["pk"])
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["page_title"] = "Unassign user from step"
-        context["ticket"] = self.task.taskitem.workflow
-        context["step"] = self.task
         return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["task"] = self.task
-        return kwargs
 
     def get_initial(self):
         initial = super().get_initial()
@@ -258,12 +226,6 @@ class TaskUnassignUserView(PermissionRequiredMixin, FormView):
     def form_valid(self, form):
         form.unassign_user(user_instigator=self.request.user)
         return HttpResponseRedirect(self.get_success_url())
-
-    def get_success_url(self):
-        return reverse(
-            "workflow:task-ui-detail",
-            kwargs={"pk": self.kwargs["pk"]},
-        )
 
 
 class SubTaskCreateView(PermissionRequiredMixin, CreateView):
@@ -457,76 +419,6 @@ class TaskWorkflowTemplateListView(
             ordering = (ordering,)
             queryset = queryset.order_by(*ordering)
         return queryset
-
-
-class QueuedItemManagementMixin:
-    """A view mixin providing helper functions to manage queued items."""
-
-    queued_item_model: type[QueueItem] = None
-    """The model responsible for managing members of a queue."""
-
-    item_lookup_field: str = ""
-    """The lookup field of the instance managed by a queued item."""
-
-    queue_field: str = ""
-    """The name of the ForeignKey field relating a queued item to a queue."""
-
-    @cached_property
-    def queue(self) -> type[Queue]:
-        """The queue instance that is the object of the view."""
-        return self.get_object()
-
-    def promote(self, lookup_id: int) -> None:
-        queued_item = get_object_or_404(
-            self.queued_item_model,
-            **{
-                self.item_lookup_field: lookup_id,
-                self.queue_field: self.queue,
-            },
-        )
-        try:
-            queued_item.promote()
-        except OperationalError:
-            pass
-
-    def demote(self, lookup_id: int) -> None:
-        queued_item = get_object_or_404(
-            self.queued_item_model,
-            **{
-                self.item_lookup_field: lookup_id,
-                self.queue_field: self.queue,
-            },
-        )
-        try:
-            queued_item.demote()
-        except OperationalError:
-            pass
-
-    def promote_to_first(self, lookup_id: int) -> None:
-        queued_item = get_object_or_404(
-            self.queued_item_model,
-            **{
-                self.item_lookup_field: lookup_id,
-                self.queue_field: self.queue,
-            },
-        )
-        try:
-            queued_item.promote_to_first()
-        except OperationalError:
-            pass
-
-    def demote_to_last(self, lookup_id: int) -> None:
-        queued_item = get_object_or_404(
-            self.queued_item_model,
-            **{
-                self.item_lookup_field: lookup_id,
-                self.queue_field: self.queue,
-            },
-        )
-        try:
-            queued_item.demote_to_last()
-        except OperationalError:
-            pass
 
 
 class TaskWorkflowDetailView(
