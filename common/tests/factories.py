@@ -30,8 +30,7 @@ from measures.validators import MeasureTypeCombination
 from measures.validators import OrderNumberCaptureCode
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
-from tasks.models import AssignmentType
-from workbaskets.models import WorkBasket
+from workbaskets.models import AssignmentType
 from workbaskets.validators import WorkflowStatus
 
 User = get_user_model()
@@ -1534,23 +1533,14 @@ class CrownDependenciesEnvelopeFailedNotificationFactory(
         model = "notifications.CrownDependenciesEnvelopeFailedNotification"
 
 
-class TaskFactory(factory.django.DjangoModelFactory):
-    title = factory.Faker("sentence")
-    description = factory.Faker("sentence")
-    workbasket = factory.SubFactory(WorkBasketFactory)
-
-    class Meta:
-        model = "tasks.Task"
-
-
-class UserAssignmentFactory(factory.django.DjangoModelFactory):
+class WorkBasketAssignmentFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     assigned_by = factory.SubFactory(UserFactory)
     assignment_type = FuzzyChoice(AssignmentType.values)
-    task = factory.SubFactory(TaskFactory)
+    workbasket = factory.SubFactory(WorkBasketFactory)
 
     class Meta:
-        model = "tasks.UserAssignment"
+        model = "workbaskets.WorkBasketAssignment"
 
 
 class AssignedWorkBasketFactory(WorkBasketFactory):
@@ -1561,21 +1551,20 @@ class AssignedWorkBasketFactory(WorkBasketFactory):
         if not create:
             return
 
-        task = TaskFactory.create(workbasket=self)
-        UserAssignmentFactory.create(
+        WorkBasketAssignmentFactory.create(
             assignment_type=AssignmentType.WORKBASKET_WORKER,
-            task=task,
+            workbasket=self,
         )
-        UserAssignmentFactory.create(
+        WorkBasketAssignmentFactory.create(
             assignment_type=AssignmentType.WORKBASKET_REVIEWER,
-            task=task,
+            workbasket=self,
         )
 
 
 class WorkBasketCommentFactory(factory.django.DjangoModelFactory):
     author = factory.SubFactory(UserFactory)
     content = factory.Faker("sentence")
-    workbasket = factory.SubFactory(WorkBasket)
+    workbasket = factory.SubFactory(WorkBasketFactory)
 
     class Meta:
         model = "workbaskets.WorkBasketComment"

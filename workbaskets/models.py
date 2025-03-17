@@ -764,20 +764,16 @@ class WorkBasket(TimestampedMixin):
 
     @property
     def worker_assignments(self):
-        from tasks.models import UserAssignment
-
         return (
-            UserAssignment.objects.filter(task__workbasket=self)
+            WorkBasketAssignment.objects.filter(workbasket=self)
             .workbasket_workers()
             .assigned()
         )
 
     @property
     def reviewer_assignments(self):
-        from tasks.models import UserAssignment
-
         return (
-            UserAssignment.objects.filter(task__workbasket=self)
+            WorkBasketAssignment.objects.filter(workbasket=self)
             .workbasket_reviewers()
             .assigned()
         )
@@ -859,12 +855,12 @@ class WorkBasketAssignmentQueryset(models.QuerySet):
 
     def workbasket_workers(self):
         return self.filter(
-            assignment_type=WorkBasketAssignment.AssignmentType.WORKBASKET_WORKER,
+            assignment_type=AssignmentType.WORKBASKET_WORKER,
         )
 
     def workbasket_reviewers(self):
         return self.filter(
-            assignment_type=WorkBasketAssignment.AssignmentType.WORKBASKET_REVIEWER,
+            assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         )
 
 
@@ -921,9 +917,9 @@ class WorkBasketAssignment(TimestampedMixin):
         return True if not self.unassigned_at else False
 
     @classmethod
-    def unassign_user(cls, user, task):
+    def unassign_user(cls, user, workbasket):
         try:
-            assignment = cls.objects.get(user=user, task=task)
+            assignment = cls.objects.get(user=user, workbasket=workbasket)
             if assignment.unassigned_at:
                 return False
             assignment.unassigned_at = make_aware(datetime.now())

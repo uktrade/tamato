@@ -1,9 +1,9 @@
 import pytest
 
 from common.tests import factories
-from tasks.models import AssignmentType
-from tasks.models import UserAssignment
 from workbaskets import forms
+from workbaskets.models import AssignmentType
+from workbaskets.models import WorkBasketAssignment
 from workbaskets.validators import tops_jira_number_validator
 
 pytestmark = pytest.mark.django_db
@@ -140,10 +140,13 @@ def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbas
     )
     assert form.is_valid()
 
-    task = factories.TaskFactory.create(workbasket=user_workbasket)
-    form.assign_users(task=task)
+    form.assign_users()
     for user in users:
-        assert UserAssignment.objects.get(user=user, task=task, assigned_by=valid_user)
+        assert WorkBasketAssignment.objects.get(
+            user=user,
+            workbasket=user_workbasket,
+            assigned_by=valid_user,
+        )
 
 
 def test_workbasket_assign_users_form_required_fields(rf, valid_user, user_workbasket):
@@ -167,10 +170,10 @@ def test_workbasket_unassign_users_form_unassigns_users(
 ):
     request = rf.request()
     request.user = valid_user
-    assignments = factories.UserAssignmentFactory.create_batch(
+    assignments = factories.WorkBasketAssignmentFactory.create_batch(
         2,
         assignment_type=AssignmentType.WORKBASKET_REVIEWER,
-        task__workbasket=user_workbasket,
+        workbasket=user_workbasket,
     )
     data = {
         "assignments": assignments,

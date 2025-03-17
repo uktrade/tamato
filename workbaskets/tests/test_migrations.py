@@ -4,8 +4,6 @@ import factory
 import pytest
 from django.db.migrations.state import ProjectState
 
-from tasks.models import AssignmentType
-
 pytestmark = pytest.mark.django_db
 
 
@@ -48,7 +46,12 @@ def create_user_assignments(
             UserAssignment.objects.create(
                 user=user,
                 assigned_by=user,
-                assignment_type=choice(AssignmentType.values),
+                assignment_type=choice(
+                    [
+                        "WORKBASKET_WORKER",
+                        "WORKBASKET_REVIEWER",
+                    ],
+                ),
                 task=task,
             ),
         )

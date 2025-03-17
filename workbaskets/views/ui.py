@@ -75,12 +75,11 @@ from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from regulations.models import Regulation
-from tasks.models import Task
-from tasks.models import UserAssignment
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
 from workbaskets.models import WorkBasket
+from workbaskets.models import WorkBasketAssignment
 from workbaskets.models import WorkBasketComment
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
@@ -116,14 +115,14 @@ class WorkBasketAssignmentFilter(FilterSet):
 
     def assignment_filter(self, queryset, name, value):
         active_workers = (
-            UserAssignment.objects.workbasket_workers()
+            WorkBasketAssignment.objects.workbasket_workers()
             .assigned()
-            .values_list("task__workbasket_id")
+            .values_list("workbasket_id")
         )
         active_reviewers = (
-            UserAssignment.objects.workbasket_reviewers()
+            WorkBasketAssignment.objects.workbasket_reviewers()
             .assigned()
-            .values_list("task__workbasket_id")
+            .values_list("workbasket_id")
         )
         if value == "Full":
             return queryset.filter(
@@ -1726,14 +1725,7 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
 
     @atomic
     def form_valid(self, form):
-        task, _ = Task.objects.get_or_create(
-            workbasket=self.workbasket,
-            defaults={
-                "title": self.workbasket.title,
-                "description": self.workbasket.reason,
-            },
-        )
-        form.assign_users(task=task)
+        form.assign_users()
         return redirect(self.get_success_url())
 
     def get_success_url(self):

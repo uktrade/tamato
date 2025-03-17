@@ -71,7 +71,7 @@ from measures.models import MeasurementUnitQualifier
 from measures.models import MonetaryUnit
 from measures.parsers import DutySentenceParser
 from publishing.models import PackagedWorkBasket
-from tasks.models import AssignmentType
+from workbaskets.models import AssignmentType
 from workbaskets.models import WorkBasket
 from workbaskets.models import get_partition_scheme
 from workbaskets.validators import WorkflowStatus
@@ -299,15 +299,15 @@ def policy_group(db) -> Group:
         ("workbaskets", "add_workbasket"),
         ("workbaskets", "change_workbasket"),
         ("workbaskets", "view_workbasket"),
+        ("workbaskets", "add_workbasketassignment"),
+        ("workbaskets", "change_workbasketassignment"),
+        ("workbaskets", "add_workbasketcomment"),
+        ("workbaskets", "view_workbasketcomment"),
+        ("workbaskets", "change_workbasketcomment"),
+        ("workbaskets", "delete_workbasketcomment"),
         ("publishing", "consume_from_packaging_queue"),
         ("publishing", "manage_packaging_queue"),
         ("publishing", "view_envelope"),
-        ("tasks", "add_userassignment"),
-        ("tasks", "change_userassignment"),
-        ("tasks", "add_comment"),
-        ("tasks", "view_comment"),
-        ("tasks", "change_comment"),
-        ("tasks", "delete_comment"),
     ]:
         group.permissions.add(
             Permission.objects.get(
@@ -540,14 +540,13 @@ def workbasket():
     else:
         workbasket = factories.WorkBasketFactory.create()
 
-    task = factories.TaskFactory.create(workbasket=workbasket)
-    factories.UserAssignmentFactory.create(
+    factories.WorkBasketAssignmentFactory.create(
         assignment_type=AssignmentType.WORKBASKET_WORKER,
-        task=task,
+        workbasket=workbasket,
     )
-    factories.UserAssignmentFactory.create(
+    factories.WorkBasketAssignmentFactory.create(
         assignment_type=AssignmentType.WORKBASKET_REVIEWER,
-        task=task,
+        workbasket=workbasket,
     )
     return workbasket
 
