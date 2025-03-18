@@ -2044,3 +2044,15 @@ def test_measure_edit_forms_geo_area_exclusions_serialize_deserialize():
         assert deserialized_form.is_valid()
         assert type(deserialized_form) == forms.MeasureGeographicalAreaExclusionsFormSet
         assert deserialized_form.data == form.data
+
+
+@pytest.mark.parametrize(
+    "end_date,exp_start_date",
+    [(None, None), (datetime.date(2020, 1, 31), datetime.date(2020, 2, 1))],
+)
+def test_measure_copy_form_start_date(end_date, exp_start_date):
+    measure = factories.MeasureFactory.create(
+        valid_between=TaricDateRange(datetime.date(2000, 1, 1), end_date),
+    )
+    form = forms.MeasureCopyForm(data={}, instance=measure)
+    assert form.fields["start_date"].initial == exp_start_date

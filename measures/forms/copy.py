@@ -32,11 +32,14 @@ class MeasureCopyForm(ValidityPeriodForm, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         prev_end_date = self.instance.valid_between.upper
+        if prev_end_date is not None:
+            self.fields["start_date"].initial = prev_end_date + relativedelta(days=+1)
+            self.fields["start_date"].help_text = (
+                "Start date has been automatically updated to one day after the end date of the original measure"
+            )
+        else:
+            self.fields["start_date"].initial = None
 
-        self.fields["start_date"].initial = prev_end_date + relativedelta(days=+1)
-        self.fields["start_date"].help_text = (
-            "Start date has been automatically updated to one day after the end date of the original measure"
-        )
         self.fields["end_date"].initial = None
 
         self.helper = FormHelper(self)
