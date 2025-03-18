@@ -460,8 +460,12 @@ class CurrentWorkBasket(FormView):
             {"pk": user.pk, "name": user.get_full_name()} for user in users
         ]
 
-        can_add_comment = self.request.user.has_perm("tasks.add_comment")
-        can_view_comment = self.request.user.has_perm("tasks.view_comment")
+        can_add_comment = self.request.user.has_perm(
+            "workbaskets.add_workbasketcomment",
+        )
+        can_view_comment = self.request.user.has_perm(
+            "workbaskets.view_workbasketcomment",
+        )
 
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         page_links = build_pagination_list(
