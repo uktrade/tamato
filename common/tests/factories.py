@@ -1547,7 +1547,7 @@ class AssignedWorkBasketFactory(WorkBasketFactory):
     """Creates a workbasket which has an assigned worker and reviewer."""
 
     @factory.post_generation
-    def user_assignments(self, create, extracted, **kwargs):
+    def workbasket_assignments(self, create, extracted, **kwargs):
         if not create:
             return
 
