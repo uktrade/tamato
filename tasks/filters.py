@@ -93,13 +93,6 @@ class TaskWorkflowFilter(TamatoFilter):
             "assignment_status",
         ]
 
-    # def filter_by_assignment_status(self, queryset, name, value):
-    #     if TaskWorkflowAssignmentChoices.ASSIGNED in value:
-    #             queryset = queryset.filter(assignees__isnull=False)
-    #     if TaskWorkflowAssignmentChoices.NOT_ASSIGNED in value:
-    #         queryset = queryset.filter(assignees__isnull=True)
-    #     return queryset
-
     def filter_by_assignment_status(self, queryset, name, value):
         assignment_status = Q()
 
@@ -111,15 +104,35 @@ class TaskWorkflowFilter(TamatoFilter):
             assignment_status |= Q(id__in=assigned_tasks)
 
         if TaskWorkflowAssignmentChoices.NOT_ASSIGNED in value:
-            not_assigned_tasks = Task.objects.not_assigned_workflow().values_list(
+            never_assigned = Task.objects.not_assigned_workflow().values_list(
                 "id",
                 flat=True,
             )
-            unassigned_tasks = TaskAssignee.objects.unassigned().values_list(
-                "task__id",
-                flat=True,
+
+            unassigned_tasks = (
+                TaskAssignee.objects.unassigned()
+                .distinct()
+                .values_list(
+                    "task__id",
+                    flat=True,
+                )
             )
-            assignment_status |= Q(id__in=not_assigned_tasks)
+
+            assigned_tasks = (
+                TaskAssignee.objects.assigned()
+                .distinct()
+                .values_list(
+                    "task__id",
+                    flat=True,
+                )
+            )
+
+            unassigned_or_never = set(list(unassigned_tasks) + list(never_assigned))
+
+            assignment_status |= Q(
+                Q(id__in=unassigned_or_never),
+                ~Q(id__in=assigned_tasks),
+            )
 
         return queryset.filter(assignment_status)
 

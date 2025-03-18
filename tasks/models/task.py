@@ -99,10 +99,10 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         return self.exclude(progress_state__name=ProgressState.State.DONE)
 
     def not_assigned_workflow(self):
-        """Returns a queryset of summary Task instances that have not been
-        assigned to a user at all."""
+        """Returns a queryset of summary Task instances that have never been assigned
+        - with no associated TaskAssignee at all."""
         return self.filter(
-            models.Q(taskworkflow__isnull=False) & models.Q(assignees__isnull=True),
+            assignees__isnull=True,
         )
 
 
