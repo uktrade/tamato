@@ -1704,7 +1704,7 @@ class NoActiveWorkBasket(TemplateView):
 
 
 class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
-    permission_required = "tasks.add_userassignment"
+    permission_required = "workbaskets.add_workbasketassignment"
     template_name = "workbaskets/assign_users.jinja"
     form_class = forms.WorkBasketAssignUsersForm
 
@@ -1737,7 +1737,7 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
 
 
 class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
-    permission_required = "tasks.change_userassignment"
+    permission_required = "workbaskets.change_workbasketassignment"
     template_name = "workbaskets/assign_users.jinja"
     form_class = forms.WorkBasketUnassignUsersForm
 
@@ -1776,7 +1776,7 @@ class WorkBasketCommentListView(
 ):
     permission_required = [
         "workbaskets.view_workbasket",
-        "tasks.view_comment",
+        "workbaskets.view_workbasketcomment",
     ]
     template_name = "workbaskets/comments/list.jinja"
     paginate_by = 20
@@ -1821,7 +1821,7 @@ class WorkBasketCommentUpdate(
 ):
     form_class = forms.WorkBasketCommentUpdateForm
     template_name = "workbaskets/comments/edit.jinja"
-    permission_required = ["tasks.change_comment"]
+    permission_required = ["workbaskets.change_workbasketcomment"]
 
     def get_initial(self):
         initial = super().get_initial()
@@ -1837,7 +1837,7 @@ class WorkBasketCommentDelete(
 ):
     form_class = forms.WorkBasketCommentDeleteForm
     template_name = "workbaskets/comments/delete.jinja"
-    permission_required = ["tasks.delete_comment"]
+    permission_required = ["workbaskets.delete_workbasketcomment"]
 
 
 class RuleCheckQueueView(
