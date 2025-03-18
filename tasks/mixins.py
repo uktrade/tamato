@@ -92,7 +92,6 @@ class TaskAssignmentMixin:
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["page_title"] = "Assign user to step"
         context["ticket"] = self.task.taskitem.workflow
         context["step"] = self.task
         return context
