@@ -3,6 +3,7 @@ import markdown
 from crispy_forms_gds.helper import FormHelper
 from crispy_forms_gds.layout import HTML
 from crispy_forms_gds.layout import Button
+from crispy_forms_gds.layout import Div
 from crispy_forms_gds.layout import Field
 from crispy_forms_gds.layout import Fieldset
 from crispy_forms_gds.layout import Layout
@@ -18,6 +19,8 @@ from django.forms import Form
 from django.forms import ModelChoiceField
 from django.forms import ModelForm
 from django.forms import Textarea
+from django.urls import reverse
+from django.utils.timezone import make_aware
 
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
@@ -586,3 +589,56 @@ class TicketCommentCreateForm(TicketCommentForm):
         if commit:
             instance.save()
         return instance
+
+
+class TicketCommentUpdateForm(TicketCommentForm):
+    def __init__(self, *args, **kwargs):
+        ticket_pk = kwargs.pop("ticket_pk")
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Field.textarea("content", placeholder="Edit comment"),
+            Div(
+                Submit(
+                    "submit",
+                    "Save",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f"<a class='govuk-button govuk-button--secondary' href={reverse('workflow:task-workflow-ui-detail', kwargs={'pk':ticket_pk})}>Cancel</a>",
+                ),
+                css_class="govuk-button-group",
+            ),
+        )
+
+
+class TicketCommentDeleteForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ()
+
+    def __init__(self, *args, **kwargs):
+        ticket_pk = kwargs.pop("ticket_pk")
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Div(
+                Submit(
+                    "submit",
+                    "Delete",
+                    css_class="govuk-button--warning",
+                    data_module="govuk-button",
+                    data_prevent_double_click="true",
+                ),
+                HTML(
+                    f"<a class='govuk-button govuk-button--secondary' href={reverse('workflow:task-workflow-ui-detail', kwargs={'pk':ticket_pk})}>Cancel</a>",
+                ),
+                css_class="govuk-button-group",
+            ),
+        )

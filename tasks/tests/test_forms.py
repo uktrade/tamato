@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from common.tests.factories import CommentFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
 from tasks import forms
@@ -192,5 +193,31 @@ def test_add_comment_form_valid(task_workflow):
 
     empty_form_data = {"content": ""}
     form = forms.TicketCommentCreateForm(data=empty_form_data, instance=task_workflow)
+    assert not form.is_valid()
+    assert "Enter your comment" in form.errors["content"]
+
+
+def test_edit_comment_form_valid(task_workflow):
+    comment = CommentFactory.create(
+        task=task_workflow.summary_task,
+        content="Test comment",
+    )
+    form_data = {"content": "Update comment"}
+    form = forms.TicketCommentUpdateForm(
+        data=form_data,
+        instance=comment,
+        ticket_pk=task_workflow.pk,
+    )
+    assert form.is_valid()
+    form.save()
+    comment.refresh_from_db()
+    assert "Update comment" in comment.content
+
+    empty_form_data = {"content": ""}
+    form = forms.TicketCommentUpdateForm(
+        data=empty_form_data,
+        instance=comment,
+        ticket_pk=task_workflow.pk,
+    )
     assert not form.is_valid()
     assert "Enter your comment" in form.errors["content"]

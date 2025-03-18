@@ -10,6 +10,7 @@ from common.tests.factories import CommentFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
+from common.tests.factories import UserFactory
 from common.util import format_date
 from tasks.forms import TaskWorkflowCreateForm
 from tasks.models import Comment
@@ -1040,3 +1041,98 @@ def test_ticket_view_add_comment(valid_user_client):
     assert response.status_code == 302
     assert response.url == url
     assert content in Comment.objects.get(task=ticket.summary_task).content
+
+
+def test_ticket_comment_edit_delete_links(
+    valid_user_client,
+    policy_group,
+    task_workflow,
+    client,
+):
+    """Test that the links to edit and delete a comment only appear for comments
+    written by the user."""
+    commenter = UserFactory.create()
+    policy_group.user_set.add(commenter)
+    comment = CommentFactory.create(author=commenter, task=task_workflow.summary_task)
+
+    url = reverse("workflow:task-workflow-ui-detail", kwargs={"pk": task_workflow.id})
+    response = valid_user_client.get(url)
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    edit_link = [a for a in page.select("a.govuk-link") if "Edit" in a.get_text()]
+    delete_link = [a for a in page.select("a.govuk-link") if "Delete" in a.get_text()]
+    assert not edit_link
+    assert not delete_link
+
+    client.force_login(commenter)
+    response = client.get(url)
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    edit_link = [a for a in page.select("a.govuk-link") if "Edit" in a.get_text()]
+    delete_link = [a for a in page.select("a.govuk-link") if "Delete" in a.get_text()]
+    assert edit_link and delete_link
+
+
+def test_ticket_edit_comment(valid_user, valid_user_client, task_workflow):
+    """Test that posting a valid edit comment form returns 302 and updates the
+    comment."""
+    comment = CommentFactory.create(author=valid_user, task=task_workflow.summary_task)
+
+    url = reverse(
+        "workflow:ticket-comment-update",
+        kwargs={"ticket_pk": task_workflow.id, "pk": comment.pk},
+    )
+    form_data = {"content": "Updated comment"}
+
+    response = valid_user_client.post(url, data=form_data, ticket_pk=task_workflow.pk)
+    assert response.status_code == 302
+
+    comment.refresh_from_db()
+    assert "Updated comment" in comment.content
+
+
+def test_ticket_delete_comment(valid_user, valid_user_client, task_workflow):
+    """Test that posting a valid delete comment form returns 302 and deletes the
+    comment."""
+    comment = CommentFactory.create(author=valid_user, task=task_workflow.summary_task)
+
+    url = reverse(
+        "workflow:ticket-comment-delete",
+        kwargs={"ticket_pk": task_workflow.id, "pk": comment.pk},
+    )
+
+    response = valid_user_client.post(url, ticket_pk=task_workflow.pk)
+    assert response.status_code == 302
+
+    comment = Comment.objects.all().filter(pk=comment.pk)
+    assert not comment
+
+
+def test_ticket_comment_edit_delete_permissions(
+    valid_user,
+    superuser_client,
+    task_workflow,
+):
+    """Test that a user who did not write the comment cannot edit or delete
+    it."""
+    comment = CommentFactory.create(author=valid_user, task=task_workflow.summary_task)
+
+    edit_url = reverse(
+        "workflow:ticket-comment-update",
+        kwargs={"ticket_pk": task_workflow.id, "pk": comment.pk},
+    )
+    delete_url = reverse(
+        "workflow:ticket-comment-delete",
+        kwargs={"ticket_pk": task_workflow.id, "pk": comment.pk},
+    )
+    form_data = {"content": "Updated comment"}
+
+    response = superuser_client.post(
+        edit_url,
+        data=form_data,
+        ticket_pk=task_workflow.pk,
+    )
+    assert response.status_code == 403
+
+    response = superuser_client.post(delete_url, ticket_pk=task_workflow.pk)
+    assert response.status_code == 403
