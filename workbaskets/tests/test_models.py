@@ -467,7 +467,7 @@ def test_unassigned_workbasket_cannot_be_queued():
     assert not workbasket.is_fully_assigned()
 
 
-def test_workbasket_user_assignments_queryset():
+def test_workbasket_assignments_queryset():
     workbasket = factories.WorkBasketFactory.create()
     worker_assignment = factories.WorkBasketAssignmentFactory.create(
         assignment_type=AssignmentType.WORKBASKET_WORKER,
@@ -486,7 +486,7 @@ def test_workbasket_user_assignments_queryset():
     factories.WorkBasketAssignmentFactory.create()
 
     workbasket.refresh_from_db()
-    queryset = workbasket.user_assignments
+    queryset = workbasket.workbasket_assignments
 
     assert worker_assignment in queryset
     assert reviewer_assignment in queryset

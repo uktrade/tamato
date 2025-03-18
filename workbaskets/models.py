@@ -779,7 +779,7 @@ class WorkBasket(TimestampedMixin):
         )
 
     @property
-    def user_assignments(self):
+    def workbasket_assignments(self):
         assignments = self.worker_assignments | self.reviewer_assignments
         return assignments
 
@@ -865,6 +865,8 @@ class WorkBasketAssignmentQueryset(models.QuerySet):
 
 
 class AssignmentType(models.TextChoices):
+    """WorkBasketAssignment instances are always one of these choice types."""
+
     WORKBASKET_WORKER = "WORKBASKET_WORKER", "Workbasket worker"
     WORKBASKET_REVIEWER = "WORKBASKET_REVIEWER", "Workbasket reviewer"
 
@@ -874,7 +876,7 @@ class WorkBasketAssignment(TimestampedMixin):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         # TODO: remove
-        # related_name="assigned_to",
+        # DONE related_name="assigned_to",
         related_name="assigned_to_workbaskets",
     )
     workbasket = models.ForeignKey(
@@ -883,15 +885,17 @@ class WorkBasketAssignment(TimestampedMixin):
         # on_delete=models.PROTECT,
         on_delete=models.CASCADE,
         # TODO: remove
-        # related_name="assignments",
-        related_name="workbasket_assignments",
+        # DONE related_name="assignments",
+        # DONE related_name="user_assignments", # previously on task ForeignKey
+        # DONE related_name="workbasket_assignments",
+        # related_to catered for by WorkBasket.workbasket_assignments property.
     )
     assigned_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         editable=False,
         # TODO: remove
-        # related_name="assigned_by",
+        # DONE related_name="assigned_by",
         related_name="workbasket_assigned_by",
     )
     assignment_type = models.CharField(
@@ -935,7 +939,7 @@ class WorkBasketComment(TimestampedMixin):
         on_delete=models.PROTECT,
         editable=False,
         # TODO: remove
-        # related_name="authored_comments",
+        # DONE related_name="authored_comments",
         related_name="authored_workbasket_comments",
     )
     content = models.TextField(
@@ -946,5 +950,7 @@ class WorkBasketComment(TimestampedMixin):
         # TODO: remove
         # on_delete=models.PROTECT,
         on_delete=models.CASCADE,
+        # TODO: remove
+        # related_name="comments", # previously on task ForeignKey
         related_name="workbasket_comments",
     )
