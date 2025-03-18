@@ -831,21 +831,6 @@ class DataRow(ValidityMixin, models.Model):
     )
 
 
-# TODO: Remove
-# class Task(TimestampedMixin):
-#    title = models.CharField(max_length=255)
-#    description = models.TextField()
-#    workbasket = models.ForeignKey(
-#        WorkBasket,
-#        on_delete=models.PROTECT,
-#        #related_name="tasks",
-#        related_name="workbasket_tasks",
-#    )
-#
-#    def __str__(self):
-#        return self.title
-
-
 class WorkBasketAssignmentQueryset(models.QuerySet):
     def assigned(self):
         return self.exclude(unassigned_at__isnull=False)
@@ -875,27 +860,17 @@ class WorkBasketAssignment(TimestampedMixin):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        # TODO: remove
-        # DONE related_name="assigned_to",
         related_name="assigned_to_workbaskets",
     )
     workbasket = models.ForeignKey(
         WorkBasket,
-        # TODO: remove
-        # on_delete=models.PROTECT,
         on_delete=models.CASCADE,
-        # TODO: remove
-        # DONE related_name="assignments",
-        # DONE related_name="user_assignments", # previously on task ForeignKey
-        # DONE related_name="workbasket_assignments",
         # related_to catered for by WorkBasket.workbasket_assignments property.
     )
     assigned_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         editable=False,
-        # TODO: remove
-        # DONE related_name="assigned_by",
         related_name="workbasket_assigned_by",
     )
     assignment_type = models.CharField(
@@ -938,8 +913,6 @@ class WorkBasketComment(TimestampedMixin):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         editable=False,
-        # TODO: remove
-        # DONE related_name="authored_comments",
         related_name="authored_workbasket_comments",
     )
     content = models.TextField(
@@ -947,10 +920,6 @@ class WorkBasketComment(TimestampedMixin):
     )
     workbasket = models.ForeignKey(
         WorkBasket,
-        # TODO: remove
-        # on_delete=models.PROTECT,
         on_delete=models.CASCADE,
-        # TODO: remove
-        # related_name="comments", # previously on task ForeignKey
         related_name="workbasket_comments",
     )
