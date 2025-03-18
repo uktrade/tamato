@@ -45,7 +45,7 @@ class TaskWorkflow(Queue):
         verbose_name = "workflow"
 
     def __str__(self):
-        return self.title
+        return f"{self.prefixied_id} - {self.title}"
 
     @property
     def title(self) -> str:
@@ -54,6 +54,10 @@ class TaskWorkflow(Queue):
     @property
     def description(self) -> str:
         return self.summary_task.description
+
+    @property
+    def prefixed_id(self) -> str:
+        return f"{settings.TICKET_PREFIX}{str(self.id).zfill(4)}"
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
