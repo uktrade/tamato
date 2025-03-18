@@ -2,38 +2,8 @@
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Task: " ~ object.title %}
-
-{% if object.parent_task %}
-  {% set edit_url = url("workflow:subtask-ui-update", kwargs={"pk": object.pk}) %}
-  {% set title_caption = "Subtask" %}
-  {% set parent_summary_list_row %}
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Parent task
-      </dt>
-      <dd class="govuk-summary-list__value">
-        <a
-          class="govuk-link"
-          href="{{ object.parent_task.get_url("detail") }}"
-        >{{ object.parent_task.pk }}</a>
-      </dd>
-    </div>
-  {% endset %}
-{% else %}
-  {% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
-{% endif %}
-
-{% set workbasket_linked_id %}
-  {% if object.workbasket -%}
-    <a
-      class="govuk-link"
-      href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": object.workbasket.pk}) }}"
-    >{{ object.workbasket.pk }}</a>
-  {% else %}
-    -
-  {% endif -%}
-{% endset %}
+{% set page_title = "Step: " ~ object.title %}
+{% set ticket_title = object.taskitem.workflow.title %}
 
 {% macro display_assignees(assignees) %}
   {% if not assignees %}
@@ -58,81 +28,44 @@
   ) }}
 {% endblock %}
 
-{% set workbasket_summary_link %}
+{% set workbasket_link %}
   {% if object.workbasket %}
     <a
       class="govuk-link"
       href="{{ url('workbaskets:workbasket-ui-detail', kwargs={'pk': object.workbasket.pk}) }}"
-    >{{ object.workbasket.pk }} ({{ object.workbasket.status }})</a>
+    > Review workbasket {{ object.workbasket.pk }})</a>
   {% else %}
-    None
+    No workbasket set
   {% endif %}
 {% endset %}
 
 {% block content %}
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
-    {% if title_caption %}
-      {% block page_subtitle %}
-        <span class="govuk-caption-xl">
-          {{ title_caption }}
-        </span>
-      {% endblock %}
-    {% endif %}
-    <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <div class="govuk-grid-column-full">
+    <span class="govuk-caption-xl govuk-!-margin-bottom-0">{{ ticket_title }}</span>
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-three-quarters">
+        <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">
+            {{ page_title }}
+        </h1>
+      </div>
+      <div class="govuk-grid-column-one-quarter">
+        {{ govukButton({
+        "text": "Delete step",
+        "href": url("workflow:task-ui-delete", kwargs={"pk": object.pk}),
+        "classes": "govuk-button--warning govuk-!-margin-top-2 delete_step_button"
+        }) }}
+      </div>
+    </div>
   </div>
 </div>
 
+
+<a href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk}) }}" class="govuk-link govuk-back-link govuk-!-margin-bottom-8">Back to ticket</a>
+
 <h2 class="govuk-heading-m">Details</h2>
 
-<dl class="govuk-summary-list">
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      ID
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ object.pk }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <!-- Empty for column alignment -->
-    </dd>
-  </div>
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Title
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ object.title }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> title</span></a>
-    </dd>
-  </div>
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Description
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ object.description }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> description</span></a>
-    </dd>
-  </div>
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Category
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ object.category or "-" }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> category</span></a>
-    </dd>
-  </div>
+<dl class="govuk-summary-list govuk-!-margin-bottom-8">
 
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">
@@ -143,46 +76,6 @@
     </dd>
     <dd class="govuk-summary-list__actions">
       <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
-    </dd>
-  </div>
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Workbasket
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ workbasket_linked_id }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
-    </dd>
-  </div>
-
-  {% if object.parent_task %}
-    {{ parent_summary_list_row }}
-  {% endif %}
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Created
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ "{:%d %b %Y %H:%M}".format(object.created_at) }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <!-- Empty for column alignment -->
-    </dd>
-  </div>
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Created by
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ object.creator.get_displayname() if object.creator else "-" }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <!-- Empty for column alignment -->
     </dd>
   </div>
 
@@ -216,37 +109,37 @@
       </ul>
     </dd>
   </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Created date
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ "{:%d %B %Y}".format(object.created_at) }}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <!-- Empty for column alignment -->
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Description
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ object.description }}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> description</span></a>
+    </dd>
+  </div>
 </dl>
 
-<div class="govuk-button-group">
-  {% if not object.parent_task %}
-    {{ govukButton({
-      "text": "Delete task",
-      "href": url("workflow:task-ui-delete", kwargs={"pk": object.pk}),
-      "classes": "govuk-button--warning"
-    }) }}
-  {% else %}
-    {{ govukButton({
-      "text": "Delete subtask",
-      "href": url("workflow:subtask-ui-delete", kwargs={"pk": object.pk}),
-      "classes": "govuk-button--warning"
-    }) }}
-  {% endif %}
 
-  {{ govukButton({
-    "text": "Find and view tasks",
-    "href": url("workflow:task-ui-list"),
-    "classes": "govuk-button--secondary"
-  }) }}
+<h2 class="govuk-heading-m">Actions</h2>
+{{workbasket_link}}
 
-  {% if not object.parent_task %}
-    {{ govukButton({
-      "text": "Create subtask",
-      "href": url("workflow:subtask-ui-create", kwargs={"parent_task_pk": object.pk}),
-      "classes": "govuk-button--secondary"
-    }) }}
-  {% endif %}
-</div>
+
 
 {% set assign_users_link = url("workflow:task-ui-assign-users", kwargs={"pk": object.pk}) %}
 {% set unassign_users_link = url("workflow:task-ui-unassign-users", kwargs={"pk": object.pk}) %}
