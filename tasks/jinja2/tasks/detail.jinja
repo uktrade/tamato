@@ -35,6 +35,9 @@
   {% endif -%}
 {% endset %}
 
+{% set assign_user_link = url("workflow:task-ui-assign-user", kwargs={"pk": object.pk}) %}
+{% set unassign_user_link = url("workflow:task-ui-unassign-user", kwargs={"pk": object.pk}) %}
+
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
       {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
@@ -190,7 +193,7 @@
           <a
             id="assign-user"
             class="govuk-link"
-            href="{{ url('workflow:task-ui-assign-user', kwargs={'pk': object.pk}) }}"
+            href="{{ assign_user_link }}"
           >Assign<span class="govuk-visually-hidden"> user</span></a>
         </li>
         {% elif current_assignee %}
@@ -198,7 +201,7 @@
           <a
             id="unassign-user"
             class="govuk-link"
-            href="{{ url('workflow:task-ui-unassign-user', kwargs={'pk': object.pk}) }}"
+            href="{{ unassign_user_link }}"
           >Unassign<span class="govuk-visually-hidden"> user</span></a>
         </li>
         {% endif %}
@@ -236,9 +239,6 @@
     }) }}
   {% endif %}
 </div>
-
-{% set assign_user_link = url("workflow:task-ui-assign-user", kwargs={"pk": object.pk}) %}
-{% set unassign_user_link = url("workflow:task-ui-unassign-user", kwargs={"pk": object.pk}) %}
 
 <script nonce="{{ request.csp_nonce }}">
   const CSRF_TOKEN = "{{ csrf_token }}";
