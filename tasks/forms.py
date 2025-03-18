@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import bleach
 import markdown
 from crispy_forms_gds.helper import FormHelper
@@ -13,14 +11,13 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import TextChoices
 from django.forms import CharField
-from django.forms import CheckboxSelectMultiple
 from django.forms import Form
 from django.forms import ModelChoiceField
 from django.forms import ModelForm
-from django.forms import ModelMultipleChoiceField
 from django.forms import Textarea
 from django.urls import reverse
 from django.utils.timezone import make_aware
@@ -33,12 +30,12 @@ from common.forms import delete_form_for
 from common.validators import SymbolValidator
 from common.validators import markdown_tags_allowlist
 from tasks.models import Comment
+from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
-from tasks.signals import set_current_instigator
 from workbaskets.models import WorkBasket
 
 User = get_user_model()
@@ -122,67 +119,11 @@ class TaskUpdateForm(TaskBaseForm):
     pass
 
 
-class AssignUsersForm(Form):
-    users = ModelMultipleChoiceField(
-        help_text="Select users to assign",
-        widget=CheckboxSelectMultiple,
+class AssignUserForm(Form):
+    user = ModelChoiceField(
+        label="Select user",
         queryset=User.objects.active_tms(),
-        error_messages={"required": "Select one or more users to assign"},
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.init_fields()
-        self.init_layout()
-
-    def init_fields(self):
-        self.fields["users"].label_from_instance = lambda obj: obj.get_full_name()
-
-    def init_layout(self):
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-        self.helper.layout = Layout(
-            "users",
-            Submit(
-                "submit",
-                "Save",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
-            ),
-        )
-
-    @transaction.atomic
-    def assign_users(self, task: Task, user_instigator) -> list[TaskAssignee]:
-        """Create TaskAssignee instances for the selected Users and return the
-        TaskAssignees as a list."""
-        set_current_instigator(user_instigator)
-
-        assignees = [
-            TaskAssignee(
-                user=user,
-                assignment_type=TaskAssignee.AssignmentType.GENERAL,
-                task=task,
-            )
-            for user in self.cleaned_data["users"]
-            if not TaskAssignee.objects.filter(
-                user=user,
-                assignment_type=TaskAssignee.AssignmentType.GENERAL,
-                task=task,
-            )
-            .assigned()
-            .exists()
-        ]
-        return TaskAssignee.objects.bulk_create(assignees)
-
-
-class UnassignUsersForm(Form):
-    assignees = ModelMultipleChoiceField(
-        label="Users",
-        help_text="Select users to unassign",
-        widget=CheckboxSelectMultiple,
-        queryset=TaskAssignee.objects.all(),
-        error_messages={"required": "Select one or more users to unassign"},
+        error_messages={"required": "Select a user to assign"},
     )
 
     def __init__(self, *args, **kwargs):
@@ -192,21 +133,14 @@ class UnassignUsersForm(Form):
         self.init_layout()
 
     def init_fields(self):
-        self.fields["assignees"].queryset = self.task.assignees.order_by(
-            "user__first_name",
-            "user__last_name",
-        ).exclude(unassigned_at__isnull=False)
-
-        self.fields["assignees"].label_from_instance = (
-            lambda obj: f"{obj.user.get_full_name()}"
-        )
+        self.fields["user"].label_from_instance = lambda obj: obj.get_displayname()
 
     def init_layout(self):
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            "assignees",
+            "user",
             Submit(
                 "submit",
                 "Save",
@@ -215,19 +149,78 @@ class UnassignUsersForm(Form):
             ),
         )
 
+    def clean(self):
+        if self.task.assignees.assigned().exists():
+            raise ValidationError(
+                {
+                    "user": "The selected user cannot be assigned because the step already has an assignee.",
+                },
+            )
+
+        return super().clean()
+
     @transaction.atomic
-    def unassign_users(self, user_instigator) -> int:
-        """Set assignees as unassigned from their associated task and return the
-        number of assignees that have been updated in this way."""
-        set_current_instigator(user_instigator)
+    def assign_user(self, task: Task, user_instigator) -> TaskAssignee:
+        user = self.cleaned_data["user"]
 
-        assignees = self.cleaned_data["assignees"]
-        for assignee in assignees:
-            assignee.unassigned_at = make_aware(datetime.now())
+        return TaskAssignee.assign_user(
+            user=user,
+            task=task,
+            instigator=user_instigator,
+        )
 
-        return TaskAssignee.objects.bulk_update(
-            assignees,
-            fields=["unassigned_at"],
+
+class UnassignUserForm(Form):
+    assignee = ModelChoiceField(
+        label="Select user",
+        queryset=TaskAssignee.objects.assigned(),
+        error_messages={"required": "Select a user to unassign"},
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.task = kwargs.pop("task", None)
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.init_layout()
+
+    def init_fields(self):
+        self.fields["assignee"].queryset = self.task.assignees.assigned()
+        self.fields["assignee"].label_from_instance = (
+            lambda obj: obj.user.get_displayname()
+        )
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "assignee",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        if self.task.progress_state.name == ProgressState.State.DONE:
+            raise ValidationError(
+                {
+                    "assignee": "The selected user cannot be unassigned because the step has a status of Done.",
+                },
+            )
+
+        return super().clean()
+
+    @transaction.atomic
+    def unassign_user(self, user_instigator) -> bool:
+        assignee = self.cleaned_data["assignee"]
+
+        return TaskAssignee.unassign_user(
+            user=assignee.user,
+            task=self.task,
+            instigator=user_instigator,
         )
 
 
