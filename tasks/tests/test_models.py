@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 from django.db.utils import IntegrityError
 
 from common.tests.factories import CategoryFactory
@@ -259,3 +260,8 @@ def test_task_is_subtask_property(task_factory):
 def test_task_is_summary_task_property(create_task_fn):
     task = create_task_fn()
     assert bool(hasattr(task, "taskworkflow")) == task.is_summary_task
+
+
+def test_prefixed_id(task_workflow):
+    expected_prefixed_id = f"{settings.TICKET_PREFIX}{str(task_workflow.id)}"
+    assert task_workflow.prefixed_id == expected_prefixed_id
