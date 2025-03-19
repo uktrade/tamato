@@ -1,6 +1,7 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
+{% from "tasks/macros/display_details.jinja" import display_status %}
 
 {% set page_title = "Step: " ~ object.title %}
 {% set ticket_title = object.taskitem.workflow.title %}
@@ -72,7 +73,7 @@
       Status
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ object.progress_state }}
+      {{ display_status(object.progress_state.__str__()) }}
     </dd>
     <dd class="govuk-summary-list__actions">
       <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
