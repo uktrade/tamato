@@ -1,3 +1,6 @@
+import re
+
+from django.conf import settings
 from django.db.models import TextChoices
 from django.forms import CheckboxSelectMultiple
 from django.forms import widgets
@@ -13,6 +16,8 @@ from tasks.forms import TaskFilterForm
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskWorkflowTemplate
+
+TICKET_ID = re.compile(rf"(?i)({settings.TICKET_PREFIX}?)(\d+)")
 
 
 class TaskFilter(TamatoFilter):
@@ -42,10 +47,11 @@ class TaskFilter(TamatoFilter):
 
 class TaskWorkflowFilter(TamatoFilter):
     search_fields = (
-        "id",
+        "taskworkflow__id",
         "title",
         "description",
     )
+    search_regex = TICKET_ID
     clear_url = reverse_lazy("workflow:task-workflow-ui-list")
 
     progress_state = ModelMultipleChoiceFilter(
@@ -67,6 +73,21 @@ class TaskWorkflowFilter(TamatoFilter):
         field_name="assignees",
         queryset=User.objects.active_tms(),
     )
+
+    def get_search_term(self, value):
+        """Looks for a pattern matching a ticket ID and removes any TC- prefix
+        so only the number is searched."""
+        value = value.strip()
+        if self.search_regex:
+            match = self.search_regex.search(value)
+            if match:
+                terms = list(match.groups())
+                terms = [term for term in terms if term.isdigit()]
+                terms.extend(
+                    [value[: match.start()].strip(), value[match.end() :].strip()],
+                )
+                return " ".join(terms)
+        return value
 
     class Meta:
         model = Task
