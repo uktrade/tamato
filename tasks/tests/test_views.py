@@ -9,7 +9,9 @@ import settings
 from common.tests.factories import CommentFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
+from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
+from common.tests.factories import UserFactory
 from common.util import format_date
 from tasks.forms import TaskWorkflowCreateForm
 from tasks.models import ProgressState
@@ -927,3 +929,43 @@ def test_ticket_comments_render(valid_user_client):
         "This is an initial comment which should be on the second page."
         in comments[2].text
     )
+
+
+def test_task_detail_view_displays_correctly(
+    valid_user_client,
+    task_workflow_single_task_item,
+):
+    task_item = task_workflow_single_task_item.get_items()[0]
+    task = Task.objects.get(pk=task_item.task_id)
+
+    user = UserFactory.create(
+        first_name="Testo",
+        last_name="Useri",
+    )
+
+    assignee = TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+        user=user,
+    )
+
+    url = reverse(
+        "workflow:task-ui-detail",
+        kwargs={"pk": task.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    assert f"Step: {task.title}" in page.find("h1").text
+
+    table_values = [
+        dd.text.strip()
+        for dd in page.find_all("dd", {"class": "govuk-summary-list__value"})
+    ]
+
+    assert assignee.user.get_full_name() in table_values
+    assert format_date(task.created_at) in table_values
+    assert task.description in table_values
+    assert task.progress_state.__str__() in table_values
