@@ -1,4 +1,4 @@
-/* global assignableUsers:readonly, currentAssignees:readonly */
+/* global assignableUsers:readonly, currentAssignee:readonly */
 
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
@@ -15,13 +15,19 @@ import { UnassignUserForm } from "./UnassignUserForm";
  * @param buttonId The button's element ID
  * @param formId The form's element ID
  */
-function TaskUserAssignment({ action, users, buttonId, formId }) {
+function TaskUserAssignment({
+  action,
+  assignableUsers,
+  currentAssignee,
+  buttonId,
+  formId,
+}) {
   const [showForm, setShowForm] = useState(null);
 
   const removeFormDiv = () => {
     const possibleFormDivs = [
-      document.getElementById("assign-users-form"),
-      document.getElementById("unassign-users-form"),
+      document.getElementById("assign-user-form"),
+      document.getElementById("unassign-user-form"),
     ];
     possibleFormDivs.forEach((form) => {
       if (form) {
@@ -38,7 +44,7 @@ function TaskUserAssignment({ action, users, buttonId, formId }) {
     formDiv.className = "govuk-!-margin-top-4";
 
     const assignedUsersContent = document.getElementById(
-      "assigned-users-content",
+      "assigned-user-content",
     );
     assignedUsersContent.classList.add("govuk-summary-list__row--no-border");
     assignedUsersContent.after(formDiv);
@@ -59,9 +65,9 @@ function TaskUserAssignment({ action, users, buttonId, formId }) {
 
   function UserForm({ action }) {
     if (action === "Assign") {
-      return <AssignUserForm users={users} />;
+      return <AssignUserForm users={assignableUsers} />;
     } else {
-      return <UnassignUserForm users={users} />;
+      return <UnassignUserForm user={currentAssignee} />;
     }
   }
 
@@ -84,12 +90,16 @@ function TaskUserAssignment({ action, users, buttonId, formId }) {
 }
 TaskUserAssignment.propTypes = {
   action: PropTypes.string.isRequired,
-  users: PropTypes.arrayOf(
+  assignableUsers: PropTypes.arrayOf(
     PropTypes.shape({
       pk: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
     }),
   ),
+  currentAssignee: PropTypes.shape({
+    pk: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+  }),
   buttonId: PropTypes.string.isRequired,
   formId: PropTypes.string.isRequired,
 };
@@ -99,28 +109,28 @@ TaskUserAssignment.propTypes = {
  * for each assign/unassign link on the Task detail view.
  */
 function init() {
-  const assignUsersLink = document.getElementById("assign-users");
-  if (assignUsersLink) {
-    const assignUsers = createRoot(assignUsersLink);
-    assignUsers.render(
+  const assignUserLink = document.getElementById("assign-user");
+  if (assignUserLink) {
+    const assignUser = createRoot(assignUserLink);
+    assignUser.render(
       <TaskUserAssignment
         action="Assign"
-        users={assignableUsers}
-        buttonId="assign-users"
-        formId="assign-users-form"
+        assignableUsers={assignableUsers}
+        buttonId="assign-user"
+        formId="assign-user-form"
       />,
     );
   }
 
-  const unassignUsersLink = document.getElementById("unassign-users");
-  if (unassignUsersLink) {
-    const unassignUsers = createRoot(unassignUsersLink);
-    unassignUsers.render(
+  const unassignUserLink = document.getElementById("unassign-user");
+  if (unassignUserLink) {
+    const unassignUser = createRoot(unassignUserLink);
+    unassignUser.render(
       <TaskUserAssignment
         action="Unassign"
-        users={currentAssignees}
-        buttonId="unassign-users"
-        formId="unassign-users-form"
+        currentAssignee={currentAssignee}
+        buttonId="unassign-user"
+        formId="unassign-user-form"
       />,
     );
   }

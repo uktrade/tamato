@@ -165,6 +165,14 @@ class Task(TaskBase):
     def is_summary_task(self) -> bool:
         return hasattr(self, "taskworkflow")
 
+    def get_current_assignee(self) -> "TaskAssignee":
+        """Returns the currently active`TaskAssignee` instance associated to
+        this `Task` instance."""
+        try:
+            return self.assignees.assigned().get()
+        except TaskAssignee.DoesNotExist:
+            return TaskAssignee.objects.none()
+
     def __str__(self):
         return self.title
 
@@ -345,17 +353,14 @@ class TaskAssignee(TimestampedMixin):
 
         set_current_instigator(instigator)
 
-        try:
-            current_assignee = task.assignees.assigned().get().user
-        except cls.DoesNotExist:
-            current_assignee = None
+        current_assignee = task.get_current_assignee()
 
         if current_assignee:
-            if current_assignee == user:
+            if current_assignee.user == user:
                 return TaskAssignee.objects.none()
 
             cls.unassign_user(
-                user=current_assignee,
+                user=current_assignee.user,
                 task=task,
                 instigator=instigator,
             )

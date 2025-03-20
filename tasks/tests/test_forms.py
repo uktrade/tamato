@@ -2,12 +2,81 @@ from datetime import date
 
 import pytest
 
+from common.tests.factories import CommentFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
 from tasks import forms
 from tasks.models import ProgressState
+from tasks.models import TaskAssignee
 
 pytestmark = pytest.mark.django_db
+
+
+def test_task_assign_user_form_assigns_user(task, valid_user):
+    """Tests that `AssignUserForm.assign_user()` creates a `TaskAssignee`
+    instance associated to the task."""
+    data = {
+        "user": valid_user.pk,
+    }
+    form = forms.AssignUserForm(
+        data=data,
+        task=task,
+    )
+    assert form.is_valid()
+    assert form.assign_user(task=task, user_instigator=valid_user)
+
+
+def test_task_assign_user_form_prevents_multiple_assignees(task_assignee, valid_user):
+    """Tests that `AssignUserForm` raises a ValidationError if the task already
+    has an assignee."""
+    data = {
+        "user": valid_user.pk,
+    }
+    form = forms.AssignUserForm(
+        data=data,
+        task=task_assignee.task,
+    )
+    assert not form.is_valid()
+    assert (
+        "The selected user cannot be assigned because the step already has an assignee."
+        in form.errors["user"]
+    )
+
+
+def test_task_unassign_user_form_unassigns_user(task_assignee, valid_user):
+    """Tests that `UnassignUserForm.unassign_user()` unassigns the given user
+    from the task."""
+    task = task_assignee.task
+
+    data = {
+        "assignee": task_assignee.pk,
+    }
+
+    form = forms.UnassignUserForm(
+        data=data,
+        task=task,
+    )
+    assert form.is_valid()
+
+    form.unassign_user(user_instigator=valid_user)
+    assert TaskAssignee.objects.unassigned().get(task=task, user=task_assignee.user)
+
+
+def test_task_unassign_user_form_prevents_done_unassignment(done_task):
+    """Tests that `UnassignUserForm` raises a ValidationError if the task has a
+    status of Done."""
+    data = {
+        "assignee": "",
+    }
+    form = forms.UnassignUserForm(
+        data=data,
+        task=done_task,
+    )
+    assert not form.is_valid()
+    assert (
+        "The selected user cannot be unassigned because the step has a status of Done."
+        in form.errors["assignee"]
+    )
 
 
 def test_create_subtask_assigns_correct_parent_task(valid_user):
@@ -115,3 +184,40 @@ def test_workflow_update_form_save(assigned_task_workflow):
     assert workflow.policy_contact == form_data["policy_contact"]
     assert workflow.summary_task.title == form_data["title"]
     assert workflow.summary_task.description == form_data["description"]
+
+
+def test_add_comment_form_valid(task_workflow):
+    form_data = {"content": "Test comment."}
+    form = forms.TicketCommentCreateForm(data=form_data, instance=task_workflow)
+    assert form.is_valid()
+
+    empty_form_data = {"content": ""}
+    form = forms.TicketCommentCreateForm(data=empty_form_data, instance=task_workflow)
+    assert not form.is_valid()
+    assert "Enter your comment" in form.errors["content"]
+
+
+def test_edit_comment_form_valid(task_workflow):
+    comment = CommentFactory.create(
+        task=task_workflow.summary_task,
+        content="Test comment",
+    )
+    form_data = {"content": "Update comment"}
+    form = forms.TicketCommentUpdateForm(
+        data=form_data,
+        instance=comment,
+        ticket_pk=task_workflow.pk,
+    )
+    assert form.is_valid()
+    form.save()
+    comment.refresh_from_db()
+    assert "Update comment" in comment.content
+
+    empty_form_data = {"content": ""}
+    form = forms.TicketCommentUpdateForm(
+        data=empty_form_data,
+        instance=comment,
+        ticket_pk=task_workflow.pk,
+    )
+    assert not form.is_valid()
+    assert "Enter your comment" in form.errors["content"]

@@ -5,6 +5,7 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
+from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskItem
@@ -18,6 +19,12 @@ from tasks.tests import factories
 @pytest.fixture()
 def task():
     return TaskFactory.create()
+
+
+@pytest.fixture()
+def done_task():
+    done_state = ProgressStateFactory.create(name=ProgressState.State.DONE)
+    return TaskFactory.create(progress_state=done_state)
 
 
 @pytest.fixture()

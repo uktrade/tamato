@@ -1,4 +1,5 @@
 import threading
+from datetime import datetime
 from functools import wraps
 from unittest import mock
 from unittest.mock import MagicMock
@@ -736,3 +737,74 @@ def test_crown_dependencies_publishing_pause_and_unpause(unpause_publishing):
         == CrownDependenciesPublishingOperationalStatus.objects.current_status()
     )
     assert not CrownDependenciesPublishingOperationalStatus.is_publishing_paused()
+
+
+@freezegun.freeze_time("2025-01-01")
+def test_next_expected_to_api_first_envelope_of_new_year(
+    successful_envelope_factory,
+):
+    """Test that publish_to_api returns the correct ID for the first envelope of
+    the new year, if the last envelope of the previous year was successful."""
+    # Publish some envelopes in the previous year
+    with freezegun.freeze_time("2024-12-31"):
+        successful_envelope_factory(
+            published_to_tariffs_api="2024-12-28",
+        )
+        successful_envelope_factory(
+            published_to_tariffs_api="2024-12-29",
+        )
+        last_env = successful_envelope_factory(
+            published_to_tariffs_api="2024-12-31",
+        )
+        assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 0
+
+    successful_envelope_factory()
+    current_year = str(datetime.now().year)[-2:]
+    last_env_last_year = Envelope.objects.last_envelope_for_year(
+        year=int(current_year) - 1,
+    )
+    pwbs = PackagedWorkBasket.objects.all()
+    unpublished = pwbs.get_unpublished_to_api()
+    assert last_env_last_year == last_env
+    assert pwbs.last_published_envelope_id() == last_env.envelope_id
+    assert unpublished[0].next_expected_to_api()
+
+
+@freezegun.freeze_time("2025-01-01")
+def test_next_expected_to_api_first_envelope_of_new_year_last_envelope_failed(
+    successful_envelope_factory,
+    failed_envelope_factory,
+):
+    with freezegun.freeze_time("2024-12-31"):
+        successful_envelope_factory(
+            published_to_tariffs_api="2024-12-28",
+        )
+        penultimate_env = successful_envelope_factory(
+            published_to_tariffs_api="2024-12-29",
+        )
+        failed_envelope_factory()
+
+    current_year = str(datetime.now().year)[-2:]
+    last_env_last_year = Envelope.objects.last_envelope_for_year(
+        year=int(current_year) - 1,
+    )
+    first = successful_envelope_factory()
+    pwbs = PackagedWorkBasket.objects.all()
+    unpublished = pwbs.get_unpublished_to_api()
+    assert last_env_last_year == penultimate_env
+    assert pwbs.last_published_envelope_id() == penultimate_env.envelope_id
+    assert unpublished[0].next_expected_to_api()
+    assert first.envelope_id == "250001"
+
+
+def test_next_expected_to_api_returns_false_for_second_in_queue(
+    successful_envelope_factory,
+):
+
+    successful_envelope_factory()
+    successful_envelope_factory()
+
+    pwbs = PackagedWorkBasket.objects.all()
+    unpublished = pwbs.get_unpublished_to_api()
+
+    assert not unpublished[1].next_expected_to_api()
