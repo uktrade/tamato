@@ -81,8 +81,9 @@ class TaskWorkflowFilter(TamatoFilter):
         if self.id_search_regex:
             match = self.id_search_regex.search(value)
             if match:
+                prefix_pattern = re.compile(rf"(?i){settings.TICKET_PREFIX}?")
                 terms = list(match.groups())
-                terms = [term for term in terms if term != settings.TICKET_PREFIX]
+                terms = [term for term in terms if not prefix_pattern.search(term)]
                 terms.extend(
                     [value[: match.start()].strip(), value[match.end() :].strip()],
                 )
