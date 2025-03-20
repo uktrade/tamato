@@ -5,19 +5,8 @@
 
 {% set page_title = "Step: " ~ object.title %}
 
-{% macro display_assignees(assignees) %}
-  {% if not assignees %}
-    <div class="govuk-!-margin-bottom-3">
-      None
-    </div>
-  {% else %}
-    {% for assignee in assignees %}
-      <div class="govuk-!-margin-bottom-3">
-      {{ assignee.name }}{% if not loop.last %}, {% endif %}
-      </div>
-    {% endfor %}
-  {% endif %}
-{% endmacro %}
+{% set assign_user_link = url("workflow:task-ui-assign-user", kwargs={"pk": object.pk}) %}
+{% set unassign_user_link = url("workflow:task-ui-unassign-user", kwargs={"pk": object.pk}) %}
 
 {% block breadcrumb %}
   {% if ticket_number %}
@@ -92,26 +81,29 @@
       Assignees
     </dt>
     <dd class="govuk-summary-list__value">
-      <div id="assigned-users-content">
-        {{ display_assignees(current_assignees) }}
+      <div id="assigned-user-content">
+        <div class="govuk-!-margin-bottom-3">
+          {{ current_assignee.name if current_assignee else "None" }}
+        </div>
       </div>
     </dd>
     <dd class="govuk-summary-list__actions">
       <ul class="govuk-summary-list__actions-list">
+        {% if not current_assignee %}
         <li class="govuk-summary-list__actions-list-item">
           <a
-            id="assign-users"
+            id="assign-user"
             class="govuk-link"
-            href="{{ url('workflow:task-ui-assign-users', kwargs={'pk': object.pk}) }}"
-          >Assign<span class="govuk-visually-hidden"> users</span></a>
+            href="{{ assign_user_link }}"
+          >Assign<span class="govuk-visually-hidden"> user</span></a>
         </li>
-        {% if current_assignees %}
+        {% elif current_assignee %}
         <li class="govuk-summary-list__actions-list-item">
           <a
-            id="unassign-users"
+            id="unassign-user"
             class="govuk-link"
-            href="{{ url('workflow:task-ui-unassign-users', kwargs={'pk': object.pk}) }}"
-          >Unassign<span class="govuk-visually-hidden"> users</span></a>
+            href="{{ unassign_user_link }}"
+          >Unassign<span class="govuk-visually-hidden"> user</span></a>
         </li>
         {% endif %}
       </ul>
@@ -149,16 +141,13 @@
 
 
 
-{% set assign_users_link = url("workflow:task-ui-assign-users", kwargs={"pk": object.pk}) %}
-{% set unassign_users_link = url("workflow:task-ui-unassign-users", kwargs={"pk": object.pk}) %}
-
 <script nonce="{{ request.csp_nonce }}">
   const CSRF_TOKEN = "{{ csrf_token }}";
 
-  const currentAssignees = {{ current_assignees|safe }};
+  const currentAssignee = {{ current_assignee|safe }};
   const assignableUsers = {{ assignable_users|safe }};
 
-  const assignUsersUrl = "{{ assign_users_link }}";
-  const unassignUsersUrl = "{{ unassign_users_link }}";
+  const assignUserUrl = "{{ assign_user_link }}";
+  const unassignUserUrl = "{{ unassign_user_link }}";
 </script>
 {% endblock %}

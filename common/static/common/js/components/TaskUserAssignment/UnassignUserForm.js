@@ -1,12 +1,12 @@
-/* global CSRF_TOKEN:readonly, unassignUsersUrl:readonly */
+/* global CSRF_TOKEN:readonly, unassignUserUrl:readonly */
 
 import React, { useEffect } from "react";
 import accessibleAutocomplete from "accessible-autocomplete";
 import PropTypes from "prop-types";
 
-function UnassignUserForm({ users }) {
-  const elementId = "assignees-select";
-  const elementName = "assignees";
+function UnassignUserForm({ user }) {
+  const elementId = "assignee-select";
+  const elementName = "assignee";
   const label = "Unassign user";
   const hint = "Select a user to unassign";
 
@@ -24,7 +24,7 @@ function UnassignUserForm({ users }) {
 
   return (
     <form
-      action={unassignUsersUrl}
+      action={unassignUserUrl}
       method="POST"
       data-testid={"unassign-user-form"}
     >
@@ -43,11 +43,9 @@ function UnassignUserForm({ users }) {
           data-testid="unassign-user-select"
         >
           <option value="">Select a user</option>
-          {users.map((user) => (
-            <option key={user.pk} value={user.pk}>
-              {user.name}
-            </option>
-          ))}
+          <option key={user.pk} value={user.pk}>
+            {user.name}
+          </option>
         </select>
       </div>
       <button
@@ -62,12 +60,10 @@ function UnassignUserForm({ users }) {
 }
 
 UnassignUserForm.propTypes = {
-  users: PropTypes.arrayOf(
-    PropTypes.shape({
-      pk: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-    }),
-  ),
+  user: PropTypes.shape({
+    pk: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+  }),
 };
 
 export { UnassignUserForm };

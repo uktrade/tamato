@@ -1543,7 +1543,7 @@ class CategoryFactory(factory.django.DjangoModelFactory):
 
 
 class ProgressStateFactory(factory.django.DjangoModelFactory):
-    name = FuzzyChoice(ProgressState.State.values)
+    name = ProgressState.State.TO_DO
 
     class Meta:
         model = "tasks.ProgressState"
