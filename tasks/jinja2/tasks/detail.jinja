@@ -4,7 +4,6 @@
 {% from "tasks/macros/display_details.jinja" import display_status %}
 
 {% set page_title = "Step: " ~ object.title %}
-{% set ticket_title = object.taskitem.workflow.title %}
 
 {% macro display_assignees(assignees) %}
   {% if not assignees %}
@@ -21,12 +20,20 @@
 {% endmacro %}
 
 {% block breadcrumb %}
-  {{ breadcrumbs(request, [
-      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
-      {"text": page_title}
-    ],
-    with_workbasket=False,
-  ) }}
+  {% if ticket_number %}
+    {{ breadcrumbs(request, [
+        {"text": ticket_number, "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_number})},
+        {"text": page_title}
+      ],
+      with_workbasket=False,
+    ) }}
+  {%else %}
+    {{ breadcrumbs(request, [
+        {"text": page_title}
+      ],
+      with_workbasket=False,
+    )}}
+  {% endif %}
 {% endblock %}
 
 {% set workbasket_link %}
@@ -43,7 +50,7 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
-    <span class="govuk-caption-xl govuk-!-margin-bottom-0">{{ ticket_title }}</span>
+    {{ticket_title}}
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-three-quarters">
         <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">
@@ -61,9 +68,9 @@
   </div>
 </div>
 
-
-<a href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk}) }}" class="govuk-link govuk-back-link govuk-!-margin-bottom-8">Back to ticket</a>
-
+{% if ticket_number%}
+  <a href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk}) }}" class="govuk-link govuk-back-link govuk-!-margin-bottom-8">Back to ticket</a>
+{%endif%}
 <h2 class="govuk-heading-m">Details</h2>
 
 <dl class="govuk-summary-list govuk-!-margin-bottom-8">

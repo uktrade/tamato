@@ -4,13 +4,24 @@
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 {% from "components/button/macro.njk" import govukButton %}
 
+
 {% block breadcrumb %}
-  {{ breadcrumbs(request, [
-      {"text": "Find and view tasks", "href": url("workflow:task-ui-list")},
-      {"text": verbose_name|capitalize ~ ": " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk})},
-      {"text": page_title}
-    ])
-  }}
+  {% if ticket_number %}
+    {{ breadcrumbs(request, [
+      {"text": "Ticket " ~ object.taskitem.workflow.pk, "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk})},
+      {"text": "Step: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk}) },
+      {"text": "Delete step: " ~ object.title},
+    ],
+    with_workbasket=False,
+  ) }}
+  {%else %}
+    {{ breadcrumbs(request, [
+      {"text": "Step: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk}) },
+      {"text": "Delete step: " ~ object.title},
+    ],
+    with_workbasket=False,
+  ) }}
+  {% endif %}
 {% endblock %}
 
 {% block content %}
