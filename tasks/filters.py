@@ -77,9 +77,7 @@ class TaskWorkflowFilter(TamatoFilter):
         ticket_prefix from the search groups."""
         value = value.strip()
         ticket_prefix = settings.TICKET_PREFIX
-        import pdb
 
-        pdb.set_trace()
         if ticket_prefix:
             cleaned_prefix = re.sub("-", "", ticket_prefix)
             cleaned_search_value = re.sub("-", "", value)
