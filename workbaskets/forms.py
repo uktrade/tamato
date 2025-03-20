@@ -18,11 +18,11 @@ from django.utils.timezone import make_aware
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
 from common.validators import markdown_tags_allowlist
-from tasks.models import Comment
-from tasks.models import Task
-from tasks.models import UserAssignment
 from workbaskets import models
 from workbaskets import validators
+from workbaskets.models import AssignmentType
+from workbaskets.models import WorkBasketAssignment
+from workbaskets.models import WorkBasketComment
 from workbaskets.util import serialize_uploaded_data
 
 User = get_user_model()
@@ -209,7 +209,7 @@ class WorkBasketAssignUsersForm(forms.Form):
         error_messages={"required": "Select one or more users to assign"},
     )
     assignment_type = forms.ChoiceField(
-        choices=UserAssignment.AssignmentType.choices,
+        choices=AssignmentType.choices,
         widget=forms.RadioSelect,
         error_messages={"required": "Select an assignment type"},
     )
@@ -249,28 +249,27 @@ class WorkBasketAssignUsersForm(forms.Form):
             ),
         )
 
-    def assign_users(self, task):
+    def assign_users(self):
         assignment_type = self.cleaned_data["assignment_type"]
 
         objs = [
-            UserAssignment(
+            WorkBasketAssignment(
                 user=user,
                 assigned_by=self.request.user,
                 assignment_type=assignment_type,
-                task=task,
+                workbasket=self.workbasket,
             )
             for user in self.cleaned_data["users"]
-            if not UserAssignment.objects.filter(
+            if not WorkBasketAssignment.objects.filter(
                 user=user,
                 assignment_type=assignment_type,
-                task__workbasket=self.workbasket,
+                workbasket=self.workbasket,
             )
             .assigned()
             .exists()
         ]
-        user_assignments = UserAssignment.objects.bulk_create(objs)
 
-        return user_assignments
+        return WorkBasketAssignment.objects.bulk_create(objs)
 
 
 class WorkBasketUnassignUsersForm(forms.Form):
@@ -278,7 +277,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
         label="Users",
         help_text="Select users to unassign",
         widget=forms.CheckboxSelectMultiple,
-        queryset=UserAssignment.objects.all(),
+        queryset=WorkBasketAssignment.objects.all(),
         error_messages={"required": "Select one or more users to unassign"},
     )
 
@@ -290,9 +289,11 @@ class WorkBasketUnassignUsersForm(forms.Form):
         self.init_layout()
 
     def init_fields(self):
-        self.fields["assignments"].queryset = self.workbasket.user_assignments.order_by(
-            "user__first_name",
-            "user__last_name",
+        self.fields["assignments"].queryset = (
+            self.workbasket.workbasket_assignments.order_by(
+                "user__first_name",
+                "user__last_name",
+            )
         )
 
         self.fields["assignments"].label_from_instance = (
@@ -318,11 +319,10 @@ class WorkBasketUnassignUsersForm(forms.Form):
         for assignment in assignments:
             assignment.unassigned_at = make_aware(datetime.now())
 
-        user_assignments = UserAssignment.objects.bulk_update(
+        return WorkBasketAssignment.objects.bulk_update(
             assignments,
             fields=["unassigned_at"],
         )
-        return user_assignments
 
 
 class WorkBasketCommentForm(forms.ModelForm):
@@ -334,7 +334,7 @@ class WorkBasketCommentForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Comment
+        model = WorkBasketComment
         fields = ("content",)
 
     def clean_content(self):
@@ -369,7 +369,7 @@ class WorkBasketCommentCreateForm(WorkBasketCommentForm):
     def save(self, user, workbasket, commit=True):
         instance = super().save(commit=False)
         instance.author = user
-        instance.task = Task.objects.get(workbasket=workbasket)
+        instance.workbasket = workbasket
         if commit:
             instance.save()
         return instance
@@ -401,7 +401,7 @@ class WorkBasketCommentUpdateForm(WorkBasketCommentForm):
 
 class WorkBasketCommentDeleteForm(forms.ModelForm):
     class Meta:
-        model = Comment
+        model = WorkBasketComment
         fields = ()
 
     def __init__(self, *args, **kwargs):

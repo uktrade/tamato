@@ -47,8 +47,9 @@ from measures.models import Measure
 from publishing.models import PackagedWorkBasket
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
-from tasks.models import UserAssignment
+from workbaskets.models import AssignmentType
 from workbaskets.models import WorkBasket
+from workbaskets.models import WorkBasketAssignment
 from workbaskets.models import WorkflowStatus
 
 logger = logging.getLogger(__name__)
@@ -62,21 +63,20 @@ class HomeView(LoginRequiredMixin, FormView):
         context = super().get_context_data(**kwargs)
 
         assignments = (
-            UserAssignment.objects.filter(user=self.request.user)
+            WorkBasketAssignment.objects.filter(user=self.request.user)
             .assigned()
-            .select_related("task__workbasket")
+            .select_related("workbasket")
             .filter(
-                Q(task__workbasket__status=WorkflowStatus.EDITING)
-                | Q(task__workbasket__status=WorkflowStatus.ERRORED),
+                Q(workbasket__status=WorkflowStatus.EDITING)
+                | Q(workbasket__status=WorkflowStatus.ERRORED),
             )
         )
         assigned_workbaskets = []
         for assignment in assignments:
-            workbasket = assignment.task.workbasket
+            workbasket = assignment.workbasket
             assignment_type = (
                 "Assigned"
-                if assignment.assignment_type
-                == UserAssignment.AssignmentType.WORKBASKET_WORKER
+                if assignment.assignment_type == AssignmentType.WORKBASKET_WORKER
                 else "Reviewing"
             )
             rule_violations_count = workbasket.tracked_model_check_errors.count()

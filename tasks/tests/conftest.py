@@ -1,29 +1,23 @@
 import pytest
 
-from common.tests.factories import TaskFactory
-from common.tests.factories import UserAssignmentFactory
-from tasks.models import UserAssignment
-
-
-@pytest.fixture()
-def task():
-    return TaskFactory.create()
+from common.tests.factories import WorkBasketAssignmentFactory
+from workbaskets.models import AssignmentType
 
 
 @pytest.fixture()
 def user_assignment():
-    return UserAssignmentFactory.create()
+    return WorkBasketAssignmentFactory.create()
 
 
 @pytest.fixture()
 def workbasket_worker_assignment():
-    return UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+    return WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
     )
 
 
 @pytest.fixture()
 def workbasket_reviewer_assignment():
-    return UserAssignmentFactory.create(
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+    return WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
     )

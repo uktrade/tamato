@@ -1,48 +1,48 @@
 import pytest
 
-from tasks.models import UserAssignment
+from workbaskets.models import WorkBasketAssignment
 
 pytestmark = pytest.mark.django_db
 
 
 def test_user_assignment_unassign_user_classmethod(user_assignment):
     user = user_assignment.user
-    task = user_assignment.task
+    workbasket = user_assignment.workbasket
 
-    assert UserAssignment.unassign_user(user=user, task=task)
+    assert WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
     # User has already been unassigned
-    assert not UserAssignment.unassign_user(user=user, task=task)
+    assert not WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
 
 
 def test_user_assignment_assigned_queryset(
     user_assignment,
 ):
-    assert UserAssignment.objects.assigned().count() == 1
+    assert WorkBasketAssignment.objects.assigned().count() == 1
 
     user = user_assignment.user
-    task = user_assignment.task
-    UserAssignment.unassign_user(user=user, task=task)
+    workbasket = user_assignment.workbasket
+    WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
 
-    assert not UserAssignment.objects.assigned()
+    assert not WorkBasketAssignment.objects.assigned()
 
 
 def test_user_assignment_unassigned_queryset(
     user_assignment,
 ):
-    assert not UserAssignment.objects.unassigned()
+    assert not WorkBasketAssignment.objects.unassigned()
 
     user = user_assignment.user
-    task = user_assignment.task
-    UserAssignment.unassign_user(user=user, task=task)
+    workbasket = user_assignment.workbasket
+    WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
 
-    assert UserAssignment.objects.unassigned().count() == 1
+    assert WorkBasketAssignment.objects.unassigned().count() == 1
 
 
 def test_user_assignment_workbasket_workers_queryset(
     workbasket_worker_assignment,
     workbasket_reviewer_assignment,
 ):
-    workbasket_workers = UserAssignment.objects.workbasket_workers()
+    workbasket_workers = WorkBasketAssignment.objects.workbasket_workers()
 
     assert workbasket_workers.count() == 1
     assert workbasket_worker_assignment in workbasket_workers
@@ -52,7 +52,7 @@ def test_user_assignment_workbasket_reviewers_queryset(
     workbasket_worker_assignment,
     workbasket_reviewer_assignment,
 ):
-    workbasket_reviewers = UserAssignment.objects.workbasket_reviewers()
+    workbasket_reviewers = WorkBasketAssignment.objects.workbasket_reviewers()
 
     assert workbasket_reviewers.count() == 1
     assert workbasket_reviewer_assignment in workbasket_reviewers

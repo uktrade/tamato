@@ -30,20 +30,21 @@ class UserAssignmentQueryset(models.QuerySet):
 
     def workbasket_workers(self):
         return self.filter(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
+            assignment_type=AssignmentType.WORKBASKET_WORKER,
         )
 
     def workbasket_reviewers(self):
         return self.filter(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
+            assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         )
 
 
-class UserAssignment(TimestampedMixin):
-    class AssignmentType(models.TextChoices):
-        WORKBASKET_WORKER = "WORKBASKET_WORKER", "Workbasket worker"
-        WORKBASKET_REVIEWER = "WORKBASKET_REVIEWER", "Workbasket reviewer"
+class AssignmentType(models.TextChoices):
+    WORKBASKET_WORKER = "WORKBASKET_WORKER", "Workbasket worker"
+    WORKBASKET_REVIEWER = "WORKBASKET_REVIEWER", "Workbasket reviewer"
 
+
+class UserAssignment(TimestampedMixin):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
