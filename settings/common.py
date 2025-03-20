@@ -948,4 +948,4 @@ MEASURES_ASYNC_EDIT = is_truthy(os.environ.get("MEASURES_ASYNC_EDIT", "true"))
 
 
 # Ticket naming prefix
-TICKET_PREFIX = "TC-"
+os.environ.get("TICKET_PREFIX", "TC-")
