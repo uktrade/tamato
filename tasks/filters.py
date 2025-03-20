@@ -50,7 +50,7 @@ class TaskWorkflowFilter(TamatoFilter):
         "description",
     )
     if settings.TICKET_PREFIX:
-        search_regex = re.compile(rf"(?i)({settings.TICKET_PREFIX}?)(\d+)")
+        id_search_regex = re.compile(rf"(?i)({settings.TICKET_PREFIX}?)(\d+)")
 
     clear_url = reverse_lazy("workflow:task-workflow-ui-list")
 
@@ -78,8 +78,8 @@ class TaskWorkflowFilter(TamatoFilter):
         """Looks for a pattern matching a ticket ID with prefix and removes the
         ticket_prefix from the search groups."""
         value = value.strip()
-        if self.search_regex:
-            match = self.search_regex.search(value)
+        if self.id_search_regex:
+            match = self.id_search_regex.search(value)
             if match:
                 terms = list(match.groups())
                 terms = [term for term in terms if term != settings.TICKET_PREFIX]
