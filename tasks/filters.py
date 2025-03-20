@@ -75,8 +75,8 @@ class TaskWorkflowFilter(TamatoFilter):
     )
 
     def get_search_term(self, value):
-        """Looks for a pattern matching a ticket ID and removes any TC- prefix
-        so only the number is searched."""
+        """Looks for a pattern matching a ticket ID and removes any non
+        numerical prefix so only the number is searched."""
         value = value.strip()
         if self.search_regex:
             match = self.search_regex.search(value)
