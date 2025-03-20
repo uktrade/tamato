@@ -1,15 +1,55 @@
 {% extends "commodities/detail.jinja" %}
 
 {% block content_class %}commodity-hierarchy{% endblock %}
-
 {% macro leaf_commodity(comm) -%}
-<p class="govuk-body {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}"><a class="govuk-link" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">{{ comm.code }}</a> - {{ comm.description }} ({{ comm.suffix }})</p>
+  <p class="govuk-body {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
+    {# TODO: Spacing is getting there, number of - is not #}
+    {% for i in range(comm.indent) %}
+      <span class="commodity-hierarchy-dash-{{i+1}}"></span>
+    {% endfor%}
+    <a class="govuk-link" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">{{comm.description}}</a> <span class="govuk-!-text-align-right">{{ comm_code_display(comm) }}</span>
+  </p>
 {% endmacro %}
 
+{% macro comm_code_display(comm) -%}
+  <span class="govuk-!-text-align-right">
+      <span class="comm-code-1">{{comm.code.code[:2]}}</span>
+      <span class="comm-code-2">{{comm.code.code[2:4]}}</span>
+      <span class="comm-code-3">{{comm.code.code[4:6]}}</span>
+      <span class="comm-code-4">{{comm.code.code[6:8]}}</span>
+      <span class="comm-code-5">{{comm.code.code[8:]}}</span>
+      <td>({{comm.suffix}})</td>
+  </span>
+{% endmacro %}
+
+
+{# {% macro comm_code_description_link(comm) %}
+  <a class="govuk-link" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">{{ comm.description }}</a>
+{% endmacro %} #}
+
+{# TODO:
+Rebuild as a table?
+Or as columns: two-thirds/one-third or three-quarters/one-quarter
+<tr>
+  Column
+  <td>tab</td>
+  
+  Column
+  <td>comm.description</td>
+
+  NOTE: use tabular numbers
+  https://design-system.service.gov.uk/styles/font-override-classes/#tabular-numbers
+  eg: https://www.check-duties-customs-exporting-goods.service.gov.uk/summary?d=DE&ds=gtp&kw=fish&pc=03019917
+</tr>
+
+#}
+
+{# TODO:
+  macro to create tabulation
+#}
 {% block tab_content %}
 
 <h2 class="govuk-heading-l">Commodity hierarchy</h2>
-
 {% if not is_current %}
   <p>This commodity has been end dated so no longer forms part of the hierarchy.</p>
 
@@ -18,15 +58,16 @@
 
 {% else %}
   {% for comm in snapshot.commodities %}
-
     {% if loop.nextitem and loop.nextitem.indent > comm.indent %}
     <details class="govuk-details" data-code="{{comm.item_id}}-{{comm.suffix}}"{% if comm in snapshot.ancestors[this_commodity] %}open=""{% endif %}>
     <summary class="govuk-details__summary">
-      <span class="govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
-        {{ comm.code }} - {{ comm.description }} ({{ comm.suffix }})
-      </span>
+      
+        <span class="govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
+          {{ comm.description }} {{comm_code_display(comm)}} 
+        </span>
+      
     </summary>
-
+    
     <a class="govuk-link govuk-!-font-size-16" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">View commodity<span class="govuk-visually-hidden">{{ comm.code }}</span></a>
 
     {% elif not loop.nextitem or loop.nextitem.indent <= comm.indent %}

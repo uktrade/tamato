@@ -1,8 +1,55 @@
 .commodity-hierarchy {
-
     details>details,
     details>p {
         padding-left: 10px;
-        border-left: 20px solid govuk-tint(govuk-colour("light-blue"), 60);
+        border-left: 20px solid govuk-tint(govuk-colour("green"), 90);
     }
+    details>details::before,
+    details>p::before {
+            content: "—";
+            margin-left: -30px;
+            margin-right: 10px;
+        }
 }
+.comm-code-1 {
+    background-color: #ECE8FF;
+    // background-color: blue;
+}
+.comm-code-2 {
+    background-color: #CCEFF1;
+}
+.comm-code-3 {
+    background-color: #DEF2CE;
+}
+.comm-code-4 {
+    background-color: #FDF5BA;
+}
+.comm-code-5 {
+    background-color: #FCDFB9;
+}
+.commodity-hierarchy-dash-2>span::before {
+    content: "—";
+    margin-left: -60px;
+    margin-right: 20px;
+    padding-left: 20px;
+}
+.commodity-hierarchy-dash-3>span::before {
+    content:"-";
+    background-color: blue;
+    margin-left: -90x;
+    margin-right: 20px;
+    padding-left: 20px;
+}
+.commodity-hierarchy-dash-4 {
+    background-color: yellow;
+    margin-left: -60px;
+    margin-right: 40px;
+    padding-left: 20px;
+}
+.commodity-hierarchy-dash-5 {
+    background-color: red;
+    margin-left: -80px;
+    margin-right: 20px;
+    padding-left: 20px;
+}
+// I want to: set a — for each 
