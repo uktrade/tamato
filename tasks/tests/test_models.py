@@ -263,5 +263,5 @@ def test_task_is_summary_task_property(create_task_fn):
 
 
 def test_prefixed_id(task_workflow):
-    expected_prefixed_id = f"{settings.TICKET_PREFIX}{str(task_workflow.id)}"
+    expected_prefixed_id = f"{settings.TICKET_PREFIX}{task_workflow.id}"
     assert task_workflow.prefixed_id == expected_prefixed_id

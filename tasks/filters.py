@@ -17,8 +17,6 @@ from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskWorkflowTemplate
 
-TICKET_ID = re.compile(rf"(?i)({settings.TICKET_PREFIX}?)(\d+)")
-
 
 class TaskFilter(TamatoFilter):
 
@@ -51,7 +49,9 @@ class TaskWorkflowFilter(TamatoFilter):
         "title",
         "description",
     )
-    search_regex = TICKET_ID
+    if settings.TICKET_PREFIX:
+        search_regex = re.compile(rf"(?i)({settings.TICKET_PREFIX}?)(\d+)")
+
     clear_url = reverse_lazy("workflow:task-workflow-ui-list")
 
     progress_state = ModelMultipleChoiceFilter(
@@ -75,14 +75,14 @@ class TaskWorkflowFilter(TamatoFilter):
     )
 
     def get_search_term(self, value):
-        """Looks for a pattern matching a ticket ID and removes any non
-        numerical prefix so only the number is searched."""
+        """Looks for a pattern matching a ticket ID with prefix and removes the
+        ticket_prefix from the search groups."""
         value = value.strip()
         if self.search_regex:
             match = self.search_regex.search(value)
             if match:
                 terms = list(match.groups())
-                terms = [term for term in terms if term.isdigit()]
+                terms = [term for term in terms if term != settings.TICKET_PREFIX]
                 terms.extend(
                     [value[: match.start()].strip(), value[match.end() :].strip()],
                 )

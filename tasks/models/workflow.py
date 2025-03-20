@@ -57,7 +57,7 @@ class TaskWorkflow(Queue):
 
     @property
     def prefixed_id(self) -> str:
-        return f"{settings.TICKET_PREFIX}{str(self.id)}"
+        return f"{settings.TICKET_PREFIX}{self.id}"
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
