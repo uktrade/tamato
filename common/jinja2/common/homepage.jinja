@@ -47,12 +47,12 @@
               <a href="{{ url('workflow:task-workflow-ui-list') }}"
               class="govuk-button"
             >View all tickets</a>
-              <a href="{{ url('workflow:task-workflow-ui-list') }}"
+              <a href="{{ url('workflow:task-workflow-ui-create') }}"
             class="govuk-button govuk-button--secondary"
           >Create a new ticket</a>
             </div>
         {% if request.user.is_superuser %}
-          <p class="govuk-body"></p>
+          <p class="govuk-body">
           <a href="{{ url('workflow:task-workflow-template-ui-list') }}"
             class="govuk-link"
           >View ticket templates</a>
@@ -96,17 +96,17 @@
 
         <div>
           {% if can_add_workbasket %}
-              <p><a href="{{ url('workbaskets:workbasket-ui-create') }}">Create a workbasket</a></p>
+              <p><a href="{{ url('workbaskets:workbasket-ui-create') }}" class="govuk-link">Create a workbasket</a></p>
           {% endif %}
 
           {% if can_edit_workbasket %}
-              <p><a href="{{ url('workbaskets:workbasket-ui-list') }}">Edit a workbasket</a></p>
+              <p><a href="{{ url('workbaskets:workbasket-ui-list') }}" class="govuk-link">Edit a workbasket</a></p>
           {% endif %}
 
           {% if can_manage_packaging %}
-              <p><a href="{{ url('publishing:packaged-workbasket-queue-ui-list') }}">Package workbaskets</a><br></p>
+              <p><a href="{{ url('publishing:packaged-workbasket-queue-ui-list') }}" class="govuk-link">Package workbaskets</a><br></p>
           {% endif %}
-            <p><a href="{{ url('workbaskets:workbasket-ui-list-all') }}">Search for workbaskets</a></p>
+            <p><a href="{{ url('workbaskets:workbasket-ui-list-all') }}" class="govuk-link">Search for workbaskets</a></p>
         </div>
       </article>
     {% endif %}
