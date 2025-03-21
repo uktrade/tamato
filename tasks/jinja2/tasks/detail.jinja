@@ -69,7 +69,7 @@
       Status
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ display_status(object.progress_state.__str__()) }}
+      {{ display_status(str(object.progress_state)) }}
     </dd>
     <dd class="govuk-summary-list__actions">
       <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
