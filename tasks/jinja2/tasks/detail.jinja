@@ -69,7 +69,7 @@
       Status
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ display_status(str(object.progress_state)) }}
+      {{ display_status(object.progress_state.get_name_display()) }}
     </dd>
     <dd class="govuk-summary-list__actions">
       <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
@@ -115,7 +115,7 @@
       Created date
     </dt>
     <dd class="govuk-summary-list__value">
-      {{ "{:%d %b %Y}".format(object.created_at) }}
+      {{ object.created_at|format_date }}
     </dd>
     <dd class="govuk-summary-list__actions">
       <!-- Empty for column alignment -->
