@@ -144,6 +144,25 @@
       </article>
     {% endif %}
 
+
+    {% if request.user.groups.filter(name='Tariff Managers').exists() or request.user.is_superuser %}
+      <article class="masonry-card">
+        <h3 class="govuk-heading-m">Tickets</h3>
+          <p class="govuk-body"></p>
+          <a href="{{ url('workflow:task-workflow-ui-list') }}"
+            class="govuk-link"
+          >Tickets</a>
+          </p>
+        {% if request.user.is_superuser %}
+          <p class="govuk-body"></p>
+          <a href="{{ url('workflow:task-workflow-template-ui-list') }}"
+            class="govuk-link"
+          >Ticket templates</a>
+          </p>
+        {% endif %}
+      </article>
+    {% endif %}
+
     <article class="masonry-card">
       <h3 class="govuk-heading-m">Resources</h3>
       <p class="govuk-body">

@@ -6,18 +6,16 @@
 {% from "includes/workbaskets/navigation.jinja" import create_workbasket_detail_navigation with context %}
 {% from "macros/checkbox_item.jinja" import checkbox_item %}
 
-{% set base_url = url("workbaskets:workbasket-ui-changes", args=[workbasket.pk]) ~ "?page=" ~ page_obj.number %}
-
 {% set component %}
-  {{ create_sortable_anchor(request, "component", "Item", base_url, True) }}
+  {{ create_sortable_anchor(request, "Item", sorting_urls["component"]) }}
 {% endset %}
 
 {% set action %}
-  {{ create_sortable_anchor(request, "action", "Action", base_url, True) }}
+  {{ create_sortable_anchor(request, "Action", sorting_urls["action"]) }}
 {% endset %}
 
 {% set activity_date %}
-  {{ create_sortable_anchor(request, "activity_date", "Activity date", base_url, True) }}
+  {{ create_sortable_anchor(request, "Activity date", sorting_urls["activity_date"]) }}
 {% endset %}
 
 {% set page_title %} Workbasket {{ workbasket.id }} - {{ workbasket.status }} {% endset %}
