@@ -14,7 +14,7 @@
     ],
     with_workbasket=False,
   ) }}
-  {%else %}
+  {% else %}
     {{ breadcrumbs(request, [
       {"text": "Step: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk}) },
       {"text": "Delete step: " ~ object.title},
