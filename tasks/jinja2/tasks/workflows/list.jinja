@@ -44,7 +44,7 @@
             <a
               class="govuk-link"
               href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk':  object.taskworkflow.pk}) }}"
-            >{{ object.taskworkflow.pk }}</a>
+            >{{ object.taskworkflow.prefixed_id }}</a>
           {%- endset -%}
 
           {{ table_rows.append([

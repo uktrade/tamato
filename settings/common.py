@@ -945,3 +945,7 @@ DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "100
 # Asynchronous / background (bulk) object creation and editing config.
 MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))
 MEASURES_ASYNC_EDIT = is_truthy(os.environ.get("MEASURES_ASYNC_EDIT", "true"))
+
+
+# Ticket naming prefix
+TICKET_PREFIX = os.environ.get("TICKET_PREFIX", "TC-")

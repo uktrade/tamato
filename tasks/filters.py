@@ -1,3 +1,6 @@
+import re
+
+from django.conf import settings
 from django.db.models import TextChoices
 from django.forms import CheckboxSelectMultiple
 from django.forms import widgets
@@ -42,10 +45,11 @@ class TaskFilter(TamatoFilter):
 
 class TaskWorkflowFilter(TamatoFilter):
     search_fields = (
-        "id",
+        "taskworkflow__id",
         "title",
         "description",
     )
+
     clear_url = reverse_lazy("workflow:task-workflow-ui-list")
 
     progress_state = ModelMultipleChoiceFilter(
@@ -67,6 +71,30 @@ class TaskWorkflowFilter(TamatoFilter):
         field_name="assignees",
         queryset=User.objects.active_tms(),
     )
+
+    def get_search_term(self, value):
+        """Looks for a pattern matching a ticket ID with prefix and removes the
+        ticket_prefix from the search groups."""
+        value = value.strip()
+        ticket_prefix = settings.TICKET_PREFIX
+
+        if ticket_prefix:
+            cleaned_prefix = re.sub("-", "", ticket_prefix)
+            cleaned_search_value = re.sub("-", "", value)
+            prefixed_id_pattern = re.compile(rf"(?i)({cleaned_prefix})(\d+)")
+            match = prefixed_id_pattern.search(cleaned_search_value)
+            if match:
+                prefix_pattern = re.compile(rf"(?i){cleaned_prefix}")
+                terms = list(match.groups())
+                terms = [term for term in terms if not prefix_pattern.search(term)]
+                terms.extend(
+                    [
+                        cleaned_search_value[: match.start()].strip(),
+                        cleaned_search_value[match.end() :].strip(),
+                    ],
+                )
+                return " ".join(terms)
+        return value
 
     class Meta:
         model = Task
