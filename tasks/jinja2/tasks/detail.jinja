@@ -57,7 +57,7 @@
   </div>
 </div>
 
-{% if ticket_number%}
+{% if ticket_number %}
   <a href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk}) }}" class="govuk-link govuk-back-link govuk-!-margin-bottom-8">Back to ticket</a>
 {%endif%}
 <h2 class="govuk-heading-m">Details</h2>
