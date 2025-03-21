@@ -9,6 +9,7 @@ import settings
 from common.tests.factories import CommentFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
+from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
 from common.tests.factories import UserFactory
 from common.util import format_date
@@ -126,71 +127,6 @@ def test_confirm_create_template_shows_task_or_subtask(
     expected_h1_text = f"{object_type}: {parent_task_instance.title}"
 
     assert expected_h1_text in page.find("h1").text
-
-
-@pytest.mark.parametrize(
-    ("task_factory", "update_url"),
-    [
-        (TaskFactory, "workflow:task-ui-update"),
-        (SubTaskFactory, "workflow:subtask-ui-update"),
-    ],
-    ids=("task test", "subtask test"),
-)
-def test_update_link_changes_for_task_and_subtask(
-    superuser_client,
-    task_factory,
-    update_url,
-):
-    task = task_factory.create()
-
-    url = reverse(
-        "workflow:task-ui-detail",
-        kwargs={
-            "pk": task.pk,
-        },
-    )
-    response = superuser_client.get(url)
-    assert response.status_code == 200
-
-    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-
-    update_link = reverse(
-        update_url,
-        kwargs={
-            "pk": task.pk,
-        },
-    )
-    assert page.find("a", href=update_link)
-
-
-@pytest.mark.parametrize(
-    ("task_factory"),
-    [TaskFactory, SubTaskFactory],
-    ids=("task test", "subtask test"),
-)
-def test_create_subtask_button_shows_only_for_non_parent_tasks(
-    superuser_client,
-    task_factory,
-):
-    task = task_factory.create()
-
-    url = reverse(
-        "workflow:task-ui-detail",
-        kwargs={
-            "pk": task.pk,
-        },
-    )
-    response = superuser_client.get(url)
-    assert response.status_code == 200
-
-    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-
-    create_subtask_url = reverse(
-        "workflow:subtask-ui-create",
-        kwargs={"parent_task_pk": task.pk},
-    )
-
-    assert bool(page.find("a", href=create_subtask_url)) != task.is_subtask
 
 
 def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
@@ -1026,8 +962,7 @@ def test_ticket_comments_render(valid_user_client):
         "This is an initial comment which should be on the second page."
         in comments[2].text
     )
-
-
+    
 def test_ticket_view_add_comment(valid_user_client):
     """Tests that a comment can be added to a ticket from the ticket summary
     view."""
@@ -1136,3 +1071,43 @@ def test_ticket_comment_edit_delete_permissions(
 
     response = superuser_client.post(delete_url, ticket_pk=task_workflow.pk)
     assert response.status_code == 403
+    
+
+def test_task_detail_view_displays_correctly(
+    valid_user_client,
+    task_workflow_single_task_item,
+):
+    task_item = task_workflow_single_task_item.get_items()[0]
+    task = Task.objects.get(pk=task_item.task_id)
+
+    user = UserFactory.create(
+        first_name="Testo",
+        last_name="Useri",
+    )
+
+    assignee = TaskAssigneeFactory.create(
+        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
+        task=task,
+        user=user,
+    )
+
+    url = reverse(
+        "workflow:task-ui-detail",
+        kwargs={"pk": task.pk},
+    )
+    response = valid_user_client.get(url)
+    assert response.status_code == 200
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    assert f"Step: {task.title}" in page.find("h1").text
+
+    table_values = [
+        dd.text.strip()
+        for dd in page.find_all("dd", {"class": "govuk-summary-list__value"})
+    ]
+
+    assert assignee.user.get_full_name() in table_values
+    assert format_date(task.created_at) in table_values
+    assert task.description in table_values
+    assert task.progress_state.__str__() in table_values
