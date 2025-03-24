@@ -26,6 +26,16 @@ ui_patterns = [
         name="measure-ui-create",
     ),
     path(
+        "<sid:sid>/copy/",
+        views.MeasureCopy.as_view(),
+        name="measure-ui-copy",
+    ),
+    path(
+        "<sid:sid>/confirm-copy/",
+        views.MeasureConfirmCopy.as_view(),
+        name="measure-ui-confirm-copy",
+    ),
+    path(
         "edit-multiple/",
         views.MeasureEditWizard.as_view(
             url_name="measure-ui-edit-multiple",
