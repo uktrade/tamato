@@ -75,26 +75,36 @@ class TaskWorkflowFilter(TamatoFilter):
     def get_search_term(self, value):
         """Looks for a pattern matching a ticket ID with prefix and removes the
         ticket_prefix from the search groups."""
-        value = value.strip()
-        ticket_prefix = settings.TICKET_PREFIX
+        return self.normalise_prefixed_ticket_ids(value)
 
-        if ticket_prefix:
-            cleaned_prefix = re.sub("-", "", ticket_prefix)
-            cleaned_search_value = re.sub("-", "", value)
-            prefixed_id_pattern = re.compile(rf"(?i)({cleaned_prefix})(\d+)")
-            match = prefixed_id_pattern.search(cleaned_search_value)
+    def normalise_prefixed_ticket_ids(self, search_sentence: str) -> str:
+        """
+        Normalise all terms in `search_sentence` that match prefixed ticket IDs
+        and return the normalised result.
+
+        Ticket IDs may be 'bare' (no prefix included) or include the ticket ID
+        prefix string. For instance, given a ticket ID prefix of 'TC-', then
+        both 'TC-123' and '123' would be considered valid IDs.
+        """
+
+        if not settings.TICKET_PREFIX or not search_sentence.strip():
+            return search_sentence
+
+        normalised_tokens = []
+
+        for token in search_sentence.strip().split(" "):
+            match = re.match(
+                pattern=rf"({settings.TICKET_PREFIX})(\d+)",
+                string=token,
+                flags=re.IGNORECASE,
+            )
+
             if match:
-                prefix_pattern = re.compile(rf"(?i){cleaned_prefix}")
-                terms = list(match.groups())
-                terms = [term for term in terms if not prefix_pattern.search(term)]
-                terms.extend(
-                    [
-                        cleaned_search_value[: match.start()].strip(),
-                        cleaned_search_value[match.end() :].strip(),
-                    ],
-                )
-                return " ".join(terms)
-        return value
+                normalised_tokens.append(match[2])
+            else:
+                normalised_tokens.append(token)
+
+        return " ".join(normalised_tokens)
 
     class Meta:
         model = Task

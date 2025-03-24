@@ -14,14 +14,13 @@ pytestmark = pytest.mark.django_db
     [
         (f"{settings.TICKET_PREFIX}1234", True),
         (f"{settings.TICKET_PREFIX.lower()}1234", True),
-        (f"{settings.TICKET_PREFIX}-1234", True),
         ("1234", True),
         ("4321", False),
     ],
 )
 def test_ticket_id_filter(search_term, expected_result):
     """Test that a user searching by a prefixed ticket ID correctly returns
-    results regardless of case or if the dash is included."""
+    results regardless of case or prefix."""
 
     ticket_filter = TaskWorkflowFilter()
     summary_task = TaskFactory.create()
@@ -32,17 +31,36 @@ def test_ticket_id_filter(search_term, expected_result):
     assert (summary_task in filtered_steps) == expected_result
 
 
-@pytest.mark.parametrize("ticket_prefix", [("TC2025"), ("TC2025-"), ("")])
-def test_alternative_ticket_prefixes(ticket_prefix):
-    """Test that filtering still works with a prefix including numbers or no
-    prefix at all."""
+@pytest.mark.parametrize(
+    ("ticket_prefix", "search_sentence", "expected_result"),
+    (
+        ("", "", ""),
+        ("", "123", "123"),
+        ("", "ABC", "ABC"),
+        ("", "123 456", "123 456"),
+        ("TC-", "123", "123"),
+        ("TC-", "TC-123", "123"),
+        ("TC-", "TC-123 456", "123 456"),
+        ("TC-", "TC-ABC", "TC-ABC"),
+        ("TC-", "TC-ABC 123", "TC-ABC 123"),
+        ("TC-", "TC-ABC TC-123", "TC-ABC 123"),
+        ("2025", "2025123", "123"),
+        ("2025", "2025ABC 123", "2025ABC 123"),
+    ),
+)
+def test_normalise_prefixed_ticket_ids(
+    ticket_prefix,
+    search_sentence,
+    expected_result,
+):
+    """Test that TaskWorkflowFilter.normalise_prefixed_ticket_ids() returns a
+    normalised sentence with ticket ID prefixes removed correctly."""
+
     settings.TICKET_PREFIX = ticket_prefix
 
     ticket_filter = TaskWorkflowFilter()
-    summary_task = TaskFactory.create()
-    TaskWorkflowFactory.create(summary_task=summary_task, id=1234)
-    queryset = Task.objects.all()
+    normalised_sentence = ticket_filter.normalise_prefixed_ticket_ids(
+        search_sentence=search_sentence,
+    )
 
-    search_term = f"{ticket_prefix}1234"
-    filtered_steps = ticket_filter.filter_search(queryset, "search", search_term)
-    assert (summary_task in filtered_steps) == True
+    assert normalised_sentence == expected_result
