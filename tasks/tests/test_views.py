@@ -1142,7 +1142,7 @@ def test_ticket_comment_edit_delete_permissions(
 
 def test_ordering_by_assignee_first_name_workflow_list_view(valid_user_client):
     """Tests that workflows listed on `TaskWorkflowList` view can be sorted by
-    assignee's first_name in ascending or descending order."""
+    assignee's name in ascending or descending order."""
 
     workflow_instance_a = TaskWorkflowFactory.create()
     assignee_a = UserFactory.create(first_name="A", last_name="B")
