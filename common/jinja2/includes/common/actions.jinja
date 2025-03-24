@@ -13,6 +13,10 @@
         {% if delete_url %}
             <li><a class="govuk-link" href="{{ delete_url }}">Delete this {{object._meta.verbose_name}}</a></li>
         {% endif %}
+        {% set copy_url = object.get_url('copy') %}
+        {% if copy_url %}
+            <li><a class="govuk-link" href="{{ copy_url }}">Copy this {{object._meta.verbose_name}}</a></li>
+        {% endif %}
         </ul>
     </div>
 </div>
