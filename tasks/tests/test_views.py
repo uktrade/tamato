@@ -580,7 +580,7 @@ def test_workflow_detail_view_displays_tasks(
 
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
 
-    assert f"Ticket {workflow.id}" in page.find("h1").text
+    assert f"Ticket {workflow.prefixed_id}" in page.find("h1").text
     assert page.find("p", text=workflow.description)
     assert page.find("a", text=f"{workbasket.pk} - {workbasket.status}")
     assert page.find("dd", text=format_date(workflow.summary_task.created_at))
