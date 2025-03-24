@@ -111,6 +111,9 @@ class HomeView(LoginRequiredMixin, FormView):
                 "can_view_reports": self.request.user.has_perm(
                     "reports.view_report_index",
                 ),
+                "can_view_tickets": self.request.user.has_perm(
+                    "tasks.view_taskworkflow",
+                ),
                 "my_tickets": my_tickets,
             },
         )

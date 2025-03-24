@@ -20,7 +20,7 @@
   {% endblock %}
 
   <div id="masonry-container" class="govuk-grid-row">
-    {% if request.user.groups.filter(name='Tariff Managers').exists() or request.user.is_superuser %}
+    {% if can_view_tickets %}
 
     {% set my_tickets_rows = []%}
       {% for ticket in my_tickets %}
@@ -59,7 +59,7 @@
           </p>
         {% endif %}
         <h4>My tickets</h4>
-        <p><a href="#NOT-IMPLEMENTED" class="govuk-link">View all my tickets</a>
+        <p><a href="{{ url('workflow:task-workflow-ui-list') }}" class="govuk-link">View all my tickets</a>
         </p>
         {{ govukTable({
           "head": [
