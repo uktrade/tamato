@@ -8,6 +8,7 @@ from common.forms import BindNestedFormMixin
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
 from common.forms import unprefix_formset_data
+from common.util import make_real_edit
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas import constants
@@ -269,13 +270,18 @@ class MeasureForm(
         if commit:
             instance.save()
 
-        sid = instance.sid
-
         geo_area = self.cleaned_data.get("geographical_area")
         if geo_area and geo_area != instance.geographical_area:
             instance.geographical_area = geo_area
             instance.save(update_fields=["geographical_area"])
 
+        self.update_geo_area_exclusions(instance)
+        self.update_duty_sentence(instance)
+        self.update_footnote_associations(instance)
+
+        return instance
+
+    def update_geo_area_exclusions(self, instance):
         if self.cleaned_data.get("exclusions"):
             exclusions = self.cleaned_data.get("exclusions")
 
@@ -322,6 +328,7 @@ class MeasureForm(
                     modified_measure=instance,
                 )
 
+    def update_duty_sentence(self, instance):
         if (
             self.request.session[f"instance_duty_sentence_{self.instance.sid}"]
             != self.cleaned_data["duty_sentence"]
@@ -340,10 +347,11 @@ class MeasureForm(
                 "component_measure",
             )
 
+    def update_footnote_associations(self, instance):
         # Footnotes added via "Add another footnote" button
         footnote_pks = [
             form["footnote"]
-            for form in self.request.session.get(f"formset_initial_{sid}", [])
+            for form in self.request.session.get(f"formset_initial_{instance.sid}", [])
         ]
 
         # Footnote submitted directly via "Save" button
@@ -355,10 +363,12 @@ class MeasureForm(
             footnote_pks.append(form_footnote)
 
         # Footnotes already on measure
-        footnote_pks.extend(self.request.session.get(f"instance_footnotes_{sid}", []))
+        footnote_pks.extend(
+            self.request.session.get(f"instance_footnotes_{instance.sid}", []),
+        )
 
-        self.request.session.pop(f"formset_initial_{sid}", None)
-        self.request.session.pop(f"instance_footnotes_{sid}", None)
+        self.request.session.pop(f"formset_initial_{instance.sid}", None)
+        self.request.session.pop(f"instance_footnotes_{instance.sid}", None)
 
         removed_associations = (
             instance.footnoteassociationmeasure_set.current().exclude(
@@ -366,10 +376,12 @@ class MeasureForm(
             )
         )
         for association in removed_associations:
-            association.new_version(
+            make_real_edit(
+                tx=instance.transaction,
+                cls=models.FootnoteAssociationMeasure,
+                obj=association,
+                data={"footnoted_measure": instance},
                 workbasket=WorkBasket.current(self.request),
-                transaction=instance.transaction,
-                footnoted_measure=instance,
                 update_type=UpdateType.DELETE,
             )
 
@@ -392,20 +404,26 @@ class MeasureForm(
                 .first()
             )
             if existing_association:
-                existing_association.new_version(
+                make_real_edit(
+                    tx=instance.transaction,
+                    cls=models.FootnoteAssociationMeasure,
+                    obj=existing_association,
+                    data={"footnoted_measure": instance},
                     workbasket=WorkBasket.current(self.request),
-                    transaction=instance.transaction,
-                    footnoted_measure=instance,
+                    update_type=UpdateType.UPDATE,
                 )
             else:
-                models.FootnoteAssociationMeasure.objects.create(
-                    footnoted_measure=instance,
-                    associated_footnote=footnote,
+                make_real_edit(
+                    tx=instance.transaction,
+                    cls=models.FootnoteAssociationMeasure,
+                    obj=None,
+                    data={
+                        "footnoted_measure": instance,
+                        "associated_footnote": footnote,
+                    },
+                    workbasket=WorkBasket.current(self.request),
                     update_type=UpdateType.CREATE,
-                    transaction=instance.transaction,
                 )
-
-        return instance
 
     def is_valid(self) -> bool:
         """Check that measure conditions data is valid before calling super() on

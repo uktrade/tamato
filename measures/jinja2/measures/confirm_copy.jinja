@@ -1,0 +1,24 @@
+{% extends "layouts/confirm.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Measure copied" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and edit measures", "href": url("measure-ui-list")},
+      {"text": "Measure: " ~ view.kwargs.sid2, "href": url("measure-ui-detail", kwargs={"sid": view.kwargs.sid})},
+      {"text": page_title}
+    ])
+  }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": "Measure " ~ view.kwargs.sid ~ " copied",
+    "text": "Measure " ~ view.kwargs.sid2 ~ " has been created and added to workbasket " ~ request.user.current_workbasket.pk,
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block button_group %}{% endblock %}
+{% block actions %}{% endblock %}
