@@ -58,7 +58,7 @@
 
         {{ govukTable({
           "head": [
-            {"text": create_sortable_anchor(request, "ID", sorting_urls["taskworkflow__id"])},
+            {"text": create_sortable_anchor(request, "ID", sorting_urls["taskworkflow__id"]), "classes": "govuk-!-padding-left-4"},
             {"text": "Ticket name"},
             {"text": create_sortable_anchor(request, "Assignee", sorting_urls["assigned_user"])},
             {"text": create_sortable_anchor(request, "Entry into force date", sorting_urls["taskworkflow__eif_date"])},
