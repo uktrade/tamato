@@ -102,6 +102,9 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
         context["assignable_users"] = [
             {"pk": user.pk, "name": user.get_full_name()} for user in assignable_users
         ]
+        if context["object"].taskitem.workflow:
+            context["ticket_title"] = context["object"].taskitem.workflow.title
+            context["ticket_number"] = context["object"].taskitem.workflow.pk
 
         return context
 
@@ -182,7 +185,12 @@ class TaskDeleteView(PermissionRequiredMixin, DeleteView):
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["verbose_name"] = "task"
+        context_data["verbose_name"] = "step"
+        context_data["ticket_number"] = (
+            context_data["object"].taskitem.workflow.pk
+            if context_data["object"].taskitem.workflow.pk
+            else None
+        )
         return context_data
 
     def get_success_url(self):
