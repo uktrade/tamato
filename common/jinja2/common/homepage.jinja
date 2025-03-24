@@ -72,23 +72,6 @@
       </article>
     {% endif %}
 
-    {% if request.user.groups.filter(name='Tariff Managers').exists() or request.user.is_superuser %}
-      <article class="masonry-card">
-        <h3 class="govuk-heading-m">Tickets in review</h3>
-          <p class="govuk-body"></p>
-          <a href="{{ url('workflow:task-workflow-ui-list') }}"
-            class="govuk-link"
-          >Tickets</a>
-          </p>
-        {% if request.user.is_superuser %}
-          <p class="govuk-body"></p>
-          <a href="{{ url('workflow:task-workflow-template-ui-list') }}"
-            class="govuk-link"
-          >Ticket templates</a>
-          </p>
-        {% endif %}
-      </article>
-    {% endif %}
 
     {% if can_view_workbasket %}
       <article class="masonry-card">
@@ -141,24 +124,21 @@
             class="govuk-link"
           >Measures create process queue</a>
           <br>
-          This queue shows the status of measures that you submitted for
-          creation.
+          Shows the status of measures that you submitted for creation.
           </p>
           <p class="govuk-body">
           <a href="{{ url('measure-edit-process-queue') }}"
             class="govuk-link"
           >Measures edit process queue</a>
           <br>
-          This queue shows the status of measures that you submitted for
-          editing.
+          Shows the status of measures that you submitted for editing.
           </p>
           <p class="govuk-body">
           <a href="{{ url('workbaskets:rule-check-queue') }}"
             class="govuk-link"
           >Rule check queue</a>
           <br>
-          This queue shows currently running and queued business rule
-          checks.
+          Shows currently running and queued business rule checks.
         </p>
       </article>
     {% endif %}
