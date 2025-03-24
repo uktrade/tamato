@@ -30,7 +30,7 @@ from measures.validators import MeasureTypeCombination
 from measures.validators import OrderNumberCaptureCode
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
-from tasks.models import UserAssignment
+from workbaskets.models import AssignmentType
 from workbaskets.validators import WorkflowStatus
 
 User = get_user_model()
@@ -1533,48 +1533,38 @@ class CrownDependenciesEnvelopeFailedNotificationFactory(
         model = "notifications.CrownDependenciesEnvelopeFailedNotification"
 
 
-class TaskFactory(factory.django.DjangoModelFactory):
-    title = factory.Faker("sentence")
-    description = factory.Faker("sentence")
+class WorkBasketAssignmentFactory(factory.django.DjangoModelFactory):
+    user = factory.SubFactory(UserFactory)
+    assigned_by = factory.SubFactory(UserFactory)
+    assignment_type = FuzzyChoice(AssignmentType.values)
     workbasket = factory.SubFactory(WorkBasketFactory)
 
     class Meta:
-        model = "tasks.Task"
-
-
-class UserAssignmentFactory(factory.django.DjangoModelFactory):
-    user = factory.SubFactory(UserFactory)
-    assigned_by = factory.SubFactory(UserFactory)
-    assignment_type = FuzzyChoice(UserAssignment.AssignmentType.values)
-    task = factory.SubFactory(TaskFactory)
-
-    class Meta:
-        model = "tasks.UserAssignment"
+        model = "workbaskets.WorkBasketAssignment"
 
 
 class AssignedWorkBasketFactory(WorkBasketFactory):
     """Creates a workbasket which has an assigned worker and reviewer."""
 
     @factory.post_generation
-    def user_assignments(self, create, extracted, **kwargs):
+    def workbasket_assignments(self, create, extracted, **kwargs):
         if not create:
             return
 
-        task = TaskFactory.create(workbasket=self)
-        UserAssignmentFactory.create(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_WORKER,
-            task=task,
+        WorkBasketAssignmentFactory.create(
+            assignment_type=AssignmentType.WORKBASKET_WORKER,
+            workbasket=self,
         )
-        UserAssignmentFactory.create(
-            assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
-            task=task,
+        WorkBasketAssignmentFactory.create(
+            assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+            workbasket=self,
         )
 
 
-class CommentFactory(factory.django.DjangoModelFactory):
+class WorkBasketCommentFactory(factory.django.DjangoModelFactory):
     author = factory.SubFactory(UserFactory)
     content = factory.Faker("sentence")
-    task = factory.SubFactory(TaskFactory)
+    workbasket = factory.SubFactory(WorkBasketFactory)
 
     class Meta:
-        model = "tasks.Comment"
+        model = "workbaskets.WorkBasketComment"
