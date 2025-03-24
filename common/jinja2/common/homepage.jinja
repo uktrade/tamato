@@ -59,7 +59,8 @@
           </p>
         {% endif %}
         <h4>My tickets</h4>
-        <p><a href="{{ url('workflow:task-workflow-ui-list') }}" class="govuk-link">View all my tickets</a>
+        {% set query_string = '?search=&assignees=' ~ request.user.pk ~ '&work_type=&submit=' %}
+        <p><a href="{{ url('workflow:task-workflow-ui-list') + query_string }}" class="govuk-link">View all my tickets</a>
         </p>
         {{ govukTable({
           "head": [
