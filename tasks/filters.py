@@ -73,8 +73,6 @@ class TaskWorkflowFilter(TamatoFilter):
     )
 
     def get_search_term(self, value):
-        """Looks for a pattern matching a ticket ID with prefix and removes the
-        ticket_prefix from the search groups."""
         return self.normalise_prefixed_ticket_ids(value)
 
     def normalise_prefixed_ticket_ids(self, search_sentence: str) -> str:
