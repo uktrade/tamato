@@ -1,3 +1,6 @@
+import re
+
+from django.conf import settings
 from django.db.models import TextChoices
 from django.forms import CheckboxSelectMultiple
 from django.forms import widgets
@@ -42,10 +45,11 @@ class TaskFilter(TamatoFilter):
 
 class TaskWorkflowFilter(TamatoFilter):
     search_fields = (
-        "id",
+        "taskworkflow__id",
         "title",
         "description",
     )
+
     clear_url = reverse_lazy("workflow:task-workflow-ui-list")
 
     progress_state = ModelMultipleChoiceFilter(
@@ -67,6 +71,38 @@ class TaskWorkflowFilter(TamatoFilter):
         field_name="assignees",
         queryset=User.objects.active_tms(),
     )
+
+    def get_search_term(self, value):
+        return self.normalise_prefixed_ticket_ids(value)
+
+    def normalise_prefixed_ticket_ids(self, search_sentence: str) -> str:
+        """
+        Normalise all terms in `search_sentence` that match prefixed ticket IDs
+        and return the normalised result.
+
+        Ticket IDs may be 'bare' (no prefix included) or include the ticket ID
+        prefix string. For instance, given a ticket ID prefix of 'TC-', then
+        both 'TC-123' and '123' would be considered valid IDs.
+        """
+
+        if not settings.TICKET_PREFIX or not search_sentence.strip():
+            return search_sentence
+
+        normalised_tokens = []
+
+        for token in search_sentence.strip().split(" "):
+            match = re.match(
+                pattern=rf"({settings.TICKET_PREFIX})(\d+)",
+                string=token,
+                flags=re.IGNORECASE,
+            )
+
+            if match:
+                normalised_tokens.append(match[2])
+            else:
+                normalised_tokens.append(token)
+
+        return " ".join(normalised_tokens)
 
     class Meta:
         model = Task
