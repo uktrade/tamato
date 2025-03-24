@@ -4,14 +4,16 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Ticket " ~ object.prefixed_id ~ " updated" %}
+{% set object_id = object.prefixed_id if object.prefixed_id else object.id%}
+
+{% set page_title = verbose_name|capitalize ~ " " ~ object_id ~ " updated" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,
     [
       {"text": "Find and view " ~ verbose_name ~ "s", "href": object.get_url("list")},
-      {"text": verbose_name|capitalize ~ " " ~ object.prefixed_id, "href": object.get_url("detail")},
+      {"text": verbose_name|capitalize ~ " " ~ object_id, "href": object.get_url("detail")},
       {"text": page_title}
     ],
     with_workbasket=False,
@@ -20,7 +22,7 @@
 
 {% block panel %}
   {{ govukPanel({
-    "titleText": verbose_name|capitalize ~ " " ~ object.prefixed_id,
+    "titleText": verbose_name|capitalize ~ " " ~ object_id,
     "text": "You have updated the " ~ verbose_name,
     "classes": "govuk-!-margin-bottom-7"
   }) }}
