@@ -6,7 +6,7 @@
 {% from "tasks/macros/display_details.jinja" import display_summary_row_stacked %}
 {% from "tasks/macros/display_details.jinja" import display_status %}
 
-{% set page_title = verbose_name|capitalize ~ " " ~ object.id %}
+{% set page_title = verbose_name|capitalize ~ " " ~ object.prefixed_id %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
