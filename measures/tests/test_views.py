@@ -58,11 +58,11 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture()
 def mocked_diff_components():
-    """Mocks `diff_components()` inside `create_measure_components()` that is
+    """Mocks `diff_components()` inside `update_measure_components()` that is
     called in `MeasureEditWizard` to prevent parsing errors where test measures
     lack a duty sentence."""
     with patch(
-        "measures.editors.create_measure_components",
+        "measures.editors.update_measure_components",
     ) as update_measure_components:
         yield update_measure_components
 
@@ -3021,3 +3021,30 @@ def test_cancel_bulk_processor_task(processing_state, superuser_client):
         pk=measures_bulk_creator.pk,
     )
     assert updated_measures_bulk_creator.processing_state == ProcessingState.CANCELLED
+
+
+def test_copy_measure(client_with_current_workbasket):
+    measure = factories.MeasureFactory.create()
+    commodity = factories.GoodsNomenclatureFactory()
+    url = reverse("measure-ui-copy", kwargs={"sid": measure.sid})
+    response = client_with_current_workbasket.get(url)
+
+    assert response.status_code == 200
+
+    data = {
+        "start_date_0": 1,
+        "start_date_1": 1,
+        "start_date_2": 2025,
+        "goods_nomenclature": commodity.pk,
+    }
+    response2 = client_with_current_workbasket.post(url, data)
+
+    assert response2.status_code == 302
+
+    new_measure = Measure.objects.last()
+    # sanity check
+    assert new_measure.goods_nomenclature == commodity
+    assert response2.url == reverse(
+        "measure-ui-confirm-copy",
+        kwargs={"sid": new_measure.sid},
+    )
