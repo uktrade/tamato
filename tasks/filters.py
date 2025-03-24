@@ -72,7 +72,7 @@ class TaskWorkflowFilter(TamatoFilter):
 
     assignees = ModelChoiceFilter(
         label="Assignees",
-        field_name="assignees__user",
+        method="filter_by_current_assignee",
         queryset=User.objects.active_tms(),
     )
 
@@ -135,6 +135,18 @@ class TaskWorkflowFilter(TamatoFilter):
             )
 
         return queryset.filter(assignment_status)
+
+    def filter_by_current_assignee(self, queryset, name, value):
+        active_assigned_tasks = (
+            TaskAssignee.objects.assigned()
+            .filter(user=value)
+            .distinct()
+            .values_list(
+                "task__id",
+                flat=True,
+            )
+        )
+        return queryset.filter(id__in=active_assigned_tasks)
 
     @property
     def qs(self):

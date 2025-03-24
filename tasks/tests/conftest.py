@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 
 from common.tests.factories import CategoryFactory
@@ -170,3 +172,17 @@ def task_workflow_three_task_items(
     )
 
     return task_workflow
+
+
+@pytest.fixture()
+def unassigned_task_workflow(valid_user) -> TaskWorkflow:
+    """Returns a task workflow that has been unassigned from a user
+    (unassigned_at__isnull=False)"""
+    workflow = factories.TaskWorkflowFactory.create()
+    assignee = TaskAssigneeFactory.create(
+        task=workflow.summary_task,
+        user=valid_user,
+        unassigned_at=datetime.now(),
+    )
+
+    return workflow

@@ -9,9 +9,11 @@ import settings
 from common.tests.factories import CommentFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
+from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
 from common.tests.factories import UserFactory
 from common.util import format_date
+from tasks.filters import TaskWorkflowFilter
 from tasks.forms import TaskWorkflowCreateForm
 from tasks.models import Comment
 from tasks.models import ProgressState
@@ -1136,3 +1138,115 @@ def test_ticket_comment_edit_delete_permissions(
 
     response = superuser_client.post(delete_url, ticket_pk=task_workflow.pk)
     assert response.status_code == 403
+
+
+def test_ordering_by_assignee_first_name_workflow_list_view(valid_user_client):
+    """Tests that workflows listed on `TaskWorkflowList` view can be sorted by
+    assignee's first_name in ascending or descending order."""
+
+    workflow_instance_a = TaskWorkflowFactory.create()
+    assignee_a = UserFactory.create(first_name="A", last_name="B")
+    TaskAssigneeFactory.create(task=workflow_instance_a.summary_task, user=assignee_a)
+
+    workflow_instance_b = TaskWorkflowFactory.create()
+    assignee_b = UserFactory.create(first_name="B", last_name="A")
+    TaskAssigneeFactory.create(task=workflow_instance_b.summary_task, user=assignee_b)
+
+    url = reverse(
+        "workflow:task-workflow-ui-list",
+    )
+    response = valid_user_client.get(
+        f"{url}?sort_by=assigned_user&ordered=asc",
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    ticket_ids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert ticket_ids == [workflow_instance_a.id, workflow_instance_b.id]
+
+    response = valid_user_client.get(
+        f"{url}?sort_by=assigned_user&ordered=desc",
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    ticket_ids = [
+        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert ticket_ids == [workflow_instance_b.id, workflow_instance_a.id]
+
+
+@pytest.mark.parametrize(
+    ("workflow_fixture", "assignment_status", "expected_filtered_count"),
+    [
+        (["assigned_task_workflow"], ["assigned"], 1),
+        (["task_workflow"], ["not_assigned"], 1),
+        (["assigned_task_workflow", "task_workflow"], ["assigned", "not_assigned"], 2),
+        (["unassigned_task_workflow"], ["not_assigned"], 1),
+        (["task_workflow", "unassigned_task_workflow"], ["not_assigned"], 2),
+        (["unassigned_task_workflow", "assigned_task_workflow"], ["assigned"], 1),
+        (
+            ["unassigned_task_workflow", "assigned_task_workflow"],
+            ["assigned", "not_assigned"],
+            2,
+        ),
+        (
+            ["unassigned_task_workflow", "assigned_task_workflow", "task_workflow"],
+            ["assigned", "not_assigned"],
+            3,
+        ),
+        (["task_workflow", "unassigned_task_workflow"], ["assigned"], 0),
+    ],
+)
+def test_filter_by_assignment_status_workflow_list_view(
+    workflow_fixture,
+    assignment_status,
+    expected_filtered_count,
+    request,
+):
+    """Tests if tickets with differing assignment statuses (assigned) or
+    (unassiged & never assigned) can be returned correctly when using the
+    assignment status filter."""
+    [request.getfixturevalue(fixture) for fixture in workflow_fixture]
+    queryset = Task.objects.all()
+
+    filter = TaskWorkflowFilter(queryset=queryset)
+    filtered = filter.filter_by_assignment_status(
+        queryset,
+        assignment_status,
+        assignment_status,
+    )
+
+    assert filtered.count() == expected_filtered_count
+
+
+@pytest.mark.parametrize(
+    ("workflow_fixture", "expected_filtered_count"),
+    [
+        (["assigned_task_workflow"], 0),
+        (["task_workflow"], 0),
+        (["task_workflow", "assigned_task_workflow"], 0),
+        (["unassigned_task_workflow"], 0),
+    ],
+)
+def test_filter_by_workflow_assignee(
+    workflow_fixture,
+    expected_filtered_count,
+    request,
+):
+    """Tests if tickets that have been assigned to a user are returned correctly
+    when filtering by assignee."""
+
+    test_user = UserFactory.create()
+    queryset = Task.objects.all()
+    [request.getfixturevalue(fixture) for fixture in workflow_fixture]
+
+    filter = TaskWorkflowFilter(queryset=queryset)
+    filtered = filter.filter_by_current_assignee(queryset, "assignee", test_user)
+
+    assert filtered.count() == expected_filtered_count
