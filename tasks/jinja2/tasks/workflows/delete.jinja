@@ -1,0 +1,32 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Delete " ~ verbose_name ~ ": " ~ object.title %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {"text": "Find and view "~ verbose_name ~ "s", "href": object.get_url("list")},
+      {
+        "text": verbose_name|capitalize ~ ": " ~ object.prefixed_id,
+        "href": object.get_url("detail"),
+      },
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
+
+{% block form %}
+  {{ govukWarningText({
+    "text": "Are you sure you want to delete ticket " ~ object.prefixed_id ~ "?",
+  }) }}
+
+  {% call django_form(action=object.get_url("delete")) %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

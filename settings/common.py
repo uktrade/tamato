@@ -892,6 +892,9 @@ WEBPACK_LOADER = {
 
 TRANSACTION_SCHEMA = os.getenv("TRANSACTION_SCHEMA", "workbaskets.models.SEED_FIRST")
 
+# TAP's default maximum number of items to display in a paginated list view.
+DEFAULT_PAGINATOR_PER_PAGE_MAX = 20
+
 # Default max number of objects that will be accurately counted by LimitedPaginator.
 LIMITED_PAGINATOR_MAX_COUNT = 200
 # Default max number of objects that will be accurately counted by MeasurePaginator.
@@ -942,3 +945,7 @@ DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "100
 # Asynchronous / background (bulk) object creation and editing config.
 MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))
 MEASURES_ASYNC_EDIT = is_truthy(os.environ.get("MEASURES_ASYNC_EDIT", "true"))
+
+
+# Ticket naming prefix
+TICKET_PREFIX = os.environ.get("TICKET_PREFIX", "TC-")
