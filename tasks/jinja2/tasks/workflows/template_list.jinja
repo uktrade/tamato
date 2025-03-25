@@ -3,7 +3,7 @@
 {% from "components/table/macro.njk" import govukTable %}
 {% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
 
-{% set page_title = "Find and view workflow templates" %}
+{% set page_title = "View all ticket templates" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
@@ -16,8 +16,8 @@
 {% block content %}
   <h1 class="govuk-heading-xl">{{ page_title }}</h1>
   <p class="govuk-body">
-    Search for workflow templates.
-    Alternatively, <a class="govuk-link" href="{{ url("workflow:task-workflow-template-ui-create") }}">create a new workflow template</a>.
+    Search for ticket templates.
+    Alternatively, <a class="govuk-link" href="{{ url("workflow:task-workflow-template-ui-create") }}">create a new ticket template</a>.
   </p>
 
   <div class="filter-layout">
@@ -29,6 +29,7 @@
     </div>
 
   <div class="filter-layout__content">
+    {% set items_name = "ticket template" %}
     {% if paginator.count > 0 %}
       {% include "includes/common/pagination-list-summary.jinja" %}
     {% endif %}

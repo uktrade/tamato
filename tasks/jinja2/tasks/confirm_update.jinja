@@ -1,41 +1,42 @@
-{% extends "common/confirm_update.jinja" %}
+{% extends "layouts/confirm.jinja" %}
 
 {% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = page_title %}
+{% set page_title = "Step updated" %}
+
+{% set ticket = object.taskitem.workflow %}
 
 {% block breadcrumb %}
-  {{ govukBreadcrumbs({
-    "items": [
-      {"text": object_type ~ ": " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk})},
+  {{ breadcrumbs(request, [
+      {"text": "Ticket " ~ ticket.prefixed_id, "href": ticket.get_url("detail")},
+      {"text": "Step: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk})},
       {"text": page_title}
-    ]
-  }) }}
+    ],
+    with_workbasket=False,
+  ) }}
 {% endblock %}
 
 {% block panel %}
   {{ govukPanel({
-    "titleText": object_type ~ ": " ~ object.title,
-    "text": object_type ~ " has been updated",
+    "titleText": "Step: " ~ object.title,
+    "text": "Step has been updated",
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}
 
 {% block button_group %}
   {{ govukButton({
-    "text": "View " ~ object_type,
+    "text": "View step",
     "href": url('workflow:task-ui-detail', kwargs={"pk": object.pk}),
     "classes": "govuk-button"
   }) }}
   {{ govukButton({
-    "text": "Return to homepage",
-    "href": url("home"),
+    "text": "Return to ticket",
+    "href": ticket.get_url("detail"),
     "classes": "govuk-button--secondary"
   }) }}
 {% endblock %}
 
-{% block actions %}
-  <li><a href="{{ url("workflow:task-ui-list") }}">Find and view tasks</a></li>
-{% endblock %}
+{% block actions %}{% endblock %}

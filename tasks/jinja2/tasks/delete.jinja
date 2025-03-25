@@ -8,7 +8,7 @@
 {% block breadcrumb %}
   {% if ticket_number %}
     {{ breadcrumbs(request, [
-      {"text": "Ticket " ~ object.taskitem.workflow.pk, "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk})},
+      {"text": "Ticket " ~ object.taskitem.workflow.prefixed_id, "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk})},
       {"text": "Step: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk}) },
       {"text": "Delete step: " ~ object.title},
     ],

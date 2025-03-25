@@ -5,18 +5,19 @@
 
 {% set page_title = "Step: " ~ object.title %}
 
+{% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
 {% set assign_user_link = url("workflow:task-ui-assign-user", kwargs={"pk": object.pk}) %}
 {% set unassign_user_link = url("workflow:task-ui-unassign-user", kwargs={"pk": object.pk}) %}
 
 {% block breadcrumb %}
   {% if ticket_number %}
     {{ breadcrumbs(request, [
-        {"text": ticket_number, "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_number})},
+        {"text": "Ticket " ~ ticket_prefixed_id, "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_number})},
         {"text": page_title}
       ],
       with_workbasket=False,
     ) }}
-  {%else %}
+  {% else %}
     {{ breadcrumbs(request, [
         {"text": page_title}
       ],
@@ -39,18 +40,18 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
-    {{ticket_title}}
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-three-quarters">
         <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">
-            {{ page_title }}
+          <span class="govuk-caption-xl">{{ ticket_title }}</span>
+          {{ page_title }}
         </h1>
       </div>
       <div class="govuk-grid-column-one-quarter">
         {{ govukButton({
         "text": "Delete step",
         "href": url("workflow:task-ui-delete", kwargs={"pk": object.pk}),
-        "classes": "govuk-button--warning govuk-!-margin-top-2 delete_step_button"
+        "classes": "govuk-button--warning govuk-!-margin-top-2 float-elements-right"
         }) }}
       </div>
     </div>
@@ -78,13 +79,11 @@
 
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">
-      Assignees
+      Assignee
     </dt>
     <dd class="govuk-summary-list__value">
       <div id="assigned-user-content">
-        <div class="govuk-!-margin-bottom-3">
-          {{ current_assignee.name if current_assignee else "None" }}
-        </div>
+        {{ current_assignee.name if current_assignee else "None" }}
       </div>
     </dd>
     <dd class="govuk-summary-list__actions">

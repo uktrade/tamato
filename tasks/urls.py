@@ -23,7 +23,7 @@ task_ui_patterns = [
     ),
     path("<int:pk>/delete/", views.TaskDeleteView.as_view(), name="task-ui-delete"),
     path(
-        "<int:pk>/confirm-delete/",
+        "<int:pk>/workflow/<int:workflow_pk>/confirm-delete/",
         views.TaskConfirmDeleteView.as_view(),
         name="task-ui-confirm-delete",
     ),

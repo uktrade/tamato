@@ -10,7 +10,7 @@
   {{ breadcrumbs(
     request,
     [
-      {"text": "Find and view "~ verbose_name ~ "s", "href": list_url},
+      {"text": "View all "~ verbose_name ~ "s", "href": list_url},
       {"text": page_title}
     ],
     False,
@@ -27,12 +27,12 @@
 
 {% block button_group %}
   {{ govukButton({
-    "text": "Find and view " ~ verbose_name ~ "s",
+    "text": "View all " ~ verbose_name ~ "s",
     "href": list_url,
     "classes": "govuk-button"
   }) }}
   {{ govukButton({
-    "text": "Create a " ~ verbose_name,
+    "text": "Create a new " ~ verbose_name,
     "href": create_url,
     "classes": "govuk-button--secondary"
   }) }}
