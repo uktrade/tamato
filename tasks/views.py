@@ -894,6 +894,11 @@ class TaskWorkflowTemplateDeleteView(PermissionRequiredMixin, DeleteView):
         kwargs["instance"] = self.object
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["verbose_name"] = "ticket template"
+        return context_data
+
     @transaction.atomic
     def form_valid(self, form):
         self.object.get_task_templates().delete()
