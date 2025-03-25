@@ -470,13 +470,6 @@ class TaskWorkflowDetailView(
     def paginator(self):
         return Paginator(self.comments, per_page=10)
 
-    @property
-    def view_url(self) -> str:
-        return reverse(
-            "workflow:task-workflow-ui-detail",
-            kwargs={"pk": self.queue.pk},
-        )
-
     def form_valid(self, form):
         form.save(user=self.request.user, task=self.summary_task)
         return redirect(self.get_success_url())
