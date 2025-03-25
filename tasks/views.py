@@ -628,6 +628,11 @@ class TaskWorkflowConfirmCreateView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/workflows/confirm_create.jinja"
     permission_required = "tasks.add_taskworkflow"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket"
+        return context
+
 
 class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
     model = TaskWorkflow
@@ -852,6 +857,11 @@ class TaskWorkflowTemplateConfirmCreateView(PermissionRequiredMixin, DetailView)
     model = TaskWorkflowTemplate
     template_name = "tasks/workflows/confirm_create.jinja"
     permission_required = "tasks.add_taskworkflowtemplate"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket template"
+        return context
 
 
 class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
