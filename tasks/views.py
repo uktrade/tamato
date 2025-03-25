@@ -955,8 +955,7 @@ class TaskTemplateCreateView(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-
-        context["page_title"] = "Create a task template"
+        context["page_title"] = "Add a step template"
         context["task_workflow_template"] = self.get_task_workflow_template()
 
         return context
@@ -1002,7 +1001,7 @@ class TaskTemplateUpdateView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["page_title"] = f"Update task template: {self.get_object().title}"
+        context["page_title"] = f"Edit step template: {self.get_object().title}"
         context["task_workflow_template"] = (
             self.get_object().taskitemtemplate.workflow_template
         )
