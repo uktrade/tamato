@@ -834,8 +834,7 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "workflow template"
-        context["list_url"] = reverse("workflow:task-workflow-template-ui-list")
+        context["verbose_name"] = "ticket template"
         return context
 
     def form_valid(self, form):
