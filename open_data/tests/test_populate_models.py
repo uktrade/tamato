@@ -10,6 +10,7 @@ from open_data.direct_sql import get_create_materialised_view_sql
 from open_data.direct_sql import get_drop_fk_sql
 from open_data.models import ReportFootnote
 from open_data.models import ReportMeasure
+from open_data.models.datestamp import OriginChoice
 from open_data.models.utils import ReportModel
 from open_data.tasks import populate_open_data
 
@@ -74,7 +75,7 @@ def test_measures_unpublished_and_unapproved(run_required_sql):
     assert Measure.objects.count() == 3
     assert ReportMeasure.objects.count() == 0
     assert Measure.objects.published().count() == 1
-    populate_open_data()
+    populate_open_data(OriginChoice.TEST)
     assert Measure.objects.count() == 3
     assert ReportMeasure.objects.count() == 1
     assert Measure.objects.published().count() == 1
@@ -96,7 +97,7 @@ def test_footnotes(run_required_sql):
     # Open data is empty
     assert ReportFootnote.objects.count() == 0
     assert Footnote.objects.published().count() == 1
-    populate_open_data()
+    populate_open_data(OriginChoice.TEST)
 
     # Nothing created or deleted in the footnotes
     assert Footnote.objects.count() == 1

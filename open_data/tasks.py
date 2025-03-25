@@ -12,6 +12,9 @@ from open_data.commodities import save_commodities_parent
 from open_data.geo_areas import save_geo_areas
 from open_data.measures import create_measure_components
 from open_data.measures import update_measure
+from open_data.models.datestamp import EventChoice
+from open_data.models.datestamp import OriginChoice
+from open_data.models.datestamp import ReportDateStamp
 from open_data.models.utils import ReportModel
 from open_data.models.utils import get_lookup_name
 
@@ -66,8 +69,8 @@ def update_model(model, cursor, verbose=True):
         print(f"{model._meta.db_table} updated")
 
 
-def populate_open_data(verbose=False):
-
+def populate_open_data(origin: OriginChoice, verbose=False):
+    ReportDateStamp.objects.all().delete()
     config = django.apps.apps.get_app_config(APP_LABEL)
     populate_start_time = time.time()
     with connection.cursor() as cursor:
@@ -105,6 +108,11 @@ def populate_open_data(verbose=False):
         save_geo_areas(verbose)
         update_measure(verbose)
         create_measure_components(verbose)
+
+        ReportDateStamp.objects.create(
+            event=EventChoice.REFRESH_OPEN_DATA,
+            origin=origin,
+        )
 
         print(
             f"Completed open data table in {(time.time()-populate_start_time)/60} minutes",
