@@ -32,6 +32,7 @@
     </div>
 
     <div class="filter-layout__content">
+      {% set items_name = "ticket" %}
       {% if paginator.count > 0 %}
         {% include "includes/common/pagination-list-summary.jinja" %}
       {% endif %}
