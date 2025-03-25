@@ -371,7 +371,7 @@ def test_workflow_template_delete_view(
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
     assert (
-        f"Workflow template ID: {task_workflow_template_pk}"
+        f"Ticket template ID: {task_workflow_template_pk}"
         in soup.select(".govuk-panel__title")[0].text
     )
 

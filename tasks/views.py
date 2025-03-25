@@ -920,7 +920,7 @@ class TaskWorkflowTemplateConfirmDeleteView(PermissionRequiredMixin, TemplateVie
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
-                "verbose_name": "workflow template",
+                "verbose_name": "ticket template",
                 "deleted_pk": self.kwargs["pk"],
                 "create_url": reverse("workflow:task-workflow-template-ui-create"),
                 "list_url": reverse("workflow:task-workflow-template-ui-list"),
