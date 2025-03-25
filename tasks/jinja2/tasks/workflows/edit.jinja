@@ -1,7 +1,7 @@
 {% extends "layouts/form.jinja" %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
-{% set page_title = "Edit " ~ verbose_name ~ " " ~ object.prefixed_id %}
+{% set page_title = verbose_name|capitalize ~ " " ~ object.prefixed_id if object.prefixed_id else verbose_name|capitalize ~ " " ~ object.id%}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [

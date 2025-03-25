@@ -635,7 +635,8 @@ def test_workflow_create_view(
     assert confirmation_response.status_code == 200
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert str(created_workflow) in soup.select("h1")[0].text
+    assert created_workflow.title in soup.select("h1")[0].text
+    assert created_workflow.prefixed_id in soup.select("h1")[0].text
 
 
 def test_workflow_create_view_assigns_tasks(
@@ -798,7 +799,7 @@ def test_ticket_list_view(valid_user_client, task_workflow):
     assert len(table.select("tbody tr")) == 1
     assert table.select("tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)")[
         0
-    ].text == str(task_workflow.pk)
+    ].text == str(task_workflow.prefixed_id)
 
 
 def test_workflow_list_view_eif_date(
@@ -821,9 +822,12 @@ def test_workflow_list_view_eif_date(
         "html.parser",
     )
     ticket_ids = [
-        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+        sid.text for sid in page.select(".govuk-table tbody tr td:first-child")
     ]
-    assert ticket_ids == [workflow_instance_1.id, workflow_instance_2.id]
+    assert ticket_ids == [
+        workflow_instance_1.prefixed_id,
+        workflow_instance_2.prefixed_id,
+    ]
 
     response = valid_user_client.get(
         f"{url}?sort_by=taskworkflow__eif_date&ordered=desc",
@@ -834,9 +838,12 @@ def test_workflow_list_view_eif_date(
     )
 
     ticket_ids = [
-        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+        sid.text for sid in page.select(".govuk-table tbody tr td:first-child")
     ]
-    assert ticket_ids == [workflow_instance_2.id, workflow_instance_1.id]
+    assert ticket_ids == [
+        workflow_instance_2.prefixed_id,
+        workflow_instance_1.prefixed_id,
+    ]
 
 
 def test_task_and_workflow_list_view(valid_user_client, task, task_workflow):

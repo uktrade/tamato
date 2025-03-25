@@ -48,6 +48,7 @@ from publishing.models import PackagedWorkBasket
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
 from tasks.models import TaskAssignee
+from tasks.models.task import Task
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
 
@@ -60,6 +61,15 @@ class HomeView(LoginRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        active_user_assignees = (
+            TaskAssignee.objects.assigned()
+            .filter(user=self.request.user)
+            .values_list("task__id")
+        )
+        my_tickets = Task.objects.workflow_summary().filter(
+            id__in=active_user_assignees,
+        )
 
         assignments = (
             TaskAssignee.objects.filter(user=self.request.user)
@@ -101,6 +111,10 @@ class HomeView(LoginRequiredMixin, FormView):
                 "can_view_reports": self.request.user.has_perm(
                     "reports.view_report_index",
                 ),
+                "can_view_tickets": self.request.user.has_perm(
+                    "tasks.view_taskworkflow",
+                ),
+                "my_tickets": my_tickets,
             },
         )
         return context
