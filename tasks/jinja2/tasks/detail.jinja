@@ -5,6 +5,7 @@
 
 {% set page_title = "Step: " ~ object.title %}
 
+{% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
 {% set assign_user_link = url("workflow:task-ui-assign-user", kwargs={"pk": object.pk}) %}
 {% set unassign_user_link = url("workflow:task-ui-unassign-user", kwargs={"pk": object.pk}) %}
 
@@ -16,7 +17,7 @@
       ],
       with_workbasket=False,
     ) }}
-  {%else %}
+  {% else %}
     {{ breadcrumbs(request, [
         {"text": page_title}
       ],
@@ -39,7 +40,7 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
-    {{ticket_title}}
+    {{ ticket_title }}
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-three-quarters">
         <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">
