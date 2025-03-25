@@ -162,12 +162,6 @@ class TaskConfirmUpdateView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/confirm_update.jinja"
     permission_required = "tasks.change_task"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page_title"] = "Task updated"
-        context["object_type"] = "Task"
-        return context
-
 
 class TaskDeleteView(PermissionRequiredMixin, DeleteView):
     model = Task
