@@ -2,8 +2,8 @@
 
 {% block content_class %}commodity-hierarchy{% endblock %}
 {% macro leaf_commodity(comm) -%}
-  <div class="govuk-body {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
-    <span><a class="govuk-link" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">{{comm.description}}</a>  {{ comm_code_display(comm) }}</span>
+  <div class="govuk-body comm-code-container {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
+    <span>{{comm.description}}</span>  <span>{{ comm_code_display(comm) }}</span>
   </div>
 {% endmacro %}
 
@@ -17,23 +17,12 @@
         <td class="comm-code-block"><span class="comm-code-4">{{comm.code.code[6:8]}}</span></td>
         <td class="comm-code-block"><span class="comm-code-5">{{comm.code.code[8:]}}</span></td>
         <td class="comm-code-suffix">({{comm.suffix}})</td>
-        <td><a class="comm-code-link govuk-link govuk-!-font-size-16" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">View<span class="govuk-visually-hidden">{{ comm.code }}</span></td>
+        <td><a class="comm-code-link govuk-link" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">View<span class="govuk-visually-hidden">{{ comm.code }}</span></td>
     </tr>
   </table>
 </span>
 {% endmacro %}
 
-{# {% macro comm_code_description_link(comm) %}
-  <a class="govuk-link" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">{{ comm.description }}</a>
-{% endmacro %} #}
-
-{# TODO:
-  NOTE: tabular numbers didn't work....
-  https://design-system.service.gov.uk/styles/font-override-classes/#tabular-numbers
-  eg: https://www.check-duties-customs-exporting-goods.service.gov.uk/summary?d=DE&ds=gtp&kw=fish&pc=03019917
-</tr>
-
-#}
 {% block tab_content %}
 
 <h2 class="govuk-heading-l">Commodity hierarchy</h2>
@@ -41,22 +30,22 @@
   <p>This commodity has been end dated so no longer forms part of the hierarchy.</p>
 
 {% elif snapshot.commodities|length == 1 %}
-  {{ leaf_commodity(snapshot.commodities[0]) }}
+  <div class="comm-code-container">{{ leaf_commodity(snapshot.commodities[0]) }}</div>
 
 {% else %}
   {% for comm in snapshot.commodities %}
     {% if loop.nextitem and loop.nextitem.indent > comm.indent %}
-    <details class="govuk-details" data-code="{{comm.item_id}}-{{comm.suffix}}"{% if comm in snapshot.ancestors[this_commodity] %}open=""{% endif %}>
-    <summary class="govuk-details__summary">
-      
-        <span class="govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
-          {{ comm.description }} <span class="comm-code-display">{{comm_code_display(comm)}}</span>
-        </span>
-      
-    </summary>
+      <details class="govuk-details" data-code="{{comm.item_id}}-{{comm.suffix}}"{% if comm in snapshot.ancestors[this_commodity] %}open=""{% endif %}>
+      <summary class="govuk-details__summary comm-code-container">
+        
+          <span class="govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold{% endif %}">
+            {{ comm.description }} <span class="comm-code-display">{{comm_code_display(comm)}}</span>
+          </span>
+        
+      </summary>
 
     {% elif not loop.nextitem or loop.nextitem.indent <= comm.indent %}
-      {{ leaf_commodity(comm) }}
+      <div class="comm-code-no-children"><span class="comm-code-container">{{ leaf_commodity(comm) }}</span></div>
 
       {% if not loop.nextitem %}
         {% for i in range(comm.indent) %}
