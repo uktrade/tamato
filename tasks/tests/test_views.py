@@ -1104,9 +1104,12 @@ def test_ordering_by_assignee_first_name_workflow_list_view(valid_user_client):
         "html.parser",
     )
     ticket_ids = [
-        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+        sid.text for sid in page.select(".govuk-table tbody tr td:first-child")
     ]
-    assert ticket_ids == [workflow_instance_a.id, workflow_instance_b.id]
+    assert ticket_ids == [
+        workflow_instance_a.prefixed_id,
+        workflow_instance_b.prefixed_id,
+    ]
 
     response = valid_user_client.get(
         f"{url}?sort_by=assigned_user&ordered=desc",
@@ -1117,9 +1120,12 @@ def test_ordering_by_assignee_first_name_workflow_list_view(valid_user_client):
     )
 
     ticket_ids = [
-        int(sid.text) for sid in page.select(".govuk-table tbody tr td:first-child")
+        sid.text for sid in page.select(".govuk-table tbody tr td:first-child")
     ]
-    assert ticket_ids == [workflow_instance_b.id, workflow_instance_a.id]
+    assert ticket_ids == [
+        workflow_instance_b.prefixed_id,
+        workflow_instance_a.prefixed_id,
+    ]
 
 
 def test_task_detail_view_displays_correctly(
