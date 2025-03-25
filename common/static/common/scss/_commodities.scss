@@ -18,13 +18,12 @@
 }
 
 .comm-code-block {
-    margin-right: .1em;
-    margin-bottom: .2em;
+    margin: .1em;
     font-size: 1em;
     width: 1.5em;
     text-align: center;
     height: 1.3em;
-    padding: .1em;
+    border-right: 2px solid govuk-tint(govuk-colour("white"), 100)
 }
 
 .comm-code-no-children {
@@ -32,23 +31,18 @@
 }
 
 .comm-code-1 {
-    // padding: .1em;
     background-color: #ECE8FF;
 }
 .comm-code-2 {
-    // padding: .1em;
     background-color: #CCEFF1;
 }
 .comm-code-3 {
-    // padding: .1em;
     background-color: #DEF2CE;
 }
 .comm-code-4 {
-    // padding: .1em;
     background-color: #FBF3C6;
 }
 .comm-code-5 {
-    // padding: .1em;
     background-color: #FCDFB9;
 }
 
