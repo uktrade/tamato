@@ -4,52 +4,119 @@
         padding-left: 10px;
         border-left: 20px solid govuk-tint(govuk-colour("green"), 90);
     }
-    details>details::before,
-    details>p::before {
-            content: "—";
-            margin-left: -30px;
-            margin-right: 10px;
-        }
+    // details>details::before,
+    // details>p::before {
+    //         content: "—";
+    //         margin-left: -30px;
+    //         margin-right: 10px;
+    //     }
 }
+
+.comm-code-block {
+    margin-right: .1em;
+    font-size: 1em;
+    width: 1.5em;
+    text-align: center;
+    height: 1.3em;
+    padding: .1em;
+}
+
 .comm-code-1 {
+    padding: .1em;
     background-color: #ECE8FF;
-    // background-color: blue;
 }
 .comm-code-2 {
+    padding: .1em;
     background-color: #CCEFF1;
 }
 .comm-code-3 {
+    padding: .1em;
     background-color: #DEF2CE;
 }
 .comm-code-4 {
+    padding: .1em;
     background-color: #FDF5BA;
 }
 .comm-code-5 {
+    padding: .1em;
     background-color: #FCDFB9;
 }
-.commodity-hierarchy-dash-2>span::before {
-    content: "—";
-    margin-left: -60px;
-    margin-right: 20px;
-    padding-left: 20px;
+
+.govuk-details__summary {
+    display: block;
 }
-.commodity-hierarchy-dash-3>span::before {
-    content:"-";
-    background-color: blue;
-    margin-left: -90x;
-    margin-right: 20px;
-    padding-left: 20px;
+
+.comm-code-display {
+    float: right;
+    // display: block;
 }
-.commodity-hierarchy-dash-4 {
-    background-color: yellow;
-    margin-left: -60px;
-    margin-right: 40px;
-    padding-left: 20px;
+
+.comm-code-table {
+    display: contents;
+    float: right;
 }
-.commodity-hierarchy-dash-5 {
-    background-color: red;
-    margin-left: -80px;
-    margin-right: 20px;
-    padding-left: 20px;
+
+.comm-code-table-container {
+    float: right;
 }
+
+.comm-code-suffix{
+    width: 3rem;
+    text-align: center;
+}
+
+.comm-code-link {
+    float: right;
+}
+// need a separate/additional style for hierarchy-1 when selected
+// .commodity-hierarchy-dash-this-commodity::before {
+//     content: "—";
+//     margin-left: -50px;
+//     margin-right: 30px;
+//     // content: "—";
+//     // margin-left: -80px;
+//     // margin-right: 40px;
+//     // padding-left: 20px;
+// }
+// .commodity-hierarchy-dash-1::before {
+//     content: "—";
+//     margin-left: -30px;
+//     margin-right: 10px;
+//     // content: "—";
+//     // margin-left: -80px;
+//     // margin-right: 40px;
+//     // padding-left: 20px;
+// }
+// .commodity-hierarchy-dash-2::before {
+//     content: "—     —";
+//     margin-left: -80px;
+//     margin-right: 40px;
+//     padding-left: 20px;
+//     span::before {
+//         content: "—";
+//         margin-left: -30px;
+//         margin-right: 10px;
+//     }
+// }
+// .commodity-hierarchy-dash-3>span::before {
+//     content:"-";
+//     // background-color: blue;
+//     margin-left: -100x;
+//     margin-right: 20px;
+//     padding-left: 20px;
+// }
+// .commodity-hierarchy-dash-4::before {
+//     content: "—";
+//     background-color: yellow;
+//     margin-left: -60px;
+//     margin-right: 40px;
+//     padding-left: 20px;
+// }
+// .commodity-hierarchy-dash-5::before {
+//     content: "—";
+//     background-color: red;
+//     margin-left: -80px;
+//     margin-right: 20px;
+//     padding-left: 20px;
+// }
 // I want to: set a — for each 
