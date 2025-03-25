@@ -100,9 +100,13 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
         context["assignable_users"] = [
             {"pk": user.pk, "name": user.get_full_name()} for user in assignable_users
         ]
+
         if context["object"].taskitem.workflow:
             context["ticket_title"] = context["object"].taskitem.workflow.title
-            context["ticket_number"] = context["object"].taskitem.workflow.pk
+            context["ticket_prefixed_id"] = context[
+                "object"
+            ].taskitem.workflow.prefixed_id
+            context["ticket_number"] = context["object"].taskitem.workflow.id
 
         return context
 
