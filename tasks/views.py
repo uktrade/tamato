@@ -196,6 +196,7 @@ class TaskDeleteView(PermissionRequiredMixin, DeleteView):
         return context_data
 
     def get_success_url(self):
+        self.request.session["ticket_pk"] = self.object.taskitem.workflow.pk
         return reverse("workflow:task-ui-confirm-delete", kwargs={"pk": self.object.pk})
 
 
@@ -207,7 +208,10 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data["deleted_pk"] = self.kwargs["pk"]
-        context_data["verbose_name"] = "task"
+        context_data["ticket"] = TaskWorkflow.objects.get(
+            pk=self.request.session["ticket_pk"],
+        )
+        del self.request.session["ticket_pk"]
         return context_data
 
 
