@@ -1523,4 +1523,41 @@ class Migration(migrations.Migration):
                 to="open_data.reportadditionalcodetype",
             ),
         ),
+        migrations.CreateModel(
+            name="ReportDateStamp",
+            fields=[
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "event",
+                    models.CharField(
+                        choices=[
+                            ("Refresh", "Refresh open data"),
+                            ("Export", "Export open data"),
+                        ],
+                    ),
+                ),
+                ("event_date", models.DateTimeField(auto_now_add=True, null=True)),
+                (
+                    "origin",
+                    models.CharField(
+                        choices=[
+                            ("Command", "Management command"),
+                            ("", "Async process"),
+                            ("2", "Test"),
+                        ],
+                    ),
+                ),
+            ],
+            options={
+                "db_table": f"{schema_name}open_data_reportdatestamp",
+            },
+        ),
     ]
