@@ -28,7 +28,6 @@ class ReportDateStamp(models.Model):
     about the data refresh are stored in the log
     """
 
-    # a new comment
     event = models.CharField(choices=EventChoice.choices)
     event_date = models.DateTimeField(auto_now_add=True, editable=False, null=True)
     origin = models.CharField(choices=OriginChoice.choices)
