@@ -42,17 +42,24 @@
   {% for comm in snapshot.commodities %}
     {% if loop.nextitem and loop.nextitem.indent > comm.indent %}
       <details class="govuk-details" data-code="{{comm.item_id}}-{{comm.suffix}}"{% if comm in snapshot.ancestors[this_commodity] %}open=""{% endif %}>
-      <summary class="govuk-details__summary comm-code-container">
+      <summary class="govuk-details__summary comm-code-container comm-code-indent-{{comm.indent}}">
+        {% for num in range(comm.indent) %}
+          <div class="comm-code-indent--spacer comm-code-indent--spacer-{{num}}">—</div>
+        {% endfor %}
         <div class="comm-code-second-container {% if comm == this_commodity %}selected-commodity{% endif %}">
           <span class="govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold selected-commodity{% endif %}">
             {{ comm.description }} <span class="comm-code-display">{{comm_code_display(comm)}}</span>
           </span>
         </div>
-        
       </summary>
 
     {% elif not loop.nextitem or loop.nextitem.indent <= comm.indent %}
-      <div class="comm-code-no-children {% if comm == this_commodity %}selected-commodity{% endif %}"><span class="comm-code-container">{{ leaf_commodity(comm) }}</span></div>
+      <div class="comm-code-no-children comm-code-indent-{{comm.indent}} {% if comm == this_commodity %}selected-commodity{% endif %}">
+        {% for num in range(comm.indent) %}
+          <div class="comm-code-indent--spacer comm-code-indent--spacer-{{num}}">—</div>
+        {% endfor %}
+        <span class="comm-code-container">{{ leaf_commodity(comm) }}</span>
+      </div>
 
       {% if not loop.nextitem %}
         {% for i in range(comm.indent) %}

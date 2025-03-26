@@ -1,10 +1,14 @@
 // Overrides of govuk styles to get everything else displaying correctly
-.govuk-body, .comment p, body, .govuk-body-m {
+.govuk-body,
+.comment p,
+body,
+.govuk-body-m {
     margin-bottom: 0;
 }
 
 .govuk-details {
     margin-bottom: 0px;
+    position: relative;
 }
 
 .govuk-details__summary {
@@ -12,16 +16,87 @@
     margin-bottom: 0px;
 }
 
-.commodity-hierarchy {
-    details>details,
-    details>p {
-        padding-left: 30px;
+$base-padding: 25px;
+
+.comm-code-indent {
+
+    &--spacer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 5px 0 5px;
+
+        &-0 {
+            margin-left: 0;
+        }
+
+        &-1 {
+            margin-left: 30px;
+        }
+
+        &-2 {
+            margin-left: 30px * 2;
+        }
+
+        &-3 {
+            margin-left: 30px * 3;
+        }
+
+        &-4 {
+            margin-left: 30px * 4;
+        }
+
+        &-5 {
+            margin-left: 30px * 5;
+        }
+    }
+
+    &-1 {
+        padding-left: $base-padding + 30px;
+
+        &:before {
+            left: 30px;
+        }
+    }
+
+    &-2 {
+        padding-left: $base-padding + (30px * 2);
+
+        &:before {
+            left: 30px * 2;
+        }
+    }
+
+    &-3 {
+        padding-left: $base-padding + (30px * 3);
+
+        &:before {
+            left: 30px * 3;
+        }
+    }
+
+    &-4 {
+        padding-left: $base-padding + (30px * 4);
+
+        &:before {
+            left: 30px * 4;
+        }
+    }
+
+    &-5 {
+        padding-left: $base-padding + (30px * 5);
+
+        &:before {
+            left: 30px * 5;
+        }
     }
 }
-.comm-code-second-container{
+
+.comm-code-second-container {
     padding-bottom: 8px;
     border-bottom: 1px solid #B1B4B6;
 }
+
 .selected-commodity {
     background-color: #F3F2F1;
 }
@@ -38,11 +113,12 @@
 //     border-top-color: inherit;
 // }
 
-.comm-code-container{
+.comm-code-container {
     height: 1.5em;
     padding-bottom: 5px;
     padding-top: 5px;
 }
+
 .comm-code-block {
     margin: .1em;
     font-size: 1em;
@@ -55,32 +131,38 @@
 .comm-code-link {
     padding-left: 8px;
 }
+
 .comm-code-no-children {
     padding-left: 55px;
+    position: relative;
 }
 
 .comm-code-1 {
     background-color: #ECE8FF;
 }
+
 .comm-code-2 {
     background-color: #CCEFF1;
 }
+
 .comm-code-3 {
     background-color: #DEF2CE;
 }
+
 .comm-code-4 {
     background-color: #FBF3C6;
 }
+
 .comm-code-5 {
     background-color: #FCDFB9;
 }
 
 .comm-code-table-container {
     float: right;
-    color:#0b0c0c;
+    color: #0b0c0c;
 }
 
-.comm-code-suffix{
+.comm-code-suffix {
     width: 3rem;
     text-align: center;
 }
