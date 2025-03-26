@@ -215,7 +215,15 @@ def update_measure_footnote_associations(measure, workbasket):
         )
     )
     for fa in footnote_associations:
-        fa.new_version(
-            footnoted_measure=measure,
+        data = {
+            "footnoted_measure": measure,
+        }
+        new_tx = workbasket.new_transaction()
+        make_real_edit(
+            tx=new_tx,
+            cls=measure_models.FootnoteAssociationMeasure,
+            obj=fa,
+            data=data,
             workbasket=workbasket,
+            update_type=UpdateType.UPDATE,
         )
