@@ -8,7 +8,6 @@ from open_data.models.commodities_model import (
 from open_data.models.commodities_model import ReportGoodsNomenclature
 from open_data.models.commodities_model import ReportGoodsNomenclatureOrigin
 from open_data.models.commodities_model import ReportGoodsNomenclatureSuccessor
-from open_data.models.datestamp import ReportDateStamp
 from open_data.models.footnotes_models import ReportFootnote
 from open_data.models.footnotes_models import ReportFootnoteType
 from open_data.models.geo_areas_models import ReportGeographicalArea
@@ -84,5 +83,4 @@ __all__ = [
     "ReportRegulation",
     "ReportSuspension",
     "ReportReplacement",
-    "ReportDateStamp",
 ]
