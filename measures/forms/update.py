@@ -8,6 +8,7 @@ from common.forms import BindNestedFormMixin
 from common.forms import RadioNested
 from common.forms import ValidityPeriodForm
 from common.forms import unprefix_formset_data
+from common.util import make_real_edit
 from common.validators import UpdateType
 from footnotes.models import Footnote
 from geo_areas import constants
@@ -292,17 +293,25 @@ class MeasureForm(
                 )
 
                 if existing_exclusion:
-                    existing_exclusion.new_version(
+                    make_real_edit(
+                        tx=instance.transaction,
+                        cls=MeasureExcludedGeographicalArea,
+                        obj=existing_exclusion,
+                        data={"modified_measure": instance},
                         workbasket=WorkBasket.current(self.request),
-                        transaction=instance.transaction,
-                        modified_measure=instance,
+                        update_type=UpdateType.UPDATE,
                     )
                 else:
-                    MeasureExcludedGeographicalArea.objects.create(
-                        modified_measure=instance,
-                        excluded_geographical_area=geo_area,
+                    make_real_edit(
+                        tx=instance.transaction,
+                        cls=MeasureExcludedGeographicalArea,
+                        obj=None,
+                        data={
+                            "modified_measure": instance,
+                            "excluded_geographical_area": geo_area,
+                        },
+                        workbasket=WorkBasket.current(self.request),
                         update_type=UpdateType.CREATE,
-                        transaction=instance.transaction,
                     )
 
             removed_excluded_areas = {
@@ -315,11 +324,15 @@ class MeasureForm(
             ]
 
             for removed in removed_exclusions:
-                removed.new_version(
-                    update_type=UpdateType.DELETE,
+                make_real_edit(
+                    tx=instance.transaction,
+                    cls=MeasureExcludedGeographicalArea,
+                    obj=removed,
+                    data={
+                        "modified_measure": instance,
+                    },
                     workbasket=WorkBasket.current(self.request),
-                    transaction=instance.transaction,
-                    modified_measure=instance,
+                    update_type=UpdateType.DELETE,
                 )
 
         if (
