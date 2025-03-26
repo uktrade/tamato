@@ -6,6 +6,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db import transaction
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.timezone import make_aware
 
@@ -103,6 +104,35 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         - with no associated TaskAssignee at all."""
         return self.filter(
             assignees__isnull=True,
+        )
+
+    def assigned(self):
+        """Return the queryset of `Task` instances that have currently active
+        assignees."""
+        return self.filter(
+            Q(assignees__isnull=False) & Q(assignees__unassigned_at__isnull=True),
+        )
+        # what is the purpose of 'assignees__isnull=False'?
+        # why doesn't 'unassigned_at__isnull=True' suffice?
+
+    def not_assigned(self):
+        """
+        Return the queryset of `Task` instances that are currently have no.
+
+        active assigees. That is, they have either:
+        - never had an assignee, or
+        - had assignees, but they have now been removed.
+        """
+        return self.filter(
+            Q(assignees__isnull=True)
+            | (Q(assignees__isnull=False) & Q(assignees__unassigned_at__isnull=False)),
+        )
+
+    def actively_assigned_to(self, user):
+        """Returns a queryset of Tasks instances that have `user` currently
+        assigned to them."""
+        return self.filter(
+            Q(assignees__user=user) & Q(assignees__unassigned_at__isnull=True),
         )
 
 
