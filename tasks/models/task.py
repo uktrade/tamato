@@ -119,8 +119,9 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         """
         Return the queryset of `Task` instances that currently have no active
         assignees. That is, they have either:
-            - never had an assignee, or
-            - had assignees, but they have now been removed.
+
+        - never had an assignee, or
+        - had assignees, but they have now been unassigned.
         """
         active_assignmees = TaskAssignee.objects.filter(unassigned_at__isnull=True)
         return self.exclude(assignees__in=active_assignmees)
