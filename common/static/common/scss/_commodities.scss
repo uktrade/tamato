@@ -95,7 +95,6 @@ $base-padding: 25px;
 
 .comm-code-container {
     position: relative;
-    padding-bottom: 5px;
 }
 
 .comm-code-no-children {
@@ -113,17 +112,19 @@ $base-padding: 25px;
 }
 
 .comm-code-description{
-    width: 80%;
     display: inline-flex;
+    
 }
 .comm-code-suffix-link{
     width: 15em;
+    color: #0b0c0b;
 }
 
 .comm-code-block {
     width: 1.5em;
     text-align: center;
     padding-right: 2px;
+    color: #0b0c0b;
 }
 
 .comm-code-link {
