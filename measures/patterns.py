@@ -19,6 +19,7 @@ from common.models.trackedmodel import TrackedModel
 from common.renderers import Counter
 from common.renderers import counter_generator
 from common.util import TaricDateRange
+from common.util import make_real_edit
 from common.util import maybe_max
 from common.util import maybe_min
 from common.validators import UpdateType
@@ -275,11 +276,16 @@ class MeasureCreationPattern:
         footnotes: Sequence[Footnote],
     ) -> Sequence[FootnoteAssociationMeasure]:
         return [
-            FootnoteAssociationMeasure.objects.create(
-                footnoted_measure=measure,
-                associated_footnote=footnote,
+            make_real_edit(
+                tx=measure.transaction,
+                cls=FootnoteAssociationMeasure,
+                obj=None,
+                data={
+                    "footnoted_measure": measure,
+                    "associated_footnote": footnote,
+                },
+                workbasket=self.workbasket,
                 update_type=UpdateType.CREATE,
-                transaction=measure.transaction,
             )
             for footnote in footnotes
         ]

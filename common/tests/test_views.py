@@ -16,7 +16,7 @@ from common.util import xml_fromstring
 from common.views import HealthCheckView
 from common.views import handler403
 from common.views import handler500
-from tasks.models import UserAssignment
+from workbaskets.models import AssignmentType
 from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
@@ -274,10 +274,10 @@ def test_homepage_cards_contain_expected_links(superuser_client):
 def test_homepage_card_currently_working_on(status, valid_user, valid_user_client):
     test_reason = "test reason"
     workbasket = factories.WorkBasketFactory.create(status=status, reason=test_reason)
-    factories.UserAssignmentFactory.create(
+    factories.WorkBasketAssignmentFactory.create(
         user=valid_user,
-        assignment_type=UserAssignment.AssignmentType.WORKBASKET_REVIEWER,
-        task__workbasket=workbasket,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+        workbasket=workbasket,
     )
     TrackedModelCheckFactory.create(
         transaction_check__transaction=workbasket.new_transaction(),
@@ -378,8 +378,7 @@ def test_resources_view_displays_resources(heading, expected_url, valid_user_cli
 @override_settings(SSO_ENABLED=True)
 def test_admin_login_shows_404_when_sso_enabled(superuser_client):
     """Test to check that when staff SSO is enabled, the login page shows a 404
-    but the rest of the admin site is still available.
-    """
+    but the rest of the admin site is still available."""
     response = superuser_client.get(reverse("admin:login"))
     assert response.status_code == 404
 
