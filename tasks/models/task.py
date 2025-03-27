@@ -122,10 +122,8 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
             - never had an assignee, or
             - had assignees, but they have now been removed.
         """
-        return self.filter(
-            Q(assignees__isnull=True)
-            | (Q(assignees__isnull=False) & Q(assignees__unassigned_at__isnull=False)),
-        )
+        active_assignmees = TaskAssignee.objects.filter(unassigned_at__isnull=True)
+        return self.exclude(assignees__in=active_assignmees)
 
     def actively_assigned_to(self, user):
         """Returns a queryset of `Task` instances that have `user` currently
@@ -375,7 +373,7 @@ class TaskAssignee(TimestampedMixin):
             return False
 
     @classmethod
-    def assign_user(cls, user, task, instigator) -> Self:
+    def assign_user(cls, user, task: Task, instigator) -> Self:
         """Assigns a new user to the given task and unassigns the current
         assignee if one exists."""
         from tasks.signals import set_current_instigator
