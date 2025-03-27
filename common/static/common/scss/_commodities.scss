@@ -15,6 +15,9 @@ body,
     display: block;
     margin-bottom: 0px;
 }
+.govuk-details__summary-text {
+    text-decoration: none;
+}
 
 $base-padding: 25px;
 
@@ -117,14 +120,13 @@ $base-padding: 25px;
 }
 .comm-code-suffix-link{
     width: 15em;
-    color: #0b0c0b;
+    color: #0b0c0b;  
 }
 
 .comm-code-block {
     width: 1.5em;
     text-align: center;
     padding-right: 2px;
-    color: #0b0c0b;
 }
 
 .comm-code-link {
