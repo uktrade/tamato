@@ -28,9 +28,9 @@ class ReportDateStamp(models.Model):
     about the data refresh are stored in the log
     """
 
-    event = models.CharField(choices=EventChoice.choices)
+    event = models.CharField(choices=EventChoice.choices, max_length=50)
     event_date = models.DateTimeField(auto_now_add=True, editable=False, null=True)
-    origin = models.CharField(choices=OriginChoice.choices)
+    origin = models.CharField(choices=OriginChoice.choices, max_length=50)
 
     class Meta:
         db_table = create_open_data_name("datestamp")
