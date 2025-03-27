@@ -196,7 +196,19 @@ def test_actively_assigned_to_task_queryset(
     not_assigned_task_no_previous_assignee,
     not_assigned_task_with_previous_assignee,
 ):
-    """TODO."""
+    user_1 = assigned_task_no_previous_assignee.assignees.get().user
+    user_1_actively_assigned = Task.objects.actively_assigned_to(user=user_1)
+    assert set([assigned_task_no_previous_assignee]) == set(user_1_actively_assigned)
+
+    user_2 = (
+        assigned_task_with_previous_assignee.assignees.filter(
+            unassigned_at__isnull=True,
+        )
+        .get()
+        .user
+    )
+    user_2_actively_assigned = Task.objects.actively_assigned_to(user=user_2)
+    assert set([assigned_task_with_previous_assignee]) == set(user_2_actively_assigned)
 
 
 def test_create_task_log_task_assigned():
