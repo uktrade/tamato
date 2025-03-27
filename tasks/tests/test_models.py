@@ -5,7 +5,6 @@ from django.db.utils import IntegrityError
 from common.tests.factories import CategoryFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
-from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
 from tasks.models import ProgressState
 from tasks.models import Task
@@ -161,77 +160,43 @@ def test_top_level_task_queryset(task, task_workflow_single_task_item):
     assert task_workflow_single_task_item.get_tasks().get() not in top_level_tasks
 
 
-@pytest.fixture
-def assigned_tasks_x_2() -> list:
-    """
-    Create two tasks with assignees, one with a single active assignee, the
-    second with one active assignee and one non-active assignee (i.e. it's been
-    unassigned).
-
-    Returns both Task instances in a list.
-    """
-
-    # Create Task that with one active assignee.
-    assignee_1 = TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.GENERAL,
-    )
-
-    # Create Task with one non-active assignee and one active assignee (a
-    # reassignment).
-    assignee_2 = TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.GENERAL,
-    )
-    TaskAssignee.unassign_user(
-        user=assignee_2.user,
-        task=assignee_2.task,
-        instigator=assignee_2.user,
-    )
-    TaskAssignee.assign_user(
-        user=assignee_2.user,
-        task=assignee_2.task,
-        instigator=assignee_2.user,
-    )
-
-    return [assignee_1.task, assignee_2.task]
-
-
-@pytest.fixture
-def not_assigned_tasks_x_2() -> list:
-    """
-    Create two tasks with no active assignees, one task that has no assignee
-    history and one with a non-active assignee (i.e. it's been unassigned).
-
-    Returns both Task instances in a list.
-    """
-
-    # Create Task with no assignees at all.
-    task = TaskFactory.create()
-
-    # Create Task with one non-active assignee.
-    assignee_1 = TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.GENERAL,
-    )
-    TaskAssignee.unassign_user(
-        user=assignee_1.user,
-        task=assignee_1.task,
-        instigator=assignee_1.user,
-    )
-
-    return [task, assignee_1.task]
-
-
-def test_assigned_task_queryset(assigned_tasks_x_2, not_assigned_tasks_x_2):
+def test_assigned_task_queryset(
+    assigned_task_no_previous_assignee,
+    assigned_task_with_previous_assignee,
+    not_assigned_task_no_previous_assignee,
+    not_assigned_task_with_previous_assignee,
+):
+    assigned_tasks = [
+        assigned_task_no_previous_assignee,
+        assigned_task_with_previous_assignee,
+    ]
     assert Task.objects.count() == 4
-    assert set(assigned_tasks_x_2) == set(Task.objects.assigned())
+    assert Task.objects.assigned().count() == 2
+    assert set(assigned_tasks) == set(Task.objects.assigned())
 
 
-def test_not_assigned_task_queryset(assigned_tasks_x_2, not_assigned_tasks_x_2):
+def test_not_assigned_task_queryset(
+    assigned_task_no_previous_assignee,
+    assigned_task_with_previous_assignee,
+    not_assigned_task_no_previous_assignee,
+    not_assigned_task_with_previous_assignee,
+):
+    not_assigned_tasks = [
+        not_assigned_task_no_previous_assignee,
+        not_assigned_task_with_previous_assignee,
+    ]
     assert Task.objects.count() == 4
-    assert set(not_assigned_tasks_x_2) == set(Task.objects.not_assigned())
+    assert Task.objects.not_assigned().count() == 2
+    assert set(not_assigned_tasks) == set(Task.objects.not_assigned())
 
 
-def test_actively_assigned_to_task_queryset():
-    pass
+def test_actively_assigned_to_task_queryset(
+    assigned_task_no_previous_assignee,
+    assigned_task_with_previous_assignee,
+    not_assigned_task_no_previous_assignee,
+    not_assigned_task_with_previous_assignee,
+):
+    """TODO."""
 
 
 def test_create_task_log_task_assigned():
