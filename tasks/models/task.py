@@ -117,11 +117,10 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
 
     def not_assigned(self):
         """
-        Return the queryset of `Task` instances that are currently have no.
-
-        active assigees. That is, they have either:
-        - never had an assignee, or
-        - had assignees, but they have now been removed.
+        Return the queryset of `Task` instances that currently have no active
+        assignees. That is, they have either:
+            - never had an assignee, or
+            - had assignees, but they have now been removed.
         """
         return self.filter(
             Q(assignees__isnull=True)
@@ -129,7 +128,7 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         )
 
     def actively_assigned_to(self, user):
-        """Returns a queryset of Tasks instances that have `user` currently
+        """Returns a queryset of `Task` instances that have `user` currently
         assigned to them."""
         return self.filter(
             Q(assignees__user=user) & Q(assignees__unassigned_at__isnull=True),
