@@ -6,6 +6,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db import transaction
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.timezone import make_aware
 
@@ -97,6 +98,40 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
     def incomplete(self):
         """Returns a queryset of tasks excluding those marked as complete."""
         return self.exclude(progress_state__name=ProgressState.State.DONE)
+
+    def not_assigned_workflow(self):
+        """Returns a queryset of summary Task instances that have never been assigned
+        - with no associated TaskAssignee at all."""
+        return self.filter(
+            assignees__isnull=True,
+        )
+
+    def assigned(self):
+        """Return the queryset of `Task` instances that have currently active
+        assignees."""
+        return self.filter(
+            Q(assignees__isnull=False) & Q(assignees__unassigned_at__isnull=True),
+        )
+        # what is the purpose of 'assignees__isnull=False'?
+        # why doesn't 'unassigned_at__isnull=True' suffice?
+
+    def not_assigned(self):
+        """
+        Return the queryset of `Task` instances that currently have no active
+        assignees. That is, they have either:
+
+        - never had an assignee, or
+        - had assignees, but they have now been unassigned.
+        """
+        active_assignmees = TaskAssignee.objects.filter(unassigned_at__isnull=True)
+        return self.exclude(assignees__in=active_assignmees)
+
+    def actively_assigned_to(self, user):
+        """Returns a queryset of `Task` instances that have `user` currently
+        assigned to them."""
+        return self.filter(
+            Q(assignees__user=user) & Q(assignees__unassigned_at__isnull=True),
+        )
 
 
 class TaskBase(TimestampedMixin):
@@ -339,7 +374,7 @@ class TaskAssignee(TimestampedMixin):
             return False
 
     @classmethod
-    def assign_user(cls, user, task, instigator) -> Self:
+    def assign_user(cls, user, task: Task, instigator) -> Self:
         """Assigns a new user to the given task and unassigns the current
         assignee if one exists."""
         from tasks.signals import set_current_instigator

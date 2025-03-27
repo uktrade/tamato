@@ -4,6 +4,8 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import OuterRef
+from django.db.models import Subquery
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -368,14 +370,21 @@ class TaskWorkflowListView(
     permission_required = "tasks.view_task"
     paginate_by = settings.DEFAULT_PAGINATOR_PER_PAGE_MAX
     filterset_class = TaskWorkflowFilter
-    sort_by_fields = ["taskworkflow__id", "taskworkflow__eif_date"]
+    sort_by_fields = ["taskworkflow__id", "taskworkflow__eif_date", "assigned_user"]
 
     def get_queryset(self):
-        queryset = Task.objects.all()
+        latest_assignees = TaskAssignee.objects.filter(
+            task=OuterRef("pk"),
+            unassigned_at__isnull=True,
+        ).values("user__first_name")
+        queryset = Task.objects.all().annotate(
+            assigned_user=Subquery(latest_assignees[:1]),
+        )
         ordering = self.get_ordering()
         if ordering:
             ordering = (ordering,)
             queryset = queryset.order_by(*ordering)
+
         return queryset
 
     def get_context_data(self, *, object_list=None, **kwargs):

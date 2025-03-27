@@ -160,6 +160,57 @@ def test_top_level_task_queryset(task, task_workflow_single_task_item):
     assert task_workflow_single_task_item.get_tasks().get() not in top_level_tasks
 
 
+def test_assigned_task_queryset(
+    assigned_task_no_previous_assignee,
+    assigned_task_with_previous_assignee,
+    not_assigned_task_no_previous_assignee,
+    not_assigned_task_with_previous_assignee,
+):
+    assigned_tasks = [
+        assigned_task_no_previous_assignee,
+        assigned_task_with_previous_assignee,
+    ]
+    assert Task.objects.count() == 4
+    assert Task.objects.assigned().count() == 2
+    assert set(assigned_tasks) == set(Task.objects.assigned())
+
+
+def test_not_assigned_task_queryset(
+    assigned_task_no_previous_assignee,
+    assigned_task_with_previous_assignee,
+    not_assigned_task_no_previous_assignee,
+    not_assigned_task_with_previous_assignee,
+):
+    not_assigned_tasks = [
+        not_assigned_task_no_previous_assignee,
+        not_assigned_task_with_previous_assignee,
+    ]
+    assert Task.objects.count() == 4
+    assert Task.objects.not_assigned().count() == 2
+    assert set(not_assigned_tasks) == set(Task.objects.not_assigned())
+
+
+def test_actively_assigned_to_task_queryset(
+    assigned_task_no_previous_assignee,
+    assigned_task_with_previous_assignee,
+    not_assigned_task_no_previous_assignee,
+    not_assigned_task_with_previous_assignee,
+):
+    user_1 = assigned_task_no_previous_assignee.assignees.get().user
+    user_1_actively_assigned = Task.objects.actively_assigned_to(user=user_1)
+    assert set([assigned_task_no_previous_assignee]) == set(user_1_actively_assigned)
+
+    user_2 = (
+        assigned_task_with_previous_assignee.assignees.filter(
+            unassigned_at__isnull=True,
+        )
+        .get()
+        .user
+    )
+    user_2_actively_assigned = Task.objects.actively_assigned_to(user=user_2)
+    assert set([assigned_task_with_previous_assignee]) == set(user_2_actively_assigned)
+
+
 def test_create_task_log_task_assigned():
     task = TaskFactory.create()
     instigator = task.creator
