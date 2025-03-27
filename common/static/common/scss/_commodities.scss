@@ -22,9 +22,6 @@ $base-padding: 25px;
 
     &--spacer {
         position: absolute;
-        top: 0;
-        left: 0;
-        padding: 5px 0 5px;
 
         &-0 {
             margin-left: 0;
@@ -92,49 +89,45 @@ $base-padding: 25px;
     }
 }
 
-.comm-code-second-container {
-    padding-bottom: 8px;
-    border-bottom: 1px solid #B1B4B6;
-}
-
 .selected-commodity {
     background-color: #F3F2F1;
 }
 
-// div.selected-commodity::before {
-//     display: block;
-//     width: 0;
-//     height: 0;
-//     border-style: solid;
-//     border-color: transparent;
-//     -webkit-clip-path: polygon(0% 0%, 50% 100%, 100% 0%);
-//     clip-path: polygon(0% 0%, 50% 100%, 100% 0%);
-//     border-width: 12.124px 7px 0 7px;
-//     border-top-color: inherit;
-// }
-
 .comm-code-container {
-    height: 1.5em;
+    position: relative;
     padding-bottom: 5px;
-    padding-top: 5px;
+}
+
+.comm-code-no-children {
+    position: relative;
+}
+
+.comm-code-parent-table {
+    width: 100%;
+    overflow: auto;
+}
+
+.comm-code-second-container {
+    align-self: bottom;
+    border-bottom: 1px solid #B1B4B6;
+}
+
+.comm-code-description{
+    width: 80%;
+    display: inline-flex;
+}
+.comm-code-suffix-link{
+    width: 15em;
 }
 
 .comm-code-block {
-    margin: .1em;
-    font-size: 1em;
     width: 1.5em;
     text-align: center;
-    height: 1.3em;
     padding-right: 2px;
 }
 
 .comm-code-link {
     padding-left: 8px;
-}
-
-.comm-code-no-children {
-    padding-left: 55px;
-    position: relative;
 }
 
 .comm-code-1 {
@@ -155,11 +148,6 @@ $base-padding: 25px;
 
 .comm-code-5 {
     background-color: #FCDFB9;
-}
-
-.comm-code-table-container {
-    float: right;
-    color: #0b0c0c;
 }
 
 .comm-code-suffix {
