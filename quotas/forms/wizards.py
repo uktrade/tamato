@@ -412,14 +412,15 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                     {"valid_between": new_date_range},
                 )
 
-            if change_type == 1:
-                volume += volume * (change_amount / decimal.Decimal(100))
-            elif change_type == 2:
-                volume -= volume * (change_amount / decimal.Decimal(100))
-            elif change_type == 3:
-                volume += change_amount
-            elif change_type == 4:
-                volume -= change_amount
+            if frequency == 1:
+                if change_type == 1:
+                    volume += volume * (change_amount / decimal.Decimal(100))
+                elif change_type == 2:
+                    volume -= volume * (change_amount / decimal.Decimal(100))
+                elif change_type == 3:
+                    volume += change_amount
+                elif change_type == 4:
+                    volume -= change_amount
 
             definition_data.update({"volume": round(volume, 2)})
 
