@@ -20,9 +20,9 @@ def create_commodities_report():
             parent_code = commodity.parent_trackedmodel_ptr.item_id
             parent_suffix = commodity.parent_trackedmodel_ptr.suffix
         else:
-            parent_sid = ""
-            parent_code = ""
-            parent_suffix = ""
+            parent_sid = None
+            parent_code = None
+            parent_suffix = None
 
         ReportCommodityReport.objects.create(
             id=id,
