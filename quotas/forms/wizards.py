@@ -240,7 +240,22 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
             "required": "Enter the initial volume",
         },
     )
-
+    volume_change_type = forms.ChoiceField(
+        label="How will the volume change between definition periods?",
+        help_text="Select an option from the dropdown",
+        choices=(
+            (0, "It won't change"),
+            (1, "Increase by percentage"),
+            (2, "Decrease by percentage"),
+            (3, "Increase by quantity"),
+            (4, "Decrease by quantity"),
+        ),
+        error_messages={"required": "Critical state must be set"},
+    )
+    volume_change_amount = forms.DecimalField(
+        widget=forms.TextInput(),
+        help_text="Enter the value by which the quota should change as a number, ie. for 5% enter 5, for 5,000 tonnes, enter 5000",
+    )
     measurement_unit = forms.ModelChoiceField(
         empty_label="Choose measurement unit",
         queryset=MeasurementUnit.objects.current().order_by("code"),
@@ -307,6 +322,10 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     def save_definition_data_to_session(self, cleaned_data):
         instance_count = decimal.Decimal(cleaned_data["instance_count"])
         frequency = decimal.Decimal(cleaned_data["frequency"])
+        volume = decimal.Decimal(cleaned_data["volume"])
+        change_type = decimal.Decimal(cleaned_data["volume_change_type"])
+        change_amount = decimal.Decimal(cleaned_data["volume_change_amount"] or 0)
+
         definition_data = {
             "id": 1,
             "maximum_precision": cleaned_data["maximum_precision"],
@@ -360,7 +379,6 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                         "valid_between": new_date_range,
                     },
                 )
-
             if frequency == 2:
                 # Repeats every 6 months
                 new_start_date = definition_data["valid_between"].upper + relativedelta(
@@ -393,6 +411,18 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                 definition_data.update(
                     {"valid_between": new_date_range},
                 )
+
+            if change_type == 1:
+                volume += volume * (change_amount / decimal.Decimal(100))
+            elif change_type == 2:
+                volume -= volume * (change_amount / decimal.Decimal(100))
+            elif change_type == 3:
+                volume += change_amount
+            elif change_type == 4:
+                volume -= change_amount
+
+            definition_data.update({"volume": round(volume, 2)})
+
             serialized_definition_data = serialize_definition_data(definition_data)
             staged_definitions.append(serialized_definition_data)
 
@@ -462,6 +492,14 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                     Field("initial_volume", css_class="govuk-!-width-one-third"),
                     Field("volume", css_class="govuk-!-width-one-third"),
                     "maximum_precision",
+                    Field(
+                        "volume_change_type",
+                        css_class="govuk-!-width-one-third",
+                    ),
+                    Field(
+                        "volume_change_amount",
+                        css_class="govuk-!-width-one-third",
+                    ),
                 ),
                 HTML(
                     "<br />",
