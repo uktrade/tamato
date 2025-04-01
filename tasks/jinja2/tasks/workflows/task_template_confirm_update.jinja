@@ -1,24 +1,25 @@
-{% extends "common/confirm_update.jinja" %}
+{% extends "layouts/confirm.jinja" %}
 
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
+{% set page_title = "Step template updated" %}
+
+{% set step_template_url = object.get_url("detail") %}
+{% set ticket_template_url = task_workflow_template.get_url("detail") %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,
     [
       {
-        "text": "Find and view workflow templates",
-        "href": url("workflow:task-workflow-template-ui-list"),
+        "text": "Ticket template: " ~ task_workflow_template.title,
+        "href": ticket_template_url,
       },
       {
-        "text": "Workflow template: " ~ task_workflow_template.title,
-        "href": url(
-          "workflow:task-workflow-template-ui-detail",
-          kwargs={"pk": task_workflow_template.pk},
-        ),
+        "text": "Step template: " ~ object.title,
+        "href": step_template_url,
       },
       {"text": page_title}
     ],
@@ -28,25 +29,24 @@
 
 {% block panel %}
   {{ govukPanel({
-    "titleText": "Task template: " ~ object.title,
-    "text": "Task template has been updated",
+    "titleText": "Step template: " ~ object.title,
+    "text": "Step template has been updated",
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}
 
 {% block button_group %}
   {{ govukButton({
-    "text": "View task template",
-    "href": url("workflow:task-template-ui-detail", kwargs={"pk": object.pk}),
-    "classes": "govuk-button"
+    "text": "View step template",
+    "href": step_template_url,
   }) }}
   {{ govukButton({
-    "text": "Return to homepage",
-    "href": url("home"),
+    "text": "Return to ticket template",
+    "href": ticket_template_url,
     "classes": "govuk-button--secondary"
   }) }}
 {% endblock %}
 
 {% block actions %}
-  <li><a href="{{ url('workflow:task-workflow-template-ui-list') }}" class="govuk-link">Find and edit workflow templates</a></li>
+  <li><a href="{{ task_workflow_template.get_url("list") }}" class="govuk-link">View all ticket templates</a></li>
 {% endblock %}

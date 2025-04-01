@@ -1,12 +1,15 @@
 {% extends "layouts/form.jinja" %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
-{% set page_title = verbose_name|capitalize ~ " " ~ object.prefixed_id if object.prefixed_id else verbose_name|capitalize ~ " " ~ object.id%}
+
+{% set object_id = object.prefixed_id if object.prefixed_id else object.id %}
+{% set object_name = verbose_name|capitalize ~ " " ~  object_id %}
+
+{% set page_title = "Edit " ~ object_name %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and view " ~ verbose_name ~ "s", "href": object.get_url("list")},
-      {"text": verbose_name|capitalize ~ " " ~ object.prefixed_id, "href": object.get_url("detail")},
+      {"text": object_name, "href": object.get_url("detail")},
       {"text": page_title}
     ],
     with_workbasket=False,

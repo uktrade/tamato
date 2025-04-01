@@ -10,7 +10,6 @@
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and view " ~ verbose_name ~ "s", "href": object.get_url("list")},
       {"text": page_title}
     ],
     with_workbasket=False,
@@ -76,6 +75,7 @@
           {{ govukButton({
             "text": "Add a step",
             "href": url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}),
+            "classes": "govuk-button--secondary"
           }) }}
           {{ govukButton({
             "text": "Delete " ~ verbose_name,

@@ -4,15 +4,17 @@
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Delete " ~ verbose_name ~ ": " ~ object.title %}
+
+{% set object_id = object.prefixed_id if object.prefixed_id else object.id %}
+{% set object_name = verbose_name|capitalize ~ " " ~  object_id %}
+{% set page_title = "Delete " ~ object_name %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,
     [
-      {"text": "Find and view "~ verbose_name ~ "s", "href": object.get_url("list")},
       {
-        "text": verbose_name|capitalize ~ ": " ~ object.prefixed_id,
+        "text": object_name,
         "href": object.get_url("detail"),
       },
       {"text": page_title}
@@ -23,7 +25,7 @@
 
 {% block form %}
   {{ govukWarningText({
-    "text": "Are you sure you want to delete ticket " ~ object.prefixed_id ~ "?",
+    "text": "Are you sure you want to delete " ~ object_name ~ "?",
   }) }}
 
   {% call django_form(action=object.get_url("delete")) %}
