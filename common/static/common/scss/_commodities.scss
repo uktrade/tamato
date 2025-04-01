@@ -15,81 +15,36 @@ body,
     display: block;
     margin-bottom: 0px;
 }
+
 .govuk-details__summary-text {
     text-decoration: none;
 }
 
 $base-padding: 25px;
+$margin-increment: 30px;
 
 .comm-code-indent {
 
     &--spacer {
         position: absolute;
 
-        &-0 {
-            margin-left: 0;
-        }
-
-        &-1 {
-            margin-left: 30px;
-        }
-
-        &-2 {
-            margin-left: 30px * 2;
-        }
-
-        &-3 {
-            margin-left: 30px * 3;
-        }
-
-        &-4 {
-            margin-left: 30px * 4;
-        }
-
-        &-5 {
-            margin-left: 30px * 5;
+        @for $i from 0 through 7 {
+            &-#{$i} {
+                margin-left: $i * $margin-increment;
+            }
         }
     }
 
-    &-1 {
-        padding-left: $base-padding + 30px;
+    @for $i from 1 through 7 {
+        &-#{$i} {
+            padding-left: $base-padding + ($margin-increment * $i);
 
-        &:before {
-            left: 30px;
+            &:before {
+                left: $margin-increment * $i;
+            }
         }
     }
 
-    &-2 {
-        padding-left: $base-padding + (30px * 2);
-
-        &:before {
-            left: 30px * 2;
-        }
-    }
-
-    &-3 {
-        padding-left: $base-padding + (30px * 3);
-
-        &:before {
-            left: 30px * 3;
-        }
-    }
-
-    &-4 {
-        padding-left: $base-padding + (30px * 4);
-
-        &:before {
-            left: 30px * 4;
-        }
-    }
-
-    &-5 {
-        padding-left: $base-padding + (30px * 5);
-
-        &:before {
-            left: 30px * 5;
-        }
-    }
 }
 
 .selected-commodity {
@@ -114,13 +69,14 @@ $base-padding: 25px;
     border-bottom: 1px solid #B1B4B6;
 }
 
-.comm-code-description{
+.comm-code-description {
     display: inline-flex;
-    
+
 }
-.comm-code-suffix-link{
+
+.comm-code-suffix-link {
     width: 15em;
-    color: #0b0c0b;  
+    color: #0b0c0b;
 }
 
 .comm-code-block {
