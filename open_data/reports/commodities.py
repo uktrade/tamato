@@ -2,13 +2,11 @@ from open_data.models import ReportGoodsNomenclature
 from open_data.models.report_models import ReportCommodityReport
 
 
-def create_commodities_report():
-    """
-    Produces data for the commodity report, stored in an open_data table.
+def create_commodities_report(verbose=True):
+    """Produces data for the commodity report, stored in an open_data table."""
 
-    Returns:
-        None: Operations performed and stored within the NamedTemporaryFile
-    """
+    ReportCommodityReport.objects.all().delete()
+
     commodities = ReportGoodsNomenclature.objects.all().select_related(
         "parent_trackedmodel_ptr",
     )

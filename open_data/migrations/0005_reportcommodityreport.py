@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                     models.CharField(blank=True, max_length=2, null=True),
                 ),
                 ("commodity_description", models.TextField(blank=True, null=True)),
-                ("commodity_validity_start", models.DateField(db_index=True)),
+                ("commodity_validity_start", models.DateField()),
                 ("commodity_validity_end", models.DateField(blank=True, null=True)),
                 ("parent_sid", models.IntegerField(blank=True, null=True)),
                 ("parent_code", models.CharField(blank=True, max_length=10, null=True)),
