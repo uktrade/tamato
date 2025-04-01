@@ -1169,6 +1169,9 @@ def test_quota_definition_bulk_create_definition_info_frequencies(
         ),
         "volume": 600.000,
         "initial_volume": 500.000,
+        "volume-change": "no_change",
+        "volume_change_type": "no_change",
+        "volume_change_value": None,
         "measurement_unit": measurement_unit,
         "quota_critical_threshold": 90,
         "quota_critical": "False",
@@ -1277,8 +1280,8 @@ def test_quota_definition_bulk_create_definition_increment_decriment(
         ),
         "volume": 100.000,
         "initial_volume": 100.000,
-        "volume_change_type": 0,
-        "volume_change_amount": None,
+        "volume_change_type": "no_change",
+        "volume_change_value": None,
         "measurement_unit": measurement_unit,
         "quota_critical_threshold": 90,
         "quota_critical": "False",
@@ -1302,8 +1305,8 @@ def test_quota_definition_bulk_create_definition_increment_decriment(
         )
 
     # increment by percentage
-    form_data["volume_change_type"] = 1
-    form_data["volume_change_amount"] = 4.5
+    form_data["volume_change_type"] = "increase_percentage"
+    form_data["volume_change_value"] = 4.5
     with override_current_transaction(Transaction.objects.last()):
         bulk_create_definition_form.save_definition_data_to_session(form_data)
         # check that the length staged_definitions still matches the initial_info['instance_count']
@@ -1319,8 +1322,8 @@ def test_quota_definition_bulk_create_definition_increment_decriment(
         )
 
     # decrement by percentage
-    form_data["volume_change_type"] = 2
-    form_data["volume_change_amount"] = 7.7
+    form_data["volume_change_type"] = "decrease_percentage"
+    form_data["volume_change_value"] = 7.7
     with override_current_transaction(Transaction.objects.last()):
         bulk_create_definition_form.save_definition_data_to_session(form_data)
         # check that the length staged_definitions still matches the initial_info['instance_count']
@@ -1332,8 +1335,8 @@ def test_quota_definition_bulk_create_definition_increment_decriment(
         assert session_request.session["staged_definition_data"][2]["volume"] == "85.19"
 
     # increment by value
-    form_data["volume_change_type"] = 3
-    form_data["volume_change_amount"] = 10
+    form_data["volume_change_type"] = "increase_quantity"
+    form_data["volume_change_value"] = 10
     with override_current_transaction(Transaction.objects.last()):
         bulk_create_definition_form.save_definition_data_to_session(form_data)
         # check that the length staged_definitions still matches the initial_info['instance_count']
@@ -1349,8 +1352,8 @@ def test_quota_definition_bulk_create_definition_increment_decriment(
         )
 
     # decrement by value
-    form_data["volume_change_type"] = 4
-    form_data["volume_change_amount"] = 10
+    form_data["volume_change_type"] = "decrease_quantity"
+    form_data["volume_change_value"] = 10
     with override_current_transaction(Transaction.objects.last()):
         bulk_create_definition_form.save_definition_data_to_session(form_data)
         # check that the length staged_definitions still matches the initial_info['instance_count']
@@ -1384,6 +1387,8 @@ def test_bulk_create_update_definition_data_populates_parent_data(
         ),
         "volume": "600.000",
         "initial_volume": "500.000",
+        "volume_change_type": "no_change",
+        "volume_change_value": None,
         "measurement_unit": measurement_unit,
         "quota_critical_threshold": "90",
         "quota_critical": "False",
@@ -1432,6 +1437,8 @@ def test_bulk_create_update_definition_data_updates_data(
         ),
         "volume": 600.000,
         "initial_volume": 500.000,
+        "volume_change_type": "no_change",
+        "volume_change_value": None,
         "measurement_unit": measurement_unit,
         "quota_critical_threshold": 90,
         "quota_critical": "False",
@@ -1498,6 +1505,12 @@ def test_quota_definition_bulk_create_definition_is_valid(
         "end_date_2": date_ranges.normal.upper.year,
         "volume": "600.000",
         "initial_volume": "500.000",
+        "volume-change": "no_change",
+        "volume_change_type": "no_change",
+        "increase_percentage": None,
+        "decrease_percentage": None,
+        "increase_quantity": None,
+        "decrease_quantity": None,
         "measurement_unit": measurement_unit,
         "measurement_unit_qualifier": measurement_unit_qualifier,
         "quota_critical_threshold": "90",
