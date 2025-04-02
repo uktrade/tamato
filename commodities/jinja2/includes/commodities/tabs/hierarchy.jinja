@@ -48,13 +48,13 @@
 {% else %}
   {% for comm in snapshot.commodities %}
     {% if loop.nextitem and loop.nextitem.indent > comm.indent %}
-      <details class="govuk-details" data-code="{{comm.item_id}}-{{comm.suffix}}"{% if comm in snapshot.ancestors[this_commodity] %}open=""{% endif %}>
-      <summary class="govuk-details__summary comm-code-container comm-code-indent-{{comm.indent}}">
+      <details class="comm-code-details govuk-details" data-code="{{comm.item_id}}-{{comm.suffix}}"{% if comm in snapshot.ancestors[this_commodity] %}open=""{% endif %}>
+      <summary class="comm-code-details govuk-details__summary comm-code-container comm-code-indent-{{comm.indent}}">
         {% for num in range(comm.indent) %}
           <div class="comm-code-indent--spacer comm-code-indent--spacer-{{num}}"></div>
         {% endfor %}
         <div class="comm-code-second-container {% if comm == this_commodity %}selected-commodity{% endif %}">
-          <span class="govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold selected-commodity{% endif %}">
+          <span class="comm-code-details govuk-details__summary-text {% if comm == this_commodity %}govuk-!-font-weight-bold selected-commodity{% endif %}">
             <span class="comm-code-display">{{comm_code_display(comm)}}</span>
           </span>
         </div>

@@ -6,18 +6,18 @@ body,
     margin-bottom: 0;
 }
 
-.govuk-details {
-    margin-bottom: 0px;
-    position: relative;
-}
-
-.govuk-details__summary {
-    display: block;
-    margin-bottom: 0px;
-}
-
-.govuk-details__summary-text {
-    text-decoration: none;
+.comm-code-details {
+    .govuk-details {
+        margin-bottom: 0px;
+        position: relative;
+    }
+    .govuk-details__summary {
+        display: block;
+        margin-bottom: 0px;
+    }
+    .govuk-details__summary-text {
+        text-decoration: none;
+    }
 }
 
 $base-padding: 25px;
