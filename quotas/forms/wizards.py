@@ -360,7 +360,10 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
         frequency = decimal.Decimal(cleaned_data["frequency"])
         volume = decimal.Decimal(cleaned_data["volume"])
         volume_change_type = cleaned_data["volume_change_type"]
-        if "volume_change_value" in cleaned_data:
+        if (
+            "volume_change_value" in cleaned_data
+            and cleaned_data["volume_change_value"] is not None
+        ):
             volume_change_value = decimal.Decimal(cleaned_data["volume_change_value"])
 
         definition_data = {
