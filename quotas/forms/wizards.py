@@ -462,7 +462,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                 elif volume_change_type == "decrease_quantity":
                     volume -= volume_change_value
                 elif volume_change_type == "no_change":
-                    volume = volume
+                    volume
 
             definition_data.update({"volume": round(volume, 2)})
 
@@ -473,35 +473,35 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
 
     def clean(self):
         cleaned_data = super().clean()
-        if (
-            cleaned_data["frequency"] != "1"
-            and self.data["volume-change"] != "no_change"
-        ):
-            raise ValidationError(
-                "Automatically increasing or decreasing the volume between definition periods is only available for definition periods that span the entire year or if there is only one definition period in the year.",
-            )
-
-        self.cleaned_data["volume_change_type"] = self.data["volume-change"]
-        if self.data["volume-change"] != "no_change":
-            self.cleaned_data["volume_change_value"] = next(
-                (
-                    v
-                    for v in [
-                        self.data["increase_percentage"],
-                        self.data["decrease_percentage"],
-                        self.data["increase_quantity"],
-                        self.data["decrease_quantity"],
-                    ]
-                    if v
-                ),
-                None,
-            )
-            if self.cleaned_data["volume_change_value"] is None:
+        if self.is_valid():
+            if (
+                cleaned_data["frequency"] != "1"
+                and self.data["volume-change"] != "no_change"
+            ):
                 raise ValidationError(
-                    "A value must be provided for the option you have selected",
+                    "Automatically increasing or decreasing the volume between definition periods is only available for definition periods that span the entire year or if there is only one definition period in the year.",
                 )
 
-        if self.is_valid():
+            self.cleaned_data["volume_change_type"] = self.data["volume-change"]
+            if self.data["volume-change"] != "no_change":
+                self.cleaned_data["volume_change_value"] = next(
+                    (
+                        v
+                        for v in [
+                            self.data["increase_percentage"],
+                            self.data["decrease_percentage"],
+                            self.data["increase_quantity"],
+                            self.data["decrease_quantity"],
+                        ]
+                        if v
+                    ),
+                    None,
+                )
+                if self.cleaned_data["volume_change_value"] is None:
+                    raise ValidationError(
+                        "A value must be provided for the option you have selected",
+                    )
+
             self.save_definition_data_to_session(cleaned_data)
         return cleaned_data
 
