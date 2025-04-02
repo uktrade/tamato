@@ -26,17 +26,6 @@
   {% endif %}
 {% endblock %}
 
-{% set workbasket_link %}
-  {% if object.workbasket %}
-    <a
-      class="govuk-link"
-      href="{{ url('workbaskets:workbasket-ui-detail', kwargs={'pk': object.workbasket.pk}) }}"
-    > Review workbasket {{ object.workbasket.pk }})</a>
-  {% else %}
-    No workbasket set
-  {% endif %}
-{% endset %}
-
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
@@ -134,11 +123,15 @@
   </div>
 </dl>
 
+{% if object.has_automation %}
+  <h2 class="govuk-heading-m">Action</h2>
 
-<h2 class="govuk-heading-m">Actions</h2>
-{{workbasket_link}}
-
-
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      {{ object.automation.rendered_state() | safe }}
+    </div>
+  </div>
+{% endif %}
 
 <script nonce="{{ request.csp_nonce }}">
   const CSRF_TOKEN = "{{ csrf_token }}";

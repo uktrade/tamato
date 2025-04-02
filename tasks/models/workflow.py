@@ -4,9 +4,11 @@ from django.conf import settings
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
+from django.utils.module_loading import import_string
 
 from common.models import User
 from common.models.mixins import TimestampedMixin
+from task_automations import AUTOMATIONS
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
 from tasks.models.task import Task
@@ -212,6 +214,15 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
                 task=task,
             )
 
+            if task_template.automation_class_name:
+                try:
+                    automation_cls = import_string(
+                        task_template.automation_class_name,
+                    )
+                    automation_cls.objects.create(task=task)
+                except ImportError:
+                    """TODO."""
+
         return task_workflow
 
     def get_url(self, action: str = "detail"):
@@ -265,6 +276,12 @@ class TaskItemTemplate(QueueItem):
 class TaskTemplate(TaskBase):
     """Template used to create Task instances from within a template
     workflow."""
+
+    automation_class_name = models.CharField(
+        choices=AUTOMATIONS,
+        max_length=200,
+        blank=True,
+    )
 
     def get_url(self, action: str = "detail"):
         if action == "detail":
