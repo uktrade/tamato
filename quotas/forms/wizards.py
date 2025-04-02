@@ -499,7 +499,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                 )
                 if self.cleaned_data["volume_change_value"] is None:
                     raise ValidationError(
-                        "A value must be provided for the option you have selected",
+                        "A value must be provided for the volume change option you have selected",
                     )
 
             self.save_definition_data_to_session(cleaned_data)
