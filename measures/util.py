@@ -141,12 +141,18 @@ def update_measure_excluded_geographical_areas(
     """Updates the excluded geographical areas associated to the measure."""
     existing_exclusions = measure.exclusions.current()
 
+    tx = workbasket.new_transaction()
+
     # Update any exclusions to new measure version
     if not edited:
         for exclusion in existing_exclusions:
-            exclusion.new_version(
-                modified_measure=measure,
+            make_real_edit(
+                tx=tx,
+                cls=measure_models.MeasureExcludedGeographicalArea,
+                obj=existing_exclusion,
+                data={"modified_measure": measure},
                 workbasket=workbasket,
+                update_type=UpdateType.UPDATE,
             )
         return
 
@@ -160,16 +166,25 @@ def update_measure_excluded_geographical_areas(
             excluded_geographical_area=geo_area,
         ).first()
         if existing_exclusion:
-            existing_exclusion.new_version(
-                modified_measure=measure,
+            make_real_edit(
+                tx=tx,
+                cls=measure_models.MeasureExcludedGeographicalArea,
+                obj=existing_exclusion,
+                data={"modified_measure": measure},
                 workbasket=workbasket,
+                update_type=UpdateType.UPDATE,
             )
         else:
-            measure_models.MeasureExcludedGeographicalArea.objects.create(
-                modified_measure=measure,
-                excluded_geographical_area=geo_area,
+            make_real_edit(
+                tx=tx,
+                cls=measure_models.MeasureExcludedGeographicalArea,
+                obj=None,
+                data={
+                    "modified_measure": measure,
+                    "excluded_geographical_area": geo_area,
+                },
+                workbasket=workbasket,
                 update_type=UpdateType.CREATE,
-                transaction=workbasket.new_transaction(),
             )
 
     removed_excluded_areas = {
@@ -182,10 +197,13 @@ def update_measure_excluded_geographical_areas(
     ]
 
     for exclusion in exclusions_to_remove:
-        exclusion.new_version(
-            update_type=UpdateType.DELETE,
-            modified_measure=measure,
+        make_real_edit(
+            tx=tx,
+            cls=measure_models.MeasureExcludedGeographicalArea,
+            obj=exclusion,
+            data={"modified_measure": measure},
             workbasket=workbasket,
+            update_type=UpdateType.DELETE,
         )
 
 
