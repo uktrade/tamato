@@ -1,11 +1,12 @@
 // Overrides of govuk styles to get everything else displaying correctly
-.govuk-body,
-.comment p,
-body,
-.govuk-body-m {
-    margin-bottom: 0;
+.commodity-hierarchy {
+    .govuk-body,
+    .comment p,
+    body,
+    .govuk-body-m {
+        margin-bottom: 0;
+    }
 }
-
 .comm-code-details {
     .govuk-details {
         margin-bottom: 0px;
