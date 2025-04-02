@@ -13,6 +13,10 @@ def create_commodities_report(verbose=True):
     id = 0
     for commodity in commodities:
         id += 1
+        if verbose:
+            if id % 1000 == 0:
+                print(id)
+
         if commodity.parent_trackedmodel_ptr:
             parent_sid = commodity.parent_trackedmodel_ptr.sid
             parent_code = commodity.parent_trackedmodel_ptr.item_id
