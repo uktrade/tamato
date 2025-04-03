@@ -6,6 +6,7 @@ from common.tests.factories import CategoryFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
+from common.tests.factories import UserFactory
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
@@ -316,3 +317,48 @@ def test_task_is_summary_task_property(create_task_fn):
 def test_prefixed_id(task_workflow):
     expected_prefixed_id = f"{settings.TICKET_PREFIX}{task_workflow.id}"
     assert task_workflow.prefixed_id == expected_prefixed_id
+
+
+def test_get_latest_assignees_task_queryset(
+    not_assigned_task_no_previous_assignee,
+    assigned_task_no_previous_assignee,
+):
+    assert Task.objects.assigned().count() == 1
+
+    new_assignee_1 = UserFactory.create(first_name="Marya", last_name="Shariq")
+    new_assignee_2 = UserFactory.create(first_name="Paul", last_name="Pepper")
+
+    user_for_unassignment = assigned_task_no_previous_assignee.assignees.get().user
+
+    # In this section, I'm assigning a new user to a task workflow with no previous assignee (new_assignee_1)
+
+    TaskAssignee.assign_user(
+        user=new_assignee_1,
+        task=not_assigned_task_no_previous_assignee,
+        instigator=new_assignee_1,
+    )
+
+    # In this section, I'm unassing the user for the task workflow with an existing assignee
+    # Then, I am reassigning the task workflow with a new user (new_assignee_2)
+
+    TaskAssignee.unassign_user(
+        user=user_for_unassignment,
+        task=assigned_task_no_previous_assignee,
+        instigator=user_for_unassignment,
+    )
+    TaskAssignee.assign_user(
+        user=new_assignee_2,
+        task=assigned_task_no_previous_assignee,
+        instigator=new_assignee_2,
+    )
+
+    qs = Task.objects.get_latest_assignees()
+
+    assert qs.first().assigned_user == "Marya"
+    assert qs.last().assigned_user == "Paul"
+
+    assert Task.objects.assigned().count() == 2
+    assert (
+        assigned_task_no_previous_assignee.assignees.assigned().get().user
+        == new_assignee_2
+    )

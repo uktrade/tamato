@@ -70,24 +70,33 @@ def test_normalise_prefixed_ticket_ids(
 @pytest.mark.parametrize(
     ("workflow_fixture", "assignment_status", "expected_filtered_count"),
     [
-        (["assigned_task_workflow"], ["assigned"], 1),
-        (["task_workflow"], ["not_assigned"], 1),
-        (["assigned_task_workflow", "task_workflow"], ["assigned", "not_assigned"], 2),
-        (["unassigned_task_workflow"], ["not_assigned"], 1),
-        (["task_workflow", "unassigned_task_workflow"], ["not_assigned"], 2),
-        (["unassigned_task_workflow", "assigned_task_workflow"], ["assigned"], 1),
+        (["assigned_task_workflow"], "not_assigned", 0),
+        (["task_workflow"], "assigned", 0),
         (
-            ["unassigned_task_workflow", "assigned_task_workflow"],
-            ["assigned", "not_assigned"],
+            ["task_workflow", "not_assigned_task_with_previous_assignee"],
+            "not_assigned",
             2,
         ),
         (
-            ["unassigned_task_workflow", "assigned_task_workflow", "task_workflow"],
-            ["assigned", "not_assigned"],
-            3,
+            ["assigned_task_workflow", "not_assigned_task_with_previous_assignee"],
+            "assigned",
+            1,
         ),
-        (["task_workflow", "unassigned_task_workflow"], ["assigned"], 0),
+        (
+            ["assigned_task_workflow", "not_assigned_task_with_previous_assignee"],
+            "assigned",
+            1,
+        ),
+        (
+            [
+                "assigned_task_with_previous_assignee",
+                "not_assigned_task_with_previous_assignee",
+            ],
+            "not_assigned",
+            1,
+        ),
     ],
+    ids=["id1", "id2", "id3", "id4", "id5", "id6"],
 )
 def test_filter_by_assignment_status_workflow_list_view(
     workflow_fixture,
@@ -101,7 +110,7 @@ def test_filter_by_assignment_status_workflow_list_view(
     [request.getfixturevalue(fixture) for fixture in workflow_fixture]
     queryset = Task.objects.all()
 
-    filter = TaskWorkflowFilter(queryset=queryset)
+    filter = TaskWorkflowFilter()
     filtered = filter.filter_by_assignment_status(
         queryset,
         assignment_status,
@@ -117,7 +126,7 @@ def test_filter_by_assignment_status_workflow_list_view(
         (["assigned_task_workflow"], 0),
         (["task_workflow"], 0),
         (["task_workflow", "assigned_task_workflow"], 0),
-        (["unassigned_task_workflow"], 0),
+        (["not_assigned_task_with_previous_assignee"], 0),
     ],
 )
 def test_filter_by_workflow_assignee(

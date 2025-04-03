@@ -6,7 +6,9 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db import transaction
+from django.db.models import OuterRef
 from django.db.models import Q
+from django.db.models import Subquery
 from django.urls import reverse
 from django.utils.timezone import make_aware
 
@@ -132,6 +134,20 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         return self.filter(
             Q(assignees__user=user) & Q(assignees__unassigned_at__isnull=True),
         )
+
+    def get_latest_assignees(self):
+        """
+        Returns a queryset of tasks annotated with the first_name of the most
+        recent active TaskAssignee assigned to the Task.
+
+        This allows for alphabetical ordering by Task assignee first_name
+        """
+        latest_assignees = TaskAssignee.objects.filter(
+            task=OuterRef("pk"),
+            unassigned_at__isnull=True,
+        ).values("user__first_name")
+
+        return self.annotate(assigned_user=Subquery(latest_assignees[:1]))
 
 
 class TaskBase(TimestampedMixin):

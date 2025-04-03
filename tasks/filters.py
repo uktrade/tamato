@@ -78,12 +78,6 @@ class TaskWorkflowFilter(TamatoFilter):
         queryset=User.objects.active_tms(),
     )
 
-    # assignment_status = MultipleChoiceFilter(
-    #     choices=TaskWorkflowAssignmentChoices.choices,
-    #     method="filter_by_assignment_status",
-    #     label="Assignment status",
-    #     widget=CheckboxSelectMultiple,
-    # )
     assignment_status = ChoiceFilter(
         choices=TaskWorkflowAssignmentChoices.choices,
         method="filter_by_assignment_status",
