@@ -18,10 +18,10 @@
           <table>
             <tr>
               <td class="comm-code-block comm-code-1">{{comm.code.code[:2]}}</td>
-              <td class="comm-code-block {% if comm.indent >= 1 %}comm-code-2 {% endif %}">{{comm.code.code[2:4]}}</td>
-              <td class="comm-code-block {% if comm.indent >=2 %} comm-code-3 {% endif %} %}">{{comm.code.code[4:6]}}</td>
-              <td class="comm-code-block {% if comm.indent >=3 %}comm-code-4 {% endif %} %}">{{comm.code.code[6:8]}}</td>
-              <td class="comm-code-block {% if comm.indent >=4 %}comm-code-5 {% endif %} %}">{{comm.code.code[8:]}}</td>
+              <td class="comm-code-block {% if comm.code.code[2:4] != '00' %}comm-code-2 {% endif %}">{{comm.code.code[2:4]}}</td>
+              <td class="comm-code-block {% if comm.code.code[4:6] != '00' %} comm-code-3 {% endif %} %}">{{comm.code.code[4:6]}}</td>
+              <td class="comm-code-block {% if comm.code.code[6:8] != '00' %}comm-code-4 {% endif %} %}">{{comm.code.code[6:8]}}</td>
+              <td class="comm-code-block {% if comm.code.code[8:] != '00' %}comm-code-5 {% endif %} %}">{{comm.code.code[8:]}}</td>
               <td class="comm-code-suffix">({{comm.suffix}})</td>
               <td><a class="comm-code-link govuk-link" href="{{ url('commodity-ui-detail', args=[comm.sid]) }}">View<span class="govuk-visually-hidden">{{ comm.code }}</span></td>
             </tr>
