@@ -1,0 +1,61 @@
+<div class="govuk-form-group">
+    <fieldset class="govuk-fieldset">
+      <div class="govuk-radios" data-module="govuk-radios">
+        {% if option.value == 'divider' %}
+          <div class="govuk-radios__divider">{{option.label}}</div>
+        {% elif option.value == 'no_change' %}
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input" 
+            id="volume-change-{{option.value}}"
+            name="volume-change" 
+            type="radio" 
+            value={{option.value}}
+            checked data-aria-controls="conditional-volume-{{option.value}}"
+        >
+          <label class="govuk-label govuk-radios__label" for="volume-change">
+            {{option.label.label}}
+            <div class="govuk-hint">
+              {{option.label.help_text}}
+            </div>
+          </label>
+        </div>
+        {% else %}
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input" 
+            id="volume-change-{{option.value}}"
+            name="volume-change" 
+            type="radio" 
+            value={{option.value}}
+            checked data-aria-controls="conditional-volume-{{option.value}}"
+        >
+          <label class="govuk-label govuk-radios__label" for="volume-change">
+            {{option.label.label}}
+          </label>
+        </div>
+        <div class="govuk-radios__conditional" id="conditional-volume-{{option.value}}">
+          <div class="govuk-form-group">
+            <div class="govuk-input__wrapper">
+              {% if widget.label.suffix %}
+              <input 
+                    class="numberinput govuk-input govuk-input govuk-input--width-3" 
+                    type="text"
+                    id="{{option.value}}"
+                    name="{{ option.value }}"
+                    {% include "django/forms/widgets/attrs.html" %} />
+                <div class="govuk-input__suffix" aria-hidden="true">{{widget.label.suffix}}</div>
+              {% else %}
+                <input 
+                    class="numberinput govuk-input govuk-input govuk-input--width-5" 
+                    type="text"
+                    id="{{option.value}}"
+                    name="{{ option.value }}"
+                    aria-describedby="input-error"
+                    {% include "django/forms/widgets/attrs.html" %} />
+                {% endif %}
+              </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </fieldset>
+  </div>
