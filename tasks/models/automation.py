@@ -71,6 +71,9 @@ class Automation(PolymorphicModel):
     )
     """The Task instance associate with this automation."""
 
+    def __repr__(self):
+        return f"{self.__class__}(pk={self.pk}, name={self.name})"
+
     def get_state(self) -> StateChoices:
         """
         Returns a StateChoices element representing the current state of this
