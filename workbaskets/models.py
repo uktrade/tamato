@@ -19,6 +19,8 @@ from django.db.models import Max
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Subquery
+from django.db.transaction import atomic
+from django.urls import reverse
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -35,6 +37,10 @@ from common.models.transactions import TransactionPartition
 from common.models.transactions import TransactionQueryset
 from measures.models import Measure
 from measures.querysets import MeasuresQuerySet
+from tasks.models import Automation
+from tasks.models import ProgressState
+from tasks.models import StateChoices
+from tasks.signals import set_current_instigator
 from workbaskets.util import serialize_uploaded_data
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
@@ -842,3 +848,83 @@ class DataRow(ValidityMixin, models.Model):
         null=True,
         blank=True,
     )
+
+
+class CreateWorkBasketAutomation(Automation):
+    """Create a workbasket and associate with the workflow."""
+
+    name = "Create workbasket"
+    help_text = "Creates a workbasket and associates it with the ticket."
+
+    def get_state(self) -> StateChoices:
+        if not self.task.get_workflow():
+            # The related task must be associated with a TaskWorkflow instance
+            # in order to run this automation, otherwise it is in error.
+            return StateChoices.ERRORED
+        if self.task.get_workflow().summary_task.workbasket:
+            return StateChoices.DONE
+        else:
+            return StateChoices.CAN_RUN
+
+    def rendered_state(self) -> str:
+        if self.get_state() == StateChoices.CAN_RUN:
+            create_workbasket_url = reverse(
+                "workbaskets:workbasket-automation-ui-create",
+                kwargs={"pk": self.pk},
+            )
+            return f"""<a class="govuk-link" href="{create_workbasket_url}">Create workbasket</a>"""
+        elif self.get_state() == StateChoices.DONE:
+            return """<p class="govuk-body">Done: workbasket created</p>"""
+        else:
+            return """<p class="govuk-body">Error</p>"""
+
+    @atomic
+    def run_automation(self, user):
+        """Create a workbasket, associate it with the automated step's workflow
+        and set automated step's state to DONE."""
+        workflow = self.task.get_workflow()
+
+        workbasket = WorkBasket.objects.create(
+            title=f"{workflow.prefixed_id} - {workflow.title}",
+            reason=f"{workflow.summary_task.description}",
+            author=user,
+        )
+
+        workflow.summary_task.workbasket = workbasket
+        workflow.summary_task.save()
+
+        set_current_instigator(user)
+        self.task.progress_state = ProgressState.objects.get(
+            name=ProgressState.State.DONE,
+        )
+        self.task.save()
+
+        logger.info(
+            f"{self} created {workbasket} on {self.task.get_workflow()}",
+        )
+
+
+class RunRuleChecksAutomation(Automation):
+    """Run rule checks on the associated workbasket."""
+
+    name = "Run rule checks"
+    help_text = "Runs rule checks on the ticket's workbasket."
+
+    def state(self) -> StateChoices:
+        return StateChoices.DONE
+
+    def rendered_state(self) -> str:
+        return """<p class="govuk-body">Automation not yet implemented</p>"""
+
+
+class EndDateMeasuresAutomation(Automation):
+    """End-date measures in the task workflow's workbasket."""
+
+    name = "End-date measures"
+    help_text = "End-date measures based upon goods in the ticket's workbasket."
+
+    def get_state(self) -> StateChoices:
+        return StateChoices.DONE
+
+    def rendered_state(self) -> str:
+        return """<p class="govuk-body">Automation not yet implemented</p>"""

@@ -20,7 +20,6 @@ from django.forms import ModelChoiceField
 from django.forms import ModelForm
 from django.forms import Textarea
 from django.urls import reverse
-from django.utils.timezone import make_aware
 
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
@@ -483,7 +482,7 @@ TaskWorkflowTemplateDeleteForm = delete_form_for(TaskWorkflowTemplate)
 class TaskTemplateFormBase(ModelForm):
     class Meta:
         model = TaskTemplate
-        fields = ("title", "description")
+        fields = ("title", "description", "automation_class_name")
 
     def __init__(self, *args, submit_title, **kwargs):
         super().__init__(*args, **kwargs)
@@ -494,6 +493,7 @@ class TaskTemplateFormBase(ModelForm):
         self.helper.layout = Layout(
             "title",
             "description",
+            "automation_class_name",
             Submit(
                 "submit",
                 submit_title,
