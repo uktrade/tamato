@@ -180,6 +180,9 @@ class Task(TaskBase):
             return self.taskitem.workflow
         return None
 
+    def __repr__(self):
+        return f"{self.__class__}(pk={self.pk}, name={self.title})"
+
     def __str__(self):
         return self.title
 
