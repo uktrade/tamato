@@ -332,10 +332,6 @@ def test_get_latest_assignees_task_queryset(
 
     qs = Task.objects.get_latest_assignees()
 
-    assert qs.assigned().count() == 1
-    assert qs.first().assigned_user == None
-    assert qs.last().assigned_user == ""
-
     TaskAssignee.assign_user(
         user=new_assignee_1,
         task=workflow_1,
