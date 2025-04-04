@@ -3,7 +3,6 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from tasks.models import Category
-from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskItem
@@ -94,10 +93,6 @@ class TaskAdmin(ReadOnlyAdminMixin, TaskAdminMixin, admin.ModelAdmin):
 
 
 class CategoryAdmin(admin.ModelAdmin):
-    search_fields = ["name"]
-
-
-class ProgressStateAdmin(admin.ModelAdmin):
     search_fields = ["name"]
 
 
@@ -211,8 +206,6 @@ class TaskWorflowAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
 admin.site.register(Task, TaskAdmin)
 
 admin.site.register(Category, CategoryAdmin)
-
-admin.site.register(ProgressState, ProgressStateAdmin)
 
 admin.site.register(TaskAssignee, TaskAssigneeAdmin)
 
