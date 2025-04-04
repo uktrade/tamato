@@ -331,6 +331,7 @@ def test_get_latest_assignees_task_queryset(
     new_assignee_2 = UserFactory.create(first_name="Paul")
 
     qs = Task.objects.get_latest_assignees()
+    assert qs.assigned().count() == 1
 
     TaskAssignee.assign_user(
         user=new_assignee_1,
