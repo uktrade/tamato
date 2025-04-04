@@ -39,6 +39,7 @@ class TaskWorkflow(Queue):
         blank=True,
         null=True,
     )
+    """'Entry into force' the due date on a tariff update."""
     policy_contact = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta(Queue.Meta):
@@ -59,6 +60,8 @@ class TaskWorkflow(Queue):
 
     @property
     def prefixed_id(self) -> str:
+        """Get the workflow's ID prefixed with the system configured ticket
+        prefix setting."""
         return f"{settings.TICKET_PREFIX}{self.id}"
 
     def get_tasks(self) -> models.QuerySet:
