@@ -8,6 +8,8 @@ from django.db import models
 from django.db import transaction
 from django.urls import reverse
 from django.utils.timezone import make_aware
+from django_fsm import FSMField
+from django_fsm import transition
 
 from common.models.mixins import TimestampedMixin
 from common.models.mixins import WithSignalManagerMixin
@@ -17,30 +19,13 @@ from workbaskets.models import WorkBasket
 User = get_user_model()
 
 
-class ProgressState(models.Model):
-    class State(models.TextChoices):
-        TO_DO = "TO_DO", "To do"
-        IN_PROGRESS = "IN_PROGRESS", "In progress"
-        DONE = "DONE", "Done"
+class ProgressState(models.TextChoices):
+    TO_DO = "TO_DO", "To do"
+    IN_PROGRESS = "IN_PROGRESS", "In progress"
+    DONE = "DONE", "Done"
 
-    DEFAULT_STATE_NAME = State.TO_DO
-    """The name of the default `State` object for `ProgressState`."""
 
-    name = models.CharField(
-        max_length=255,
-        choices=State.choices,
-        unique=True,
-    )
-
-    def __str__(self):
-        return self.get_name_display()
-
-    @classmethod
-    def get_default_state_id(cls):
-        """Get the id / pk of the default `State` object for `ProgressState`."""
-        # Failsafe get_or_create() avoids attempt to get non-existant instance.
-        default, _ = cls.objects.get_or_create(name=cls.DEFAULT_STATE_NAME)
-        return default.id
+# Might need a get display name function
 
 
 class TaskManager(WithSignalManagerMixin, models.Manager):
@@ -117,10 +102,13 @@ class TaskBase(TimestampedMixin):
 
 
 class Task(TaskBase):
-    progress_state = models.ForeignKey(
-        ProgressState,
-        default=ProgressState.get_default_state_id,
-        on_delete=models.PROTECT,
+
+    progress_state = FSMField(
+        default=ProgressState.TO_DO,
+        choices=ProgressState.choices,
+        db_index=True,
+        protected=True,
+        editable=False,
     )
     parent_task = models.ForeignKey(
         "self",
@@ -174,6 +162,30 @@ class Task(TaskBase):
             return reverse("workflow:task-ui-detail", kwargs={"pk": self.pk})
 
         return "#NOT-IMPLEMENTED"
+
+    @transition(
+        field=progress_state,
+        source=[ProgressState.TO_DO, ProgressState.DONE],
+        target=ProgressState.IN_PROGRESS,
+    )
+    def in_progress(self):
+        """Mark a task as in progress."""
+
+    @transition(
+        field=progress_state,
+        source=[ProgressState.TO_DO, ProgressState.IN_PROGRESS],
+        target=ProgressState.DONE,
+    )
+    def done(self):
+        """Mark a task as done."""
+
+    @transition(
+        field=progress_state,
+        source=[ProgressState.DONE, ProgressState.IN_PROGRESS],
+        target=ProgressState.TO_DO,
+    )
+    def to_do(self):
+        """Mark a task as to do."""
 
 
 class Category(models.Model):
