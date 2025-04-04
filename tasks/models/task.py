@@ -81,7 +81,7 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
 
     def incomplete(self):
         """Returns a queryset of tasks excluding those marked as complete."""
-        return self.exclude(progress_state__name=ProgressState.State.DONE)
+        return self.exclude(progress_state__name=ProgressState.DONE)
 
 
 class TaskBase(TimestampedMixin):
