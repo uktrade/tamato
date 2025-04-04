@@ -2,6 +2,7 @@ import pytest
 from django.conf import settings
 
 from common.tests.factories import TaskFactory
+from common.tests.factories import UserFactory
 from tasks.filters import TaskWorkflowFilter
 from tasks.models import Task
 from tasks.tests.factories import TaskWorkflowFactory
@@ -64,3 +65,83 @@ def test_normalise_prefixed_ticket_ids(
     )
 
     assert normalised_sentence == expected_result
+
+
+@pytest.mark.parametrize(
+    ("workflow_fixture", "assignment_status", "expected_filtered_count"),
+    [
+        (["assigned_task_workflow"], "not_assigned", 0),
+        (["task_workflow"], "assigned", 0),
+        (
+            ["task_workflow", "not_assigned_task_with_previous_assignee"],
+            "not_assigned",
+            2,
+        ),
+        (
+            ["assigned_task_workflow", "not_assigned_task_with_previous_assignee"],
+            "assigned",
+            1,
+        ),
+        (
+            ["assigned_task_workflow", "not_assigned_task_with_previous_assignee"],
+            "assigned",
+            1,
+        ),
+        (
+            [
+                "assigned_task_with_previous_assignee",
+                "not_assigned_task_with_previous_assignee",
+            ],
+            "not_assigned",
+            1,
+        ),
+    ],
+    ids=["id1", "id2", "id3", "id4", "id5", "id6"],
+)
+def test_filter_by_assignment_status_workflow_list_view(
+    workflow_fixture,
+    assignment_status,
+    expected_filtered_count,
+    request,
+):
+    """Tests if tickets with differing assignment statuses (assigned) or
+    (unassiged & never assigned) can be returned correctly when using the
+    assignment status filter."""
+    [request.getfixturevalue(fixture) for fixture in workflow_fixture]
+    queryset = Task.objects.all()
+
+    filter = TaskWorkflowFilter()
+    filtered = filter.filter_by_assignment_status(
+        queryset,
+        assignment_status,
+        assignment_status,
+    )
+
+    assert filtered.count() == expected_filtered_count
+
+
+@pytest.mark.parametrize(
+    ("workflow_fixture", "expected_filtered_count"),
+    [
+        (["assigned_task_workflow"], 0),
+        (["task_workflow"], 0),
+        (["task_workflow", "assigned_task_workflow"], 0),
+        (["not_assigned_task_with_previous_assignee"], 0),
+    ],
+)
+def test_filter_by_workflow_assignee(
+    workflow_fixture,
+    expected_filtered_count,
+    request,
+):
+    """Tests if tickets that have been assigned to a user are returned correctly
+    when filtering by assignee."""
+
+    test_user = UserFactory.create()
+    queryset = Task.objects.all()
+    [request.getfixturevalue(fixture) for fixture in workflow_fixture]
+
+    filter = TaskWorkflowFilter(queryset=queryset)
+    filtered = filter.filter_by_current_assignee(queryset, "assignee", test_user)
+
+    assert filtered.count() == expected_filtered_count
