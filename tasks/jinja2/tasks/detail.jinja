@@ -12,7 +12,10 @@
 {% block breadcrumb %}
   {% if ticket_number %}
     {{ breadcrumbs(request, [
-        {"text": "Ticket " ~ ticket_prefixed_id, "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_number})},
+        {
+          "text": "Ticket " ~ ticket_prefixed_id,
+          "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_number}),
+        },
         {"text": page_title}
       ],
       with_workbasket=False,
