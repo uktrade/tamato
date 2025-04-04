@@ -149,12 +149,6 @@ class Task(TaskBase):
         ordering = ["id"]
 
     @property
-    def workflow(self):
-        """Return this task's TaskWorkflow instance if it has one, or otherwise
-        returns None."""
-        return self.taskitem.workflow if hasattr(self, "taskitem") else None
-
-    @property
     def has_automation(self) -> bool:
         """Return True if this task has an associated Automation instance, False
         otherwise."""
@@ -176,6 +170,15 @@ class Task(TaskBase):
             return self.assignees.assigned().get()
         except TaskAssignee.DoesNotExist:
             return TaskAssignee.objects.none()
+
+    def get_workflow(self):
+        """Return this task's TaskWorkflow instance if it has one, or otherwise
+        returns None."""
+        if self.is_summary_task:
+            return self.taskworkflow
+        elif hasattr(self, "taskitem"):
+            return self.taskitem.workflow
+        return None
 
     def __str__(self):
         return self.title
