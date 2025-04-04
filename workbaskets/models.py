@@ -19,7 +19,7 @@ from django.db.models import Max
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Subquery
-from django.db.transaction import atomic
+from django.urls import reverse
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -854,45 +854,26 @@ class CreateWorkBasketAutomation(Automation):
     help_text = "Creates a workbasket and associates it with the ticket."
 
     def get_state(self) -> StateChoices:
-        if not self.task.workflow:
+        if not self.task.get_workflow():
             # The related task must be associated with a TaskWorkflow instance
             # in order to run this automation, otherwise it is in error.
             return StateChoices.ERRORED
-
-        if self.task.workflow.summary_task.workbasket:
+        if self.task.get_workflow().summary_task.workbasket:
             return StateChoices.DONE
         else:
             return StateChoices.CAN_RUN
 
     def rendered_state(self) -> str:
         if self.get_state() == StateChoices.CAN_RUN:
-            return """<a class="govuk-link" href="#">Create workbasket</a>"""
-        elif self.get_status() == StateChoices.DONE:
-            return """<p class="govuk-body">Automation completed</p>"""
+            create_workbasket_url = reverse(
+                "workbaskets:workbasket-automation-ui-create",
+                kwargs={"pk": self.pk},
+            )
+            return f"""<a class="govuk-link" href="{create_workbasket_url}">Create workbasket</a>"""
+        elif self.get_state() == StateChoices.DONE:
+            return """<p class="govuk-body">Done: workbasket created</p>"""
         else:
-            return """<p class="govuk-body">Automation in error</p>"""
-
-    @atomic
-    def run(self, user) -> bool:
-        """Run this automation."""
-
-        # TODO put this stuff in the view?
-
-        if self.state != StateChoices.CAN_RUN:
-            logger.warning(f"Attempt to run {self} when state was not CAN_RUN")
-            return False
-
-        self.task.workflow.summary_task.workbasket = WorkBasket.objects.create(
-            title=f"{self.task.workflow.summary_task.title}",
-            reason=f"{self.task.workflow.summary_task.description}",
-            author=user,
-        )
-        self.task.workflow.summary_task.save()
-        logger.info(
-            f"{self} created workbasket {self.task.workflow.summary_task.workbasket}",
-        )
-
-        return True
+            return """<p class="govuk-body">Error</p>"""
 
 
 class RunRuleChecksAutomation(Automation):
