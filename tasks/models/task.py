@@ -114,8 +114,6 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         return self.filter(
             Q(assignees__isnull=False) & Q(assignees__unassigned_at__isnull=True),
         )
-        # what is the purpose of 'assignees__isnull=False'?
-        # why doesn't 'unassigned_at__isnull=True' suffice?
 
     def not_assigned(self):
         """

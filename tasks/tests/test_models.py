@@ -327,8 +327,8 @@ def test_get_latest_assignees_task_queryset(
     workflow_1 = not_assigned_task_no_previous_assignee
     workflow_2 = assigned_task_no_previous_assignee
 
-    new_assignee_1 = UserFactory.create(first_name="Marya")
-    new_assignee_2 = UserFactory.create(first_name="Paul")
+    new_assignee_1 = UserFactory.create(first_name="Aaa")
+    new_assignee_2 = UserFactory.create(first_name="Bbb")
 
     qs = Task.objects.get_latest_assignees()
     assert qs.assigned().count() == 1
@@ -344,9 +344,6 @@ def test_get_latest_assignees_task_queryset(
         task=workflow_2,
         instigator=new_assignee_2,
     )
-
-    # The above tests pass but why? Don't I need to call the 'get_latest_assignees' method again to
-    # reflect these new changes?
 
     assert qs.assigned().count() == 2
     assert qs.first().assigned_user == new_assignee_1.first_name
