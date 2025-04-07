@@ -20,7 +20,6 @@ from django.forms import ModelChoiceField
 from django.forms import ModelForm
 from django.forms import Textarea
 from django.urls import reverse
-from django.utils.timezone import make_aware
 
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
@@ -204,7 +203,7 @@ class UnassignUserForm(Form):
         )
 
     def clean(self):
-        if self.task.progress_state.name == ProgressState.State.DONE:
+        if self.task.progress_state.name == ProgressState.DONE:
             raise ValidationError(
                 {
                     "assignee": "The selected user cannot be unassigned because the step has a status of Done.",
