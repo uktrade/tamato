@@ -30,7 +30,7 @@ class TaskFilter(TamatoFilter):
     progress_state = ModelMultipleChoiceFilter(
         label="Status",
         help_text="Select all that apply",
-        queryset=ProgressState.objects.all(),
+        choices=ProgressState.choices,
         widget=CheckboxSelectMultiple,
     )
 
