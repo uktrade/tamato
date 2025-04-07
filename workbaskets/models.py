@@ -878,6 +878,20 @@ class CreateWorkBasketAutomation(Automation):
         else:
             return """<p class="govuk-body">Error</p>"""
 
+    def can_run_automation(self) -> bool:
+        workflow = self.task.get_workflow()
+
+        if not workflow:
+            raise ValidationError("No ticket associated with automation.")
+
+        if workflow.summary_task.workbasket:
+            raise ValidationError(
+                "A workbasket is already associated with the ticket. Cannot "
+                "associate more.",
+            )
+
+        return True
+
     @atomic
     def run_automation(self, user):
         """Create a workbasket, associate it with the automated step's workflow

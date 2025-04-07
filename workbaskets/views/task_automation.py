@@ -7,21 +7,21 @@ from crispy_forms_gds.layout import Submit
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.transaction import atomic
 from django.forms import Form
-from django.forms import ValidationError
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import FormView
 
 from tasks.models import Task
-from tasks.models import TaskWorkflow
 from workbaskets.models import CreateWorkBasketAutomation
 
 logger = logging.getLogger(__name__)
 
 
 class AutomationCreateWorkBasketForm(Form):
+    """Form for creating workbaskets via CreateWorkBasketAutomation."""
+
     def __init__(self, *args, **kwargs):
-        self.workflow = TaskWorkflow.objects.get(pk=kwargs.pop("workflow_id"))
+        self.automation: CreateWorkBasketAutomation = kwargs.pop("automation")
 
         super().__init__(*args, **kwargs)
 
@@ -38,11 +38,7 @@ class AutomationCreateWorkBasketForm(Form):
         )
 
     def clean(self):
-        if self.workflow.summary_task.workbasket:
-            raise ValidationError(
-                "A workbasket is already associated with the ticket. Cannot "
-                "associate more.",
-            )
+        self.automation.can_run_automation()
         return self.cleaned_data
 
 
@@ -68,7 +64,7 @@ class AutomationCreateWorkBasketView(PermissionRequiredMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["workflow_id"] = self.task.get_workflow().id
+        kwargs["automation"] = self.get_automation()
         return kwargs
 
     def get_context_data(self, **kwargs):
