@@ -2878,16 +2878,6 @@ def test_bulk_create_creates_definition(
         assert len(models.QuotaDefinition.objects.all()) == 1
 
 
-# @pytest.mark.parametrize(
-#     "change_type, change_value, result_1, result_2",
-#     [
-#         ("no_change", None, "100.00", "100.00"),
-#         ("increase_percentage", 4.5, "104.50", "109.20"),
-#         ("decrease_percentage", 7.7, "92.30", "85.19"),
-#         ("increase_quantity", 10, "110.00", "120.00"),
-#         ("decrease_quantity", 5, "95.00", "90.00"),
-#     ],
-# )
 def test_bulk_create_creates_definition_with_changing_volumes(
     session_request_with_workbasket,
     date_ranges,
