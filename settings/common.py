@@ -459,11 +459,7 @@ elif VCAP_SERVICES.get("aws-s3-bucket"):
             IMPORTER_S3_REGION_NAME = credentials["aws_region"]
             IMPORTER_S3_ACCESS_KEY_ID = credentials["aws_access_key_id"]
             IMPORTER_S3_SECRET_ACCESS_KEY = credentials["aws_secret_access_key"]
-        if "quotas-export" in bucket["name"]:
-            QUOTAS_EXPORT_STORAGE_BUCKET_NAME = credentials["bucket_name"]
-            QUOTAS_EXPORT_S3_REGION_NAME = credentials["aws_region"]
-            QUOTAS_EXPORT_S3_ACCESS_KEY_ID = credentials["aws_access_key_id"]
-            QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = credentials["aws_secret_access_key"]
+
 else:
     IMPORTER_S3_REGION_NAME = os.environ.get("AWS_REGION", "eu-west-2")
     IMPORTER_S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
@@ -483,21 +479,31 @@ else:
         "IMPORTER_STORAGE_BUCKET_NAME",
         "importer",
     )
-    QUOTAS_EXPORT_STORAGE_BUCKET_NAME = os.environ.get(
-        "QUOTAS_EXPORT_S3_ACCESS_KEY_ID",
+    DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_BUCKET_NAME = os.environ.get(
+        "DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_BUCKET_NAME",
         "quotas-export-local",
     )
-    QUOTAS_EXPORT_S3_REGION_NAME = os.environ.get(
-        "QUOTAS_EXPORT_S3_REGION_NAME",
+    DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_REGION_NAME = os.environ.get(
+        "DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_REGION_NAME",
         "eu-west-2",
     )
-    QUOTAS_EXPORT_S3_ACCESS_KEY_ID = os.environ.get(
-        "QUOTAS_EXPORT_S3_ACCESS_KEY_ID",
+    DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_ACCESS_KEY_ID = os.environ.get(
+        "DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_ACCESS_KEY_ID",
         "quotas-export-id",
     )
-    QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY = os.environ.get(
-        "QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY",
+    DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_SECRET_ACCESS_KEY = os.environ.get(
+        "DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_SECRET_ACCESS_KEY",
         "quotas-export-key",
+    )
+    # quota export S3 additional settings
+    QUOTAS_CSV_EXPORT_DESTINATION_FOLDER = os.environ.get(
+        "QUOTAS_CSV_EXPORT_DESTINATION_FOLDER",
+        "quotas_csv/",
+    )
+
+    QUOTAS_SQLITE_EXPORT_DESTINATION_FOLDER = os.environ.get(
+        "QUOTAS_SQLITE_EXPORT_DESTINATION_FOLDER",
+        "quotas_sqlite/",
     )
 
 S3_ENDPOINT_URL = os.environ.get(
@@ -537,11 +543,7 @@ CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY = int(
     os.environ.get("CROWN_DEPENDENCIES_API_DEFAULT_RETRY_DELAY", "8"),
 )
 
-# quota export S3 additional settings
-QUOTAS_EXPORT_DESTINATION_FOLDER = os.environ.get(
-    "QUOTAS_EXPORT_DESTINATION_FOLDER",
-    "quotas_export/",
-)
+
 
 # SQLite AWS settings
 if is_copilot():

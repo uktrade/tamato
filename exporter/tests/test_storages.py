@@ -6,16 +6,14 @@ from os import path
 from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
+import apsw
 
 import pytest
 import sqlite_s3vfs
 from django.conf import settings
 
-from exporter.storages import EmptyFileException
+from exporter.storages import EmptyFileException, QuotasSQLiteExportS3StorageBase, QuotaSQLiteS3Storage, QuotaSQLiteLocalStorage
 from exporter.storages import HMRCStorage
-from exporter.storages import QuotaLocalStorage
-from exporter.storages import QuotaS3Storage
-from exporter.storages import QuotasExportS3StorageBase
 from exporter.storages import SQLiteLocalStorage
 from exporter.storages import SQLiteS3Storage
 from exporter.storages import SQLiteS3StorageBase
@@ -134,8 +132,8 @@ class TestSQLiteS3StorageBase:
 
 
 @pytest.mark.exporter
-class TestQuotasExportS3StorageBase:
-    target_class = QuotasExportS3StorageBase
+class TestQuotasSQLiteExportS3StorageBase:
+    target_class = QuotasSQLiteExportS3StorageBase
 
     def get_target(self):
         return self.target_class()
@@ -146,12 +144,12 @@ class TestQuotasExportS3StorageBase:
 
         assert (
             default_settings["bucket_name"]
-            == settings.QUOTAS_EXPORT_STORAGE_BUCKET_NAME
+            == settings.DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_BUCKET_NAME
         )
-        assert default_settings["access_key"] == settings.QUOTAS_EXPORT_S3_ACCESS_KEY_ID
+        assert default_settings["access_key"] == settings.DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_ACCESS_KEY_ID
         assert (
             default_settings["secret_key"]
-            == settings.QUOTAS_EXPORT_S3_SECRET_ACCESS_KEY
+            == settings.DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_SECRET_ACCESS_KEY
         )
         assert default_settings["endpoint_url"] == settings.S3_ENDPOINT_URL
         assert default_settings["default_acl"] == "private"
@@ -159,7 +157,7 @@ class TestQuotasExportS3StorageBase:
     def test_generate_filename(self):
         target = self.get_target()
         file_name = target.generate_filename("zzz.zzz")
-        assert file_name == "quotas_export/zzz.zzz"
+        assert file_name == "quotas_sqlite/zzz.zzz"
 
 
 @pytest.mark.exporter
@@ -180,90 +178,6 @@ class TestHMRCStorage:
         target = self.get_target()
         params = target.get_object_parameters("file.ext")
         assert params == {"ContentDisposition": "attachment; filename=file.ext"}
-
-
-@pytest.mark.exporter
-class TestQuotaLocalStorage:
-    target_class = QuotaLocalStorage
-    target_class_location = "exporter/tests/test_files"
-
-    def get_target(self, location=None):
-        if location is None:
-            return self.target_class(self.target_class_location)
-        return self.target_class(location)
-
-    def test_init_bad_location(self):
-        with pytest.raises(Exception) as e:
-            self.get_target("zzz")
-
-        assert str(e.value) == "Directory does not exist: zzz."
-
-    def test_init_good_location(self):
-        target = self.get_target()
-        resolved_location = Path(self.target_class_location).expanduser().resolve()
-        assert target._location == resolved_location
-
-    def test_path(self):
-        target = self.get_target()
-        target_path = target.path("a.csv")
-        expected_path = (
-            str(Path(self.target_class_location).expanduser().resolve()) + "/a.csv"
-        )
-        assert target_path == expected_path
-
-    def test_exists(self):
-        target = self.get_target()
-        target_exists = target.exists("valid.csv")
-        assert target_exists
-
-        target_exists = target.exists("zzz.csv")
-        assert not target_exists
-
-    def test_export_csv(self):
-        def mocked_make_export(named_temp_file):
-            with open(named_temp_file.name, "wt") as file:
-                writer = csv.writer(file)
-                writer.writerow(["header1", "header2", "header3"])
-                writer.writerow(["data1", "data2", "data3"])
-
-        patch("exporter.quotas.make_export", mocked_make_export)
-        with pytest.raises(Exception) as e:
-            self.get_target("zzz")
-
-        assert str(e.value) == "Directory does not exist: zzz."
-
-    def test_init_good_location(self):
-        target = self.get_target()
-        resolved_location = Path(self.target_class_location).expanduser().resolve()
-        assert target._location == resolved_location
-
-    def test_path(self):
-        target = self.get_target()
-        target_path = target.path("a.csv")
-        expected_path = (
-            str(Path(self.target_class_location).expanduser().resolve()) + "/a.csv"
-        )
-        assert target_path == expected_path
-
-    def test_exists(self):
-        target = self.get_target()
-        target_exists = target.exists("valid.csv")
-        assert target_exists
-
-        target_exists = target.exists("zzz.csv")
-        assert not target_exists
-
-    def test_export_csv(self):
-        def mocked_make_export(named_temp_file):
-            with open(named_temp_file.name, "wt") as file:
-                writer = csv.writer(file)
-                writer.writerow(["header1", "header2", "header3"])
-                writer.writerow(["data1", "data2", "data3"])
-
-        patch("exporter.quotas.make_export", mocked_make_export)
-        target = self.get_target()
-        target.export_csv("some.csv")
-        assert os.path.exists(os.path.join(target._location, "some.csv"))
 
 
 @pytest.mark.exporter
@@ -376,27 +290,6 @@ class TestSQLiteLocalStorage:
 
 
 @pytest.mark.exporter
-class TestQuotaS3Storage:
-    target_class = QuotaS3Storage
-
-    def get_target(self):
-        return self.target_class()
-
-    @patch("exporter.storages.is_valid_quotas_csv", return_value=True)
-    def test_export_csv(self, patched_is_valid_quotas_csv):
-        def mocked_make_export(named_temp_file):
-            with open(named_temp_file.name, "wt") as file:
-                writer = csv.writer(file)
-                writer.writerow(["header1", "header2", "header3"])
-                writer.writerow(["data1", "data2", "data3"])
-
-        patch("exporter.quotas.make_export", mocked_make_export)
-        target = self.get_target()
-        target.export_csv("some.csv")
-        assert os.path.exists(os.path.join(target._location, "some.csv"))
-
-
-@pytest.mark.exporter
 class TestSQLiteS3VFSStorage:
     target_class = SQLiteS3VFSStorage
 
@@ -506,14 +399,129 @@ class TestSQLiteLocalStorage:
 
 
 @pytest.mark.exporter
-class TestQuotaS3Storage:
-    target_class = QuotaS3Storage
+class TestQuotasSQLiteExportS3StorageBase:
+    target_class = QuotasSQLiteExportS3StorageBase
 
     def get_target(self):
         return self.target_class()
 
-    @patch("exporter.storages.is_valid_quotas_csv", return_value=True)
-    def test_export_csv(self, patched_is_valid_quotas_csv):
+    def test_get_default_settings(self):
+        target = self.get_target()
+        default_settings = target.get_default_settings()
+
+        assert (
+            default_settings["bucket_name"]
+            == settings.DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_BUCKET_NAME
+        )
+        assert default_settings["access_key"] == settings.DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_ACCESS_KEY_ID
+        assert (
+            default_settings["secret_key"]
+            == settings.DATA_WORKSPACE_OPEN_DATA_EXPORT_S3_SECRET_ACCESS_KEY
+        )
+        assert default_settings["endpoint_url"] == settings.S3_ENDPOINT_URL
+        assert default_settings["default_acl"] == "private"
+
+    def test_generate_filename(self):
+        target = self.get_target()
+        file_name = target.generate_filename("zzz.zzz")
+        assert file_name == "quotas_sqlite/zzz.zzz"
+
+
+@pytest.mark.exporter
+class TestSQLiteS3StorageBase:
+    target_class = SQLiteS3StorageBase
+
+    def get_target(self):
+        return self.target_class()
+
+    def test_get_default_settings(self):
+        target = self.get_target()
+        default_settings = target.get_default_settings()
+
+        assert default_settings["bucket_name"] == settings.SQLITE_STORAGE_BUCKET_NAME
+        assert default_settings["access_key"] == settings.SQLITE_S3_ACCESS_KEY_ID
+        assert default_settings["secret_key"] == settings.SQLITE_S3_SECRET_ACCESS_KEY
+        assert default_settings["endpoint_url"] == settings.SQLITE_S3_ENDPOINT_URL
+        assert default_settings["default_acl"] == "private"
+
+    def test_generate_filename(self):
+        target = self.get_target()
+        file_name = target.generate_filename("zzz.zzz")
+        assert file_name == "sqlite/zzz.zzz"
+
+
+@pytest.mark.exporter
+class TestQuotaSQLiteLocalStorage:
+    target_class = QuotaSQLiteLocalStorage
+    target_class_location = "exporter/tests/test_files"
+
+    def get_target(self, location=None):
+        if location is None:
+            return self.target_class(self.target_class_location)
+        return self.target_class(location)
+
+    def test_init_bad_location(self):
+        with pytest.raises(Exception) as e:
+            self.get_target("zzz")
+
+        assert str(e.value) == "Directory does not exist: zzz."
+
+    def test_init_good_location(self):
+        target = self.get_target()
+        resolved_location = Path(self.target_class_location).expanduser().resolve()
+        assert target._location == resolved_location
+
+    def test_path(self):
+        target = self.get_target()
+        target_path = target.path("a.csv")
+        expected_path = (
+            str(Path(self.target_class_location).expanduser().resolve()) + "/a.csv"
+        )
+        assert target_path == expected_path
+
+    def test_exists(self):
+        target = self.get_target()
+        target_exists = target.exists("valid.csv")
+        assert target_exists
+
+        target_exists = target.exists("zzz.csv")
+        assert not target_exists
+
+    def test_export_csv(self):
+        def mocked_make_export(named_temp_file):
+            with open(named_temp_file.name, "wt") as file:
+                writer = csv.writer(file)
+                writer.writerow(["header1", "header2", "header3"])
+                writer.writerow(["data1", "data2", "data3"])
+
+        patch("exporter.quotas.make_export", mocked_make_export)
+        with pytest.raises(Exception) as e:
+            self.get_target("zzz")
+
+        assert str(e.value) == "Directory does not exist: zzz."
+
+    def test_init_good_location(self):
+        target = self.get_target()
+        resolved_location = Path(self.target_class_location).expanduser().resolve()
+        assert target._location == resolved_location
+
+    def test_path(self):
+        target = self.get_target()
+        target_path = target.path("a.csv")
+        expected_path = (
+            str(Path(self.target_class_location).expanduser().resolve()) + "/a.csv"
+        )
+        assert target_path == expected_path
+
+    def test_exists(self):
+        target = self.get_target()
+        target_exists = target.exists("valid.csv")
+        assert target_exists
+
+        target_exists = target.exists("zzz.csv")
+        assert not target_exists
+
+    def test_export_csv(self):
         def mocked_make_export(named_temp_file):
             with open(named_temp_file.name, "wt") as file:
                 writer = csv.writer(file)
@@ -522,21 +530,53 @@ class TestQuotaS3Storage:
 
         patch("exporter.quotas.make_export", mocked_make_export)
         target = self.get_target()
-        with patch.object(target, "save") as mock_save:
-            mock_save.return_value = None
-            target.export_csv("valid.file")
-        patched_is_valid_quotas_csv.assert_called_once()
-        mock_save.assert_called_once()
+        target.export_sqlite("some.sqlite")
+        assert os.path.exists(os.path.join(target._location, "some.sqlite"))
 
-    def test_export_csv_invalid(self):
+
+
+@pytest.mark.exporter
+class TestQuotaSQLiteS3Storage:
+    target_class = QuotaSQLiteS3Storage
+
+    def get_target(self):
+        return self.target_class()
+
+    @patch("exporter.storages.is_valid_sqlite", return_value=True)
+    def test_export_sqlite(self, patched_is_valid_sqlite):
+        class FakeConnection:
+            def close(self):
+                pass
+
+            def cursor(self):
+                return MagicMock()
+
+            def backup(self,a,b,c):
+                return MagicMock()
+
         def mocked_make_export(named_temp_file):
-            pass
+            sqlite_conn = apsw.Connection(named_temp_file.name)
+            sqlite_cursor = sqlite_conn.cursor()
+            sql = '''
+                    CREATE TABLE quota__commodities (
+                        quota_definition__sid INTEGER NOT NULL,
+                        idx NOT NULL,
+                        commodity TEXT NOT NULL,
+                        PRIMARY KEY(quota_definition__sid, idx)
+                        FOREIGN KEY(quota_definition__sid) REFERENCES quotas(quota_definition__sid)
+                    );
+                    CREATE INDEX idx__quota__commodities__commoditiy
+                    ON quota__commodities(commodity);
+                    '''
+            sqlite_cursor.execute(sql)
 
-        with patch(
-            "exporter.quotas.make_export",
-            mocked_make_export,
-        ) as patched_make_export:
+        with patch("apsw.Connection") as mocked_connection:
+            patch("exporter.quotas_sqlite.make_export", mocked_make_export)
+            fake_bucket = MagicMock()
+            mocked_connection.return_value = FakeConnection()
             target = self.get_target()
-            with pytest.raises(EmptyFileException) as e:
-                target.export_csv("valid.file")
-            assert "has zero size." in str(e.value)
+            target._bucket = fake_bucket
+            target.export_sqlite("some.sqlite")
+
+        mocked_connection.assert_called()
+

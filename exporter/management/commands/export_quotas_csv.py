@@ -5,7 +5,7 @@ from typing import Optional
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 
-from exporter.quotas.tasks import export_and_upload_quotas_csv
+from exporter.quotas_csv.tasks import export_and_upload_quotas_csv
 
 logger = logging.getLogger(__name__)
 

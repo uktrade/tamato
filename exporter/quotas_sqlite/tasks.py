@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import date
 
+import settings
 from common.celery import app
 from exporter import storages
 
@@ -15,32 +16,34 @@ def get_output_filename():
     If no revisions are present the filename is prefixed with seed_.
     """
     date_str = f"{date.today().strftime('%Y%m%d')}"
-    return f"quotas_export_{date_str}.csv"
+    return f"quotas_export_{date_str}.sqlite"
 
 
 @app.task
-def export_and_upload_quotas_csv(local_path: str = None) -> bool:
+def export_and_upload_quotas_sqlite(local_path: str = None) -> bool:
     """
     Generates an export of latest published quota data from the TAP database to
-    a CSV file.
+    an SQLite file.
 
-    If `local_path` is provided, then the quotas CSV file will be saved in
+    If `local_path` is provided, then the quotas SQLite file will be saved in
     that directory location (note that in this case `local_path` must be an
     existing directory path on the local file system).
 
-    If `local_path` is not provided, then the quotas CSV file will be saved
+    If `local_path` is not provided, then the quotas SQLite file will be saved
     to the configured S3 bucket.
     """
-    csv_file_name = get_output_filename()
-
+    sqlite_file_name = get_output_filename()
     if local_path:
-        logger.info("Quota export process targeting local file system.")
-        storage = storages.QuotaLocalStorage(location=local_path)
+        logger.info("Quota SQLite export process targeting local file system.")
+        storage = storages.QuotaSQLiteLocalStorage(location=local_path)
+        export_filename = storage.generate_filename(sqlite_file_name)
     else:
-        logger.info("Quota export process targeting S3 file system.")
-        storage = storages.QuotaS3Storage()
+        logger.info("Quota SQLite export process targeting S3 file system.")
+        storage = storages.QuotaSQLiteS3Storage()
+        export_filename = storage.generate_filename(sqlite_file_name)
 
-    export_filename = storage.generate_filename(csv_file_name)
+
+
 
     logger.info(f"Checking for existing file {export_filename}.")
     if storage.exists(export_filename):
@@ -50,7 +53,7 @@ def export_and_upload_quotas_csv(local_path: str = None) -> bool:
         )
         return False
 
-    logger.info(f"Generating quotas CSV export {export_filename}.")
-    storage.export_csv(export_filename)
-    logger.info(f"Quotas CSV export {export_filename} complete.")
+    logger.info(f"Generating quotas SQLite export {export_filename}.")
+    storage.export_sqlite(export_filename)
+    logger.info(f"Quotas SQLite export {export_filename} complete.")
     return True
