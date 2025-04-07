@@ -31,11 +31,11 @@ class CommodityVolumeRadioSelect(RadioSelect):
     option_template_name = "common/widgets/radio_conditional_commodities.html"
 
     def get_context(self, name, value, attrs):
-        ctx = super().get_context(name, value, attrs)
+        context = super().get_context(name, value, attrs)
 
-        ctx.update({"optgroups": self.choices})
+        context.update({"optgroups": self.choices})
 
-        return ctx
+        return context
 
 
 class FormSetFieldWidget(widgets.Widget):

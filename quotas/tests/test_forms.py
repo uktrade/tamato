@@ -1261,11 +1261,25 @@ def test_quota_definition_bulk_create_definition_info_frequencies(
         )
 
 
-def test_quota_definition_bulk_create_definition_increment_decriment(
+@pytest.mark.parametrize(
+    "change_type, change_value, result_1, result_2",
+    [
+        ("no_change", None, "100.00", "100.00"),
+        ("increase_percentage", 4.5, "104.50", "109.20"),
+        ("decrease_percentage", 7.7, "92.30", "85.19"),
+        ("increase_quantity", 10, "110.00", "120.00"),
+        ("decrease_quantity", 5, "95.00", "90.00"),
+    ],
+)
+def test_quota_definition_bulk_create_volume_changes_saves_to_session(
     quota,
     session_request,
     bulk_create_start_form,
     bulk_create_definition_form,
+    change_type,
+    change_value,
+    result_1,
+    result_2,
 ):
     measurement_unit = factories.MeasurementUnitFactory()
     measurement_unit_qualifier = factories.MeasurementUnitQualifierFactory.create()
@@ -1280,8 +1294,8 @@ def test_quota_definition_bulk_create_definition_increment_decriment(
         ),
         "volume": 100.000,
         "initial_volume": 100.000,
-        "volume_change_type": "no_change",
-        "volume_change_value": None,
+        "volume_change_type": change_type,
+        "volume_change_value": change_value,
         "measurement_unit": measurement_unit,
         "quota_critical_threshold": 90,
         "quota_critical": "False",
@@ -1291,78 +1305,127 @@ def test_quota_definition_bulk_create_definition_increment_decriment(
         "measurement_unit_qualifier": measurement_unit_qualifier,
     }
 
-    # tests no input results in the same volume value
     with override_current_transaction(Transaction.objects.last()):
         bulk_create_start_form.save_quota_order_number_to_session(initial_data)
         bulk_create_definition_form.save_definition_data_to_session(form_data)
-        # check that the length staged_definitions matches the initial_info['instance_count']
         assert (
             len(session_request.session["staged_definition_data"])
             == form_data["instance_count"]
         )
         assert (
-            session_request.session["staged_definition_data"][1]["volume"] == "100.00"
+            session_request.session["staged_definition_data"][1]["volume"] == result_1
+        )
+        assert (
+            session_request.session["staged_definition_data"][2]["volume"] == result_2
         )
 
-    # increment by percentage
-    form_data["volume_change_type"] = "increase_percentage"
-    form_data["volume_change_value"] = 4.5
+
+@pytest.mark.parametrize(
+    "change_type",
+    [
+        "increase_percentage",
+        "decrease_percentage",
+        "increase_quantity",
+        "decrease_quantity",
+    ],
+)
+def test_quota_definition_bulk_create_volume_changes_no_values(
+    session_request_with_workbasket,
+    change_type,
+    date_ranges,
+):
+    measurement_unit = factories.MeasurementUnitFactory()
+    measurement_unit_qualifier = factories.MeasurementUnitQualifierFactory.create()
+
+    form_data = {
+        "maximum_precision": 3,
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "volume": 100.000,
+        "initial_volume": 100.000,
+        "volume-change": change_type,
+        "volume_change_type": change_type,
+        "increase_percentage": None,
+        "decrease_percentage": None,
+        "increase_quantity": None,
+        "decrease_quantity": None,
+        "measurement_unit": measurement_unit,
+        "quota_critical_threshold": 90,
+        "quota_critical": "False",
+        "instance_count": 3,
+        "frequency": 1,
+        "description": "This is a description",
+        "measurement_unit_qualifier": measurement_unit_qualifier,
+    }
+
+    form = forms.QuotaDefinitionBulkCreateDefinitionInformation(
+        data=form_data,
+        request=session_request_with_workbasket,
+    )
     with override_current_transaction(Transaction.objects.last()):
-        bulk_create_definition_form.save_definition_data_to_session(form_data)
-        # check that the length staged_definitions still matches the initial_info['instance_count']
+        assert not form.is_valid()
         assert (
-            len(session_request.session["staged_definition_data"])
-            == form_data["instance_count"]
-        )
-        assert (
-            session_request.session["staged_definition_data"][1]["volume"] == "104.50"
-        )
-        assert (
-            session_request.session["staged_definition_data"][2]["volume"] == "109.20"
+            "A value must be provided for the volume change option you have selected"
+            in form.errors["__all__"]
         )
 
-    # decrement by percentage
-    form_data["volume_change_type"] = "decrease_percentage"
-    form_data["volume_change_value"] = 7.7
-    with override_current_transaction(Transaction.objects.last()):
-        bulk_create_definition_form.save_definition_data_to_session(form_data)
-        # check that the length staged_definitions still matches the initial_info['instance_count']
-        assert (
-            len(session_request.session["staged_definition_data"])
-            == form_data["instance_count"]
-        )
-        assert session_request.session["staged_definition_data"][1]["volume"] == "92.30"
-        assert session_request.session["staged_definition_data"][2]["volume"] == "85.19"
 
-    # increment by value
-    form_data["volume_change_type"] = "increase_quantity"
-    form_data["volume_change_value"] = 10
-    with override_current_transaction(Transaction.objects.last()):
-        bulk_create_definition_form.save_definition_data_to_session(form_data)
-        # check that the length staged_definitions still matches the initial_info['instance_count']
-        assert (
-            len(session_request.session["staged_definition_data"])
-            == form_data["instance_count"]
-        )
-        assert (
-            session_request.session["staged_definition_data"][1]["volume"] == "110.00"
-        )
-        assert (
-            session_request.session["staged_definition_data"][2]["volume"] == "120.00"
-        )
+@pytest.mark.parametrize(
+    "change_type, change_value",
+    [
+        ("increase_percentage", 4.5),
+        ("decrease_percentage", 7.7),
+        ("increase_quantity", 10),
+        ("decrease_quantity", 5),
+    ],
+)
+def test_quota_definition_bulk_create_volume_changes_not_annually_recurring(
+    session_request_with_workbasket,
+    change_type,
+    change_value,
+    date_ranges,
+):
+    measurement_unit = factories.MeasurementUnitFactory()
+    measurement_unit_qualifier = factories.MeasurementUnitQualifierFactory.create()
+    form_data = {
+        "maximum_precision": 3,
+        "start_date_0": date_ranges.normal.lower.day,
+        "start_date_1": date_ranges.normal.lower.month,
+        "start_date_2": date_ranges.normal.lower.year,
+        "end_date_0": date_ranges.normal.upper.day,
+        "end_date_1": date_ranges.normal.upper.month,
+        "end_date_2": date_ranges.normal.upper.year,
+        "volume": 100.000,
+        "initial_volume": 100.000,
+        "volume-change": change_type,
+        "volume_change_type": change_type,
+        "increase_percentage": change_value,
+        "decrease_percentage": change_value,
+        "increase_quantity": change_value,
+        "decrease_quantity": change_value,
+        "measurement_unit": measurement_unit,
+        "quota_critical_threshold": 90,
+        "quota_critical": "False",
+        "instance_count": 3,
+        "frequency": 2,
+        "description": "This is a description",
+        "measurement_unit_qualifier": measurement_unit_qualifier,
+    }
 
-    # decrement by value
-    form_data["volume_change_type"] = "decrease_quantity"
-    form_data["volume_change_value"] = 10
+    form = forms.QuotaDefinitionBulkCreateDefinitionInformation(
+        data=form_data,
+        request=session_request_with_workbasket,
+    )
     with override_current_transaction(Transaction.objects.last()):
-        bulk_create_definition_form.save_definition_data_to_session(form_data)
-        # check that the length staged_definitions still matches the initial_info['instance_count']
+        assert not form.is_valid()
         assert (
-            len(session_request.session["staged_definition_data"])
-            == form_data["instance_count"]
+            "Automatically increasing or decreasing the volume between definition periods is only available for definition periods that span the entire year or if there is only one definition period in the year."
+            in form.errors["__all__"]
         )
-        assert session_request.session["staged_definition_data"][1]["volume"] == "90.00"
-        assert session_request.session["staged_definition_data"][2]["volume"] == "80.00"
 
 
 def test_bulk_create_update_definition_data_populates_parent_data(
@@ -1505,9 +1568,9 @@ def test_quota_definition_bulk_create_definition_is_valid(
         "end_date_2": date_ranges.normal.upper.year,
         "volume": "600.000",
         "initial_volume": "500.000",
-        "volume-change": "no_change",
-        "volume_change_type": "no_change",
-        "increase_percentage": None,
+        "volume-change": "increase_percentage",
+        "volume_change_type": "increase_percentage",
+        "increase_percentage": 10,
         "decrease_percentage": None,
         "increase_quantity": None,
         "decrease_quantity": None,

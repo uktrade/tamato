@@ -241,6 +241,7 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
             "required": "Enter the initial volume",
         },
     )
+    # required=False is passed twice here so the nested input is not required.
     volume_change_type_radio = forms.ChoiceField(
         label="How will the volume change between definition periods?",
         widget=CommodityVolumeRadioSelect(attrs={"required": False}),
