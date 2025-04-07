@@ -123,8 +123,8 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         - never had an assignee, or
         - had assignees, but they have now been unassigned.
         """
-        active_assignmees = TaskAssignee.objects.filter(unassigned_at__isnull=True)
-        return self.exclude(assignees__in=active_assignmees)
+        active_assignees = TaskAssignee.objects.filter(unassigned_at__isnull=True)
+        return self.exclude(assignees__in=active_assignees)
 
     def actively_assigned_to(self, user):
         """Returns a queryset of `Task` instances that have `user` currently
@@ -133,7 +133,7 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
             Q(assignees__user=user) & Q(assignees__unassigned_at__isnull=True),
         )
 
-    def get_latest_assignees(self):
+    def with_latest_assignees(self):
         """
         Returns a queryset of tasks annotated with the first_name of the most
         recent active TaskAssignee assigned to the Task.

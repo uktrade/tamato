@@ -15,7 +15,6 @@ from common.widgets import RadioSelect
 from tasks.forms import TaskFilterForm
 from tasks.models import ProgressState
 from tasks.models import Task
-from tasks.models import TaskAssignee
 from tasks.models import TaskWorkflowTemplate
 
 
@@ -129,61 +128,8 @@ class TaskWorkflowFilter(TamatoFilter):
 
         return " ".join(normalised_tokens)
 
-    # def filter_by_assignment_status(self, queryset, name, value):
-    #     assignment_status = Q()
-
-    #     if TaskWorkflowAssignmentChoices.ASSIGNED in value:
-    #         assigned_tasks = TaskAssignee.objects.assigned().values_list(
-    #             "task__id",
-    #             flat=True,
-    #         )
-    #         assignment_status |= Q(id__in=assigned_tasks)
-
-    #     if TaskWorkflowAssignmentChoices.NOT_ASSIGNED in value:
-    #         never_assigned = Task.objects.not_assigned_workflow().values_list(
-    #             "id",
-    #             flat=True,
-    #         )
-
-    #         unassigned_tasks = (
-    #             TaskAssignee.objects.unassigned()
-    #             .distinct()
-    #             .values_list(
-    #                 "task__id",
-    #                 flat=True,
-    #             )
-    #         )
-
-    #         assigned_tasks = (
-    #             TaskAssignee.objects.assigned()
-    #             .distinct()
-    #             .values_list(
-    #                 "task__id",
-    #                 flat=True,
-    #             )
-    #         )
-
-    #         unassigned_or_never = set(list(unassigned_tasks) + list(never_assigned))
-
-    #         assignment_status |= Q(
-    #             Q(id__in=unassigned_or_never),
-    #             ~Q(id__in=assigned_tasks),
-    #         )
-
-    #     return queryset.filter(assignment_status)
-
     def filter_by_current_assignee(self, queryset, name, value):
         return queryset.actively_assigned_to(user=value).distinct()
-        active_assigned_tasks = (
-            TaskAssignee.objects.assigned()
-            .filter(user=value)
-            .distinct()
-            .values_list(
-                "task__id",
-                flat=True,
-            )
-        )
-        return queryset.filter(id__in=active_assigned_tasks)
 
     def filter_by_assignment_status(self, queryset, name, value):
         if TaskWorkflowAssignmentChoices.ASSIGNED == value:

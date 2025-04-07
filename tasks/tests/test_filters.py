@@ -3,6 +3,7 @@ from django.conf import settings
 
 from common.tests.factories import TaskFactory
 from common.tests.factories import UserFactory
+from tasks.filters import TaskWorkflowAssignmentChoices
 from tasks.filters import TaskWorkflowFilter
 from tasks.models import Task
 from tasks.tests.factories import TaskWorkflowFactory
@@ -70,21 +71,21 @@ def test_normalise_prefixed_ticket_ids(
 @pytest.mark.parametrize(
     ("workflow_fixture", "assignment_status", "expected_filtered_count"),
     [
-        (["assigned_task_workflow"], "not_assigned", 0),
-        (["task_workflow"], "assigned", 0),
+        (["assigned_task_workflow"], TaskWorkflowAssignmentChoices.NOT_ASSIGNED, 0),
+        (["task_workflow"], TaskWorkflowAssignmentChoices.ASSIGNED, 0),
         (
             ["task_workflow", "not_assigned_task_with_previous_assignee"],
-            "not_assigned",
+            TaskWorkflowAssignmentChoices.NOT_ASSIGNED,
             2,
         ),
         (
             ["assigned_task_workflow", "not_assigned_task_with_previous_assignee"],
-            "assigned",
+            TaskWorkflowAssignmentChoices.ASSIGNED,
             1,
         ),
         (
             ["assigned_task_workflow", "not_assigned_task_with_previous_assignee"],
-            "assigned",
+            TaskWorkflowAssignmentChoices.ASSIGNED,
             1,
         ),
         (
@@ -92,13 +93,12 @@ def test_normalise_prefixed_ticket_ids(
                 "assigned_task_with_previous_assignee",
                 "not_assigned_task_with_previous_assignee",
             ],
-            "not_assigned",
+            TaskWorkflowAssignmentChoices.NOT_ASSIGNED,
             1,
         ),
     ],
-    ids=["id1", "id2", "id3", "id4", "id5", "id6"],
 )
-def test_filter_by_assignment_status_workflow_list_view(
+def test_filter_by_assignment_status(
     workflow_fixture,
     assignment_status,
     expected_filtered_count,
@@ -113,7 +113,7 @@ def test_filter_by_assignment_status_workflow_list_view(
     filter = TaskWorkflowFilter()
     filtered = filter.filter_by_assignment_status(
         queryset,
-        assignment_status,
+        "assignment_status",
         assignment_status,
     )
 
@@ -129,7 +129,7 @@ def test_filter_by_assignment_status_workflow_list_view(
         (["not_assigned_task_with_previous_assignee"], 0),
     ],
 )
-def test_filter_by_workflow_assignee(
+def test_filter_by_current_assignee(
     workflow_fixture,
     expected_filtered_count,
     request,
