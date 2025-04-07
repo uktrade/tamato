@@ -25,6 +25,7 @@ from tasks.models import TaskAssignee
 from tasks.signals import set_current_instigator
 from workbaskets import models
 from workbaskets import validators
+from workbaskets.models import CreateWorkBasketAutomation
 from workbaskets.util import serialize_uploaded_data
 
 User = get_user_model()
@@ -429,3 +430,28 @@ class WorkBasketCommentDeleteForm(forms.ModelForm):
                 css_class="govuk-button-group",
             ),
         )
+
+
+class AutomationCreateWorkBasketForm(forms.Form):
+    """Form for creating workbaskets via CreateWorkBasketAutomation."""
+
+    def __init__(self, *args, **kwargs):
+        self.automation: CreateWorkBasketAutomation = kwargs.pop("automation")
+
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Submit(
+                "submit",
+                "Run",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        self.automation.can_run_automation()
+        return self.cleaned_data

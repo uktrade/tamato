@@ -1,45 +1,16 @@
 import logging
 
-from crispy_forms_gds.helper import FormHelper
-from crispy_forms_gds.layout import Layout
-from crispy_forms_gds.layout import Size
-from crispy_forms_gds.layout import Submit
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.transaction import atomic
-from django.forms import Form
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import FormView
 
 from tasks.models import Task
+from workbaskets.forms import AutomationCreateWorkBasketForm
 from workbaskets.models import CreateWorkBasketAutomation
 
 logger = logging.getLogger(__name__)
-
-
-class AutomationCreateWorkBasketForm(Form):
-    """Form for creating workbaskets via CreateWorkBasketAutomation."""
-
-    def __init__(self, *args, **kwargs):
-        self.automation: CreateWorkBasketAutomation = kwargs.pop("automation")
-
-        super().__init__(*args, **kwargs)
-
-        self.helper = FormHelper()
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-        self.helper.layout = Layout(
-            Submit(
-                "submit",
-                "Run",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
-            ),
-        )
-
-    def clean(self):
-        self.automation.can_run_automation()
-        return self.cleaned_data
 
 
 class AutomationCreateWorkBasketView(PermissionRequiredMixin, FormView):
