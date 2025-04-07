@@ -40,7 +40,7 @@ from measures.querysets import MeasuresQuerySet
 from tasks.models import Automation
 from tasks.models import ProgressState
 from tasks.models import StateChoices
-from tasks.signals import set_current_instigator
+from tasks.signals import override_current_instigator
 from workbaskets.util import serialize_uploaded_data
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
@@ -893,11 +893,11 @@ class CreateWorkBasketAutomation(Automation):
         workflow.summary_task.workbasket = workbasket
         workflow.summary_task.save()
 
-        set_current_instigator(user)
-        self.task.progress_state = ProgressState.objects.get(
-            name=ProgressState.State.DONE,
-        )
-        self.task.save()
+        with override_current_instigator(user):
+            self.task.progress_state = ProgressState.objects.get(
+                name=ProgressState.State.DONE,
+            )
+            self.task.save()
 
         logger.info(
             f"{self} created {workbasket} on {self.task.get_workflow()}",
