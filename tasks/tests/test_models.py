@@ -1,10 +1,12 @@
 import pytest
+from django.conf import settings
 from django.db.utils import IntegrityError
 
 from common.tests.factories import CategoryFactory
 from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
+from common.tests.factories import UserFactory
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
@@ -35,6 +37,21 @@ def test_task_assignee_unassign_user_classmethod(task_assignee):
     assert TaskAssignee.unassign_user(user=user, task=task, instigator=user)
     # User has already been unassigned
     assert not TaskAssignee.unassign_user(user=user, task=task, instigator=user)
+
+
+def test_task_assignee_assign_user_classmethod(task_assignee, valid_user):
+    """Tests that `TaskAssignee.assign_user()` assigns the new user to the task
+    and unassigns the existing assignee."""
+    old_assignee = task_assignee.user
+    task = task_assignee.task
+
+    new_assignee = TaskAssignee.assign_user(
+        user=valid_user,
+        task=task,
+        instigator=valid_user,
+    )
+    assert task.assignees.assigned().get() == new_assignee
+    assert TaskAssignee.objects.unassigned().get(user=old_assignee, task=task)
 
 
 def test_task_assignee_assigned_queryset(
@@ -81,6 +98,24 @@ def test_task_assignee_workbasket_reviewers_queryset(
     assert workbasket_reviewer_assignee in workbasket_reviewers
 
 
+def test_task_incomplete_queryset():
+    """Tests that `TaskQueryset.incomplete()` excludes `Task` instances that are
+    marked as done."""
+    task = TaskFactory.create(
+        progress_state=ProgressStateFactory.create(
+            name=ProgressState.State.IN_PROGRESS,
+        ),
+    )
+    done_task = TaskFactory.create(
+        progress_state=ProgressStateFactory.create(name=ProgressState.State.DONE),
+    )
+    incomplete_tasks = Task.objects.incomplete()
+
+    assert Task.objects.count() == 2
+    assert task in incomplete_tasks
+    assert done_task not in incomplete_tasks
+
+
 def test_non_workflow_queryset(task, task_workflow_single_task_item):
     """Test correct behaviour of TaskQueryset.non_workflow()."""
 
@@ -124,6 +159,57 @@ def test_top_level_task_queryset(task, task_workflow_single_task_item):
     assert task_workflow_single_task_item.summary_task in top_level_tasks
     assert task in top_level_tasks
     assert task_workflow_single_task_item.get_tasks().get() not in top_level_tasks
+
+
+def test_assigned_task_queryset(
+    assigned_task_no_previous_assignee,
+    assigned_task_with_previous_assignee,
+    not_assigned_task_no_previous_assignee,
+    not_assigned_task_with_previous_assignee,
+):
+    assigned_tasks = [
+        assigned_task_no_previous_assignee,
+        assigned_task_with_previous_assignee,
+    ]
+    assert Task.objects.count() == 4
+    assert Task.objects.assigned().count() == 2
+    assert set(assigned_tasks) == set(Task.objects.assigned())
+
+
+def test_not_assigned_task_queryset(
+    assigned_task_no_previous_assignee,
+    assigned_task_with_previous_assignee,
+    not_assigned_task_no_previous_assignee,
+    not_assigned_task_with_previous_assignee,
+):
+    not_assigned_tasks = [
+        not_assigned_task_no_previous_assignee,
+        not_assigned_task_with_previous_assignee,
+    ]
+    assert Task.objects.count() == 4
+    assert Task.objects.not_assigned().count() == 2
+    assert set(not_assigned_tasks) == set(Task.objects.not_assigned())
+
+
+def test_actively_assigned_to_task_queryset(
+    assigned_task_no_previous_assignee,
+    assigned_task_with_previous_assignee,
+    not_assigned_task_no_previous_assignee,
+    not_assigned_task_with_previous_assignee,
+):
+    user_1 = assigned_task_no_previous_assignee.assignees.get().user
+    user_1_actively_assigned = Task.objects.actively_assigned_to(user=user_1)
+    assert set([assigned_task_no_previous_assignee]) == set(user_1_actively_assigned)
+
+    user_2 = (
+        assigned_task_with_previous_assignee.assignees.filter(
+            unassigned_at__isnull=True,
+        )
+        .get()
+        .user
+    )
+    user_2_actively_assigned = Task.objects.actively_assigned_to(user=user_2)
+    assert set([assigned_task_with_previous_assignee]) == set(user_2_actively_assigned)
 
 
 def test_create_task_log_task_assigned():
@@ -226,3 +312,39 @@ def test_task_is_subtask_property(task_factory):
 def test_task_is_summary_task_property(create_task_fn):
     task = create_task_fn()
     assert bool(hasattr(task, "taskworkflow")) == task.is_summary_task
+
+
+def test_prefixed_id(task_workflow):
+    expected_prefixed_id = f"{settings.TICKET_PREFIX}{task_workflow.id}"
+    assert task_workflow.prefixed_id == expected_prefixed_id
+
+
+def test_with_latest_assignees_task_queryset(
+    not_assigned_task_no_previous_assignee,
+    assigned_task_no_previous_assignee,
+):
+
+    workflow_1 = not_assigned_task_no_previous_assignee
+    workflow_2 = assigned_task_no_previous_assignee
+
+    new_assignee_1 = UserFactory.create(first_name="Aaa")
+    new_assignee_2 = UserFactory.create(first_name="Bbb")
+
+    qs = Task.objects.with_latest_assignees()
+    assert qs.assigned().count() == 1
+
+    TaskAssignee.assign_user(
+        user=new_assignee_1,
+        task=workflow_1,
+        instigator=new_assignee_1,
+    )
+
+    TaskAssignee.assign_user(
+        user=new_assignee_2,
+        task=workflow_2,
+        instigator=new_assignee_2,
+    )
+
+    assert qs.assigned().count() == 2
+    assert qs.first().assigned_user == new_assignee_1.first_name
+    assert qs.last().assigned_user == new_assignee_2.first_name

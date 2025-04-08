@@ -690,6 +690,34 @@ def format_date_string(date_string: str, short_format=False) -> str:
         return ""
 
 
+def format_date(value: datetime | date) -> str:
+    """Formats a datetime or date object using `settings.DATE_FORMAT`."""
+    if isinstance(value, (datetime, date)):
+        return value.strftime(settings.DATE_FORMAT)
+    return value
+
+
+def format_short_date(value: datetime | date) -> str:
+    """Formats a datetime or date object using `settings.SHORT_DATE_FORMAT`."""
+    if isinstance(value, (datetime, date)):
+        return value.strftime(settings.SHORT_DATE_FORMAT)
+    return value
+
+
+def format_datetime(value: datetime) -> str:
+    """Formats a datetime object using `settings.DATETIME_FORMAT`."""
+    if isinstance(value, datetime):
+        return value.strftime(settings.DATETIME_FORMAT)
+    return value
+
+
+def format_short_datetime(value: datetime) -> str:
+    """Formats a datetime object using `settings.SHORT_DATETIME_FORMAT`."""
+    if isinstance(value, datetime):
+        return value.strftime(settings.SHORT_DATETIME_FORMAT)
+    return value
+
+
 def log_timing(logger_function: typing.Callable):
     """
     Decorator function to log start and end times of a decorated function.

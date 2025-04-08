@@ -5,6 +5,8 @@ from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
+from common.tests.factories import UserFactory
+from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskItem
@@ -18,6 +20,12 @@ from tasks.tests import factories
 @pytest.fixture()
 def task():
     return TaskFactory.create()
+
+
+@pytest.fixture()
+def done_task():
+    done_state = ProgressStateFactory.create(name=ProgressState.State.DONE)
+    return TaskFactory.create(progress_state=done_state)
 
 
 @pytest.fixture()
@@ -118,6 +126,15 @@ def task_workflow() -> TaskWorkflow:
 
 
 @pytest.fixture()
+def assigned_task_workflow(valid_user) -> TaskWorkflow:
+    """Return an empty TaskWorkflow instance whose `summary_task` has an
+    assignee."""
+    workflow = factories.TaskWorkflowFactory.create()
+    TaskAssigneeFactory.create(task=workflow.summary_task, user=valid_user)
+    return workflow
+
+
+@pytest.fixture()
 def task_workflow_single_task_item(task_workflow) -> TaskWorkflow:
     """Return a TaskWorkflow instance containing a single TaskItem instance with
     associated Task instance."""
@@ -154,3 +171,36 @@ def task_workflow_three_task_items(
     )
 
     return task_workflow
+
+
+@pytest.fixture
+def assigned_task_no_previous_assignee() -> Task:
+    task = TaskFactory.create()
+    user = UserFactory.create()
+    TaskAssignee.assign_user(user=user, task=task, instigator=user)
+    return task
+
+
+@pytest.fixture
+def assigned_task_with_previous_assignee() -> Task:
+    task = TaskFactory.create()
+    user_1 = UserFactory.create()
+    TaskAssignee.assign_user(user=user_1, task=task, instigator=user_1)
+    TaskAssignee.unassign_user(user=user_1, task=task, instigator=user_1)
+    user_2 = UserFactory.create()
+    TaskAssignee.assign_user(user=user_2, task=task, instigator=user_2)
+    return task
+
+
+@pytest.fixture
+def not_assigned_task_no_previous_assignee() -> Task:
+    return TaskFactory.create()
+
+
+@pytest.fixture
+def not_assigned_task_with_previous_assignee() -> Task:
+    task = TaskFactory.create()
+    user = UserFactory.create()
+    TaskAssignee.assign_user(user=user, task=task, instigator=user)
+    TaskAssignee.unassign_user(user=user, task=task, instigator=user)
+    return task

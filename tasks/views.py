@@ -1,26 +1,30 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db import OperationalError
+from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import DeleteView
+from django.views.generic.edit import FormMixin
 from django.views.generic.edit import FormView
 from django.views.generic.edit import UpdateView
+from markdownify import markdownify
 
+from common.pagination import build_pagination_list
 from common.views import SortingMixin
 from common.views import WithPaginationListView
 from tasks.filters import TaskAndWorkflowFilter
 from tasks.filters import TaskFilter
 from tasks.filters import TaskWorkflowFilter
 from tasks.filters import WorkflowTemplateFilter
-from tasks.forms import AssignUsersForm
+from tasks.forms import AssignUserForm
 from tasks.forms import SubTaskCreateForm
 from tasks.forms import TaskCreateForm
 from tasks.forms import TaskDeleteForm
@@ -34,9 +38,13 @@ from tasks.forms import TaskWorkflowTemplateCreateForm
 from tasks.forms import TaskWorkflowTemplateDeleteForm
 from tasks.forms import TaskWorkflowTemplateUpdateForm
 from tasks.forms import TaskWorkflowUpdateForm
-from tasks.forms import UnassignUsersForm
-from tasks.models import Queue
-from tasks.models import QueueItem
+from tasks.forms import TicketCommentCreateForm
+from tasks.forms import TicketCommentDeleteForm
+from tasks.forms import TicketCommentUpdateForm
+from tasks.forms import UnassignUserForm
+from tasks.mixins import QueuedItemManagementMixin
+from tasks.mixins import TaskAssignmentMixin
+from tasks.models import Comment
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskItem
@@ -78,30 +86,27 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
 
-        # TODO: Factor out queries and place in TaskAssigeeQuerySet.
-        current_assignees = TaskAssignee.objects.filter(
-            task=self.get_object(),
-            # TODO:
-            # Using all task assignees is temporary for illustration as it
-            # doesn't align with the new approach of assigning users to tasks
-            # rather than assigning users to workbaskets (the old approach,
-            # uses tasks as an intermediary joining object).
-            # assignment_type=TaskAssignee.AssignmentType.GENERAL,
-        ).assigned()
+        current_assignee = self.get_object().get_current_assignee()
+        context["current_assignee"] = (
+            {"pk": current_assignee.pk, "name": current_assignee.user.get_displayname()}
+            if current_assignee
+            else {}
+        )
 
-        context["current_assignees"] = [
-            {"pk": assignee.pk, "name": assignee.user.get_full_name()}
-            for assignee in current_assignees.order_by(
-                "user__first_name",
-                "user__last_name",
-            )
-        ]
+        assignable_users = User.objects.active_tms()
+        if current_assignee:
+            assignable_users = assignable_users.exclude(pk=current_assignee.user.pk)
+
         context["assignable_users"] = [
-            {"pk": user.pk, "name": user.get_full_name()}
-            for user in User.objects.active_tms().exclude(
-                pk__in=current_assignees.values_list("user__pk", flat=True),
-            )
+            {"pk": user.pk, "name": user.get_full_name()} for user in assignable_users
         ]
+
+        if context["object"].taskitem.workflow:
+            context["ticket_title"] = context["object"].taskitem.workflow.title
+            context["ticket_prefixed_id"] = context[
+                "object"
+            ].taskitem.workflow.prefixed_id
+            context["ticket_number"] = context["object"].taskitem.workflow.id
 
         return context
 
@@ -142,11 +147,6 @@ class TaskUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = "tasks.change_task"
     form_class = TaskUpdateForm
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page_title"] = "Edit task details"
-        return context
-
     def form_valid(self, form):
         set_current_instigator(self.request.user)
         with transaction.atomic():
@@ -162,12 +162,6 @@ class TaskConfirmUpdateView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/confirm_update.jinja"
     permission_required = "tasks.change_task"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page_title"] = "Task updated"
-        context["object_type"] = "Task"
-        return context
-
 
 class TaskDeleteView(PermissionRequiredMixin, DeleteView):
     model = Task
@@ -182,11 +176,22 @@ class TaskDeleteView(PermissionRequiredMixin, DeleteView):
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["verbose_name"] = "task"
+        context_data["verbose_name"] = "step"
+        context_data["ticket_number"] = (
+            context_data["object"].taskitem.workflow.pk
+            if context_data["object"].taskitem.workflow.pk
+            else None
+        )
         return context_data
 
     def get_success_url(self):
-        return reverse("workflow:task-ui-confirm-delete", kwargs={"pk": self.object.pk})
+        return reverse(
+            "workflow:task-ui-confirm-delete",
+            kwargs={
+                "pk": self.object.pk,
+                "workflow_pk": self.object.taskitem.workflow.pk,
+            },
+        )
 
 
 class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
@@ -197,63 +202,43 @@ class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data["deleted_pk"] = self.kwargs["pk"]
-        context_data["verbose_name"] = "task"
+        context_data["ticket"] = TaskWorkflow.objects.get(
+            pk=self.kwargs["workflow_pk"],
+        )
         return context_data
 
 
-class TaskAssignUsersView(PermissionRequiredMixin, FormView):
+class TaskAssignUserView(PermissionRequiredMixin, TaskAssignmentMixin, FormView):
     permission_required = "tasks.add_taskassignee"
-    template_name = "tasks/assign_users.jinja"
-    form_class = AssignUsersForm
-
-    @property
-    def task(self):
-        return Task.objects.get(pk=self.kwargs["pk"])
+    form_class = AssignUserForm
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["page_title"] = "Assign users to task"
+        context["page_title"] = "Assign user to step"
         return context
 
     def form_valid(self, form):
-        form.assign_users(task=self.task, user_instigator=self.request.user)
+        form.assign_user(task=self.task, user_instigator=self.request.user)
         return HttpResponseRedirect(self.get_success_url())
 
-    def get_success_url(self):
-        return reverse(
-            "workflow:task-ui-detail",
-            kwargs={"pk": self.kwargs["pk"]},
-        )
 
-
-class TaskUnassignUsersView(PermissionRequiredMixin, FormView):
+class TaskUnassignUserView(PermissionRequiredMixin, TaskAssignmentMixin, FormView):
     permission_required = "tasks.change_taskassignee"
-    template_name = "tasks/assign_users.jinja"
-    form_class = UnassignUsersForm
-
-    @property
-    def task(self):
-        return Task.objects.get(pk=self.kwargs["pk"])
+    form_class = UnassignUserForm
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["page_title"] = "Unassign users from task"
+        context["page_title"] = "Unassign user from step"
         return context
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["task"] = self.task
-        return kwargs
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["assignee"] = self.task.get_current_assignee()
+        return initial
 
     def form_valid(self, form):
-        form.unassign_users(self.request.user)
+        form.unassign_user(user_instigator=self.request.user)
         return HttpResponseRedirect(self.get_success_url())
-
-    def get_success_url(self):
-        return reverse(
-            "workflow:task-ui-detail",
-            kwargs={"pk": self.kwargs["pk"]},
-        )
 
 
 class SubTaskCreateView(PermissionRequiredMixin, CreateView):
@@ -383,14 +368,15 @@ class TaskWorkflowListView(
     permission_required = "tasks.view_task"
     paginate_by = settings.DEFAULT_PAGINATOR_PER_PAGE_MAX
     filterset_class = TaskWorkflowFilter
-    sort_by_fields = ["created_at"]
+    sort_by_fields = ["taskworkflow__id", "taskworkflow__eif_date", "assigned_user"]
 
     def get_queryset(self):
-        queryset = Task.objects.all()
+        queryset = Task.objects.with_latest_assignees()
         ordering = self.get_ordering()
         if ordering:
             ordering = (ordering,)
             queryset = queryset.order_by(*ordering)
+
         return queryset
 
     def get_context_data(self, *, object_list=None, **kwargs):
@@ -449,147 +435,185 @@ class TaskWorkflowTemplateListView(
         return queryset
 
 
-class QueuedItemManagementMixin:
-    """A view mixin providing helper functions to manage queued items."""
-
-    queued_item_model: type[QueueItem] = None
-    """The model responsible for managing members of a queue."""
-
-    item_lookup_field: str = ""
-    """The lookup field of the instance managed by a queued item."""
-
-    queue_field: str = ""
-    """The name of the ForeignKey field relating a queued item to a queue."""
-
-    @cached_property
-    def queue(self) -> type[Queue]:
-        """The queue instance that is the object of the view."""
-        return self.get_object()
-
-    def promote(self, lookup_id: int) -> None:
-        queued_item = get_object_or_404(
-            self.queued_item_model,
-            **{
-                self.item_lookup_field: lookup_id,
-                self.queue_field: self.queue,
-            },
-        )
-        try:
-            queued_item.promote()
-        except OperationalError:
-            pass
-
-    def demote(self, lookup_id: int) -> None:
-        queued_item = get_object_or_404(
-            self.queued_item_model,
-            **{
-                self.item_lookup_field: lookup_id,
-                self.queue_field: self.queue,
-            },
-        )
-        try:
-            queued_item.demote()
-        except OperationalError:
-            pass
-
-    def promote_to_first(self, lookup_id: int) -> None:
-        queued_item = get_object_or_404(
-            self.queued_item_model,
-            **{
-                self.item_lookup_field: lookup_id,
-                self.queue_field: self.queue,
-            },
-        )
-        try:
-            queued_item.promote_to_first()
-        except OperationalError:
-            pass
-
-    def demote_to_last(self, lookup_id: int) -> None:
-        queued_item = get_object_or_404(
-            self.queued_item_model,
-            **{
-                self.item_lookup_field: lookup_id,
-                self.queue_field: self.queue,
-            },
-        )
-        try:
-            queued_item.demote_to_last()
-        except OperationalError:
-            pass
-
-
 class TaskWorkflowDetailView(
     PermissionRequiredMixin,
-    QueuedItemManagementMixin,
     DetailView,
+    FormMixin,
 ):
     template_name = "tasks/workflows/detail.jinja"
     permission_required = "tasks.view_taskworkflow"
     model = TaskWorkflow
-    queued_item_model = TaskItem
-    item_lookup_field = "task_id"
-    queue_field = queued_item_model.queue_field
+    form_class = TicketCommentCreateForm
 
     @property
-    def view_url(self) -> str:
+    def summary_task(self):
+        return self.workflow.summary_task
+
+    def post(self, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    @property
+    def workflow(self):
+        return TaskWorkflow.objects.all().get(id=self.kwargs["pk"])
+
+    @property
+    def comments(self):
+        comments = Comment.objects.filter(task=self.summary_task).order_by(
+            "-created_at",
+        )
+        return comments
+
+    @cached_property
+    def paginator(self):
+        return Paginator(self.comments, per_page=10)
+
+    def form_valid(self, form):
+        form.save(user=self.request.user, task=self.summary_task)
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
         return reverse(
             "workflow:task-workflow-ui-detail",
-            kwargs={"pk": self.queue.pk},
+            kwargs={"pk": self.workflow.id},
         )
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["object_list"] = self.queue.get_tasks()
+
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        page_links = build_pagination_list(
+            page.number,
+            self.paginator.num_pages,
+        )
+
+        context_data.update(
+            {
+                "object_list": self.get_object().get_tasks(),
+                "verbose_name": "ticket",
+                "list_include": "tasks/includes/task_list.jinja",
+                "comments": page.object_list,
+                "paginator": self.paginator,
+                "page_obj": page,
+                "page_links": page_links,
+            },
+        )
         return context_data
 
-    def post(self, request, *args, **kwargs):
-        if "promote" in request.POST:
-            self.promote(request.POST.get("promote"))
-        elif "demote" in request.POST:
-            self.demote(request.POST.get("demote"))
-        elif "promote_to_first" in request.POST:
-            self.promote_to_first(request.POST.get("promote_to_first"))
-        elif "demote_to_last" in request.POST:
-            self.demote_to_last(request.POST.get("demote_to_last"))
 
-        return HttpResponseRedirect(self.view_url)
+class TicketCommentUpdateDeleteMixin:
+    model = Comment
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["ticket_pk"] = self.kwargs["ticket_pk"]
+        return kwargs
+
+    def editable(self, comment: Comment) -> bool:
+        return comment.author == self.request.user
+
+    def get_object(self, queryset=None):
+        obj = super().get_object()
+        if not self.editable(obj):
+            raise PermissionDenied
+        else:
+            return obj
+
+    def get_success_url(self):
+        ticket_pk = self.kwargs["ticket_pk"]
+        return reverse("workflow:task-workflow-ui-detail", kwargs={"pk": ticket_pk})
+
+
+class TicketCommentUpdate(
+    PermissionRequiredMixin,
+    TicketCommentUpdateDeleteMixin,
+    UpdateView,
+):
+    form_class = TicketCommentUpdateForm
+    template_name = "tasks/workflows/comment_edit.jinja"
+    permission_required = ["tasks.change_comment"]
+
+    def get_initial(self):
+        initial = super().get_initial()
+        markdown = markdownify(self.object.content, heading_style="atx")
+        initial["content"] = markdown
+        return initial
+
+
+class TicketCommentDelete(
+    PermissionRequiredMixin,
+    TicketCommentUpdateDeleteMixin,
+    DeleteView,
+):
+    form_class = TicketCommentDeleteForm
+    template_name = "tasks/workflows/comment_delete.jinja"
+    permission_required = ["tasks.delete_comment"]
 
 
 class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
+    # Feb 2025 - Workflows will now be called Tickets in the UI only.
     permission_required = "tasks.add_taskworkflow"
     template_name = "tasks/workflows/create.jinja"
     form_class = TaskWorkflowCreateForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "workflow"
-        context["list_url"] = "#NOT-IMPLEMENTED"
+        context["verbose_name"] = "ticket"
         return context
 
+    @transaction.atomic
     def form_valid(self, form):
-        summary_data = {
-            "title": form.cleaned_data["title"],
+        data = {
+            "title": form.cleaned_data["ticket_name"],
             "description": form.cleaned_data["description"],
             "creator": self.request.user,
+            "eif_date": form.cleaned_data["entry_into_force_date"],
+            "policy_contact": form.cleaned_data["policy_contact"],
         }
-        create_type = form.cleaned_data["create_type"]
+        template = form.cleaned_data["work_type"]
+        self.object = template.create_task_workflow(**data)
 
-        if create_type == TaskWorkflowCreateForm.CreateType.WITH_TEMPLATE:
-            template = form.cleaned_data["workflow_template"]
-            self.object = template.create_task_workflow(**summary_data)
-        elif create_type == TaskWorkflowCreateForm.CreateType.WITHOUT_TEMPLATE:
-            with transaction.atomic():
-                summary_task = Task.objects.create(**summary_data)
-                self.object = TaskWorkflow.objects.create(
-                    summary_task=summary_task,
-                )
+        self.create_assignments(form)
 
         return super().form_valid(form)
 
+    def create_assignments(self, form):
+        """Assigns a chosen user to `TaskWorkflow.summary_task` in addition to
+        all other `Task` instances associated to this `TaskWorkflow`
+        instance."""
+        set_current_instigator(self.request.user)
+
+        assign_type = form.cleaned_data["assignment"]
+
+        if assign_type == TaskWorkflowCreateForm.AssignType.SELF:
+            assignee = self.request.user
+        elif assign_type == TaskWorkflowCreateForm.AssignType.OTHER_USER:
+            assignee = form.cleaned_data["assignee"]
+        else:
+            return
+
+        TaskAssignee.objects.create(
+            task=self.object.summary_task,
+            user=assignee,
+            assignment_type=TaskAssignee.AssignmentType.GENERAL,
+        )
+
+        for task in self.object.get_tasks():
+            TaskAssignee.objects.create(
+                task=task,
+                user=assignee,
+                assignment_type=TaskAssignee.AssignmentType.GENERAL,
+            )
+
+        return
+
     def get_success_url(self):
         return reverse(
-            "workflow:task-workflow-ui-confirm-create",
+            "workflow:task-workflow-ui-detail",
             kwargs={"pk": self.object.pk},
         )
 
@@ -599,12 +623,53 @@ class TaskWorkflowConfirmCreateView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/workflows/confirm_create.jinja"
     permission_required = "tasks.add_taskworkflow"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket"
+        return context
+
 
 class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
     model = TaskWorkflow
     template_name = "tasks/workflows/edit.jinja"
     permission_required = "tasks.change_taskworkflow"
     form_class = TaskWorkflowUpdateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket"
+        return context
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        self.update_assignments(form)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def update_assignments(self, form):
+        """
+        Assigns a new user to `TaskWorkflow.summary_task` in addition to all
+        other `Task` instances associated to this `TaskWorkflow` instance.
+
+        `Task` instances that are marked as done are not reassigned.
+        """
+
+        new_assignee = form.cleaned_data["assignee"]
+
+        TaskAssignee.assign_user(
+            user=new_assignee,
+            task=self.object.summary_task,
+            instigator=self.request.user,
+        )
+
+        for task in self.object.get_tasks().incomplete():
+            TaskAssignee.assign_user(
+                user=new_assignee,
+                task=task,
+                instigator=self.request.user,
+            )
+
+        return
 
     def get_success_url(self):
         return reverse(
@@ -618,6 +683,11 @@ class TaskWorkflowConfirmUpdateView(PermissionRequiredMixin, DetailView):
     template_name = "tasks/workflows/confirm_update.jinja"
     permission_required = "tasks.change_taskworkflow"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket"
+        return context
+
 
 class TaskWorkflowDeleteView(PermissionRequiredMixin, DeleteView):
     model = TaskWorkflow
@@ -629,6 +699,11 @@ class TaskWorkflowDeleteView(PermissionRequiredMixin, DeleteView):
         kwargs = super().get_form_kwargs()
         kwargs["instance"] = self.object
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["verbose_name"] = "ticket"
+        return context_data
 
     @transaction.atomic
     def form_valid(self, form):
@@ -654,10 +729,10 @@ class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
-                "verbose_name": "workflow",
+                "verbose_name": "ticket",
                 "deleted_pk": self.kwargs["pk"],
                 "create_url": reverse("workflow:task-workflow-ui-create"),
-                "list_url": "#NOT-IMPLEMENTED",
+                "list_url": reverse("workflow:task-workflow-ui-list"),
             },
         )
         return context_data
@@ -729,7 +804,13 @@ class TaskWorkflowTemplateDetailView(
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["object_list"] = self.queue.get_task_templates()
+        context_data.update(
+            {
+                "object_list": self.queue.get_task_templates(),
+                "verbose_name": "ticket template",
+                "list_include": "tasks/includes/task_queue.jinja",
+            },
+        )
         return context_data
 
     def post(self, request, *args, **kwargs):
@@ -753,8 +834,7 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "workflow template"
-        context["list_url"] = reverse("workflow:task-workflow-template-ui-list")
+        context["verbose_name"] = "ticket template"
         return context
 
     def form_valid(self, form):
@@ -773,12 +853,22 @@ class TaskWorkflowTemplateConfirmCreateView(PermissionRequiredMixin, DetailView)
     template_name = "tasks/workflows/confirm_create.jinja"
     permission_required = "tasks.add_taskworkflowtemplate"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket template"
+        return context
+
 
 class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
     model = TaskWorkflowTemplate
     template_name = "tasks/workflows/edit.jinja"
     permission_required = "tasks.change_taskworkflowtemplate"
     form_class = TaskWorkflowTemplateUpdateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket template"
+        return context
 
     def get_success_url(self):
         return reverse(
@@ -792,6 +882,11 @@ class TaskWorkflowTemplateConfirmUpdateView(PermissionRequiredMixin, DetailView)
     template_name = "tasks/workflows/confirm_update.jinja"
     permission_required = "tasks.change_taskworkflowtemplate"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["verbose_name"] = "ticket template"
+        return context
+
 
 class TaskWorkflowTemplateDeleteView(PermissionRequiredMixin, DeleteView):
     model = TaskWorkflowTemplate
@@ -803,6 +898,11 @@ class TaskWorkflowTemplateDeleteView(PermissionRequiredMixin, DeleteView):
         kwargs = super().get_form_kwargs()
         kwargs["instance"] = self.object
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["verbose_name"] = "ticket template"
+        return context_data
 
     @transaction.atomic
     def form_valid(self, form):
@@ -825,7 +925,7 @@ class TaskWorkflowTemplateConfirmDeleteView(PermissionRequiredMixin, TemplateVie
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
-                "verbose_name": "workflow template",
+                "verbose_name": "ticket template",
                 "deleted_pk": self.kwargs["pk"],
                 "create_url": reverse("workflow:task-workflow-template-ui-create"),
                 "list_url": reverse("workflow:task-workflow-template-ui-list"),
@@ -862,8 +962,7 @@ class TaskTemplateCreateView(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-
-        context["page_title"] = "Create a task template"
+        context["page_title"] = "Add a step template"
         context["task_workflow_template"] = self.get_task_workflow_template()
 
         return context
@@ -909,7 +1008,7 @@ class TaskTemplateUpdateView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["page_title"] = f"Update task template: {self.get_object().title}"
+        context["page_title"] = f"Edit step template: {self.get_object().title}"
         context["task_workflow_template"] = (
             self.get_object().taskitemtemplate.workflow_template
         )

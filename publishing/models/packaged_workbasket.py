@@ -31,6 +31,7 @@ from notifications.models import EnvelopeReadyForProcessingNotification
 from notifications.models import EnvelopeRejectedNotification
 from notifications.models import NotificationLog
 from publishing import models as publishing_models
+from publishing.models.decorators import refresh_after
 from publishing.models.decorators import save_after
 from publishing.models.decorators import skip_notifications_if_disabled
 from publishing.models.state import ProcessingState
@@ -246,7 +247,6 @@ class PackagedWorkBasketQuerySet(QuerySet):
     def last_published_envelope_id(self) -> "publishing_models.EnvelopeId":
         """Get the envelope_id of the last Envelope successfully published to
         the Tariffs API service."""
-
         return (
             self.select_related(
                 "envelope",
@@ -400,43 +400,38 @@ class PackagedWorkBasket(TimestampedMixin):
         """
         Checks if previous envelope in sequence has been published to the API.
 
-        This check will check if the previous packaged workbasket has a
-        CrownDependenciesEnvelope OR has published_to_tariffs_api set in the
-        Envelope model. Will return True if the previous_id comes back as None
-        (this means the envelope is the first to be published to the API)
+        Returns True if the current PackagedWorkBasket object is the next
+        to be published to the API.
+        It returns True for the following:
+        If is the first PackagedWorkBasket of the year.
+        If the previous PackagedWorkBasket has a CrownDependenciesEnvelope OR
+        If the previous PackagedWorkBasket has published_to_tariffs_api set in
+        the Envelope model.
+        If the HMRC_PACKAGING_SEED_ENVELOPE_ID is from this year, and is
+        greater than the previously published Envelope.envelope_id.
         """
 
-        previous_id = PackagedWorkBasket.objects.last_published_envelope_id()
-        if self.envelope.envelope_id[2:] == settings.HMRC_PACKAGING_SEED_ENVELOPE_ID:
-            # NOTE:
-            # Code in this conditional block, and therefore this function,
-            # wrongly assumes a new year has passed since the last envelope was
-            # successfully published to tariffs-api.
-            # See Jira ticket TP2000-1646 for details of the issue.
-
-            current_envelope_year = int(self.envelope.envelope_id[:2])
-            last_envelope_last_year = (
-                publishing_models.Envelope.objects.last_envelope_for_year(
-                    year=current_envelope_year - 1,
-                )
-            )
-            expected_previous_id = (
-                last_envelope_last_year.envelope_id if last_envelope_last_year else None
-            )
+        previous_id = PackagedWorkBasket.objects.last_published_envelope_id() or 0
+        current_id = self.envelope.envelope_id
+        current_year = str(datetime.now().year)[-2:]
+        if previous_id == 0 or (int(previous_id[:2]) == int(current_year) - 1):
+            return current_id == current_year + "0001"
         else:
-            expected_previous_id = str(int(self.envelope.envelope_id) - 1)
+            expected_previous_id = max(
+                int(previous_id),
+                int(settings.HMRC_PACKAGING_SEED_ENVELOPE_ID),
+            )
 
-        if previous_id and previous_id != expected_previous_id:
+        if int(previous_id) != expected_previous_id:
             return False
 
         return True
-
-    # processing_state transition management.
 
     def begin_processing_condition_at_position_1(self) -> bool:
         """Django FSM condition: Instance must be at position 1 in order to
         complete the begin_processing transition to CURRENTLY_PROCESSING."""
 
+        self.refresh_from_db(fields=["position"])
         return self.position == 1
 
     def begin_processing_condition_no_instances_currently_processing(self) -> bool:
@@ -476,7 +471,9 @@ class PackagedWorkBasket(TimestampedMixin):
         multiple instances it's necessary for this method to perform a save()
         operation upon successful transitions.
         """
-        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
+        PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            pk=self.pk,
+        )
         self.processing_started_at = make_aware(datetime.now())
         self.save()
 
@@ -618,6 +615,7 @@ class PackagedWorkBasket(TimestampedMixin):
 
     @atomic
     @create_envelope_on_new_top
+    @refresh_after
     def pop_top(self) -> "PackagedWorkBasket":
         """
         Pop the top-most instance, shuffling all remaining queued instances
@@ -626,23 +624,34 @@ class PackagedWorkBasket(TimestampedMixin):
         Management of the popped instance's `processing_state` is not altered by
         this function and should be managed separately by the caller.
         """
-        if self.position != 1:
+
+        instance = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            pk=self.pk,
+        )
+
+        if instance.position != 1:
             raise PackagedWorkBasketInvalidQueueOperation(
-                "Unable to pop instance at position {self.position} in queue "
+                "Unable to pop instance at position {instance.position} in queue "
                 "because it is not at position 1.",
             )
 
-        PackagedWorkBasket.objects.select_for_update(nowait=True).filter(
-            position__gt=0,
-        ).update(
+        instance.position = 0
+        instance.save()
+
+        to_update = list(
+            PackagedWorkBasket.objects.select_for_update(nowait=True)
+            .filter(position__gt=1)
+            .values_list("pk", flat=True),
+        )
+        PackagedWorkBasket.objects.filter(pk__in=to_update).update(
             position=F("position") - 1,
         )
-        self.refresh_from_db()
 
-        return self
+        return instance
 
     @atomic
     @create_envelope_on_new_top
+    @refresh_after
     def remove_from_queue(self) -> "PackagedWorkBasket":
         """
         Remove instance from the queue, shuffling all successive queued
@@ -652,98 +661,111 @@ class PackagedWorkBasket(TimestampedMixin):
         this function and should be managed separately by the caller.
         """
 
-        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
-        self.refresh_from_db()
+        instance = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            pk=self.pk,
+        )
 
-        if self.position == 0:
+        if instance.position == 0:
             raise PackagedWorkBasketInvalidQueueOperation(
                 "Unable to remove instance with a position value of 0 from "
                 "queue because 0 indicates that it is not a queue member.",
             )
 
-        current_position = self.position
-        self.position = 0
-        self.save()
+        current_position = instance.position
+        instance.position = 0
+        instance.save()
 
-        PackagedWorkBasket.objects.select_for_update(nowait=True).filter(
-            position__gt=current_position,
-        ).update(
+        to_update = list(
+            PackagedWorkBasket.objects.select_for_update(nowait=True)
+            .filter(position__gt=current_position)
+            .values_list("pk", flat=True),
+        )
+        PackagedWorkBasket.objects.filter(pk__in=to_update).update(
             position=F("position") - 1,
         )
-        self.refresh_from_db()
 
-        return self
+        return instance
 
     @atomic
     @create_envelope_on_new_top
+    @refresh_after
     def promote_to_top_position(self) -> "PackagedWorkBasket":
         """Promote the instance to the top position of the package processing
         queue so that it occupies position 1."""
 
-        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
-        self.refresh_from_db()
+        instance = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            pk=self.pk,
+        )
 
-        if self.position <= 1:
-            return self
+        if instance.position <= 1:
+            return instance
 
-        position = self.position
+        current_position = instance.position
 
-        PackagedWorkBasket.objects.select_for_update(nowait=True).filter(
-            Q(position__gte=1) & Q(position__lt=position),
-        ).update(position=F("position") + 1)
+        to_update = list(
+            PackagedWorkBasket.objects.select_for_update(nowait=True)
+            .filter(Q(position__gte=1) & Q(position__lt=current_position))
+            .values_list("pk", flat=True),
+        )
+        PackagedWorkBasket.objects.filter(pk__in=to_update).update(
+            position=F("position") + 1,
+        )
 
-        self.position = 1
-        self.save()
-        self.refresh_from_db()
+        instance.position = 1
+        instance.save()
 
-        return self
+        return instance
 
     @atomic
     @create_envelope_on_new_top
+    @refresh_after
     def promote_position(self) -> "PackagedWorkBasket":
         """Promote the instance by one position up the package processing
         queue."""
 
-        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
-        self.refresh_from_db()
+        instance = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            pk=self.pk,
+        )
 
-        if self.position <= 1:
-            return self
+        if instance.position <= 1:
+            return instance
 
         obj_to_swap = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
-            position=self.position - 1,
+            position=instance.position - 1,
         )
         obj_to_swap.position += 1
-        self.position -= 1
+        instance.position -= 1
+
         PackagedWorkBasket.objects.bulk_update(
-            [self, obj_to_swap],
+            [instance, obj_to_swap],
             ["position"],
         )
-        self.refresh_from_db()
 
-        return self
+        return instance
 
     @atomic
     @create_envelope_on_new_top
+    @refresh_after
     def demote_position(self) -> "PackagedWorkBasket":
         """Demote the instance by one position down the package processing
         queue."""
 
-        PackagedWorkBasket.objects.select_for_update(nowait=True).get(pk=self.pk)
-        self.refresh_from_db()
+        instance = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
+            pk=self.pk,
+        )
 
-        if self.position in {0, PackagedWorkBasket.objects.max_position()}:
-            return self
+        if instance.position in {0, PackagedWorkBasket.objects.max_position()}:
+            return instance
 
         obj_to_swap = PackagedWorkBasket.objects.select_for_update(nowait=True).get(
-            position=self.position + 1,
+            position=instance.position + 1,
         )
         obj_to_swap.position -= 1
-        self.position += 1
+        instance.position += 1
+
         PackagedWorkBasket.objects.bulk_update(
-            [self, obj_to_swap],
+            [instance, obj_to_swap],
             ["position"],
         )
-        self.refresh_from_db()
 
-        return self
+        return instance

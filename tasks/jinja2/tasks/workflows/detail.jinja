@@ -1,24 +1,15 @@
 {% extends "layouts/layout.jinja" %}
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
+{% from "tasks/macros/display_details.jinja" import display_assignees %}
+{% from "tasks/macros/display_details.jinja" import display_workbasket %}
+{% from "tasks/macros/display_details.jinja" import display_summary_row_stacked %}
+{% from "tasks/macros/display_details.jinja" import display_status %}
 
-{% set object_name = object._meta.verbose_name %}
-
-{% set page_title = object_name|capitalize ~ ": " ~ object.title %}
-
-{% if object_name == "workflow" %}
-  {% set task_object_name = "task" %}
-  {% set task_object_create_url = url("workflow:task-workflow-task-ui-create", kwargs={"task_workflow_pk": object.pk}) %}
-{% elif object_name == "workflow template" %}
-  {% set task_object_name = "task template" %}
-  {% set task_object_create_url = url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}) %}
-{% endif %}
-
-{% set list_include = "tasks/includes/task_queue.jinja" %}
+{% set page_title = verbose_name|capitalize ~ " " ~ object.prefixed_id if object.prefixed_id else verbose_name|capitalize ~ " " ~ object.id%}
 
 {% block breadcrumb %}
   {{ breadcrumbs(request, [
-      {"text": "Find and view "~ object_name ~ "s", "href": object.get_url("list")},
       {"text": page_title}
     ],
     with_workbasket=False,
@@ -26,80 +17,77 @@
 {% endblock %}
 
 {% block content %}
-  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
-
-  <h2 class="govuk-heading-m">Details</h2>
-  
-  <dl class="govuk-summary-list">
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        ID
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ object.pk }}
-      </dd>
-      <dd class="govuk-summary-list__actions"></dd>
-    </div>
-
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Title
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ object.title }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href="{{ object.get_url("edit") }}">Change<span class="govuk-visually-hidden"> title</span></a>
-      </dd>
-    </div>
-
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">
-        Description
-      </dt>
-      <dd class="govuk-summary-list__value">
-        {{ object.description }}
-      </dd>
-      <dd class="govuk-summary-list__actions">
-        <a class="govuk-link" href="{{ object.get_url("edit") }}">Change<span class="govuk-visually-hidden"> description</span></a>
-      </dd>
-    </div>
-  </dl>
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-three-quarters">
-      <h2 class="govuk-heading-m">{{ task_object_name|capitalize }}s</h2>
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-0">
+        <span class="govuk-caption-xl">{{ object.title }}</span>
+        {{ page_title }}
+      </h1>
     </div>
 
-    <div class="govuk-grid-column-one-quarter">
+    <div class="govuk-grid-column-one-quarter govuk-!-margin-top-7">
       {{ govukButton({
-        "text": "Create a " ~ task_object_name,
-        "href": task_object_create_url,
-        "classes": "govuk-button align-right"
+        "text": "Edit " ~ verbose_name,
+        "href": object.get_url("edit"),
+        "classes": "align-right",
       }) }}
     </div>
   </div>
 
+  <hr class="govuk-section-break govuk-section-break--visible">
+
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
+    <div class="govuk-grid-column-three-quarters">
+      <h2 class="govuk-heading-m">Description</h2>
+      <p class="govuk-body">{{ object.description }}</p>
+
+      <h2 class="govuk-heading-m">Steps</h2>
       {% if object_list %}
         {% include list_include %}
       {% else %}
-        <p class="govuk-body">There are no {{ task_object_name }}s for this {{ object_name }}.</p>
+        <p class="govuk-body">There are no steps for this {{ verbose_name }}.</p>
       {% endif %}
+    </div>
+
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Details</h2>
+      <dl class="govuk-summary-list govuk-summary-list--no-border">
+        {% if verbose_name == "ticket" %}
+          {{ display_summary_row_stacked("Workbasket", display_workbasket(object.summary_task.workbasket)) }}
+          {{ display_summary_row_stacked("Status", display_status(object.summary_task.progress_state.__str__())) }}
+          {{ display_summary_row_stacked("Assignee", display_assignees(object.summary_task.assignees.assigned())) }}
+          {{ display_summary_row_stacked("Work type", object.creator_template.title) }}
+          {{ display_summary_row_stacked("Created date", object.summary_task.created_at|format_date) }}
+          {{ display_summary_row_stacked("Entry into force date", object.eif_date|format_date) }}
+          {{ display_summary_row_stacked("Policy contact", object.policy_contact or "None") }}
+        {% elif verbose_name == "ticket template" %}
+          {{ display_summary_row_stacked("Created by", object.creator.get_displayname()) }}
+          {{ display_summary_row_stacked("Created date", object.created_at|format_date) }}
+        {% endif %}
+      </dl>
     </div>
   </div>
 
-  <div class="govuk-button-group govuk-!-margin-top-6">
-    {{ govukButton({
-      "text": "Delete " ~ object_name,
-      "href": object.get_url("delete"),
-      "classes": "govuk-button--warning"
-    }) }}
-    {{ govukButton({
-      "text": "Find and view " ~ object_name ~ "s",
-      "href": object.get_url("list"),
-      "classes": "govuk-button--secondary"
-    }) }}
-  </div>
+  {% if verbose_name == "ticket template" %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-button-group">
+          {{ govukButton({
+            "text": "Add a step",
+            "href": url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}),
+            "classes": "govuk-button--secondary"
+          }) }}
+          {{ govukButton({
+            "text": "Delete " ~ verbose_name,
+            "href": object.get_url("delete"),
+            "classes": "govuk-button--warning"
+          }) }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  
+  {% if form %}
+    {% include "tasks/includes/comments.jinja" %}
+  {% endif %}
 {% endblock %}

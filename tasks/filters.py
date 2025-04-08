@@ -1,11 +1,18 @@
+import re
+
+from django.conf import settings
 from django.db.models import TextChoices
 from django.forms import CheckboxSelectMultiple
+from django.forms import widgets
 from django.urls import reverse_lazy
 from django_filters import ChoiceFilter
+from django_filters import ModelChoiceFilter
 from django_filters import ModelMultipleChoiceFilter
 
 from common.filters import TamatoFilter
+from common.models import User
 from common.widgets import RadioSelect
+from tasks.forms import TaskFilterForm
 from tasks.models import ProgressState
 from tasks.models import Task
 from tasks.models import TaskWorkflowTemplate
@@ -36,12 +43,18 @@ class TaskFilter(TamatoFilter):
         return super().qs.non_workflow()
 
 
+class TaskWorkflowAssignmentChoices(TextChoices):
+    ASSIGNED = "assigned", "Assigned"
+    NOT_ASSIGNED = "not_assigned", "Not assigned"
+
+
 class TaskWorkflowFilter(TamatoFilter):
     search_fields = (
-        "id",
+        "taskworkflow__id",
         "title",
         "description",
     )
+
     clear_url = reverse_lazy("workflow:task-workflow-ui-list")
 
     progress_state = ModelMultipleChoiceFilter(
@@ -51,9 +64,80 @@ class TaskWorkflowFilter(TamatoFilter):
         widget=CheckboxSelectMultiple,
     )
 
+    work_type = ModelChoiceFilter(
+        label="Work type",
+        queryset=TaskWorkflowTemplate.objects.all(),
+        field_name="taskworkflow__creator_template",
+        widget=widgets.Select(),
+    )
+
+    assignees = ModelChoiceFilter(
+        label="Assignees",
+        method="filter_by_current_assignee",
+        queryset=User.objects.active_tms(),
+    )
+
+    assignment_status = ChoiceFilter(
+        choices=TaskWorkflowAssignmentChoices.choices,
+        method="filter_by_assignment_status",
+        widget=RadioSelect,
+        label="Assignment status",
+        empty_label="Assigned and not assigned",
+        help_text="Select the choice that applies",
+    )
+
     class Meta:
         model = Task
-        fields = ["search", "category", "progress_state"]
+        form = TaskFilterForm
+        fields = [
+            "search",
+            "progress_state",
+            "assignees__user",
+            "assignment_status",
+        ]
+
+    def get_search_term(self, value):
+        return self.normalise_prefixed_ticket_ids(value)
+
+    def normalise_prefixed_ticket_ids(self, search_sentence: str) -> str:
+        """
+        Normalise all terms in `search_sentence` that match prefixed ticket IDs
+        and return the normalised result.
+
+        Ticket IDs may be 'bare' (no prefix included) or include the ticket ID
+        prefix string. For instance, given a ticket ID prefix of 'TC-', then
+        both 'TC-123' and '123' would be considered valid IDs.
+        """
+
+        if not settings.TICKET_PREFIX or not search_sentence.strip():
+            return search_sentence
+
+        normalised_tokens = []
+
+        for token in search_sentence.strip().split(" "):
+            match = re.match(
+                pattern=rf"({settings.TICKET_PREFIX})(\d+)",
+                string=token,
+                flags=re.IGNORECASE,
+            )
+
+            if match:
+                normalised_tokens.append(match[2])
+            else:
+                normalised_tokens.append(token)
+
+        return " ".join(normalised_tokens)
+
+    def filter_by_current_assignee(self, queryset, name, value):
+        return queryset.actively_assigned_to(user=value).distinct()
+
+    def filter_by_assignment_status(self, queryset, name, value):
+        if TaskWorkflowAssignmentChoices.ASSIGNED == value:
+            queryset = queryset.assigned().distinct()
+        elif TaskWorkflowAssignmentChoices.NOT_ASSIGNED == value:
+            queryset = queryset.not_assigned().distinct()
+
+        return queryset
 
     @property
     def qs(self):

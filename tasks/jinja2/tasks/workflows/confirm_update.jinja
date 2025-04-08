@@ -4,15 +4,15 @@
 {% from "components/panel/macro.njk" import govukPanel %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set object_name = object._meta.verbose_name %}
-{% set page_title = object_name|capitalize ~ " updated" %}
+{% set object_id = object.prefixed_id if object.prefixed_id else object.id %}
+
+{% set page_title = verbose_name|capitalize ~ " " ~ object_id ~ " updated" %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,
     [
-      {"text": "Find and view " ~ object_name ~ "s", "href": object.get_url("list")},
-      {"text": object_name|capitalize ~ ": " ~ object.title, "href": object.get_url("detail")},
+      {"text": verbose_name|capitalize ~ " " ~ object_id, "href": object.get_url("detail")},
       {"text": page_title}
     ],
     with_workbasket=False,
@@ -21,33 +21,23 @@
 
 {% block panel %}
   {{ govukPanel({
-    "titleText": object_name|capitalize ~ ": " ~ object,
-    "text": "You have updated the " ~ object_name,
+    "titleText": verbose_name|capitalize ~ " " ~ object_id,
+    "text": "You have updated the " ~ verbose_name,
     "classes": "govuk-!-margin-bottom-7"
   }) }}
 {% endblock %}
 
 {% block button_group %}
   {{ govukButton({
-    "text": "View " ~ object_name,
+    "text": "Return to " ~ verbose_name,
     "href": object.get_url("detail"),
     "classes": "govuk-button"
   }) }}
-  {% if object_name == "workflow" %}
-    {{ govukButton({
-      "text": "Create a task",
-      "href": "#TODO",
-      "classes": "govuk-button--secondary"
-    }) }}
-  {% elif object_name == "workflow template" %}
-    {{ govukButton({
-      "text": "Create a task template",
-      "href": url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}),
-      "classes": "govuk-button--secondary"
-    }) }}
-  {% endif %}
+  {{ govukButton({
+    "text": "View all " ~ verbose_name ~ "s",
+    "href": object.get_url("list"),
+    "classes": "govuk-button--secondary"
+  }) }}
 {% endblock %}
 
-{% block actions %}
-  <a href={{ object.get_url("list") }} class="govuk-link">Find and view {{object_name}}s</a>
-{% endblock %}
+{% block actions %}{% endblock %}

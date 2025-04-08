@@ -1,10 +1,14 @@
 from datetime import datetime
+from typing import Self
 
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db import transaction
+from django.db.models import OuterRef
+from django.db.models import Q
+from django.db.models import Subquery
 from django.urls import reverse
 from django.utils.timezone import make_aware
 
@@ -93,6 +97,56 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
         """Returns a queryset of tasks who have parent tasks linked to them."""
         return self.exclude(models.Q(parent_task=None))
 
+    def incomplete(self):
+        """Returns a queryset of tasks excluding those marked as complete."""
+        return self.exclude(progress_state__name=ProgressState.State.DONE)
+
+    def not_assigned_workflow(self):
+        """Returns a queryset of summary Task instances that have never been assigned
+        - with no associated TaskAssignee at all."""
+        return self.filter(
+            assignees__isnull=True,
+        )
+
+    def assigned(self):
+        """Return the queryset of `Task` instances that have currently active
+        assignees."""
+        return self.filter(
+            Q(assignees__isnull=False) & Q(assignees__unassigned_at__isnull=True),
+        )
+
+    def not_assigned(self):
+        """
+        Return the queryset of `Task` instances that currently have no active
+        assignees. That is, they have either:
+
+        - never had an assignee, or
+        - had assignees, but they have now been unassigned.
+        """
+        active_assignees = TaskAssignee.objects.filter(unassigned_at__isnull=True)
+        return self.exclude(assignees__in=active_assignees)
+
+    def actively_assigned_to(self, user):
+        """Returns a queryset of `Task` instances that have `user` currently
+        assigned to them."""
+        return self.filter(
+            Q(assignees__user=user) & Q(assignees__unassigned_at__isnull=True),
+        )
+
+    def with_latest_assignees(self):
+        """
+        Returns a queryset of tasks annotated with the first_name of the most
+        recent active TaskAssignee assigned to the Task.
+
+        This allows for alphabetical ordering by Task assignee first_name
+        """
+        latest_assignees = TaskAssignee.objects.filter(
+            task=OuterRef("pk"),
+            unassigned_at__isnull=True,
+        ).values("user__first_name")
+
+        return self.annotate(assigned_user=Subquery(latest_assignees[:1]))
+
 
 class TaskBase(TimestampedMixin):
     """Abstract model mixin containing model fields common to TaskTemplate and
@@ -152,6 +206,14 @@ class Task(TaskBase):
     @property
     def is_summary_task(self) -> bool:
         return hasattr(self, "taskworkflow")
+
+    def get_current_assignee(self) -> "TaskAssignee":
+        """Returns the currently active`TaskAssignee` instance associated to
+        this `Task` instance."""
+        try:
+            return self.assignees.assigned().get()
+        except TaskAssignee.DoesNotExist:
+            return TaskAssignee.objects.none()
 
     def __str__(self):
         return self.title
@@ -310,13 +372,13 @@ class TaskAssignee(TimestampedMixin):
         return True if not self.unassigned_at else False
 
     @classmethod
-    def unassign_user(cls, user, task, instigator):
+    def unassign_user(cls, user, task, instigator) -> bool:
+        """Unassigns the user from the given task by setting the
+        TaskAssignee.unassigned_at field."""
         from tasks.signals import set_current_instigator
 
         try:
-            assignment = cls.objects.get(user=user, task=task)
-            if assignment.unassigned_at:
-                return False
+            assignment = cls.objects.assigned().get(user=user, task=task)
             set_current_instigator(instigator)
             with transaction.atomic():
                 assignment.unassigned_at = make_aware(datetime.now())
@@ -324,6 +386,32 @@ class TaskAssignee(TimestampedMixin):
             return True
         except cls.DoesNotExist:
             return False
+
+    @classmethod
+    def assign_user(cls, user, task: Task, instigator) -> Self:
+        """Assigns a new user to the given task and unassigns the current
+        assignee if one exists."""
+        from tasks.signals import set_current_instigator
+
+        set_current_instigator(instigator)
+
+        current_assignee = task.get_current_assignee()
+
+        if current_assignee:
+            if current_assignee.user == user:
+                return TaskAssignee.objects.none()
+
+            cls.unassign_user(
+                user=current_assignee.user,
+                task=task,
+                instigator=instigator,
+            )
+
+        return cls.objects.create(
+            task=task,
+            user=user,
+            assignment_type=cls.AssignmentType.GENERAL,
+        )
 
 
 class Comment(TimestampedMixin):

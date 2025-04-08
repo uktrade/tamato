@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.conf import settings
 from django.db import models
 from django.db.transaction import atomic
@@ -26,10 +28,16 @@ class TaskWorkflow(Queue):
     workflow."""
     creator_template = models.ForeignKey(
         "tasks.TaskWorkflowTemplate",
+        blank=False,
         null=True,
         on_delete=models.SET_NULL,
     )
     """The template from which this workflow was created, if any."""
+    eif_date = models.DateField(
+        blank=True,
+        null=True,
+    )
+    policy_contact = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta(Queue.Meta):
         abstract = False
@@ -37,7 +45,7 @@ class TaskWorkflow(Queue):
         verbose_name = "workflow"
 
     def __str__(self):
-        return self.title
+        return f"{self.prefixed_id} - {self.title}"
 
     @property
     def title(self) -> str:
@@ -46,6 +54,10 @@ class TaskWorkflow(Queue):
     @property
     def description(self) -> str:
         return self.summary_task.description
+
+    @property
+    def prefixed_id(self) -> str:
+        return f"{settings.TICKET_PREFIX}{self.id}"
 
     def get_tasks(self) -> models.QuerySet:
         """Get a QuerySet of the Tasks associated through their TaskItem
@@ -163,6 +175,9 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
         title: str,
         description: str,
         creator: User,
+        # Take in additional data
+        eif_date: date,
+        policy_contact: str,
     ) -> "TaskWorkflow":
         """Create a workflow and it subtasks, using values from this template
         workflow and its task templates."""
@@ -175,6 +190,9 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
         task_workflow = TaskWorkflow.objects.create(
             summary_task=summary_task,
             creator_template=self,
+            # Pass new data to the workflow instance that will be made
+            eif_date=eif_date,
+            policy_contact=policy_contact,
         )
 
         task_item_templates = TaskItemTemplate.objects.select_related(

@@ -11,17 +11,24 @@
     {% endset %}
 
     {% set commodity_link %}
+    {% if association.goods_nomenclature.current_version_inc_draft %}
       <a class="govuk-link govuk-!-font-weight-bold" href="{{ association.goods_nomenclature.get_url() }}">{{ association.goods_nomenclature.item_id }}</a>
+      {% else %}
+      {{ association.goods_nomenclature.item_id }} {% endif %}
     {% endset %}
 
     {% set action %}
+    {% if association.goods_nomenclature.current_version_inc_draft %}
       {% if association.valid_between.lower > [today, association.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper]|min %}To be deleted{% else %}To be end-dated{% endif %}
+    {% else %} To be deleted 
+    {% endif %}
     {% endset %}
 
     {{ table_rows.append([
       {"text": footnote_link},
       {"html": commodity_link if association.goods_nomenclature else "-"},
-      {"text": "{:%d %b %Y}".format(association.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper) if association.goods_nomenclature.version_at(workbasket.transactions.last()).valid_between.upper else "-" },
+      {"html": 'Commodity end-dated' if association.goods_nomenclature.current_version_inc_draft else 'Commodity deleted'},
+      {"text": "{:%d %b %Y}".format(association.goods_nomenclature.current_version_inc_draft.valid_between.upper) if association.goods_nomenclature.current_version_inc_draft and association.goods_nomenclature.current_version_inc_draft.valid_between.upper else "-" },
       {"text": "{:%d %b %Y}".format(association.valid_between.lower) },
       {"text": "{:%d %b %Y}".format(association.valid_between.upper) if association.valid_between.upper else '-' },
       {"text": action},
@@ -34,6 +41,7 @@
       "head": [
         {"text": "Footnote SID"},
         {"text": "Commodity code"},
+        {"text": "Commodity update type"},
         {"text": "Commodity end date"},
         {"text": "Association start date"},
         {"text": 'Association end date'},

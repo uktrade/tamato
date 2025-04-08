@@ -3,22 +3,17 @@
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Task template: " ~ object.title %}
+{% set page_title = "Step template: " ~ object.title %}
 
+{% set ticket_template_url = task_workflow_template.get_url("detail") %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,
     [
       {
-        "text": "Find and view workflow templates",
-        "href": url("workflow:task-workflow-template-ui-list"),
-      },
-      {
-        "text": "Workflow template: " ~ task_workflow_template.title,
-        "href": url(
-          "workflow:task-workflow-template-ui-detail",
-          kwargs={"pk": task_workflow_template.pk}),
+        "text": "Ticket template: " ~ task_workflow_template.title,
+        "href": ticket_template_url,
       },
       {"text": page_title}
     ],
@@ -27,7 +22,25 @@
 {% endblock %}
 
 {% block content %}
-  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-0">
+        <span class="govuk-caption-xl">{{ task_workflow_template.title }}</span>
+        {{ page_title }}
+      </h1>
+    </div>
+
+    <div class="govuk-grid-column-one-quarter govuk-!-margin-top-7">
+      {{ govukButton({
+        "text": "Delete step template",
+        "href": object.get_url("delete"),
+        "classes": "govuk-button--warning align-right",
+      }) }}
+    </div>
+
+    <a href="{{ ticket_template_url }}" class="govuk-link govuk-back-link govuk-!-margin-bottom-8">Back to ticket template</a>
+  </div>
 
   <h2 class="govuk-heading-m">Details</h2>
 
@@ -54,24 +67,4 @@
       </dd>
     </div>
   </dl>
-
-  <div class="govuk-button-group govuk-!-margin-top-6">
-  {{ govukButton({
-      "text": "Delete task template",
-      "href": url(
-        "workflow:task-template-ui-delete",
-        kwargs={
-          "workflow_template_pk": task_workflow_template.pk,
-          "pk": object.pk,
-        },
-      ),
-
-      "classes": "govuk-button--warning"
-  }) }}
-  {{ govukButton({
-    "text": "Return to workflow template",
-    "href": url("workflow:task-workflow-template-ui-detail", kwargs={"pk": task_workflow_template.pk}),
-    "classes": "govuk-button--secondary"
-  }) }}
-  </div>
 {% endblock %}

@@ -2,14 +2,13 @@
 
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 
-{% set page_title = "Create a " ~ verbose_name  %}
+{% set page_title = "Create a new " ~ verbose_name  %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,
     [
-      {"text": "Find and view "~ verbose_name ~ "s", "href": list_url},
-      {"text": page_title}
+      {"text": page_title},
     ],
     False,
   ) }}

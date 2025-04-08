@@ -1,3 +1,6 @@
+import threading
+from datetime import datetime
+from functools import wraps
 from unittest import mock
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -5,6 +8,8 @@ from unittest.mock import patch
 import factory
 import freezegun
 import pytest
+from django.db import OperationalError
+from django.db import connections
 from django_fsm import TransitionNotAllowed
 
 from common.tests import factories
@@ -160,6 +165,7 @@ def test_success_processing_transition(
     assert packaged_work_basket.processing_state == ProcessingState.AWAITING_PROCESSING
 
     packaged_work_basket.begin_processing()
+    assert packaged_work_basket.processing_started_at
     assert packaged_work_basket.position == 0
     assert (
         packaged_work_basket.pk == PackagedWorkBasket.objects.currently_processing().pk
@@ -469,6 +475,249 @@ def test_next_envelope_id(envelope_storage):
     assert Envelope.next_envelope_id() == "230002"
 
 
+@pytest.mark.django_db(transaction=True)
+class TestPackagingQueueRaceConditions:
+    """Tests that concurrent requests to reorder packaged workbaskets don't
+    result in duplicate or non-consecutive positions."""
+
+    NUM_THREADS: int = 2
+    """The number of threads each test uses."""
+
+    THREAD_TIMEOUT: int = 5
+    """The duration in seconds to wait for a thread to complete before timing
+    out."""
+
+    NUM_PACKAGED_WORKBASKETS: int = 5
+    """The number of packaged workbaskets to create for each test."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, settings):
+        """Initialises a barrier to synchronise threads and creates packaged
+        workbaskets anew for each test."""
+        settings.ENABLE_PACKAGING_NOTIFICATIONS = False
+
+        self.unexpected_exceptions = []
+
+        self.barrier = threading.Barrier(
+            parties=self.NUM_THREADS,
+            timeout=self.THREAD_TIMEOUT,
+        )
+
+        for _ in range(self.NUM_PACKAGED_WORKBASKETS):
+            self._create_packaged_workbasket()
+
+        self.packaged_workbaskets = PackagedWorkBasket.objects.filter(
+            processing_state__in=ProcessingState.queued_states(),
+        )
+
+    def _create_packaged_workbasket(self):
+        """Creates a new packaged workbasket with a unique
+        create_envelope_task_id."""
+        with patch(
+            "publishing.tasks.create_xml_envelope_file.apply_async",
+            return_value=MagicMock(id=factory.Faker("uuid4")),
+        ):
+            factories.QueuedPackagedWorkBasketFactory()
+
+    def assert_no_unexpected_exceptions(self):
+        """Asserts that no threads raised an unexpected exception."""
+        assert (
+            not self.unexpected_exceptions
+        ), f"Unexpected exception(s) raised: {self.unexpected_exceptions}"
+
+    def assert_expected_positions(self):
+        """Asserts that positions in the packaging queue are both unique and in
+        consecutive sequence."""
+        positions = list(
+            PackagedWorkBasket.objects.filter(
+                processing_state__in=ProcessingState.queued_states(),
+            )
+            .order_by("position")
+            .values_list("position", flat=True),
+        )
+
+        assert len(set(positions)) == len(positions), "Duplicate positions found!"
+
+        assert positions == list(
+            range(min(positions), max(positions) + 1),
+        ), "Non-consecutive positions found!"
+
+    def synchronised(func):
+        """
+        Decorator that ensures all threads wait until they can call their target
+        function in a synchronised fashion.
+
+        Any unexpected exceptions raised during the execution of the decorated
+        function are stored for the individual test to re-raise.
+
+        Any lingering DB connections are closed after threaded execution.
+        """
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            try:
+                self.barrier.wait()
+                func(self, *args, **kwargs)
+            except (TransitionNotAllowed, OperationalError):
+                pass
+            except Exception as error:
+                self.unexpected_exceptions.append(error)
+            finally:
+                connections.close_all()
+
+        return wrapper
+
+    @synchronised
+    def synchronised_call(
+        self,
+        method_name: str,
+        packaged_workbasket: PackagedWorkBasket,
+    ):
+        """
+        Thread-synchronised wrapper for the following `PackagedWorkBasket`
+        instance methods:
+
+        - begin_processing
+        - abandon
+        - promote_to_top_position
+        - promote_position
+        - demote_position
+        """
+        getattr(packaged_workbasket, method_name)()
+
+    @synchronised
+    def synchronised_create_packaged_workbasket(self):
+        """Thread-synchronised wrapper method to create a new
+        `PackagedWorkbasket` instance."""
+        self._create_packaged_workbasket()
+
+    def execute_threads(self, threads: list[threading.Thread]):
+        """Starts a list of threads and waits for them to complete or
+        timeout."""
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join(timeout=self.THREAD_TIMEOUT)
+            if thread.is_alive():
+                raise RuntimeError(f"Thread {thread.name} timed out.")
+
+    def test_process_and_promote_to_top_packaged_workbaskets(self):
+        """Begins processing the top-most packaged workbasket while promoting to
+        the top the packaged workbasket in last place."""
+        thread1 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "begin_processing",
+                "packaged_workbasket": self.packaged_workbaskets[0],
+            },
+            name="BeginProcessingThread1",
+        )
+        thread2 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "promote_to_top_position",
+                "packaged_workbasket": self.packaged_workbaskets[4],
+            },
+            name="PromoteToTopThread2",
+        )
+
+        self.execute_threads(threads=[thread1, thread2])
+        self.assert_no_unexpected_exceptions()
+        self.assert_expected_positions()
+
+    def test_promote_and_promote_to_top_packaged_workbaskets(self):
+        """Promotes to the top the last-placed packaged workbasket while
+        promoting the one above it."""
+        thread1 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "promote_to_top_position",
+                "packaged_workbasket": self.packaged_workbaskets[4],
+            },
+            name="PromoteToTopThread1",
+        )
+        thread2 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "begin_processing",
+                "packaged_workbasket": self.packaged_workbaskets[3],
+            },
+            name="BeginProcessingThread2",
+        )
+
+        self.execute_threads(threads=[thread1, thread2])
+        self.assert_no_unexpected_exceptions()
+        self.assert_expected_positions()
+
+    def test_demote_and_promote_packaged_workbaskets(self):
+        """Demotes and promotes the same packaged workbasket."""
+        thread1 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "demote_position",
+                "packaged_workbasket": self.packaged_workbaskets[2],
+            },
+            name="DemotePositionThread1",
+        )
+        thread2 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "promote_position",
+                "packaged_workbasket": self.packaged_workbaskets[2],
+            },
+            name="PromotePositionThread2",
+        )
+
+        self.execute_threads(threads=[thread1, thread2])
+        self.assert_no_unexpected_exceptions()
+        self.assert_expected_positions()
+
+    def test_abandon_and_create_packaged_workbaskets(self):
+        """Abandons the last-placed packaged workbasket while creating a new
+        one."""
+        thread1 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "abandon",
+                "packaged_workbasket": self.packaged_workbaskets[4],
+            },
+            name="AbandonThread1",
+        )
+        thread2 = threading.Thread(
+            target=self.synchronised_create_packaged_workbasket,
+            name="CreateThread2",
+        )
+
+        self.execute_threads(threads=[thread1, thread2])
+        self.assert_no_unexpected_exceptions()
+        self.assert_expected_positions()
+
+    def test_abandon_and_process_packaged_workbaskets(self):
+        """Abandons the top-most packaged workbasket while beginning to process
+        it."""
+        thread1 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "abandon",
+                "packaged_workbasket": self.packaged_workbaskets[0],
+            },
+            name="AbandonThread1",
+        )
+        thread2 = threading.Thread(
+            target=self.synchronised_call,
+            kwargs={
+                "method_name": "begin_processing",
+                "packaged_workbasket": self.packaged_workbaskets[0],
+            },
+            name="BeginProcessingThread2",
+        )
+
+        self.execute_threads(threads=[thread1, thread2])
+        self.assert_no_unexpected_exceptions()
+        self.assert_expected_positions()
+
+
 def test_crown_dependencies_publishing_pause_and_unpause(unpause_publishing):
     """Test that Crown Dependencies publishing operational status can be paused
     and unpaused."""
@@ -488,3 +737,74 @@ def test_crown_dependencies_publishing_pause_and_unpause(unpause_publishing):
         == CrownDependenciesPublishingOperationalStatus.objects.current_status()
     )
     assert not CrownDependenciesPublishingOperationalStatus.is_publishing_paused()
+
+
+@freezegun.freeze_time("2025-01-01")
+def test_next_expected_to_api_first_envelope_of_new_year(
+    successful_envelope_factory,
+):
+    """Test that publish_to_api returns the correct ID for the first envelope of
+    the new year, if the last envelope of the previous year was successful."""
+    # Publish some envelopes in the previous year
+    with freezegun.freeze_time("2024-12-31"):
+        successful_envelope_factory(
+            published_to_tariffs_api="2024-12-28",
+        )
+        successful_envelope_factory(
+            published_to_tariffs_api="2024-12-29",
+        )
+        last_env = successful_envelope_factory(
+            published_to_tariffs_api="2024-12-31",
+        )
+        assert PackagedWorkBasket.objects.get_unpublished_to_api().count() == 0
+
+    successful_envelope_factory()
+    current_year = str(datetime.now().year)[-2:]
+    last_env_last_year = Envelope.objects.last_envelope_for_year(
+        year=int(current_year) - 1,
+    )
+    pwbs = PackagedWorkBasket.objects.all()
+    unpublished = pwbs.get_unpublished_to_api()
+    assert last_env_last_year == last_env
+    assert pwbs.last_published_envelope_id() == last_env.envelope_id
+    assert unpublished[0].next_expected_to_api()
+
+
+@freezegun.freeze_time("2025-01-01")
+def test_next_expected_to_api_first_envelope_of_new_year_last_envelope_failed(
+    successful_envelope_factory,
+    failed_envelope_factory,
+):
+    with freezegun.freeze_time("2024-12-31"):
+        successful_envelope_factory(
+            published_to_tariffs_api="2024-12-28",
+        )
+        penultimate_env = successful_envelope_factory(
+            published_to_tariffs_api="2024-12-29",
+        )
+        failed_envelope_factory()
+
+    current_year = str(datetime.now().year)[-2:]
+    last_env_last_year = Envelope.objects.last_envelope_for_year(
+        year=int(current_year) - 1,
+    )
+    first = successful_envelope_factory()
+    pwbs = PackagedWorkBasket.objects.all()
+    unpublished = pwbs.get_unpublished_to_api()
+    assert last_env_last_year == penultimate_env
+    assert pwbs.last_published_envelope_id() == penultimate_env.envelope_id
+    assert unpublished[0].next_expected_to_api()
+    assert first.envelope_id == "250001"
+
+
+def test_next_expected_to_api_returns_false_for_second_in_queue(
+    successful_envelope_factory,
+):
+
+    successful_envelope_factory()
+    successful_envelope_factory()
+
+    pwbs = PackagedWorkBasket.objects.all()
+    unpublished = pwbs.get_unpublished_to_api()
+
+    assert not unpublished[1].next_expected_to_api()

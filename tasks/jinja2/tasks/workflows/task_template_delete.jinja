@@ -1,22 +1,17 @@
-{% extends "common/delete.jinja" %}
+{% extends "layouts/form.jinja" %}
 
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/warning-text/macro.njk" import govukWarningText %}
 {% from "components/button/macro.njk" import govukButton %}
 
-{% set page_title = "Delete task template:" ~ object.title %}
-
+{% set page_title = "Delete step template: " ~ object.title %}
 
 {% block breadcrumb %}
   {{ breadcrumbs(
     request,
     [
       {
-        "text": "Find and view workflow templates",
-        "href": url("workflow:task-workflow-template-ui-list"),
-      },
-      {
-        "text": "Workflow template: " ~ task_workflow_template.title,
+        "text": "Ticket template: " ~ task_workflow_template.title,
         "href": url("workflow:task-workflow-template-ui-detail", kwargs={"pk": task_workflow_template.pk}),
       },
       {"text": page_title}
@@ -27,7 +22,7 @@
 
 {% block form %}
   {{ govukWarningText({
-    "text": "Are you sure you want to delete this task template?"
+    "text": "Are you sure you want to delete this step template?"
   }) }}
 
   {% call django_form(
