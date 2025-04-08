@@ -53,7 +53,7 @@
             {"text": object.title},
             {"html": display_assignees(object.assignees.assigned())},
             {"text": "{:%d %b %Y}".format(object.taskworkflow.eif_date) if object.taskworkflow.eif_date else "-"},
-            {"text": display_status(object.progress_state.__str__()), },
+            {"text": display_status(object.progress_state.get_name_display())},
           ]) or "" }}
         {% endfor %}
 
