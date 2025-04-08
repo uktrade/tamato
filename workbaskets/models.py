@@ -921,29 +921,3 @@ class CreateWorkBasketAutomation(Automation):
         logger.info(
             f"{self} created {workbasket} on {self.task.get_workflow()}",
         )
-
-
-class RunRuleChecksAutomation(Automation):
-    """Run rule checks on the associated workbasket."""
-
-    name = "Run rule checks"
-    help_text = "Runs rule checks on the ticket's workbasket."
-
-    def state(self) -> StateChoices:
-        return StateChoices.DONE
-
-    def rendered_state(self) -> str:
-        return """<p class="govuk-body">Automation not yet implemented</p>"""
-
-
-class EndDateMeasuresAutomation(Automation):
-    """End-date measures in the task workflow's workbasket."""
-
-    name = "End-date measures"
-    help_text = "End-date measures based upon goods in the ticket's workbasket."
-
-    def get_state(self) -> StateChoices:
-        return StateChoices.DONE
-
-    def rendered_state(self) -> str:
-        return """<p class="govuk-body">Automation not yet implemented</p>"""

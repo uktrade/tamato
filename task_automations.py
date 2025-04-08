@@ -2,8 +2,6 @@
 
 AUTOMATIONS = [
     ("workbaskets.models.CreateWorkBasketAutomation", "Create workbasket"),
-    ("workbaskets.models.EndDateMeasuresAutomation", "End-date measures"),
-    ("workbaskets.models.RunRuleChecksAutomation", "Run business rule checks"),
 ]
 """
 An iterable of two-tuples. Each tuple must contain a task Automation class in
