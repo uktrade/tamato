@@ -521,12 +521,15 @@ class TaskFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.helper = FormHelper()
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
 
         self.helper.layout = Layout(
             "search",
             "progress_state",
             "assignees",
-            "work_type",
+            Field("work_type", css_class="govuk-!-width-full"),
+            "assignment_status",
             Button(
                 "submit",
                 "Search and filter",

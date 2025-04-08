@@ -43,6 +43,11 @@ class TaskFilter(TamatoFilter):
         return super().qs.non_workflow()
 
 
+class TaskWorkflowAssignmentChoices(TextChoices):
+    ASSIGNED = "assigned", "Assigned"
+    NOT_ASSIGNED = "not_assigned", "Not assigned"
+
+
 class TaskWorkflowFilter(TamatoFilter):
     search_fields = (
         "taskworkflow__id",
@@ -68,9 +73,28 @@ class TaskWorkflowFilter(TamatoFilter):
 
     assignees = ModelChoiceFilter(
         label="Assignees",
-        field_name="assignees",
+        method="filter_by_current_assignee",
         queryset=User.objects.active_tms(),
     )
+
+    assignment_status = ChoiceFilter(
+        choices=TaskWorkflowAssignmentChoices.choices,
+        method="filter_by_assignment_status",
+        widget=RadioSelect,
+        label="Assignment status",
+        empty_label="Assigned and not assigned",
+        help_text="Select the choice that applies",
+    )
+
+    class Meta:
+        model = Task
+        form = TaskFilterForm
+        fields = [
+            "search",
+            "progress_state",
+            "assignees__user",
+            "assignment_status",
+        ]
 
     def get_search_term(self, value):
         return self.normalise_prefixed_ticket_ids(value)
@@ -104,14 +128,16 @@ class TaskWorkflowFilter(TamatoFilter):
 
         return " ".join(normalised_tokens)
 
-    class Meta:
-        model = Task
-        form = TaskFilterForm
-        fields = [
-            "search",
-            "progress_state",
-            "assignees",
-        ]
+    def filter_by_current_assignee(self, queryset, name, value):
+        return queryset.actively_assigned_to(user=value).distinct()
+
+    def filter_by_assignment_status(self, queryset, name, value):
+        if TaskWorkflowAssignmentChoices.ASSIGNED == value:
+            queryset = queryset.assigned().distinct()
+        elif TaskWorkflowAssignmentChoices.NOT_ASSIGNED == value:
+            queryset = queryset.not_assigned().distinct()
+
+        return queryset
 
     @property
     def qs(self):

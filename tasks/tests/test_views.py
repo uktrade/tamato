@@ -1081,6 +1081,53 @@ def test_ticket_comment_edit_delete_permissions(
     assert response.status_code == 403
 
 
+def test_ordering_by_assignee_first_name_workflow_list_view(valid_user_client):
+    """Tests that workflows listed on `TaskWorkflowList` view can be sorted by
+    assignee's name in ascending or descending order."""
+
+    workflow_instance_a = TaskWorkflowFactory.create()
+    assignee_a = UserFactory.create(first_name="A", last_name="B")
+    TaskAssigneeFactory.create(task=workflow_instance_a.summary_task, user=assignee_a)
+
+    workflow_instance_b = TaskWorkflowFactory.create()
+    assignee_b = UserFactory.create(first_name="B", last_name="A")
+    TaskAssigneeFactory.create(task=workflow_instance_b.summary_task, user=assignee_b)
+
+    url = reverse(
+        "workflow:task-workflow-ui-list",
+    )
+    response = valid_user_client.get(
+        f"{url}?sort_by=assigned_user&ordered=asc",
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+    ticket_ids = [
+        sid.text for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert ticket_ids == [
+        workflow_instance_a.prefixed_id,
+        workflow_instance_b.prefixed_id,
+    ]
+
+    response = valid_user_client.get(
+        f"{url}?sort_by=assigned_user&ordered=desc",
+    )
+    page = BeautifulSoup(
+        response.content.decode(response.charset),
+        "html.parser",
+    )
+
+    ticket_ids = [
+        sid.text for sid in page.select(".govuk-table tbody tr td:first-child")
+    ]
+    assert ticket_ids == [
+        workflow_instance_b.prefixed_id,
+        workflow_instance_a.prefixed_id,
+    ]
+
+
 def test_task_detail_view_displays_correctly(
     valid_user_client,
     task_workflow_single_task_item,
