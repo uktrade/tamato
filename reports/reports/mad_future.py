@@ -36,7 +36,6 @@ class Report(ReportBaseTable):
         ]
 
     def row(self, row: ReportMeasureAsDefinedReport) -> [dict]:
-
         return [
             {"text": row.id},
             {"text": row.commodity_sid},
@@ -75,7 +74,6 @@ class Report(ReportBaseTable):
         table_rows = []
         for row in self.csv_query():
             table_rows.append(self.row(row))
-
         return table_rows
 
     def query(self):
