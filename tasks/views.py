@@ -368,14 +368,15 @@ class TaskWorkflowListView(
     permission_required = "tasks.view_task"
     paginate_by = settings.DEFAULT_PAGINATOR_PER_PAGE_MAX
     filterset_class = TaskWorkflowFilter
-    sort_by_fields = ["taskworkflow__id", "taskworkflow__eif_date"]
+    sort_by_fields = ["taskworkflow__id", "taskworkflow__eif_date", "assigned_user"]
 
     def get_queryset(self):
-        queryset = Task.objects.all()
+        queryset = Task.objects.with_latest_assignees()
         ordering = self.get_ordering()
         if ordering:
             ordering = (ordering,)
             queryset = queryset.order_by(*ordering)
+
         return queryset
 
     def get_context_data(self, *, object_list=None, **kwargs):

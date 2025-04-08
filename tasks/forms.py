@@ -20,7 +20,6 @@ from django.forms import ModelChoiceField
 from django.forms import ModelForm
 from django.forms import Textarea
 from django.urls import reverse
-from django.utils.timezone import make_aware
 
 from common.fields import AutoCompleteField
 from common.forms import BindNestedFormMixin
@@ -521,12 +520,15 @@ class TaskFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.init_fields()
         self.helper = FormHelper()
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
 
         self.helper.layout = Layout(
             "search",
             "progress_state",
             "assignees",
-            "work_type",
+            Field("work_type", css_class="govuk-!-width-full"),
+            "assignment_status",
             Button(
                 "submit",
                 "Search and filter",
