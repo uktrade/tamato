@@ -3,7 +3,9 @@ import pytest
 from tasks.models import StateChoices
 from tasks.tests.factories import TaskItemFactory
 from workbaskets.models import CreateWorkBasketAutomation
-from workbaskets.tests.automations.factories import CreateWorkBasketAutomationFactory
+from workbaskets.tests.task_automations.factories import (
+    CreateWorkBasketAutomationFactory,
+)
 
 pytestmark = pytest.mark.django_db
 
