@@ -84,7 +84,12 @@ def export_report_to_csv(request, report_slug, current_tab=None):
         headers = (
             report_instance.headers() if hasattr(report_instance, "headers") else None
         )
-        rows = report_instance.rows() if hasattr(report_instance, "rows") else None
+
+        rows = None
+        if hasattr(report_instance, "csv_rows"):
+            rows = report_instance.csv_rows()
+        elif hasattr(report_instance, "rows"):
+            rows = report_instance.rows()
 
     writer = csv.writer(response)
 
