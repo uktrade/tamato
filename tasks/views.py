@@ -371,7 +371,7 @@ class TaskWorkflowListView(
     sort_by_fields = ["taskworkflow__id", "taskworkflow__eif_date", "assigned_user"]
 
     def get_queryset(self):
-        queryset = Task.objects.get_latest_assignees()
+        queryset = Task.objects.with_latest_assignees()
         ordering = self.get_ordering()
         if ordering:
             ordering = (ordering,)

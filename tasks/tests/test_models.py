@@ -319,7 +319,7 @@ def test_prefixed_id(task_workflow):
     assert task_workflow.prefixed_id == expected_prefixed_id
 
 
-def test_get_latest_assignees_task_queryset(
+def test_with_latest_assignees_task_queryset(
     not_assigned_task_no_previous_assignee,
     assigned_task_no_previous_assignee,
 ):
@@ -330,7 +330,7 @@ def test_get_latest_assignees_task_queryset(
     new_assignee_1 = UserFactory.create(first_name="Aaa")
     new_assignee_2 = UserFactory.create(first_name="Bbb")
 
-    qs = Task.objects.get_latest_assignees()
+    qs = Task.objects.with_latest_assignees()
     assert qs.assigned().count() == 1
 
     TaskAssignee.assign_user(
