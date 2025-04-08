@@ -232,6 +232,6 @@ workflow_template_ui_patterns = [
 urlpatterns = [
     path("steps/", include(task_ui_patterns)),
     path("tickets/", include(workflow_ui_patterns)),
-    path("tasks-and-workflows/", include(task_and_workflow_ui_patterns)),
+    path("steps-and-tickets/", include(task_and_workflow_ui_patterns)),
     path("ticket-templates/", include(workflow_template_ui_patterns)),
 ]
