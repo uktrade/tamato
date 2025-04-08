@@ -453,5 +453,5 @@ class AutomationCreateWorkBasketForm(forms.Form):
         )
 
     def clean(self):
-        self.automation.can_run_automation()
+        self.automation.validate_can_run_automation()
         return self.cleaned_data
