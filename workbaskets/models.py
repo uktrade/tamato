@@ -857,11 +857,13 @@ class CreateWorkBasketAutomation(Automation):
     help_text = "Creates a workbasket and associates it with the ticket."
 
     def get_state(self) -> StateChoices:
-        if not self.task.get_workflow():
+        workflow = self.task.get_workflow()
+
+        if not workflow:
             # The related task must be associated with a TaskWorkflow instance
             # in order to run this automation, otherwise it is in error.
             return StateChoices.ERRORED
-        if self.task.get_workflow().summary_task.workbasket:
+        if workflow.summary_task.workbasket:
             return StateChoices.DONE
         else:
             return StateChoices.CAN_RUN
@@ -885,12 +887,11 @@ class CreateWorkBasketAutomation(Automation):
 
         If validation fails then a `ValidationError` exception is raised.
         """
-        workflow = self.task.get_workflow()
 
-        if not workflow:
+        state = self.get_state()
+        if state == StateChoices.ERRORED:
             raise ValidationError("No ticket associated with automation.")
-
-        if workflow.summary_task.workbasket:
+        elif state == StateChoices.DONE:
             raise ValidationError(
                 "A workbasket is already associated with the ticket. Cannot "
                 "associate more.",
