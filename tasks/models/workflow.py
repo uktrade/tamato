@@ -4,11 +4,11 @@ from django.conf import settings
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
-from django.utils.module_loading import import_string
 
 from common.models import User
 from common.models.mixins import TimestampedMixin
 from task_automations import AUTOMATIONS
+from tasks.models.automation import Automation
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
 from tasks.models.task import Task
@@ -218,13 +218,10 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
             )
 
             if task_template.automation_class_name:
-                try:
-                    automation_cls = import_string(
-                        task_template.automation_class_name,
-                    )
-                    automation_cls.objects.create(task=task)
-                except ImportError:
-                    """TODO."""
+                Automation.create(
+                    subclass_name=task_template.automation_class_name,
+                    task=task,
+                )
 
         return task_workflow
 

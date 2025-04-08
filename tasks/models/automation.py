@@ -1,6 +1,7 @@
 import logging
 
 from django.db import models
+from django.utils.module_loading import import_string
 from polymorphic.models import PolymorphicModel
 
 logger = logging.getLogger(__name__)
@@ -23,22 +24,6 @@ class StateChoices(models.TextChoices):
     """A TaskAutomation instance is in an errored state."""
 
 
-# TODO
-# from django.db.models import Manager
-# from django.utils.module_loading import import_string
-#
-# class AutomationManager(Manager):
-#    def create(self, automation_class_name, task) -> type:
-#        try:
-#            automation_cls = import_string(automation_class_name)
-#            automation_obj = automation_cls(task=task)
-#            automation_obj.save()
-#        except ImportError:
-#            """TODO"""
-#            pass
-#        return automation_obj
-
-
 class Automation(PolymorphicModel):
     """
     Base class inherited by models that define and encapsulate task automation
@@ -56,20 +41,40 @@ class Automation(PolymorphicModel):
     """
 
     name = "Task automation"
-    """The name used in the UI to identify this automation. Subclasses should
-    override this attribute."""
+    """
+    The name used in the UI to identify this automation.
+
+    Subclasses should override this attribute.
+    """
 
     help_text = "Automates a task."
-    """The help text used in the UI to describe what this automation does. This
-    helps users to select the correct automation for their tasks when
-    constructing workflow templates. Subclasses should override this
-    attribute."""
+    """
+    The help text used in the UI to describe what this automation does.
+
+    This helps users to select the correct automation for their tasks when
+    constructing workflow templates. Subclasses should override this attribute.
+    """
 
     task = models.OneToOneField(
         "tasks.Task",
         on_delete=models.CASCADE,
     )
     """The Task instance associate with this automation."""
+
+    @classmethod
+    def create(cls, subclass_name, task) -> "Automation":
+        """
+        Convenience method used to create a subclass instance of Automation
+        using the subclass's fully qualified name in dotted path notation.
+
+        Providing a classmethod on the model rather than an object method on the
+        Manager class allows preservation and access to the default Manager
+        class's create() implementation.
+        """
+        cls = import_string(subclass_name)
+        obj = cls(task=task)
+        obj.save(force_insert=True)
+        return obj
 
     def __repr__(self):
         return f"{self.__class__}(pk={self.pk}, name={self.name})"
