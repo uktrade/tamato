@@ -5,7 +5,7 @@ from reports.reports.base_text import ReportBaseText
 class Report(ReportBaseText):
     name = "Commodities"
     description = "Commodities tree"
-    export = True
+    download_csv = True
 
     def text(self):
         return self.description
@@ -45,14 +45,5 @@ class Report(ReportBaseText):
 
         return table_rows
 
-    def csv_rows(self) -> [[dict]]:
-        table_rows = []
-        for row in self.csv_query():
-            table_rows.append(self.row(row))
-        return table_rows
-
     def query(self):
-        return ReportCommodityReport.objects.all()[:10]
-
-    def csv_query(self):
         return ReportCommodityReport.objects.all()

@@ -1,10 +1,14 @@
 from open_data.models.report_models import ReportMeasureAsDefinedReport
-from reports.reports.base_table import ReportBaseTable
+from reports.reports.base_text import ReportBaseText
 
 
-class Report(ReportBaseTable):
+class Report(ReportBaseText):
     name = "Measures as defined"
     description = "Measures as defined, including future measures"
+    download_csv = True
+
+    def text(self):
+        return self.description
 
     def headers(self) -> [dict]:
         return [
@@ -70,14 +74,5 @@ class Report(ReportBaseTable):
 
         return table_rows
 
-    def csv_rows(self) -> [[dict]]:
-        table_rows = []
-        for row in self.csv_query():
-            table_rows.append(self.row(row))
-        return table_rows
-
     def query(self):
-        return ReportMeasureAsDefinedReport.objects.all()[:10]
-
-    def csv_query(self):
         return ReportMeasureAsDefinedReport.objects.all()
