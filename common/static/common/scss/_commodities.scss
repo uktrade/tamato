@@ -1,8 +1,116 @@
+// Overrides of govuk styles to get everything else displaying correctly
 .commodity-hierarchy {
-
-    details>details,
-    details>p {
-        padding-left: 10px;
-        border-left: 20px solid govuk-tint(govuk-colour("light-blue"), 60);
+    .govuk-body,
+    .comment p,
+    body,
+    .govuk-body-m {
+        margin-bottom: 0;
     }
+}
+.comm-code-details {
+    .govuk-details {
+        margin-bottom: 0px;
+        position: relative;
+    }
+    .govuk-details__summary {
+        display: block;
+        margin-bottom: 0px;
+    }
+    .govuk-details__summary-text {
+        text-decoration: none;
+    }
+}
+
+$base-padding: 25px;
+$margin-increment: 30px;
+
+.comm-code-indent {
+
+    &--spacer {
+        position: absolute;
+
+        @for $i from 0 through 7 {
+            &-#{$i} {
+                margin-left: $i * $margin-increment;
+            }
+        }
+    }
+
+    @for $i from 1 through 7 {
+        &-#{$i} {
+            padding-left: $base-padding + ($margin-increment * $i);
+
+            &:before {
+                left: $margin-increment * $i;
+            }
+        }
+    }
+
+}
+
+.selected-commodity {
+    background-color: #F3F2F1;
+}
+
+.comm-code-container {
+    position: relative;
+}
+
+.comm-code-no-children {
+    position: relative;
+}
+
+.comm-code-parent-table {
+    width: 100%;
+    overflow: auto;
+}
+
+.comm-code-second-container {
+    align-self: bottom;
+    border-bottom: 1px solid #B1B4B6;
+}
+
+.comm-code-description {
+    display: inline-flex;
+
+}
+
+.comm-code-suffix-link {
+    width: 15em;
+    color: #0b0c0b;
+}
+
+.comm-code-block {
+    width: 1.5em;
+    text-align: center;
+    padding-right: 2px;
+}
+
+.comm-code-link {
+    padding-left: 8px;
+}
+
+.comm-code-1 {
+    background-color: #ECE8FF;
+}
+
+.comm-code-2 {
+    background-color: #CCEFF1;
+}
+
+.comm-code-3 {
+    background-color: #DEF2CE;
+}
+
+.comm-code-4 {
+    background-color: #FBF3C6;
+}
+
+.comm-code-5 {
+    background-color: #FCDFB9;
+}
+
+.comm-code-suffix {
+    width: 3rem;
+    text-align: center;
 }
