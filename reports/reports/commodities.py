@@ -1,10 +1,14 @@
 from open_data.models.report_models import ReportCommodityReport
-from reports.reports.base_table import ReportBaseTable
+from reports.reports.base_text import ReportBaseText
 
 
-class Report(ReportBaseTable):
+class Report(ReportBaseText):
     name = "Commodities"
     description = "Commodities tree"
+    export = True
+
+    def text(self):
+        return self.description
 
     def headers(self) -> [dict]:
         return [

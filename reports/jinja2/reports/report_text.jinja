@@ -12,7 +12,10 @@
     <h1 class="govuk-heading-xl govuk-!-margin-bottom-3">
         Report: {{ report.name }}
     </h1>
-    <span class="govuk-caption-xl govuk-!-margin-bottom-9">Text</span>
+    {% if report.export %}
+      <a id="exportToCSVLink{{report.slug()}}" class="govuk-button" style="float:right;" href="{{ url("reports:export_report_to_csv", kwargs={"report_slug": report.slug()}) }}">Export to CSV</a>
+    {% endif %}
+
     <h2 class="govuk-body">
     {{ report.description|safe }}
     </h2>
