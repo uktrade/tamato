@@ -7,6 +7,7 @@ from common.tests import factories
 from reports.reports.base import ReportBase
 from reports.reports.base_table import ReportBaseTable
 from reports.reports.blank_goods_nomenclature_descriptions import Report
+from reports.reports.quota_utils import link_renderer_for_quotas
 from reports.utils import get_child_classes
 from reports.utils import get_report_by_slug
 from reports.utils import get_reports
@@ -53,16 +54,14 @@ class TestUtils:
     def test_link_renderer_for_quotas(self, db):
         order_number_obj = factories.QuotaOrderNumberFactory.create()
 
-        report_instance = Report()
-
         # Test without fragment
-        result = report_instance.link_renderer_for_quotas(order_number_obj, "Test Text")
+        result = link_renderer_for_quotas(order_number_obj, "Test Text")
         expected_url = reverse("quota-ui-detail", args=[order_number_obj.sid])
         expected_output = f"<a class='govuk-link govuk-!-font-weight-bold' href='{expected_url}'>Test Text</a>"
         assert result == SafeString(expected_output)
 
         # Test with fragment
-        result = report_instance.link_renderer_for_quotas(
+        result = link_renderer_for_quotas(
             order_number_obj,
             "Test Text",
             fragment="#blocking-periods",
