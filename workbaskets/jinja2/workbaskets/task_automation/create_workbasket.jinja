@@ -1,0 +1,34 @@
+{% extends 'layouts/form.jinja' %}
+
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {
+        "text": "Ticket " ~ ticket_prefixed_id,
+        "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_id}),
+      },
+      {
+        "text": step_title,
+        "href": url('workflow:task-ui-detail', kwargs={'pk': step_id}),
+      },
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+
+{% block form %}
+  <p class="govuk-body">
+    Running this automation with create a new workbasket and associate it with
+    the ticket 
+    <a
+      href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_id}) }}"
+      class="govuk-link"
+    >{{ ticket_title }}</a>.
+  </p>
+
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}
