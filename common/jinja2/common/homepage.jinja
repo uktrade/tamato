@@ -35,7 +35,7 @@
         {{ my_tickets_rows.append([          
             {"html": ticket_linked_id},
             {"text": ticket.title},
-            {"text": display_status(ticket.progress_state.get_progress_state_display())}
+            {"text": display_status(ticket.get_progress_state_display())}
 
         ],
         ) or "" }}
