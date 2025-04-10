@@ -12,7 +12,7 @@
   {{ table_rows.append([
     {"html": object_link},
     {"text": display_assignees(object.assignees.assigned())},
-    {"text": display_status(object.progress_state.__str__())},
+    {"text": display_status(object.get_progress_state_display())},
   ]) or "" }}
 {% endfor %}
 
