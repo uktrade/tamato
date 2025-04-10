@@ -30,7 +30,7 @@ class TaskFilter(TamatoFilter):
     progress_state = ModelMultipleChoiceFilter(
         label="Status",
         help_text="Select all that apply",
-        queryset=ProgressState.objects.all(),
+        queryset=ProgressState.choices,
         widget=CheckboxSelectMultiple,
     )
 
@@ -60,7 +60,7 @@ class TaskWorkflowFilter(TamatoFilter):
     progress_state = ModelMultipleChoiceFilter(
         label="Status",
         help_text="Select all that apply",
-        queryset=ProgressState.objects.all(),
+        queryset=ProgressState.choices,
         widget=CheckboxSelectMultiple,
     )
 
@@ -170,7 +170,7 @@ class TaskAndWorkflowFilter(TamatoFilter):
     progress_state = ModelMultipleChoiceFilter(
         label="Status",
         help_text="Select all that apply",
-        queryset=ProgressState.objects.all(),
+        queryset=ProgressState.choices,
         widget=CheckboxSelectMultiple,
     )
 
