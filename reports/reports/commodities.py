@@ -1,4 +1,5 @@
 from open_data.models.report_models import ReportCommodityReport
+from open_data.utils import get_report_timestamp
 from reports.reports.base_text import ReportBaseText
 
 
@@ -8,7 +9,8 @@ class Report(ReportBaseText):
     download_csv = True
 
     def text(self):
-        return self.description
+        report_date = get_report_timestamp().strftime("%X %x")
+        return f"Report correct up to {report_date}"
 
     def headers(self) -> [dict]:
         return [
