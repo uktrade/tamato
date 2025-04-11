@@ -1,4 +1,5 @@
 import csv
+import datetime
 import re
 
 from django.contrib.auth.decorators import permission_required
@@ -42,10 +43,10 @@ def export_report_to_csv(request, report_slug, current_tab=None):
     report_instance = report_class()
 
     response = HttpResponse(content_type="text/csv")
-
+    datestamp = datetime.datetime.now().strftime("%d_%b_%Y")
     if current_tab:
         response["Content-Disposition"] = (
-            f'attachment; filename="{report_slug + "_for_" + current_tab}_report.csv"'
+            f'attachment; filename="{report_slug + "_for_" + current_tab}_{datestamp}_report.csv"'
         )
         formatted_current_tab = current_tab.capitalize().replace("_", " ")
 
@@ -79,7 +80,7 @@ def export_report_to_csv(request, report_slug, current_tab=None):
             raise ValueError(f"Invalid current_tab value: {formatted_current_tab}")
     else:
         response["Content-Disposition"] = (
-            f'attachment; filename="{report_slug}_report.csv"'
+            f'attachment; filename="{report_slug}_{datestamp}_report.csv"'
         )
         headers = (
             report_instance.headers() if hasattr(report_instance, "headers") else None
