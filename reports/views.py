@@ -42,7 +42,6 @@ def export_report_to_csv(request, report_slug, current_tab=None):
     report_instance = report_class()
 
     response = HttpResponse(content_type="text/csv")
-
     if current_tab:
         response["Content-Disposition"] = (
             f'attachment; filename="{report_slug + "_for_" + current_tab}_report.csv"'

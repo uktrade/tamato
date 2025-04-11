@@ -10,6 +10,7 @@ from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaOrderNumberOrigin
 from quotas.models import QuotaOrderNumberOriginExclusion
 from reports.reports.base_table import ReportBaseTable
+from reports.reports.quota_utils import link_renderer_for_quotas
 
 
 class Report(ReportBaseTable):
@@ -27,7 +28,7 @@ class Report(ReportBaseTable):
 
     def row(self, row: QuotaDefinition) -> [dict]:
         return [
-            {"text": self.link_renderer_for_quotas(row, row.order_number)},
+            {"text": link_renderer_for_quotas(row, row.order_number)},
             {
                 "text": (
                     f"{row.valid_between.lower:%d %b %Y}"

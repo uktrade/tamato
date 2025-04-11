@@ -128,6 +128,8 @@ DOMAIN_APPS = [
     "taric_parsers.apps.TaricParsersConfig",
 ]
 
+OPEN_DATA_APPS = ["open_data.apps.OpenDataConfig"]
+
 TAMATO_APPS = [
     "hmrc_sdes",
     "importer",
@@ -150,6 +152,7 @@ INSTALLED_APPS = [
     *DJANGO_CORE_APPS,
     *THIRD_PARTY_APPS,
     *TAMATO_APPS,
+    *OPEN_DATA_APPS,
     *DOMAIN_APPS,
     *APPS_THAT_MUST_COME_LAST,
 ]
