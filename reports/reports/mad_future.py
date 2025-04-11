@@ -1,5 +1,5 @@
 from open_data.models.report_models import ReportMeasureAsDefinedReport
-from open_data.utils import get_report_timestamp
+from open_data.utils import get_report_timestamp_str
 from reports.reports.base_text import ReportBaseText
 
 
@@ -9,8 +9,7 @@ class Report(ReportBaseText):
     download_csv = True
 
     def text(self):
-        report_date = get_report_timestamp().strftime("%X %x")
-        return f"Report correct up to {report_date}"
+        return f"Report correct up to {get_report_timestamp_str()}"
 
     def headers(self) -> [dict]:
         return [
