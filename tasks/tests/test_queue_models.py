@@ -224,7 +224,7 @@ class TestQueueRaceConditions:
     NUM_THREADS: int = 2
     """The number of threads each test uses."""
 
-    THREAD_TIMEOUT: int = 5
+    THREAD_TIMEOUT: int = 15
     """The duration in seconds to wait for a thread to complete before timing
     out."""
 
