@@ -10,6 +10,7 @@ import factory
 import pytest
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.test.client import RequestFactory
 from django.urls import reverse
@@ -33,10 +34,9 @@ from exporter.tasks import upload_workbaskets
 from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from measures.models import Measure
-from tasks.models import Comment
-from tasks.models import TaskAssignee
-from tasks.models import TaskLog
 from workbaskets import models
+from workbaskets.models import AssignmentType
+from workbaskets.models import WorkBasketComment
 from workbaskets.tasks import call_end_measures
 from workbaskets.tasks import check_workbasket_sync
 from workbaskets.validators import WorkflowStatus
@@ -317,16 +317,14 @@ def test_workbasket_assignments_appear(valid_user_client):
     assert reviewer.get_full_name() not in response.content.decode(response.charset)
 
     # Fully assign the workbasket
-    task = factories.TaskFactory.create(workbasket=workbasket)
-
-    worker_assignment = factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-        task=task,
+    worker_assignment = factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
+        workbasket=workbasket,
         user=worker,
     )
-    reviewer_assignment = factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
-        task=task,
+    reviewer_assignment = factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+        workbasket=workbasket,
         user=reviewer,
     )
     # Assert that the assigned names appear in the table
@@ -364,33 +362,27 @@ def test_select_workbasket_filtering(
     # Create a fully assigned workbasket
     fully_assigned_workbasket = factories.WorkBasketFactory.create(id=1)
 
-    task = factories.TaskFactory.create(workbasket=fully_assigned_workbasket)
-
-    factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-        task=task,
+    factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
+        workbasket=fully_assigned_workbasket,
     )
-    factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
-        task=task,
+    factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+        workbasket=fully_assigned_workbasket,
     )
     # Create an unassigned workbasket
     factories.WorkBasketFactory.create(id=2)
     # Create workbasket with only a reviewer assigned
     reviewer_assigned_workbasket = factories.WorkBasketFactory.create(id=3)
-    reviewer_task = factories.TaskFactory.create(
+    factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
         workbasket=reviewer_assigned_workbasket,
-    )
-    factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
-        task=reviewer_task,
     )
     # Create a workbasket with only a worker assigned
     worker_assigned_workbasket = factories.WorkBasketFactory.create(id=4)
-    worker_task = factories.TaskFactory.create(workbasket=worker_assigned_workbasket)
-    factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-        task=worker_task,
+    factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
+        workbasket=worker_assigned_workbasket,
     )
 
     # Test that the workbaskets are appearing on the correct tabs
@@ -2067,29 +2059,30 @@ def test_workbasket_delete_previously_queued_workbasket(
     assert workbasket.status == WorkflowStatus.ARCHIVED
 
 
-def test_workbasket_delete_archives_assigned_workbasket(valid_user, valid_user_client):
-    """Test that an assigned workbasket (or workbasket with an associated task)
-    transitions to ARCHIVED status when a user attempts to delete it."""
+def test_workbasket_deletes_assigned_workbasket(valid_user, valid_user_client):
+    """Test that an assigned workbasket is delete correctly when a user attempts
+    to delete it."""
     valid_user.user_permissions.add(
         Permission.objects.get(codename="delete_workbasket"),
     )
     workbasket = factories.AssignedWorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
+    workbasket_pk = workbasket.pk
     url = reverse(
         "workbaskets:workbasket-ui-delete",
-        kwargs={"pk": workbasket.pk},
+        kwargs={"pk": workbasket_pk},
     )
     response = valid_user_client.post(url)
 
     assert response.status_code == 302
     assert response.url == reverse(
         "workbaskets:workbasket-ui-delete-done",
-        kwargs={"deleted_pk": workbasket.pk},
+        kwargs={"deleted_pk": workbasket_pk},
     )
 
-    workbasket.refresh_from_db()
-    assert workbasket.status == WorkflowStatus.ARCHIVED
+    with pytest.raises(ObjectDoesNotExist):
+        workbasket.refresh_from_db()
 
 
 def test_workbasket_compare_200(valid_user_client, user_workbasket):
@@ -2350,14 +2343,13 @@ def test_disabled_packaging_for_unassigned_workbasket(
     assert soup.find("button", {"id": "send-to-packaging", "aria-disabled": "true"})
 
     # Assign the workbasket so it can now be packaged
-    task = factories.TaskFactory.create(workbasket=user_empty_workbasket)
-    factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-        task=task,
+    factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
+        workbasket=user_empty_workbasket,
     )
-    factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
-        task=task,
+    factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+        workbasket=user_empty_workbasket,
     )
 
     response = valid_user_client.get(url)
@@ -2366,36 +2358,18 @@ def test_disabled_packaging_for_unassigned_workbasket(
     assert not packaging_button.has_attr("disabled")
 
 
-def test_workbasket_assign_users_view(valid_user, valid_user_client, new_workbasket):
-    """Tests that a user can be assigned to a workbasket and that a `TaskLog`
-    entry is created together with the `TaskAssignee` instance."""
-    url = reverse(
-        "workbaskets:workbasket-ui-assign-users",
-        kwargs={"pk": new_workbasket.pk},
+def test_workbasket_assign_users_view(valid_user, valid_user_client, user_workbasket):
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="add_userassignment"),
     )
-
-    form_data = {
-        "users": [valid_user.pk],
-        "assignment_type": TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-    }
-
-    response = valid_user_client.get(url)
+    response = valid_user_client.get(
+        reverse(
+            "workbaskets:workbasket-ui-assign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
     assert response.status_code == 200
-
-    response = valid_user_client.post(url, form_data)
-    assert response.status_code == 302
-
-    assert TaskAssignee.objects.get(
-        user=valid_user,
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-        task__workbasket=new_workbasket,
-    )
-
-    assert TaskLog.objects.get(
-        task__workbasket=new_workbasket,
-        action=TaskLog.AuditActionType.TASK_ASSIGNED,
-        instigator=response.wsgi_request.user,
-    )
+    assert "Assign users to workbasket" in response.content.decode(response.charset)
 
 
 def test_workbasket_assign_users_view_without_permission(client, user_workbasket):
@@ -2410,35 +2384,18 @@ def test_workbasket_assign_users_view_without_permission(client, user_workbasket
     assert response.status_code == 403
 
 
-def test_workbasket_unassign_users_view(valid_user, valid_user_client):
-    """Tests that a user can be unassigned from a workbasket and that a
-    `TaskLog` entry is created together with the updated `TaskAssignee`
-    instance."""
-    assignee = factories.TaskAssigneeFactory.create(user=valid_user)
-    workbasket = assignee.task.workbasket
-
-    url = reverse(
-        "workbaskets:workbasket-ui-unassign-users",
-        kwargs={"pk": workbasket.pk},
+def test_workbasket_unassign_users_view(valid_user, valid_user_client, user_workbasket):
+    valid_user.user_permissions.add(
+        Permission.objects.get(codename="change_userassignment"),
     )
-    form_data = {
-        "assignees": [assignee.pk],
-    }
-
-    response = valid_user_client.get(url)
+    response = valid_user_client.get(
+        reverse(
+            "workbaskets:workbasket-ui-unassign-users",
+            kwargs={"pk": user_workbasket.pk},
+        ),
+    )
     assert response.status_code == 200
-
-    response = valid_user_client.post(url, form_data)
-    assert response.status_code == 302
-
-    assignee.refresh_from_db()
-
-    assert not assignee.is_assigned
-    assert TaskLog.objects.get(
-        task__workbasket=workbasket,
-        action=TaskLog.AuditActionType.TASK_UNASSIGNED,
-        instigator=response.wsgi_request.user,
-    )
+    assert "Unassign users from workbasket" in response.content.decode(response.charset)
 
 
 def test_workbasket_unassign_users_view_without_permission(client, user_workbasket):
@@ -2459,12 +2416,12 @@ def test_workbasket_summary_view_add_comment(valid_user_client, user_workbasket)
     content = "Test comment."
     form_data = {"content": content}
     url = reverse("workbaskets:current-workbasket")
-    assert not Comment.objects.exists()
+    assert not WorkBasketComment.objects.exists()
 
     response = valid_user_client.post(url, form_data)
     assert response.status_code == 302
     assert response.url == url
-    assert content in Comment.objects.get(task__workbasket=user_workbasket).content
+    assert content in WorkBasketComment.objects.get(workbasket=user_workbasket).content
 
 
 def test_workbasket_summary_view_displays_comments(
@@ -2473,12 +2430,13 @@ def test_workbasket_summary_view_displays_comments(
     user_workbasket,
 ):
     """Tests that workbasket comments are displayed on the summary view."""
-    factories.CommentFactory.create_batch(
+    factories.WorkBasketCommentFactory.create_batch(
         2,
         author=valid_user,
-        task__workbasket=user_workbasket,
+        workbasket=user_workbasket,
     )
-    comments = Comment.objects.all().order_by("-created_at")
+    comments = WorkBasketComment.objects.all().order_by("-created_at")
+    assert comments.count() == 2
 
     url = reverse("workbaskets:current-workbasket")
     response = valid_user_client.get(url)
@@ -2504,9 +2462,9 @@ def test_workbasket_summary_view_displays_comments(
 
 def test_workbasket_comment_update_view(valid_user, valid_user_client, user_workbasket):
     """Tests that workbasket comments can be edited."""
-    comment = factories.CommentFactory.create(
+    comment = factories.WorkBasketCommentFactory.create(
         author=valid_user,
-        task__workbasket=user_workbasket,
+        workbasket=user_workbasket,
     )
 
     url = reverse(
@@ -2523,7 +2481,7 @@ def test_workbasket_comment_update_view(valid_user, valid_user_client, user_work
     assert response.status_code == 302
     assert response.url == reverse("workbaskets:current-workbasket")
 
-    assert content in Comment.objects.get(pk=comment.pk).content
+    assert content in WorkBasketComment.objects.get(pk=comment.pk).content
 
 
 def test_workbasket_comment_update_view_permission_denied(
@@ -2531,7 +2489,7 @@ def test_workbasket_comment_update_view_permission_denied(
     user_workbasket,
 ):
     """Tests that editing another user's workbasket comment is not permitted."""
-    comment = factories.CommentFactory.create(task__workbasket=user_workbasket)
+    comment = factories.WorkBasketCommentFactory.create(workbasket=user_workbasket)
     url = reverse(
         "workbaskets:workbasket-ui-comment-edit",
         kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
@@ -2546,9 +2504,9 @@ def test_workbasket_comment_update_view_permission_denied(
 
 def test_workbasket_comment_delete_view(valid_user, valid_user_client, user_workbasket):
     """Tests that workbasket comments can be deleted."""
-    comment = factories.CommentFactory.create(
+    comment = factories.WorkBasketCommentFactory.create(
         author=valid_user,
-        task__workbasket=user_workbasket,
+        workbasket=user_workbasket,
     )
 
     url = reverse(
@@ -2563,8 +2521,8 @@ def test_workbasket_comment_delete_view(valid_user, valid_user_client, user_work
     assert response.status_code == 302
     assert response.url == reverse("workbaskets:current-workbasket")
 
-    with pytest.raises(Comment.DoesNotExist):
-        Comment.objects.get(pk=comment.pk)
+    with pytest.raises(WorkBasketComment.DoesNotExist):
+        WorkBasketComment.objects.get(pk=comment.pk)
 
 
 def test_workbasket_comment_delete_view_permission_denied(
@@ -2573,7 +2531,7 @@ def test_workbasket_comment_delete_view_permission_denied(
 ):
     """Tests that deleting another user's workbasket comment is not
     permitted."""
-    comment = factories.CommentFactory.create(task__workbasket=user_workbasket)
+    comment = factories.WorkBasketCommentFactory.create(workbasket=user_workbasket)
     url = reverse(
         "workbaskets:workbasket-ui-comment-delete",
         kwargs={"wb_pk": user_workbasket.pk, "pk": comment.pk},
@@ -2588,12 +2546,12 @@ def test_workbasket_comment_delete_view_permission_denied(
 
 def test_workbasket_comment_list_view(valid_user_client, user_workbasket):
     """Tests that `WorkBasketCommentListView` displays workbasket comments."""
-    factories.CommentFactory.create_batch(
+    factories.WorkBasketCommentFactory.create_batch(
         2,
         author=user_workbasket.author,
-        task__workbasket=user_workbasket,
+        workbasket=user_workbasket,
     )
-    comments = Comment.objects.all().order_by("-created_at")
+    comments = WorkBasketComment.objects.all().order_by("-created_at")
     url = reverse(
         "workbaskets:workbasket-ui-comments",
         kwargs={"pk": user_workbasket.pk},

@@ -165,7 +165,7 @@
       </dd>
     </div>
 
-    {% if workbasket.tasks.exists() and can_add_comment %}
+    {% if can_add_comment %}
       <div class="govuk-summary-list__row govuk-summary-list__row--no-border">
         <dt class="govuk-summary-list__key">Activity</dt>
         <dd class="govuk-summary-list__value govuk-!-padding-top-4">
@@ -173,7 +173,7 @@
         </dd>
         {% if comments %}
           <dd class="govuk-summary-list__actions">
-            <span class="govuk-visually-hidden">Sort by </span>{{ create_sortable_anchor(request, sort_by_label, sorting_urls["comments"]) }}
+            <span class="govuk-visually-hidden">Sort by </span>{{ create_sortable_anchor(request, "comments", sort_by_title, base_url, query_params="True") }}
           </dd>
         {% endif %}
       </div>

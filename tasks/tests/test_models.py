@@ -78,26 +78,6 @@ def test_task_assignee_unassigned_queryset(
     assert TaskAssignee.objects.unassigned().count() == 1
 
 
-def test_task_assignee_workbasket_workers_queryset(
-    workbasket_worker_assignee,
-    workbasket_reviewer_assignee,
-):
-    workbasket_workers = TaskAssignee.objects.workbasket_workers()
-
-    assert workbasket_workers.count() == 1
-    assert workbasket_worker_assignee in workbasket_workers
-
-
-def test_task_assignee_workbasket_reviewers_queryset(
-    workbasket_worker_assignee,
-    workbasket_reviewer_assignee,
-):
-    workbasket_reviewers = TaskAssignee.objects.workbasket_reviewers()
-
-    assert workbasket_reviewers.count() == 1
-    assert workbasket_reviewer_assignee in workbasket_reviewers
-
-
 def test_task_incomplete_queryset():
     """Tests that `TaskQueryset.incomplete()` excludes `Task` instances that are
     marked as done."""

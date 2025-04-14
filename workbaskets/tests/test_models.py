@@ -19,16 +19,17 @@ from common.tests.factories import TransactionFactory
 from common.tests.factories import WorkBasketFactory
 from common.tests.util import assert_transaction_order
 from common.validators import UpdateType
-from tasks.models import TaskAssignee
 from workbaskets import tasks
 from workbaskets.models import REVISION_ONLY
 from workbaskets.models import SEED_FIRST
 from workbaskets.models import SEED_ONLY
 from workbaskets.models import TRANSACTION_PARTITION_SCHEMES
+from workbaskets.models import AssignmentType
 from workbaskets.models import TransactionPartitionScheme
 from workbaskets.models import TransactionPurgeException
 from workbaskets.models import UserTransactionPartitionScheme
 from workbaskets.models import WorkBasket
+from workbaskets.models import WorkBasketAssignment
 from workbaskets.models import get_partition_scheme
 from workbaskets.tests.util import assert_workbasket_valid
 from workbaskets.validators import WorkflowStatus
@@ -366,14 +367,13 @@ def test_queue(valid_user, unapproved_checked_transaction):
     """Test that approve transitions workbasket from EDITING to QUEUED, setting
     approver and shifting transaction from DRAFT to REVISION partition."""
     wb = unapproved_checked_transaction.workbasket
-    task = factories.TaskFactory.create(workbasket=wb)
-    factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-        task=task,
+    factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
+        workbasket=wb,
     )
-    factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
-        task=task,
+    factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+        workbasket=wb,
     )
     wb.queue(valid_user.pk, settings.TRANSACTION_SCHEMA)
 
@@ -448,46 +448,45 @@ def test_unassigned_workbasket_cannot_be_queued():
     assert not workbasket.is_fully_assigned()
 
     worker = factories.UserFactory.create()
-    task = factories.TaskFactory.create(workbasket=workbasket)
 
     with pytest.raises(TransitionNotAllowed):
         workbasket.queue(user=worker.id, scheme_name=settings.TRANSACTION_SCHEMA)
 
-    factories.TaskAssigneeFactory.create(
+    factories.WorkBasketAssignmentFactory.create(
         user=worker,
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-        task=task,
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
+        workbasket=workbasket,
     )
-    factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
-        task=task,
+    factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+        workbasket=workbasket,
     )
     assert workbasket.is_fully_assigned()
 
-    TaskAssignee.unassign_user(user=worker, task=task, instigator=worker)
+    WorkBasketAssignment.unassign_user(user=worker, workbasket=workbasket)
     assert not workbasket.is_fully_assigned()
 
 
-def test_workbasket_user_assignments_queryset():
+def test_workbasket_assignments_queryset():
     workbasket = factories.WorkBasketFactory.create()
-    worker_assignment = factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-        task__workbasket=workbasket,
+    worker_assignment = factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_WORKER,
+        workbasket=workbasket,
     )
-    reviewer_assignment = factories.TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
-        task__workbasket=workbasket,
+    reviewer_assignment = factories.WorkBasketAssignmentFactory.create(
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+        workbasket=workbasket,
     )
     # Inactive assignment
-    factories.TaskAssigneeFactory.create(
+    factories.WorkBasketAssignmentFactory.create(
         unassigned_at=make_aware(datetime.now()),
-        task__workbasket=workbasket,
+        workbasket=workbasket,
     )
     # Unrelated assignment
-    factories.TaskAssigneeFactory.create()
+    factories.WorkBasketAssignmentFactory.create()
 
     workbasket.refresh_from_db()
-    queryset = workbasket.user_assignments
+    queryset = workbasket.workbasket_assignments
 
     assert worker_assignment in queryset
     assert reviewer_assignment in queryset
@@ -539,3 +538,52 @@ def test_dequeue_reverts_current_version(valid_user, user_workbasket):
     user_workbasket.dequeue()
     measure_create.refresh_from_db()
     assert measure_create.version_group.current_version == measure_create
+
+
+def test_workbasket_assignment_unassign_user_classmethod(workbasket_assignment):
+    user = workbasket_assignment.user
+    workbasket = workbasket_assignment.workbasket
+
+    assert WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
+    # User has already been unassigned
+    assert not WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
+
+
+def test_workbasket_assignment_assigned_queryset(workbasket_assignment):
+    assert WorkBasketAssignment.objects.assigned().count() == 1
+
+    user = workbasket_assignment.user
+    workbasket = workbasket_assignment.workbasket
+    WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
+
+    assert not WorkBasketAssignment.objects.assigned()
+
+
+def test_workbasket_assignment_unassigned_queryset(workbasket_assignment):
+    assert not WorkBasketAssignment.objects.unassigned()
+
+    user = workbasket_assignment.user
+    workbasket = workbasket_assignment.workbasket
+    WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
+
+    assert WorkBasketAssignment.objects.unassigned().count() == 1
+
+
+def test_task_assignee_workbasket_workers_queryset(
+    workbasket_worker_assignee,
+    workbasket_reviewer_assignee,
+):
+    workbasket_workers = WorkBasketAssignment.objects.workbasket_workers()
+
+    assert workbasket_workers.count() == 1
+    assert workbasket_worker_assignee in workbasket_workers
+
+
+def test_task_assignee_workbasket_reviewers_queryset(
+    workbasket_worker_assignee,
+    workbasket_reviewer_assignee,
+):
+    workbasket_reviewers = WorkBasketAssignment.objects.workbasket_reviewers()
+
+    assert workbasket_reviewers.count() == 1
+    assert workbasket_reviewer_assignee in workbasket_reviewers

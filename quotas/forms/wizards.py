@@ -15,6 +15,7 @@ from common.fields import AutoCompleteField
 from common.forms import ValidityPeriodForm
 from common.serializers import deserialize_date
 from common.util import TaricDateRange
+from common.widgets import CommodityVolumeRadioSelect
 from common.widgets import DecimalSuffix
 from measures.models import MeasurementUnit
 from measures.models import MeasurementUnitQualifier
@@ -240,6 +241,57 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
             "required": "Enter the initial volume",
         },
     )
+    # required=False is passed twice here so the nested input is not required.
+    volume_change_type_radio = forms.ChoiceField(
+        label="How will the volume change between definition periods?",
+        widget=CommodityVolumeRadioSelect(attrs={"required": False}),
+        required=False,
+        choices=(
+            (
+                "increase_percentage",
+                {
+                    "label": "Increase by percentage",
+                    "type": "percentage",
+                    "name": "increase_percentage",
+                    "suffix": "%",
+                },
+            ),
+            (
+                "increase_quantity",
+                {
+                    "label": "Increase by quantity",
+                    "type": "quantity",
+                    "name": "increase_quantity",
+                },
+            ),
+            (
+                "decrease_percentage",
+                {
+                    "label": "Decrease by percentage",
+                    "type": "percentage",
+                    "name": "decrease_percentage",
+                    "suffix": "%",
+                },
+            ),
+            (
+                "decrease_quantity",
+                {
+                    "label": "Decrease by quantity",
+                    "type": "quantity",
+                    "name": "decrease_quantity",
+                },
+            ),
+            ("divider", "or"),
+            (
+                "no_change",
+                {
+                    "label": "The volume will not change and/or there are multiple definition periods per year",
+                    "help_text": "You can edit the volume manually on the next page if required",
+                },
+            ),
+        ),
+        help_text="Select an option",
+    )
 
     measurement_unit = forms.ModelChoiceField(
         empty_label="Choose measurement unit",
@@ -307,6 +359,14 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     def save_definition_data_to_session(self, cleaned_data):
         instance_count = decimal.Decimal(cleaned_data["instance_count"])
         frequency = decimal.Decimal(cleaned_data["frequency"])
+        volume = decimal.Decimal(cleaned_data["volume"])
+        volume_change_type = cleaned_data["volume_change_type"]
+        if (
+            "volume_change_value" in cleaned_data
+            and cleaned_data["volume_change_value"] is not None
+        ):
+            volume_change_value = decimal.Decimal(cleaned_data["volume_change_value"])
+
         definition_data = {
             "id": 1,
             "maximum_precision": cleaned_data["maximum_precision"],
@@ -360,7 +420,6 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                         "valid_between": new_date_range,
                     },
                 )
-
             if frequency == 2:
                 # Repeats every 6 months
                 new_start_date = definition_data["valid_between"].upper + relativedelta(
@@ -393,6 +452,21 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                 definition_data.update(
                     {"valid_between": new_date_range},
                 )
+            # If a definition period repeats yearly, we can change the volume by the following options
+            if frequency == 1:
+                if volume_change_type == "increase_percentage":
+                    volume += volume * (volume_change_value / decimal.Decimal(100))
+                elif volume_change_type == "increase_quantity":
+                    volume += volume_change_value
+                elif volume_change_type == "decrease_percentage":
+                    volume -= volume * (volume_change_value / decimal.Decimal(100))
+                elif volume_change_type == "decrease_quantity":
+                    volume -= volume_change_value
+                elif volume_change_type == "no_change":
+                    volume
+
+            definition_data.update({"volume": round(volume, 2)})
+
             serialized_definition_data = serialize_definition_data(definition_data)
             staged_definitions.append(serialized_definition_data)
 
@@ -401,6 +475,34 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
     def clean(self):
         cleaned_data = super().clean()
         if self.is_valid():
+            if (
+                cleaned_data["frequency"] != "1"
+                and self.data["volume-change"] != "no_change"
+            ):
+                raise ValidationError(
+                    "Automatically increasing or decreasing the volume between definition periods is only available for definition periods that span the entire year or if there is only one definition period in the year.",
+                )
+
+            self.cleaned_data["volume_change_type"] = self.data["volume-change"]
+            if self.data["volume-change"] != "no_change":
+                self.cleaned_data["volume_change_value"] = next(
+                    (
+                        v
+                        for v in [
+                            self.data["increase_percentage"],
+                            self.data["decrease_percentage"],
+                            self.data["increase_quantity"],
+                            self.data["decrease_quantity"],
+                        ]
+                        if v
+                    ),
+                    None,
+                )
+                if self.cleaned_data["volume_change_value"] is None:
+                    raise ValidationError(
+                        "A value must be provided for the volume change option you have selected",
+                    )
+
             self.save_definition_data_to_session(cleaned_data)
         return cleaned_data
 
@@ -462,6 +564,10 @@ class QuotaDefinitionBulkCreateDefinitionInformation(
                     Field("initial_volume", css_class="govuk-!-width-one-third"),
                     Field("volume", css_class="govuk-!-width-one-third"),
                     "maximum_precision",
+                    Field(
+                        "volume_change_type_radio",
+                        css_class="govuk-!-width-two-thirds",
+                    ),
                 ),
                 HTML(
                     "<br />",

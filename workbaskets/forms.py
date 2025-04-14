@@ -11,7 +11,6 @@ from crispy_forms_gds.layout import Size
 from crispy_forms_gds.layout import Submit
 from django import forms
 from django.contrib.auth import get_user_model
-from django.db import transaction
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.timezone import make_aware
@@ -19,12 +18,11 @@ from django.utils.timezone import make_aware
 from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
 from common.validators import markdown_tags_allowlist
-from tasks.models import Comment
-from tasks.models import Task
-from tasks.models import TaskAssignee
-from tasks.signals import set_current_instigator
 from workbaskets import models
 from workbaskets import validators
+from workbaskets.models import AssignmentType
+from workbaskets.models import WorkBasketAssignment
+from workbaskets.models import WorkBasketComment
 from workbaskets.util import serialize_uploaded_data
 
 User = get_user_model()
@@ -211,7 +209,7 @@ class WorkBasketAssignUsersForm(forms.Form):
         error_messages={"required": "Select one or more users to assign"},
     )
     assignment_type = forms.ChoiceField(
-        choices=TaskAssignee.AssignmentType.choices,
+        choices=AssignmentType.choices,
         widget=forms.RadioSelect,
         error_messages={"required": "Select an assignment type"},
     )
@@ -251,28 +249,26 @@ class WorkBasketAssignUsersForm(forms.Form):
             ),
         )
 
-    @transaction.atomic
-    def assign_users(self, task):
-        set_current_instigator(self.request.user)
-
+    def assign_users(self):
         assignment_type = self.cleaned_data["assignment_type"]
 
-        assignees = [
-            TaskAssignee(
+        objs = [
+            WorkBasketAssignment(
                 user=user,
                 assignment_type=assignment_type,
-                task=task,
+                workbasket=self.workbasket,
             )
             for user in self.cleaned_data["users"]
-            if not TaskAssignee.objects.filter(
+            if not WorkBasketAssignment.objects.filter(
                 user=user,
                 assignment_type=assignment_type,
-                task__workbasket=self.workbasket,
+                workbasket=self.workbasket,
             )
             .assigned()
             .exists()
         ]
-        return TaskAssignee.objects.bulk_create(assignees)
+
+        return WorkBasketAssignment.objects.bulk_create(objs)
 
 
 class WorkBasketUnassignUsersForm(forms.Form):
@@ -280,7 +276,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
         label="Users",
         help_text="Select users to unassign",
         widget=forms.CheckboxSelectMultiple,
-        queryset=TaskAssignee.objects.all(),
+        queryset=WorkBasketAssignment.objects.all(),
         error_messages={"required": "Select one or more users to unassign"},
     )
 
@@ -292,9 +288,11 @@ class WorkBasketUnassignUsersForm(forms.Form):
         self.init_layout()
 
     def init_fields(self):
-        self.fields["assignees"].queryset = self.workbasket.user_assignments.order_by(
-            "user__first_name",
-            "user__last_name",
+        self.fields["assignments"].queryset = (
+            self.workbasket.workbasket_assignments.order_by(
+                "user__first_name",
+                "user__last_name",
+            )
         )
 
         self.fields["assignees"].label_from_instance = (
@@ -315,16 +313,13 @@ class WorkBasketUnassignUsersForm(forms.Form):
             ),
         )
 
-    @transaction.atomic
     def unassign_users(self):
-        set_current_instigator(self.request.user)
+        assignments = self.cleaned_data["assignments"]
+        for assignment in assignments:
+            assignment.unassigned_at = make_aware(datetime.now())
 
-        assignees = self.cleaned_data["assignees"]
-        for assignee in assignees:
-            assignee.unassigned_at = make_aware(datetime.now())
-
-        return TaskAssignee.objects.bulk_update(
-            assignees,
+        return WorkBasketAssignment.objects.bulk_update(
+            assignments,
             fields=["unassigned_at"],
         )
 
@@ -338,7 +333,7 @@ class WorkBasketCommentForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Comment
+        model = WorkBasketComment
         fields = ("content",)
 
     def clean_content(self):
@@ -373,7 +368,7 @@ class WorkBasketCommentCreateForm(WorkBasketCommentForm):
     def save(self, user, workbasket, commit=True):
         instance = super().save(commit=False)
         instance.author = user
-        instance.task = Task.objects.get(workbasket=workbasket)
+        instance.workbasket = workbasket
         if commit:
             instance.save()
         return instance
@@ -405,7 +400,7 @@ class WorkBasketCommentUpdateForm(WorkBasketCommentForm):
 
 class WorkBasketCommentDeleteForm(forms.ModelForm):
     class Meta:
-        model = Comment
+        model = WorkBasketComment
         fields = ()
 
     def __init__(self, *args, **kwargs):
