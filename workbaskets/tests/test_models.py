@@ -570,20 +570,20 @@ def test_workbasket_assignment_unassigned_queryset(workbasket_assignment):
 
 
 def test_task_assignee_workbasket_workers_queryset(
-    workbasket_worker_assignee,
-    workbasket_reviewer_assignee,
+    workbasket_worker_assignment,
+    workbasket_reviewer_assignment,
 ):
     workbasket_workers = WorkBasketAssignment.objects.workbasket_workers()
 
     assert workbasket_workers.count() == 1
-    assert workbasket_worker_assignee in workbasket_workers
+    assert workbasket_worker_assignment in workbasket_workers
 
 
 def test_task_assignee_workbasket_reviewers_queryset(
-    workbasket_worker_assignee,
-    workbasket_reviewer_assignee,
+    workbasket_worker_assignment,
+    workbasket_reviewer_assignment,
 ):
     workbasket_reviewers = WorkBasketAssignment.objects.workbasket_reviewers()
 
     assert workbasket_reviewers.count() == 1
-    assert workbasket_reviewer_assignee in workbasket_reviewers
+    assert workbasket_reviewer_assignment in workbasket_reviewers
