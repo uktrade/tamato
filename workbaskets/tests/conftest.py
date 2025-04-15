@@ -1,3 +1,5 @@
+import random
+
 import pytest
 
 from common.tests import factories
@@ -23,8 +25,12 @@ def transition(request):
 
 
 @pytest.fixture()
-def user_assignment():
-    return WorkBasketAssignmentFactory.create()
+def workbasket_assignment():
+    """Create and return a WorkBasketAssignment instance with randomly allocated
+    AssignmentTYpe."""
+    return WorkBasketAssignmentFactory.create(
+        assignment_type=random.choice(AssignmentType.choices),
+    )
 
 
 @pytest.fixture()
