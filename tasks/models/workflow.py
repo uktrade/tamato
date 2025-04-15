@@ -7,6 +7,8 @@ from django.urls import reverse
 
 from common.models import User
 from common.models.mixins import TimestampedMixin
+from task_automations import AUTOMATIONS
+from tasks.models.automation import Automation
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
 from tasks.models.task import Task
@@ -37,6 +39,7 @@ class TaskWorkflow(Queue):
         blank=True,
         null=True,
     )
+    """'Entry into force' the due date on a tariff update."""
     policy_contact = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta(Queue.Meta):
@@ -57,6 +60,8 @@ class TaskWorkflow(Queue):
 
     @property
     def prefixed_id(self) -> str:
+        """Get the workflow's ID prefixed with the system configured ticket
+        prefix setting."""
         return f"{settings.TICKET_PREFIX}{self.id}"
 
     def get_tasks(self) -> models.QuerySet:
@@ -212,6 +217,12 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
                 task=task,
             )
 
+            if task_template.automation_class_name:
+                Automation.create(
+                    subclass_name=task_template.automation_class_name,
+                    task=task,
+                )
+
         return task_workflow
 
     def get_url(self, action: str = "detail"):
@@ -265,6 +276,12 @@ class TaskItemTemplate(QueueItem):
 class TaskTemplate(TaskBase):
     """Template used to create Task instances from within a template
     workflow."""
+
+    automation_class_name = models.CharField(
+        choices=AUTOMATIONS,
+        max_length=200,
+        blank=True,
+    )
 
     def get_url(self, action: str = "detail"):
         if action == "detail":
