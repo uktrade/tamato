@@ -173,7 +173,7 @@
         </dd>
         {% if comments %}
           <dd class="govuk-summary-list__actions">
-            <span class="govuk-visually-hidden">Sort by </span>{{ create_sortable_anchor(request, "comments", sort_by_title, base_url, query_params="True") }}
+            <span class="govuk-visually-hidden">Sort by </span>{{ create_sortable_anchor(request, sort_by_label, sorting_urls["comments"]) }}
           </dd>
         {% endif %}
       </div>
