@@ -255,6 +255,7 @@ class WorkBasketAssignUsersForm(forms.Form):
         objs = [
             WorkBasketAssignment(
                 user=user,
+                assigned_by=self.request.user,
                 assignment_type=assignment_type,
                 workbasket=self.workbasket,
             )
