@@ -2360,7 +2360,7 @@ def test_disabled_packaging_for_unassigned_workbasket(
 
 def test_workbasket_assign_users_view(valid_user, valid_user_client, user_workbasket):
     valid_user.user_permissions.add(
-        Permission.objects.get(codename="add_userassignment"),
+        Permission.objects.get(codename="add_workbasketassignment"),
     )
     response = valid_user_client.get(
         reverse(
