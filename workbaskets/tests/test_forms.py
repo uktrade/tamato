@@ -206,7 +206,7 @@ def test_workbasket_unassign_users_form_required_fields(
         data={},
     )
     assert not form.is_valid()
-    assert f"Select one or more users to unassign" in form.errors["assignees"]
+    assert f"Select one or more users to unassign" in form.errors["assignments"]
 
 
 def test_workbasket_comment_create_form(assigned_workbasket):
