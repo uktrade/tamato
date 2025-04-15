@@ -2386,7 +2386,7 @@ def test_workbasket_assign_users_view_without_permission(client, user_workbasket
 
 def test_workbasket_unassign_users_view(valid_user, valid_user_client, user_workbasket):
     valid_user.user_permissions.add(
-        Permission.objects.get(codename="change_userassignment"),
+        Permission.objects.get(codename="change_workbasketassignment"),
     )
     response = valid_user_client.get(
         reverse(
