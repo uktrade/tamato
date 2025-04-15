@@ -6,7 +6,7 @@ from django.db import migrations
 def forwards_move_assignments_and_comments(apps, schema_editor):
     """
     Forward migration operation:
-    1. Move UserAssignment instances with their associated Task data
+    1. Move TaskAssignment instances with their associated Task data
        (i.e. WorkBasket) from the tasks package to instances of their new,
        simplified equivalent workbaskets.models.WorkBasketAssignment.
     2. Move Comment instances with their associated Task data
@@ -14,7 +14,7 @@ def forwards_move_assignments_and_comments(apps, schema_editor):
        simplified equivalent workbaskets.models.WorkBasketComment.
 
     Notes:
-       This migration moves both task.models.UserAssignment and
+       This migration moves both task.models.TaskAssignee and
        task.models.Comment instances because they both reference instances of
        the task.models.Task, which must all be cleaned up / deleted. Other
        approaches are possible, decomposing the two, but the current approach
@@ -23,21 +23,21 @@ def forwards_move_assignments_and_comments(apps, schema_editor):
     """
 
     Comment = apps.get_model("tasks", "Comment")
-    UserAssignment = apps.get_model("tasks", "UserAssignment")
+    TaskAssignment = apps.get_model("tasks", "TaskAssignee")
     Task = apps.get_model("tasks", "Task")
     WorkBasketAssignment = apps.get_model("workbaskets", "WorkBasketAssignment")
     WorkBasketComment = apps.get_model("workbaskets", "WorkBasketComment")
 
-    user_assignments_qs = UserAssignment.objects.all()
-    for user_assignment in user_assignments_qs:
+    task_assignment_qs = TaskAssignment.objects.all()
+    for task_assignment in task_assignment_qs:
         WorkBasketAssignment.objects.create(
             # created_at is an auto_now_add field so can't be copied.
             # updated_at is an auto_now field so can't be copied.
-            workbasket=user_assignment.task.workbasket,
-            user=user_assignment.user,
-            assigned_by=user_assignment.assigned_by,
-            assignment_type=user_assignment.assignment_type,
-            unassigned_at=user_assignment.unassigned_at,
+            workbasket=task_assignment.task.workbasket,
+            user=task_assignment.user,
+            assigned_by=task_assignment.user,
+            assignment_type=task_assignment.assignment_type,
+            unassigned_at=task_assignment.unassigned_at,
         )
 
     comments_qs = Comment.objects.all()
@@ -53,7 +53,7 @@ def forwards_move_assignments_and_comments(apps, schema_editor):
     tasks_qs = Task.objects.all()
 
     tasks_qs.delete()
-    user_assignments_qs.delete()
+    task_assignment_qs.delete()
     comments_qs.delete()
 
 
@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("workbaskets", "0010_workbasketcomment_workbasketassignment"),
-        ("tasks", "0002_comment"),
+        ("tasks", "0003_rename_userassignment_taskassignee"),
     ]
 
     operations = [
