@@ -273,7 +273,7 @@ class WorkBasketAssignUsersForm(forms.Form):
 
 
 class WorkBasketUnassignUsersForm(forms.Form):
-    assignees = forms.ModelMultipleChoiceField(
+    assignments = forms.ModelMultipleChoiceField(
         label="Users",
         help_text="Select users to unassign",
         widget=forms.CheckboxSelectMultiple,
@@ -296,7 +296,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
             )
         )
 
-        self.fields["assignees"].label_from_instance = (
+        self.fields["assignments"].label_from_instance = (
             lambda obj: f"{obj.user.get_full_name()} ({obj.get_assignment_type_display().lower()})"
         )
 
@@ -305,7 +305,7 @@ class WorkBasketUnassignUsersForm(forms.Form):
         self.helper.label_size = Size.SMALL
         self.helper.legend_size = Size.SMALL
         self.helper.layout = Layout(
-            "assignees",
+            "assignments",
             Submit(
                 "submit",
                 "Save",
