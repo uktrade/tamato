@@ -80,28 +80,9 @@ class HomeView(LoginRequiredMixin, FormView):
                 | Q(task__workbasket__status=WorkflowStatus.ERRORED),
             )
         )
-        assigned_workbaskets = []
-        for assignment in assignments:
-            workbasket = assignment.task.workbasket
-            assignment_type = (
-                "Assigned"
-                if assignment.assignment_type
-                == TaskAssignee.AssignmentType.WORKBASKET_WORKER
-                else "Reviewing"
-            )
-            rule_violations_count = workbasket.tracked_model_check_errors.count()
-            assigned_workbaskets.append(
-                {
-                    "id": workbasket.id,
-                    "description": workbasket.reason,
-                    "rule_violations_count": rule_violations_count,
-                    "assignment_type": assignment_type,
-                },
-            )
 
         context.update(
             {
-                "assigned_workbaskets": assigned_workbaskets,
                 "can_add_workbasket": self.request.user.has_perm(
                     "workbaskets.add_workbasket",
                 ),

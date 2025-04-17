@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("tasks", "0022_tasktemplate_automation_class_name_automation"),
-        ("workbaskets", "0009_workbasket_missing_measures_check_task_id"),
+        ("workbaskets", "0012_alter_workbasketassignment_workbasket"),
     ]
 
     operations = [

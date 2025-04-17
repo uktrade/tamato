@@ -27,6 +27,17 @@ class RadioNestedWidget(RadioSelect):
         self.nested_forms = forms
 
 
+class CommodityVolumeRadioSelect(RadioSelect):
+    option_template_name = "common/widgets/radio_conditional_commodities.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+
+        context.update({"optgroups": self.choices})
+
+        return context
+
+
 class FormSetFieldWidget(widgets.Widget):
     template_name = "common/widgets/formset_field.html"
     input_type = ""
