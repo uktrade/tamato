@@ -4,43 +4,39 @@ import django.db.models.deletion
 from django.db import migrations
 from django.db import models
 
-from tasks.models import ProgressState as TaskProgressState
-from workbaskets.validators import WorkflowStatus
+# def forwards_create_default_task_progress_state_instances(apps, schema_editor):
+#     """Creates default `ProgressState` instances for `TO_DO`, `IN_PROGRESS` and
+#     `DONE`."""
+#     ProgressState = apps.get_model("tasks", "ProgressState")
+#     progress_states = [ProgressState(name=state) for state in TaskProgressState.State]
+#     ProgressState.objects.bulk_create(progress_states)
 
 
-def forwards_create_default_task_progress_state_instances(apps, schema_editor):
-    """Creates default `ProgressState` instances for `TO_DO`, `IN_PROGRESS` and
-    `DONE`."""
-    ProgressState = apps.get_model("tasks", "ProgressState")
-    progress_states = [ProgressState(name=state) for state in TaskProgressState.State]
-    ProgressState.objects.bulk_create(progress_states)
+# def forwards_update_existing_tasks_progress_state(apps, schema_editor):
+#     """
+#     Updates `progress_state` on existing `Task` instances that have an
+#     associated workbasket.
 
+#     Tasks with an unpublished workbasket are set to `ProgressState.State.IN_PROGRESS`
+#     and tasks with a published workbasket are set to `ProgressState.State.DONE`.
+#     """
+#     ProgressState = apps.get_model("tasks", "ProgressState")
+#     inprogress_state = ProgressState.objects.get(
+#         name=TaskProgressState.State.IN_PROGRESS,
+#     )
+#     done_state = ProgressState.objects.get(name=TaskProgressState.State.DONE)
+#     Task = apps.get_model("tasks", "Task")
 
-def forwards_update_existing_tasks_progress_state(apps, schema_editor):
-    """
-    Updates `progress_state` on existing `Task` instances that have an
-    associated workbasket.
+#     Task.objects.filter(
+#         models.Q(workbasket__status=WorkflowStatus.EDITING)
+#         | models.Q(workbasket__status=WorkflowStatus.QUEUED)
+#         | models.Q(workbasket__status=WorkflowStatus.ERRORED),
+#     ).update(progress_state=inprogress_state)
 
-    Tasks with an unpublished workbasket are set to `ProgressState.State.IN_PROGRESS`
-    and tasks with a published workbasket are set to `ProgressState.State.DONE`.
-    """
-    ProgressState = apps.get_model("tasks", "ProgressState")
-    inprogress_state = ProgressState.objects.get(
-        name=TaskProgressState.State.IN_PROGRESS,
-    )
-    done_state = ProgressState.objects.get(name=TaskProgressState.State.DONE)
-    Task = apps.get_model("tasks", "Task")
-
-    Task.objects.filter(
-        models.Q(workbasket__status=WorkflowStatus.EDITING)
-        | models.Q(workbasket__status=WorkflowStatus.QUEUED)
-        | models.Q(workbasket__status=WorkflowStatus.ERRORED),
-    ).update(progress_state=inprogress_state)
-
-    Task.objects.filter(
-        models.Q(workbasket__status=WorkflowStatus.PUBLISHED)
-        | models.Q(workbasket__status=WorkflowStatus.ARCHIVED),
-    ).update(progress_state=done_state)
+#     Task.objects.filter(
+#         models.Q(workbasket__status=WorkflowStatus.PUBLISHED)
+#         | models.Q(workbasket__status=WorkflowStatus.ARCHIVED),
+#     ).update(progress_state=done_state)
 
 
 class Migration(migrations.Migration):
@@ -95,10 +91,10 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-        migrations.RunPython(
-            forwards_create_default_task_progress_state_instances,
-            migrations.RunPython.noop,
-        ),
+        # migrations.RunPython(
+        #     # forwards_create_default_task_progress_state_instances,
+        #     migrations.RunPython.noop,
+        # ),
         migrations.AddField(
             model_name="task",
             name="category",
@@ -119,10 +115,10 @@ class Migration(migrations.Migration):
                 to="tasks.progressstate",
             ),
         ),
-        migrations.RunPython(
-            forwards_update_existing_tasks_progress_state,
-            migrations.RunPython.noop,
-        ),
+        # migrations.RunPython(
+        #     # forwards_update_existing_tasks_progress_state,
+        #     migrations.RunPython.noop,
+        # ),
         migrations.AlterField(
             model_name="task",
             name="progress_state",
