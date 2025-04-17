@@ -221,3 +221,24 @@ def test_edit_comment_form_valid(task_workflow):
     )
     assert not form.is_valid()
     assert "Enter your comment" in form.errors["content"]
+
+
+def test_task_update_form():
+    """Tests that `TaskUpdateForm` correctly updates `Task.progress_state`"""
+
+    task_instance = TaskFactory.create(
+        progress_state__name=ProgressState.State.TO_DO,
+    )
+
+    new_progress_state = ProgressStateFactory.create(
+        name=ProgressState.State.IN_PROGRESS,
+    )
+
+    form_data = {
+        "progress_state": new_progress_state.pk,
+    }
+
+    form = forms.TaskUpdateForm(data=form_data, instance=task_instance)
+
+    assert form.is_valid()
+    assert task_instance.progress_state == new_progress_state
