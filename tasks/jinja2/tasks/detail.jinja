@@ -1,0 +1,148 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "tasks/macros/display_details.jinja" import display_status %}
+
+{% set page_title = "Step: " ~ object.title %}
+
+{% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
+{% set assign_user_link = url("workflow:task-ui-assign-user", kwargs={"pk": object.pk}) %}
+{% set unassign_user_link = url("workflow:task-ui-unassign-user", kwargs={"pk": object.pk}) %}
+
+{% block breadcrumb %}
+  {% if ticket_number %}
+    {{ breadcrumbs(request, [
+        {
+          "text": "Ticket " ~ ticket_prefixed_id,
+          "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_number}),
+        },
+        {"text": page_title}
+      ],
+      with_workbasket=False,
+    ) }}
+  {% else %}
+    {{ breadcrumbs(request, [
+        {"text": page_title}
+      ],
+      with_workbasket=False,
+    )}}
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-three-quarters">
+        <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">
+          <span class="govuk-caption-xl">{{ ticket_title }}</span>
+          {{ page_title }}
+        </h1>
+      </div>
+      <div class="govuk-grid-column-one-quarter">
+        {{ govukButton({
+        "text": "Delete step",
+        "href": url("workflow:task-ui-delete", kwargs={"pk": object.pk}),
+        "classes": "govuk-button--warning govuk-!-margin-top-2 float-elements-right"
+        }) }}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if ticket_number %}
+  <a href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk}) }}" class="govuk-link govuk-back-link govuk-!-margin-bottom-8">Back to ticket</a>
+{% endif %}
+<h2 class="govuk-heading-m">Details</h2>
+
+<dl class="govuk-summary-list govuk-!-margin-bottom-8">
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Status
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ display_status(object.progress_state.get_name_display()) }}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Assignee
+    </dt>
+    <dd class="govuk-summary-list__value">
+      <div id="assigned-user-content">
+        {{ current_assignee.name if current_assignee else "None" }}
+      </div>
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <ul class="govuk-summary-list__actions-list">
+        {% if not current_assignee %}
+        <li class="govuk-summary-list__actions-list-item">
+          <a
+            id="assign-user"
+            class="govuk-link"
+            href="{{ assign_user_link }}"
+          >Assign<span class="govuk-visually-hidden"> user</span></a>
+        </li>
+        {% elif current_assignee %}
+        <li class="govuk-summary-list__actions-list-item">
+          <a
+            id="unassign-user"
+            class="govuk-link"
+            href="{{ unassign_user_link }}"
+          >Unassign<span class="govuk-visually-hidden"> user</span></a>
+        </li>
+        {% endif %}
+      </ul>
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Created date
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ object.created_at|format_date }}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <!-- Empty for column alignment -->
+    </dd>
+  </div>
+
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      Description
+    </dt>
+    <dd class="govuk-summary-list__value">
+      {{ object.description }}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> description</span></a>
+    </dd>
+  </div>
+</dl>
+
+{% if object.has_automation %}
+  <h2 class="govuk-heading-m">Action</h2>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      {{ object.automation.rendered_state() | safe }}
+    </div>
+  </div>
+{% endif %}
+
+<script nonce="{{ request.csp_nonce }}">
+  const CSRF_TOKEN = "{{ csrf_token }}";
+
+  const currentAssignee = {{ current_assignee|safe }};
+  const assignableUsers = {{ assignable_users|safe }};
+
+  const assignUserUrl = "{{ assign_user_link }}";
+  const unassignUserUrl = "{{ unassign_user_link }}";
+</script>
+{% endblock %}

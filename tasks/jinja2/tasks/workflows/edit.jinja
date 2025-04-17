@@ -1,0 +1,23 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+
+{% set object_id = object.prefixed_id if object.prefixed_id else object.id %}
+{% set object_name = verbose_name|capitalize ~ " " ~  object_id %}
+
+{% set page_title = "Edit " ~ object_name %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": object_name, "href": object.get_url("detail")},
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  )}}
+{% endblock %}
+
+{% block form %}
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}
