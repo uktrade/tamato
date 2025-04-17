@@ -3,6 +3,7 @@ from django.urls import path
 from rest_framework import routers
 
 from workbaskets.views import api as api_views
+from workbaskets.views import task_automation as automation_views
 from workbaskets.views import ui as ui_views
 
 app_name = "workbaskets"
@@ -248,7 +249,16 @@ ui_patterns = [
     ),
 ]
 
+automation_ui_patterns = [
+    path(
+        "<pk>/create/",
+        automation_views.AutomationCreateWorkBasketView.as_view(),
+        name="workbasket-automation-ui-create",
+    ),
+]
+
 urlpatterns = [
     path("workbaskets/", include(ui_patterns)),
+    path("workbasket-automation/", include(automation_ui_patterns)),
     path("api/", include(api_router.urls)),
 ]

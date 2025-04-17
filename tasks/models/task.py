@@ -17,7 +17,6 @@ from django_fsm import transition
 from common.models.mixins import TimestampedMixin
 from common.models.mixins import WithSignalManagerMixin
 from common.models.mixins import WithSignalQuerysetMixin
-from workbaskets.models import WorkBasket
 
 User = get_user_model()
 
@@ -162,7 +161,7 @@ class Task(TaskBase):
         related_name="subtasks",
     )
     workbasket = models.ForeignKey(
-        WorkBasket,
+        "workbaskets.WorkBasket",
         blank=True,
         null=True,
         on_delete=models.PROTECT,
@@ -180,6 +179,12 @@ class Task(TaskBase):
     class Meta(TaskBase.Meta):
         abstract = False
         ordering = ["id"]
+
+    @property
+    def has_automation(self) -> bool:
+        """Return True if this task has an associated Automation instance, False
+        otherwise."""
+        return hasattr(self, "automation")
 
     @property
     @admin.display(boolean=True)
@@ -221,6 +226,18 @@ class Task(TaskBase):
     )
     def to_do(self):
         """Mark a task as to do."""
+
+    def get_workflow(self):
+        """Return this task's TaskWorkflow instance if it has one, or otherwise
+        returns None."""
+        if self.is_summary_task:
+            return self.taskworkflow
+        elif hasattr(self, "taskitem"):
+            return self.taskitem.workflow
+        return None
+
+    def __repr__(self):
+        return f"{self.__class__}(pk={self.pk}, name={self.title})"
 
     def __str__(self):
         return self.title

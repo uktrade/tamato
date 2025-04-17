@@ -319,6 +319,23 @@ def test_prefixed_id(task_workflow):
     assert task_workflow.prefixed_id == expected_prefixed_id
 
 
+def test_get_current_assignee(assigned_task_workflow):
+    assert (
+        assigned_task_workflow.summary_task.get_current_assignee()
+        == assigned_task_workflow.summary_task.assignees.assigned().get()
+    )
+
+
+def test_get_workflow(task_workflow_single_task_item, task):
+    workflow_task = task_workflow_single_task_item.get_tasks().get()
+    assert workflow_task.get_workflow() == task_workflow_single_task_item
+    assert (
+        task_workflow_single_task_item.summary_task.get_workflow()
+        == task_workflow_single_task_item
+    )
+    assert task.get_workflow() == None
+
+
 def test_with_latest_assignees_task_queryset(
     not_assigned_task_no_previous_assignee,
     assigned_task_no_previous_assignee,

@@ -66,5 +66,15 @@
         <a class="govuk-link" href="{{ object.get_url(action='edit') }}">Change<span class="govuk-visually-hidden"> description</span></a>
       </dd>
     </div>
+
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Automation</dt>
+      <dd class="govuk-summary-list__value">{{ object.get_automation_class_name_display() or "None" }}</dd>
+      <dd class="govuk-summary-list__actions">
+        <a
+          class="govuk-link"
+          href="{{ object.get_url(action='edit') }}"
+        >Change<span class="govuk-visually-hidden"> task automation</span></a>
+      </dd>
   </dl>
 {% endblock %}

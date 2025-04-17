@@ -1,5 +1,7 @@
 """Models used by all apps in the project."""
 
+from tasks.models.automation import Automation
+from tasks.models.automation import StateChoices
 from tasks.models.logs import TaskLog
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
@@ -16,6 +18,9 @@ from tasks.models.workflow import TaskWorkflow
 from tasks.models.workflow import TaskWorkflowTemplate
 
 __all__ = [
+    # tasks.models.automation
+    "Automation",
+    "StateChoices",
     # tasks.models.logs
     "TaskLog",
     # tasks.models.queue

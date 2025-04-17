@@ -122,12 +122,12 @@ workflow_ui_patterns = [
         name="task-workflow-ui-confirm-delete",
     ),
     path(
-        "<int:task_workflow_pk>/task/create/",
+        "<int:task_workflow_pk>/step/create/",
         views.TaskWorkflowTaskCreateView.as_view(),
         name="task-workflow-task-ui-create",
     ),
     path(
-        "task/<int:pk>/confirm-create/",
+        "step/<int:pk>/confirm-create/",
         views.TaskWorkflowTaskConfirmCreateView.as_view(),
         name="task-workflow-task-ui-confirm-create",
     ),
@@ -193,45 +193,45 @@ workflow_template_ui_patterns = [
         name="task-workflow-template-ui-confirm-delete",
     ),
     path(
-        "task-templates/<int:pk>/",
+        "step-templates/<int:pk>/",
         views.TaskTemplateDetailView.as_view(),
         name="task-template-ui-detail",
     ),
     path(
-        "<int:workflow_template_pk>/task-templates/create/",
+        "<int:workflow_template_pk>/step-templates/create/",
         views.TaskTemplateCreateView.as_view(),
         name="task-template-ui-create",
     ),
     path(
-        "task-templates/confirm-create/<int:pk>/",
+        "step-templates/confirm-create/<int:pk>/",
         views.TaskTemplateConfirmCreateView.as_view(),
         name="task-template-ui-confirm-create",
     ),
     path(
-        "task-templates/<int:pk>/update/",
+        "step-templates/<int:pk>/update/",
         views.TaskTemplateUpdateView.as_view(),
         name="task-template-ui-update",
     ),
     path(
-        "task-templates/confirm-update/<int:pk>/",
+        "step-templates/confirm-update/<int:pk>/",
         views.TaskTemplateConfirmUpdateView.as_view(),
         name="task-template-ui-confirm-update",
     ),
     path(
-        "<int:workflow_template_pk>/task-templates/<int:pk>/delete/",
+        "<int:workflow_template_pk>/step-templates/<int:pk>/delete/",
         views.TaskTemplateDeleteView.as_view(),
         name="task-template-ui-delete",
     ),
     path(
-        "<int:workflow_template_pk>/task-templates/<int:pk>/confirm-delete/",
+        "<int:workflow_template_pk>/step-templates/<int:pk>/confirm-delete/",
         views.TaskTemplateConfirmDeleteView.as_view(),
         name="task-template-ui-confirm-delete",
     ),
 ]
 
 urlpatterns = [
-    path("tasks/", include(task_ui_patterns)),
-    path("workflows/", include(workflow_ui_patterns)),
-    path("tasks-and-workflows/", include(task_and_workflow_ui_patterns)),
-    path("workflow-templates/", include(workflow_template_ui_patterns)),
+    path("steps/", include(task_ui_patterns)),
+    path("tickets/", include(workflow_ui_patterns)),
+    path("steps-and-tickets/", include(task_and_workflow_ui_patterns)),
+    path("ticket-templates/", include(workflow_template_ui_patterns)),
 ]
