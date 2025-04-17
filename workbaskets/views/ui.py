@@ -74,13 +74,12 @@ from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from regulations.models import Regulation
-from tasks.models import Comment
-from tasks.models import Task
-from tasks.models import TaskAssignee
 from workbaskets import forms
 from workbaskets.models import DataRow
 from workbaskets.models import DataUpload
 from workbaskets.models import WorkBasket
+from workbaskets.models import WorkBasketAssignment
+from workbaskets.models import WorkBasketComment
 from workbaskets.session_store import SessionStore
 from workbaskets.tasks import call_check_workbasket_sync
 from workbaskets.tasks import call_end_measures
@@ -115,14 +114,14 @@ class WorkBasketAssignmentFilter(FilterSet):
 
     def assignment_filter(self, queryset, name, value):
         active_workers = (
-            TaskAssignee.objects.workbasket_workers()
+            WorkBasketAssignment.objects.workbasket_workers()
             .assigned()
-            .values_list("task__workbasket_id")
+            .values_list("workbasket_id")
         )
         active_reviewers = (
-            TaskAssignee.objects.workbasket_reviewers()
+            WorkBasketAssignment.objects.workbasket_reviewers()
             .assigned()
-            .values_list("task__workbasket_id")
+            .values_list("workbasket_id")
         )
         if value == "Full":
             return queryset.filter(
@@ -401,11 +400,10 @@ class CurrentWorkBasket(SortingMixin, FormView):
 
     @cached_property
     def comments(self):
-        comments = Comment.objects.filter(task__workbasket=self.workbasket)
         ordering = self.get_comments_ordering()[0]
-        if ordering:
-            comments = comments.order_by(ordering)
-        return comments
+        return WorkBasketComment.objects.filter(workbasket=self.workbasket).order_by(
+            ordering,
+        )
 
     @cached_property
     def paginator(self):
@@ -463,8 +461,12 @@ class CurrentWorkBasket(SortingMixin, FormView):
             {"pk": user.pk, "name": user.get_full_name()} for user in users
         ]
 
-        can_add_comment = self.request.user.has_perm("tasks.add_comment")
-        can_view_comment = self.request.user.has_perm("tasks.view_comment")
+        can_add_comment = self.request.user.has_perm(
+            "workbaskets.add_workbasketcomment",
+        )
+        can_view_comment = self.request.user.has_perm(
+            "workbaskets.view_workbasketcomment",
+        )
 
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         page_links = build_pagination_list(
@@ -1189,10 +1191,7 @@ class WorkBasketDelete(PermissionRequiredMixin, DeleteView):
         return kwargs
 
     def form_valid(self, form):
-        if (
-            PackagedWorkBasket.objects.filter(workbasket=self.object).exists()
-            or self.object.tasks.exists()
-        ):
+        if PackagedWorkBasket.objects.filter(workbasket=self.object).exists():
             self.object.archive()
             self.object.save()
         else:
@@ -1703,7 +1702,7 @@ class NoActiveWorkBasket(TemplateView):
 
 
 class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
-    permission_required = "tasks.add_taskassignee"
+    permission_required = "workbaskets.add_workbasketassignment"
     template_name = "workbaskets/assign_users.jinja"
     form_class = forms.WorkBasketAssignUsersForm
 
@@ -1728,15 +1727,7 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
 
     @atomic
     def form_valid(self, form):
-        task, _ = Task.objects.get_or_create(
-            workbasket=self.workbasket,
-            defaults={
-                "title": self.workbasket.title,
-                "description": self.workbasket.reason,
-                "creator": self.request.user,
-            },
-        )
-        form.assign_users(task=task)
+        form.assign_users()
         return redirect(self.get_success_url())
 
     def get_success_url(self):
@@ -1744,7 +1735,7 @@ class WorkBasketAssignUsersView(PermissionRequiredMixin, FormView):
 
 
 class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
-    permission_required = "tasks.change_taskassignee"
+    permission_required = "workbaskets.change_workbasketassignment"
     template_name = "workbaskets/assign_users.jinja"
     form_class = forms.WorkBasketUnassignUsersForm
 
@@ -1782,7 +1773,7 @@ class WorkBasketCommentListView(
 ):
     permission_required = [
         "workbaskets.view_workbasket",
-        "tasks.view_comment",
+        "workbaskets.view_workbasketcomment",
     ]
     template_name = "workbaskets/comments/list.jinja"
     paginate_by = 20
@@ -1792,7 +1783,7 @@ class WorkBasketCommentListView(
         return WorkBasket.objects.get(pk=self.kwargs["pk"])
 
     def get_queryset(self):
-        return Comment.objects.filter(task__workbasket=self.workbasket).order_by(
+        return WorkBasketComment.objects.filter(workbasket=self.workbasket).order_by(
             "-created_at",
         )
 
@@ -1803,13 +1794,13 @@ class WorkBasketCommentListView(
 
 
 class WorkBasketCommentUpdateDeleteMixin:
-    model = Comment
+    model = WorkBasketComment
     success_url = reverse_lazy("workbaskets:current-workbasket")
 
-    def editable(self, comment: Comment) -> bool:
+    def editable(self, comment: WorkBasketComment) -> bool:
         return (
             comment.author == self.request.user
-            and comment.task.workbasket.status == WorkflowStatus.EDITING
+            and comment.workbasket.status == WorkflowStatus.EDITING
         )
 
     def get_object(self, queryset=None):
@@ -1827,7 +1818,7 @@ class WorkBasketCommentUpdate(
 ):
     form_class = forms.WorkBasketCommentUpdateForm
     template_name = "workbaskets/comments/edit.jinja"
-    permission_required = ["tasks.change_comment"]
+    permission_required = ["workbaskets.change_workbasketcomment"]
 
     def get_initial(self):
         initial = super().get_initial()
@@ -1843,7 +1834,7 @@ class WorkBasketCommentDelete(
 ):
     form_class = forms.WorkBasketCommentDeleteForm
     template_name = "workbaskets/comments/delete.jinja"
-    permission_required = ["tasks.delete_comment"]
+    permission_required = ["workbaskets.delete_workbasketcomment"]
 
 
 class RuleCheckQueueView(
