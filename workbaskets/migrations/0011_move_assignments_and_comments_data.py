@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("workbaskets", "0010_workbasketcomment_workbasketassignment"),
-        ("tasks", "0003_rename_userassignment_taskassignee"),
+        ("tasks", "0002_comment"),
     ]
 
     operations = [
