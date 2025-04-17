@@ -54,7 +54,7 @@
       <dl class="govuk-summary-list govuk-summary-list--no-border">
         {% if verbose_name == "ticket" %}
           {{ display_summary_row_stacked("Workbasket", display_workbasket(object.summary_task.workbasket)) }}
-          {{ display_summary_row_stacked("Status", display_status(object.summary_task.progress_state.__str__())) }}
+          {{ display_summary_row_stacked("Status", display_status(object.summary_task.get_progress_state_display())) }}
           {{ display_summary_row_stacked("Assignee", display_assignees(object.summary_task.assignees.assigned())) }}
           {{ display_summary_row_stacked("Work type", object.creator_template.title) }}
           {{ display_summary_row_stacked("Created date", object.summary_task.created_at|format_date) }}
