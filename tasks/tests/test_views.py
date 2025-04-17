@@ -24,6 +24,7 @@ from tasks.models import TaskLog
 from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
+from tasks.models.task import AssignmentType
 from tasks.tests.factories import TaskItemFactory
 from tasks.tests.factories import TaskItemTemplateFactory
 from tasks.tests.factories import TaskWorkflowFactory
@@ -1141,7 +1142,7 @@ def test_task_detail_view_displays_correctly(
     )
 
     assignee = TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
+        assignment_type=AssignmentType.GENERAL,
         task=task,
         user=user,
     )

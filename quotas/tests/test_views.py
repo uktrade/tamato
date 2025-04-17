@@ -1,3 +1,5 @@
+import datetime
+from decimal import Decimal
 from typing import OrderedDict
 from unittest import mock
 
@@ -16,6 +18,7 @@ from common.tests.util import assert_read_only_model_view_returns_list
 from common.tests.util import get_class_based_view_urls_matching_url
 from common.tests.util import view_is_subclass
 from common.tests.util import view_urlpattern_ids
+from common.util import TaricDateRange
 from common.validators import UpdateType
 from common.views import TamatoListView
 from common.views import TrackedModelDetailMixin
@@ -23,6 +26,7 @@ from geo_areas.validators import AreaCode
 from quotas import models
 from quotas import validators
 from quotas.forms.base import QuotaSuspensionType
+from quotas.forms.wizards import QuotaDefinitionBulkCreateDefinitionInformation
 from quotas.views import DuplicateDefinitionsWizard
 from quotas.views import QuotaList
 from quotas.views.wizards import QuotaDefinitionBulkCreatorUpdateDefinitionData
@@ -2872,6 +2876,67 @@ def test_bulk_create_creates_definition(
             definition=staged_data,
         )
         assert len(models.QuotaDefinition.objects.all()) == 1
+
+
+def test_bulk_create_creates_definition_with_changing_volumes(
+    session_request_with_workbasket,
+    date_ranges,
+):
+    quota_order_number = factories.QuotaOrderNumberFactory.create()
+    measurement_unit = factories.MeasurementUnitFactory.create()
+    factories.MeasurementUnitQualifierFactory.create()
+    storage = QuotaDefinitionBulkCreatorSessionStorage(
+        request=session_request_with_workbasket,
+        prefix="",
+    )
+    wizard = QuotaDefinitionBulkCreatorWizard(
+        request=session_request_with_workbasket,
+        storage=storage,
+    )
+    wizard.form_list = OrderedDict(wizard.form_list)
+    form_data = {
+        "maximum_precision": 3,
+        "valid_between": TaricDateRange(
+            datetime.date(2025, 1, 1),
+            datetime.date(2025, 12, 31),
+        ),
+        "start_date": str(date_ranges.normal.lower),
+        "end_date": str(date_ranges.normal.upper),
+        "volume": 100.00,
+        "initial_volume": 100.00,
+        "volume_change_type": "increase_percentage",
+        "volume_change_value": "4.5",
+        "increase_percentage": 4.5,
+        "measurement_unit": measurement_unit,
+        "measurement_unit_code": measurement_unit.code,
+        "quota_critical_threshold": 90,
+        "quota_critical": "False",
+        "instance_count": 3,
+        "frequency": 1,
+        "description": "This is a description",
+    }
+    # use the form method to duplicate staged_definition data with
+    # calculated volumes for subsequent definitions
+    form = QuotaDefinitionBulkCreateDefinitionInformation(
+        request=session_request_with_workbasket,
+        prefix="definition_period_info",
+    )
+
+    form.save_definition_data_to_session(form_data)
+    session_data = session_request_with_workbasket.session["staged_definition_data"]
+
+    assert len(models.QuotaDefinition.objects.all()) == 0
+    with override_current_transaction(Transaction.objects.last()):
+        for definition in session_data:
+            wizard.create_definition(
+                order_number=quota_order_number.pk,
+                definition=definition,
+            )
+        definitions_created = models.QuotaDefinition.objects.all()
+        assert len(definitions_created) == 3
+        assert definitions_created[0].volume == form_data["volume"]
+        assert definitions_created[1].volume == Decimal("104.500")
+        assert definitions_created[2].volume == Decimal("109.200")
 
 
 def test_bulk_create_done(

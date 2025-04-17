@@ -52,6 +52,7 @@ from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
+from tasks.models.task import AssignmentType
 from tasks.signals import set_current_instigator
 
 User = get_user_model()
@@ -599,14 +600,14 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
         TaskAssignee.objects.create(
             task=self.object.summary_task,
             user=assignee,
-            assignment_type=TaskAssignee.AssignmentType.GENERAL,
+            assignment_type=AssignmentType.GENERAL,
         )
 
         for task in self.object.get_tasks():
             TaskAssignee.objects.create(
                 task=task,
                 user=assignee,
-                assignment_type=TaskAssignee.AssignmentType.GENERAL,
+                assignment_type=AssignmentType.GENERAL,
             )
 
         return

@@ -1,8 +1,9 @@
 import pytest
 
 from common.tests import factories
-from tasks.models import TaskAssignee
 from workbaskets import forms
+from workbaskets.models import AssignmentType
+from workbaskets.models import WorkBasketAssignment
 from workbaskets.validators import tops_jira_number_validator
 
 pytestmark = pytest.mark.django_db
@@ -129,7 +130,7 @@ def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbas
     users = factories.UserFactory.create_batch(2, is_superuser=True)
     data = {
         "users": users,
-        "assignment_type": TaskAssignee.AssignmentType.WORKBASKET_WORKER,
+        "assignment_type": AssignmentType.WORKBASKET_WORKER,
     }
 
     form = forms.WorkBasketAssignUsersForm(
@@ -139,10 +140,13 @@ def test_workbasket_assign_users_form_assigns_users(rf, valid_user, user_workbas
     )
     assert form.is_valid()
 
-    task = factories.TaskFactory.create(workbasket=user_workbasket)
-    form.assign_users(task=task)
+    form.assign_users()
     for user in users:
-        assert TaskAssignee.objects.get(user=user, task=task)
+        assert WorkBasketAssignment.objects.get(
+            user=user,
+            workbasket=user_workbasket,
+            assigned_by=valid_user,
+        )
 
 
 def test_workbasket_assign_users_form_required_fields(rf, valid_user, user_workbasket):
@@ -166,13 +170,13 @@ def test_workbasket_unassign_users_form_unassigns_users(
 ):
     request = rf.request()
     request.user = valid_user
-    assignees = factories.TaskAssigneeFactory.create_batch(
+    assignments = factories.WorkBasketAssignmentFactory.create_batch(
         2,
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
-        task__workbasket=user_workbasket,
+        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+        workbasket=user_workbasket,
     )
     data = {
-        "assignees": assignees,
+        "assignments": assignments,
     }
 
     form = forms.WorkBasketUnassignUsersForm(
@@ -183,9 +187,9 @@ def test_workbasket_unassign_users_form_unassigns_users(
     assert form.is_valid()
 
     form.unassign_users()
-    for assignee in assignees:
-        assignee.refresh_from_db()
-        assert not assignee.is_assigned
+    for assignment in assignments:
+        assignment.refresh_from_db()
+        assert not assignment.is_assigned
 
 
 def test_workbasket_unassign_users_form_required_fields(
@@ -202,7 +206,7 @@ def test_workbasket_unassign_users_form_required_fields(
         data={},
     )
     assert not form.is_valid()
-    assert f"Select one or more users to unassign" in form.errors["assignees"]
+    assert f"Select one or more users to unassign" in form.errors["assignments"]
 
 
 def test_workbasket_comment_create_form(assigned_workbasket):
@@ -216,7 +220,7 @@ def test_workbasket_comment_create_form(assigned_workbasket):
     user = assigned_workbasket.author
     comment = form.save(user=user, workbasket=assigned_workbasket)
     assert comment.author == user
-    assert comment.task == assigned_workbasket.tasks.get()
+    assert comment.workbasket == assigned_workbasket
     assert expected_content in comment.content
 
 
@@ -261,7 +265,7 @@ def test_workbasket_comment_update_form_cleans_content(
 ):
     """Tests that `WorkBasketCommentUpdateForm` converts Markdown to sanitised
     HTML."""
-    comment = factories.CommentFactory.create()
+    comment = factories.WorkBasketCommentFactory.create()
     data = {"content": markdown}
     form = forms.WorkBasketCommentCreateForm(instance=comment, data=data)
     assert form.is_valid()
@@ -270,7 +274,7 @@ def test_workbasket_comment_update_form_cleans_content(
 
 def test_workbasket_comment_update_form():
     """Tests that `WorkBasketCommentUpdateForm` updates a comment's content."""
-    comment = factories.CommentFactory.create()
+    comment = factories.WorkBasketCommentFactory.create()
     content = "Edited comment."
     data = {"content": content}
     form = forms.WorkBasketCommentUpdateForm(instance=comment, data=data)

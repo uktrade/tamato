@@ -49,20 +49,6 @@ def task_assignee():
 
 
 @pytest.fixture()
-def workbasket_worker_assignee():
-    return TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_WORKER,
-    )
-
-
-@pytest.fixture()
-def workbasket_reviewer_assignee():
-    return TaskAssigneeFactory.create(
-        assignment_type=TaskAssignee.AssignmentType.WORKBASKET_REVIEWER,
-    )
-
-
-@pytest.fixture()
 def task_workflow_template() -> TaskWorkflowTemplate:
     """Return an empty TaskWorkflowTemplate instance (containing no items)."""
     return factories.TaskWorkflowTemplateFactory.create()

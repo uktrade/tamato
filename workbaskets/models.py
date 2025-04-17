@@ -5,6 +5,7 @@ import importlib
 import logging
 from abc import ABCMeta
 from abc import abstractmethod
+from datetime import datetime
 from os import urandom
 from typing import Optional
 from typing import Tuple
@@ -21,6 +22,7 @@ from django.db.models import QuerySet
 from django.db.models import Subquery
 from django.db.transaction import atomic
 from django.urls import reverse
+from django.utils.timezone import make_aware
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -772,12 +774,10 @@ class WorkBasket(TimestampedMixin):
 
     @property
     def worker_assignments(self):
-        """Returns a queryset of associated `TaskAssignee` instances filtered to
-        match `AssignmentType.WORKBASKET_WORKER`."""
-        from tasks.models import TaskAssignee
-
+        """Returns a queryset of associated `WorkBasketAssignment` instances
+        filtered to match `AssignmentType.WORKBASKET_WORKER`."""
         return (
-            TaskAssignee.objects.filter(task__workbasket=self)
+            WorkBasketAssignment.objects.filter(workbasket=self)
             .workbasket_workers()
             .assigned()
         )
@@ -786,17 +786,14 @@ class WorkBasket(TimestampedMixin):
     def reviewer_assignments(self):
         """Returns a queryset of associated `TaskAssignee` instances filtered to
         match `AssignmentType.WORKBASKET_REVIEWER`."""
-        from tasks.models import TaskAssignee
-
         return (
-            TaskAssignee.objects.filter(task__workbasket=self)
+            WorkBasketAssignment.objects.filter(workbasket=self)
             .workbasket_reviewers()
             .assigned()
         )
 
     @property
-    def user_assignments(self):
-        """Returns a queryset of associated `TaskAssignee` instances."""
+    def workbasket_assignments(self):
         assignments = self.worker_assignments | self.reviewer_assignments
         return assignments
 
@@ -847,6 +844,100 @@ class DataRow(ValidityMixin, models.Model):
         max_length=255,
         null=True,
         blank=True,
+    )
+
+
+class WorkBasketAssignmentQueryset(models.QuerySet):
+    def assigned(self):
+        return self.exclude(unassigned_at__isnull=False)
+
+    def unassigned(self):
+        return self.exclude(unassigned_at__isnull=True)
+
+    def workbasket_workers(self):
+        return self.filter(
+            assignment_type=AssignmentType.WORKBASKET_WORKER,
+        )
+
+    def workbasket_reviewers(self):
+        return self.filter(
+            assignment_type=AssignmentType.WORKBASKET_REVIEWER,
+        )
+
+
+class AssignmentType(models.TextChoices):
+    """WorkBasketAssignment instances are always one of these choice types."""
+
+    WORKBASKET_WORKER = "WORKBASKET_WORKER", "Workbasket worker"
+    WORKBASKET_REVIEWER = "WORKBASKET_REVIEWER", "Workbasket reviewer"
+
+
+class WorkBasketAssignment(TimestampedMixin):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="assigned_to_workbaskets",
+    )
+    workbasket = models.ForeignKey(
+        WorkBasket,
+        on_delete=models.CASCADE,
+        # related_to catered for by WorkBasket.workbasket_assignments property.
+    )
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="workbasket_assigned_by",
+    )
+    assignment_type = models.CharField(
+        choices=AssignmentType.choices,
+        max_length=50,
+    )
+    unassigned_at = models.DateTimeField(
+        auto_now=False,
+        blank=True,
+        null=True,
+    )
+
+    objects = WorkBasketAssignmentQueryset.as_manager()
+
+    def __str__(self):
+        return (
+            f"User: {self.user} ({self.assignment_type}), "
+            f"WorkBasket ID: {self.workbasket.id}"
+        )
+
+    @property
+    def is_assigned(self):
+        return True if not self.unassigned_at else False
+
+    @classmethod
+    def unassign_user(cls, user, workbasket):
+        try:
+            assignment = cls.objects.get(user=user, workbasket=workbasket)
+            if assignment.unassigned_at:
+                return False
+            assignment.unassigned_at = make_aware(datetime.now())
+            assignment.save(update_fields=["unassigned_at"])
+            return True
+        except cls.DoesNotExist:
+            return False
+
+
+class WorkBasketComment(TimestampedMixin):
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="authored_workbasket_comments",
+    )
+    content = models.TextField(
+        max_length=1000 * 5,  # Max words * average character word length.
+    )
+    workbasket = models.ForeignKey(
+        WorkBasket,
+        on_delete=models.CASCADE,
+        related_name="workbasket_comments",
     )
 
 
