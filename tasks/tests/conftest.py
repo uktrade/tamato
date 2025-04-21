@@ -1,7 +1,6 @@
 import pytest
 
 from common.tests.factories import CategoryFactory
-from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
@@ -24,8 +23,7 @@ def task():
 
 @pytest.fixture()
 def done_task():
-    done_state = ProgressStateFactory.create(name=ProgressState.State.DONE)
-    return TaskFactory.create(progress_state=done_state)
+    return TaskFactory.create(progress_state=ProgressState.DONE)
 
 
 @pytest.fixture()
@@ -36,11 +34,6 @@ def subtask():
 @pytest.fixture()
 def category():
     return CategoryFactory.create()
-
-
-@pytest.fixture()
-def progress_state():
-    return ProgressStateFactory.create()
 
 
 @pytest.fixture()

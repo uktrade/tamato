@@ -7,7 +7,6 @@ from django.urls import reverse
 
 import settings
 from common.tests.factories import CommentFactory
-from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
@@ -68,12 +67,11 @@ def test_task_unassign_user_view(valid_user_client, task_assignee):
 def test_task_update_view_update_progress_state(valid_user_client):
     """Tests that `TaskUpdateView` updates `Task.progress_state` and that a
     related `TaskLog` entry is also created."""
-    instance = TaskFactory.create(progress_state__name=ProgressState.State.TO_DO)
-    new_progress_state = ProgressStateFactory.create(
-        name=ProgressState.State.IN_PROGRESS,
-    )
+    instance = TaskFactory.create(progress_state=ProgressState.TO_DO)
+    new_progress_state = ProgressState.IN_PROGRESS
+
     form_data = {
-        "progress_state": new_progress_state.pk,
+        "progress_state": new_progress_state,
         "title": instance.title,
         "description": instance.description,
     }
@@ -111,7 +109,7 @@ def test_confirm_create_template_shows_task_or_subtask(
     creation."""
 
     parent_task_instance = TaskFactory.create(
-        progress_state__name=ProgressState.State.TO_DO,
+        progress_state=ProgressState.TO_DO,
     )
 
     url = reverse(
@@ -135,10 +133,9 @@ def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
     a subtask as a parent."""
 
     subtask_parent = SubTaskFactory.create()
-    progress_state = ProgressStateFactory.create()
 
     subtask_form_data = {
-        "progress_state": progress_state.pk,
+        "progress_state": ProgressState.TO_DO,
         "title": "subtask test title",
         "description": "subtask test description",
     }
@@ -178,7 +175,7 @@ def test_delete_subtask_missing_user_permissions(
     necessary permissions."""
     client_type = request.getfixturevalue(client_type)
     subtask_instance = SubTaskFactory.create(
-        progress_state__name=ProgressState.State.TO_DO,
+        progress_state=ProgressState.TO_DO,
     )
 
     url = reverse(
@@ -712,15 +709,13 @@ def test_workflow_update_view_reassigns_tasks(
     TaskItemFactory.create_batch(
         2,
         workflow=assigned_task_workflow,
-        task__progress_state=ProgressStateFactory.create(
-            name=ProgressState.State.TO_DO,
-        ),
+        task__progress_state=ProgressState.TO_DO,
     )
 
     done_task = TaskItemFactory.create(
         workflow=assigned_task_workflow,
-        task__progress_state=ProgressStateFactory.create(name=ProgressState.State.DONE),
-    ).task
+        task__progress_state=ProgressState.DONE,
+    )
 
     form_data = {
         "title": "Updated workflow",
@@ -870,8 +865,6 @@ def test_create_workflow_task_view(valid_user_client, task_workflow):
 
     assert task_workflow.get_tasks().count() == 0
 
-    progress_state = ProgressStateFactory.create()
-
     create_url = reverse(
         "workflow:task-workflow-task-ui-create",
         kwargs={"task_workflow_pk": task_workflow.pk},
@@ -880,7 +873,7 @@ def test_create_workflow_task_view(valid_user_client, task_workflow):
     form_data = {
         "title": factory.Faker("sentence"),
         "description": factory.Faker("sentence"),
-        "progress_state": progress_state.pk,
+        "progress_state": ProgressState.TO_DO,
     }
     create_response = valid_user_client.post(create_url, form_data)
 

@@ -3,10 +3,8 @@ from datetime import date
 import pytest
 
 from common.tests.factories import CommentFactory
-from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
 from tasks import forms
-from tasks.models import ProgressState
 from tasks.models import TaskAssignee
 
 pytestmark = pytest.mark.django_db
@@ -80,14 +78,11 @@ def test_task_unassign_user_form_prevents_done_unassignment(done_task):
 
 
 def test_create_subtask_assigns_correct_parent_task(valid_user):
+    # change form to not amend progress state with transitions
     """Tests that SubtaskCreateForm assigns the correct parent on form.save."""
     parent_task_instance = TaskFactory.create()
-    progress_state = ProgressStateFactory.create(
-        name=ProgressState.State.IN_PROGRESS,
-    )
 
     subtask_form_data = {
-        "progress_state": progress_state.pk,
         "title": "subtask test title",
         "description": "subtask test description",
     }
