@@ -80,7 +80,7 @@ class TaskQueryset(WithSignalQuerysetMixin, models.QuerySet):
 
     def incomplete(self):
         """Returns a queryset of tasks excluding those marked as complete."""
-        return self.exclude(progress_state__name=ProgressState.DONE)
+        return self.exclude(progress_state=ProgressState.DONE)
 
     def not_assigned_workflow(self):
         """Returns a queryset of summary Task instances that have never been assigned
