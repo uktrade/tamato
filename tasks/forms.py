@@ -40,7 +40,7 @@ from workbaskets.models import WorkBasket
 User = get_user_model()
 
 
-class TaskBaseForm(ModelForm):
+class TaskCreateForm(ModelForm):
     class Meta:
         model = Task
         fields = [
@@ -95,8 +95,6 @@ class TaskBaseForm(ModelForm):
             ),
         )
 
-
-class TaskCreateForm(TaskBaseForm):
     def save(self, user, commit=True):
         instance = super().save(commit=False)
         instance.creator = user
@@ -105,8 +103,32 @@ class TaskCreateForm(TaskBaseForm):
         return instance
 
 
-class TaskUpdateForm(TaskBaseForm):
-    pass
+class TaskUpdateForm(ModelForm):
+    class Meta:
+        model = Task
+        fields = ["progress_state"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_fields()
+        self.init_layout()
+
+    def init_fields(self):
+        self.fields["progress_state"].label = "Status"
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "progress_state",
+            Submit(
+                "submit",
+                "Save",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
 
 
 class AssignUserForm(Form):
@@ -214,10 +236,9 @@ class UnassignUserForm(Form):
         )
 
 
-class SubTaskCreateForm(TaskBaseForm):
+class SubTaskCreateForm(TaskCreateForm):
     def save(self, parent_task, user, commit=True):
-        instance = super().save(commit=False)
-        instance.creator = user
+        instance = super().save(user=user, commit=False)
         instance.parent_task = parent_task
         if commit:
             instance.save()
