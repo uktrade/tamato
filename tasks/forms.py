@@ -203,7 +203,7 @@ class UnassignUserForm(Form):
         )
 
     def clean(self):
-        if self.task.progress_state.name == ProgressState.DONE:
+        if self.task.progress_state == ProgressState.DONE:
             raise ValidationError(
                 {
                     "assignee": "The selected user cannot be unassigned because the step has a status of Done.",

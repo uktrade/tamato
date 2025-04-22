@@ -1159,4 +1159,4 @@ def test_task_detail_view_displays_correctly(
     assert assignee.user.get_full_name() in table_values
     assert format_date(task.created_at) in table_values
     assert task.description in table_values
-    assert task.progress_state.__str__() in table_values
+    assert task.get_progress_state_display() in table_values
