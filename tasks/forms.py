@@ -46,7 +46,6 @@ class TaskBaseForm(ModelForm):
         fields = [
             "title",
             "description",
-            "progress_state",
             "category",
             "workbasket",
         ]
@@ -57,9 +56,6 @@ class TaskBaseForm(ModelForm):
             },
             "description": {
                 "required": "Enter a description",
-            },
-            "progress_state": {
-                "required": "Select a status",
             },
         }
 
@@ -80,11 +76,7 @@ class TaskBaseForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.init_fields()
         self.init_layout()
-
-    def init_fields(self):
-        self.fields["progress_state"].label = "Status"
 
     def init_layout(self):
         self.helper = FormHelper(self)
@@ -94,7 +86,6 @@ class TaskBaseForm(ModelForm):
             "title",
             "description",
             "category",
-            "progress_state",
             "workbasket",
             Submit(
                 "submit",
