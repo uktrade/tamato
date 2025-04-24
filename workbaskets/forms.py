@@ -19,7 +19,6 @@ from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
 from common.validators import markdown_tags_allowlist
 from workbaskets import models
-from workbaskets import validators
 from workbaskets.models import AssignmentType
 from workbaskets.models import CreateWorkBasketAutomation
 from workbaskets.models import WorkBasketAssignment
@@ -40,7 +39,11 @@ class WorkbasketCreateForm(forms.ModelForm):
             "Your workbasket will be given a unique number that will be different to your TOPS/Jira number. "
         ),
         widget=forms.TextInput,
-        validators=[validators.tops_jira_number_validator],
+        # validators=[validators.tops_jira_number_validator],
+        validators=[
+            AlphanumericValidator,
+            SymbolValidator,
+        ],
         required=True,
         error_messages={"unique": "A workbasket with this title already exists"},
     )
@@ -53,7 +56,7 @@ class WorkbasketCreateForm(forms.ModelForm):
             AlphanumericValidator,
             SymbolValidator,
         ],
-        required=True,
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
