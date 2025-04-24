@@ -15,6 +15,7 @@
 {% set assign_users_link = url("workbaskets:workbasket-ui-assign-users", kwargs={"pk": workbasket.pk}) %}
 {% set unassign_users_link = url("workbaskets:workbasket-ui-unassign-users", kwargs={"pk": workbasket.pk}) %}
 
+
 {% macro display_assigned_users(assigned_users, assignment_type) %}
   {% if not assigned_users and assignment_type == "workers" %}
     No users have been assigned to this workbasket yet.
@@ -46,24 +47,12 @@
 
   <dl class="govuk-summary-list">
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">TOPS/Jira number</dt>
-      <dd class="govuk-summary-list__value">{{ workbasket.title }}</dd>
+      <dt class="govuk-summary-list__key">Ticket</dt>
+      <dd class="govuk-summary-list__value">
+        <a class= "govuk-link" href="#TODO">{{ workbasket.title }}</a>
+        </dd>
       <dd class="govuk-summary-list__actions">
-        <a
-          class="govuk-link"
-          href="{{ change_workbasket_details_link }}"
-        >Change<span class="govuk-visually-hidden"> TOPS/Jira number</span></a>
-      </dd>
-    </div>
-
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Description</dt>
-      <dd class="govuk-summary-list__value">{{ workbasket.reason }}</dd>
-      <dd class="govuk-summary-list__actions">
-        <a
-          class="govuk-link"
-          href="{{ change_workbasket_details_link }}"
-        >Change<span class="govuk-visually-hidden"> description</span></a>
+      <!-- Empty for column alignment -->
       </dd>
     </div>
 

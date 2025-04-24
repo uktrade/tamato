@@ -995,7 +995,7 @@ class CreateWorkBasketAutomation(Automation):
         workflow = self.task.get_workflow()
 
         workbasket = WorkBasket.objects.create(
-            title=f"{workflow.prefixed_id} - {workflow.title}",
+            title=f"{workflow.prefixed_id} : {workflow.title}",
             reason=f"{workflow.summary_task.description}",
             author=user,
         )
