@@ -131,20 +131,17 @@ class TaskUpdateForm(Form):
 
     def update_progress_state(self, task) -> bool:
         new_status = self.cleaned_data["progress_state"]
-        if task.progress_state != new_status:
-            match new_status:
-                case ProgressState.TO_DO:
-                    task.to_do()
-                case ProgressState.IN_PROGRESS:
-                    task.in_progress()
-                case ProgressState.DONE:
-                    task.done()
-        else:
-            raise ValidationError(
-                {
-                    "progress_state": "The selected option is not permitted.",
-                },
-            )
+        if task.progress_state == new_status:
+            return task
+
+        match new_status:
+            case ProgressState.TO_DO:
+                task.to_do()
+            case ProgressState.IN_PROGRESS:
+                task.in_progress()
+            case ProgressState.DONE:
+                task.done()
+
         return task
 
 
