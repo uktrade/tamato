@@ -738,7 +738,7 @@ def test_workflow_update_view_reassigns_tasks(
         ), "Task should be assigned to the new user"
 
     assert (
-        not TaskAssignee.objects.filter(task=done_task, user=valid_user)
+        not TaskAssignee.objects.filter(task=done_task.task_id, user=valid_user)
         .assigned()
         .exists()
     ), "Done task should not be assigned to the new user"
