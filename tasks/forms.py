@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import TextChoices
 from django.forms import CharField
+from django.forms import ChoiceField
 from django.forms import Form
 from django.forms import ModelChoiceField
 from django.forms import ModelForm
@@ -103,18 +104,16 @@ class TaskCreateForm(ModelForm):
         return instance
 
 
-class TaskUpdateForm(ModelForm):
-    class Meta:
-        model = Task
-        fields = ["progress_state"]
+class TaskUpdateForm(Form):
+    progress_state = ChoiceField(
+        label="Status",
+        choices=ProgressState.choices,
+        error_messages={"required": "Select a state"},
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.init_fields()
         self.init_layout()
-
-    def init_fields(self):
-        self.fields["progress_state"].label = "Status"
 
     def init_layout(self):
         self.helper = FormHelper(self)
@@ -129,6 +128,25 @@ class TaskUpdateForm(ModelForm):
                 data_prevent_double_click="true",
             ),
         )
+
+    def update_status(self, task) -> bool:
+        new_status = self.cleaned_data["progress_state"]
+        if task.progress_state != new_status:
+            match new_status:
+                case ProgressState.TO_DO:
+                    task.to_do()
+                case ProgressState.IN_PROGRESS:
+                    task.in_progress()
+                case ProgressState.DONE:
+                    task.done()
+        else:
+            raise ValidationError(
+                {
+                    "progress_state": "The selected option is not permitted.",
+                },
+            )
+
+        return task
 
 
 class AssignUserForm(Form):

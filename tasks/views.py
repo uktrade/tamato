@@ -142,20 +142,30 @@ class TaskConfirmCreateView(PermissionRequiredMixin, DetailView):
         return context
 
 
-class TaskUpdateView(PermissionRequiredMixin, UpdateView):
-    model = Task
+class TaskUpdateView(PermissionRequiredMixin, FormView):
     template_name = "tasks/edit.jinja"
     permission_required = "tasks.change_task"
     form_class = TaskUpdateForm
 
+    @cached_property
+    def task(self):
+        return Task.objects.get(pk=self.kwargs["pk"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["object"] = self.task
+        return context
+
     def form_valid(self, form):
         set_current_instigator(self.request.user)
         with transaction.atomic():
-            self.object = form.save()
+            task = form.update_status(task=self.task)
+            task.save()
+            # won't save??
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse("workflow:task-ui-confirm-update", kwargs={"pk": self.object.pk})
+        return reverse("workflow:task-ui-confirm-update", kwargs={"pk": self.task.pk})
 
 
 class TaskConfirmUpdateView(PermissionRequiredMixin, DetailView):
