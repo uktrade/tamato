@@ -15,7 +15,7 @@ def create_commodities_report(verbose=True):
         id += 1
         if verbose:
             if id % 1000 == 0:
-                print(id)
+                print(f"Processing row {id}")
 
         if commodity.parent_trackedmodel_ptr:
             parent_sid = commodity.parent_trackedmodel_ptr.sid
