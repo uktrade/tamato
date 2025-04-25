@@ -235,5 +235,5 @@ def test_task_update_form():
     form = forms.TaskUpdateForm(data=form_data)
     assert form.is_valid()
 
-    form.update_status(task=task_instance)
+    form.update_progress_state(task=task_instance)
     assert task_instance.progress_state == new_progress_state

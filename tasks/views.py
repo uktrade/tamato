@@ -159,7 +159,7 @@ class TaskUpdateView(PermissionRequiredMixin, FormView):
     def form_valid(self, form):
         set_current_instigator(self.request.user)
         with transaction.atomic():
-            task = form.update_status(task=self.task)
+            task = form.update_progress_state(task=self.task)
             task.save()
         return HttpResponseRedirect(self.get_success_url())
 

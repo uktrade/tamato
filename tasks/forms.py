@@ -129,7 +129,7 @@ class TaskUpdateForm(Form):
             ),
         )
 
-    def update_status(self, task) -> bool:
+    def update_progress_state(self, task) -> bool:
         new_status = self.cleaned_data["progress_state"]
         if task.progress_state != new_status:
             match new_status:
