@@ -220,7 +220,8 @@ def test_edit_comment_form_valid(task_workflow):
 
 
 def test_task_update_form():
-    """Tests that `TaskUpdateForm` correctly updates `Task.progress_state`"""
+    """Tests that `TaskUpdateForm's update_status function` correctly updates
+    `Task.progress_state`"""
 
     task_instance = TaskFactory.create(
         progress_state__name=ProgressState.TO_DO,
@@ -232,7 +233,8 @@ def test_task_update_form():
         "progress_state": new_progress_state,
     }
 
-    form = forms.TaskUpdateForm(data=form_data, instance=task_instance)
-
+    form = forms.TaskUpdateForm(data=form_data)
     assert form.is_valid()
+
+    form.update_status(task=task_instance)
     assert task_instance.progress_state == new_progress_state
