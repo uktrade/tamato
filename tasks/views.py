@@ -147,7 +147,7 @@ class TaskUpdateView(PermissionRequiredMixin, FormView):
     permission_required = "tasks.change_task"
     form_class = TaskUpdateForm
 
-    @cached_property
+    @property
     def task(self):
         return Task.objects.get(pk=self.kwargs["pk"])
 
@@ -161,7 +161,6 @@ class TaskUpdateView(PermissionRequiredMixin, FormView):
         with transaction.atomic():
             task = form.update_status(task=self.task)
             task.save()
-            # won't save??
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):

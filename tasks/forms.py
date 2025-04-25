@@ -145,7 +145,6 @@ class TaskUpdateForm(Form):
                     "progress_state": "The selected option is not permitted.",
                 },
             )
-
         return task
 
 

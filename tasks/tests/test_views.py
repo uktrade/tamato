@@ -72,8 +72,6 @@ def test_task_update_view_update_progress_state(valid_user_client):
 
     form_data = {
         "progress_state": new_progress_state,
-        "title": instance.title,
-        "description": instance.description,
     }
     url = reverse(
         "workflow:task-ui-update",
@@ -82,11 +80,11 @@ def test_task_update_view_update_progress_state(valid_user_client):
     response = valid_user_client.post(url, form_data)
     assert response.status_code == 302
 
-    instance.refresh_from_db()
+    refreshed_instance = Task.objects.get(pk=instance.pk)
 
-    assert instance.progress_state == new_progress_state
+    assert refreshed_instance.progress_state == new_progress_state
     assert TaskLog.objects.get(
-        task=instance,
+        task=refreshed_instance,
         action=TaskLog.AuditActionType.PROGRESS_STATE_UPDATED,
         instigator=response.wsgi_request.user,
     )
