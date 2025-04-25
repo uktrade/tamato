@@ -3,7 +3,6 @@ from django.conf import settings
 from django.db.utils import IntegrityError
 
 from common.tests.factories import CategoryFactory
-from common.tests.factories import ProgressStateFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from common.tests.factories import UserFactory
@@ -21,13 +20,6 @@ def test_task_category_uniqueness():
     CategoryFactory.create(name=name)
     with pytest.raises(IntegrityError):
         CategoryFactory.create(name=name)
-
-
-def test_task_progress_state_uniqueness():
-    name = "Blocked"
-    ProgressState.objects.create(name=name)
-    with pytest.raises(IntegrityError):
-        ProgressState.objects.create(name=name)
 
 
 def test_task_assignee_unassign_user_classmethod(task_assignee):
@@ -82,12 +74,10 @@ def test_task_incomplete_queryset():
     """Tests that `TaskQueryset.incomplete()` excludes `Task` instances that are
     marked as done."""
     task = TaskFactory.create(
-        progress_state=ProgressStateFactory.create(
-            name=ProgressState.State.IN_PROGRESS,
-        ),
+        progress_state=ProgressState.IN_PROGRESS,
     )
     done_task = TaskFactory.create(
-        progress_state=ProgressStateFactory.create(name=ProgressState.State.DONE),
+        progress_state=ProgressState.DONE,
     )
     incomplete_tasks = Task.objects.incomplete()
 
@@ -230,7 +220,7 @@ def test_create_task_log_progress_state_updated():
     task = TaskFactory.create()
     instigator = task.creator
     action = TaskLog.AuditActionType.PROGRESS_STATE_UPDATED
-    progress_state = ProgressStateFactory.create()
+    progress_state = (ProgressState.TO_DO,)
     task_log = TaskLog.objects.create(
         task=task,
         action=action,

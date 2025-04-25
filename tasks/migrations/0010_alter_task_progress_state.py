@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             model_name="task",
             name="progress_state",
             field=models.ForeignKey(
-                default=tasks.models.task.ProgressState.get_default_state_id,
+                default=tasks.models.task.ProgressState.TO_DO,
                 on_delete=django.db.models.deletion.PROTECT,
                 to="tasks.progressstate",
             ),

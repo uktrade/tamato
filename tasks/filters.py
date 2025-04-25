@@ -7,7 +7,7 @@ from django.forms import widgets
 from django.urls import reverse_lazy
 from django_filters import ChoiceFilter
 from django_filters import ModelChoiceFilter
-from django_filters import ModelMultipleChoiceFilter
+from django_filters import MultipleChoiceFilter
 
 from common.filters import TamatoFilter
 from common.models import User
@@ -27,10 +27,10 @@ class TaskFilter(TamatoFilter):
     )
     clear_url = reverse_lazy("workflow:task-ui-list")
 
-    progress_state = ModelMultipleChoiceFilter(
+    progress_state = MultipleChoiceFilter(
         label="Status",
         help_text="Select all that apply",
-        queryset=ProgressState.objects.all(),
+        queryset=ProgressState.choices,
         widget=CheckboxSelectMultiple,
     )
 
@@ -57,10 +57,10 @@ class TaskWorkflowFilter(TamatoFilter):
 
     clear_url = reverse_lazy("workflow:task-workflow-ui-list")
 
-    progress_state = ModelMultipleChoiceFilter(
+    progress_state = MultipleChoiceFilter(
         label="Status",
         help_text="Select all that apply",
-        queryset=ProgressState.objects.all(),
+        choices=ProgressState.choices,
         widget=CheckboxSelectMultiple,
     )
 
@@ -167,10 +167,10 @@ class TaskAndWorkflowFilter(TamatoFilter):
         help_text="Select the choice that applies",
     )
 
-    progress_state = ModelMultipleChoiceFilter(
+    progress_state = MultipleChoiceFilter(
         label="Status",
         help_text="Select all that apply",
-        queryset=ProgressState.objects.all(),
+        choices=ProgressState.choices,
         widget=CheckboxSelectMultiple,
     )
 
