@@ -265,10 +265,10 @@ def test_homepage_cards_contain_expected_links(superuser_client):
 
 def test_homepage_card_tickets(valid_user, valid_user_client):
     ticket1 = TaskWorkflowFactory.create(
-        summary_task__progress_state__name=ProgressState.TO_DO,
+        summary_task__progress_state=ProgressState.TO_DO,
     )
     ticket2 = TaskWorkflowFactory.create(
-        summary_task__progress_state__name=ProgressState.IN_PROGRESS,
+        summary_task__progress_state=ProgressState.IN_PROGRESS,
     )
     factories.TaskAssigneeFactory.create(user=valid_user, task=ticket1.summary_task)
     factories.TaskAssigneeFactory.create(user=valid_user, task=ticket2.summary_task)
