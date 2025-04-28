@@ -847,3 +847,10 @@ def get_current_view_url(request: HttpRequest) -> str:
     args = request.resolver_match.args
     kwargs = request.resolver_match.kwargs
     return reverse(view_name, args=args, kwargs=kwargs)
+
+
+def in_test() -> bool:
+    """Returns True if we're currently in a test situation (e.g. running via
+    pytest or python manage.py test), False otherwise."""
+
+    return os.environ.get("DJANGO_SETTINGS_MODULE") == "settings.test"

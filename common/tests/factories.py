@@ -1553,19 +1553,11 @@ class CategoryFactory(factory.django.DjangoModelFactory):
         model = "tasks.Category"
 
 
-class ProgressStateFactory(factory.django.DjangoModelFactory):
-    name = ProgressState.State.TO_DO
-
-    class Meta:
-        model = "tasks.ProgressState"
-        django_get_or_create = ("name",)
-
-
 class TaskFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("sentence")
     description = factory.Faker("sentence")
     category = factory.SubFactory(CategoryFactory)
-    progress_state = factory.SubFactory(ProgressStateFactory)
+    progress_state = ProgressState.TO_DO
     workbasket = factory.SubFactory(WorkBasketFactory)
     creator = factory.SubFactory(UserFactory)
 

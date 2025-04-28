@@ -3,7 +3,6 @@ from datetime import date
 import pytest
 
 from common.tests.factories import CommentFactory
-from common.tests.factories import ProgressStateFactory
 from common.tests.factories import TaskFactory
 from tasks import forms
 from tasks.models import ProgressState
@@ -82,12 +81,8 @@ def test_task_unassign_user_form_prevents_done_unassignment(done_task):
 def test_create_subtask_assigns_correct_parent_task(valid_user):
     """Tests that SubtaskCreateForm assigns the correct parent on form.save."""
     parent_task_instance = TaskFactory.create()
-    progress_state = ProgressStateFactory.create(
-        name=ProgressState.State.IN_PROGRESS,
-    )
 
     subtask_form_data = {
-        "progress_state": progress_state.pk,
         "title": "subtask test title",
         "description": "subtask test description",
     }
@@ -224,21 +219,21 @@ def test_edit_comment_form_valid(task_workflow):
 
 
 def test_task_update_form():
-    """Tests that `TaskUpdateForm` correctly updates `Task.progress_state`"""
+    """Tests that `TaskUpdateForm's update_status function` correctly updates
+    `Task.progress_state`"""
 
     task_instance = TaskFactory.create(
-        progress_state__name=ProgressState.State.TO_DO,
+        progress_state__name=ProgressState.TO_DO,
     )
 
-    new_progress_state = ProgressStateFactory.create(
-        name=ProgressState.State.IN_PROGRESS,
-    )
+    new_progress_state = ProgressState.IN_PROGRESS
 
     form_data = {
-        "progress_state": new_progress_state.pk,
+        "progress_state": new_progress_state,
     }
 
-    form = forms.TaskUpdateForm(data=form_data, instance=task_instance)
-
+    form = forms.TaskUpdateForm(data=form_data)
     assert form.is_valid()
+
+    form.update_progress_state(task=task_instance)
     assert task_instance.progress_state == new_progress_state

@@ -40,7 +40,6 @@ from common.models.transactions import TransactionQueryset
 from measures.models import Measure
 from measures.querysets import MeasuresQuerySet
 from tasks.models import Automation
-from tasks.models import ProgressState
 from tasks.models import StateChoices
 from tasks.signals import override_current_instigator
 from workbaskets.util import serialize_uploaded_data
@@ -1004,9 +1003,7 @@ class CreateWorkBasketAutomation(Automation):
         workflow.summary_task.save()
 
         with override_current_instigator(user):
-            self.task.progress_state = ProgressState.objects.get(
-                name=ProgressState.State.DONE,
-            )
+            self.task.done()
             self.task.save()
 
         logger.info(
