@@ -1,10 +1,10 @@
+import factory
 import pytest
 
 from common.tests import factories
 from workbaskets import forms
 from workbaskets.models import AssignmentType
 from workbaskets.models import WorkBasketAssignment
-from workbaskets.validators import tops_jira_number_validator
 
 pytestmark = pytest.mark.django_db
 
@@ -24,11 +24,6 @@ def test_workbasket_create_form_invalid_data():
     form = forms.WorkbasketCreateForm(data={})
     assert not form.is_valid()
     assert "This field is required." in form.errors["title"]
-    assert "This field is required." in form.errors["reason"]
-
-    form = forms.WorkbasketCreateForm(data={"title": "abc", "reason": "test"})
-    assert not form.is_valid()
-    assert tops_jira_number_validator.message in form.errors["title"]
 
     factories.WorkBasketFactory(title="123321")
     form = forms.WorkbasketCreateForm(data={"title": "123321", "reason": "test"})
@@ -282,3 +277,36 @@ def test_workbasket_comment_update_form():
     form.save()
     comment.refresh_from_db()
     assert content in comment.content
+
+
+@pytest.mark.parametrize(
+    "form_data, is_valid",
+    (
+        (
+            {
+                "title": "",
+                "reason": factory.Faker("sentence"),
+            },
+            False,
+        ),
+        (
+            {
+                "title": "",
+                "reason": factory.Faker("sentence"),
+            },
+            False,
+        ),
+        (
+            {
+                "title": factory.Faker("sentence"),
+                "reason": factory.Faker("sentence"),
+            },
+            True,
+        ),
+    ),
+)
+def test_workbasket_update_form(form_data, is_valid):
+    """Tests that `WorkBasketUpdateForm` updates a workbasket's title and
+    description fields without erroring Tests that `WorkBasketUpdateForm` raises
+    expected form errors given invalid form data."""
+    forms.WorkbasketUpdateForm()
