@@ -431,6 +431,9 @@ class WorkBasketCommentDeleteForm(forms.ModelForm):
 class AutomationCreateWorkBasketForm(forms.Form):
     """Form for creating workbaskets via CreateWorkBasketAutomation."""
 
+    automation: CreateWorkBasketAutomation
+    """Automation instance that this form helps to execute."""
+
     def __init__(self, *args, **kwargs):
         self.automation: CreateWorkBasketAutomation = kwargs.pop("automation")
 
