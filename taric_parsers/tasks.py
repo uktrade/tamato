@@ -47,6 +47,10 @@ def parse_and_import(
     chunk.status = ImporterChunkStatus.RUNNING
     chunk.save()
 
+    # If the ImportBatch was created by Ticket step automation, then get the
+    # automation instance.
+    automation = batch.get_import_goods_automation()
+
     try:
         importer = taric_parsers.importer.TaricImporter(
             import_batch=batch,
@@ -65,6 +69,11 @@ def parse_and_import(
             batch.workbasket = workbasket
             batch.save()
 
+            # If the ImportBatch was created by task automation, then set
+            # workbasket on its task's workflow instance.
+            if automation:
+                automation.set_workbasket(workbasket)
+
             importer.process_and_save_if_valid(workbasket)
         elif importer.is_empty():
             importer.clear_issues()
@@ -77,6 +86,11 @@ def parse_and_import(
             chunk.status = ImporterChunkStatus.DONE
 
         chunk.save()
+
+        # If the ImportBatch was created by task automation, then set
+        # the automation's state to done.
+        if automation:
+            automation.set_done()
 
     except Exception as e:
         batch.failed()

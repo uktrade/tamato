@@ -1,9 +1,12 @@
 from logging import getLogger
+from typing import Optional
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.db.models import QuerySet
+from django.urls import reverse
 from django_chunk_upload_handlers.clam_av import validate_virus_check_result
 from django_fsm import FSMField
 from django_fsm import transition
@@ -13,6 +16,9 @@ from common.models import TimestampedMixin
 from importer.storages import CommodityImporterStorage
 from importer.validators import ImportIssueType
 from taric_parsers.importer_issue import ImportIssueReportItem
+from tasks.models import Automation
+from tasks.models import StateChoices
+from tasks.signals import override_current_instigator
 from workbaskets.util import clear_workbasket
 from workbaskets.validators import WorkflowStatus
 
@@ -116,6 +122,13 @@ class ImportBatch(TimestampedMixin):
     )
 
     objects = models.Manager.from_queryset(ImporterQuerySet)()
+
+    def get_import_goods_automation(self) -> Optional["ImportGoodsAutomation"]:
+        """If this instance has a related ImportGoodsAutomation instance
+        associated with it, then return it, otherwise return None."""
+        if hasattr(self, "importgoodsautomation"):
+            return self.importgoodsautomation
+        return None
 
     @transition(
         field=status,
@@ -376,3 +389,130 @@ class BatchDependencies(models.Model):
 
     def __str__(self):
         return f"Batch {self.dependent_batch} depends on {self.depends_on}"
+
+
+class ImportGoodsAutomation(Automation):
+    """Import a commodity code XML file and create a workbasket into which goods
+    and related entities are stored."""
+
+    name = "Import commodity codes"
+    help_text = "Import commodity codes and create a workbasket to store them in"
+
+    import_batch = models.OneToOneField(
+        "importer.ImportBatch",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+
+    def get_state(self) -> StateChoices:
+        if not self.import_batch:
+            return StateChoices.CAN_RUN
+        elif self.import_batch.status == ImportBatchStatus.IMPORTING:
+            return StateChoices.RUNNING
+        elif (
+            self.import_batch.status == ImportBatchStatus.SUCCEEDED
+            or self.import_batch.status == ImportBatchStatus.FAILED_EMPTY
+        ):
+            return StateChoices.DONE
+        else:
+            return StateChoices.ERRORED
+
+    def rendered_state(self) -> str:
+        if self.get_state() == StateChoices.CAN_RUN:
+            return self._rendered_state_CAN_RUN()
+        elif self.get_state() == StateChoices.DONE:
+            return self._rendered_state_DONE()
+        else:
+            return self._rendered_state_ERRORED()
+
+    def set_done(self) -> None:
+        """
+        Utility method to set this automation's task as done.
+
+        Usually called by the importer when it has successfully completed its
+        work.
+        """
+
+        with override_current_instigator(self.import_batch.author):
+            self.task.done()
+            self.task.save()
+
+    def set_workbasket(self, workbasket) -> None:
+        """Utility method to associate a workbasket with this automation's task
+        workflow."""
+        self.task.get_workflow().set_workbasket(workbasket)
+
+    def _rendered_state_CAN_RUN(self) -> str:
+        url = reverse(
+            "comodity-importer-automation-ui-create",
+            kwargs={"pk": self.pk},
+        )
+        return f"""
+            <div class="automation state-can-run">
+                <a class="govuk-link" href="{url}">Import EU TARIC file</a>
+            </div>
+        """
+
+    def _rendered_state_RUNNING(self) -> str:
+        return f"""
+            <div class="automation state-running">
+                <h3>File is being imported</h3>
+                <p class="govuk-body">
+                    Check back shortly or refresh the page to see if the process
+                    has finished.
+                </p>
+            </div>
+        """
+
+    def _rendered_state_DONE(self) -> str:
+        if self.import_batch.status == ImportBatchStatus.SUCCEEDED:
+            heading = "File imported - changes detected"
+            message = (
+                "There are changes to make. A workbasket has been created and "
+                "linked to this ticket."
+            )
+        elif self.import_batch.status == ImportBatchStatus.FAILED_EMPTY:
+            heading = "File imported - empty"
+            message = (
+                "There are no further actions to take. This ticket has been "
+                "changed to completed."
+            )
+        else:
+            heading = "There is a problem"
+            message = "Invalid state. Please contact the TAP service team."
+
+        return f"""
+            <div class="automation state-done">
+                <h3>{heading}</h3>
+                <p class="govuk-body">
+                    {message}
+                </p>
+            </div>
+        """
+
+    def _rendered_state_ERRORED(self) -> str:
+        return """
+            <div class="automation state-errored">
+                <h3>There is a problem</h3>
+                <p class="govuk-body">
+                    Import error. Please contact the TAP service team.
+                </p>
+            </div>
+        """
+
+    def validate_can_run_automation(self) -> None:
+        """
+        Validates that this automation instance can be executed (by calling the
+        `save()` method on the automation's view form).
+
+        If validation fails then a `ValidationError` exception is raised.
+        """
+
+        state = self.get_state()
+        if state == StateChoices.ERRORED:
+            raise ValidationError("No ticket associated with automation.")
+        elif state == StateChoices.RUNNING:
+            raise ValidationError("An import is already underway.")
+        elif state == StateChoices.DONE:
+            raise ValidationError("This automation has already completed.")

@@ -2,6 +2,7 @@
 
 AUTOMATIONS = [
     ("workbaskets.models.CreateWorkBasketAutomation", "Create workbasket"),
+    ("importer.models.ImportGoodsAutomation", "Import commodity codes"),
 ]
 """
 An iterable of two-tuples. Each tuple must contain a task Automation class in
