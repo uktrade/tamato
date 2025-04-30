@@ -1,5 +1,5 @@
-import factory
 import pytest
+from faker import Faker
 
 from common.tests import factories
 from workbaskets import forms
@@ -7,6 +7,8 @@ from workbaskets.models import AssignmentType
 from workbaskets.models import WorkBasketAssignment
 
 pytestmark = pytest.mark.django_db
+
+fake = Faker()
 
 
 def test_workbasket_create_form_valid_data():
@@ -285,28 +287,29 @@ def test_workbasket_comment_update_form():
         (
             {
                 "title": "",
-                "reason": factory.Faker("sentence"),
+                "reason": fake.sentence(),
             },
             False,
         ),
         (
             {
-                "title": "",
-                "reason": factory.Faker("sentence"),
+                "title": fake.sentence(),
+                "reason": "",
             },
-            False,
+            True,
         ),
         (
             {
-                "title": factory.Faker("sentence"),
-                "reason": factory.Faker("sentence"),
+                "title": fake.sentence(),
+                "reason": fake.sentence(),
             },
             True,
         ),
     ),
 )
 def test_workbasket_update_form(form_data, is_valid):
-    """Tests that `WorkBasketUpdateForm` updates a workbasket's title and
-    description fields without erroring Tests that `WorkBasketUpdateForm` raises
-    expected form errors given invalid form data."""
-    forms.WorkbasketUpdateForm()
+    """Tests that `WorkBasketUpdateForm` raises expected form errors when title
+    field is left empty."""
+    form = forms.WorkbasketUpdateForm(data=form_data)
+
+    assert is_valid == form.is_valid()
