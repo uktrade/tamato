@@ -474,8 +474,6 @@ class CurrentWorkBasket(SortingMixin, FormView):
             self.paginator.num_pages,
         )
 
-        # workflow = self.workbasket.workflows.get()
-
         context.update(
             {
                 "workbasket": self.workbasket,
