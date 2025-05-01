@@ -7,6 +7,7 @@ import taric_parsers.importer
 from common.celery import app
 from importer.models import BatchImportError
 from importer.models import ImportBatch
+from importer.models import ImportBatchStatus
 from importer.models import ImporterChunkStatus
 from importer.models import ImporterXMLChunk
 from importer.models import ImportIssueType
@@ -87,9 +88,10 @@ def parse_and_import(
 
         chunk.save()
 
-        # If the ImportBatch was created by task automation, then set
-        # the automation's state to done.
-        if automation:
+        if automation and (
+            batch.status == ImportBatchStatus.SUCCEEDED
+            or batch.status == ImportBatchStatus.FAILED_EMPTY
+        ):
             automation.set_done()
 
     except Exception as e:
