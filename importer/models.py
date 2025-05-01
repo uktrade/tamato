@@ -492,11 +492,22 @@ class ImportGoodsAutomation(Automation):
         """
 
     def _rendered_state_ERRORED(self) -> str:
-        return """
+        issue_messages = []
+        for issue in self.import_batch.issues.all():
+            issue_messages.append(
+                f"<li>{issue.issue_type}: {issue.description}</li>",
+            )
+        issues_ul = f"""
+            <ul class="govuk-list--bullet">
+                {"\n".join(issue_messages)}
+            </ul>"""
+
+        return f"""
             <div class="automation state-errored">
-                <h3>There is a problem</h3>
-                <p class="govuk-body">
-                    Import error. Please contact the TAP service team.
+                <h3>There are problems</h3>
+                {issues_ul}
+                <p>
+                    Please contact the TAP service team for assistance.
                 </p>
             </div>
         """
