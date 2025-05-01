@@ -500,7 +500,8 @@ class ImportGoodsAutomation(Automation):
         issues_ul = f"""
             <ul class="govuk-list--bullet">
                 {"\n".join(issue_messages)}
-            </ul>"""
+            </ul>
+        """
 
         return f"""
             <div class="automation state-errored">
