@@ -101,7 +101,7 @@ class MeasureFilter(TamatoFilter):
     workbasket = BooleanFilter(
         label="Filter by current workbasket",
         widget=forms.CheckboxInput(),
-        method="workbasket_modifier",
+        method="workbasket_filter",
         required=False,
     )
 
