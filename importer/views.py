@@ -29,7 +29,9 @@ from importer.models import ImportBatchStatus
 from notifications.models import GoodsSuccessfulImportNotification
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
+from tasks.models import ProgressState
 from tasks.models import Task
+from tasks.signals import override_current_instigator
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -268,9 +270,14 @@ class AutomationCommodityImportCreateView(
     @atomic
     def form_valid(self, form: forms.AutomationCommodityImportForm):
         workflow = self.task.get_workflow()
-        workbasket_title = (f"{workflow.prefixed_id} - {workflow.title}",)
         automation = self.get_automation()
 
+        with override_current_instigator(self.request.user):
+            if automation.task.progress_state != ProgressState.IN_PROGRESS:
+                automation.task.in_progress()
+                automation.task.save()
+
+        workbasket_title = (f"{workflow.prefixed_id} - {workflow.title}",)
         self.object = form.save(workbasket_title=workbasket_title)
         automation.import_batch = self.object
         automation.save()
