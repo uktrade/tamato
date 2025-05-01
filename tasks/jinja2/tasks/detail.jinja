@@ -2,6 +2,8 @@
 {% from "components/breadcrumbs.jinja" import breadcrumbs %}
 {% from "components/button/macro.njk" import govukButton %}
 {% from "tasks/macros/display_details.jinja" import display_status %}
+{% from "tasks/macros/display_details.jinja" import display_assignees %}
+{% from "tasks/macros/display_details.jinja" import display_summary_row_stacked %}
 
 {% set page_title = "Step: " ~ object.title %}
 
@@ -50,82 +52,21 @@
     {% endif %}
     </div>
   </div>
+
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Details</h2>
+      <dl class="govuk-summary-list govuk-summary-list--no-border">
+          {{ display_summary_row_stacked("Status", display_status(object.get_progress_state_display())) }}
+          {{ display_summary_row_stacked("Assignee", display_assignees(object.current_assignee)) }}
+          {{ display_summary_row_stacked("Last updated", "{:%H:%M, %d %b %Y}".format(object.updated_at)) }}
+      </dl>
+    </div>
 </div>
 
 {% if ticket_number %}
   <a href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk}) }}" class="govuk-link govuk-back-link govuk-!-margin-bottom-8">Back to ticket</a>
 {% endif %}
-<h2 class="govuk-heading-m">Details</h2>
 
-<dl class="govuk-summary-list govuk-!-margin-bottom-8">
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Status
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ display_status(object.get_progress_state_display()) }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <a class="govuk-link" href="{{ edit_url }}">Change<span class="govuk-visually-hidden"> status</span></a>
-    </dd>
-  </div>
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Assignee
-    </dt>
-    <dd class="govuk-summary-list__value">
-      <div id="assigned-user-content">
-        {{ current_assignee.name if current_assignee else "None" }}
-      </div>
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <ul class="govuk-summary-list__actions-list">
-        {% if not current_assignee %}
-        <li class="govuk-summary-list__actions-list-item">
-          <a
-            id="assign-user"
-            class="govuk-link"
-            href="{{ assign_user_link }}"
-          >Assign<span class="govuk-visually-hidden"> user</span></a>
-        </li>
-        {% elif current_assignee %}
-        <li class="govuk-summary-list__actions-list-item">
-          <a
-            id="unassign-user"
-            class="govuk-link"
-            href="{{ unassign_user_link }}"
-          >Unassign<span class="govuk-visually-hidden"> user</span></a>
-        </li>
-        {% endif %}
-      </ul>
-    </dd>
-  </div>
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Created date
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ object.created_at|format_date }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-      <!-- Empty for column alignment -->
-    </dd>
-  </div>
-
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">
-      Description
-    </dt>
-    <dd class="govuk-summary-list__value">
-      {{ object.description }}
-    </dd>
-    <dd class="govuk-summary-list__actions">
-    </dd>
-  </div>
-</dl>
 
 {% if object.has_automation %}
   <h2 class="govuk-heading-m">Action</h2>
