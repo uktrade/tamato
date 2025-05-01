@@ -256,7 +256,7 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
         )
 
     @transaction.atomic
-    def save(self, user: User):
+    def save(self, user: User):  # type: ignore - Pylance invalid type
         workbasket = WorkBasket.objects.create(
             title=f"Data Import {self.cleaned_data['name']}",
             author=user,
