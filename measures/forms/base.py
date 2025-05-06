@@ -81,7 +81,7 @@ class MeasureFilterForm(forms.Form):
                         ),
                         Div(
                             Div(
-                                Field.radios("measure_filters_modifier", inline=True),
+                                Field.radios("workbasket", inline=True),
                                 css_class="govuk-grid-column-full form-group-margin-bottom-2",
                             ),
                             Div(

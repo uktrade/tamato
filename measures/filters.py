@@ -98,10 +98,10 @@ class MeasureFilter(TamatoFilter):
         method="commodity_modifier",
     )
 
-    measure_filters_modifier = BooleanFilter(
+    workbasket = BooleanFilter(
         label="Filter by current workbasket",
         widget=forms.CheckboxInput(),
-        method="measures_filter",
+        method="workbasket_filter",
         required=False,
     )
 
@@ -252,9 +252,10 @@ class MeasureFilter(TamatoFilter):
             )
         return queryset
 
-    def measures_filter(self, queryset, name, value):
+    def workbasket_filter(self, queryset, name, value):
         if value:
-            queryset = WorkBasket.current(self.request).measures
+            wb = WorkBasket.current(self.request)
+            queryset = queryset.filter(transaction__workbasket=wb)
 
         return queryset
 
