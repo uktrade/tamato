@@ -277,7 +277,7 @@ class AutomationCommodityImportCreateView(
                 automation.task.in_progress()
                 automation.task.save()
 
-        workbasket_title = (f"{workflow.prefixed_id} - {workflow.title}",)
+        workbasket_title = f"{workflow.prefixed_id} - {workflow.title}"
         self.object = form.save(workbasket_title=workbasket_title)
         automation.import_batch = self.object
         automation.save()
