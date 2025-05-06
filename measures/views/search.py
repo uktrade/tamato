@@ -180,7 +180,7 @@ class MeasureList(
         if "modc" in selected_filters:
             selected_filters_strings.append("Include inherited measures")
 
-        if "measure_filters_modifier" in selected_filters:
+        if "workbasket" in selected_filters:
             selected_filters_strings.append("Filter by current workbasket")
 
         # This splits the selected_filter_strings into nested lists of 7 so that the lists can be shown side by side in the template.
