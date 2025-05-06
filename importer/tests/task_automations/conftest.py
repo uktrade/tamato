@@ -26,13 +26,13 @@ def import_goods_automation_state_is_RUNNING() -> ImportGoodsAutomation:
     with status set to IMPORTING and a workflow with an associated
     workbasket."""
 
-    import_goods = ImportBatchFactory()
+    import_batch = ImportBatchFactory()
     task_item = TaskItemFactory.create(
-        workflow__summary_task__workbasket=import_goods.workbasket,
+        workflow__summary_task__workbasket=import_batch.workbasket,
     )
     return ImportGoodsAutomationFactory.create(
         task=task_item.task,
-        import_batch=None,
+        import_batch=import_batch,
     )
 
 
@@ -42,15 +42,15 @@ def import_goods_automation_state_is_DONE() -> ImportGoodsAutomation:
     with status set to SUCCEEDED and a workflow with an associated
     workbasket."""
 
-    import_goods = ImportBatchFactory(
+    import_batch = ImportBatchFactory(
         status=ImportBatchStatus.SUCCEEDED,
     )
     task_item = TaskItemFactory.create(
-        workflow__summary_task__workbasket=import_goods.workbasket,
+        workflow__summary_task__workbasket=import_batch.workbasket,
     )
     return ImportGoodsAutomationFactory.create(
         task=task_item.task,
-        import_batch=None,
+        import_batch=import_batch,
     )
 
 
@@ -59,13 +59,13 @@ def import_goods_automation_state_is_ERRORED() -> ImportGoodsAutomation:
     """Return an ImportGoodsAutomation instance that has an ImportBatch instance
     with status set to FAILED and a workflow with an associated workbasket."""
 
-    import_goods = ImportBatchFactory(
+    import_batch = ImportBatchFactory(
         status=ImportBatchStatus.FAILED,
     )
     task_item = TaskItemFactory.create(
-        workflow__summary_task__workbasket=import_goods.workbasket,
+        workflow__summary_task__workbasket=import_batch.workbasket,
     )
     return ImportGoodsAutomationFactory.create(
         task=task_item.task,
-        import_batch=None,
+        import_batch=import_batch,
     )
