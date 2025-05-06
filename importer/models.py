@@ -421,6 +421,8 @@ class ImportGoodsAutomation(Automation):
     def rendered_state(self) -> str:
         if self.get_state() == StateChoices.CAN_RUN:
             return self._rendered_state_CAN_RUN()
+        elif self.get_state() == StateChoices.RUNNING:
+            return self._rendered_state_RUNNING()
         elif self.get_state() == StateChoices.DONE:
             return self._rendered_state_DONE()
         else:
