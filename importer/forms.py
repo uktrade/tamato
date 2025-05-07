@@ -323,7 +323,7 @@ class CommodityImportFormBase(ImporterV2FormMixin, forms.Form):
         return cleaned_data
 
     @transaction.atomic
-    def save(self, workbasket_title: str):
+    def save(self, workbasket_title: str) -> ImportBatch:
         """
         Save an instance of ImportBatch using the form data and related, derived
         values.
