@@ -15,7 +15,6 @@
 {% set transaction_order_link = url("workbaskets:workbasket-ui-transaction-order", kwargs={"pk": workbasket.pk}) %}
 {% set assign_users_link = url("workbaskets:workbasket-ui-assign-users", kwargs={"pk": workbasket.pk}) %}
 {% set unassign_users_link = url("workbaskets:workbasket-ui-unassign-users", kwargs={"pk": workbasket.pk}) %}
-{% set workflow_link = url("workflow:task-workflow-ui-detail", kwargs={"pk": workflow.pk}) %}
 
 
 {% macro display_assigned_users(assigned_users, assignment_type) %}
@@ -51,8 +50,15 @@
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Ticket</dt>
       <dd class="govuk-summary-list__value">
-        <a class= "govuk-link" href="{{ workflow_link }}">{{ workbasket.title }}</a>
-        </dd>
+        {% if workflow %}
+          {%- set workflow_link %}
+            {{ url("workflow:task-workflow-ui-detail", kwargs={"pk": workflow.pk}) }}
+          {%- endset %}
+          <a class= "govuk-link" href="{{ workflow_link }}">{{ workflow }}</a>
+        {% else %}
+          No related ticket
+        {% endif %}
+      </dd>
       <dd class="govuk-summary-list__actions">
       <!-- Empty for column alignment -->
       </dd>

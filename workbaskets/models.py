@@ -808,6 +808,16 @@ class WorkBasket(TimestampedMixin):
         user_ids = self.reviewer_assignments.values_list("user_id", flat=True)
         return User.objects.filter(id__in=user_ids)
 
+    @property
+    def task_workflow(self):
+        """Return the TaskWorkflow instance associated with the workbasket if it
+        has one, otherwise return None."""
+
+        task = self.tasks.first()
+        if task:
+            return task.get_workflow()
+        return None
+
     class Meta:
         verbose_name = "workbasket"
         verbose_name_plural = "workbaskets"
