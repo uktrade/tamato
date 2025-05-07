@@ -88,12 +88,6 @@ def parse_and_import(
 
         chunk.save()
 
-        if automation and (
-            batch.status == ImportBatchStatus.SUCCEEDED
-            or batch.status == ImportBatchStatus.FAILED_EMPTY
-        ):
-            automation.set_done()
-
     except Exception as e:
         batch.failed()
         batch.save()
@@ -136,6 +130,13 @@ def parse_and_import(
             # chunks with status ERRORED, so transition batch to ERRORED.
             batch.failed()
         batch.save()
+
+    if automation and (
+        batch.status == ImportBatchStatus.SUCCEEDED
+        or batch.status == ImportBatchStatus.FAILED_EMPTY
+    ):
+        automation.set_done()
+        automation.save()
 
 
 def setup_new_chunk_task(
