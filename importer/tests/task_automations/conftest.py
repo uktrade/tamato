@@ -74,14 +74,13 @@ def import_goods_automation_state_is_DONE_empty() -> ImportGoodsAutomation:
 @pytest.fixture
 def import_goods_automation_state_is_ERRORED() -> ImportGoodsAutomation:
     """Return an ImportGoodsAutomation instance that has an ImportBatch instance
-    with status set to FAILED and a workflow with an associated workbasket."""
+    with status set to FAILED and a workflow with no associated workbasket."""
 
     import_batch = ImportBatchFactory(
         status=ImportBatchStatus.FAILED,
+        workbasket=None,
     )
-    task_item = TaskItemFactory.create(
-        workflow__summary_task__workbasket=import_batch.workbasket,
-    )
+    task_item = TaskItemFactory.create()
     return ImportGoodsAutomationFactory.create(
         task=task_item.task,
         import_batch=import_batch,
