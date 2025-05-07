@@ -287,29 +287,36 @@ def test_workbasket_comment_update_form():
         (
             {
                 "title": "",
-                "reason": fake.sentence(),
+                "reason": "",
             },
             False,
         ),
         (
             {
-                "title": fake.sentence(),
+                "title": "test sentence",
                 "reason": "",
             },
             True,
         ),
         (
             {
-                "title": fake.sentence(),
-                "reason": fake.sentence(),
+                "title": "test sentence",
+                "reason": "test sentence;",
             },
-            True,
+            False,
+        ),
+        (
+            {
+                "title": "",
+                "reason": "test sentence!",
+            },
+            False,
         ),
     ),
 )
 def test_workbasket_update_form(form_data, is_valid):
-    """Tests that `WorkBasketUpdateForm` raises expected form errors when title
-    field is left empty."""
+    """Tests that `WorkBasketUpdateForm` raises expected form errors given empty
+    title field or incorrect symbol usage in text field."""
     form = forms.WorkbasketUpdateForm(data=form_data)
 
     assert is_valid == form.is_valid()
