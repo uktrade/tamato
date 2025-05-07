@@ -279,7 +279,10 @@ class AutomationCommodityImportCreateView(
 
         workbasket_title = f"{workflow.prefixed_id} - {workflow.title}"
         self.object = form.save(workbasket_title=workbasket_title)
+
         automation.import_batch = self.object
+        if automation.import_batch.status == ImportBatchStatus.FAILED_EMPTY:
+            automation.set_done()
         automation.save()
 
         return redirect(self.get_success_url())
