@@ -445,7 +445,7 @@ class AutomationCreateWorkBasketForm(forms.Form):
         self.helper.layout = Layout(
             Submit(
                 "submit",
-                "Run",
+                "Create",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),
