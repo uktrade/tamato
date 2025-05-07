@@ -1,6 +1,7 @@
 import os
 import shutil
 import xml.etree.ElementTree as et
+from collections.abc import Generator
 from pathlib import Path
 from typing import Sequence
 from typing import Type
@@ -34,7 +35,7 @@ def get_project_root():
 
 
 @pytest.fixture
-def object_nursery() -> TariffObjectNursery:
+def object_nursery() -> Generator[TariffObjectNursery, None, None]:
     nursery = get_nursery()
     yield nursery
     nursery.cache.clear()
