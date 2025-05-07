@@ -32,14 +32,14 @@ def test_filter_by_current_workbasket(
     factories.MeasureFactory.create()
     factories.MeasureFactory.create()
     self = MeasureFilter(
-        data={"measure_filters_modifier": "current"},
+        data={"workbasket": "current"},
         request=session_request,
     )
     qs = Measure.objects.all()
-    result = MeasureFilter.measures_filter(
+    result = MeasureFilter.workbasket_filter(
         self,
         queryset=qs,
-        name="measure_filters_modifier",
+        name="workbasket",
         value="current",
     )
     assert len(result) == len(user_workbasket.measures)
