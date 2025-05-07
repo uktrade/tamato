@@ -30,11 +30,34 @@ def test_import_goods_automation_get_state_running(
     assert "File is being imported" in headings[0]
 
 
+@pytest.mark.parametrize(
+    ("import_goods_automation_done_name", "heading_text"),
+    (
+        (
+            "import_goods_automation_state_is_DONE",
+            "File imported - changes detected",
+        ),
+        (
+            "import_goods_automation_state_is_DONE_empty",
+            "File imported - empty",
+        ),
+    ),
+)
 def test_import_goods_automation_get_state_done(
-    import_goods_automation_state_is_DONE,
+    import_goods_automation_done_name,
+    heading_text,
+    request,
 ):
     """Test that an automation in DONE state renders correctly."""
-    """TODO."""
+    import_goods_automation_done = request.getfixturevalue(
+        import_goods_automation_done_name,
+    )
+    assert import_goods_automation_done.get_state() == StateChoices.DONE
+    rendering = import_goods_automation_done.rendered_state()
+    soup = BeautifulSoup(rendering)
+    headings = soup.select(".automation.state-done > h3")
+    assert len(headings) == 1
+    assert heading_text in headings[0]
 
 
 def test_import_goods_automation_get_state_errored(
