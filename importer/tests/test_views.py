@@ -20,8 +20,8 @@ User = get_user_model()
 
 @pytest.mark.parametrize("url_name", ["import_batch-ui-list", "import_batch-ui-create"])
 def test_import_urls_requires_superuser(
-    valid_user: User,
-    admin_user: User,
+    valid_user: User,  # type: ignore - Pylance invalid type
+    admin_user: User,  # type: ignore - Pylance invalid type
     client: Client,
     url_name: str,
 ):
