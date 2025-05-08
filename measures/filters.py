@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import CharField
@@ -21,9 +23,12 @@ from common.util import StartDate
 from common.validators import NumericValidator
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
+from measures.forms import MeasureConditionFilterForm
 from measures.forms import MeasureFilterForm
 from measures.models import Measure
+from measures.models import MeasureAction
 from measures.models import MeasureCondition
+from measures.models import MeasureConditionCode
 from measures.models import MeasureType
 from measures.models.bulk_processing import MeasuresBulkCreator
 from measures.models.bulk_processing import MeasuresBulkEditor
@@ -49,6 +54,20 @@ class MeasureTypeFilterBackend(TamatoFilterBackend):
         StringAgg("sid", delimiter=" ", output_field=CharField),
         StringAgg("description", delimiter=" ", output_field=CharField),
     )  # XXX order is significant
+
+
+class MeasureConditionCodeFilterBackend(TamatoFilterBackend):
+    search_fields = (
+        StringAgg("code", delimiter=" ", output_field=CharField),
+        StringAgg("description", delimiter=" ", output_field=CharField),
+    )
+
+
+class MeasureActionFilterBackend(TamatoFilterBackend):
+    search_fields = (
+        StringAgg("code", delimiter=" ", output_field=CharField),
+        StringAgg("description", delimiter=" ", output_field=CharField),
+    )
 
 
 class MeasureFilter(TamatoFilter):
@@ -315,3 +334,67 @@ class MeasureEditTaskFilter(TamatoFilter):
     class Meta:
         model = MeasuresBulkEditor
         fields = ["processing_state"]
+
+
+class MeasureConditionFilter(TamatoFilter):
+    clear_url = reverse_lazy("measure-conditions-search")
+
+    sid = CharFilter(
+        label="ID",
+        widget=forms.TextInput(),
+        validators=[
+            NumericValidator,
+        ],
+    )
+
+    condition_code = AutoCompleteFilter(
+        label="Condition code",
+        field_name="condition_code",
+        queryset=MeasureConditionCode.objects.all(),
+    )
+
+    action = AutoCompleteFilter(
+        label="Action code",
+        field_name="action",
+        queryset=MeasureAction.objects.all(),
+    )
+
+    duty_amount = CharFilter(
+        label="Duty amount/reference price",
+        field_name="duty_amount",
+        widget=forms.TextInput(),
+        method="duty_amount_filter",
+    )
+
+    required_certificate = AutoCompleteFilter(
+        label="Certificate",
+        field_name="required_certificate",
+        queryset=Certificate.objects.current(),
+    )
+
+    workbasket = BooleanFilter(
+        label="Filter by current workbasket",
+        widget=forms.CheckboxInput(),
+        method="workbasket_filter",
+        required=False,
+    )
+
+    def workbasket_filter(self, queryset, name, value):
+        if value:
+            wb = WorkBasket.current(self.request)
+            queryset = queryset.filter(transaction__workbasket=wb)
+
+        return queryset
+
+    def duty_amount_filter(self, queryset, name, value):
+        if value:
+            queryset = queryset.filter(components__duty_amount=Decimal(value))
+
+        return queryset
+
+    class Meta:
+        model = MeasureCondition
+        form = MeasureConditionFilterForm
+
+        # Defines the order shown in the form.
+        fields = ["search", "sid"]

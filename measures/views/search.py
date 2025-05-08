@@ -10,12 +10,14 @@ from rest_framework.reverse import reverse
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
 from commodities.models.orm import GoodsNomenclature
+from common.pagination import LimitedPaginator
 from common.pagination import build_pagination_list
 from common.views import SortingMixin
 from common.views import TamatoListView
 from footnotes.models import Footnote
 from geo_areas.models import GeographicalArea
 from measures import models
+from measures.filters import MeasureConditionFilter
 from measures.filters import MeasureFilter
 from measures.pagination import MeasurePaginator
 from regulations.models import Regulation
@@ -283,3 +285,97 @@ class MeasureList(
             url = reverse("measure-ui-list")
 
         return HttpResponseRedirect(url)
+
+
+class MeasureConditionsSearch(FilterView):
+    """
+    UI endpoint for filtering MeasureConditions.
+
+    Does not list any measure conditions. Redirects to MeasureConditionsList on
+    form submit.
+    """
+
+    template_name = "measures/conditions-search.jinja"
+    filterset_class = MeasureConditionFilter
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(reverse("measure-conditions-list"))
+
+
+class MeasureConditionsList(
+    SortingMixin,
+    TamatoListView,
+):
+    """UI endpoint for filtering measure conditions."""
+
+    model = models.MeasureCondition
+    template_name = "measures/conditions-list.jinja"
+    filterset_class = MeasureConditionFilter
+    sort_by_fields = ["search", "sid", "condition_code", "action_code", "duty_amount"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        ordering = self.get_ordering()
+        if ordering:
+            ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
+        return queryset
+
+    def cleaned_query_params(self):
+        # Remove the sort_by and ordered params in order to stop them being duplicated in the base url
+        if "sort_by" and "ordered" in self.filterset.data:
+            cleaned_filterset = self.filterset.data.copy()
+            cleaned_filterset.pop("sort_by")
+            cleaned_filterset.pop("ordered")
+            return cleaned_filterset
+        else:
+            return self.filterset.data
+
+    @cached_property
+    def paginator(self):
+        filterset_class = self.get_filterset_class()
+        self.filterset = self.get_filterset(filterset_class)
+        return LimitedPaginator(
+            self.filterset.qs.select_related(
+                "condition_code",
+                "action",
+            ),
+            per_page=40,
+        )
+
+    def get_context_data(self, **kwargs):
+        # References to page or pagination in the template were heavily increasing load time. By setting everything we need in the context,
+        # we can reduce load time
+        page = self.paginator.get_page(self.request.GET.get("page", 1))
+        context = {}
+        context.update(
+            {
+                "filter": kwargs["filter"],
+                "view": self,
+                "object_list": self.paginator.get_page(self.request.GET.get("page", 1)),
+                "is_paginated": True,
+                "results_count": self.paginator.count,
+                "results_limit_breached": self.paginator.limit_breached,
+                "page_count": self.paginator.num_pages,
+                "has_other_pages": page.has_other_pages(),
+                "has_previous_page": page.has_previous(),
+                "has_next_page": page.has_next(),
+                "page_number": page.number,
+                "list_items_count": self.paginator.per_page,
+                "page_links": build_pagination_list(
+                    page.number,
+                    page.paginator.num_pages,
+                ),
+                "workbasket": self.workbasket,
+            },
+        )
+        if context["has_previous_page"]:
+            context["prev_page_number"] = page.previous_page_number()
+        if context["has_next_page"]:
+            context["next_page_number"] = page.next_page_number()
+
+        context["query_params"] = True
+        context["base_url"] = (
+            f'{reverse("measure-conditions-list")}?{urlencode(self.cleaned_query_params())}'
+        )
+        return context
