@@ -1,0 +1,22 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/input/macro.njk" import govukInput %}
+{% from "components/table/macro.njk" import govukTable %}
+
+{% set form_url = "measure-conditions-list" %}
+
+{% set page_title = "Find and edit measure conditions" %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+
+  <div class="full-width-search">
+    <div class="govuk-!-margin-bottom-5">
+      <form method="get" action="{{ url(form_url) }}">
+          {{ crispy(filter.form) }}
+      </form>
+    </div>
+  </div>
+
+{% endblock %}
