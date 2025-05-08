@@ -13,7 +13,7 @@ def test_create_workbasket_automation_get_state_can_run(
         == StateChoices.CAN_RUN
     )
     assert (
-        "create workbasket"
+        "create a workbasket"
         in create_workbasket_automation_state_is_CAN_RUN.rendered_state().lower()
     )
 

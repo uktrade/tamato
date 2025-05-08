@@ -72,6 +72,12 @@ class TaskWorkflow(Queue):
             "taskitem__position",
         )
 
+    def set_workbasket(self, workbasket):
+        """Assign `workbasket` to this workflow's summary task and save the
+        summary task."""
+        self.summary_task.workbasket = workbasket
+        self.summary_task.save()
+
     def get_url(self, action: str = "detail"):
         if action == "detail":
             return reverse(

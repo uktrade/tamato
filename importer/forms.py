@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
+from django.http import HttpRequest
 from sentry_sdk import capture_exception
 from werkzeug.utils import secure_filename
 
@@ -25,6 +26,7 @@ from common.validators import validate_filepath
 from importer.chunker import chunk_taric
 from importer.management.commands.run_import_batch import run_batch
 from importer.models import ImportBatch
+from importer.models import ImportGoodsAutomation
 from importer.namespaces import TARIC_RECORD_GROUPS
 from taric_parsers.importer import run_batch as run_batch_v2
 from workbaskets.models import WorkBasket
@@ -254,7 +256,7 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
         )
 
     @transaction.atomic
-    def save(self, user: User):
+    def save(self, user: User):  # type: ignore - Pylance invalid type
         workbasket = WorkBasket.objects.create(
             title=f"Data Import {self.cleaned_data['name']}",
             author=user,
@@ -280,23 +282,14 @@ class UploadTaricForm(ImportFormMixin, forms.ModelForm):
         return batch
 
 
-class CommodityImportForm(ImporterV2FormMixin, forms.Form):
-    """Form used to create new instances of ImportBatch via upload of a
-    commodity code file."""
+class CommodityImportFormBase(ImporterV2FormMixin, forms.Form):
+    """Base class Form used to create new instances of ImportBatch from a
+    commodity code file upload."""
 
-    workbasket_title = forms.CharField(
-        max_length=255,
-        validators=[tops_jira_number_validator],
-        strip=True,
-        label="TOPS/Jira number",
-        help_text=(
-            "Your TOPS/Jira number is needed to associate your import's "
-            "workbasket with your Jira ticket. You can find this number at the "
-            "end of the web address for your Jira ticket. Your workbasket will "
-            "be given a unique number that may be different to your TOPS/Jira "
-            "number. "
-        ),
-    )
+    request: HttpRequest
+    """Request instance passed into __init__() via kwargs and used to access the
+    uploaded File and User objects."""
+
     taric_file = forms.FileField(
         label="Upload a TARIC file",
         help_text=(
@@ -310,20 +303,6 @@ class CommodityImportForm(ImporterV2FormMixin, forms.Form):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
-
-        self.helper = FormHelper(self)
-        self.helper.label_size = Size.SMALL
-        self.helper.legend_size = Size.SMALL
-        self.helper.layout = Layout(
-            "workbasket_title",
-            "taric_file",
-            Submit(
-                "submit",
-                "Upload",
-                data_module="govuk-button",
-                data_prevent_double_click="true",
-            ),
-        )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -343,14 +322,8 @@ class CommodityImportForm(ImporterV2FormMixin, forms.Form):
 
         return cleaned_data
 
-    def clean_workbasket_title(self):
-        workbasket_title = self.cleaned_data["workbasket_title"]
-        if WorkBasket.objects.filter(title=workbasket_title):
-            raise ValidationError("WorkBasket title already exists.")
-        return workbasket_title
-
     @transaction.atomic
-    def save(self):
+    def save(self, workbasket_title: str) -> ImportBatch:
         """
         Save an instance of ImportBatch using the form data and related, derived
         values.
@@ -358,11 +331,9 @@ class CommodityImportForm(ImporterV2FormMixin, forms.Form):
         NOTE: because this save() method initiates import batch processing -
         which results in a background task being started - it doesn't currently
         make sense to use commit=False. process_file() should be moved into the
-        view if this (common) behaviour becomes required.
+        view if this (common) behaviour is needed.
         """
         taric_filename = secure_filename(self.cleaned_data["name"])
-        file_id = os.path.splitext(taric_filename)[0]
-        description = f"TARIC {file_id} commodity code changes"
 
         import_batch = ImportBatch(
             author=self.request.user,
@@ -382,7 +353,7 @@ class CommodityImportForm(ImporterV2FormMixin, forms.Form):
             self.files["taric_file"],
             import_batch,
             self.request.user,
-            workbasket_title=description,
+            workbasket_title=workbasket_title,
             record_group=list(TARIC_RECORD_GROUPS["commodities"]),
         )
 
@@ -391,3 +362,85 @@ class CommodityImportForm(ImporterV2FormMixin, forms.Form):
             import_batch.save()
 
         return import_batch
+
+
+class CommodityImportForm(CommodityImportFormBase):
+    """Form used to create new instances of ImportBatch via upload of a
+    commodity code file."""
+
+    workbasket_title = forms.CharField(
+        max_length=255,
+        validators=[tops_jira_number_validator],
+        strip=True,
+        label="TOPS/Jira number",
+        help_text=(
+            "Your TOPS/Jira number is needed to associate your import's "
+            "workbasket with your Jira ticket. You can find this number at the "
+            "end of the web address for your Jira ticket. Your workbasket will "
+            "be given a unique number that may be different to your TOPS/Jira "
+            "number. "
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_layout()
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "workbasket_title",
+            "taric_file",
+            Submit(
+                "submit",
+                "Upload",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean_workbasket_title(self):
+        workbasket_title = self.cleaned_data["workbasket_title"]
+        if WorkBasket.objects.filter(title=workbasket_title):
+            raise ValidationError("WorkBasket title already exists.")
+        return workbasket_title
+
+    @transaction.atomic
+    def save(self):
+        taric_filename = secure_filename(self.cleaned_data["name"])
+        file_id = os.path.splitext(taric_filename)[0]
+        description = f"TARIC {file_id} commodity code changes"
+        return super().save(workbasket_title=description)
+
+
+class AutomationCommodityImportForm(CommodityImportFormBase):
+    """Form used to upload a goods file and begin process via
+    ImportGoodsAutomation."""
+
+    automation: ImportGoodsAutomation
+    """Automation instance that this form helps to execute."""
+
+    def __init__(self, *args, **kwargs):
+        self.automation: ImportGoodsAutomation = kwargs.pop("automation")
+        super().__init__(*args, **kwargs)
+        self.init_layout()
+
+    def init_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            "taric_file",
+            Submit(
+                "submit",
+                "Upload",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        self.automation.validate_can_run_automation()
+        return super().clean()
