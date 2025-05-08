@@ -3106,3 +3106,29 @@ def test_missing_measures_override(valid_user_client, user_workbasket):
     check = MissingMeasuresCheck.objects.get(workbasket=user_workbasket)
     assert check.successful == True
     assert check.model_checks.count() == 0
+
+
+@pytest.mark.parametrize(
+    "workbasket_type, display_message",
+    [
+        ("user_workbasket", "No related ticket"),
+        ("workbasket_with_task_workflow", "TC1: Test ticket"),
+    ],
+)
+def test_workbasket_summary_displays_workflow(
+    workbasket_type,
+    display_message,
+    request,
+    valid_user_client,
+):
+    """Tests to see if the 'Current Workbasket' summary page correctly displays
+    the task workflow associated with a workbasket, if it exists."""
+    workbasket_type = request.getfixturevalue(workbasket_type)
+
+    url = reverse("workbaskets:current-workbasket")
+
+    response = valid_user_client.get(url)
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+
+    assert display_message in page.find("dd").get_text()
