@@ -46,7 +46,7 @@ Jinja2==3.1.6
 lark==1.1.9
 lxml==5.2.2
 markdown==3.6
-markdownify==0.12.1
+markdownify==0.14.1
 markupsafe==2.1.2
 moto==3.0.7
 notifications-python-client==6.4.1
