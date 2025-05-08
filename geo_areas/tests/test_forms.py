@@ -52,7 +52,7 @@ def test_geographical_area_create_description_form_invalid_description(date_rang
     form = forms.GeographicalAreaCreateDescriptionForm(data=data)
 
     assert not form.is_valid()
-    assert "Only symbols .,/()&£$@!+-% are allowed." in form.errors["description"]
+    assert "Only symbols .,/()&£$@!+-%: are allowed." in form.errors["description"]
 
 
 def test_geographical_area_end_date_form_valid_date(date_ranges):
@@ -375,7 +375,7 @@ def test_geographical_area_create_form_invalid_data():
     expected_form_errors = {
         "area_id": "Enter a geographical area ID in the correct format.",
         "end_date": "The end date must be the same as or after the start date.",
-        "description": "Only symbols .,/()&£$@!+-% are allowed.",
+        "description": "Only symbols .,/()&£$@!+-%: are allowed.",
     }
 
     form = forms.GeographicalAreaCreateForm(data=form_data)

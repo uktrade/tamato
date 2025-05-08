@@ -4,6 +4,7 @@ import pytest
 
 from common.tests import factories
 from common.tests.factories import WorkBasketAssignmentFactory
+from tasks.tests.factories import TaskWorkflowFactory
 from workbaskets.models import AssignmentType
 from workbaskets.models import WorkBasket
 from workbaskets.models import WorkflowStatus
@@ -45,3 +46,17 @@ def workbasket_reviewer_assignment():
     return WorkBasketAssignmentFactory.create(
         assignment_type=AssignmentType.WORKBASKET_REVIEWER,
     )
+
+
+@pytest.fixture()
+def workbasket_with_task_workflow(user_workbasket):
+    """Returns a workbasket with an associated task workflow."""
+    workflow = TaskWorkflowFactory.create()
+    workflow.summary_task.title = "TC1: Test ticket"
+    workflow.summary_task.save()
+
+    workbasket = user_workbasket
+    workflow.summary_task.workbasket = workbasket
+    workflow.summary_task.save()
+
+    return workbasket

@@ -1,0 +1,9 @@
+{% macro display_workflow(workflow) -%}
+  {% if not workflow %}
+    None
+  {% else %}
+    <a
+      class="govuk-link"
+      href= "{{ url("workflow:task-workflow-ui-detail", kwargs={"pk": workflow.pk}) }}"
+  {% endif %}
+{%- endmacro %}

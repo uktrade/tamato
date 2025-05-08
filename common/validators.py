@@ -90,8 +90,8 @@ NumericValidator = RegexValidator(
     ValidationError("Only numbers are allowed."),
 )
 SymbolValidator = RegexValidator(
-    r"^[0-9A-Za-z\s.',()&£$%@!/\+-]*$",
-    ValidationError("Only symbols .,/()&£$@!+-% are allowed."),
+    r"^[0-9A-Za-z\s.',()&£$%@!/\+-:]*$",
+    ValidationError("Only symbols .,/()&£$@!+-%: are allowed."),
 )
 
 

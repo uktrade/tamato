@@ -15,11 +15,9 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.timezone import make_aware
 
-from common.validators import AlphanumericValidator
 from common.validators import SymbolValidator
 from common.validators import markdown_tags_allowlist
 from workbaskets import models
-from workbaskets import validators
 from workbaskets.models import AssignmentType
 from workbaskets.models import CreateWorkBasketAutomation
 from workbaskets.models import WorkBasketAssignment
@@ -40,7 +38,9 @@ class WorkbasketCreateForm(forms.ModelForm):
             "Your workbasket will be given a unique number that will be different to your TOPS/Jira number. "
         ),
         widget=forms.TextInput,
-        validators=[validators.tops_jira_number_validator],
+        validators=[
+            SymbolValidator,
+        ],
         required=True,
         error_messages={"unique": "A workbasket with this title already exists"},
     )
@@ -50,10 +50,9 @@ class WorkbasketCreateForm(forms.ModelForm):
         help_text="Summarise the changes that will be in this workbasket.",
         widget=forms.Textarea,
         validators=[
-            AlphanumericValidator,
             SymbolValidator,
         ],
-        required=True,
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):

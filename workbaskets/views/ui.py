@@ -487,6 +487,7 @@ class CurrentWorkBasket(SortingMixin, FormView):
                 "paginator": self.paginator,
                 "page_obj": page,
                 "page_links": page_links,
+                "workflow": self.workbasket.task_workflow,
             },
         )
 
