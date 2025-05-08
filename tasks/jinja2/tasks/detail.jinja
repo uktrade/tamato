@@ -53,14 +53,21 @@
     </div>
   </div>
 
+  <div class="govuk-grid-column-full">
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-three-quarters">
+        <p class="govuk-body">{{ object.description }}</p>
+      </div>
     <div class="govuk-grid-column-one-quarter">
-      <h2 class="govuk-heading-m">Details</h2>
       <dl class="govuk-summary-list govuk-summary-list--no-border">
           {{ display_summary_row_stacked("Status", display_status(object.get_progress_state_display())) }}
           {{ display_summary_row_stacked("Assignee", display_assignees(object.current_assignee)) }}
           {{ display_summary_row_stacked("Last updated", "{:%H:%M, %d %b %Y}".format(object.updated_at)) }}
       </dl>
     </div>
+  </div>
+
+
 </div>
 
 {% if ticket_number %}
