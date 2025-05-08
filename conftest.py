@@ -291,7 +291,7 @@ def api_client() -> APIClient:
 
 @pytest.fixture
 def policy_group(db) -> Group:
-    group = factories.UserGroupFactory.create(name="Policy")
+    group = factories.UserGroupFactory.create(name="Tariff Managers")
 
     for app_label, codename in [
         ("common", "add_trackedmodel"),
@@ -308,6 +308,28 @@ def policy_group(db) -> Group:
         ("publishing", "consume_from_packaging_queue"),
         ("publishing", "manage_packaging_queue"),
         ("publishing", "view_envelope"),
+        ("tasks", "add_task"),
+        ("tasks", "change_task"),
+        ("tasks", "delete_task"),
+        ("tasks", "view_task"),
+        ("tasks", "add_taskassignee"),
+        ("tasks", "change_taskassignee"),
+        ("tasks", "add_comment"),
+        ("tasks", "view_comment"),
+        ("tasks", "change_comment"),
+        ("tasks", "delete_comment"),
+        ("tasks", "add_taskworkflow"),
+        ("tasks", "change_taskworkflow"),
+        ("tasks", "delete_taskworkflow"),
+        ("tasks", "view_taskworkflow"),
+        ("tasks", "add_taskworkflowtemplate"),
+        ("tasks", "change_taskworkflowtemplate"),
+        ("tasks", "delete_taskworkflowtemplate"),
+        ("tasks", "view_taskworkflowtemplate"),
+        ("tasks", "add_tasktemplate"),
+        ("tasks", "change_tasktemplate"),
+        ("tasks", "delete_tasktemplate"),
+        ("tasks", "view_tasktemplate"),
     ]:
         group.permissions.add(
             Permission.objects.get(

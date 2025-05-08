@@ -538,3 +538,52 @@ def test_dequeue_reverts_current_version(valid_user, user_workbasket):
     user_workbasket.dequeue()
     measure_create.refresh_from_db()
     assert measure_create.version_group.current_version == measure_create
+
+
+def test_workbasket_assignment_unassign_user_classmethod(workbasket_assignment):
+    user = workbasket_assignment.user
+    workbasket = workbasket_assignment.workbasket
+
+    assert WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
+    # User has already been unassigned
+    assert not WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
+
+
+def test_workbasket_assignment_assigned_queryset(workbasket_assignment):
+    assert WorkBasketAssignment.objects.assigned().count() == 1
+
+    user = workbasket_assignment.user
+    workbasket = workbasket_assignment.workbasket
+    WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
+
+    assert not WorkBasketAssignment.objects.assigned()
+
+
+def test_workbasket_assignment_unassigned_queryset(workbasket_assignment):
+    assert not WorkBasketAssignment.objects.unassigned()
+
+    user = workbasket_assignment.user
+    workbasket = workbasket_assignment.workbasket
+    WorkBasketAssignment.unassign_user(user=user, workbasket=workbasket)
+
+    assert WorkBasketAssignment.objects.unassigned().count() == 1
+
+
+def test_task_assignee_workbasket_workers_queryset(
+    workbasket_worker_assignment,
+    workbasket_reviewer_assignment,
+):
+    workbasket_workers = WorkBasketAssignment.objects.workbasket_workers()
+
+    assert workbasket_workers.count() == 1
+    assert workbasket_worker_assignment in workbasket_workers
+
+
+def test_task_assignee_workbasket_reviewers_queryset(
+    workbasket_worker_assignment,
+    workbasket_reviewer_assignment,
+):
+    workbasket_reviewers = WorkBasketAssignment.objects.workbasket_reviewers()
+
+    assert workbasket_reviewers.count() == 1
+    assert workbasket_reviewer_assignment in workbasket_reviewers

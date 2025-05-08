@@ -1,0 +1,20 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Edit comment ID " ~ object.id %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Find and view tickets", "href": object.task.taskworkflow.get_url("list")},
+      {"text": "Ticket " ~ object.task.taskworkflow.pk, "href": object.task.taskworkflow.get_url()},
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+{% block form %}
+  {% call django_form(action=url("workflow:ticket-comment-update", kwargs={"ticket_pk": object.task.taskworkflow.pk, "pk": object.pk})) %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Step template: " ~ object.title %}
+
+{% set ticket_template_url = task_workflow_template.get_url("detail") %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {
+        "text": "Ticket template: " ~ task_workflow_template.title,
+        "href": ticket_template_url,
+      },
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-0">
+        <span class="govuk-caption-xl">{{ task_workflow_template.title }}</span>
+        {{ page_title }}
+      </h1>
+    </div>
+
+    <div class="govuk-grid-column-one-quarter govuk-!-margin-top-7">
+      {{ govukButton({
+        "text": "Delete step template",
+        "href": object.get_url("delete"),
+        "classes": "govuk-button--warning align-right",
+      }) }}
+    </div>
+
+    <a href="{{ ticket_template_url }}" class="govuk-link govuk-back-link govuk-!-margin-bottom-8">Back to ticket template</a>
+  </div>
+
+  <h2 class="govuk-heading-m">Details</h2>
+
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">ID</dt>
+      <dd class="govuk-summary-list__value">{{ object.pk }}</dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Title</dt>
+      <dd class="govuk-summary-list__value">{{ object.title }}</dd>
+      <dd class="govuk-summary-list__actions">
+        <a class="govuk-link" href="{{ object.get_url(action='edit') }}">Change<span class="govuk-visually-hidden"> title</span></a>
+      </dd>
+    </div>
+
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Description</dt>
+      <dd class="govuk-summary-list__value">{{ object.description }}</dd>
+      <dd class="govuk-summary-list__actions">
+        <a class="govuk-link" href="{{ object.get_url(action='edit') }}">Change<span class="govuk-visually-hidden"> description</span></a>
+      </dd>
+    </div>
+
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Automation</dt>
+      <dd class="govuk-summary-list__value">{{ object.get_automation_class_name_display() or "None" }}</dd>
+      <dd class="govuk-summary-list__actions">
+        <a
+          class="govuk-link"
+          href="{{ object.get_url(action='edit') }}"
+        >Change<span class="govuk-visually-hidden"> task automation</span></a>
+      </dd>
+  </dl>
+{% endblock %}

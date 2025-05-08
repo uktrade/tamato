@@ -3,7 +3,6 @@ import re
 from datetime import date
 from functools import cached_property
 from itertools import chain
-from typing import Tuple
 
 import boto3
 import django_filters
@@ -389,9 +388,11 @@ class EditWorkbasketView(PermissionRequiredMixin, TemplateView):
 
 
 @method_decorator(require_current_workbasket, name="dispatch")
-class CurrentWorkBasket(FormView):
+class CurrentWorkBasket(SortingMixin, FormView):
     template_name = "workbaskets/summary-workbasket.jinja"
     form_class = forms.WorkBasketCommentCreateForm
+    sort_by_fields = ["comments"]
+    custom_sorting = {"comments": "created_at"}
 
     @property
     def workbasket(self) -> WorkBasket:
@@ -408,18 +409,18 @@ class CurrentWorkBasket(FormView):
     def paginator(self):
         return Paginator(self.comments, per_page=20)
 
-    def get_comments_ordering(self) -> Tuple[str, str]:
-        """Returns the ordering for `self.comments` based on `ordered` GET param
-        together with the title to use for the sort by filter (which will be the
-        opposite of the applied ordering)."""
-        ordered = self.request.GET.get("ordered")
-        if ordered == "desc":
+    def get_comments_ordering(self) -> tuple[str, str]:
+        """Reverses the ordering value returned by `super().get_ordering()` to
+        list newest comments first by default and includes a custom label to use
+        as the sorting anchor's title."""
+        ordering = super().get_ordering()
+        if ordering and ordering.startswith("-"):
             ordering = "created_at"
-            new_sort_by_title = "Newest first"
+            sort_by_label = "Newest first"
         else:
             ordering = "-created_at"
-            new_sort_by_title = "Oldest first"
-        return ordering, new_sort_by_title
+            sort_by_label = "Oldest first"
+        return ordering, sort_by_label
 
     def form_valid(self, form):
         form.save(user=self.request.user, workbasket=self.workbasket)
@@ -482,7 +483,7 @@ class CurrentWorkBasket(FormView):
                 "can_add_comment": can_add_comment,
                 "can_view_comment": can_view_comment,
                 "comments": page.object_list,
-                "sort_by_title": self.get_comments_ordering()[1],
+                "sort_by_label": self.get_comments_ordering()[1],
                 "paginator": self.paginator,
                 "page_obj": page,
                 "page_links": page_links,
@@ -1757,7 +1758,6 @@ class WorkBasketUnassignUsersView(PermissionRequiredMixin, FormView):
         )
         return kwargs
 
-    @atomic
     def form_valid(self, form):
         form.unassign_users()
         return redirect(self.get_success_url())
