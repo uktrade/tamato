@@ -12,6 +12,12 @@
 {% set assign_user_link = url("workflow:task-ui-assign-user", kwargs={"pk": object.pk}) %}
 {% set unassign_user_link = url("workflow:task-ui-unassign-user", kwargs={"pk": object.pk}) %}
 
+{% if not current_assignee %}
+  {%- set change_assignee_link = assign_user_link %}
+{% else %}
+  {%- set change_assignee_link = unassign_user_link %}
+{% endif %}
+
 
 {% block breadcrumb %}
   {% if ticket_number %}
