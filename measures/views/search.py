@@ -6,6 +6,7 @@ from django.utils.functional import cached_property
 from django.views.generic.edit import FormView
 from django_filters.views import FilterView
 from rest_framework.reverse import reverse
+from rest_framework.reverse import reverse_lazy
 
 from additional_codes.models import AdditionalCode
 from certificates.models import Certificate
@@ -62,12 +63,16 @@ class MeasureList(
     }
 
     def dispatch(self, *args, **kwargs):
-        if not self.request.GET:
+        if not self.request.GET and not self.request.session.get("filtered_measures"):
             return HttpResponseRedirect(reverse("measure-ui-search"))
         return super().dispatch(*args, **kwargs)
 
     def get_queryset(self):
         queryset = super().get_queryset()
+
+        if self.request.session.get("filtered_measures"):
+            measure_sids = self.request.session.get("filtered_measures")
+            queryset = queryset.filter(sid__in=measure_sids)
 
         ordering = self.get_ordering()
 
@@ -224,9 +229,15 @@ class MeasureList(
         # we can reduce load time
         page = self.paginator.get_page(self.request.GET.get("page", 1))
         context = {}
+        measures_subset = []
+        if self.request.session.get("filtered_measures"):
+            measures_subset = models.Measure.objects.filter(
+                sid__in=self.request.session.get("filtered_measures"),
+            )
         context.update(
             {
                 "filter": kwargs["filter"],
+                "measures_subset": measures_subset,
                 "form": self.get_form(),
                 "view": self,
                 "is_paginated": True,
@@ -267,6 +278,10 @@ class MeasureList(
     def form_valid(self, form):
         if form.data["form-action"] == "remove-selected":
             url = reverse("measure-ui-delete-multiple")
+        elif form.data["form-action"] == "clear-measures":
+            del self.request.session["filtered_measures"]
+            params = urlencode(self.request.GET)
+            url = reverse("measure-ui-list") + "?" + params
         elif form.data["form-action"] == "edit-selected":
             url = reverse("measure-ui-edit-multiple")
         elif form.data["form-action"] == "persist-selection":
@@ -344,10 +359,13 @@ class MeasureConditionsList(
         )
 
     def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         # References to page or pagination in the template were heavily increasing load time. By setting everything we need in the context,
         # we can reduce load time
         page = self.paginator.get_page(self.request.GET.get("page", 1))
-        context = {}
+        measures = set(
+            self.filterset.qs.values_list("dependent_measure__sid", flat=True),
+        )
         context.update(
             {
                 "filter": kwargs["filter"],
@@ -367,15 +385,26 @@ class MeasureConditionsList(
                     page.paginator.num_pages,
                 ),
                 "workbasket": self.workbasket,
+                "measures": measures,
+                "base_url": f'{reverse("measure-conditions-list")}?{urlencode(self.cleaned_query_params())}',
+                "query_params": True,
             },
         )
+
         if context["has_previous_page"]:
             context["prev_page_number"] = page.previous_page_number()
         if context["has_next_page"]:
             context["next_page_number"] = page.next_page_number()
 
-        context["query_params"] = True
-        context["base_url"] = (
-            f'{reverse("measure-conditions-list")}?{urlencode(self.cleaned_query_params())}'
-        )
         return context
+
+    def post(self, *args, **kwargs):
+        data = self.request.POST
+        filterset_class = self.get_filterset_class()
+        self.filterset = self.get_filterset(filterset_class)
+        if data.get("form-action") == "filter-measures":
+            measure_sids = list(
+                set(self.filterset.qs.values_list("dependent_measure__sid", flat=True)),
+            )
+            self.request.session["filtered_measures"] = measure_sids
+        return HttpResponseRedirect(reverse_lazy("measure-ui-list"))

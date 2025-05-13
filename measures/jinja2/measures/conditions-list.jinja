@@ -20,6 +20,11 @@
       </form>
     </div>
 
+    <form method="post" action="">
+      {{ csrf_input }}
+      <button class="govuk-link fake-link" name="form-action" value="filter-measures">Filter measures linked to these measure conditions</button>
+    </form>
+
     <div class="govuk-!-margin-top-3">
       {% if results_count > 0 %}
 

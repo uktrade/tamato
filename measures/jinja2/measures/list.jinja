@@ -20,6 +20,20 @@
       </form>
     </div>
 
+    {% if measures_subset %}
+    <details class="govuk-details govuk-!-margin-bottom-5" data-module="govuk-details">
+      <summary class="govuk-details__summary">You are currently filtering the following subset of {{ measures_subset.count() }} measures:</summary>
+      <ul>
+        {%- for measure in measures_subset %}
+        <li><a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a></li>
+        {% endfor %}
+      </ul>
+    </details>
+    <form method="post" action="">
+      {{ csrf_input }}
+      <button class="govuk-button govuk-button--secondary" name="form-action" value="clear-measures">Clear filter</button>
+    </form>
+    {% endif %}
 
     <div class="govuk-!-margin-top-3">
       {% if results_count > 0 %}
