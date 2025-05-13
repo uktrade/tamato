@@ -208,7 +208,6 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
             task = Task.objects.create(
                 title=task_template.title,
                 description=task_template.description,
-                category=task_template.category,
                 creator=creator,
             )
             TaskItem.objects.create(

@@ -138,12 +138,6 @@ class TaskBase(TimestampedMixin):
 
     title = models.CharField(max_length=255)
     description = models.TextField()
-    category = models.ForeignKey(
-        "Category",
-        blank=True,
-        null=True,
-        on_delete=models.PROTECT,
-    )
 
 
 class Task(TaskBase):
@@ -247,20 +241,6 @@ class Task(TaskBase):
             return reverse("workflow:task-ui-detail", kwargs={"pk": self.pk})
 
         return "#NOT-IMPLEMENTED"
-
-
-class Category(models.Model):
-    name = models.CharField(
-        max_length=255,
-        unique=True,
-    )
-
-    class Meta:
-        ordering = ["name"]
-        verbose_name_plural = "categories"
-
-    def __str__(self):
-        return self.name
 
 
 class TaskAssigneeManager(WithSignalManagerMixin, models.Manager):

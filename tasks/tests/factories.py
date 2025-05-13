@@ -2,7 +2,6 @@ import factory
 from factory import SubFactory
 from factory.django import DjangoModelFactory
 
-from common.tests.factories import CategoryFactory
 from common.tests.factories import TaskFactory
 from common.tests.factories import UserFactory
 from tasks.models import TaskItem
@@ -28,7 +27,6 @@ class TaskTemplateFactory(DjangoModelFactory):
 
     title = factory.Faker("sentence")
     description = factory.Faker("sentence")
-    category = factory.SubFactory(CategoryFactory)
 
     class Meta:
         model = TaskTemplate
