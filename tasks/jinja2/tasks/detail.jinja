@@ -64,7 +64,15 @@
   <div class="govuk-grid-column-full">
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-three-quarters">
-        <p class="govuk-body">{{ object.description }}</p>
+        <p class="govuk-body govuk-!-padding-bottom-4">{{ object.description }}</p>
+
+      {% if object.has_automation %}
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-full">
+          {{ object.automation.rendered_state() | safe }}
+          </div>
+        </div>
+      {% endif %}
       </div>
     <div class="govuk-grid-column-one-quarter">
       <dl class="govuk-summary-list govuk-summary-list--no-border">
@@ -78,14 +86,14 @@
 </div>
 
 
-{% if object.has_automation %}
+{# {% if object.has_automation %}
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       {{ object.automation.rendered_state() | safe }}
     </div>
   </div>
-{% endif %}
+{% endif %} #}
 
 <script nonce="{{ request.csp_nonce }}">
   const CSRF_TOKEN = "{{ csrf_token }}";
