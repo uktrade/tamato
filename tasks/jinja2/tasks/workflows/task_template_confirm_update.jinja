@@ -1,0 +1,52 @@
+{% extends "layouts/confirm.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Step template updated" %}
+
+{% set step_template_url = object.get_url("detail") %}
+{% set ticket_template_url = task_workflow_template.get_url("detail") %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {
+        "text": "Ticket template: " ~ task_workflow_template.title,
+        "href": ticket_template_url,
+      },
+      {
+        "text": "Step template: " ~ object.title,
+        "href": step_template_url,
+      },
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": "Step template: " ~ object.title,
+    "text": "Step template has been updated",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block button_group %}
+  {{ govukButton({
+    "text": "View step template",
+    "href": step_template_url,
+  }) }}
+  {{ govukButton({
+    "text": "Return to ticket template",
+    "href": ticket_template_url,
+    "classes": "govuk-button--secondary"
+  }) }}
+{% endblock %}
+
+{% block actions %}
+  <li><a href="{{ task_workflow_template.get_url("list") }}" class="govuk-link">View all ticket templates</a></li>
+{% endblock %}

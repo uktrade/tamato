@@ -1,9 +1,31 @@
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import UserManager
 from django.db import models
+
+
+class UserQuerySet(models.QuerySet):
+    def active_tms(self) -> models.QuerySet | list["User"]:
+        """Return a QuerySet of active users that may take the tariff manager
+        role."""
+        return (
+            self.filter(
+                models.Q(groups__name__in=["Tariff Managers", "Tariff Lead Profile"])
+                | models.Q(is_superuser=True),
+            )
+            .filter(is_active=True)
+            .distinct()
+            .order_by("first_name", "last_name")
+        )
+
+
+class TamatoUserManager(UserManager.from_queryset(UserQuerySet)):
+    use_in_migrations = True
 
 
 class User(AbstractUser):
     """Custom user model."""
+
+    objects = TamatoUserManager()
 
     current_workbasket = models.ForeignKey(
         "workbaskets.WorkBasket",

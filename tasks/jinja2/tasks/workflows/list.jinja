@@ -1,0 +1,82 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+{% from "tasks/macros/display_details.jinja" import display_status %}
+{% from "tasks/macros/display_details.jinja" import display_assignees %}
+
+{% set page_title = "View all tickets" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <p class="govuk-body">
+    Search for tickets. Alternatively,
+    <a class="govuk-link" href="{{ url('workflow:task-workflow-ui-create') }}">create a new ticket</a>
+  </p>
+
+  <div class="filter-layout">
+    <div class="filter-layout__filters">
+      <h2 class="govuk-heading-m govuk-!-margin-top-3">Search and filter</h2>
+
+      <form method="get" action="{{ url("workflow:task-workflow-ui-list") }}">
+          {{ crispy(filter.form) }}
+      </form>
+    </div>
+
+    <div class="filter-layout__content">
+      {% set items_name = "ticket" %}
+      {% if paginator.count > 0 %}
+        {% include "includes/common/pagination-list-summary.jinja" %}
+      {% endif %}
+
+      {% if object_list %}
+        {% set table_rows = [] %}
+
+        {% for object in object_list %}
+          {%- set task_linked_id -%}
+            <a
+              class="govuk-link"
+              href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk':  object.taskworkflow.pk}) }}"
+            >{{ object.taskworkflow.prefixed_id }}</a>
+          {%- endset -%}
+
+          {{ table_rows.append([
+            {"html": task_linked_id},
+            {"text": object.title},
+            {"html": display_assignees(object.assignees.assigned())},
+            {"text": "{:%d %b %Y}".format(object.taskworkflow.eif_date) if object.taskworkflow.eif_date else "-"},
+            {"text": display_status(object.get_progress_state_display())},
+          ]) or "" }}
+        {% endfor %}
+
+        {{ govukTable({
+          "head": [
+            {"text": create_sortable_anchor(request, "ID", sorting_urls["taskworkflow__id"]), "classes": "govuk-!-padding-left-4"},
+            {"text": "Ticket name"},
+            {"text": create_sortable_anchor(request, "Assignee", sorting_urls["assigned_user"])},
+            {"text": create_sortable_anchor(request, "Entry into force date", sorting_urls["taskworkflow__eif_date"])},
+            {"text": "Status", "classes": "govuk-!-padding-right-5"},
+          ],
+            "rows": table_rows
+          }) }}
+      {% else %}
+        <p class="govuk-body">There are no results for your search, please:</p>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>check the spelling of your keywords</li>
+          <li>use more general keywords</li>
+          <li>select or deselect different filters</li>
+        </ul>
+      {% endif %}
+
+      {% include "includes/common/pagination.jinja" %}
+    </div>
+  </div>
+{% endblock %}

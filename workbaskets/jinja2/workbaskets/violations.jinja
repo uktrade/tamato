@@ -33,18 +33,16 @@
     ]) or "" }}
 {% endfor %}
 
-{% set base_url = url('workbaskets:workbasket-ui-violations' ) %}
-
 {% set item %}
-  {{ create_sortable_anchor(request, "model", "Item", base_url) }}
+  {{ create_sortable_anchor(request, "Item", sorting_urls["model"]) }}
 {% endset %}
 
 {% set violation %}
-  {{ create_sortable_anchor(request, "check_name", "Violation", base_url) }}
+  {{ create_sortable_anchor(request, "Violation", sorting_urls["check_name"]) }}
 {% endset %}
 
 {% set activity_date %}
-  {{ create_sortable_anchor(request, "date", "Activity date", base_url) }}
+  {{ create_sortable_anchor(request, "Activity date", sorting_urls["date"]) }}
 {% endset %}
 
 {{ govukTable({

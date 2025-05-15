@@ -1,0 +1,50 @@
+{% extends "common/delete.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
+
+
+{% block breadcrumb %}
+  {% if ticket_number %}
+    {{ breadcrumbs(request, [
+      {"text": "Ticket " ~ object.taskitem.workflow.prefixed_id, "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': object.taskitem.workflow.pk})},
+      {"text": "Step: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk}) },
+      {"text": "Delete step: " ~ object.title},
+    ],
+    with_workbasket=False,
+  ) }}
+  {% else %}
+    {{ breadcrumbs(request, [
+      {"text": "Step: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk}) },
+      {"text": "Delete step: " ~ object.title},
+    ],
+    with_workbasket=False,
+  ) }}
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-!-width-two-thirds">
+  <h1 class="govuk-heading-xl">Delete {{ verbose_name }}: {{ object.title }}</h1>
+  {% if page_label %}
+    <div class="govuk-hint"> {{ page_label }}</div>
+  {% endif %}
+  {% block form %}
+    {{ govukWarningText({
+    "text": "Are you sure you want to delete this " ~ verbose_name ~ "?"
+  }) }}
+
+  {% if not object.parent_task %}
+    {% set url_name = "workflow:task-ui-delete" %}
+  {% else %}
+    {% set url_name = "workflow:subtask-ui-delete" %}
+  {% endif %}
+  
+  {% call django_form(action=url(url_name, kwargs={"pk": object.pk})) %}
+    {{ crispy(form) }}
+  {% endcall %}
+
+  {% endblock %}
+</div>
+{% endblock %}
