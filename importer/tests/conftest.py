@@ -1,6 +1,7 @@
 import os
 import shutil
 import xml.etree.ElementTree as et
+from collections.abc import Generator
 from pathlib import Path
 from typing import Sequence
 from typing import Type
@@ -34,7 +35,7 @@ def get_project_root():
 
 
 @pytest.fixture
-def object_nursery() -> TariffObjectNursery:
+def object_nursery() -> Generator[TariffObjectNursery, None, None]:
     nursery = get_nursery()
     yield nursery
     nursery.cache.clear()
@@ -341,3 +342,10 @@ def get_command_help_text(capsys, command, command_class=BaseCommand):
     captured = capsys.readouterr()
     command_class().print_help(command, "")
     return captured.out
+
+
+@pytest.fixture
+def test_files_path():
+    return os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "test_files"),
+    )

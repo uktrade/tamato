@@ -1,0 +1,33 @@
+/*
+  Styling for task automation UI components.
+*/
+
+.automation {
+    padding: 20px;
+    border: 3px solid;
+}
+.automation.state-can-run {
+    padding: 0;
+    border: 0;
+}
+.automation.state-running {
+    border-color: #b1b4b6;
+}
+.automation.state-done {
+    border-color: #00703c;
+    h3 {
+        color: #00703c;
+    }
+}
+.automation.state-errored {
+    border-color: #d4351c;
+    h3 {
+        color: #d4351c;
+    }
+}
+.automation *:first-child {
+    margin-top: 0;
+}
+.automation *:last-child {
+    margin-bottom: 0;
+}
