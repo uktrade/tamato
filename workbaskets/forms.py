@@ -431,6 +431,9 @@ class WorkBasketCommentDeleteForm(forms.ModelForm):
 class AutomationCreateWorkBasketForm(forms.Form):
     """Form for creating workbaskets via CreateWorkBasketAutomation."""
 
+    automation: CreateWorkBasketAutomation
+    """Automation instance that this form helps to execute."""
+
     def __init__(self, *args, **kwargs):
         self.automation: CreateWorkBasketAutomation = kwargs.pop("automation")
 
@@ -442,7 +445,7 @@ class AutomationCreateWorkBasketForm(forms.Form):
         self.helper.layout = Layout(
             Submit(
                 "submit",
-                "Run",
+                "Create",
                 data_module="govuk-button",
                 data_prevent_double_click="true",
             ),

@@ -1,0 +1,33 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+
+{% set page_title = "Import TARIC file" %}
+
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {
+        "text": "Ticket " ~ ticket_prefixed_id,
+        "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_id}),
+      },
+      {
+        "text": step_title,
+        "href": url('workflow:task-ui-detail', kwargs={'pk': step_id}),
+      },
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds govuk-!-padding-right-9">
+      <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+      {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
+    </div>
+  </div>
+{% endblock %}
