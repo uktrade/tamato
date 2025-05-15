@@ -15,7 +15,7 @@ from workbaskets.serializers import WorkBasketSerializer
 class WorkBasketViewSet(viewsets.ModelViewSet):
     """API endpoint that allows workbaskets to be viewed and edited."""
 
-    queryset = WorkBasket.objects.prefetch_related("transactions")
+    queryset = WorkBasket.objects.all()
     filterset_fields = ("status",)
     serializer_class = WorkBasketSerializer
     renderer_classes = [
@@ -29,10 +29,24 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
     ]
     search_fields = ["title"]
 
-    def get_template_names(self, *args, **kwargs):
-        if self.detail:
-            return ["workbaskets/taric/workbasket_detail.xml"]
-        return ["workbaskets/taric/workbasket_list.xml"]
+    # TODO: Required? Delete?
+    # def get_template_names(self, *args, **kwargs):
+    #    if self.detail:
+    #        return ["workbaskets/taric/workbasket_detail.xml"]
+    #    elif self.list:
+    #        return ["workbaskets/taric/workbasket_list.xml"]
+    #    else:
+    #        return super().get_template_names(*args, **kwargs)
+    #
+    # Is this method actually ever used? If it is, then should that
+    # implementation ^ actually inspect the `action` attr? Like so:
+    # def get_template_name(self, *args, **kwargs):
+    #    if self.action == 'detail':
+    #        return ["workbaskets/taric/workbasket_detail.xml"]
+    #    elif self.action == 'list':
+    #        return ["workbaskets/taric/workbasket_list.xml"]
+    #    else:
+    #        return super().get_template_names(*args, **kwargs)
 
     @action(
         detail=False,

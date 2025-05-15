@@ -30,6 +30,9 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_SERIALIZER_FORMAT = "json"
+
+
 class TARIC3DateRangeField(DateRangeField):
     child = serializers.DateField(
         input_formats=[
@@ -52,20 +55,29 @@ class TrackedModelSerializerMixin(FlexFieldsModelSerializer):
         """
         Find the format of the request.
 
-        This first checks the immediate serializer context, if not found it
-        checks the request for query params. If that fails it checks the Accept
-        header to see if any of the `self.formats_with_template` are within the
-        header.
+        If no request object is included in context, then "json" is returned.
+
+        If a request object is present in context, then this function checks
+        immediate serializer context, if not found it checks the request for
+        query params. If that fails it checks the Accept header to see if any of
+        the `self.formats_with_template` are within the header.
         """
+
         if self.context.get("format"):
             return self.context["format"]
 
-        if self.context["request"].query_params.get("format"):
-            return self.context["request"].query_params.get("format")
+        request = self.context.get("request")
+        if not request:
+            return DEFAULT_SERIALIZER_FORMAT
+
+        if request and request.query_params.get("format"):
+            return request.query_params.get("format")
 
         for data_format in self.formats_with_template:
-            if data_format in self.context["request"].accepted_media_type.lower():
+            if data_format in request.accepted_media_type.lower():
                 return data_format
+
+        return DEFAULT_SERIALIZER_FORMAT
 
     def to_representation(self, *args, **kwargs):
         """
