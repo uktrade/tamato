@@ -1,6 +1,5 @@
 import pytest
 
-from common.tests.factories import CategoryFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
@@ -29,11 +28,6 @@ def done_task():
 @pytest.fixture()
 def subtask():
     return SubTaskFactory.create()
-
-
-@pytest.fixture()
-def category():
-    return CategoryFactory.create()
 
 
 @pytest.fixture()

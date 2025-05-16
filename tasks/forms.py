@@ -47,7 +47,6 @@ class TaskCreateForm(ModelForm):
         fields = [
             "title",
             "description",
-            "category",
             "workbasket",
         ]
 
@@ -86,7 +85,6 @@ class TaskCreateForm(ModelForm):
         self.helper.layout = Layout(
             "title",
             "description",
-            "category",
             "workbasket",
             Submit(
                 "submit",

@@ -61,7 +61,6 @@ def test_create_task_workflow_from_task_workflow_template(
     for task_template, task in zipped_objs:
         assert task_template.title == task.title
         assert task_template.description == task.description
-        assert task_template.category == task.category
 
 
 def test_delete_task_item_template():

@@ -1,8 +1,6 @@
 import pytest
 from django.conf import settings
-from django.db.utils import IntegrityError
 
-from common.tests.factories import CategoryFactory
 from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskFactory
 from common.tests.factories import UserFactory
@@ -13,13 +11,6 @@ from tasks.models import TaskLog
 from tasks.tests.factories import TaskWorkflowFactory
 
 pytestmark = pytest.mark.django_db
-
-
-def test_task_category_uniqueness():
-    name = "Most favoured nation"
-    CategoryFactory.create(name=name)
-    with pytest.raises(IntegrityError):
-        CategoryFactory.create(name=name)
 
 
 def test_task_assignee_unassign_user_classmethod(task_assignee):

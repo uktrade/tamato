@@ -6,7 +6,6 @@ from tasks.models.logs import TaskLog
 from tasks.models.queue import Queue
 from tasks.models.queue import QueueItem
 from tasks.models.queue import RequiredFieldError
-from tasks.models.task import Category
 from tasks.models.task import Comment
 from tasks.models.task import ProgressState
 from tasks.models.task import Task
@@ -28,7 +27,6 @@ __all__ = [
     "QueueItem",
     "RequiredFieldError",
     # tasks.models.task
-    "Category",
     "Comment",
     "ProgressState",
     "Task",
