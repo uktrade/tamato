@@ -686,7 +686,7 @@ CELERY_ROUTES = {
         "queue": "bulk-create",
     },
     re.compile(r"(reference_documents)\.tasks\..*"): {
-        "queue": "standard",
+        "queue": "report",
     },
 }
 
