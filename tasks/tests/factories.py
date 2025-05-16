@@ -51,6 +51,7 @@ class TaskWorkflowFactory(DjangoModelFactory):
         model = TaskWorkflow
 
     summary_task = SubFactory(TaskFactory)
+    creator_template = SubFactory(TaskWorkflowTemplateFactory)
 
 
 class TaskItemFactory(DjangoModelFactory):
