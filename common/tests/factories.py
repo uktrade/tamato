@@ -1558,7 +1558,6 @@ class TaskFactory(factory.django.DjangoModelFactory):
     description = factory.Faker("sentence")
     category = factory.SubFactory(CategoryFactory)
     progress_state = ProgressState.TO_DO
-    workbasket = factory.SubFactory(WorkBasketFactory)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:

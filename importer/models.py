@@ -441,9 +441,11 @@ class ImportGoodsAutomation(Automation):
             self.task.save()
 
     def set_workbasket(self, workbasket) -> None:
-        """Utility method to associate a workbasket with this automation's task
-        workflow."""
-        self.task.get_workflow().set_workbasket(workbasket)
+        """Utility method to associate (and save) a workbasket with the workflow
+        of this automation's task."""
+        workflow = self.task.get_workflow()
+        workflow.workbasket = workbasket
+        workflow.save()
 
     def _rendered_state_CAN_RUN(self) -> str:
         url = reverse(

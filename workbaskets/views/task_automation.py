@@ -55,7 +55,7 @@ class AutomationCreateWorkBasketView(PermissionRequiredMixin, FormView):
     def form_valid(self, form):
         automation = self.get_automation()
         automation.run_automation(user=self.request.user)
-        self.task.get_workflow().summary_task.workbasket.set_as_current(
+        self.task.get_workflow().workbasket.set_as_current(
             self.request.user,
         )
 

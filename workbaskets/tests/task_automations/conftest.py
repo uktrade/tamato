@@ -12,7 +12,7 @@ def create_workbasket_automation_state_is_CAN_RUN() -> CreateWorkBasketAutomatio
     """Return a CreateWorkBasketAutomation instance that is associated with a
     workflow but no workbasket."""
     task_item = TaskItemFactory.create(
-        workflow__summary_task__workbasket=None,
+        workflow__workbasket=None,
     )
     return CreateWorkBasketAutomationFactory.create(
         task=task_item.task,

@@ -953,7 +953,7 @@ class CreateWorkBasketAutomation(Automation):
             # The related task must be associated with a TaskWorkflow instance
             # in order to run this automation, otherwise it is in error.
             return StateChoices.ERRORED
-        if workflow.summary_task.workbasket:
+        if workflow.workbasket:
             return StateChoices.DONE
         else:
             return StateChoices.CAN_RUN
@@ -1018,19 +1018,19 @@ class CreateWorkBasketAutomation(Automation):
     def run_automation(self, user) -> None:
         """Create a workbasket, associate it with the automated step's workflow
         and set automated step's state to DONE."""
-        workflow = self.task.get_workflow()
 
-        workbasket = WorkBasket.objects.create(
+        workflow = self.task.get_workflow()
+        workflow.workbasket = WorkBasket.objects.create(
             title=f"{workflow.prefixed_id} - {workflow.title}",
             reason=f"{workflow.summary_task.description}",
             author=user,
         )
-        workflow.set_workbasket(workbasket)
+        workflow.save()
 
         with override_current_instigator(user):
             self.task.done()
             self.task.save()
 
         logger.info(
-            f"{self} created {workbasket} on {self.task.get_workflow()}",
+            f"{self} created {workflow.workbasket} on {self.task.get_workflow()}",
         )

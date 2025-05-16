@@ -41,6 +41,14 @@ class TaskWorkflow(Queue):
     )
     """'Entry into force' the due date on a tariff update."""
     policy_contact = models.CharField(max_length=40, blank=True, null=True)
+    """The name or other contact details of a member of polic staff."""
+    workbasket = models.OneToOneField(
+        "workbaskets.WorkBasket",
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+    )
+    """The associated workbasket, if any."""
 
     class Meta(Queue.Meta):
         abstract = False
@@ -71,12 +79,6 @@ class TaskWorkflow(Queue):
         return Task.objects.filter(taskitem__workflow=self).order_by(
             "taskitem__position",
         )
-
-    def set_workbasket(self, workbasket):
-        """Assign `workbasket` to this workflow's summary task and save the
-        summary task."""
-        self.summary_task.workbasket = workbasket
-        self.summary_task.save()
 
     def get_url(self, action: str = "detail"):
         if action == "detail":
