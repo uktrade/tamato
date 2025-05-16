@@ -4,10 +4,10 @@
 {% from "components/input/macro.njk" import govukInput %}
 {% from "components/table/macro.njk" import govukTable %}
 
-{% set form_url = "measure-ui-list" %}
-{% set list_include = "includes/measures/list.jinja" %}
+{% set form_url = "measure-conditions-list" %}
+{% set list_include = "includes/measures/conditions-list.jinja" %}
 
-{% set page_title = "Find and edit measures" %}
+{% set page_title = "Find and edit measure conditions" %}
 
 
 {% block content %}
@@ -20,20 +20,10 @@
       </form>
     </div>
 
-    {% if measures_subset %}
-    <details class="govuk-details govuk-!-margin-bottom-5" data-module="govuk-details">
-      <summary class="govuk-details__summary">You are currently filtering the following subset of {{ measures_subset.count() }} measures:</summary>
-      <ul>
-        {%- for measure in measures_subset %}
-        <li><a class="govuk-link govuk-!-font-weight-bold" href="{{ measure.get_url() }}">{{measure.sid}}</a></li>
-        {% endfor %}
-      </ul>
-    </details>
     <form method="post" action="">
       {{ csrf_input }}
-      <button class="govuk-button govuk-button--secondary" name="form-action" value="clear-measures">Clear filter</button>
+      <button class="govuk-link fake-link" name="form-action" value="filter-measures">Filter measures linked to these measure conditions</button>
     </form>
-    {% endif %}
 
     <div class="govuk-!-margin-top-3">
       {% if results_count > 0 %}
@@ -46,23 +36,9 @@
         <p class="govuk-body-l">
             {{ objects_count }} results
         </p>
-        <p class="govuk-body govuk-!-margin-top-2">
-          You are currently viewing {{ objects_count }} results for:
-        </p>
-        <div class="govuk-grid-row">
-          {% for list in selected_filter_lists %}
-              <div class="govuk-grid-column-one-half">
-                <ul class="govuk-list govuk-list--bullet">
-                  {% for item in list %}
-                    <li>{{item}}</li>
-                  {%endfor%}
-                </ul>
-              </div>
-          {%endfor%}
-        </div>
-
         <hr/>
       {% endif %}
+
       {% if results_count %}
         {% include list_include %}
       {% else %}
@@ -74,7 +50,7 @@
           <li>get help via our <a class="govuk-link" href="#">support and feedback form</a></li>
         </ul>
       {% endif %}
-      
+
       {% if has_other_pages %}
         {% set objects_count = '{0:,}'.format(results_count) %}
         {% set page_count = '{0:,}'.format(page_count) %}
@@ -85,7 +61,7 @@
 
         <nav class="pagination tamato-clearfix" role="navigation" aria-label="Pagination Navigation">
             <div class="govuk-body">
-                Showing {{ list_items_count }} of {{ objects_count }} measures
+                Showing {{ list_items_count }} of {{ objects_count }} measure conditions
             </div>
             <div class="govuk-body align-left">
                 Page {{page_number}} of {{ page_count }}

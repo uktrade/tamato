@@ -198,3 +198,30 @@ class MeasureUpdateFootnotesFormSet(FormSet):
 
 
 MeasureDeleteForm = delete_form_for(models.Measure)
+
+
+class MeasureConditionFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Div(
+                Div("sid", css_class="govuk-grid-column-one-third"),
+                Div("condition_code", css_class="govuk-grid-column-one-third"),
+                Div("action", css_class="govuk-grid-column-one-third"),
+                css_class="govuk-grid-row",
+            ),
+            Div(
+                Div("duty_amount", css_class="govuk-grid-column-one-third"),
+                Div("required_certificate", css_class="govuk-grid-column-one-third"),
+                css_class="govuk-grid-row",
+            ),
+            "workbasket",
+            Button(
+                "submit",
+                "Search and filter",
+                css_class="govuk-!-margin-top-6",
+            ),
+        )

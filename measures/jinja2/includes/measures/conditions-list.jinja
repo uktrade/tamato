@@ -1,0 +1,71 @@
+{% from "macros/checkbox_item.jinja" import checkbox_item %}
+{% from 'macros/create_link.jinja' import create_link %}
+{% from 'macros/footnotes_display.jinja' import footnotes_display %}
+{% from "includes/measures/conditions.jinja" import conditions_list %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+
+
+{# Sets out checking all checkbox #}
+{% set checkbox_check_all -%}
+<div id="check-all-checkbox"></div>
+{%- endset %}
+
+{% set sid %}
+  {{ create_sortable_anchor(request, "sid", "SID", base_url, query_params) }}
+{% endset %}
+
+{% set measure %}
+  {{ create_sortable_anchor(request, "measure", "Measure", base_url, query_params) }}
+{% endset %}
+
+{% set condition_code %}
+  {{ create_sortable_anchor(request, "condition_code", "Condition code", base_url, query_params) }}
+{% endset %}
+
+{% set action_code %}
+  {{ create_sortable_anchor(request, "action_code", "Action code", base_url, query_params) }}
+{% endset %}
+
+{% set certificate %}
+  {{ create_sortable_anchor(request, "certificate", "Certificate", base_url, query_params) }}
+{% endset %}
+
+{% set duty_sentence %}
+  {{ create_sortable_anchor(request, "duty_sentence", "Duty sentence", base_url, query_params) }}
+{% endset %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    {% set table_rows = [] %}
+    {% for obj in object_list %}
+      {% set obj_link -%}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.get_url() }}">{{obj.sid}}</a>
+      {%- endset %}
+      {% set measure_link -%}
+        <a class="govuk-link govuk-!-font-weight-bold" href="{{ obj.dependent_measure.get_url() }}">{{obj.dependent_measure.sid}}</a>
+      {%- endset %}
+      {{ table_rows.append([
+        {"html": obj_link},
+        {"html": measure_link},
+        {"text": obj.condition_code},
+        {"text": obj.action },
+        {"text": obj.required_certificate if obj.required_certificate else "—" },
+        {"text": obj.duty_sentence },
+      ]) or "" }} 
+    {% endfor %}
+      {{ govukTable({
+        "head": [
+          {"text": sid},
+          {"text": measure},
+          {"text": condition_code},
+          {"text": action_code},
+          {"text": certificate},
+          {"text": duty_sentence},
+        ],
+        "rows": table_rows,
+        "classes": "govuk-table-m"
+      }) }}
+  </div>
+</div>

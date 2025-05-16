@@ -9,6 +9,18 @@ from measures.conditions import measure_edit_condition_dict
 api_router = routers.DefaultRouter()
 api_router.register(r"measure_types", views.MeasureTypeViewSet, basename="measuretype")
 
+api_router.register(
+    r"measure_condition_code",
+    views.MeasureConditionCodeViewSet,
+    basename="measureconditioncode",
+)
+
+api_router.register(
+    r"measure_action",
+    views.MeasureActionViewSet,
+    basename="measureaction",
+)
+
 detail = "<sid:sid>"
 ui_patterns = [
     *get_ui_paths(views, detail),
@@ -16,6 +28,16 @@ ui_patterns = [
         "search/",
         views.MeasureSearch.as_view(),
         name="measure-ui-search",
+    ),
+    path(
+        "conditions-search/",
+        views.MeasureConditionsSearch.as_view(),
+        name="measure-conditions-search",
+    ),
+    path(
+        "conditions-list/",
+        views.MeasureConditionsList.as_view(),
+        name="measure-conditions-list",
     ),
     path(
         "create/",

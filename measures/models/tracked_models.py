@@ -368,6 +368,10 @@ class MeasureConditionCode(TrackedModel, ValidityMixin):
     class Meta:
         ordering = ["code"]
 
+    @property
+    def autocomplete_label(self):
+        return f"{self.code} - {self.description}"
+
     def __str__(self):
         return f"{self.code} - {self.description}"
 
@@ -412,6 +416,10 @@ class MeasureAction(TrackedModel, ValidityMixin):
 
     class Meta:
         ordering = ["code"]
+
+    @property
+    def autocomplete_label(self):
+        return f"{self.code} - {self.description}"
 
     def __str__(self):
         return f"{self.code} - {self.description}"
