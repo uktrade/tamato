@@ -191,3 +191,22 @@
   padding-bottom: govuk-spacing(2);
   margin: 0;
 }
+
+.govuk-summary-list__actions__inline {
+  @extend .govuk-summary-list__actions;
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+.govuk-summary-list__key-and-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%
+}
+
+
+
+
+
