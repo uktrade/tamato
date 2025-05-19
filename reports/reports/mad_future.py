@@ -5,11 +5,14 @@ from reports.reports.base_text import ReportBaseText
 
 class Report(ReportBaseText):
     name = "Measures as defined"
-    description = "Measures as defined, including future measures"
+    description = (
+        "Measures as defined, including future measures. "
+        "<br>The report is too large to display: use 'Export to csv' to download it."
+    )
     download_csv = True
 
     def text(self):
-        return f"Report correct up to {get_report_timestamp_str()}"
+        return get_report_timestamp_str()
 
     def headers(self) -> [dict]:
         return [

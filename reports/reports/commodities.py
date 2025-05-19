@@ -5,11 +5,13 @@ from reports.reports.base_text import ReportBaseText
 
 class Report(ReportBaseText):
     name = "Commodities"
-    description = "Commodities tree"
+    description = (
+        "The report is too large to display. Use 'Export to csv' to download it."
+    )
     download_csv = True
 
     def text(self):
-        return f"Report correct up to {get_report_timestamp_str()}"
+        return get_report_timestamp_str()
 
     def headers(self) -> [dict]:
         return [
