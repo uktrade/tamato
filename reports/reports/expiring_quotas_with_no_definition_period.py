@@ -8,6 +8,8 @@ from quotas.models import QuotaDefinition
 from quotas.models import QuotaOrderNumber
 from quotas.models import QuotaSuspension
 from reports.reports.base_table import ReportBaseTable
+from reports.reports.quota_utils import link_renderer_for_quota_origin
+from reports.reports.quota_utils import link_renderer_for_quotas
 
 
 class Report(ReportBaseTable):
@@ -32,11 +34,11 @@ class Report(ReportBaseTable):
 
     def row(self, row) -> [dict]:
         return [
-            {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
+            {"text": link_renderer_for_quotas(row.order_number, row.order_number)},
             {"text": row.valid_between.lower},
             {"text": row.valid_between.upper},
             {
-                "text": self.link_renderer_for_quota_origin(origin)
+                "text": link_renderer_for_quota_origin(origin)
                 for origin in row.order_number.origins.all()
             },
         ]
@@ -114,13 +116,13 @@ class Report(ReportBaseTable):
         for sub_quotas in row.sub_quotas.all():
             sub_quotas_array.append(
                 {
-                    "text": self.link_renderer_for_quotas(
+                    "text": link_renderer_for_quotas(
                         row.order_number,
                         row.order_number,
                     ),
                 },
                 {
-                    "text": self.link_renderer_for_quotas(
+                    "text": link_renderer_for_quotas(
                         row.order_number,
                         sub_quotas.sid,
                         "#sub-quotas",
@@ -129,14 +131,14 @@ class Report(ReportBaseTable):
                 {"text": sub_quotas.valid_between.lower},
                 {"text": sub_quotas.valid_between.upper},
                 {
-                    "text": self.link_renderer_for_quotas(
+                    "text": link_renderer_for_quotas(
                         row.order_number,
                         row.sid,
                         "#definition-details",
                     ),
                 },
                 {
-                    "text": self.link_renderer_for_quota_origin(origin)
+                    "text": link_renderer_for_quota_origin(origin)
                     for origin in row.order_number.origins.all()
                 },
             )
@@ -187,9 +189,9 @@ class Report(ReportBaseTable):
 
     def row3(self, row) -> [dict]:
         return [
-            {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
+            {"text": link_renderer_for_quotas(row.order_number, row.order_number)},
             {
-                "text": self.link_renderer_for_quotas(
+                "text": link_renderer_for_quotas(
                     row.order_number,
                     blocking.sid,
                     "#blocking-periods",
@@ -205,14 +207,14 @@ class Report(ReportBaseTable):
                 for blocking in row.quotablocking_set.all()
             },
             {
-                "text": self.link_renderer_for_quotas(
+                "text": link_renderer_for_quotas(
                     row.order_number,
                     row.sid,
                     "#definition-details",
                 ),
             },
             {
-                "text": self.link_renderer_for_quota_origin(origin)
+                "text": link_renderer_for_quota_origin(origin)
                 for origin in row.order_number.origins.all()
             },
         ]
@@ -266,9 +268,9 @@ class Report(ReportBaseTable):
 
     def row4(self, row) -> [dict]:
         return [
-            {"text": self.link_renderer_for_quotas(row.order_number, row.order_number)},
+            {"text": link_renderer_for_quotas(row.order_number, row.order_number)},
             {
-                "text": self.link_renderer_for_quotas(
+                "text": link_renderer_for_quotas(
                     row.order_number,
                     suspension.sid,
                     "#blocking-periods",
@@ -284,14 +286,14 @@ class Report(ReportBaseTable):
                 for suspension in row.quotasuspension_set.all()
             },
             {
-                "text": self.link_renderer_for_quotas(
+                "text": link_renderer_for_quotas(
                     row.order_number,
                     row.sid,
                     "#definition-details",
                 ),
             },
             {
-                "text": self.link_renderer_for_quota_origin(origin)
+                "text": link_renderer_for_quota_origin(origin)
                 for origin in row.order_number.origins.all()
             },
         ]
