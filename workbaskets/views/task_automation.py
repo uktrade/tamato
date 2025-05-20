@@ -47,7 +47,7 @@ class AutomationCreateWorkBasketView(PermissionRequiredMixin, FormView):
         context["ticket_id"] = workflow.id
         context["step_title"] = f"Step: {self.task.title}"
         context["step_id"] = self.task.id
-        context["page_title"] = "Run automation"
+        context["page_title"] = "Create a workbasket"
 
         return context
 
@@ -55,7 +55,7 @@ class AutomationCreateWorkBasketView(PermissionRequiredMixin, FormView):
     def form_valid(self, form):
         automation = self.get_automation()
         automation.run_automation(user=self.request.user)
-        self.task.get_workflow().summary_task.workbasket.set_as_current(
+        self.task.get_workflow().workbasket.set_as_current(
             self.request.user,
         )
 

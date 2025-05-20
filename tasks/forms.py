@@ -47,7 +47,6 @@ class TaskCreateForm(ModelForm):
         fields = [
             "title",
             "description",
-            "category",
             "workbasket",
         ]
 
@@ -86,7 +85,6 @@ class TaskCreateForm(ModelForm):
         self.helper.layout = Layout(
             "title",
             "description",
-            "category",
             "workbasket",
             Submit(
                 "submit",
@@ -512,6 +510,8 @@ class TaskTemplateFormBase(ModelForm):
 
     def __init__(self, *args, submit_title, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["automation_class_name"].label = "Automation"
 
         self.helper = FormHelper(self)
         self.helper.label_size = Size.SMALL

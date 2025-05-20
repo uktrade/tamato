@@ -1,3 +1,4 @@
+from django.urls import include
 from django.urls import path
 
 from importer import views
@@ -63,4 +64,15 @@ commodity_importer_urlpatterns = [
     ),
 ]
 
-urlpatterns = general_importer_urlpatterns + commodity_importer_urlpatterns
+automation_ui_patterns = [
+    path(
+        "<pk>/create/",
+        views.AutomationCommodityImportCreateView.as_view(),
+        name="comodity-importer-automation-ui-create",
+    ),
+]
+
+urlpatterns = [
+    path("", include(general_importer_urlpatterns + commodity_importer_urlpatterns)),
+    path("importer-automation/", include(automation_ui_patterns)),
+]
