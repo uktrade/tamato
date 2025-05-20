@@ -85,15 +85,6 @@
 </div>
 
 
-{# {% if object.has_automation %}
-
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
-      {{ object.automation.rendered_state() | safe }}
-    </div>
-  </div>
-{% endif %} #}
-
 <script nonce="{{ request.csp_nonce }}">
   const CSRF_TOKEN = "{{ csrf_token }}";
 
