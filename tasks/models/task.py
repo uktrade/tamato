@@ -160,13 +160,6 @@ class Task(TaskBase):
         on_delete=models.CASCADE,
         related_name="subtasks",
     )
-    workbasket = models.ForeignKey(
-        "workbaskets.WorkBasket",
-        blank=True,
-        null=True,
-        on_delete=models.PROTECT,
-        related_name="tasks",
-    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,

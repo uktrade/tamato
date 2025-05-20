@@ -21,7 +21,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.db import OperationalError
 from django.db import connection
-from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -50,7 +49,6 @@ from regulations.models import Regulation
 from tasks.models import TaskAssignee
 from tasks.models.task import Task
 from workbaskets.models import WorkBasket
-from workbaskets.models import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
@@ -69,16 +67,6 @@ class HomeView(LoginRequiredMixin, FormView):
         )
         my_tickets = Task.objects.workflow_summary().filter(
             id__in=active_user_assignees,
-        )
-
-        assignments = (
-            TaskAssignee.objects.filter(user=self.request.user)
-            .assigned()
-            .select_related("task__workbasket")
-            .filter(
-                Q(task__workbasket__status=WorkflowStatus.EDITING)
-                | Q(task__workbasket__status=WorkflowStatus.ERRORED),
-            )
         )
 
         context.update(
