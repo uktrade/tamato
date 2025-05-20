@@ -21,9 +21,23 @@
   {% endif %}
 {%- endmacro %}
 
-{% macro display_summary_row_stacked(key, value) -%}
+{% macro display_summary_row_stacked(key, value, change_link=None) -%}
   <div class="govuk-summary-list__row__stacked">
-    <dt class="govuk-summary-list__key__stacked">{{ key }}</dt>
+    <dt class="govuk-summary-list__key__stacked">
+      <div class="govuk-grid-row">
+        {% if change_link %}
+          <div class="govuk-grid-column-two-thirds">{{ key }}</div>
+          <div class="govuk-grid-column-one-third">
+            <a
+              class="govuk-link"
+              href={{ change_link }}
+            >Change<span class="govuk-visually-hidden"> {{ key }}</span></a>
+          </div>
+        {% else %}
+          <div class="govuk-grid-column-full">{{ key }}</div>
+        {% endif %}
+      </div>
+    </dt>
     <dd class="govuk-summary-list__value__stacked">{{ value }}</dd>
   </div>
 {%- endmacro %}
