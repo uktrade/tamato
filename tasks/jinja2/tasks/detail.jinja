@@ -4,7 +4,6 @@
 {% from "tasks/macros/display_details.jinja" import display_status %}
 {% from "tasks/macros/display_details.jinja" import display_assignees %}
 {% from "tasks/macros/display_details.jinja" import display_summary_row_stacked %}
-{% from "tasks/macros/display_details.jinja" import display_summary_row_stacked_with_actions %}
 
 {% set page_title = "Step: " ~ object.title %}
 
@@ -76,9 +75,9 @@
       </div>
     <div class="govuk-grid-column-one-quarter">
       <dl class="govuk-summary-list govuk-summary-list--no-border">
-          {{ display_summary_row_stacked_with_actions("Status", edit_url, display_status(object.get_progress_state_display())) }}
-          {{ display_summary_row_stacked_with_actions("Assignee", change_assignee_link, display_assignees(object.assignees.assigned())) }}
-          {{ display_summary_row_stacked("Last updated", "{:%H:%M, %d %b %Y}".format(object.updated_at)) }}
+        {{ display_summary_row_stacked("Status", display_status(object.get_progress_state_display()), edit_url) }}
+        {{ display_summary_row_stacked("Assignee", display_assignees(object.assignees.assigned()), change_assignee_link) }}
+        {{ display_summary_row_stacked("Last updated", "{:%H:%M, %d %b %Y}".format(object.updated_at)) }}
       </dl>
       </div>
     </div>
