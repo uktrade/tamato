@@ -36,7 +36,7 @@ class TaskFilter(TamatoFilter):
 
     class Meta:
         model = Task
-        fields = ["search", "category", "progress_state"]
+        fields = ["search", "progress_state"]
 
     @property
     def qs(self):
@@ -176,7 +176,7 @@ class TaskAndWorkflowFilter(TamatoFilter):
 
     class Meta:
         model = Task
-        fields = ["search", "tasks_and_workflows", "category", "progress_state"]
+        fields = ["search", "tasks_and_workflows", "progress_state"]
 
     def filter_by_tasks_and_workflows(self, queryset, name, value):
         if TasksAndWorkflowsChoices.TASKS_ONLY == value:
