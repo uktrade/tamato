@@ -1546,19 +1546,10 @@ class WorkBasketAssignmentFactory(factory.django.DjangoModelFactory):
         model = "workbaskets.WorkBasketAssignment"
 
 
-class CategoryFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker("bs")
-
-    class Meta:
-        model = "tasks.Category"
-
-
 class TaskFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("sentence")
     description = factory.Faker("sentence")
-    category = factory.SubFactory(CategoryFactory)
     progress_state = ProgressState.TO_DO
-    workbasket = factory.SubFactory(WorkBasketFactory)
     creator = factory.SubFactory(UserFactory)
 
     class Meta:

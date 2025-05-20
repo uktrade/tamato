@@ -953,24 +953,51 @@ class CreateWorkBasketAutomation(Automation):
             # The related task must be associated with a TaskWorkflow instance
             # in order to run this automation, otherwise it is in error.
             return StateChoices.ERRORED
-        if workflow.summary_task.workbasket:
+        if workflow.workbasket:
             return StateChoices.DONE
         else:
             return StateChoices.CAN_RUN
 
     def rendered_state(self) -> str:
         if self.get_state() == StateChoices.CAN_RUN:
-            create_workbasket_url = reverse(
-                "workbaskets:workbasket-automation-ui-create",
-                kwargs={"pk": self.pk},
-            )
-            return f"""<a class="govuk-link" href="{create_workbasket_url}">Create workbasket</a>"""
+            return self._rendered_state_CAN_RUN()
         elif self.get_state() == StateChoices.DONE:
-            return """<p class="govuk-body">Done: workbasket created</p>"""
+            return self._rendered_state_DONE()
         else:
-            return """<p class="govuk-body">Error</p>"""
+            return self._rendered_state_ERRORED()
 
-    def validate_can_run_automation(self) -> bool:
+    def _rendered_state_CAN_RUN(self) -> str:
+        create_workbasket_url = reverse(
+            "workbaskets:workbasket-automation-ui-create",
+            kwargs={"pk": self.pk},
+        )
+        return f"""
+            <div class="automation state-can-run">
+                <a class="govuk-link" href="{create_workbasket_url}">Create a workbasket</a>
+            </div>
+        """
+
+    def _rendered_state_DONE(self) -> str:
+        return """
+            <div class="automation state-done">
+                <h3>Workbasket created</h3>
+                <p class="govuk-body">
+                    A workbasket has been created and associated with this ticket.
+                </p>
+            </div>
+        """
+
+    def _rendered_state_ERRORED(self) -> str:
+        return """
+            <div class="automation state-errored">
+                <h3>There is a problem</h3>
+                <p class="govuk-body">
+                    Please contact the TAP service team.
+                </p>
+            </div>
+        """
+
+    def validate_can_run_automation(self) -> None:
         """
         Validates that this automation instance can be executed (by calling the
         `run_automation()` method).
@@ -988,24 +1015,22 @@ class CreateWorkBasketAutomation(Automation):
             )
 
     @atomic
-    def run_automation(self, user):
+    def run_automation(self, user) -> None:
         """Create a workbasket, associate it with the automated step's workflow
         and set automated step's state to DONE."""
-        workflow = self.task.get_workflow()
 
-        workbasket = WorkBasket.objects.create(
+        workflow = self.task.get_workflow()
+        workflow.workbasket = WorkBasket.objects.create(
             title=f"{workflow.prefixed_id} - {workflow.title}",
             reason=f"{workflow.summary_task.description}",
             author=user,
         )
-
-        workflow.summary_task.workbasket = workbasket
-        workflow.summary_task.save()
+        workflow.save()
 
         with override_current_instigator(user):
             self.task.done()
             self.task.save()
 
         logger.info(
-            f"{self} created {workbasket} on {self.task.get_workflow()}",
+            f"{self} created {workflow.workbasket} on {self.task.get_workflow()}",
         )

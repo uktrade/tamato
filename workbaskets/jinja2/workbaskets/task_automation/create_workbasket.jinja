@@ -20,12 +20,8 @@
 
 {% block form %}
   <p class="govuk-body">
-    Running this automation with create a new workbasket and associate it with
-    the ticket 
-    <a
-      href="{{ url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_id}) }}"
-      class="govuk-link"
-    >{{ ticket_title }}</a>.
+    This will create a new workbasket and associate with the ticket
+    {{ ticket_prefixed_id }}.
   </p>
 
   {% call django_form() %}

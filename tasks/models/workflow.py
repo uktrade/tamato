@@ -41,6 +41,14 @@ class TaskWorkflow(Queue):
     )
     """'Entry into force' the due date on a tariff update."""
     policy_contact = models.CharField(max_length=40, blank=True, null=True)
+    """The name or other contact details of a member of polic staff."""
+    workbasket = models.OneToOneField(
+        "workbaskets.WorkBasket",
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
+    )
+    """The associated workbasket, if any."""
 
     class Meta(Queue.Meta):
         abstract = False
@@ -208,7 +216,6 @@ class TaskWorkflowTemplate(Queue, TimestampedMixin):
             task = Task.objects.create(
                 title=task_template.title,
                 description=task_template.description,
-                category=task_template.category,
                 creator=creator,
             )
             TaskItem.objects.create(

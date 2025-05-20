@@ -2,9 +2,9 @@ import factory
 from factory import SubFactory
 from factory.django import DjangoModelFactory
 
-from common.tests.factories import CategoryFactory
 from common.tests.factories import TaskFactory
 from common.tests.factories import UserFactory
+from common.tests.factories import WorkBasketFactory
 from tasks.models import TaskItem
 from tasks.models import TaskItemTemplate
 from tasks.models import TaskTemplate
@@ -28,7 +28,6 @@ class TaskTemplateFactory(DjangoModelFactory):
 
     title = factory.Faker("sentence")
     description = factory.Faker("sentence")
-    category = factory.SubFactory(CategoryFactory)
 
     class Meta:
         model = TaskTemplate
@@ -52,6 +51,7 @@ class TaskWorkflowFactory(DjangoModelFactory):
 
     summary_task = SubFactory(TaskFactory)
     creator_template = SubFactory(TaskWorkflowTemplateFactory)
+    workbasket = factory.SubFactory(WorkBasketFactory)
 
 
 class TaskItemFactory(DjangoModelFactory):

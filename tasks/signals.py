@@ -1,6 +1,8 @@
 import contextlib
 import threading
+from typing import Optional
 
+from django.contrib.auth import get_user_model
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
@@ -10,12 +12,16 @@ from tasks.models import TaskLog
 
 _thread_locals = threading.local()
 
+User = get_user_model()
 
-def get_current_instigator():
+
+def get_current_instigator() -> Optional["User"]:  # type: ignore - Pylance invalid type
+    """Get the current User instance set as an instigator on the current thread
+    if one is set, otherwise return None."""
     return getattr(_thread_locals, "instigator", None)
 
 
-def set_current_instigator(instigator):
+def set_current_instigator(instigator: "User"):  # type: ignore - Pylance invalid type
     """
     Sets the current user (`instigator`) who is instigating a task action /
     change.
@@ -27,8 +33,14 @@ def set_current_instigator(instigator):
 
 
 @contextlib.contextmanager
-def override_current_instigator(instigator):
-    """Override the thread-local current instigator with `instigator`."""
+def override_current_instigator(instigator: "User"):  # type: ignore - Pylance invalid type
+    """
+    Override the thread-local current instigator with `instigator`, a User
+    instance.
+
+    The previously assigned User instigator is reinstated, if one was set, on
+    exiting the context manager.
+    """
     original_instigator = get_current_instigator()
     try:
         set_current_instigator(instigator=instigator)

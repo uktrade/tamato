@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from tasks.models import Category
 from tasks.models import Task
 from tasks.models import TaskAssignee
 from tasks.models import TaskItem
@@ -68,7 +67,6 @@ class TaskAdmin(ReadOnlyAdminMixin, TaskAdminMixin, admin.ModelAdmin):
         "title",
         "is_subtask",
         "description",
-        "category",
         "progress_state",
         "parent_task_id",
         "workbasket_id",
@@ -77,7 +75,6 @@ class TaskAdmin(ReadOnlyAdminMixin, TaskAdminMixin, admin.ModelAdmin):
     search_fields = ["id", "title", "description"]
     list_filter = (
         SubtaskFilter,
-        "category",
         "progress_state",
     )
 
@@ -90,10 +87,6 @@ class TaskAdmin(ReadOnlyAdminMixin, TaskAdminMixin, admin.ModelAdmin):
         if not obj.workbasket:
             return "-"
         return self.link_to_workbasket(obj.workbasket)
-
-
-class CategoryAdmin(admin.ModelAdmin):
-    search_fields = ["name"]
 
 
 class TaskAssigneeAdmin(ReadOnlyAdminMixin, TaskAdminMixin, admin.ModelAdmin):
@@ -159,7 +152,6 @@ class TaskTemplateAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
         "created_at",
     )
     search_fields = ["id", "title", "description"]
-    list_filter = ["category"]
 
     @admin.display(description="Task Workflow Template")
     def taskworkflowtemplate_id(self, obj):
@@ -204,8 +196,6 @@ class TaskWorflowAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
 
 
 admin.site.register(Task, TaskAdmin)
-
-admin.site.register(Category, CategoryAdmin)
 
 admin.site.register(TaskAssignee, TaskAssigneeAdmin)
 

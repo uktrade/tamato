@@ -591,7 +591,7 @@ def test_workflow_detail_view_displays_tasks(
     workflow.policy_contact = "Policy contact"
     workflow.eif_date = date.today()
     workflow.save()
-    workbasket = workflow.summary_task.workbasket
+    workbasket = workflow.workbasket
 
     url = reverse(
         "workflow:task-workflow-ui-detail",
