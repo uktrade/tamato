@@ -12,7 +12,7 @@ def import_goods_automation_state_is_CAN_RUN() -> ImportGoodsAutomation:
     """Return an ImportGoodsAutomation instance that has no ImportBatch instance
     and is associated with a workflow that has no workbasket."""
     task_item = TaskItemFactory.create(
-        workflow__summary_task__workbasket=None,
+        workflow__workbasket=None,
     )
     return ImportGoodsAutomationFactory.create(
         task=task_item.task,
@@ -28,7 +28,7 @@ def import_goods_automation_state_is_RUNNING() -> ImportGoodsAutomation:
 
     import_batch = ImportBatchFactory()
     task_item = TaskItemFactory.create(
-        workflow__summary_task__workbasket=import_batch.workbasket,
+        workflow__workbasket=import_batch.workbasket,
     )
     return ImportGoodsAutomationFactory.create(
         task=task_item.task,
@@ -46,7 +46,7 @@ def import_goods_automation_state_is_DONE() -> ImportGoodsAutomation:
         status=ImportBatchStatus.SUCCEEDED,
     )
     task_item = TaskItemFactory.create(
-        workflow__summary_task__workbasket=import_batch.workbasket,
+        workflow__workbasket=import_batch.workbasket,
     )
     return ImportGoodsAutomationFactory.create(
         task=task_item.task,
