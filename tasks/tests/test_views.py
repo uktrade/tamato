@@ -1161,9 +1161,6 @@ def test_task_detail_view_displays_correctly(
     ]
 
     assert assignee.user.get_full_name() in table_values
-    assert (
-        f"{task.updated_at.strftime('%H:%M')}, {format_date(task.updated_at)}"
-        in table_values
-    )
+    assert task.updated_at.strftime(settings.DATETIME_FORMAT) in table_values
     assert task.get_progress_state_display() in table_values
     assert page.find("a", href=expected_assignment_form_url)
