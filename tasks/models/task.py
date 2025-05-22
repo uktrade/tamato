@@ -200,7 +200,7 @@ class Task(TaskBase):
 
     @transition(
         field=progress_state,
-        source=[ProgressState.TO_DO, ProgressState.IN_PROGRESS],
+        source=ProgressState.IN_PROGRESS,
         target=ProgressState.DONE,
     )
     def done(self):
