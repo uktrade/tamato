@@ -7,9 +7,10 @@ from workbaskets import models
 class WorkBasketSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="workbaskets:workbasket-detail",
+        read_only=True,
     )
-    approver = UserSerializer()
-    author = UserSerializer()
+    author = UserSerializer(read_only=True)
+    approver = UserSerializer(read_only=True)
 
     class Meta:
         model = models.WorkBasket
@@ -26,8 +27,7 @@ class WorkBasketSerializer(serializers.HyperlinkedModelSerializer):
         ]
         read_only_fields = [
             "id",
-            "url",
-            "approver",
+            "status",
             "created_at",
             "updated_at",
         ]

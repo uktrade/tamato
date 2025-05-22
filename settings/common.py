@@ -168,8 +168,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "common.models.utils.ValidateUserWorkBasketMiddleware",
     "common.models.utils.TransactionMiddleware",
-    "csp.middleware.CSPMiddleware",
 ]
+
+# TODO: better to allow DRF content to pass through this middleware?
+if not DEBUG:
+    MIDDLEWARE += [
+        "csp.middleware.CSPMiddleware",
+    ]
 
 if SSO_ENABLED and not MAINTENANCE_MODE:
     MIDDLEWARE += [

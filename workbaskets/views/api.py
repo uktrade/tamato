@@ -19,8 +19,8 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
     filterset_fields = ("status",)
     serializer_class = WorkBasketSerializer
     renderer_classes = [
-        renderers.JSONRenderer,
         renderers.BrowsableAPIRenderer,
+        renderers.JSONRenderer,
         TaricXMLRenderer,
     ]
     permission_classes = [
@@ -76,3 +76,12 @@ class WorkBasketViewSet(viewsets.ModelViewSet):
 
         serializer = AutoCompleteSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def perform_create(self, serializer):
+        """Override CreateModelMixin.perform_create() in order to set the
+        workbasket author / creator."""
+
+        kwargs = {
+            "author": self.request.user,
+        }
+        serializer.save(**kwargs)
