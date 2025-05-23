@@ -108,6 +108,8 @@ class TaskDetailView(PermissionRequiredMixin, DetailView):
             ].taskitem.workflow.prefixed_id
             context["ticket_number"] = context["object"].taskitem.workflow.id
 
+        context["datetime_format"] = settings.DATETIME_FORMAT
+
         return context
 
 

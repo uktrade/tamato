@@ -2607,7 +2607,7 @@ def test_current_tasks_is_called(valid_user_client):
         # Assert the mocked response is formatted correctly on the page
         soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
         table_rows = [element for element in soup.select(".govuk-table__row")]
-        assert "10:34 11 Jun 2024" in str(table_rows[1])
+        assert "11 Jun 2024 10:34" in str(table_rows[1])
         assert len(table_rows) == 4
         active_checks = soup.find_all("span", {"class": "tamato-badge-light-green"})
         assert len(active_checks) == 1
