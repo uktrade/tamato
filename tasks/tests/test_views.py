@@ -25,7 +25,6 @@ from tasks.models import TaskTemplate
 from tasks.models import TaskWorkflow
 from tasks.models import TaskWorkflowTemplate
 from tasks.models.task import AssignmentType
-from tasks.tests.factories import CategoryFactory
 from tasks.tests.factories import TaskItemFactory
 from tasks.tests.factories import TaskItemTemplateFactory
 from tasks.tests.factories import TaskWorkflowFactory
@@ -183,7 +182,6 @@ def test_task_create_success(valid_user_client):
     workbasket = WorkBasketFactory.create(
         status=WorkflowStatus.EDITING,
     )
-    category = CategoryFactory.create()
 
     get_response = valid_user_client.get(url)
     assert get_response.status_code == 200
@@ -192,7 +190,6 @@ def test_task_create_success(valid_user_client):
         "title": "Task title",
         "description": "Task description",
         "progress_state": ProgressState.TO_DO,
-        "category": category.pk,
         "workbasket": workbasket.pk,
     }
 
