@@ -1142,6 +1142,12 @@ def test_task_detail_view_displays_correctly(
         "workflow:task-ui-detail",
         kwargs={"pk": task.pk},
     )
+
+    expected_assignment_form_url = reverse(
+        "workflow:task-ui-unassign-user",
+        kwargs={"pk": task.pk},
+    )
+
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
@@ -1151,10 +1157,10 @@ def test_task_detail_view_displays_correctly(
 
     table_values = [
         dd.text.strip()
-        for dd in page.find_all("dd", {"class": "govuk-summary-list__value"})
+        for dd in page.find_all("dd", {"class": "govuk-summary-list__value__stacked"})
     ]
 
     assert assignee.user.get_full_name() in table_values
-    assert format_date(task.created_at) in table_values
-    assert task.description in table_values
+    assert task.updated_at.strftime(settings.DATETIME_FORMAT) in table_values
     assert task.get_progress_state_display() in table_values
+    assert page.find("a", href=expected_assignment_form_url)
