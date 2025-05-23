@@ -54,16 +54,3 @@
     "classes": status_to_class_map[status],
   }) }}
 {% endmacro %}
-
-{% macro display_summary_row_stacked_with_actions(key, link, value) -%}
-<div class="govuk-summary-list__row__stacked">
-  <div class="govuk-summary-list__key-and-action">
-      <dt class="govuk-summary-list__key__stacked">{{ key }}</dt>
-      <dd class="govuk-summary-list__actions__inline">
-        <a class="govuk-link" href={{ link }}>Change<span class="govuk-visually-hidden"> {{ key }}</span></a>
-      </dd>
-  </div>
-  <dd class="govuk-summary-list__value__stacked">{{ value }}</dd>
-</div>
-{%- endmacro %}
-
