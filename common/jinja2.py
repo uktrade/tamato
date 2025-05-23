@@ -16,6 +16,10 @@ from jinja2.utils import markupsafe
 from webpack_loader.contrib.jinja2ext import _render_bundle
 from webpack_loader.templatetags.webpack_loader import webpack_static
 
+from common.util import format_date
+from common.util import format_datetime
+from common.util import format_short_date
+from common.util import format_short_datetime
 from govuk_frontend_jinja.templates import Environment
 from govuk_frontend_jinja.templates import NunjucksExtension
 from workbaskets.models import WorkBasket
@@ -127,6 +131,10 @@ def environment(**kwargs):
         {
             "localtime": template_localtime,
             "pluralize": pluralize,
+            "format_date": format_date,
+            "format_short_date": format_short_date,
+            "format_datetime": format_datetime,
+            "format_short_datetime": format_short_datetime,
         },
     )
 

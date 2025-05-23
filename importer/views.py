@@ -7,6 +7,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django.db.models import Q
+from django.db.transaction import atomic
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -28,6 +29,9 @@ from importer.models import ImportBatchStatus
 from notifications.models import GoodsSuccessfulImportNotification
 from notifications.models import Notification
 from notifications.models import NotificationTypeChoices
+from tasks.models import ProgressState
+from tasks.models import Task
+from tasks.signals import override_current_instigator
 from workbaskets.models import WorkBasket
 from workbaskets.validators import WorkflowStatus
 
@@ -217,6 +221,71 @@ class CommodityImportCreateView(
                 kwargs={"pk": self.object.pk},
             ),
         )
+
+
+class AutomationCommodityImportCreateView(
+    PermissionRequiredMixin,
+    FormView,
+):
+    """Task automation commodity code file import view."""
+
+    form_class = forms.AutomationCommodityImportForm
+    permission_required = [
+        "common.add_trackedmodel",
+        "common.change_trackedmodel",
+    ]
+    template_name = "eu-importer/automation-import.jinja"
+
+    def get_automation(self) -> models.ImportGoodsAutomation:
+        """Return the CreateWorkBasketAutomation instance that this view
+        runs."""
+        return models.ImportGoodsAutomation.objects.get(pk=self.kwargs["pk"])
+
+    @property
+    def task(self) -> Task:
+        """Return the Task instance associated with the automation."""
+        return self.get_automation().task
+
+    def get_success_url(self):
+        return reverse("workflow:task-ui-detail", kwargs={"pk": self.task.pk})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        kwargs["automation"] = self.get_automation()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        workflow = self.task.get_workflow()
+        context["ticket_title"] = workflow.title
+        context["ticket_prefixed_id"] = workflow.prefixed_id
+        context["ticket_id"] = workflow.id
+        context["step_title"] = f"Step: {self.task.title}"
+        context["step_id"] = self.task.id
+
+        return context
+
+    @atomic
+    def form_valid(self, form: forms.AutomationCommodityImportForm):
+        workflow = self.task.get_workflow()
+        automation = self.get_automation()
+
+        with override_current_instigator(self.request.user):
+            if automation.task.progress_state != ProgressState.IN_PROGRESS:
+                automation.task.in_progress()
+                automation.task.save()
+
+        workbasket_title = f"{workflow.prefixed_id} - {workflow.title}"
+        self.object = form.save(workbasket_title=workbasket_title)
+
+        automation.import_batch = self.object
+        if automation.import_batch.status == ImportBatchStatus.FAILED_EMPTY:
+            automation.set_done()
+        automation.save()
+
+        return redirect(self.get_success_url())
 
 
 class CommodityImportDetails(RequiresSuperuserMixin, DetailView):

@@ -1,0 +1,87 @@
+import pytest
+
+from common.tests.factories import ImportBatchFactory
+from importer.models import ImportBatchStatus
+from importer.models import ImportGoodsAutomation
+from importer.tests.task_automations.factories import ImportGoodsAutomationFactory
+from tasks.tests.factories import TaskItemFactory
+
+
+@pytest.fixture
+def import_goods_automation_state_is_CAN_RUN() -> ImportGoodsAutomation:
+    """Return an ImportGoodsAutomation instance that has no ImportBatch instance
+    and is associated with a workflow that has no workbasket."""
+    task_item = TaskItemFactory.create(
+        workflow__workbasket=None,
+    )
+    return ImportGoodsAutomationFactory.create(
+        task=task_item.task,
+        import_batch=None,
+    )
+
+
+@pytest.fixture
+def import_goods_automation_state_is_RUNNING() -> ImportGoodsAutomation:
+    """Return an ImportGoodsAutomation instance that has an ImportBatch instance
+    with status set to IMPORTING and a workflow with an associated
+    workbasket."""
+
+    import_batch = ImportBatchFactory()
+    task_item = TaskItemFactory.create(
+        workflow__workbasket=import_batch.workbasket,
+    )
+    return ImportGoodsAutomationFactory.create(
+        task=task_item.task,
+        import_batch=import_batch,
+    )
+
+
+@pytest.fixture
+def import_goods_automation_state_is_DONE() -> ImportGoodsAutomation:
+    """Return an ImportGoodsAutomation instance that has an ImportBatch instance
+    with status set to SUCCEEDED and a workflow with an associated
+    workbasket."""
+
+    import_batch = ImportBatchFactory(
+        status=ImportBatchStatus.SUCCEEDED,
+    )
+    task_item = TaskItemFactory.create(
+        workflow__workbasket=import_batch.workbasket,
+    )
+    return ImportGoodsAutomationFactory.create(
+        task=task_item.task,
+        import_batch=import_batch,
+    )
+
+
+@pytest.fixture
+def import_goods_automation_state_is_DONE_empty() -> ImportGoodsAutomation:
+    """Return an ImportGoodsAutomation instance that has an ImportBatch instance
+    with status set to FAILED_EMPTY and a workflow with no associated
+    workbasket."""
+
+    import_batch = ImportBatchFactory(
+        status=ImportBatchStatus.FAILED_EMPTY,
+        workbasket=None,
+    )
+    task_item = TaskItemFactory.create()
+    return ImportGoodsAutomationFactory.create(
+        task=task_item.task,
+        import_batch=import_batch,
+    )
+
+
+@pytest.fixture
+def import_goods_automation_state_is_ERRORED() -> ImportGoodsAutomation:
+    """Return an ImportGoodsAutomation instance that has an ImportBatch instance
+    with status set to FAILED and a workflow with no associated workbasket."""
+
+    import_batch = ImportBatchFactory(
+        status=ImportBatchStatus.FAILED,
+        workbasket=None,
+    )
+    task_item = TaskItemFactory.create()
+    return ImportGoodsAutomationFactory.create(
+        task=task_item.task,
+        import_batch=import_batch,
+    )

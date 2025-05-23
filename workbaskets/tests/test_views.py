@@ -45,6 +45,24 @@ from workbaskets.views import ui
 pytestmark = pytest.mark.django_db
 
 
+def test_workbasket_autocomplete_api_endpoint(valid_user_api_client):
+    """Tests that workbasket autocomplete API endpoint allows searching for
+    workbaskets."""
+    factories.WorkBasketFactory.create(reason="irrelevant_workbasket")
+    workbasket = factories.WorkBasketFactory.create(reason="test")
+
+    autocomplete_api_url = reverse("workbaskets:workbasket-autocomplete-list")
+    response = valid_user_api_client.get(
+        path=autocomplete_api_url,
+        data={"search": "test"},
+    )
+
+    assert response.status_code == 200
+    assert response.data["count"] == 1
+    assert response.data["results"][0]["value"] == workbasket.pk
+    assert response.data["results"][0]["label"] == workbasket.autocomplete_label
+
+
 def test_workbasket_create_form_creates_workbasket_object(
     valid_user_api_client,
 ):
@@ -2342,7 +2360,7 @@ def test_disabled_packaging_for_unassigned_workbasket(
 
 def test_workbasket_assign_users_view(valid_user, valid_user_client, user_workbasket):
     valid_user.user_permissions.add(
-        Permission.objects.get(codename="add_userassignment"),
+        Permission.objects.get(codename="add_workbasketassignment"),
     )
     response = valid_user_client.get(
         reverse(
@@ -2368,7 +2386,7 @@ def test_workbasket_assign_users_view_without_permission(client, user_workbasket
 
 def test_workbasket_unassign_users_view(valid_user, valid_user_client, user_workbasket):
     valid_user.user_permissions.add(
-        Permission.objects.get(codename="change_userassignment"),
+        Permission.objects.get(codename="change_workbasketassignment"),
     )
     response = valid_user_client.get(
         reverse(
@@ -2589,7 +2607,7 @@ def test_current_tasks_is_called(valid_user_client):
         # Assert the mocked response is formatted correctly on the page
         soup = BeautifulSoup(response.content.decode(response.charset), "html.parser")
         table_rows = [element for element in soup.select(".govuk-table__row")]
-        assert "10:34 11 Jun 2024" in str(table_rows[1])
+        assert "11 Jun 2024 10:34" in str(table_rows[1])
         assert len(table_rows) == 4
         active_checks = soup.find_all("span", {"class": "tamato-badge-light-green"})
         assert len(active_checks) == 1

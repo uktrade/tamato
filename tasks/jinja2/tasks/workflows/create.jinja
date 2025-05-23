@@ -1,0 +1,15 @@
+{% extends "layouts/create.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Create a new " ~ verbose_name  %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {"text": page_title},
+    ],
+    False,
+  ) }}
+{% endblock %}

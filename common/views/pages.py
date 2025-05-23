@@ -21,7 +21,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.db import OperationalError
 from django.db import connection
-from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -47,10 +46,9 @@ from measures.models import Measure
 from publishing.models import PackagedWorkBasket
 from quotas.models import QuotaOrderNumber
 from regulations.models import Regulation
-from workbaskets.models import AssignmentType
+from tasks.models import TaskAssignee
+from tasks.models.task import Task
 from workbaskets.models import WorkBasket
-from workbaskets.models import WorkBasketAssignment
-from workbaskets.models import WorkflowStatus
 
 logger = logging.getLogger(__name__)
 
@@ -62,36 +60,17 @@ class HomeView(LoginRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        assignments = (
-            WorkBasketAssignment.objects.filter(user=self.request.user)
-            .assigned()
-            .select_related("workbasket")
-            .filter(
-                Q(workbasket__status=WorkflowStatus.EDITING)
-                | Q(workbasket__status=WorkflowStatus.ERRORED),
-            )
+        active_user_assignees = (
+            TaskAssignee.objects.assigned()
+            .filter(user=self.request.user)
+            .values_list("task__id")
         )
-        assigned_workbaskets = []
-        for assignment in assignments:
-            workbasket = assignment.workbasket
-            assignment_type = (
-                "Assigned"
-                if assignment.assignment_type == AssignmentType.WORKBASKET_WORKER
-                else "Reviewing"
-            )
-            rule_violations_count = workbasket.tracked_model_check_errors.count()
-            assigned_workbaskets.append(
-                {
-                    "id": workbasket.id,
-                    "description": workbasket.reason,
-                    "rule_violations_count": rule_violations_count,
-                    "assignment_type": assignment_type,
-                },
-            )
+        my_tickets = Task.objects.workflow_summary().filter(
+            id__in=active_user_assignees,
+        )
 
         context.update(
             {
-                "assigned_workbaskets": assigned_workbaskets,
                 "can_add_workbasket": self.request.user.has_perm(
                     "workbaskets.add_workbasket",
                 ),
@@ -101,6 +80,10 @@ class HomeView(LoginRequiredMixin, FormView):
                 "can_view_reports": self.request.user.has_perm(
                     "reports.view_report_index",
                 ),
+                "can_view_tickets": self.request.user.has_perm(
+                    "tasks.view_taskworkflow",
+                ),
+                "my_tickets": my_tickets,
             },
         )
         return context

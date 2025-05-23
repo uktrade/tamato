@@ -7,6 +7,7 @@ from itertools import product
 
 import factory
 from django.contrib.auth import get_user_model
+from django.db.models import signals
 from factory.fuzzy import FuzzyChoice
 from factory.fuzzy import FuzzyText
 from faker import Faker
@@ -30,6 +31,8 @@ from measures.validators import MeasureTypeCombination
 from measures.validators import OrderNumberCaptureCode
 from publishing.models import ProcessingState
 from quotas.validators import QuotaEventType
+from tasks.models import ProgressState
+from tasks.models.task import AssignmentType as TaskAssignmentType
 from workbaskets.models import AssignmentType
 from workbaskets.validators import WorkflowStatus
 
@@ -1543,6 +1546,30 @@ class WorkBasketAssignmentFactory(factory.django.DjangoModelFactory):
         model = "workbaskets.WorkBasketAssignment"
 
 
+class TaskFactory(factory.django.DjangoModelFactory):
+    title = factory.Faker("sentence")
+    description = factory.Faker("sentence")
+    progress_state = ProgressState.TO_DO
+    creator = factory.SubFactory(UserFactory)
+
+    class Meta:
+        model = "tasks.Task"
+
+
+class SubTaskFactory(TaskFactory):
+    parent_task = factory.SubFactory(TaskFactory)
+
+
+@factory.django.mute_signals(signals.pre_save)
+class TaskAssigneeFactory(factory.django.DjangoModelFactory):
+    user = factory.SubFactory(UserFactory)
+    assignment_type = TaskAssignmentType.GENERAL
+    task = factory.SubFactory(TaskFactory)
+
+    class Meta:
+        model = "tasks.TaskAssignee"
+
+
 class AssignedWorkBasketFactory(WorkBasketFactory):
     """Creates a workbasket which has an assigned worker and reviewer."""
 
@@ -1559,6 +1586,15 @@ class AssignedWorkBasketFactory(WorkBasketFactory):
             assignment_type=AssignmentType.WORKBASKET_REVIEWER,
             workbasket=self,
         )
+
+
+class CommentFactory(factory.django.DjangoModelFactory):
+    author = factory.SubFactory(UserFactory)
+    content = factory.Faker("sentence")
+    task = factory.SubFactory(TaskFactory)
+
+    class Meta:
+        model = "tasks.Comment"
 
 
 class WorkBasketCommentFactory(factory.django.DjangoModelFactory):

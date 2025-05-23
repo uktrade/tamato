@@ -1,0 +1,56 @@
+{% from "components/tag/macro.njk" import govukTag %}
+
+{% macro display_assignees(assignees) -%}
+  {% if not assignees %}
+    -
+  {% else %}
+    {% for assignee in assignees %}
+      {{ assignee.user.get_displayname() }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  {% endif %}
+{%- endmacro %}
+
+{% macro display_workbasket(workbasket) -%}
+  {% if not workbasket %}
+    None
+  {% else %}
+    <a
+      class="govuk-link"
+      href="{{ url("workbaskets:workbasket-ui-detail", kwargs={"pk": workbasket.pk}) }}"
+    >{{ workbasket.pk }} - {{ workbasket.status }}</a>
+  {% endif %}
+{%- endmacro %}
+
+{% macro display_summary_row_stacked(key, value, change_link=None) -%}
+  <div class="govuk-summary-list__row__stacked">
+    <dt class="govuk-summary-list__key__stacked">
+      <div class="govuk-grid-row">
+        {% if change_link %}
+          <div class="govuk-grid-column-two-thirds">{{ key }}</div>
+          <div class="govuk-grid-column-one-third">
+            <a
+              class="govuk-link"
+              href={{ change_link }}
+            >Change<span class="govuk-visually-hidden"> {{ key }}</span></a>
+          </div>
+        {% else %}
+          <div class="govuk-grid-column-full">{{ key }}</div>
+        {% endif %}
+      </div>
+    </dt>
+    <dd class="govuk-summary-list__value__stacked">{{ value }}</dd>
+  </div>
+{%- endmacro %}
+
+{% macro display_status(status) %}
+  {% set status_to_class_map = ({
+    "In progress": "govuk-tag--blue",
+    "Done": "govuk-tag--green",
+    "To do": "govuk-tag--purple",
+  }) %}
+
+  {{ govukTag({
+    "text": status,
+    "classes": status_to_class_map[status],
+  }) }}
+{% endmacro %}

@@ -1,0 +1,43 @@
+{% extends "layouts/confirm.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set object_id = object.prefixed_id if object.prefixed_id else object.id %}
+
+{% set page_title = verbose_name|capitalize ~ " " ~ object_id ~ " updated" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {"text": verbose_name|capitalize ~ " " ~ object_id, "href": object.get_url("detail")},
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": verbose_name|capitalize ~ " " ~ object_id,
+    "text": "You have updated the " ~ verbose_name,
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block button_group %}
+  {{ govukButton({
+    "text": "Return to " ~ verbose_name,
+    "href": object.get_url("detail"),
+    "classes": "govuk-button"
+  }) }}
+  {{ govukButton({
+    "text": "View all " ~ verbose_name ~ "s",
+    "href": object.get_url("list"),
+    "classes": "govuk-button--secondary"
+  }) }}
+{% endblock %}
+
+{% block actions %}{% endblock %}

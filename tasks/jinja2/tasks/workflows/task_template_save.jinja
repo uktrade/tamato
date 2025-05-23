@@ -1,0 +1,17 @@
+{% extends 'layouts/create.jinja' %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {
+        "text": "Ticket template: " ~ task_workflow_template.title,
+        "href": url("workflow:task-workflow-template-ui-detail", kwargs={"pk": task_workflow_template.pk}),
+      },
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
