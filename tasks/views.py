@@ -8,7 +8,6 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import DeleteView
@@ -130,18 +129,7 @@ class TaskCreateView(PermissionRequiredMixin, CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse("workflow:task-ui-confirm-create", kwargs={"pk": self.object.pk})
-
-
-class TaskConfirmCreateView(PermissionRequiredMixin, DetailView):
-    model = Task
-    template_name = "tasks/confirm_create.jinja"
-    permission_required = "tasks.add_task"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "task"
-        return context
+        return reverse("workflow:task-ui-detail", kwargs={"pk": self.object.pk})
 
 
 class TaskUpdateView(PermissionRequiredMixin, FormView):
@@ -166,13 +154,7 @@ class TaskUpdateView(PermissionRequiredMixin, FormView):
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse("workflow:task-ui-confirm-update", kwargs={"pk": self.task.pk})
-
-
-class TaskConfirmUpdateView(PermissionRequiredMixin, DetailView):
-    model = Task
-    template_name = "tasks/confirm_update.jinja"
-    permission_required = "tasks.change_task"
+        return reverse("workflow:task-ui-detail", kwargs={"pk": self.task.pk})
 
 
 class TaskDeleteView(PermissionRequiredMixin, DeleteView):
@@ -198,26 +180,11 @@ class TaskDeleteView(PermissionRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-ui-confirm-delete",
+            "workflow:task-workflow-ui-detail",
             kwargs={
-                "pk": self.object.pk,
-                "workflow_pk": self.object.taskitem.workflow.pk,
+                "pk": self.object.taskitem.workflow.pk,
             },
         )
-
-
-class TaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
-    model = Task
-    template_name = "tasks/confirm_delete.jinja"
-    permission_required = "tasks.delete_task"
-
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["deleted_pk"] = self.kwargs["pk"]
-        context_data["ticket"] = TaskWorkflow.objects.get(
-            pk=self.kwargs["workflow_pk"],
-        )
-        return context_data
 
 
 class TaskAssignUserView(PermissionRequiredMixin, TaskAssignmentMixin, FormView):
@@ -284,19 +251,9 @@ class SubTaskCreateView(PermissionRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:subtask-ui-confirm-create",
-            kwargs={"pk": self.object.pk},
+            "workflow:task-ui-detail",
+            kwargs={"pk": self.object.parent_task.pk},
         )
-
-
-class SubTaskConfirmCreateView(DetailView):
-    model = Task
-    template_name = "tasks/confirm_create.jinja"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "subtask"
-        return context
 
 
 class SubTaskUpdateView(PermissionRequiredMixin, UpdateView):
@@ -318,21 +275,9 @@ class SubTaskUpdateView(PermissionRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:subtask-ui-confirm-update",
-            kwargs={"pk": self.object.pk},
+            "workflow:task-ui-detail",
+            kwargs={"pk": self.object.parent_task.pk},
         )
-
-
-class SubTaskConfirmUpdateView(PermissionRequiredMixin, DetailView):
-    model = Task
-    template_name = "tasks/confirm_update.jinja"
-    permission_required = "tasks.change_task"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page_title"] = "Subtask updated"
-        context["object_type"] = "Subtask"
-        return context
 
 
 class SubTaskDeleteView(PermissionRequiredMixin, DeleteView):
@@ -353,21 +298,9 @@ class SubTaskDeleteView(PermissionRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:subtask-ui-confirm-delete",
-            kwargs={"pk": self.object.pk},
+            "workflow:task-ui-detail",
+            kwargs={"pk": self.object.parent_task.pk},
         )
-
-
-class SubTaskConfirmDeleteView(PermissionRequiredMixin, TemplateView):
-    model = Task
-    template_name = "tasks/confirm_delete.jinja"
-    permission_required = "tasks.delete_task"
-
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["verbose_name"] = "subtask"
-        context_data["deleted_pk"] = self.kwargs["pk"]
-        return context_data
 
 
 class TaskWorkflowListView(
@@ -630,17 +563,6 @@ class TaskWorkflowCreateView(PermissionRequiredMixin, FormView):
         )
 
 
-class TaskWorkflowConfirmCreateView(PermissionRequiredMixin, DetailView):
-    model = TaskWorkflow
-    template_name = "tasks/workflows/confirm_create.jinja"
-    permission_required = "tasks.add_taskworkflow"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "ticket"
-        return context
-
-
 class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
     model = TaskWorkflow
     template_name = "tasks/workflows/edit.jinja"
@@ -685,20 +607,9 @@ class TaskWorkflowUpdateView(PermissionRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-workflow-ui-confirm-update",
+            "workflow:task-workflow-ui-detail",
             kwargs={"pk": self.object.pk},
         )
-
-
-class TaskWorkflowConfirmUpdateView(PermissionRequiredMixin, DetailView):
-    model = TaskWorkflow
-    template_name = "tasks/workflows/confirm_update.jinja"
-    permission_required = "tasks.change_taskworkflow"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "ticket"
-        return context
 
 
 class TaskWorkflowDeleteView(PermissionRequiredMixin, DeleteView):
@@ -727,27 +638,9 @@ class TaskWorkflowDeleteView(PermissionRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-workflow-ui-confirm-delete",
-            kwargs={"pk": self.object.pk},
+            "workflow:task-workflow-template-ui-detail",
+            kwargs={"pk": self.object.creator_template.pk},
         )
-
-
-class TaskWorkflowConfirmDeleteView(PermissionRequiredMixin, TemplateView):
-    model = TaskWorkflow
-    template_name = "tasks/workflows/confirm_delete.jinja"
-    permission_required = "tasks.change_taskworkflow"
-
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data.update(
-            {
-                "verbose_name": "ticket",
-                "deleted_pk": self.kwargs["pk"],
-                "create_url": reverse("workflow:task-workflow-ui-create"),
-                "list_url": reverse("workflow:task-workflow-ui-list"),
-            },
-        )
-        return context_data
 
 
 class TaskWorkflowTaskCreateView(PermissionRequiredMixin, CreateView):
@@ -779,20 +672,9 @@ class TaskWorkflowTaskCreateView(PermissionRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-workflow-task-ui-confirm-create",
-            kwargs={"pk": self.object.pk},
+            "workflow:task-workflow-ui-detail",
+            kwargs={"pk": self.kwargs["task_workflow_pk"]},
         )
-
-
-class TaskWorkflowTaskConfirmCreateView(PermissionRequiredMixin, DetailView):
-    model = Task
-    template_name = "tasks/confirm_create.jinja"
-    permission_required = "tasks.add_task"
-
-    def get_context_data(self, **kwargs) -> dict:
-        context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "task"
-        return context
 
 
 class TaskWorkflowTemplateDetailView(
@@ -855,20 +737,9 @@ class TaskWorkflowTemplateCreateView(PermissionRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-workflow-template-ui-confirm-create",
+            "workflow:task-workflow-template-ui-detail",
             kwargs={"pk": self.object.pk},
         )
-
-
-class TaskWorkflowTemplateConfirmCreateView(PermissionRequiredMixin, DetailView):
-    model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/confirm_create.jinja"
-    permission_required = "tasks.add_taskworkflowtemplate"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "ticket template"
-        return context
 
 
 class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
@@ -884,20 +755,9 @@ class TaskWorkflowTemplateUpdateView(PermissionRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-workflow-template-ui-confirm-update",
+            "workflow:task-workflow-template-ui-detail",
             kwargs={"pk": self.object.pk},
         )
-
-
-class TaskWorkflowTemplateConfirmUpdateView(PermissionRequiredMixin, DetailView):
-    model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/confirm_update.jinja"
-    permission_required = "tasks.change_taskworkflowtemplate"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["verbose_name"] = "ticket template"
-        return context
 
 
 class TaskWorkflowTemplateDeleteView(PermissionRequiredMixin, DeleteView):
@@ -923,27 +783,8 @@ class TaskWorkflowTemplateDeleteView(PermissionRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-workflow-template-ui-confirm-delete",
-            kwargs={"pk": self.object.pk},
+            "workflow:task-workflow-template-ui-list",
         )
-
-
-class TaskWorkflowTemplateConfirmDeleteView(PermissionRequiredMixin, TemplateView):
-    model = TaskWorkflowTemplate
-    template_name = "tasks/workflows/confirm_delete.jinja"
-    permission_required = "tasks.change_taskworkflowtemplate"
-
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data.update(
-            {
-                "verbose_name": "ticket template",
-                "deleted_pk": self.kwargs["pk"],
-                "create_url": reverse("workflow:task-workflow-template-ui-create"),
-                "list_url": reverse("workflow:task-workflow-template-ui-list"),
-            },
-        )
-        return context_data
 
 
 class TaskTemplateDetailView(PermissionRequiredMixin, DetailView):
@@ -991,24 +832,9 @@ class TaskTemplateCreateView(PermissionRequiredMixin, CreateView):
 
     def get_success_url(self) -> str:
         return reverse(
-            "workflow:task-template-ui-confirm-create",
-            kwargs={"pk": self.object.pk},
+            "workflow:task-workflow-template-ui-detail",
+            kwargs={"pk": self.kwargs["workflow_template_pk"]},
         )
-
-
-class TaskTemplateConfirmCreateView(PermissionRequiredMixin, DetailView):
-    model = TaskTemplate
-    template_name = "tasks/workflows/task_template_confirm_create.jinja"
-    permission_required = "tasks.add_tasktemplate"
-
-    def get_context_data(self, **kwargs) -> dict:
-        context = super().get_context_data(**kwargs)
-
-        context["task_workflow_template"] = (
-            self.get_object().taskitemtemplate.workflow_template
-        )
-
-        return context
 
 
 class TaskTemplateUpdateView(PermissionRequiredMixin, UpdateView):
@@ -1029,24 +855,9 @@ class TaskTemplateUpdateView(PermissionRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-template-ui-confirm-update",
+            "workflow:task-template-ui-detail",
             kwargs={"pk": self.object.pk},
         )
-
-
-class TaskTemplateConfirmUpdateView(PermissionRequiredMixin, DetailView):
-    model = TaskTemplate
-    template_name = "tasks/workflows/task_template_confirm_update.jinja"
-    permission_required = "tasks.add_tasktemplate"
-
-    def get_context_data(self, **kwargs) -> dict:
-        context = super().get_context_data(**kwargs)
-
-        context["task_workflow_template"] = (
-            self.get_object().taskitemtemplate.workflow_template
-        )
-
-        return context
 
 
 class TaskTemplateDeleteView(PermissionRequiredMixin, DeleteView):
@@ -1071,24 +882,8 @@ class TaskTemplateDeleteView(PermissionRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse(
-            "workflow:task-template-ui-confirm-delete",
+            "workflow:task-workflow-template-ui-detail",
             kwargs={
-                "workflow_template_pk": self.kwargs["workflow_template_pk"],
-                "pk": self.object.pk,
+                "pk": self.kwargs["workflow_template_pk"],
             },
         )
-
-
-class TaskTemplateConfirmDeleteView(PermissionRequiredMixin, TemplateView):
-    template_name = "tasks/workflows/task_template_confirm_delete.jinja"
-    permission_required = "tasks.delete_tasktemplate"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context["deleted_pk"] = self.kwargs["pk"]
-        context["task_workflow_template"] = TaskWorkflowTemplate.objects.get(
-            pk=self.kwargs["workflow_template_pk"],
-        )
-
-        return context
