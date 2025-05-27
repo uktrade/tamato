@@ -27,6 +27,7 @@ class Migration(migrations.Migration):
                         default=None,
                         primary_key=True,
                         serialize=False,
+                        unique=True,
                     ),
                 ),
                 ("trackedmodel_ptr_id", models.IntegerField()),

@@ -11,9 +11,12 @@ class ReportCommodityReport(models.Model):
     # Confusing, because the column names of other tables are translated
     # inside Dataworkspace, but it is convenient to use the final names here
 
+    # The report has an ID in it, always starting from 1.
+    # So I can't use an autofield, because the autofield will 'remember'
+    # the last used value, even if the records are deleted.
     id = models.IntegerField(
         primary_key=True,
-        unique=False,
+        unique=True,
         default=None,
     )
     commodity_sid = models.IntegerField()
@@ -38,9 +41,12 @@ class ReportMeasureAsDefinedReport(models.Model):
     # Confusing, because the column names of other tables are translated
     # inside Dataworkspace, but it is convenient to use the final names here
 
+    # The report has an ID in it, always starting from 1.
+    # So I can't use an autofield, because the autofield will 'remember'
+    # the last used value, even if the records are deleted.
     id = models.IntegerField(
         primary_key=True,
-        unique=False,
+        unique=True,
         default=None,
     )
     trackedmodel_ptr_id = models.IntegerField()
