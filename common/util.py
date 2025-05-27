@@ -712,8 +712,10 @@ def log_timing(logger_function: typing.Callable):
         elapsed_time = end_time - start_time
         logger_function(
             f"Exited the function {wrapped.__name__}() on "
-            f"process pid={os.getpid()} at {end_time.isoformat()} after "
-            f"an elapsed time of {elapsed_time}.",
+            f"process pid={os.getpid()} at {end_time.isoformat()}",
+        )
+        logger_function(
+            f"\033[1mTotal elapsed time {elapsed_time}.\033[0m",
         )
 
         return result

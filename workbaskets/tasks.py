@@ -4,6 +4,7 @@ from typing import List
 from celery import group
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from django.conf import settings
 from django.db.models import F
 from django.db.transaction import atomic
 
@@ -18,7 +19,9 @@ from common.celery import app
 from common.models import Transaction
 from common.models.trackedmodel import TrackedModel
 from common.models.transactions import Transaction
+from common.models.transactions import TransactionQueryset
 from common.util import TaricDateRange
+from common.util import log_timing
 from common.validators import UpdateType
 from geo_areas.models import GeographicalArea
 from measures.models.tracked_models import Measure
@@ -47,9 +50,13 @@ def transition(instance_id: int, state: str, *args):
 
 @app.task(bind=True)
 def check_workbasket(self, workbasket_id: int):
-    """Run and record transaction checks for the passed workbasket ID,
-    asynchronously."""
+    """
+    Run and record transaction checks for the passed workbasket ID,
+    asynchronously.
 
+    This method will run all of the checks, but they are not guaranteed to do so
+    within the context of a single executing process.
+    """
     workbasket: WorkBasket = WorkBasket.objects.get(pk=workbasket_id)
     transactions = workbasket.transactions.values_list("pk", flat=True)
 
@@ -57,13 +64,27 @@ def check_workbasket(self, workbasket_id: int):
     return self.replace(group(check_transaction.si(id) for id in transactions))
 
 
+@app.task(bind=True)
+def call_check_workbasket_sync(self, workbasket_id: int):
+    """
+    Run and record transaction checks for the passed workbasket ID,
+    synchronously.
+
+    This method is a wrapper for `check_workbasket_sync()` to allow it to be
+    called via a Celery task.
+    """
+    workbasket: WorkBasket = WorkBasket.objects.get(pk=workbasket_id)
+    workbasket.delete_checks()
+    check_workbasket_sync(workbasket)
+
+
 def check_workbasket_sync(workbasket: WorkBasket):
     """
     Run and record transaction checks for the passed workbasket ID,
     synchronously.
 
-    This method will run all of the checks one after the other and won't return
-    until they are complete. This is useful for testing and debugging.
+    This method will run all of the checks in a single process and won't return
+    until they are complete.
     """
     transactions = workbasket.transactions.all()
 
@@ -72,15 +93,63 @@ def check_workbasket_sync(workbasket: WorkBasket):
         workbasket.pk,
         transactions.count(),
     )
+
+    if settings.BUSINESS_RULE_CHECKS_CONCURRENCY == "THREADED":
+        check_transactions_threaded(transactions=transactions)
+    else:
+        check_transactions_serial(transactions=transactions)
+
+
+@log_timing(logger_function=logger.info)
+def check_transactions_serial(transactions: TransactionQueryset):
+    logger.info(
+        f"Executing checks serially against {transactions.count()} transactions.",
+    )
     for transaction in transactions:
         check_transaction_sync(transaction)
 
 
-@app.task(bind=True)
-def call_check_workbasket_sync(self, workbasket_id: int):
-    workbasket: WorkBasket = WorkBasket.objects.get(pk=workbasket_id)
-    workbasket.delete_checks()
-    check_workbasket_sync(workbasket)
+@log_timing(logger_function=logger.info)
+def check_transactions_threaded(transactions: TransactionQueryset):
+    from concurrent.futures import ThreadPoolExecutor
+    from multiprocessing import cpu_count
+
+    MIN_WORKERS = 10
+    max_workers = min(MIN_WORKERS, cpu_count())
+    logger.info(
+        f"Using {max_workers} threads, "
+        f"having MIN_WORKERS={MIN_WORKERS}, "
+        f"CPUs={cpu_count()}",
+    )
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        executor.map(check_transaction_sync, transactions)
+
+
+# Python's async support might also be considered as an alternative approach to
+# providing concurrent checks. However, Tamato does not yet integrate async
+# support and so async DB calls are not currently possible -
+# `check_transaction_sync()` relies upon blocking / non-async Django DB calls.
+#
+# If async support is added to Tamato, then something like the following
+# (untested)`check_transactions_async()` function could be used to provide async
+# concurrent checks.
+#
+# @log_timing(logger_function=logger.info)
+# def check_transactions_async(transactions: TransactionQueryset):
+#     import asyncio
+#
+#     semaphore = asyncio.Semaphore(10)
+#
+#     async def async_transaction_check(transaction: Transaction):
+#         async with semaphore:
+#             await asyncio.to_thread(check_transaction_sync, transaction)
+#
+#     async def  gather_transactions(transactions: TransactionQueryset):
+#         await asyncio.gather(
+#             *(async_transaction_check(transaction) for transaction in transactions)
+#         )
+#
+#     asyncio.run(gather_transactions(transactions=transactions))
 
 
 @atomic
