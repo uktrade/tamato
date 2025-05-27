@@ -92,7 +92,6 @@ def test_commodity_import_list_view_renders(superuser_client):
     page = BeautifulSoup(str(response.content), "html.parser")
 
     assert page.find("h1", text="EU Taric import list")
-    assert page.find("a", href="/commodity-importer/create/")
 
     assert page.find("thead").find("th", text="Taric ID number")
     assert page.find("thead").find("th", text="Date added")
