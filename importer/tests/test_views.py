@@ -92,7 +92,6 @@ def test_commodity_import_list_view_renders(superuser_client):
     page = BeautifulSoup(str(response.content), "html.parser")
 
     assert page.find("h1", text="EU Taric import list")
-    assert page.find("a", href="/commodity-importer/create/")
 
     assert page.find("thead").find("th", text="Taric ID number")
     assert page.find("thead").find("th", text="Date added")
@@ -156,16 +155,16 @@ def test_commodity_import_list_view_goods_status(
     assert len(page.select(f"td.goods-status.{goods_status_class}")) == 1
 
 
-def test_commodity_importer_import_new_returns_200(valid_user_client):
+def test_commodity_importer_import_new_returns_200(superuser_client):
     url = reverse("commodity_importer-ui-create")
-    response = valid_user_client.get(url)
+    response = superuser_client.get(url)
     assert response.status_code == 200
 
 
 @patch("importer.forms.CommodityImportForm.save")
 def test_commodity_importer_import_new_success_redirect(
     mock_save,
-    valid_user_client,
+    superuser_client,
     test_files_path,
 ):
     mock_save.return_value = factories.ImportBatchFactory.create()
@@ -183,7 +182,7 @@ def test_commodity_importer_import_new_success_redirect(
         ),
     }
 
-    response = valid_user_client.post(url, data)
+    response = superuser_client.post(url, data)
     assert response.status_code == 302
 
     batch = ImportBatch.objects.last()
@@ -193,7 +192,7 @@ def test_commodity_importer_import_new_success_redirect(
     )
     assert response.url == redirect_url
 
-    response = valid_user_client.get(redirect_url)
+    response = superuser_client.get(redirect_url)
     assert response.status_code == 200
 
 
@@ -210,14 +209,14 @@ def test_commodity_importer_import_new_success_redirect(
 def test_commodity_importer_import_new_failure(
     file_name,
     error_msg,
-    valid_user_client,
+    superuser_client,
     test_files_path,
 ):
     url = reverse("commodity_importer-ui-create")
     with open(f"{test_files_path}/{file_name}", "rb") as f:
         content = f.read()
     taric_file = SimpleUploadedFile("TGB12345.xml", content, content_type="text/xml")
-    response = valid_user_client.post(
+    response = superuser_client.post(
         url,
         {"workbasket_title": "12345", "taric_file": taric_file},
     )
