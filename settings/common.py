@@ -945,3 +945,13 @@ DATA_MIGRATION_BATCH_SIZE = int(os.environ.get("DATA_MIGRATION_BATCH_SIZE", "100
 # Asynchronous / background (bulk) object creation and editing config.
 MEASURES_ASYNC_CREATION = is_truthy(os.environ.get("MEASURES_ASYNC_CREATION", "true"))
 MEASURES_ASYNC_EDIT = is_truthy(os.environ.get("MEASURES_ASYNC_EDIT", "true"))
+
+
+# BUSINESS_RULE_CHECKS_CONCURRENCY is used to set the concurrency model used by
+# the business rule checks system and should take one of the string values,
+# "SERIAL" or "THREADED". (No "ASYNC" option is currently available as Tamato
+# is not provisioned to support Python async Django database calls.)
+BUSINESS_RULE_CHECKS_CONCURRENCY = os.environ.get(
+    "BUSINESS_RULE_CHECKS_CONCURRENCY",
+    "THREADED",
+)
