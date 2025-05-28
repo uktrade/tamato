@@ -1,4 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
+from multiprocessing import cpu_count
 from typing import List
 
 from celery import group
@@ -111,9 +113,6 @@ def check_transactions_serial(transactions: TransactionQueryset):
 
 @log_timing(logger_function=logger.info)
 def check_transactions_threaded(transactions: TransactionQueryset):
-    from concurrent.futures import ThreadPoolExecutor
-    from multiprocessing import cpu_count
-
     MIN_WORKERS = 10
     max_workers = min(MIN_WORKERS, cpu_count())
     logger.info(
