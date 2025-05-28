@@ -189,16 +189,12 @@ class CommodityImportListView(
 
 
 class CommodityImportCreateView(
-    PermissionRequiredMixin,
+    RequiresSuperuserMixin,
     FormView,
 ):
     """Commodity code file import view."""
 
     form_class = forms.CommodityImportForm
-    permission_required = [
-        "common.add_trackedmodel",
-        "common.change_trackedmodel",
-    ]
     template_name = "eu-importer/import.jinja"
 
     def get_success_url(self):
