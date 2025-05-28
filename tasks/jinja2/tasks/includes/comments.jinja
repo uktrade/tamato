@@ -1,0 +1,50 @@
+  <h2 class="govuk-heading-m">Comments</h2>
+
+  <div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters">
+
+  {{ crispy(form, context={"csrf_token": csrf_token, "request": request}) }}
+
+  {% if comments %}
+        {% for comment in comments %}
+          <article>
+            <header class="govuk-!-margin-bottom-4">
+              <p class="govuk-body">
+                <span class="govuk-!-font-weight-bold govuk-!-margin-right-2">{{ comment.author.get_displayname() }}</span>
+                <time>{{ localtime(comment.created_at).strftime("%d %B %Y, %I:%M %p") }}</time>
+              </p>
+
+              {% if comment.author == request.user %}
+                <ul class="govuk-list comment-actions">
+                  <li>
+                    <a
+                      class="govuk-link"
+                      href="{{ url("workflow:ticket-comment-update", kwargs={"ticket_pk": object.pk, "pk": comment.pk}) }}"
+                    >Edit</a>
+                  </li>
+                  <li>
+                    <a
+                      class="govuk-link"
+                      href="{{ url("workflow:ticket-comment-delete", kwargs={"ticket_pk": object.pk, "pk": comment.pk}) }}"
+                    >Delete</a>
+                  </li>
+                </ul>
+              {% endif %}
+              
+            </header>
+            <div class="comment">{{ comment.content|safe }}</div>
+            <br>
+          </article>
+          {% if not loop.last %}
+            <hr class="govuk-section-break govuk-section-break--visible">
+          {% endif %}
+        {% endfor %}
+        <hr class="govuk-section-break">
+        {% include "includes/common/pagination.jinja" %}
+      </div>
+    </div>
+  
+  {% else %}
+
+  <p>There are no comments on this ticket.</p>
+  {% endif %}

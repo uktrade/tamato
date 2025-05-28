@@ -1,5 +1,6 @@
-# TP-??? Your PR title here
+# TP2000-??? Your PR title here
 <!---
+                                                  <--- 50 characters
  * Include the JIRA ticket number, eg TP-123, to automatically link.
  * Use 50 characters maximum.
  * Do not end with a full-stop.
@@ -22,12 +23,12 @@ What is this PR doing, e.g. implementations, algorithms, etc.?
 --->
 
 <!---
-Optionally let reviewers know they need to run migrations or update dependencies before
+Let reviewers know they need to run migrations or update dependencies before
 testing by adding the following section:
-## Checklist
-- Requires migrations?
-- Requires dependency updates?
 --->
+## Checklist
+- Requires migrations? Yes / No
+- Requires dependency updates? Yes / No
 
 <!---
 Links to relevant material

@@ -1,0 +1,152 @@
+from django.urls import include
+from django.urls import path
+
+from tasks import views
+
+app_name = "workflow"
+
+task_ui_patterns = [
+    # Task urls
+    path("", views.TaskListView.as_view(), name="task-ui-list"),
+    path("<int:pk>/", views.TaskDetailView.as_view(), name="task-ui-detail"),
+    path("create/", views.TaskCreateView.as_view(), name="task-ui-create"),
+    path("<int:pk>/update/", views.TaskUpdateView.as_view(), name="task-ui-update"),
+    path("<int:pk>/delete/", views.TaskDeleteView.as_view(), name="task-ui-delete"),
+    path(
+        "<int:pk>/assign-user/",
+        views.TaskAssignUserView.as_view(),
+        name="task-ui-assign-user",
+    ),
+    path(
+        f"<int:pk>/unassign-user/",
+        views.TaskUnassignUserView.as_view(),
+        name="task-ui-unassign-user",
+    ),
+    # Subtask urls
+    path(
+        "<int:parent_task_pk>/subtasks/create/",
+        views.SubTaskCreateView.as_view(),
+        name="subtask-ui-create",
+    ),
+    path(
+        "subtasks/<int:pk>/delete",
+        views.SubTaskDeleteView.as_view(),
+        name="subtask-ui-delete",
+    ),
+    path(
+        "subtasks/<int:pk>/delete",
+        views.SubTaskDeleteView.as_view(),
+        name="subtask-ui-delete",
+    ),
+    path(
+        "subtasks/<int:pk>/update/",
+        views.SubTaskUpdateView.as_view(),
+        name="subtask-ui-update",
+    ),
+]
+
+workflow_ui_patterns = [
+    path(
+        "",
+        views.TaskWorkflowListView.as_view(),
+        name="task-workflow-ui-list",
+    ),
+    path(
+        "<int:pk>/",
+        views.TaskWorkflowDetailView.as_view(),
+        name="task-workflow-ui-detail",
+    ),
+    path(
+        "create/",
+        views.TaskWorkflowCreateView.as_view(),
+        name="task-workflow-ui-create",
+    ),
+    path(
+        "<int:pk>/update/",
+        views.TaskWorkflowUpdateView.as_view(),
+        name="task-workflow-ui-update",
+    ),
+    path(
+        "<int:pk>/delete/",
+        views.TaskWorkflowDeleteView.as_view(),
+        name="task-workflow-ui-delete",
+    ),
+    path(
+        "<int:task_workflow_pk>/step/create/",
+        views.TaskWorkflowTaskCreateView.as_view(),
+        name="task-workflow-task-ui-create",
+    ),
+    path(
+        "<ticket_pk>/comment-update/<int:pk>/",
+        views.TicketCommentUpdate.as_view(),
+        name="ticket-comment-update",
+    ),
+    path(
+        "<ticket_pk>/comment-delete/<int:pk>/",
+        views.TicketCommentDelete.as_view(),
+        name="ticket-comment-delete",
+    ),
+]
+
+task_and_workflow_ui_patterns = [
+    path(
+        "",
+        views.TaskAndWorkflowListView.as_view(),
+        name="task-and-workflow-ui-list",
+    ),
+]
+
+workflow_template_ui_patterns = [
+    path(
+        "",
+        views.TaskWorkflowTemplateListView.as_view(),
+        name="task-workflow-template-ui-list",
+    ),
+    path(
+        "<int:pk>/",
+        views.TaskWorkflowTemplateDetailView.as_view(),
+        name="task-workflow-template-ui-detail",
+    ),
+    path(
+        "create/",
+        views.TaskWorkflowTemplateCreateView.as_view(),
+        name="task-workflow-template-ui-create",
+    ),
+    path(
+        "<int:pk>/update/",
+        views.TaskWorkflowTemplateUpdateView.as_view(),
+        name="task-workflow-template-ui-update",
+    ),
+    path(
+        "<int:pk>/delete/",
+        views.TaskWorkflowTemplateDeleteView.as_view(),
+        name="task-workflow-template-ui-delete",
+    ),
+    path(
+        "step-templates/<int:pk>/",
+        views.TaskTemplateDetailView.as_view(),
+        name="task-template-ui-detail",
+    ),
+    path(
+        "<int:workflow_template_pk>/step-templates/create/",
+        views.TaskTemplateCreateView.as_view(),
+        name="task-template-ui-create",
+    ),
+    path(
+        "step-templates/<int:pk>/update/",
+        views.TaskTemplateUpdateView.as_view(),
+        name="task-template-ui-update",
+    ),
+    path(
+        "<int:workflow_template_pk>/step-templates/<int:pk>/delete/",
+        views.TaskTemplateDeleteView.as_view(),
+        name="task-template-ui-delete",
+    ),
+]
+
+urlpatterns = [
+    path("steps/", include(task_ui_patterns)),
+    path("tickets/", include(workflow_ui_patterns)),
+    path("steps-and-tickets/", include(task_and_workflow_ui_patterns)),
+    path("ticket-templates/", include(workflow_template_ui_patterns)),
+]

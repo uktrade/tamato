@@ -7,6 +7,7 @@ import taric_parsers.importer
 from common.celery import app
 from importer.models import BatchImportError
 from importer.models import ImportBatch
+from importer.models import ImportBatchStatus
 from importer.models import ImporterChunkStatus
 from importer.models import ImporterXMLChunk
 from importer.models import ImportIssueType
@@ -47,6 +48,10 @@ def parse_and_import(
     chunk.status = ImporterChunkStatus.RUNNING
     chunk.save()
 
+    # If the ImportBatch was created by Ticket step automation, then get the
+    # automation instance.
+    automation = batch.get_import_goods_automation()
+
     try:
         importer = taric_parsers.importer.TaricImporter(
             import_batch=batch,
@@ -64,6 +69,11 @@ def parse_and_import(
             # need to associate workbasket with the ImportBatch
             batch.workbasket = workbasket
             batch.save()
+
+            # If the ImportBatch was created by task automation, then set
+            # workbasket on its task's workflow instance.
+            if automation:
+                automation.set_workbasket(workbasket)
 
             importer.process_and_save_if_valid(workbasket)
         elif importer.is_empty():
@@ -120,6 +130,13 @@ def parse_and_import(
             # chunks with status ERRORED, so transition batch to ERRORED.
             batch.failed()
         batch.save()
+
+    if automation and (
+        batch.status == ImportBatchStatus.SUCCEEDED
+        or batch.status == ImportBatchStatus.FAILED_EMPTY
+    ):
+        automation.set_done()
+        automation.save()
 
 
 def setup_new_chunk_task(

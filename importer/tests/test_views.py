@@ -1,4 +1,3 @@
-from os import path
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -14,8 +13,6 @@ from importer.models import ImportBatch
 from importer.models import ImportBatchStatus
 from workbaskets.validators import WorkflowStatus
 
-TEST_FILES_PATH = path.join(path.dirname(__file__), "test_files")
-
 pytestmark = pytest.mark.django_db
 
 User = get_user_model()
@@ -23,8 +20,8 @@ User = get_user_model()
 
 @pytest.mark.parametrize("url_name", ["import_batch-ui-list", "import_batch-ui-create"])
 def test_import_urls_requires_superuser(
-    valid_user: User,
-    admin_user: User,
+    valid_user: User,  # type: ignore - Pylance invalid type
+    admin_user: User,  # type: ignore - Pylance invalid type
     client: Client,
     url_name: str,
 ):
@@ -45,11 +42,11 @@ def test_import_urls_requires_superuser(
 
 
 @patch("importer.forms.UploadTaricForm.save")
-def test_import_success_redirect(mock_save, superuser_client):
+def test_import_success_redirect(mock_save, superuser_client, test_files_path):
     mock_save.return_value = factories.ImportBatchFactory.create()
     url = reverse("import_batch-ui-create")
     redirect_url = reverse("import_batch-ui-list")
-    with open(f"{TEST_FILES_PATH}/valid.xml", "rb") as f:
+    with open(f"{test_files_path}/valid.xml", "rb") as f:
         content = f.read()
     taric_file = SimpleUploadedFile("taric_file.xml", content, content_type="text/xml")
     response = superuser_client.post(
@@ -69,9 +66,9 @@ def test_import_success_redirect(mock_save, superuser_client):
         ("invalid_type.txt", "The selected file must be XML"),
     ],
 )
-def test_import_failure(file_name, error_msg, superuser_client):
+def test_import_failure(file_name, error_msg, superuser_client, test_files_path):
     url = reverse("import_batch-ui-create")
-    with open(f"{TEST_FILES_PATH}/{file_name}", "rb") as f:
+    with open(f"{test_files_path}/{file_name}", "rb") as f:
         content = f.read()
     taric_file = SimpleUploadedFile("taric_file.xml", content, content_type="text/xml")
     response = superuser_client.post(
@@ -95,7 +92,6 @@ def test_commodity_import_list_view_renders(superuser_client):
     page = BeautifulSoup(str(response.content), "html.parser")
 
     assert page.find("h1", text="EU Taric import list")
-    assert page.find("a", href="/commodity-importer/create/")
 
     assert page.find("thead").find("th", text="Taric ID number")
     assert page.find("thead").find("th", text="Date added")
@@ -159,18 +155,22 @@ def test_commodity_import_list_view_goods_status(
     assert len(page.select(f"td.goods-status.{goods_status_class}")) == 1
 
 
-def test_commodity_importer_import_new_returns_200(valid_user_client):
+def test_commodity_importer_import_new_returns_200(superuser_client):
     url = reverse("commodity_importer-ui-create")
-    response = valid_user_client.get(url)
+    response = superuser_client.get(url)
     assert response.status_code == 200
 
 
 @patch("importer.forms.CommodityImportForm.save")
-def test_commodity_importer_import_new_success_redirect(mock_save, valid_user_client):
+def test_commodity_importer_import_new_success_redirect(
+    mock_save,
+    superuser_client,
+    test_files_path,
+):
     mock_save.return_value = factories.ImportBatchFactory.create()
     url = reverse("commodity_importer-ui-create")
 
-    with open(f"{TEST_FILES_PATH}/TGB12345.xml", "rb") as f:
+    with open(f"{test_files_path}/TGB12345.xml", "rb") as f:
         content = f.read()
 
     data = {
@@ -182,7 +182,7 @@ def test_commodity_importer_import_new_success_redirect(mock_save, valid_user_cl
         ),
     }
 
-    response = valid_user_client.post(url, data)
+    response = superuser_client.post(url, data)
     assert response.status_code == 302
 
     batch = ImportBatch.objects.last()
@@ -192,7 +192,7 @@ def test_commodity_importer_import_new_success_redirect(mock_save, valid_user_cl
     )
     assert response.url == redirect_url
 
-    response = valid_user_client.get(redirect_url)
+    response = superuser_client.get(redirect_url)
     assert response.status_code == 200
 
 
@@ -206,12 +206,17 @@ def test_commodity_importer_import_new_success_redirect(mock_save, valid_user_cl
         ("invalid_type.txt", "The selected file must be XML"),
     ],
 )
-def test_commodity_importer_import_new_failure(file_name, error_msg, valid_user_client):
+def test_commodity_importer_import_new_failure(
+    file_name,
+    error_msg,
+    superuser_client,
+    test_files_path,
+):
     url = reverse("commodity_importer-ui-create")
-    with open(f"{TEST_FILES_PATH}/{file_name}", "rb") as f:
+    with open(f"{test_files_path}/{file_name}", "rb") as f:
         content = f.read()
     taric_file = SimpleUploadedFile("TGB12345.xml", content, content_type="text/xml")
-    response = valid_user_client.post(
+    response = superuser_client.post(
         url,
         {"workbasket_title": "12345", "taric_file": taric_file},
     )

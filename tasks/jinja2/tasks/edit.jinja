@@ -1,0 +1,22 @@
+{% extends "layouts/form.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+
+{% set page_title = "Edit step status" %}
+
+{% set ticket = object.taskitem.workflow %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": "Ticket " ~ ticket.prefixed_id, "href": ticket.get_url("detail")},
+      {"text": "Step: " ~ object.title, "href": url("workflow:task-ui-detail", kwargs={"pk": object.pk})},
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+{% block form %}
+  {% call django_form() %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

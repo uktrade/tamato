@@ -1,0 +1,98 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "tasks/macros/display_details.jinja" import display_status %}
+{% from "tasks/macros/display_details.jinja" import display_assignees %}
+{% from "tasks/macros/display_details.jinja" import display_summary_row_stacked %}
+
+{% set page_title = "Step: " ~ object.title %}
+
+{% set edit_url = url("workflow:task-ui-update", kwargs={"pk": object.pk}) %}
+{% set assign_user_link = url("workflow:task-ui-assign-user", kwargs={"pk": object.pk}) %}
+{% set unassign_user_link = url("workflow:task-ui-unassign-user", kwargs={"pk": object.pk}) %}
+
+{% if not current_assignee %}
+  {%- set change_assignee_link = assign_user_link %}
+{% else %}
+  {%- set change_assignee_link = unassign_user_link %}
+{% endif %}
+
+
+{% block breadcrumb %}
+  {% if ticket_number %}
+    {{ breadcrumbs(request, [
+        {
+          "text": "Ticket " ~ ticket_prefixed_id,
+          "href": url('workflow:task-workflow-ui-detail', kwargs={'pk': ticket_number}),
+        },
+        {"text": page_title}
+      ],
+      with_workbasket=False,
+    ) }}
+  {% else %}
+    {{ breadcrumbs(request, [
+        {"text": page_title}
+      ],
+      with_workbasket=False,
+    )}}
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-three-quarters govuk-!-padding-bottom-9">
+        <h1 class="govuk-heading-xl govuk-!-margin-bottom-4">
+          <span class="govuk-caption-xl">{{ ticket_title }}</span>
+          {{ page_title }}
+        </h1>
+      </div>
+    {% if request.user.is_superuser %}
+      <div class="govuk-grid-column-one-quarter">
+        {{ govukButton({
+        "text": "Delete step",
+        "href": url("workflow:task-ui-delete", kwargs={"pk": object.pk}),
+        "classes": "govuk-button--warning govuk-!-margin-top-2 float-elements-right"
+        }) }}
+      </div>
+    {% endif %}
+    </div>
+  </div>
+
+  <div class="govuk-grid-column-full">
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-three-quarters">
+        <p class="govuk-body govuk-!-padding-bottom-4">{{ object.description }}</p>
+
+      {% if object.has_automation %}
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-full">
+          {{ object.automation.rendered_state() | safe }}
+          </div>
+        </div>
+      {% endif %}
+      </div>
+    <div class="govuk-grid-column-one-quarter">
+      <dl class="govuk-summary-list govuk-summary-list--no-border">
+        {{ display_summary_row_stacked("Status", display_status(object.get_progress_state_display()), edit_url) }}
+        {{ display_summary_row_stacked("Assignee", display_assignees(object.assignees.assigned()), change_assignee_link) }}
+        {{ display_summary_row_stacked("Last updated", object.updated_at.strftime(datetime_format)) }}
+      </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script nonce="{{ request.csp_nonce }}">
+  const CSRF_TOKEN = "{{ csrf_token }}";
+
+  const currentAssignee = {{ current_assignee|safe }};
+  const assignableUsers = {{ assignable_users|safe }};
+
+  const assignUserUrl = "{{ assign_user_link }}";
+  const unassignUserUrl = "{{ unassign_user_link }}";
+</script>
+{% endblock %}
+

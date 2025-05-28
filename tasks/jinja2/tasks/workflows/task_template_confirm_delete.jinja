@@ -1,0 +1,50 @@
+{% extends "layouts/confirm.jinja" %}
+
+{% from "components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "components/panel/macro.njk" import govukPanel %}
+{% from "components/button/macro.njk" import govukButton %}
+
+{% set page_title = "Step template deleted" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {
+        "text": "Ticket template: " ~ task_workflow_template.title,
+        "href": url(
+          "workflow:task-workflow-template-ui-detail",
+          kwargs={"pk": task_workflow_template.pk},
+        ),
+      },
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
+
+{% block panel %}
+  {{ govukPanel({
+    "titleText": "Step template ID: " ~ deleted_pk,
+    "text": "Step template has been deleted",
+    "classes": "govuk-!-margin-bottom-7"
+  }) }}
+{% endblock %}
+
+{% block button_group %}
+  {{ govukButton({
+    "text": "Return to ticket template",
+    "href": url(
+      "workflow:task-workflow-template-ui-detail",
+      kwargs={"pk": task_workflow_template.pk},
+    ),
+    "classes": "govuk-button"
+  }) }}
+  {{ govukButton({
+    "text": "View all ticket templates",
+    "href": task_workflow_template.get_url("list"),
+    "classes": "govuk-button--secondary"
+  }) }}
+{% endblock %}
+
+{% block actions %}{% endblock %}

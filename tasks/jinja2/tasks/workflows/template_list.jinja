@@ -1,0 +1,78 @@
+{% extends "layouts/layout.jinja" %}
+
+{% from "components/table/macro.njk" import govukTable %}
+{% from "components/create_sortable_anchor.jinja" import create_sortable_anchor %}
+
+{% set page_title = "View all ticket templates" %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-xl">{{ page_title }}</h1>
+  <p class="govuk-body">
+    Search for ticket templates.
+    Alternatively, <a class="govuk-link" href="{{ url("workflow:task-workflow-template-ui-create") }}">create a new ticket template</a>.
+  </p>
+
+  <div class="filter-layout">
+    <div class="filter-layout__filters">
+      <h2 class="govuk-heading-m govuk-!-margin-top-3">Search and filter</h2>
+      <form method="get" action="{{ url("workflow:task-workflow-template-ui-list") }}">
+          {{ crispy(filter.form) }}
+      </form>
+    </div>
+
+  <div class="filter-layout__content">
+    {% set items_name = "ticket template" %}
+    {% if paginator.count > 0 %}
+      {% include "includes/common/pagination-list-summary.jinja" %}
+    {% endif %}
+    {% if object_list %}
+      {% set table_rows = [] %}
+      {% for object in object_list %}
+        {%- set workflow_template_linked_id -%}
+          <a
+            class="govuk-link"
+            href="{{ url("workflow:task-workflow-template-ui-detail", kwargs={"pk": object.pk}) }}"
+          >{{ object.pk }}</a>
+        {%- endset -%}
+
+        {{ table_rows.append([
+          {"text": workflow_template_linked_id},
+          {"text": object.title},
+          {"text": object.description|truncate(75)},
+          {"text": object.creator.get_displayname() if object.creator else "Unknown"},
+          {"text": object.created_at.strftime(datetime_format)},
+          {"text": object.updated_at.strftime(datetime_format)},
+        ]) or "" }}
+      {% endfor %}
+
+      {{ govukTable({
+        "head": [
+          {"text": "ID"},
+          {"text": "Title"},
+          {"text": "Description"},
+          {"text": "Created by"},
+          {"text": create_sortable_anchor(request, "Created", sorting_urls["created_at"])},
+          {"text": create_sortable_anchor(request, "Last updated", sorting_urls["updated_at"])},
+        ],
+          "rows": table_rows
+        }) }}
+    {% else %}
+      <p class="govuk-body">There are no results for your search, please:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>check the spelling of your keywords</li>
+        <li>use more general keywords</li>
+        <li>select or deselect different filters</li>
+      </ul>
+    {% endif %}
+    {% include "includes/common/pagination.jinja" %}
+  </div>
+</div>
+{% endblock %}

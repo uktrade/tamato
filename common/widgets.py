@@ -55,13 +55,19 @@ class AutocompleteWidget(widgets.Widget):
     template_name = "components/autocomplete.jinja"
 
     def get_context(self, name, value, attrs=None):
+        from common.models import TrackedModel
+
         if attrs is None:
             attrs = {}
+
         display_string = ""
-        if value:
+
+        if isinstance(value, TrackedModel):
             display_string = value.structure_code
             if value.structure_description:
                 display_string = f"{display_string} - {value.structure_description}"
+        else:
+            display_string = value.autocomplete_label if value else ""
 
         return {
             "widget": {

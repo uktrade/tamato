@@ -149,7 +149,9 @@ def test_regulation_detail_measures_view_sorting_commodity(valid_user_client):
         3,
         generating_regulation=regulation,
     )
-    commodity_codes = [measure.goods_nomenclature.item_id for measure in measures]
+    commodity_codes = sorted(
+        [measure.goods_nomenclature.item_id for measure in measures],
+    )
 
     url = reverse(
         "regulation-ui-detail-measures",

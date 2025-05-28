@@ -15,8 +15,6 @@
 {% set assign_users_link = url("workbaskets:workbasket-ui-assign-users", kwargs={"pk": workbasket.pk}) %}
 {% set unassign_users_link = url("workbaskets:workbasket-ui-unassign-users", kwargs={"pk": workbasket.pk}) %}
 
-{% set base_url = url("workbaskets:current-workbasket") ~ "?page=" ~ page_obj.number %}
-
 {% macro display_assigned_users(assigned_users, assignment_type) %}
   {% if not assigned_users and assignment_type == "workers" %}
     No users have been assigned to this workbasket yet.
@@ -175,7 +173,7 @@
         </dd>
         {% if comments %}
           <dd class="govuk-summary-list__actions">
-            <span class="govuk-visually-hidden">Sort by </span>{{ create_sortable_anchor(request, "comments", sort_by_title, base_url, query_params="True") }}
+            <span class="govuk-visually-hidden">Sort by </span>{{ create_sortable_anchor(request, sort_by_label, sorting_urls["comments"]) }}
           </dd>
         {% endif %}
       </div>

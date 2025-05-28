@@ -20,6 +20,8 @@ from django.db.models import Max
 from django.db.models import Q
 from django.db.models import QuerySet
 from django.db.models import Subquery
+from django.db.transaction import atomic
+from django.urls import reverse
 from django.utils.timezone import make_aware
 from django_fsm import FSMField
 from django_fsm import transition
@@ -37,6 +39,9 @@ from common.models.transactions import TransactionPartition
 from common.models.transactions import TransactionQueryset
 from measures.models import Measure
 from measures.querysets import MeasuresQuerySet
+from tasks.models import Automation
+from tasks.models import StateChoices
+from tasks.signals import override_current_instigator
 from workbaskets.util import serialize_uploaded_data
 from workbaskets.validators import WorkflowStatus
 from workbaskets.views.helpers import get_comm_codes_affected_by_workbasket_changes
@@ -494,6 +499,10 @@ class WorkBasket(TimestampedMixin):
         hash.update(value)
         return hash.hexdigest()
 
+    @property
+    def autocomplete_label(self):
+        return f"({self.pk})  {self.title} - {self.reason}"
+
     def __str__(self):
         return f"({self.pk}) [{self.status}]"
 
@@ -764,6 +773,8 @@ class WorkBasket(TimestampedMixin):
 
     @property
     def worker_assignments(self):
+        """Returns a queryset of associated `WorkBasketAssignment` instances
+        filtered to match `AssignmentType.WORKBASKET_WORKER`."""
         return (
             WorkBasketAssignment.objects.filter(workbasket=self)
             .workbasket_workers()
@@ -772,6 +783,8 @@ class WorkBasket(TimestampedMixin):
 
     @property
     def reviewer_assignments(self):
+        """Returns a queryset of associated `TaskAssignee` instances filtered to
+        match `AssignmentType.WORKBASKET_REVIEWER`."""
         return (
             WorkBasketAssignment.objects.filter(workbasket=self)
             .workbasket_reviewers()
@@ -785,11 +798,13 @@ class WorkBasket(TimestampedMixin):
 
     @property
     def assigned_workers(self):
+        """Returns a queryset of `User` instances assigned as workers."""
         user_ids = self.worker_assignments.values_list("user_id", flat=True)
         return User.objects.filter(id__in=user_ids)
 
     @property
     def assigned_reviewers(self):
+        """Returns a queryset of `User` instances assigned as reviewers."""
         user_ids = self.reviewer_assignments.values_list("user_id", flat=True)
         return User.objects.filter(id__in=user_ids)
 
@@ -923,3 +938,99 @@ class WorkBasketComment(TimestampedMixin):
         on_delete=models.CASCADE,
         related_name="workbasket_comments",
     )
+
+
+class CreateWorkBasketAutomation(Automation):
+    """Create a workbasket and associate with the workflow."""
+
+    name = "Create workbasket"
+    help_text = "Creates a workbasket and associates it with the ticket."
+
+    def get_state(self) -> StateChoices:
+        workflow = self.task.get_workflow()
+
+        if not workflow:
+            # The related task must be associated with a TaskWorkflow instance
+            # in order to run this automation, otherwise it is in error.
+            return StateChoices.ERRORED
+        if workflow.workbasket:
+            return StateChoices.DONE
+        else:
+            return StateChoices.CAN_RUN
+
+    def rendered_state(self) -> str:
+        if self.get_state() == StateChoices.CAN_RUN:
+            return self._rendered_state_CAN_RUN()
+        elif self.get_state() == StateChoices.DONE:
+            return self._rendered_state_DONE()
+        else:
+            return self._rendered_state_ERRORED()
+
+    def _rendered_state_CAN_RUN(self) -> str:
+        create_workbasket_url = reverse(
+            "workbaskets:workbasket-automation-ui-create",
+            kwargs={"pk": self.pk},
+        )
+        return f"""
+            <div class="automation state-can-run">
+                <a class="govuk-link" href="{create_workbasket_url}">Create a workbasket</a>
+            </div>
+        """
+
+    def _rendered_state_DONE(self) -> str:
+        return """
+            <div class="automation state-done">
+                <h3>Workbasket created</h3>
+                <p class="govuk-body">
+                    A workbasket has been created and associated with this ticket.
+                </p>
+            </div>
+        """
+
+    def _rendered_state_ERRORED(self) -> str:
+        return """
+            <div class="automation state-errored">
+                <h3>There is a problem</h3>
+                <p class="govuk-body">
+                    Please contact the TAP service team.
+                </p>
+            </div>
+        """
+
+    def validate_can_run_automation(self) -> None:
+        """
+        Validates that this automation instance can be executed (by calling the
+        `run_automation()` method).
+
+        If validation fails then a `ValidationError` exception is raised.
+        """
+
+        state = self.get_state()
+        if state == StateChoices.ERRORED:
+            raise ValidationError("No ticket associated with automation.")
+        elif state == StateChoices.DONE:
+            raise ValidationError(
+                "A workbasket is already associated with the ticket. Cannot "
+                "associate more.",
+            )
+
+    @atomic
+    def run_automation(self, user) -> None:
+        """Create a workbasket, associate it with the automated step's workflow
+        and set automated step's state to DONE."""
+
+        workflow = self.task.get_workflow()
+        workflow.workbasket = WorkBasket.objects.create(
+            title=f"{workflow.prefixed_id} - {workflow.title}",
+            reason=f"{workflow.summary_task.description}",
+            author=user,
+        )
+        workflow.save()
+
+        with override_current_instigator(user):
+            self.task.done()
+            self.task.save()
+
+        logger.info(
+            f"{self} created {workflow.workbasket} on {self.task.get_workflow()}",
+        )

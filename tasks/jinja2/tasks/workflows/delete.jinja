@@ -1,0 +1,34 @@
+{% extends "layouts/form.jinja" %}
+
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/warning-text/macro.njk" import govukWarningText %}
+{% from "components/button/macro.njk" import govukButton %}
+
+
+{% set object_id = object.prefixed_id if object.prefixed_id else object.id %}
+{% set object_name = verbose_name|capitalize ~ " " ~  object_id %}
+{% set page_title = "Delete " ~ object_name %}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(
+    request,
+    [
+      {
+        "text": object_name,
+        "href": object.get_url("detail"),
+      },
+      {"text": page_title}
+    ],
+    False,
+  ) }}
+{% endblock %}
+
+{% block form %}
+  {{ govukWarningText({
+    "text": "Are you sure you want to delete " ~ object_name ~ "?",
+  }) }}
+
+  {% call django_form(action=object.get_url("delete")) %}
+    {{ crispy(form) }}
+  {% endcall %}
+{% endblock %}

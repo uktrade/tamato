@@ -10,14 +10,13 @@ from django.test import override_settings
 from django.urls import reverse
 from django.urls import reverse_lazy
 
-from checks.tests.factories import TrackedModelCheckFactory
 from common.tests import factories
 from common.util import xml_fromstring
 from common.views import HealthCheckView
 from common.views import handler403
 from common.views import handler500
-from workbaskets.models import AssignmentType
-from workbaskets.validators import WorkflowStatus
+from tasks.models.task import ProgressState
+from tasks.tests.factories import TaskWorkflowFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -220,8 +219,8 @@ def test_maintenance_mode_page_content(valid_user_client):
 @pytest.mark.parametrize(
     ("card", "permission"),
     [
-        ("What would you like to do?", "view_workbasket"),
-        ("Currently working on", "change_workbasket"),
+        ("Tickets", "view_taskworkflow"),
+        ("Workbaskets", "view_workbasket"),
         ("EU TARIC files", "add_trackedmodel"),
         ("Envelopes", "consume_from_packaging_queue"),
         ("Resources", ""),
@@ -264,35 +263,27 @@ def test_homepage_cards_contain_expected_links(superuser_client):
         assert reverse(url) in links
 
 
-@pytest.mark.parametrize(
-    ("status"),
-    [
-        (WorkflowStatus.EDITING),
-        (WorkflowStatus.ERRORED),
-    ],
-)
-def test_homepage_card_currently_working_on(status, valid_user, valid_user_client):
-    test_reason = "test reason"
-    workbasket = factories.WorkBasketFactory.create(status=status, reason=test_reason)
-    factories.WorkBasketAssignmentFactory.create(
-        user=valid_user,
-        assignment_type=AssignmentType.WORKBASKET_REVIEWER,
-        workbasket=workbasket,
+def test_homepage_card_tickets(valid_user, valid_user_client):
+    ticket1 = TaskWorkflowFactory.create(
+        summary_task__progress_state=ProgressState.TO_DO,
     )
-    TrackedModelCheckFactory.create(
-        transaction_check__transaction=workbasket.new_transaction(),
-        successful=False,
+    ticket2 = TaskWorkflowFactory.create(
+        summary_task__progress_state=ProgressState.IN_PROGRESS,
     )
+    factories.TaskAssigneeFactory.create(user=valid_user, task=ticket1.summary_task)
+    factories.TaskAssigneeFactory.create(user=valid_user, task=ticket2.summary_task)
 
     response = valid_user_client.get(reverse("home"))
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    card = page.find("h3", string="Currently working on")
-    assigned_workbasket = card.find_next("a")
-    details = card.find_next("span")
-
-    assert test_reason in assigned_workbasket.text
-    assert str(workbasket.pk) in assigned_workbasket.attrs["href"]
-    assert "Reviewing" and "rule violation" in details.text
+    card = page.find("h3", string="Tickets")
+    assert card
+    my_tickets = card.find_next("table")
+    rows = my_tickets.findChildren(["tr"])
+    assert len(rows) == 3
+    assert ticket1.title in rows[1].select("td")[1]
+    assert "To do" in rows[1].select("td")[2].get_text()
+    assert ticket2.title in rows[2].select("td")[1]
+    assert "In progress" in rows[2].select("td")[2].get_text()
 
 
 @pytest.mark.parametrize(
@@ -386,3 +377,50 @@ def test_admin_login_shows_404_when_sso_enabled(superuser_client):
     assert response.status_code == 200
     page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
     assert page.find("h1", string="Site administration")
+
+
+@pytest.mark.parametrize(
+    "client_name",
+    [
+        "client",
+        "superuser_client",
+        "valid_user_client",
+    ],
+)
+def test_tickets_tile_visibility_based_on_user_permissions(client_name, request):
+    """This test checks if 'Tickets' tile is only visible to either Tariff
+    Managers (valid_user_client used as proxy) or superusers."""
+    client = request.getfixturevalue(client_name)
+    response = client.get(reverse("home"))
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    card = page.find("h3", string="Tickets")
+
+    if client_name == "client":
+        assert not card
+    else:
+        assert card
+
+
+@pytest.mark.parametrize(
+    "client_name",
+    [
+        "valid_user_client",
+        "superuser_client",
+    ],
+)
+def test_ticket_templates_link_only_visible_to_superuser(client_name, request):
+    """This test checks if the 'Ticket Templates' link is only visible to
+    superusers."""
+    print(f"Using the following client: {client_name}")
+    client = request.getfixturevalue(client_name)
+    response = client.get(reverse("home"))
+
+    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
+    link_url = reverse("workflow:task-workflow-template-ui-list")
+    ticket_templates_link = page.find("a", href=link_url)
+
+    if client_name == "valid_user_client":
+        assert not ticket_templates_link
+    else:
+        assert ticket_templates_link

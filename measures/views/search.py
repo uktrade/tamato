@@ -84,16 +84,6 @@ class MeasureList(
         kwargs["objects"] = page.object_list
         return kwargs
 
-    def cleaned_query_params(self):
-        # Remove the sort_by and ordered params in order to stop them being duplicated in the base url
-        if "sort_by" and "ordered" in self.filterset.data:
-            cleaned_filterset = self.filterset.data.copy()
-            cleaned_filterset.pop("sort_by")
-            cleaned_filterset.pop("ordered")
-            return cleaned_filterset
-        else:
-            return self.filterset.data
-
     def selected_filter_formatter(self) -> List[List[str]]:
         """
         A function that formats the selected filter choices into nicely written
@@ -242,6 +232,7 @@ class MeasureList(
                 ),
                 "selected_filter_lists": self.selected_filter_formatter(),
                 "workbasket": self.workbasket,
+                "sorting_urls": self.build_sorting_urls(),
             },
         )
         if context["has_previous_page"]:
@@ -253,10 +244,6 @@ class MeasureList(
             pk__in=self.measure_selections,
         ).values_list("sid", flat=True)
 
-        context["query_params"] = True
-        context["base_url"] = (
-            f'{reverse("measure-ui-list")}?{urlencode(self.cleaned_query_params())}'
-        )
         return context
 
     def get_initial(self):

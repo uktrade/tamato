@@ -21,6 +21,7 @@ from common.validators import markdown_tags_allowlist
 from workbaskets import models
 from workbaskets import validators
 from workbaskets.models import AssignmentType
+from workbaskets.models import CreateWorkBasketAutomation
 from workbaskets.models import WorkBasketAssignment
 from workbaskets.models import WorkBasketComment
 from workbaskets.util import serialize_uploaded_data
@@ -425,3 +426,31 @@ class WorkBasketCommentDeleteForm(forms.ModelForm):
                 css_class="govuk-button-group",
             ),
         )
+
+
+class AutomationCreateWorkBasketForm(forms.Form):
+    """Form for creating workbaskets via CreateWorkBasketAutomation."""
+
+    automation: CreateWorkBasketAutomation
+    """Automation instance that this form helps to execute."""
+
+    def __init__(self, *args, **kwargs):
+        self.automation: CreateWorkBasketAutomation = kwargs.pop("automation")
+
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_size = Size.SMALL
+        self.helper.legend_size = Size.SMALL
+        self.helper.layout = Layout(
+            Submit(
+                "submit",
+                "Create",
+                data_module="govuk-button",
+                data_prevent_double_click="true",
+            ),
+        )
+
+    def clean(self):
+        self.automation.validate_can_run_automation()
+        return self.cleaned_data

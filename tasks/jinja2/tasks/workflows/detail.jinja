@@ -1,0 +1,93 @@
+{% extends "layouts/layout.jinja" %}
+{% from "components/breadcrumbs.jinja" import breadcrumbs %}
+{% from "components/button/macro.njk" import govukButton %}
+{% from "tasks/macros/display_details.jinja" import display_assignees %}
+{% from "tasks/macros/display_details.jinja" import display_workbasket %}
+{% from "tasks/macros/display_details.jinja" import display_summary_row_stacked %}
+{% from "tasks/macros/display_details.jinja" import display_status %}
+
+{% set page_title = verbose_name|capitalize ~ " " ~ object.prefixed_id if object.prefixed_id else verbose_name|capitalize ~ " " ~ object.id%}
+
+{% block breadcrumb %}
+  {{ breadcrumbs(request, [
+      {"text": page_title}
+    ],
+    with_workbasket=False,
+  ) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-0">
+        <span class="govuk-caption-xl">{{ object.title }}</span>
+        {{ page_title }}
+      </h1>
+    </div>
+
+    <div class="govuk-grid-column-one-quarter govuk-!-margin-top-7">
+      {{ govukButton({
+        "text": "Edit " ~ verbose_name,
+        "href": object.get_url("edit"),
+        "classes": "align-right",
+      }) }}
+    </div>
+  </div>
+
+  <hr class="govuk-section-break govuk-section-break--visible">
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+      <h2 class="govuk-heading-m">Description</h2>
+      <p class="govuk-body">{{ object.description }}</p>
+
+      <h2 class="govuk-heading-m">Steps</h2>
+      {% if object_list %}
+        {% include list_include %}
+      {% else %}
+        <p class="govuk-body">There are no steps for this {{ verbose_name }}.</p>
+      {% endif %}
+    </div>
+
+    <div class="govuk-grid-column-one-quarter">
+      <h2 class="govuk-heading-m">Details</h2>
+      <dl class="govuk-summary-list govuk-summary-list--no-border">
+        {% if verbose_name == "ticket" %}
+          {{ display_summary_row_stacked("Workbasket", display_workbasket(object.workbasket)) }}
+          {{ display_summary_row_stacked("Status", display_status(object.summary_task.get_progress_state_display())) }}
+          {{ display_summary_row_stacked("Assignee", display_assignees(object.summary_task.assignees.assigned())) }}
+          {{ display_summary_row_stacked("Work type", object.creator_template.title) }}
+          {{ display_summary_row_stacked("Created date", object.summary_task.created_at|format_date) }}
+          {{ display_summary_row_stacked("Entry into force date", object.eif_date|format_date) }}
+          {{ display_summary_row_stacked("Policy contact", object.policy_contact or "None") }}
+        {% elif verbose_name == "ticket template" %}
+          {{ display_summary_row_stacked("Created by", object.creator.get_displayname()) }}
+          {{ display_summary_row_stacked("Created date", object.created_at|format_date) }}
+        {% endif %}
+      </dl>
+    </div>
+  </div>
+
+  {% if verbose_name == "ticket template" %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-button-group">
+          {{ govukButton({
+            "text": "Add a step",
+            "href": url("workflow:task-template-ui-create", kwargs={"workflow_template_pk": object.pk}),
+            "classes": "govuk-button--secondary"
+          }) }}
+          {{ govukButton({
+            "text": "Delete " ~ verbose_name,
+            "href": object.get_url("delete"),
+            "classes": "govuk-button--warning"
+          }) }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  
+  {% if form %}
+    {% include "tasks/includes/comments.jinja" %}
+  {% endif %}
+{% endblock %}

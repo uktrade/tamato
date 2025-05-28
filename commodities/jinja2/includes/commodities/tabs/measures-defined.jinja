@@ -56,18 +56,16 @@
   ]) or "" }}
 {% endfor %}
 
-{% set base_url = url('commodity-ui-detail-measures-as-defined', args=[commodity.sid]) %}
-
 {% set measure_type %}
-  {{ create_sortable_anchor(request, "measure_type", "Measure type", base_url) }}
+  {{ create_sortable_anchor(request, "Measure type", sorting_urls["measure_type"]) }}
 {% endset %}
 
 {% set geo_area %}
-  {{ create_sortable_anchor(request, "geo_area", "Geographical area", base_url) }}
+  {{ create_sortable_anchor(request, "Geographical area", sorting_urls["geo_area"]) }}
 {% endset %}
 
 {% set start_date %}
-  {{ create_sortable_anchor(request, "start_date", "Start date", base_url) }}
+  {{ create_sortable_anchor(request, "Start date", sorting_urls["start_date"]) }}
 {% endset %}
 
 {% if paginator.count > 0 %}
