@@ -11,6 +11,7 @@ from common.tests.factories import SubTaskFactory
 from common.tests.factories import TaskAssigneeFactory
 from common.tests.factories import TaskFactory
 from common.tests.factories import UserFactory
+from common.tests.factories import WorkBasketFactory
 from common.util import format_date
 from tasks.forms import TaskWorkflowCreateForm
 from tasks.models import Comment
@@ -28,6 +29,7 @@ from tasks.tests.factories import TaskItemFactory
 from tasks.tests.factories import TaskItemTemplateFactory
 from tasks.tests.factories import TaskWorkflowFactory
 from tasks.tests.factories import TaskWorkflowTemplateFactory
+from workbaskets.validators import WorkflowStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -90,42 +92,6 @@ def test_task_update_view_update_progress_state(valid_user_client):
     )
 
 
-@pytest.mark.parametrize(
-    ("object_type", "success_url"),
-    [
-        ("Task", "workflow:task-ui-confirm-create"),
-        ("Subtask", "workflow:subtask-ui-confirm-create"),
-    ],
-    ids=("task test", "subtask test"),
-)
-def test_confirm_create_template_shows_task_or_subtask(
-    valid_user_client,
-    object_type,
-    success_url,
-):
-    """Test the confirm create template distinguishes between subtask or task's
-    creation."""
-
-    parent_task_instance = TaskFactory.create(
-        progress_state=ProgressState.TO_DO,
-    )
-
-    url = reverse(
-        success_url,
-        kwargs={
-            "pk": parent_task_instance.pk,
-        },
-    )
-    response = valid_user_client.get(url)
-
-    assert response.status_code == 200
-
-    page = BeautifulSoup(response.content.decode(response.charset), "html.parser")
-    expected_h1_text = f"{object_type}: {parent_task_instance.title}"
-
-    assert expected_h1_text in page.find("h1").text
-
-
 def test_create_subtask_form_errors_when_parent_is_subtask(valid_user_client):
     """Tests that the SubtaskCreateForm errors when a form is submitted that has
     a subtask as a parent."""
@@ -186,6 +152,75 @@ def test_delete_subtask_missing_user_permissions(
 
     response = client_type.post(url)
     assert response.status_code == expected_status_code_post
+
+
+def test_task_delete_success(valid_user_client):
+    taskitem = TaskItemFactory.create()
+
+    url = reverse(
+        "workflow:task-ui-delete",
+        kwargs={"pk": taskitem.task.pk},
+    )
+
+    get_response = valid_user_client.get(url)
+    assert get_response.status_code == 200
+
+    post_response = valid_user_client.post(url)
+    assert post_response.status_code == 302
+    assert post_response.url == reverse(
+        "workflow:task-workflow-ui-detail",
+        kwargs={
+            "pk": taskitem.workflow.pk,
+        },
+    )
+
+
+def test_task_create_success(valid_user_client):
+    url = reverse(
+        "workflow:task-ui-create",
+    )
+    workbasket = WorkBasketFactory.create(
+        status=WorkflowStatus.EDITING,
+    )
+
+    get_response = valid_user_client.get(url)
+    assert get_response.status_code == 200
+
+    form_data = {
+        "title": "Task title",
+        "description": "Task description",
+        "progress_state": ProgressState.TO_DO,
+        "workbasket": workbasket.pk,
+    }
+
+    post_response = valid_user_client.post(url, form_data)
+    assert post_response.status_code == 302
+    created_task = Task.objects.order_by("created_at").last()
+    assert post_response.url == reverse(
+        "workflow:task-ui-detail",
+        kwargs={"pk": created_task.pk},
+    )
+
+
+def test_subtask_create_success(valid_user_client):
+    task = TaskFactory.create()
+    url = reverse("workflow:subtask-ui-create", kwargs={"parent_task_pk": task.pk})
+
+    get_response = valid_user_client.get(url)
+    assert get_response.status_code == 200
+
+    subtask_form_data = {
+        "progress_state": ProgressState.TO_DO,
+        "title": "subtask test title",
+        "description": "subtask test description",
+    }
+
+    post_response = valid_user_client.post(url, subtask_form_data)
+    assert post_response.status_code == 302
+    assert post_response.url == reverse(
+        "workflow:task-ui-detail",
+        kwargs={"pk": task.pk},
+    )
 
 
 def test_workflow_template_detail_view_displays_task_templates(valid_user_client):
@@ -276,21 +311,19 @@ def test_workflow_template_create_view(valid_user_client):
         title=form_data["title"],
         description=form_data["description"],
     )
-    confirmation_url = reverse(
-        "workflow:task-workflow-template-ui-confirm-create",
+    detail_url = reverse(
+        "workflow:task-workflow-template-ui-detail",
         kwargs={"pk": created_workflow_template.pk},
     )
     assert create_response.status_code == 302
-    assert create_response.url == confirmation_url
+    assert create_response.url == detail_url
 
-    confirmation_response = valid_user_client.get(confirmation_url)
+    detail_response = valid_user_client.get(detail_url)
 
-    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    soup = BeautifulSoup(str(detail_response.content), "html.parser")
 
-    assert confirmation_response.status_code == 200
-    assert (
-        created_workflow_template.title in soup.select("h1.govuk-panel__title")[0].text
-    )
+    assert detail_response.status_code == 200
+    assert created_workflow_template.title in soup.h1.text
 
 
 def test_workflow_template_update_view(
@@ -317,7 +350,7 @@ def test_workflow_template_update_view(
     assert task_workflow_template.description == form_data["description"]
 
     confirmation_url = reverse(
-        "workflow:task-workflow-template-ui-confirm-update",
+        "workflow:task-workflow-template-ui-detail",
         kwargs={"pk": task_workflow_template.pk},
     )
     assert update_response.url == confirmation_url
@@ -326,9 +359,7 @@ def test_workflow_template_update_view(
     assert confirmation_response.status_code == 200
 
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert (
-        str(task_workflow_template.id) in soup.select("h1.govuk-panel__title")[0].text
-    )
+    assert str(task_workflow_template.id) in soup.h1.text
 
 
 def test_workflow_template_delete_view(
@@ -356,20 +387,16 @@ def test_workflow_template_delete_view(
     ).exists()
     assert not TaskTemplate.objects.filter(pk=task_template_pk).exists()
 
-    confirmation_url = reverse(
-        "workflow:task-workflow-template-ui-confirm-delete",
-        kwargs={"pk": task_workflow_template_pk},
+    list_url = reverse(
+        "workflow:task-workflow-template-ui-list",
     )
-    assert delete_response.url == confirmation_url
+    assert delete_response.url == list_url
 
-    confirmation_response = valid_user_client.get(confirmation_url)
-    assert confirmation_response.status_code == 200
+    list_response = valid_user_client.get(list_url)
+    assert list_response.status_code == 200
 
-    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert (
-        f"Ticket template ID: {task_workflow_template_pk}"
-        in soup.select(".govuk-panel__title")[0].text
-    )
+    soup = BeautifulSoup(str(list_response.content), "html.parser")
+    assert "View all ticket templates" in soup.h1.text
 
 
 def test_create_task_template_view(valid_user_client, task_workflow_template):
@@ -387,10 +414,10 @@ def test_create_task_template_view(valid_user_client, task_workflow_template):
         "description": factory.Faker("sentence"),
     }
     create_response = valid_user_client.post(create_url, form_data)
-    created_task_template = task_workflow_template.get_task_templates().get()
+    task_workflow_template.get_task_templates().get()
     confirmation_url = reverse(
-        "workflow:task-template-ui-confirm-create",
-        kwargs={"pk": created_task_template.pk},
+        "workflow:task-workflow-template-ui-detail",
+        kwargs={"pk": task_workflow_template.pk},
     )
 
     assert create_response.status_code == 302
@@ -402,7 +429,7 @@ def test_create_task_template_view(valid_user_client, task_workflow_template):
     soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
 
     assert confirmation_response.status_code == 200
-    assert created_task_template.title in soup.select("h1.govuk-panel__title")[0].text
+    assert task_workflow_template.title in soup.h1.text
 
 
 def test_task_template_detail_view(
@@ -454,13 +481,13 @@ def test_update_task_template_view(
     updated_task_template = (
         task_workflow_template_single_task_template_item.get_task_templates().get()
     )
-    confirmation_url = reverse(
-        "workflow:task-template-ui-confirm-update",
+    detail_url = reverse(
+        "workflow:task-template-ui-detail",
         kwargs={"pk": updated_task_template.pk},
     )
 
     assert update_response.status_code == 302
-    assert update_response.url == confirmation_url
+    assert update_response.url == detail_url
     assert (
         task_workflow_template_single_task_template_item.get_task_templates().count()
         == 1
@@ -468,12 +495,12 @@ def test_update_task_template_view(
     assert updated_task_template.title.endswith(appended_text)
     assert updated_task_template.description.endswith(appended_text)
 
-    confirmation_response = valid_user_client.get(confirmation_url)
+    detail_response = valid_user_client.get(detail_url)
 
-    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    soup = BeautifulSoup(str(detail_response.content), "html.parser")
 
-    assert confirmation_response.status_code == 200
-    assert updated_task_template.title in soup.select("h1.govuk-panel__title")[0].text
+    assert detail_response.status_code == 200
+    assert updated_task_template.title in soup.h1.text
 
 
 def test_delete_task_template_view(
@@ -508,29 +535,25 @@ def test_delete_task_template_view(
         pk=task_workflow_template_single_task_template_item.pk,
     )
 
-    confirmation_url = reverse(
-        "workflow:task-template-ui-confirm-delete",
+    detail_url = reverse(
+        "workflow:task-workflow-template-ui-detail",
         kwargs={
-            "workflow_template_pk": task_workflow_template_single_task_template_item.pk,
-            "pk": task_template_pk,
+            "pk": task_workflow_template_single_task_template_item.pk,
         },
     )
 
     assert delete_response.status_code == 302
-    assert delete_response.url == confirmation_url
+    assert delete_response.url == detail_url
     assert task_workflow_template_after.get_task_templates().count() == 0
     assert not TaskTemplate.objects.filter(pk=task_template_pk)
     assert not TaskItemTemplate.objects.filter(pk=task_item_template_pk)
 
-    confirmation_response = valid_user_client.get(confirmation_url)
+    detail_response = valid_user_client.get(detail_url)
 
-    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
+    soup = BeautifulSoup(str(detail_response.content), "html.parser")
 
-    assert confirmation_response.status_code == 200
-    assert (
-        f"Step template ID: {task_template_pk}"
-        in soup.select(".govuk-panel__title")[0].text
-    )
+    assert detail_response.status_code == 200
+    assert task_workflow_template_single_task_template_item.title in soup.h1.text
 
 
 def test_workflow_template_list_view(valid_user_client, valid_user):
@@ -683,17 +706,17 @@ def test_workflow_update_view(
     assert task_workflow.summary_task.title == form_data["title"]
     assert task_workflow.summary_task.description == form_data["description"]
 
-    confirmation_url = reverse(
-        "workflow:task-workflow-ui-confirm-update",
+    detail_url = reverse(
+        "workflow:task-workflow-ui-detail",
         kwargs={"pk": task_workflow.pk},
     )
-    assert update_response.url == confirmation_url
+    assert update_response.url == detail_url
 
-    confirmation_response = valid_user_client.get(confirmation_url)
-    assert confirmation_response.status_code == 200
+    detail_response = valid_user_client.get(detail_url)
+    assert detail_response.status_code == 200
 
-    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert str(task_workflow.id) in soup.select("h1.govuk-panel__title")[0].text
+    soup = BeautifulSoup(str(detail_response.content), "html.parser")
+    assert str(task_workflow.id) in soup.h1.text
 
 
 def test_workflow_update_view_reassigns_tasks(
@@ -768,17 +791,17 @@ def test_workflow_delete_view(
     ).exists()
     assert not Task.objects.filter(pk__in=[summary_task_pk, task_pk]).exists()
 
-    confirmation_url = reverse(
-        "workflow:task-workflow-ui-confirm-delete",
-        kwargs={"pk": workflow_pk},
+    detail_url = reverse(
+        "workflow:task-workflow-template-ui-detail",
+        kwargs={"pk": task_workflow_single_task_item.creator_template.pk},
     )
-    assert delete_response.url == confirmation_url
+    assert delete_response.url == detail_url
 
-    confirmation_response = valid_user_client.get(confirmation_url)
-    assert confirmation_response.status_code == 200
+    detail_response = valid_user_client.get(detail_url)
+    assert detail_response.status_code == 200
 
-    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert f"Ticket ID: {workflow_pk}" in soup.select(".govuk-panel__title")[0].text
+    soup = BeautifulSoup(str(detail_response.content), "html.parser")
+    assert task_workflow_single_task_item.creator_template.title in soup.h1.text
 
 
 def test_ticket_list_view(valid_user_client, task_workflow):
@@ -878,21 +901,21 @@ def test_create_workflow_task_view(valid_user_client, task_workflow):
     assert task_workflow.get_tasks().count() == 1
     assert create_response.status_code == 302
 
-    created_workflow_task = task_workflow.get_tasks().get()
-    confirmation_url = reverse(
-        "workflow:task-workflow-task-ui-confirm-create",
-        kwargs={"pk": created_workflow_task.pk},
+    task_workflow.get_tasks().get()
+    detail_url = reverse(
+        "workflow:task-workflow-ui-detail",
+        kwargs={"pk": task_workflow.pk},
     )
-    assert create_response.url == confirmation_url
+    assert create_response.url == detail_url
 
-    confirmation_response = valid_user_client.get(confirmation_url)
-    assert confirmation_response.status_code == 200
+    detail_response = valid_user_client.get(detail_url)
+    assert detail_response.status_code == 200
 
     soup = BeautifulSoup(
-        confirmation_response.content.decode(confirmation_response.charset),
+        detail_response.content.decode(detail_response.charset),
         "html.parser",
     )
-    assert created_workflow_task.title in soup.select("h1.govuk-panel__title")[0].text
+    assert task_workflow.title in soup.h1.text
 
 
 def test_workflow_delete_view_deletes_related_tasks(
@@ -918,19 +941,17 @@ def test_workflow_delete_view_deletes_related_tasks(
     ).exists()
     assert not Task.objects.filter(pk=task_pk).exists()
 
-    confirmation_url = reverse(
-        "workflow:task-workflow-ui-confirm-delete",
-        kwargs={"pk": task_workflow_pk},
+    detail_url = reverse(
+        "workflow:task-workflow-template-ui-detail",
+        kwargs={"pk": task_workflow_single_task_item.creator_template.pk},
     )
-    assert delete_response.url == confirmation_url
+    assert delete_response.url == detail_url
 
-    confirmation_response = valid_user_client.get(confirmation_url)
-    assert confirmation_response.status_code == 200
+    detail_response = valid_user_client.get(detail_url)
+    assert detail_response.status_code == 200
 
-    soup = BeautifulSoup(str(confirmation_response.content), "html.parser")
-    assert (
-        f"Ticket ID: {task_workflow_pk}" in soup.select(".govuk-panel__title")[0].text
-    )
+    soup = BeautifulSoup(str(detail_response.content), "html.parser")
+    assert task_workflow_single_task_item.creator_template.title in soup.h1.text
 
 
 def test_ticket_comments_render(valid_user_client):
@@ -1142,6 +1163,12 @@ def test_task_detail_view_displays_correctly(
         "workflow:task-ui-detail",
         kwargs={"pk": task.pk},
     )
+
+    expected_assignment_form_url = reverse(
+        "workflow:task-ui-unassign-user",
+        kwargs={"pk": task.pk},
+    )
+
     response = valid_user_client.get(url)
     assert response.status_code == 200
 
@@ -1151,10 +1178,10 @@ def test_task_detail_view_displays_correctly(
 
     table_values = [
         dd.text.strip()
-        for dd in page.find_all("dd", {"class": "govuk-summary-list__value"})
+        for dd in page.find_all("dd", {"class": "govuk-summary-list__value__stacked"})
     ]
 
     assert assignee.user.get_full_name() in table_values
-    assert format_date(task.created_at) in table_values
-    assert task.description in table_values
+    assert task.updated_at.strftime(settings.DATETIME_FORMAT) in table_values
     assert task.get_progress_state_display() in table_values
+    assert page.find("a", href=expected_assignment_form_url)
