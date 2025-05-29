@@ -10,12 +10,17 @@ def create_commodities_report(verbose=True):
     commodities = ReportGoodsNomenclature.objects.all().select_related(
         "parent_trackedmodel_ptr",
     )
+
+    total_rows = commodities.count()
+    if verbose:
+        print(f"Commodities: {total_rows} rows")
+
     id = 0
     for commodity in commodities:
         id += 1
         if verbose:
             if id % 1000 == 0:
-                print(f"Processing row {id}")
+                print(f"Completed {id} rows of Commodities")
 
         if commodity.parent_trackedmodel_ptr:
             parent_sid = commodity.parent_trackedmodel_ptr.sid

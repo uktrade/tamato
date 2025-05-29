@@ -63,8 +63,9 @@ def get_excluded_geographical_areas(measure):
     return geographical_area_ids_str, geographical_area_descriptions_str
 
 
-def create_commodities_report(verbose=True):
-    """Produces data for the commodity report, stored in an open_data table."""
+def create_measure_as_defined_report(verbose=True):
+    """Produces data for the Measures as Defined report (including future
+    measures), stored in an open_data table."""
 
     ReportMeasureAsDefinedReport.objects.all().delete()
 
@@ -149,11 +150,13 @@ def create_commodities_report(verbose=True):
 
     id = 0
 
+    if verbose:
+        print(f"Measures: {measures.count()} rows")
     for measure in measures:
         id += 1
         if verbose:
             if id % 1000 == 0:
-                print(id)
+                print(f"Completed {id} rows of Measures")
 
         (
             excluded_geographical_areas_ids,
