@@ -692,7 +692,7 @@ CELERY_ROUTES = {
 
 SQLITE_EXCLUDED_APPS = [
     "checks",
-    "reports"
+    "reports",
 ]
 
 # -- Google Tag Manager
