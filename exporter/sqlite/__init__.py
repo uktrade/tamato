@@ -38,6 +38,7 @@ from exporter.sqlite import tasks  # noqa
 
 SKIPPED_MODELS = {
     "QuotaEvent",
+    "Report"
 }
 
 
