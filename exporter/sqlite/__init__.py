@@ -42,12 +42,14 @@ SKIPPED_MODELS = {
 }
 
 
+def get_app_names():
+    app_names = [name.split(".")[0] for name in settings.SQLITE_INCLUDED_APPS]
+
+    return app_names
+
+
 def make_export_plan(sqlite_runner: runner.Runner) -> plan.Plan:
-    app_names = (
-        name.split(".")[0]
-        for name in settings.DOMAIN_APPS
-        if name not in settings.SQLITE_EXCLUDED_APPS
-    )
+    app_names = get_app_names()
     all_models = chain(*[apps.get_app_config(name).get_models() for name in app_names])
     models_by_table = {model._meta.db_table: model for model in all_models}
 

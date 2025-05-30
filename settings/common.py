@@ -128,6 +128,18 @@ DOMAIN_APPS = [
     "taric_parsers.apps.TaricParsersConfig",
 ]
 
+SQLITE_INCLUDED_APPS = [
+    "common",
+    "additional_codes.apps.AdditionalCodesConfig",
+    "certificates.apps.CertificatesConfig",
+    "commodities.apps.CommoditiesConfig",
+    "footnotes.apps.FootnotesConfig",
+    "geo_areas.apps.GeoAreasConfig",
+    "measures.apps.MeasuresConfig",
+    "quotas.apps.QuotasConfig",
+    "regulations.apps.RegulationsConfig",
+]
+
 OPEN_DATA_APPS = ["open_data.apps.OpenDataConfig"]
 
 TAMATO_APPS = [
@@ -690,9 +702,7 @@ CELERY_ROUTES = {
     },
 }
 
-SQLITE_EXCLUDED_APPS = [
-    "checks",
-]
+
 
 # -- Google Tag Manager
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID")

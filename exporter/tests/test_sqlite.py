@@ -12,6 +12,7 @@ import pytest
 
 from common.models.transactions import TransactionPartition
 from common.tests import factories
+from exporter.sqlite import get_app_names
 from exporter.sqlite import plan
 from exporter.sqlite import tasks
 from exporter.sqlite.runner import Runner
@@ -313,3 +314,20 @@ def test_local_export_task_ignores_unpublished_and_unapproved_transactions(tmp_p
 
     assert tasks.export_and_upload_sqlite(tmp_path)
     assert files_before | {sqlite_file_path} == set(tmp_path.iterdir())
+
+
+def test_get_app_names():
+    actual = get_app_names()
+    expected = [
+        "common",
+        "additional_codes",
+        "certificates",
+        "commodities",
+        "footnotes",
+        "geo_areas",
+        "measures",
+        "quotas",
+        "regulations",
+    ]
+
+    assert actual == expected
