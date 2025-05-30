@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        "It deletes all the data in the reporting tables, and copy a fresh set of data"
+        "It deletes all the data in the open data tables, and copy a fresh set of data"
         "from the tracked tables in the database."
     )
 
@@ -18,5 +18,5 @@ class Command(BaseCommand):
         logger.info(f"Starting the update of all the tables in the database")
         populate_open_data(OriginChoice.MANAGEMENT_COMMAND, True)
         self.stdout.write(
-            self.style.SUCCESS("Successfully updated the reporting tables."),
+            self.style.SUCCESS("Successfully updated the open data tables."),
         )

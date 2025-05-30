@@ -17,6 +17,8 @@ from open_data.models.datestamp import OriginChoice
 from open_data.models.datestamp import ReportDateStamp
 from open_data.models.utils import ReportModel
 from open_data.models.utils import get_lookup_name
+from open_data.reports.commodities import create_commodities_report
+from open_data.reports.measures import create_measure_as_defined_report
 
 
 def add_description(model, verbose=True):
@@ -113,6 +115,8 @@ def populate_open_data(origin: OriginChoice, verbose=False):
             event=EventChoice.REFRESH_OPEN_DATA,
             origin=origin,
         )
+        create_commodities_report(verbose)
+        create_measure_as_defined_report(verbose)
 
         print(
             f"Completed open data table in {(time.time()-populate_start_time)/60} minutes",
